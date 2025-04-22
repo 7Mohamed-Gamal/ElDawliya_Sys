@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card shadow">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">{{ page_title }}</h4>
+        </div>
+        <div class="card-body">
+            <form method="post" class="needs-validation" novalidate>
+                {% csrf_token %}
+                <div class="row g-4">
+                    <!-- Product ID -->
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="product_id" name="product_id" value="{{ form.product_id.value|default:'' }}" required>
+                            <label for="product_id">Product ID</label>
+                        </div>
+                    </div>
+
+                    <!-- Product Name -->
+                    <div class="col-md-6">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="product_name" name="product_name" value="{{ form.product_name.value|default:'' }}" required>
+                            <label for="product_name">Product Name</label>
+                        </div>
+                    </div>
+
+                    <!-- Initial Balance -->
+                    <div class="col-md-4">
+                        <div class="form-floating">
+                            <input type="number" class="form-control" id="initial_balance" name="initial_balance" value="{{ form.initial_balance.value|default:'0' }}" step="0.01">
+                            <label for="initial_balance">Initial Balance</label>
+                        </div>
+                    </div>
+
+                    <!-- Category -->
+                    <div class="col-md-4">
+                        <div class="form-floating">
+                            <select class="form-select" id="category" name="category">
+                                <option value="">Select Category</option>
+                                {% for category in categories %}
+                                <option value="{{ category.id }}">{{ category.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <label for="category">Category</label>
+                        </div>
+                    </div>
+
+                    <!-- Unit -->
+                    <div class="col-md-4">
+                        <div class="form-floating">
+                            <select class="form-select" id="unit" name="unit">
+                                <option value="">Select Unit</option>
+                                {% for unit in units %}
+                                <option value="{{ unit.id }}">{{ unit.name }}</option>
+                                {% endfor %}
+                            </select>
+                            <label for="unit">Unit</label>
+                        </div>
+                    </div>
+
+                    <!-- Unit Price -->
+                    <div class="col-md-4">
+                        <div class="form-floating">
+                            <input type="number" class="form-control" id="unit_price" name="unit_price" value="{{ form.unit_price.value|default:'0' }}" step="0.01">
+                            <label for="unit_price">Unit Price</label>
+                        </div>
+                    </div>
+
+                    <!-- Min Threshold -->
+                    <div class="col-md-4">
+                        <div class="form-floating">
+                            <input type="number" class="form-control" id="min_threshold" name="min_threshold" value="{{ form.min_threshold.value|default:'0' }}" step="0.01">
+                            <label for="min_threshold">Minimum Threshold</label>
+                        </div>
+                    </div>
+
+                    <!-- Max Threshold -->
+                    <div class="col-md-4">
+                        <div class="form-floating">
+                            <input type="number" class="form-control" id="max_threshold" name="max_threshold" value="{{ form.max_threshold.value|default:'0' }}" step="0.01">
+                            <label for="max_threshold">Maximum Threshold</label>
+                        </div>
+                    </div>
+
+                    <!-- Location -->
+                    <div class="col-12">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="location" name="location" value="{{ form.location.value|default:'' }}">
+                            <label for="location">Location</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="mt-4 text-end">
+                    <button type="submit" class="btn btn-primary btn-lg px-5">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-floating {
+    margin-bottom: 1rem;
+}
+
+.form-floating > .form-control,
+.form-floating > .form-select {
+    height: calc(3.5rem + 2px);
+    line-height: 1.25;
+}
+
+.form-floating > label {
+    padding: 1rem 0.75rem;
+}
+
+.card {
+    border-radius: 10px;
+    border: none;
+}
+
+.card-header {
+    border-radius: 10px 10px 0 0 !important;
+}
+
+.btn-primary {
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 1rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+}
+</style>
+{% endblock %}

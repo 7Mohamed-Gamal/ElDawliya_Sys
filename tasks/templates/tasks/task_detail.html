@@ -1,0 +1,434 @@
+{% extends 'base_updated.html' %}
+{% load static %}
+
+{% block title %}تفاصيل المهمة - نظام الدولية{% endblock %}
+
+{% block page_title %}تفاصيل المهمة{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'tasks:list' %}">المهام</a></li>
+<li class="breadcrumb-item active">{{ task.description|truncatechars:30 }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h4 class="card-title mb-0">تفاصيل المهمة</h4>
+                <div>
+                    <a href="{% url 'tasks:edit' task.pk %}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-edit me-1"></i>
+                        تعديل
+                    </a>
+                    <button class="btn btn-sm btn-danger ms-2 confirm-delete" 
+                            data-type="المهمة"
+                            data-id="{{ task.pk }}"
+                            data-url="{% url 'tasks:delete' task.pk %}">
+                        <i class="fas fa-trash me-1"></i>
+                        حذف
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="task-details">
+                    <div class="task-description mb-4">
+                        <h5 class="mb-3">
+                            <i class="fas fa-align-left me-2 text-primary"></i>
+                            الوصف
+                        </h5>
+                        <div class="p-3 bg-light rounded">
+                            <p class="mb-0">{{ task.description|linebreaks }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex">
+                                <div class="feature-icon bg-primary bg-opacity-10 text-primary rounded p-3 me-3">
+                                    <i class="fas fa-calendar-day"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">تاريخ البدء</h6>
+                                    <p class="mb-0">{{ task.start_date|date:"j F Y, g:i A" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex">
+                                <div class="feature-icon bg-primary bg-opacity-10 text-primary rounded p-3 me-3">
+                                    <i class="fas fa-calendar-check"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">تاريخ الانتهاء</h6>
+                                    <p class="mb-0">{{ task.end_date|date:"j F Y, g:i A" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex">
+                                <div class="feature-icon bg-primary bg-opacity-10 text-primary rounded p-3 me-3">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">المكلف</h6>
+                                    <p class="mb-0">{{ task.assigned_to.username }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex">
+                                <div class="feature-icon bg-primary bg-opacity-10 text-primary rounded p-3 me-3">
+                                    <i class="fas fa-info-circle"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">الحالة</h6>
+                                    <p class="mb-0">
+                                        <span class="badge {% if task.status == 'pending' %}bg-secondary{% elif task.status == 'in_progress' %}bg-primary{% elif task.status == 'completed' %}bg-success{% elif task.status == 'canceled' %}bg-danger{% elif task.status == 'deferred' %}bg-warning{% else %}bg-info{% endif %}">
+                                            {{ task.get_status_display }}
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="meeting-info mb-4">
+                        <h5 class="mb-3">
+                            <i class="fas fa-calendar-alt me-2 text-primary"></i>
+                            الاجتماع المرتبط
+                        </h5>
+                        {% if task.meeting %}
+                        <div class="card border">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{{ task.meeting.title }}</h6>
+                                        <p class="text-muted mb-0">
+                                            <i class="fas fa-calendar-day me-1"></i>
+                                            {{ task.meeting.date|date:"j F Y, g:i A" }}
+                                        </p>
+                                    </div>
+                                    <a href="{% url 'meetings:detail' task.meeting.pk %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye me-1"></i>
+                                        عرض الاجتماع
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            هذه المهمة غير مرتبطة بأي اجتماع.
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Task Steps -->
+        <div class="card">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h5 class="mb-0">خطوات المهمة</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" class="mb-4 needs-validation" novalidate>
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">إضافة خطوة جديدة</label>
+                        <div class="input-group">
+                            <div class="form-control-wrapper w-100">
+                                {{ form.description }}
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i>
+                                إضافة
+                            </button>
+                        </div>
+                        {% if form.description.errors %}
+                            <div class="invalid-feedback d-block">{{ form.description.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </form>
+                
+                <div class="timeline">
+                    {% if task.steps.all %}
+                        {% for step in task.steps.all %}
+                            <div class="timeline-item">
+                                <div class="timeline-badge">
+                                    <i class="fas fa-circle"></i>
+                                </div>
+                                <div class="card mb-0">
+                                    <div class="card-body py-3">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <p class="mb-1">{{ step.description }}</p>
+                                                <span class="text-muted small">{{ step.date|date:"j F Y, g:i A" }}</span>
+                                            </div>
+                                            <button class="btn btn-sm btn-outline-danger remove-step" 
+                                                    data-step-id="{{ step.id }}">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-clipboard-list text-muted fa-2x mb-3"></i>
+                            <p class="mb-0 text-muted">لم يتم إضافة أي خطوات للمهمة بعد</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Task Status Update -->
+        <div class="card mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0">تحديث الحالة</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn {% if task.status == 'pending' %}btn-primary{% else %}btn-outline-primary{% endif %} change-status" data-task-id="{{ task.id }}" data-new-status="pending">
+                        <i class="fas fa-clock me-1"></i>
+                        قيد الانتظار
+                    </button>
+                    <button class="btn {% if task.status == 'in_progress' %}btn-primary{% else %}btn-outline-primary{% endif %} change-status" data-task-id="{{ task.id }}" data-new-status="in_progress">
+                        <i class="fas fa-hourglass-half me-1"></i>
+                        يجرى العمل عليها
+                    </button>
+                    <button class="btn {% if task.status == 'completed' %}btn-success{% else %}btn-outline-success{% endif %} change-status" data-task-id="{{ task.id }}" data-new-status="completed">
+                        <i class="fas fa-check me-1"></i>
+                        مكتملة
+                    </button>
+                    <hr>
+                    <button class="btn {% if task.status == 'deferred' %}btn-warning{% else %}btn-outline-warning{% endif %} change-status" data-task-id="{{ task.id }}" data-new-status="deferred">
+                        <i class="fas fa-pause-circle me-1"></i>
+                        مؤجلة
+                    </button>
+                    <button class="btn {% if task.status == 'canceled' %}btn-danger{% else %}btn-outline-danger{% endif %} change-status" data-task-id="{{ task.id }}" data-new-status="canceled">
+                        <i class="fas fa-times-circle me-1"></i>
+                        ملغاة
+                    </button>
+                    <button class="btn {% if task.status == 'failed' %}btn-dark{% else %}btn-outline-dark{% endif %} change-status" data-task-id="{{ task.id }}" data-new-status="failed">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        فشلت
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Task Timer -->
+        <div class="card mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0">مؤقت المهمة</h5>
+            </div>
+            <div class="card-body">
+                {% if task.status == 'in_progress' %}
+                    <div class="text-center mb-3">
+                        <div class="timer-display d-flex justify-content-center gap-3 my-3">
+                            <div class="timer-item">
+                                <div class="timer-value days">00</div>
+                                <div class="timer-label">يوم</div>
+                            </div>
+                            <div class="timer-item">
+                                <div class="timer-value hours">00</div>
+                                <div class="timer-label">ساعة</div>
+                            </div>
+                            <div class="timer-item">
+                                <div class="timer-value minutes">00</div>
+                                <div class="timer-label">دقيقة</div>
+                            </div>
+                            <div class="timer-item">
+                                <div class="timer-value seconds">00</div>
+                                <div class="timer-label">ثانية</div>
+                            </div>
+                        </div>
+                        <div class="task-timer-status text-success mb-3">
+                            <i class="fas fa-circle me-1"></i>
+                            جاري العمل عليها الآن
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-clock text-muted fa-2x mb-3"></i>
+                        <p class="mb-0 text-muted">قم بتغيير حالة المهمة إلى "يجرى العمل عليها" لبدء المؤقت</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Related Tasks -->
+        {% if related_tasks %}
+        <div class="card">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0">مهام متعلقة</h5>
+            </div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    {% for related_task in related_tasks %}
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <p class="mb-1">{{ related_task.description|truncatechars:40 }}</p>
+                                    <div class="d-flex align-items-center small text-muted">
+                                        <i class="fas fa-user me-1"></i>
+                                        <span>{{ related_task.assigned_to.username }}</span>
+                                        <span class="mx-2">•</span>
+                                        <span class="badge {% if related_task.status == 'pending' %}bg-secondary{% elif related_task.status == 'in_progress' %}bg-primary{% elif related_task.status == 'completed' %}bg-success{% elif related_task.status == 'canceled' %}bg-danger{% elif related_task.status == 'deferred' %}bg-warning{% else %}bg-info{% endif %}">
+                                            {{ related_task.get_status_display }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <a href="{% url 'tasks:detail' related_task.pk %}" class="btn btn-sm btn-light">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Task Step Delete Modal -->
+<div class="modal fade" id="deleteStepModal" tabindex="-1" aria-labelledby="deleteStepModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteStepModalLabel">حذف خطوة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                هل أنت متأكد من حذف هذه الخطوة؟
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <form method="post" action="{% url 'tasks:delete_step' task.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" id="step_id_input" name="step_id" value="">
+                    <button type="submit" class="btn btn-danger">حذف</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Timer styling */
+    .timer-display {
+        font-family: 'Cairo', sans-serif;
+    }
+    
+    .timer-item {
+        background-color: var(--primary-light);
+        border-radius: var(--border-radius);
+        padding: 10px;
+        min-width: 60px;
+        text-align: center;
+    }
+    
+    .timer-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary-color);
+    }
+    
+    .timer-label {
+        font-size: 0.8rem;
+        color: var(--medium);
+    }
+    
+    .task-timer-status {
+        font-weight: 600;
+    }
+    
+    /* Task Status Buttons */
+    .change-status {
+        transition: all 0.3s ease;
+    }
+    
+    /* Feature icon */
+    .feature-icon {
+        width: 45px;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize delete confirmation
+        initDeleteConfirmations();
+        
+        // Handle status updates
+        const statusButtons = document.querySelectorAll('.change-status');
+        statusButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const taskId = this.dataset.taskId;
+                const newStatus = this.dataset.newStatus;
+                const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+                
+                // Show loading state
+                this.disabled = true;
+                const originalText = this.innerHTML;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                
+                fetch(`/tasks/${taskId}/update_status/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Reload page to show updated status
+                        window.location.reload();
+                    } else {
+                        alert('حدث خطأ أثناء تحديث الحالة');
+                        // Restore button state
+                        this.disabled = false;
+                        this.innerHTML = originalText;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('حدث خطأ أثناء الاتصال بالخادم');
+                    // Restore button state
+                    this.disabled = false;
+                    this.innerHTML = originalText;
+                });
+            });
+        });
+        
+        // Handle step delete buttons
+        const removeStepButtons = document.querySelectorAll('.remove-step');
+        if (removeStepButtons.length > 0) {
+            const stepIdInput = document.getElementById('step_id_input');
+            const deleteStepModal = new bootstrap.Modal(document.getElementById('deleteStepModal'));
+            
+            removeStepButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const stepId = this.dataset.stepId;
+                    stepIdInput.value = stepId;
+                    deleteStepModal.show();
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

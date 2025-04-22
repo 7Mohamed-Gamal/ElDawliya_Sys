@@ -1,0 +1,148 @@
+{% extends 'base_updated.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - نظام الدولية{% endblock %}
+
+{% block page_title %}{{ page_title }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'employees:dashboard' %}">الموظفين</a></li>
+<li class="breadcrumb-item"><a href="{% url 'employees:attendance_rule_list' %}">قواعد الحضور</a></li>
+<li class="breadcrumb-item active">{{ page_title }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">{{ page_title }}</h5>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="mb-3">
+                <label for="{{ form.name.id_for_label }}" class="form-label">{{ form.name.label }}</label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                <div class="invalid-feedback d-block">
+                    {% for error in form.name.errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                <label for="{{ form.description.id_for_label }}" class="form-label">{{ form.description.label }}</label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                <div class="invalid-feedback d-block">
+                    {% for error in form.description.errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                <label for="{{ form.late_grace_minutes.id_for_label }}" class="form-label">{{ form.late_grace_minutes.label }}</label>
+                {{ form.late_grace_minutes }}
+                {% if form.late_grace_minutes.errors %}
+                <div class="invalid-feedback d-block">
+                    {% for error in form.late_grace_minutes.errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                <label for="{{ form.early_leave_grace_minutes.id_for_label }}" class="form-label">{{ form.early_leave_grace_minutes.label }}</label>
+                {{ form.early_leave_grace_minutes }}
+                {% if form.early_leave_grace_minutes.errors %}
+                <div class="invalid-feedback d-block">
+                    {% for error in form.early_leave_grace_minutes.errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3 form-check">
+                {{ form.is_active }}
+                <label for="{{ form.is_active.id_for_label }}" class="form-check-label">{{ form.is_active.label }}</label>
+                {% if form.is_active.errors %}
+                <div class="invalid-feedback d-block">
+                    {% for error in form.is_active.errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">أيام الإجازة الأسبوعية</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for value, text in weekdays %}
+                        <div class="col-md-3 mb-2">
+                            <div class="form-check">
+                                <input type="checkbox" name="weekly_off_days_field" value="{{ value }}" id="weekly_off_day_{{ value }}" class="form-check-input"
+                                    {% if value in form.weekly_off_days_field.initial %}checked{% endif %}>
+                                <label for="weekly_off_day_{{ value }}" class="form-check-label">{{ text }}</label>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6 class="mb-0">جدول العمل</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>اليوم</th>
+                                    <th>وقت البدء</th>
+                                    <th>وقت الانتهاء</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for value, text in weekdays %}
+                                <tr>
+                                    <td>{{ text }}</td>
+                                    <td>
+                                        <input type="time" name="start_time_{{ value }}" id="start_time_{{ value }}" class="form-control"
+                                            value="{% if form.instance.pk %}{{ form.fields.start_time_value.initial }}{% endif %}">
+                                    </td>
+                                    <td>
+                                        <input type="time" name="end_time_{{ value }}" id="end_time_{{ value }}" class="form-control"
+                                            value="{% if form.instance.pk %}{{ form.fields.end_time_value.initial }}{% endif %}">
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> حفظ
+                </button>
+                <a href="{% url 'employees:attendance_rule_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> إلغاء
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

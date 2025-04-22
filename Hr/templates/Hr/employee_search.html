@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}بحث الموظفين{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">بحث الموظفين</h2>
+
+    <form method="get" class="mb-4">
+        <div class="row g-3">
+            <div class="col-md-3">
+                {{ form.employee_code.label_tag }}
+                {{ form.employee_code }}
+            </div>
+            <div class="col-md-3">
+                {{ form.name.label_tag }}
+                {{ form.name }}
+            </div>
+            <div class="col-md-3">
+                {{ form.national_id.label_tag }}
+                {{ form.national_id }}
+            </div>
+            <div class="col-md-3">
+                {{ form.insurance_number.label_tag }}
+                {{ form.insurance_number }}
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary mt-3">بحث</button>
+    </form>
+
+    {% if employees %}
+        {% if selected_employee %}
+            <div class="card mb-4">
+                <div class="card-header">
+                    بيانات الموظف: {{ selected_employee.emp_full_name }}
+                </div>
+                <div class="card-body">
+                    <p><strong>كود الموظف:</strong> {{ selected_employee.emp_id }}</p>
+                    <p><strong>الاسم الأول:</strong> {{ selected_employee.emp_first_name }}</p>
+                    <p><strong>الاسم الثاني:</strong> {{ selected_employee.emp_second_name }}</p>
+                    <p><strong>الرقم القومي:</strong> {{ selected_employee.national_id }}</p>
+                    <p><strong>الرقم التأميني:</strong> {{ selected_employee.insurance_number }}</p>
+                    <p><strong>القسم:</strong> {{ selected_employee.department.dept_name }}</p>
+                    <p><strong>الوظيفة:</strong> {{ selected_employee.jop_name }}</p>
+                    <p><strong>حالة العمل:</strong> {{ selected_employee.working_condition }}</p>
+                    <p><strong>تاريخ التعيين:</strong> {{ selected_employee.emp_date_hiring }}</p>
+                    <!-- Add more fields as needed -->
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    تحليلات الموظف
+                </div>
+                <div class="card-body">
+                    <p><strong>نسبة الحضور:</strong> {{ analytics.attendance_rate }}%</p>
+                    <p><strong>نسبة إتمام المهام:</strong> {{ analytics.task_completion_rate }}%</p>
+                    <p><strong>تقييم الأداء:</strong> {{ analytics.evaluation_score }}/5</p>
+                </div>
+            </div>
+        {% else %}
+            <h5>نتائج البحث:</h5>
+            <ul class="list-group">
+                {% for emp in employees %}
+                    <li class="list-group-item">
+                        <a href="?employee_code={{ emp.emp_id }}">{{ emp.emp_full_name }} - كود: {{ emp.emp_id }}</a>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+    {% else %}
+        <p>لا توجد نتائج للبحث.</p>
+    {% endif %}
+</div>
+{% endblock %}

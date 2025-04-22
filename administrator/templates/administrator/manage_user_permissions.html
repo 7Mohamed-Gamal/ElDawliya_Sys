@@ -1,0 +1,447 @@
+{% extends 'base_updated.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - نظام الدولية{% endblock %}
+
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'administrator:admin_dashboard' %}">مدير النظام</a></li>
+<li class="breadcrumb-item"><a href="{% url 'administrator:simplified_permissions_dashboard' %}">نظام الصلاحيات</a></li>
+<li class="breadcrumb-item active">{{ user_obj.username }}</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Improved Cards */
+    .card {
+        border-radius: 10px;
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+    
+    .card:hover {
+        box-shadow: 0 12px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Department Accordion */
+    .accordion-button {
+        background-color: #f8f9fa;
+        color: #333;
+        font-weight: 600;
+        box-shadow: none;
+        padding: 1rem 1.25rem;
+    }
+    
+    .accordion-button:not(.collapsed) {
+        background-color: #eaedff;
+        color: #3f51b5;
+        font-weight: 600;
+    }
+    
+    .accordion-button:focus {
+        box-shadow: none;
+        border-color: transparent;
+    }
+    
+    .accordion-button::after {
+        background-size: 1.25rem;
+        transition: all 0.3s ease;
+    }
+    
+    /* Module Card Styling */
+    .module-card {
+        border-radius: 12px;
+        border: 1px solid #e9ecef;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+    
+    .module-card:hover {
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
+        transform: translateY(-5px);
+    }
+    
+    .module-header {
+        padding: 15px;
+        border-bottom: 1px solid #e9ecef;
+        background-color: #f8f9fa;
+        display: flex;
+        align-items: center;
+    }
+    
+    .module-icon {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 15px;
+        color: white;
+        font-size: 1.2rem;
+    }
+    
+    .module-body {
+        padding: 20px;
+        background-color: #fff;
+    }
+    
+    /* Permission Switches */
+    .permission-switch {
+        display: flex;
+        align-items: center;
+        padding: 10px 15px;
+        border-radius: 8px;
+        margin-bottom: 12px;
+        transition: all 0.2s ease;
+    }
+    
+    .permission-switch:last-child {
+        margin-bottom: 0;
+    }
+    
+    .permission-switch:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .permission-label {
+        margin-right: 10px;
+        margin-bottom: 0;
+        flex: 1;
+        font-weight: 500;
+        color: #495057;
+    }
+    
+    .form-switch .form-check-input {
+        width: 2.5em;
+        height: 1.25em;
+        margin-top: 0;
+    }
+    
+    .form-check-input:checked {
+        background-color: #3f51b5;
+        border-color: #3f51b5;
+    }
+    
+    /* Custom form check styling */
+    .dept-checkbox {
+        width: 1.25rem;
+        height: 1.25rem;
+    }
+    
+    /* Empty modules message */
+    .no-modules {
+        text-align: center;
+        padding: 30px 20px;
+        color: #6c757d;
+    }
+    
+    /* User Info Panel */
+    .user-info {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .user-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background-color: #e9ecef;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        font-size: 1.5rem;
+        color: #6c757d;
+    }
+    
+    .user-details {
+        flex: 1;
+    }
+    
+    .user-name {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+    
+    .user-role {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        border-radius: 30px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        margin-right: 0.5rem;
+    }
+    
+    /* Animation */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.5s ease forwards;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+            <div style="width:40px; height:40px; border-radius:50%; background-color:#3f51b5; display:flex; align-items:center; justify-content:center; margin-left:15px;">
+                <i class="fas fa-user-shield text-white"></i>
+            </div>
+            <h5 class="mb-0">صلاحيات المستخدم: {{ user_obj.username }}</h5>
+        </div>
+        <div>
+            <a href="{% url 'administrator:user_detail' pk=user_obj.id %}" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-user me-1"></i>
+                الملف الشخصي
+            </a>
+            <a href="{% url 'administrator:simplified_permissions_help' %}" class="btn btn-outline-info">
+                <i class="fas fa-question-circle me-1"></i>
+                مساعدة
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        <!-- User Info -->
+        <div class="user-info fade-in" style="animation-delay: 0.1s;">
+            <div class="user-avatar">
+                {% if user_obj.profile_image %}
+                <img src="{{ user_obj.profile_image.url }}" alt="{{ user_obj.username }}" class="img-fluid rounded-circle">
+                {% else %}
+                <i class="fas fa-user"></i>
+                {% endif %}
+            </div>
+            <div class="user-details">
+                <h4 class="user-name">{{ user_obj.get_full_name|default:user_obj.username }}</h4>
+                <div>
+                    <span class="user-role bg-{% if user_obj.Role == 'admin' %}danger{% else %}secondary{% endif %}-subtle text-{% if user_obj.Role == 'admin' %}danger{% else %}secondary{% endif %}">
+                        {% if user_obj.Role == 'admin' %}مدير{% else %}موظف{% endif %}
+                    </span>
+                    <span class="text-muted">{{ user_obj.email }}</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="alert alert-info fade-in" style="animation-delay: 0.2s;">
+            <div class="d-flex">
+                <div class="me-3">
+                    <i class="fas fa-info-circle fa-2x text-info"></i>
+                </div>
+                <div>
+                    <strong>ملاحظة:</strong> حدد الأقسام والصلاحيات التي تريد منحها للمستخدم بشكل مباشر. الصلاحيات المستمدة من المجموعات لا تظهر هنا.
+                    <div class="mt-2">
+                        <a href="{% url 'administrator:manage_user_groups' user_id=user_obj.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-users me-1"></i> إدارة مجموعات المستخدم
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <form method="post" class="mt-4 fade-in" style="animation-delay: 0.3s;">
+            {% csrf_token %}
+            
+            <div class="accordion" id="permissionsAccordion">
+                {% for dept in departments %}
+                <div class="accordion-item mb-3 border-0 shadow-sm">
+                    <h2 class="accordion-header" id="heading{{ dept.id }}">
+                        <button class="accordion-button rounded {% if forloop.first %}{% else %}collapsed{% endif %}" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ dept.id }}" aria-expanded="{{ forloop.first }}" aria-controls="collapse{{ dept.id }}">
+                            <div class="form-check form-switch ms-2 me-0">
+                                <input class="form-check-input dept-checkbox" type="checkbox" id="dept_{{ dept.id }}" name="dept_{{ dept.id }}" {% if dept.id in user_dept_permissions %}checked{% endif %}>
+                                <label class="form-check-label ps-2" for="dept_{{ dept.id }}">
+                                    <i class="fas {{ dept.icon }} me-2 text-primary"></i> {{ dept.name }}
+                                </label>
+                            </div>
+                        </button>
+                    </h2>
+                    <div id="collapse{{ dept.id }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" aria-labelledby="heading{{ dept.id }}" data-bs-parent="#permissionsAccordion">
+                        <div class="accordion-body bg-light rounded-bottom">
+                            <div class="modules-container" id="modules_{{ dept.id }}">
+                                {% for module in dept.modules.all %}
+                                <div class="module-card">
+                                    <div class="module-header">
+                                        <div class="module-icon" style="background-color: {{ module.bg_color|default:'#3f51b5' }};">
+                                            <i class="fas {{ module.icon }}"></i>
+                                        </div>
+                                        <h6 class="mb-0">{{ module.name }}</h6>
+                                    </div>
+                                    <div class="module-body">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="permission-switch">
+                                                    <label class="permission-label" for="module_{{ module.id }}_view">
+                                                        <i class="fas fa-eye me-2 text-primary"></i>عرض
+                                                    </label>
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input module-checkbox" type="checkbox" id="module_{{ module.id }}_view" name="module_{{ module.id }}_view" 
+                                                        {% if module.id in user_module_permissions and user_module_permissions.module.id.can_view %}checked{% endif %}>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="permission-switch">
+                                                    <label class="permission-label" for="module_{{ module.id }}_add">
+                                                        <i class="fas fa-plus-circle me-2 text-success"></i>إضافة
+                                                    </label>
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" id="module_{{ module.id }}_add" name="module_{{ module.id }}_add" 
+                                                        {% if module.id in user_module_permissions and user_module_permissions.module.id.can_add %}checked{% endif %}>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="permission-switch">
+                                                    <label class="permission-label" for="module_{{ module.id }}_edit">
+                                                        <i class="fas fa-edit me-2 text-warning"></i>تعديل
+                                                    </label>
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" id="module_{{ module.id }}_edit" name="module_{{ module.id }}_edit" 
+                                                        {% if module.id in user_module_permissions and user_module_permissions.module.id.can_edit %}checked{% endif %}>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="permission-switch">
+                                                    <label class="permission-label" for="module_{{ module.id }}_delete">
+                                                        <i class="fas fa-trash-alt me-2 text-danger"></i>حذف
+                                                    </label>
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" id="module_{{ module.id }}_delete" name="module_{{ module.id }}_delete" 
+                                                        {% if module.id in user_module_permissions and user_module_permissions.module.id.can_delete %}checked{% endif %}>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="permission-switch">
+                                                    <label class="permission-label" for="module_{{ module.id }}_print">
+                                                        <i class="fas fa-print me-2 text-info"></i>طباعة
+                                                    </label>
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox" id="module_{{ module.id }}_print" name="module_{{ module.id }}_print" 
+                                                        {% if module.id in user_module_permissions and user_module_permissions.module.id.can_print %}checked{% endif %}>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% empty %}
+                                <div class="no-modules">
+                                    <i class="fas fa-info-circle fa-2x mb-3 text-muted"></i>
+                                    <p class="mb-0">لا توجد وحدات في هذا القسم</p>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div class="mt-4 d-flex justify-content-between align-items-center">
+                <a href="{% url 'administrator:simplified_permissions_dashboard' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-right me-1"></i>
+                    العودة
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i>
+                    حفظ الصلاحيات
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle department checkbox changes
+        const deptCheckboxes = document.querySelectorAll('.dept-checkbox');
+        
+        deptCheckboxes.forEach(checkbox => {
+            // Initial state
+            const deptId = checkbox.id.split('_')[1];
+            const modulesContainer = document.getElementById(`modules_${deptId}`);
+            
+            if (modulesContainer) {
+                const moduleInputs = modulesContainer.querySelectorAll('input[type="checkbox"]');
+                updateModuleState(checkbox.checked, moduleInputs);
+                
+                // Change event
+                checkbox.addEventListener('change', function() {
+                    updateModuleState(this.checked, moduleInputs);
+                    
+                    // If checked, expand accordion
+                    if (this.checked) {
+                        const collapseEl = document.getElementById(`collapse${deptId}`);
+                        if (collapseEl) {
+                            const bsCollapse = new bootstrap.Collapse(collapseEl, {
+                                toggle: false
+                            });
+                            bsCollapse.show();
+                        }
+                    }
+                });
+            }
+        });
+        
+        // Handle module view checkbox changes
+        const moduleViewCheckboxes = document.querySelectorAll('.module-checkbox');
+        
+        moduleViewCheckboxes.forEach(checkbox => {
+            const moduleCard = checkbox.closest('.module-card');
+            const otherCheckboxes = moduleCard.querySelectorAll('input[type="checkbox"]:not(.module-checkbox)');
+            
+            // Initial state
+            updateDependentState(checkbox.checked, otherCheckboxes);
+            
+            // Change event
+            checkbox.addEventListener('change', function() {
+                updateDependentState(this.checked, otherCheckboxes);
+            });
+        });
+        
+        // Animation for sections
+        const fadeInElements = document.querySelectorAll('.fade-in');
+        fadeInElements.forEach(el => {
+            const delay = el.style.animationDelay || '0s';
+            el.style.opacity = '0';
+            setTimeout(() => {
+                el.style.opacity = '1';
+                el.style.transform = 'translateY(0)';
+            }, parseInt(delay) * 1000);
+        });
+        
+        // Helper functions
+        function updateModuleState(isEnabled, checkboxes) {
+            checkboxes.forEach(cb => {
+                cb.disabled = !isEnabled;
+                if (!isEnabled) {
+                    cb.checked = false;
+                }
+            });
+        }
+        
+        function updateDependentState(isViewChecked, checkboxes) {
+            checkboxes.forEach(cb => {
+                cb.disabled = !isViewChecked;
+                if (!isViewChecked) {
+                    cb.checked = false;
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}

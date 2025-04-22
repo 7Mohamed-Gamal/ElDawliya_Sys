@@ -1,0 +1,74 @@
+<!-- templates/inventory/category_list.html -->
+{% extends 'inventory/base_inventory.html' %}
+{% load inventory_permission_tags %}
+
+{% block title %}قائمة التصنيفات - نظام إدارة المخزن{% endblock %}
+
+{% block content %}
+<div class="row ps-4">
+    <div class="col-12 mb-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-tags me-2"></i>
+                    قائمة التصنيفات
+                </h4>
+                {% has_inventory_module_permission "categories" "add" as can_add_category %}
+                {% if can_add_category %}
+                <a href="{% url 'inventory:category_add' %}" class="btn btn-light btn-sm">
+                    <i class="fas fa-plus-circle me-1"></i>
+                    إضافة تصنيف جديد
+                </a>
+                {% endif %}
+            </div>
+            <div class="card-body p-4">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>الرقم</th>
+                                <th>اسم التصنيف</th>
+                                <th>الوصف</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for category in categories %}
+                            <tr>
+                                <td>{{ category.id }}</td>
+                                <td>{{ category.name }}</td>
+                                <td>{{ category.description|default:"-"|truncatechars:50 }}</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        {% has_inventory_module_permission "categories" "edit" as can_edit_category %}
+                                        {% if can_edit_category %}
+                                        <a href="{% url 'inventory:category_edit' category.id %}" class="btn btn-sm btn-outline-primary" title="تعديل">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        {% endif %}
+
+                                        {% has_inventory_module_permission "categories" "delete" as can_delete_category %}
+                                        {% if can_delete_category %}
+                                        <a href="{% url 'inventory:category_delete' category.id %}" class="btn btn-sm btn-outline-danger" title="حذف">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4">
+                                    <i class="fas fa-exclamation-circle text-muted mb-2" style="font-size: 2rem;"></i>
+                                    <p class="mb-0 text-muted">لا يوجد تصنيفات مسجلة حالياً</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

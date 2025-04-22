@@ -1,0 +1,330 @@
+<!-- templates/inventory/stock_report.html -->
+{% extends 'inventory/base_inventory.html' %}
+{% load inventory_permission_tags %}
+
+{% block title %}تقرير المخزون - نظام إدارة المخزن{% endblock %}
+
+{% block content %}
+<div class="row ps-4">
+    <div class="col-12 mb-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    تقرير المخزون
+                </h4>
+                <div>
+                    <a href="{% url 'inventory:export_csv' %}?search={{ search_query }}&category={{ selected_category }}&stock_status={{ selected_stock_status }}" class="btn btn-light btn-sm me-2">
+                        <i class="fas fa-file-export me-1"></i> تصدير CSV
+                    </a>
+                    <a href="{% url 'Purchase_orders:purchase_request_list' %}" class="btn btn-light btn-sm">
+                        <i class="fas fa-shopping-cart me-1"></i> طلبات الشراء
+                    </a>
+                </div>
+            </div>
+
+            <!-- نموذج البحث والفلترة -->
+            <div class="card-body p-4 border-bottom">
+                <form method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="search" name="search" value="{{ search_query }}" placeholder="ابحث عن كود أو اسم الصنف">
+                            <label for="search">بحث</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-floating">
+                            <select class="form-select" id="category" name="category">
+                                <option value="">الكل</option>
+                                {% for category in categories %}
+                                <option value="{{ category.id }}" {% if selected_category == category.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ category.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                            <label for="category">التصنيف</label>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-floating">
+                            <select class="form-select" id="stock_status" name="stock_status">
+                                <option value="">الكل</option>
+                                <option value="low" {% if selected_stock_status == 'low' %}selected{% endif %}>منخفض</option>
+                                <option value="out" {% if selected_stock_status == 'out' %}selected{% endif %}>نفذ</option>
+                                <option value="normal" {% if selected_stock_status == 'normal' %}selected{% endif %}>طبيعي</option>
+                            </select>
+                            <label for="stock_status">حالة المخزون</label>
+                        </div>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search me-1"></i>
+                            بحث
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- جدول المخزون -->
+            <div class="card-body p-4">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>كود الصنف</th>
+                                <th>اسم الصنف</th>
+                                <th>التصنيف</th>
+                                <th>الكمية</th>
+                                <th>الحد الأدنى</th>
+                                <th>الحد الأقصى</th>
+                                <th>حالة المخزون</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in products %}
+                            <tr>
+                                <td>{{ product.product_id }}</td>
+                                <td>{{ product.name }}</td>
+                                <td>{{ product.category.name|default:"-" }}</td>
+                                <td>{{ product.quantity }}</td>
+                                <td>{{ product.minimum_threshold|default:"-" }}</td>
+                                <td>{{ product.maximum_threshold|default:"-" }}</td>
+                                <td>
+                                    {% if product.quantity == 0 %}
+                                        <span class="badge bg-danger rounded-pill px-3 py-2">نفذ</span>
+                                    {% elif product.quantity < product.minimum_threshold %}
+                                        <span class="badge bg-warning rounded-pill px-3 py-2">منخفض</span>
+                                    {% else %}
+                                        <span class="badge bg-success rounded-pill px-3 py-2">طبيعي</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if product.quantity == 0 or product.quantity < product.minimum_threshold %}
+                                        <div class="d-flex gap-2">
+                                            <button type="button" class="btn btn-sm btn-outline-primary transfer-btn" data-product-id="{{ product.product_id }}" data-action="add" title="ترحيل إلى طلبات الشراء">
+                                                <i class="fas fa-exchange-alt"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger cancel-transfer-btn d-none" data-product-id="{{ product.product_id }}" data-action="remove" title="إلغاء الترحيل">
+                                                <i class="fas fa-undo"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-success approved-btn d-none" disabled title="تمت الموافقة على الشراء">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        </div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="text-center py-4">
+                                    <i class="fas fa-exclamation-circle text-muted mb-2" style="font-size: 2rem;"></i>
+                                    <p class="mb-0 text-muted">لا توجد نتائج مطابقة لمعايير البحث</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-floating {
+    margin-bottom: 0.5rem;
+}
+
+.form-floating > .form-control,
+.form-floating > .form-select {
+    height: calc(3.5rem + 2px);
+    line-height: 1.25;
+}
+
+.form-floating > label {
+    padding: 1rem 0.75rem;
+}
+
+.card {
+    border-radius: 10px;
+    border: none;
+}
+
+.card-header {
+    border-radius: 10px 10px 0 0 !important;
+}
+
+.btn-outline-primary, .btn-outline-danger, .btn-outline-success {
+    transition: all 0.2s ease;
+}
+
+.btn-outline-primary:hover, .btn-outline-danger:hover, .btn-outline-success:hover {
+    transform: translateY(-2px);
+}
+
+.badge {
+    font-weight: 500;
+}
+</style>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // التحقق من حالة كل منتج عند تحميل الصفحة
+        document.querySelectorAll('.transfer-btn').forEach(function(button) {
+            const productId = button.getAttribute('data-product-id');
+            checkProductStatus(productId, button);
+        });
+
+        // إضافة مستمعي الأحداث لأزرار الترحيل
+        document.querySelectorAll('.transfer-btn').forEach(function(button) {
+            button.addEventListener('click', function() {
+                const productId = this.getAttribute('data-product-id');
+                transferProduct(productId, 'add', this);
+            });
+        });
+
+        // إضافة مستمعي الأحداث لأزرار إلغاء الترحيل
+        document.querySelectorAll('.cancel-transfer-btn').forEach(function(button) {
+            button.addEventListener('click', function() {
+                const productId = this.getAttribute('data-product-id');
+                transferProduct(productId, 'remove', this);
+            });
+        });
+
+        // دالة للتحقق من حالة المنتج في طلبات الشراء
+        function checkProductStatus(productId, button) {
+            fetch(`/purchase/api/check-product/${productId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    const row = button.closest('tr');
+                    const transferBtn = row.querySelector('.transfer-btn');
+                    const cancelBtn = row.querySelector('.cancel-transfer-btn');
+                    const approvedBtn = row.querySelector('.approved-btn');
+
+                    if (data.in_purchase_request) {
+                        transferBtn.classList.add('d-none');
+
+                        if (data.request_status === 'approved') {
+                            cancelBtn.classList.add('d-none');
+                            approvedBtn.classList.remove('d-none');
+                        } else {
+                            cancelBtn.classList.remove('d-none');
+                            approvedBtn.classList.add('d-none');
+                        }
+                    } else {
+                        transferBtn.classList.remove('d-none');
+                        cancelBtn.classList.add('d-none');
+                        approvedBtn.classList.add('d-none');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error checking product status:', error);
+                });
+        }
+
+        // دالة لترحيل المنتج إلى طلبات الشراء أو إلغاء الترحيل
+        function transferProduct(productId, action, button) {
+            const row = button.closest('tr');
+            const transferBtn = row.querySelector('.transfer-btn');
+            const cancelBtn = row.querySelector('.cancel-transfer-btn');
+            const approvedBtn = row.querySelector('.approved-btn');
+
+            // تعطيل الزر أثناء العملية
+            button.disabled = true;
+            const originalContent = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            fetch('/purchase/api/transfer-product/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify({
+                    product_id: productId,
+                    action: action
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.message || 'حدث خطأ أثناء تنفيذ العملية');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                // تحديث حالة الأزرار بناءً على الإجراء
+                if (action === 'add') {
+                    transferBtn.classList.add('d-none');
+                    cancelBtn.classList.remove('d-none');
+                    approvedBtn.classList.add('d-none');
+
+                    // إظهار رسالة نجاح
+                    showAlert('success', 'تم ترحيل الصنف إلى طلبات الشراء بنجاح');
+                } else {
+                    transferBtn.classList.remove('d-none');
+                    cancelBtn.classList.add('d-none');
+                    approvedBtn.classList.add('d-none');
+
+                    // إظهار رسالة نجاح
+                    showAlert('success', 'تم إلغاء ترحيل الصنف من طلبات الشراء بنجاح');
+                }
+
+                // إعادة تمكين الزر
+                button.disabled = false;
+                button.innerHTML = originalContent;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+
+                // إظهار رسالة خطأ
+                showAlert('danger', error.message || 'حدث خطأ أثناء تنفيذ العملية');
+
+                // إعادة تمكين الزر
+                button.disabled = false;
+                button.innerHTML = originalContent;
+            });
+        }
+
+        // دالة لإظهار تنبيه
+        function showAlert(type, message) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            // إضافة التنبيه في أعلى الصفحة
+            const cardHeader = document.querySelector('.card-header');
+            const cardBody = cardHeader.nextElementSibling;
+            cardHeader.parentNode.insertBefore(alertDiv, cardBody);
+
+            // إزالة التنبيه تلقائيًا بعد 5 ثوانٍ
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+
+        // دالة للحصول على قيمة ملف تعريف الارتباط CSRF
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}

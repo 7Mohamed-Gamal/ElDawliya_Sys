@@ -1,0 +1,13 @@
+<!-- templates/inventory/product_confirm_delete.html -->
+{% extends 'inventory/base_inventory.html' %}
+{% block content %}
+<div class="container mt-5">
+    <h2>تأكيد الحذف</h2>
+    <p>هل أنت متأكد من أنك تريد حذف الصنف "{{ object.product_name }}"؟</p>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">حذف</button>
+        <a href="{% url 'product_list' %}" class="btn btn-secondary">إلغاء</a>
+    </form>
+</div>
+{% endblock %}

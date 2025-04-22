@@ -1,0 +1,450 @@
+{% extends 'inventory/base_inventory.html' %}
+{% load static %}
+{% load inventory_permission_tags %}
+
+{% block title %}{{ page_title|default:"بيانات الصنف" }} - نظام إدارة المخزن{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Enhanced Form Styles */
+    .product-form-container {
+        padding: 1.5rem;
+    }
+    
+    .form-card {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    
+    .form-card .card-header {
+        border-radius: 0; 
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        display: flex;
+        align-items: center;
+        padding: 1.25rem 1.5rem;
+    }
+    
+    .form-section {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 1.25rem;
+        color: #3f51b5;
+        display: flex;
+        align-items: center;
+    }
+    
+    .section-title i {
+        margin-left: 0.75rem;
+        opacity: 0.8;
+    }
+    
+    .form-floating {
+        margin-bottom: 1rem;
+    }
+    
+    .form-floating > .form-control,
+    .form-floating > .form-select {
+        height: calc(3.5rem + 2px);
+        padding: 1rem 0.75rem;
+        border: 1px solid #ced4da;
+        border-radius: 8px;
+    }
+    
+    .form-floating > .form-control:focus,
+    .form-floating > .form-select:focus {
+        border-color: #3f51b5;
+        box-shadow: 0 0 0 0.25rem rgba(63, 81, 181, 0.25);
+    }
+    
+    .form-floating > label {
+        padding: 1rem 0.75rem;
+    }
+    
+    textarea.form-control {
+        min-height: 120px;
+    }
+    
+    /* Button Styles */
+    .btn-action {
+        padding: 0.6rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary {
+        background-color: #3f51b5;
+        border-color: #3f51b5;
+    }
+    
+    .btn-primary:hover {
+        background-color: #303f9f;
+        border-color: #303f9f;
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(63, 81, 181, 0.3);
+    }
+    
+    .btn-secondary {
+        background-color: #f8f9fa;
+        border-color: #ced4da;
+        color: #495057;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #e9ecef;
+        border-color: #adb5bd;
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    /* Field Validation Styles */
+    .is-valid {
+        border-color: #28a745 !important;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3e%3cpath fill='%2328a745' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right calc(0.375em + 0.1875rem) center;
+        background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+    }
+    
+    .is-invalid {
+        border-color: #dc3545 !important;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%23dc3545' viewBox='0 0 12 12'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right calc(0.375em + 0.1875rem) center;
+        background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+    }
+    
+    .invalid-feedback {
+        display: none;
+        width: 100%;
+        margin-top: .25rem;
+        font-size: 80%;
+        color: #dc3545;
+    }
+    
+    /* Card shadows and hover */
+    .card {
+        border-radius: 10px;
+        border: none;
+        transition: all 0.3s ease;
+    }
+    
+    .card:hover {
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+    }
+    
+    .card-header {
+        border-radius: 10px 10px 0 0 !important;
+    }
+    
+    /* Form Enhancements */
+    @media (max-width: 768px) {
+        .container {
+            padding: 1rem;
+        }
+    
+        .card-body {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row ps-4">
+    <div class="col-12 mb-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-box-open me-2"></i>
+                    {{ page_title }}
+                </h4>
+                <a href="{% url 'inventory:product_list' %}" class="btn btn-light btn-sm">
+                    <i class="fas fa-arrow-right me-1"></i>
+                    العودة للقائمة
+                </a>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    
+                    <!-- بيانات الصنف الأساسية -->
+                    <div class="form-section mb-4">
+                        <div class="section-title">
+                            <i class="fas fa-info-circle"></i>
+                            بيانات الصنف الأساسية
+                        </div>
+                        <div class="row g-3">
+                            <!-- رقم الصنف -->
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control {% if form.product_id.errors %}is-invalid{% endif %}" 
+                                           id="id_product_id" name="product_id" value="{{ form.product_id.value|default:'' }}" required>
+                                    <label for="id_product_id">رقم الصنف *</label>
+                                    {% if form.product_id.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.product_id.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- اسم الصنف -->
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control {% if form.name.errors %}is-invalid{% endif %}" 
+                                           id="id_name" name="name" value="{{ form.name.value|default:'' }}" required>
+                                    <label for="id_name">اسم الصنف *</label>
+                                    {% if form.name.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.name.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- التصنيف -->
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <select class="form-select {% if form.category.errors %}is-invalid{% endif %}" 
+                                            id="id_category" name="category">
+                                        <option value="">اختر التصنيف</option>
+                                        {% for category in categories %}
+                                        <option value="{{ category.id }}" {% if form.category.value == category.id %}selected{% endif %}>
+                                            {{ category.name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    <label for="id_category">التصنيف</label>
+                                    {% if form.category.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.category.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- الموقع -->
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control {% if form.location.errors %}is-invalid{% endif %}" 
+                                           id="id_location" name="location" value="{{ form.location.value|default:'' }}">
+                                    <label for="id_location">الموقع في المخزن</label>
+                                    {% if form.location.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.location.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- بيانات المخزون -->
+                    <div class="form-section mb-4">
+                        <div class="section-title">
+                            <i class="fas fa-boxes"></i>
+                            بيانات المخزون
+                        </div>
+                        <div class="row g-3">
+                            <!-- الكمية -->
+                            <div class="col-md-4">
+                                <div class="form-floating">
+                                    <input type="number" class="form-control {% if form.quantity.errors %}is-invalid{% endif %}" 
+                                           id="id_quantity" name="quantity" value="{{ form.quantity.value|default:'0' }}" step="0.01">
+                                    <label for="id_quantity">الكمية المتوفرة</label>
+                                    {% if form.quantity.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.quantity.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- سعر الوحدة -->
+                            <div class="col-md-4">
+                                <div class="form-floating">
+                                    <input type="number" class="form-control {% if form.unit_price.errors %}is-invalid{% endif %}" 
+                                           id="id_unit_price" name="unit_price" value="{{ form.unit_price.value|default:'0' }}" step="0.01">
+                                    <label for="id_unit_price">سعر الوحدة</label>
+                                    {% if form.unit_price.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.unit_price.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- وحدة القياس -->
+                            <div class="col-md-4">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control" id="id_unit" name="unit" value="{{ form.unit.value|default:'' }}">
+                                    <label for="id_unit">وحدة القياس</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- حدود المخزون -->
+                    <div class="form-section mb-4">
+                        <div class="section-title">
+                            <i class="fas fa-chart-line"></i>
+                            حدود المخزون
+                        </div>
+                        <div class="row g-3">
+                            <!-- الحد الأدنى -->
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="number" class="form-control {% if form.minimum_threshold.errors %}is-invalid{% endif %}" 
+                                           id="id_minimum_threshold" name="minimum_threshold" value="{{ form.minimum_threshold.value|default:'0' }}" step="0.01">
+                                    <label for="id_minimum_threshold">الحد الأدنى</label>
+                                    <small class="form-text text-muted">سيتم إظهار تنبيه عند انخفاض المخزون عن هذا الحد</small>
+                                    {% if form.minimum_threshold.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.minimum_threshold.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- الحد الأقصى -->
+                            <div class="col-md-6">
+                                <div class="form-floating">
+                                    <input type="number" class="form-control {% if form.maximum_threshold.errors %}is-invalid{% endif %}" 
+                                           id="id_maximum_threshold" name="maximum_threshold" value="{{ form.maximum_threshold.value|default:'0' }}" step="0.01">
+                                    <label for="id_maximum_threshold">الحد الأقصى</label>
+                                    <small class="form-text text-muted">الحد الأقصى المسموح به في المخزن</small>
+                                    {% if form.maximum_threshold.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.maximum_threshold.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- الوصف والملاحظات -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <i class="fas fa-align-left"></i>
+                            الوصف والملاحظات
+                        </div>
+                        <div class="row">
+                            <!-- الوصف -->
+                            <div class="col-12">
+                                <div class="form-floating">
+                                    <textarea class="form-control {% if form.description.errors %}is-invalid{% endif %}" 
+                                              id="id_description" name="description" style="height: 120px">{{ form.description.value|default:'' }}</textarea>
+                                    <label for="id_description">الوصف</label>
+                                    {% if form.description.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.description.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- أزرار التحكم -->
+                    <div class="mt-4 d-flex justify-content-between">
+                        <a href="{% url 'inventory:product_list' %}" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-times me-1"></i>
+                            إلغاء
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save me-1"></i>
+                            حفظ البيانات
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form validation
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.querySelector('.needs-validation');
+    
+    // Validate on submit
+    form.addEventListener('submit', function (event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            // Show error messages
+            const invalidInputs = form.querySelectorAll(':invalid');
+            invalidInputs.forEach(input => {
+                input.classList.add('is-invalid');
+                
+                // Scroll to first invalid input
+                if (invalidInputs.length > 0) {
+                    invalidInputs[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    invalidInputs[0].focus();
+                }
+            });
+        }
+        
+        form.classList.add('was-validated');
+    });
+    
+    // Live validation as user types
+    const inputs = form.querySelectorAll('input, select, textarea');
+    inputs.forEach(input => {
+        input.addEventListener('blur', function () {
+            // Clear previous validation state
+            this.classList.remove('is-valid', 'is-invalid');
+            
+            // Validate and add appropriate class
+            if (this.checkValidity()) {
+                this.classList.add('is-valid');
+            } else if (this.value) {
+                this.classList.add('is-invalid');
+            }
+        });
+    });
+    
+    // Additional field-specific validation
+    const quantityInput = document.getElementById('id_quantity');
+    const minThresholdInput = document.getElementById('id_minimum_threshold');
+    const maxThresholdInput = document.getElementById('id_maximum_threshold');
+    
+    // Validate thresholds
+    function validateThresholds() {
+        const qty = parseFloat(quantityInput.value) || 0;
+        const min = parseFloat(minThresholdInput.value) || 0;
+        const max = parseFloat(maxThresholdInput.value) || 0;
+        
+        if (max > 0 && max < min) {
+            maxThresholdInput.setCustomValidity('الحد الأقصى يجب أن يكون أكبر من الحد الأدنى');
+            maxThresholdInput.classList.add('is-invalid');
+        } else {
+            maxThresholdInput.setCustomValidity('');
+        }
+        
+        // Check if quantity is below minimum threshold
+        if (qty < min && min > 0) {
+            // Just visual indication, not preventing submission
+            quantityInput.classList.add('is-invalid');
+        }
+    }
+    
+    // Add event listeners for threshold validation
+    [quantityInput, minThresholdInput, maxThresholdInput].forEach(input => {
+        input.addEventListener('change', validateThresholds);
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,122 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="{{ current_language }}" dir="{{ text_direction }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ElDawliya System{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <!-- Google Fonts (Cairo) -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --font-family: {{ current_font }};
+        }
+        
+        body {
+            font-family: var(--font-family), system-ui, -apple-system, sans-serif;
+        }
+        
+        /* RTL specific styles */
+        [dir="rtl"] .ms-auto {
+            margin-right: auto !important;
+            margin-left: 0 !important;
+        }
+        
+        [dir="rtl"] .me-auto {
+            margin-left: auto !important;
+            margin-right: 0 !important;
+        }
+        
+        [dir="rtl"] .ms-2 {
+            margin-right: 0.5rem !important;
+            margin-left: 0 !important;
+        }
+        
+        [dir="rtl"] .me-2 {
+            margin-left: 0.5rem !important;
+            margin-right: 0 !important;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">نظام الدولية</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="{% url 'meetings:meeting_list' %}">الاجتماعات</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'tasks:list' %}">المهام</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'accounts:logout' %}">تسجيل الخروج</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Messages -->
+    <div class="container mt-3">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <!-- Main Content -->
+    <div class="container mt-4">
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>&copy;  نظام الدولية إنترناشونال للطباعة. جميع الحقوق محفوظة.</p>
+            <p>powered by <a href="https://www.eldawliya.com">ElDawliya</a></p></p>
+            <p>
+                <a href="#">سياسة الخصوصية</a> | <a href="#">شروط الاستخدام</a>
+            </p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Toastify JS -->
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <!-- Custom JavaScript -->
+    <script>
+        // Apply RTL/LTR specific JavaScript adjustments
+        document.addEventListener('DOMContentLoaded', function() {
+            const isRTL = '{{ text_direction }}' === 'rtl';
+            
+            // Adjust dropdown menus for RTL
+            if (isRTL) {
+                document.querySelectorAll('.dropdown-menu').forEach(menu => {
+                    menu.style.textAlign = 'right';
+                });
+            }
+            
+            // Adjust data tables for RTL if you're using them
+            if (typeof $.fn.DataTable !== 'undefined') {
+                $.extend(true, $.fn.DataTable.defaults, {
+                    language: {
+                        url: isRTL ? '//cdn.datatables.net/plug-ins/1.10.24/i18n/Arabic.json' : '//cdn.datatables.net/plug-ins/1.10.24/i18n/English.json'
+                    }
+                });
+            }
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

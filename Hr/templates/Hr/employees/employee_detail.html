@@ -1,0 +1,361 @@
+{% extends 'base_updated.html' %}
+{% load static %}
+
+{% block title %}{{ employee.emp_full_name }} - تفاصيل الموظف{% endblock %}
+
+{% block page_title %}تفاصيل الموظف{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'employees:list' %}">الموظفين</a></li>
+<li class="breadcrumb-item active">{{ employee.emp_full_name|default:"موظف" }}</li>
+{% endblock %}
+
+{% block content %}
+<!-- شريط الإجراءات -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-0">{{ employee.emp_full_name }}</h4>
+        <span class="text-muted">{{ employee.job.job_name|default:"" }} {{ employee.department.dept_name|default:"" }}</span>
+    </div>
+    <div class="actions">
+        <a href="{% url 'employees:edit' employee.emp_id %}" class="btn btn-primary">
+            <i class="fas fa-edit me-1"></i>
+            تعديل
+        </a>
+        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+            <i class="fas fa-trash-alt me-1"></i>
+            حذف
+        </button>
+        <a href="{% url 'employees:list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-right me-1"></i>
+            العودة للقائمة
+        </a>
+    </div>
+</div>
+
+<!-- المعلومات العامة -->
+<div class="row">
+    <!-- البيانات الشخصية -->
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body text-center pt-4">
+                {% if employee.emp_image %}
+                <div class="employee-avatar mx-auto position-relative mb-3">
+                    <img src="{{ employee.emp_image.url }}" alt="{{ employee.emp_full_name }}" class="rounded-circle user-image">
+                    {% if employee.working_condition == 'يعمل' %}
+                    <span class="status-badge bg-success"><i class="fas fa-check"></i></span>
+                    {% elif employee.working_condition == 'إجازة' %}
+                    <span class="status-badge bg-info"><i class="fas fa-pause"></i></span>
+                    {% elif employee.working_condition == 'مستقيل' %}
+                    <span class="status-badge bg-danger"><i class="fas fa-times"></i></span>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="employee-avatar-placeholder mx-auto position-relative mb-3">
+                    <div class="avatar-placeholder display-1">
+                        {{ employee.emp_first_name|slice:":1"|upper }}
+                    </div>
+                    {% if employee.working_condition == 'يعمل' %}
+                    <span class="status-badge bg-success"><i class="fas fa-check"></i></span>
+                    {% elif employee.working_condition == 'إجازة' %}
+                    <span class="status-badge bg-info"><i class="fas fa-pause"></i></span>
+                    {% elif employee.working_condition == 'مستقيل' %}
+                    <span class="status-badge bg-danger"><i class="fas fa-times"></i></span>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                <h5 class="mt-3 mb-1">{{ employee.emp_full_name }}</h5>
+                <p class="text-muted">{{ employee.job.job_name|default:"-" }}</p>
+                
+                <hr>
+                
+                <div class="row text-start g-3 mt-2">
+                    <div class="col-6">
+                        <h6 class="text-muted mb-1">رقم الموظف</h6>
+                        <p class="mb-0">{{ employee.emp_id }}</p>
+                    </div>
+                    <div class="col-6">
+                        <h6 class="text-muted mb-1">الحالة</h6>
+                        <p class="mb-0">{{ employee.working_condition }}</p>
+                    </div>
+                    <div class="col-6">
+                        <h6 class="text-muted mb-1">الرقم القومي</h6>
+                        <p class="mb-0">{{ employee.national_id|default:"-" }}</p>
+                    </div>
+                    <div class="col-6">
+                        <h6 class="text-muted mb-1">تاريخ التعيين</h6>
+                        <p class="mb-0">{% if employee.emp_date_hiring %}{{ employee.emp_date_hiring|date:"d/m/Y" }}{% else %}-{% endif %}</p>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <h6 class="text-muted mb-2">بيانات الاتصال</h6>
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-phone-alt text-muted me-2"></i>
+                        <span>{{ employee.emp_phone1|default:"-" }}</span>
+                    </div>
+                    {% if employee.emp_phone2 %}
+                    <div class="d-flex align-items-center mb-2">
+                        <i class="fas fa-phone-alt text-muted me-2"></i>
+                        <span>{{ employee.emp_phone2 }}</span>
+                    </div>
+                    {% endif %}
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-map-marker-alt text-muted me-2"></i>
+                        <span>{{ employee.emp_address|default:"-" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- البيانات التفصيلية -->
+    <div class="col-lg-8">
+        <!-- بيانات العمل والتوظيف -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-briefcase me-2"></i>
+                    معلومات العمل
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <h6 class="text-muted mb-1">القسم</h6>
+                        <p>{{ employee.department.dept_name|default:"-" }}</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <h6 class="text-muted mb-1">الوظيفة</h6>
+                        <p>{{ employee.job.job_name|default:"-" }}</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <h6 class="text-muted mb-1">نوع الموظف</h6>
+                        <p>{{ employee.emp_type|default:"-" }}</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <h6 class="text-muted mb-1">تاريخ التعيين</h6>
+                        <p>{% if employee.emp_date_hiring %}{{ employee.emp_date_hiring|date:"d/m/Y" }}{% else %}-{% endif %}</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <h6 class="text-muted mb-1">تاريخ تجديد العقد</h6>
+                        <p>{% if employee.contract_renewal_date %}{{ employee.contract_renewal_date|date:"d/m/Y" }}{% else %}-{% endif %}</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <h6 class="text-muted mb-1">نوع المناوبة</h6>
+                        <p>{{ employee.shift_type|default:"-" }}</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <h6 class="text-muted mb-1">مناوبة الأسبوع الحالي</h6>
+                        <p>{{ employee.current_week_shift|default:"-" }}</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <h6 class="text-muted mb-1">مناوبة الأسبوع القادم</h6>
+                        <p>{{ employee.next_week_shift|default:"-" }}</p>
+                    </div>
+                </div>
+                
+                {% if employee.working_condition == 'مستقيل' %}
+                <hr>
+                <h6 class="text-danger mb-2">بيانات الاستقالة</h6>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <h6 class="text-muted mb-1">تاريخ الاستقالة</h6>
+                        <p>{% if employee.date_resignation %}{{ employee.date_resignation|date:"d/m/Y" }}{% else %}-{% endif %}</p>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <h6 class="text-muted mb-1">سبب الاستقالة</h6>
+                        <p>{{ employee.reason_resignation|default:"-" }}</p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- بيانات التأمين -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-shield-alt me-2"></i>
+                    التأمين والبطاقة الصحية
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <h6 class="text-muted mb-1">حالة التأمين</h6>
+                        <p>{{ employee.insurance_status|default:"-" }}</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <h6 class="text-muted mb-1">وظيفة التأمين</h6>
+                        <p>{{ employee.job_insurance.job_name_insurance|default:"-" }}</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <h6 class="text-muted mb-1">رقم التأمين</h6>
+                        <p>{{ employee.number_insurance|default:"-" }}</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <h6 class="text-muted mb-1">تاريخ بداية التأمين</h6>
+                        <p>{% if employee.date_insurance_start %}{{ employee.date_insurance_start|date:"d/m/Y" }}{% else %}-{% endif %}</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <h6 class="text-muted mb-1">راتب التأمين</h6>
+                        <p>{{ employee.insurance_salary|default:"-" }}</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <h6 class="text-muted mb-1">نسبة التأمين المستحق</h6>
+                        <p>{{ employee.percentage_insurance_payable|default:"-" }}</p>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <h6 class="text-primary mb-2">بيانات البطاقة الصحية</h6>
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <h6 class="text-muted mb-1">البطاقة الصحية</h6>
+                        <p>{{ employee.health_card|default:"-" }}</p>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <h6 class="text-muted mb-1">رقم البطاقة</h6>
+                        <p>{{ employee.health_card_number|default:"-" }}</p>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <h6 class="text-muted mb-1">تاريخ البداية</h6>
+                        <p>{% if employee.health_card_start_date %}{{ employee.health_card_start_date|date:"d/m/Y" }}{% else %}-{% endif %}</p>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <h6 class="text-muted mb-1">تاريخ التجديد</h6>
+                        <p>{% if employee.health_card_renewal_date %}{{ employee.health_card_renewal_date|date:"d/m/Y" }}{% else %}-{% endif %}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- بيانات شخصية إضافية -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-user me-2"></i>
+                    معلومات شخصية
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <h6 class="text-muted mb-1">الاسم الأول</h6>
+                        <p>{{ employee.emp_first_name|default:"-" }}</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <h6 class="text-muted mb-1">الاسم الثاني</h6>
+                        <p>{{ employee.emp_second_name|default:"-" }}</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <h6 class="text-muted mb-1">اسم الأم</h6>
+                        <p>{{ employee.mother_name|default:"-" }}</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <h6 class="text-muted mb-1">الاسم بالإنجليزية</h6>
+                        <p>{{ employee.emp_name_english|default:"-" }}</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <h6 class="text-muted mb-1">الجنسية</h6>
+                        <p>{{ employee.emp_nationality|default:"-" }}</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <h6 class="text-muted mb-1">الحالة الاجتماعية</h6>
+                        <p>{{ employee.emp_marital_status|default:"-" }}</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <h6 class="text-muted mb-1">تاريخ الميلاد</h6>
+                        <p>{% if employee.date_birth %}{{ employee.date_birth|date:"d/m/Y" }}{% else %}-{% endif %}</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <h6 class="text-muted mb-1">محل الميلاد</h6>
+                        <p>{{ employee.place_birth|default:"-" }}</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <h6 class="text-muted mb-1">المحافظة</h6>
+                        <p>{{ employee.governorate|default:"-" }}</p>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <h6 class="text-muted mb-1">شهادة الخدمة العسكرية</h6>
+                        <p>{{ employee.military_service_certificate|default:"-" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- نموذج الحذف -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">تأكيد الحذف</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>هل أنت متأكد من رغبتك في حذف بيانات الموظف <strong>{{ employee.emp_full_name }}</strong>؟</p>
+                <p class="text-danger">هذا الإجراء لا يمكن التراجع عنه.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <form action="{% url 'employees:delete' employee.emp_id %}" method="post" class="d-inline">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">نعم، حذف</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .employee-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        overflow: hidden;
+    }
+    
+    .employee-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .employee-avatar-placeholder {
+        width: 120px;
+        height: 120px;
+    }
+    
+    .avatar-placeholder {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background-color: #6c757d;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .status-badge {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid white;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends 'administrator/base_admin.html' %}
+{% load static %}
+
+{% block title %}حذف القسم - {{ object.name }} - لوحة تحكم مدير النظام{% endblock %}
+
+{% block page_icon %}trash-alt{% endblock %}
+{% block page_header %}حذف القسم - {{ object.name }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card mb-4">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    تأكيد الحذف
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <strong>تحذير:</strong> حذف قسم قد يؤثر على أجزاء أخرى من النظام. تأكد من عدم وجود وحدات أو صفحات مرتبطة بهذا القسم قبل الحذف.
+                </div>
+                
+                <h5 class="mb-3">هل أنت متأكد من رغبتك في حذف هذا القسم؟</h5>
+                
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3 text-muted mb-2 mb-md-0">الاسم:</div>
+                            <div class="col-md-9"><strong>{{ object.name }}</strong></div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-3 text-muted mb-2 mb-md-0">الأيقونة:</div>
+                            <div class="col-md-9">
+                                <i class="fas {{ object.icon }} fa-lg me-2"></i> {{ object.icon }}
+                            </div>
+                        </div>
+                        {% if object.description %}
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-3 text-muted mb-2 mb-md-0">الوصف:</div>
+                            <div class="col-md-9">{{ object.description }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'administrator:department_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>
+                            إلغاء
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash-alt me-1"></i>
+                            تأكيد الحذف
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

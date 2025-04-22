@@ -1,0 +1,227 @@
+{% extends 'base_updated.html' %}
+{% load static %}
+
+{% block title %}تصدير البيانات - الموارد البشرية{% endblock %}
+
+{% block page_title %}تصدير البيانات{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Hr:dashboard' %}">الموارد البشرية</a></li>
+<li class="breadcrumb-item active">تصدير البيانات</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light py-3">
+                <h5 class="mb-0 fw-semibold">
+                    <i class="fas fa-file-export text-primary me-2"></i>تصدير بيانات الموظفين
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-info d-flex align-items-center">
+                    <i class="fas fa-info-circle me-3 fa-lg"></i>
+                    <div>
+                        يمكنك تصدير بيانات الموظفين بتنسيق Excel أو PDF. قم باختيار الحقول المطلوبة وتصفية البيانات حسب احتياجاتك.
+                    </div>
+                    <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+
+                <form method="post" id="exportForm" action="{% url 'Hr:reports:export_data' %}">
+                    {% csrf_token %}
+                    <div class="row g-4">
+                        <!-- Export Format Section -->
+                        <div class="col-md-12 mb-2">
+                            <h6 class="border-bottom pb-2 mb-3">تنسيق التصدير</h6>
+                            <div class="d-flex gap-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="export_format" id="formatExcel" value="excel" checked>
+                                    <label class="form-check-label" for="formatExcel">
+                                        <i class="fas fa-file-excel text-success me-1"></i> Excel
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="export_format" id="formatPdf" value="pdf">
+                                    <label class="form-check-label" for="formatPdf">
+                                        <i class="fas fa-file-pdf text-danger me-1"></i> PDF
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Filtering Section -->
+                        <div class="col-md-6">
+                            <div class="card border h-100">
+                                <div class="card-header bg-light py-3">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-filter text-primary me-2"></i>تصفية البيانات
+                                    </h6>
+                                </div>
+                                <div class="card-body p-3">
+                                    <div class="mb-3">
+                                        <label class="form-label">الموظفين</label>
+                                        <div class="row g-2">
+                                            <div class="col-6">
+                                                <div class="form-check">
+                                                    <input class="form-check-input filter-option" type="radio" name="employee_selection" id="allEmployees" value="all" checked>
+                                                    <label class="form-check-label" for="allEmployees">
+                                                        كل الموظفين
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="form-check">
+                                                    <input class="form-check-input filter-option" type="radio" name="employee_selection" id="selectedEmployees" value="selected">
+                                                    <label class="form-check-label" for="selectedEmployees">
+                                                        موظفين محددين
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-12 pt-2" id="employeeSelector" style="display: none;">
+                                                <select class="form-select" name="employees[]" id="employeesSelect" multiple>
+                                                    {% for employee in employees %}
+                                                    <option value="{{ employee.emp_id }}">{{ employee.emp_full_name }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">الأقسام</label>
+                                        <div class="row g-2">
+                                            <div class="col-6">
+                                                <div class="form-check">
+                                                    <input class="form-check-input filter-option" type="radio" name="department_selection" id="allDepartments" value="all" checked>
+                                                    <label class="form-check-label" for="allDepartments">
+                                                        كل الأقسام
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="form-check">
+                                                    <input class="form-check-input filter-option" type="radio" name="department_selection" id="selectedDepartments" value="selected">
+                                                    <label class="form-check-label" for="selectedDepartments">
+                                                        أقسام محددة
+                                                    </label>
+                                                </div>
+                                            </div>
+                                            <div class="col-12 pt-2" id="departmentSelector" style="display: none;">
+                                                <select class="form-select" name="departments[]" id="departmentsSelect" multiple>
+                                                    {% for dept in departments %}
+                                                    <option value="{{ dept.dept_code }}">{{ dept.dept_name }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">حالة الموظف</label>
+                                        <div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="checkbox" name="status_active" id="statusActive" value="1" checked>
+                                                <label class="form-check-label" for="statusActive">يعمل</label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="checkbox" name="status_leave" id="statusLeave" value="1">
+                                                <label class="form-check-label" for="statusLeave">إجازة</label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="checkbox" name="status_resigned" id="statusResigned" value="1">
+                                                <label class="form-check-label" for="statusResigned">مستقيل</label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="checkbox" name="status_terminated" id="statusTerminated" value="1">
+                                                <label class="form-check-label" for="statusTerminated">مفصول</label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">حالة التأمين</label>
+                                        <div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="checkbox" name="insurance_yes" id="insuranceYes" value="1" checked>
+                                                <label class="form-check-label" for="insuranceYes">مؤمن عليه</label>
+                                            </div>
+                                            <div class="form-check form-check-inline">
+                                                <input class="form-check-input" type="checkbox" name="insurance_no" id="insuranceNo" value="1" checked>
+                                                <label class="form-check-label" for="insuranceNo">غير مؤمن عليه</label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-0">
+                                        <label class="form-label">التاريخ</label>
+                                        <div class="row g-2">
+                                            <div class="col-md-6">
+                                                <div class="input-group">
+                                                    <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                                                    <input type="date" class="form-control" name="date_from" placeholder="من">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="input-group">
+                                                    <span class="input-group-text"><i class="fas fa-calendar-alt"></i></span>
+                                                    <input type="date" class="form-control" name="date_to" placeholder="إلى">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Field Selection Section -->
+                        <div class="col-md-6">
+                            <div class="card border h-100">
+                                <div class="card-header bg-light py-3">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-tasks text-primary me-2"></i>اختيار الحقول
+                                    </h6>
+                                </div>
+                                <div class="card-body p-3">
+                                    <div class="field-selector">
+                                        <div class="mb-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input select-all" type="checkbox" id="selectAllFields">
+                                                <label class="form-check-label fw-bold" for="selectAllFields">
+                                                    تحديد الكل
+                                                </label>
+                                            </div>
+                                        </div>
+
+                                        <div class="mb-4">
+                                            <h6 class="field-group-title">
+                                                <i class="fas fa-user me-2"></i>البيانات الشخصية
+                                                <div class="form-check d-inline-block ms-2">
+                                                    <input class="form-check-input select-group" type="checkbox" id="selectPersonalFields">
+                                                    <label class="form-check-label sr-only" for="selectPersonalFields">تحديد البيانات الشخصية</label>
+                                                </div>
+                                            </h6>
+                                            <div class="row g-2 field-group" data-group="personal">
+                                                <div class="col-6">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input field-checkbox" type="checkbox" name="fields[]" id="field_emp_id" value="emp_id" checked>
+                                                        <label class="form-check-label" for="field_emp_id">الرقم الوظيفي</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input field-checkbox" type="checkbox" name="fields[]" id="field_emp_full_name" value="emp_full_name" checked>
+                                                        <label class="form-check-label" for="field_emp_full_name">الاسم الكامل</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input field-checkbox" type="checkbox" name="fields[]" id="field_national_id" value="national_id" checked>
+                                                        <label class="form-check-label" for="field_national_id">الرقم القومي</label>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input field-checkbox" type="checkbox" name="fields[]" id="field_date_birth" value="date_birth">
+                                                        <label class="form-check-label" for="field_date_birth">تاريخ المي

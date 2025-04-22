@@ -1,0 +1,515 @@
+{% extends 'base_updated.html' %}
+{% load static %}
+
+{% block title %}قائمة الموظفين - نظام الدولية{% endblock %}
+
+{% block page_title %}قائمة الموظفين{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item active">قائمة الموظفين</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-2 g-2">
+    <!-- <div class="alert alert-info">هذه الصفحة للاستعلام عن الموظفين</div> -->
+    <div class="col-xl-3 col-md-6">
+        <div class="card shadow-sm stats-card primary h-50">
+            <div class="card-body d-flex align-items-center">
+                <i class="fas fa-users stats-icon fa-2x me-2 text-primary opacity-75"></i>
+                <div>
+                    <div class="stats-number fs-2 fw-bold">{{ total_employees }}</div>
+                    <p class="stats-title text-muted mb-0">إجمالي الموظفين</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card shadow-sm stats-card success h-50">
+            <div class="card-body d-flex align-items-center">
+                <i class="fas fa-user-check stats-icon fa-2x me-2 text-success opacity-75"></i>
+                <div>
+                    <div class="stats-number fs-2 fw-bold">{{ active_employees }}</div>
+                    <p class="stats-title text-muted mb-0">الموظفين النشطين</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card shadow-sm stats-card info h-50">
+             <div class="card-body d-flex align-items-center">
+                <i class="fas fa-pause-circle stats-icon fa-2x me-2 text-info opacity-75"></i>
+                <div>
+                    <div class="stats-number fs-2 fw-bold">{{ on_leave_employees }}</div>
+                    <p class="stats-title text-muted mb-0">الإجازات</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card shadow-sm stats-card danger h-50">
+             <div class="card-body d-flex align-items-center">
+                <i class="fas fa-user-times stats-icon fa-2x me-3 text-danger opacity-75"></i>
+                <div>
+                    <div class="stats-number fs-2 fw-bold">{{ resigned_employees }}</div>
+                    <p class="stats-title text-muted mb-0">المستقيلين</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex align-items-center mb-4 p-3 bg-light rounded shadow-sm">
+    <div class="toggle-border me-3">
+        <input id="employeeStatusToggle" type="checkbox" checked>
+        <label for="employeeStatusToggle">
+            <div class="handle"></div>
+        </label>
+    </div>
+    <span id="toggleStatusText" class="fw-bold">موظفين نشطين</span>
+</div>
+
+
+<div class="row g-4">
+    <div class="col-lg-3 col-md-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-light py-3 border-bottom">
+                <h5 class="mb-0 fw-semibold">
+                    <i class="fas fa-filter me-2 text-primary"></i>
+                    تصفية النتائج
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="get" action="">
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">{{ filter_form.search_empID.label }}</label>
+                        {{ filter_form.search_empID }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">{{ filter_form.search.label }}</label>
+                        {{ filter_form.search }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">{{ filter_form.department.label }}</label>
+                        {{ filter_form.department }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">{{ filter_form.job.label }}</label>
+                        {{ filter_form.job }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">{{ filter_form.working_condition.label }}</label>
+                        {{ filter_form.working_condition }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">{{ filter_form.insurance_status.label }}</label>
+                        {{ filter_form.insurance_status }}
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search me-1"></i>
+                            بحث
+                        </button>
+                        <a href="{% url 'employees:list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-sync-alt me-1"></i>
+                            إعادة تعيين
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-9 col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center py-3 border-bottom">
+                <h5 id="employeeListTitle" class="mb-0 fw-semibold">قائمة الموظفين النشطين</h5>
+                <a href="{% url 'employees:create' %}" class="btn btn-success">
+                    <i class="fas fa-plus me-1"></i>
+                    إضافة موظف جديد
+                </a>
+            </div>
+            <div class="card-body p-0">
+                {% if employees %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="py-3 px-3">الرقم</th>
+                                <th class="py-3 px-3">الاسم</th>
+                                <th class="py-3 px-3">القسم</th>
+                                <th class="py-3 px-3">الوظيفة</th>
+                                <th class="py-3 px-3">الهاتف</th>
+                                <th class="py-3 px-3">الحالة</th>
+                                <th class="py-3 px-3 text-center">العمليات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for employee in employees %}
+                            <tr>
+                                <td class="px-3">{{ employee.emp_id }}</td>
+                                <td class="px-3">
+                                    <div class="d-flex align-items-center py-2">
+                                        {% if employee.emp_image %}
+                                        <img src="{{ employee.emp_image.url }}" alt="{{ employee.emp_full_name }}" class="rounded-circle me-2 object-fit-cover" width="40" height="40">
+                                        {% else %}
+                                        <div class="avatar bg-secondary text-white me-2 flex-shrink-0">
+                                            {{ employee.emp_first_name|slice:":1"|upper }}
+                                        </div>
+                                        {% endif %}
+                                        <div>
+                                            <a href="{% url 'employees:detail' employee.emp_id %}" class="fw-medium d-block text-decoration-none text-dark">{{ employee.emp_full_name|default:employee.emp_first_name }}</a>
+                                            <small class="text-muted">{{ employee.national_id|default:'' }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-3">{{ employee.department.dept_name|default:"-" }}</td>
+                                <td class="px-3">{{ employee.job.job_name|default:"-" }}</td>
+                                <td class="px-3">{{ employee.emp_phone1|default:"-" }}</td>
+                                <td class="px-3">
+                                    {% if employee.working_condition == 'سارى' %}
+                                    <!-- <span class="badge rounded-pill bg-success-subtle text-success-emphasis">نشط</span> -->
+                                    <span class="badge bg-success">نشط</span>
+                                    {% elif employee.working_condition == 'إجازة' %}
+                                    <span class="badge rounded-pill bg-info-subtle text-info-emphasis">إجازة</span>
+                                    {% elif employee.working_condition == 'استقالة' %}
+                                    <span class="badge rounded-pill bg-danger-subtle text-danger-emphasis">مستقيل</span>
+                                    {% else %}
+                                    <span class="badge rounded-pill bg-secondary-subtle text-secondary-emphasis">{{ employee.working_condition|default:"-" }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-3 text-center">
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="{% url 'employees:detail' employee.emp_id %}" class="btn btn-outline-primary" title="عرض التفاصيل">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'employees:edit' employee.emp_id %}" class="btn btn-outline-secondary" title="تعديل">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        {# يمكنك إضافة زر حذف هنا إذا لزم الأمر #}
+                                        {# <a href="#" class="btn btn-sm btn-outline-danger" title="حذف"><i class="fas fa-trash-alt"></i></a> #}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% comment %}
+                <nav aria-label="Page navigation" class="p-3">
+                    <ul class="pagination justify-content-center mb-0">
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" tabindex="-1" aria-disabled="true">السابق</a>
+                        </li>
+                        <li class="page-item active" aria-current="page"><a class="page-link" href="#">1</a></li>
+                        <li class="page-item"><a class="page-link" href="#">2</a></li>
+                        <li class="page-item"><a class="page-link" href="#">3</a></li>
+                        <li class="page-item">
+                            <a class="page-link" href="#">التالي</a>
+                        </li>
+                    </ul>
+                </nav>
+                {% endcomment %}
+
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-users fa-3x mb-3 text-muted"></i>
+                    <p class="mb-0">لا يوجد موظفين بالمعايير المحددة.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if employees_by_department %}
+        <div class="card shadow-sm mt-4">
+            <div class="card-header bg-light py-3 border-bottom">
+                <h5 class="mb-0 fw-semibold">
+                    <i class="fas fa-chart-pie me-2 text-primary"></i>
+                    توزيع الموظفين حسب الأقسام
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    {% for dept in employees_by_department %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="border rounded p-3 h-100 d-flex flex-column">
+                             <h6 class="card-title mb-1">{{ dept.dept_name }}</h6>
+                             <div class="d-flex justify-content-between align-items-center mb-1">
+                                 <span class="fw-bold fs-5 text-primary">{{ dept.count }}</span>
+                                 {% if dept.dept_code %}
+                                 <a href="{% url 'employees:department_detail' dept.dept_code %}" class="btn btn-sm btn-link p-0 text-decoration-none">عرض</a>
+                                 {% endif %}
+                             </div>
+                             <div class="progress mt-auto" style="height: 6px;">
+                                 <div class="progress-bar bg-primary" role="progressbar"
+                                      style="width: {% widthratio dept.count total_employees 100 %}%;"
+                                      aria-valuenow="{% widthratio dept.count total_employees 100 %}"
+                                      aria-valuemin="0" aria-valuemax="100">
+                                 </div>
+                             </div>
+                             <small class="text-muted mt-1">{% widthratio dept.count total_employees 100 %}% من الإجمالي</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light py-3 border-bottom">
+                <h5 class="mb-0 fw-semibold">روابط سريعة</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    <div class="col-xl-3 col-md-6">
+                        <a href="{% url 'employees:list' %}" class="card action-card h-100 text-decoration-none shadow-hover">
+                            <div class="card-body d-flex align-items-center p-3">
+                                <div class="action-icon bg-primary-subtle text-primary rounded-circle me-3 flex-shrink-0">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1 text-dark">قائمة الموظفين</h6>
+                                    <p class="text-muted small mb-0">عرض وإدارة بيانات الموظفين</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-xl-3 col-md-6">
+                        <a href="{% url 'employees:create' %}" class="card action-card h-100 text-decoration-none shadow-hover">
+                            <div class="card-body d-flex align-items-center p-3">
+                                <div class="action-icon bg-success-subtle text-success rounded-circle me-3 flex-shrink-0">
+                                    <i class="fas fa-user-plus"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1 text-dark">إضافة موظف جديد</h6>
+                                    <p class="text-muted small mb-0">تسجيل بيانات موظف جديد</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-xl-3 col-md-6">
+                        <a href="{% url 'employees:department_list' %}" class="card action-card h-100 text-decoration-none shadow-hover">
+                            <div class="card-body d-flex align-items-center p-3">
+                                <div class="action-icon bg-info-subtle text-info rounded-circle me-3 flex-shrink-0">
+                                    <i class="fas fa-building"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1 text-dark">الأقسام</h6>
+                                    <p class="text-muted small mb-0">عرض وإدارة الأقسام</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-xl-3 col-md-6">
+                        <a href="{% url 'employees:job_list' %}" class="card action-card h-100 text-decoration-none shadow-hover">
+                            <div class="card-body d-flex align-items-center p-3">
+                                <div class="action-icon bg-warning-subtle text-warning rounded-circle me-3 flex-shrink-0">
+                                    <i class="fas fa-briefcase"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-1 text-dark">الوظائف</h6>
+                                    <p class="text-muted small mb-0">عرض وإدارة المسميات الوظيفية</p>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* تحسينات عامة */
+    body {
+        background-color: #f8f9fa; /* خلفية أفتح قليلاً */
+    }
+    .card {
+        border: none; /* إزالة الحدود الافتراضية للبطاقات */
+        transition: box-shadow 0.3s ease-in-out;
+    }
+    .card:hover {
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.1)!important; /* ظل أكبر عند المرور */
+    }
+    .card-header {
+        background-color: #f1f1f1; /* لون أفتح لرأس البطاقة */
+    }
+    .table th {
+        font-weight: 600; /* خط أثقل لرأس الجدول */
+        white-space: nowrap; /* منع التفاف النص في رأس الجدول */
+    }
+    .badge {
+        font-size: 0.8em;
+        padding: 0.4em 0.7em;
+    }
+
+    /* تنسيق بطاقات الإحصائيات */
+    .stats-card .card-body {
+        padding: 1.5rem; /* زيادة الحشو الداخلي */
+    }
+    .stats-icon {
+         /* حجم الأيقونة */
+    }
+    .stats-number {
+        /* حجم رقم الإحصائية */
+    }
+    .stats-title {
+        font-size: 0.9rem; /* حجم عنوان الإحصائية */
+    }
+
+    /* تنسيق صورة الموظف الافتراضية */
+    .avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem; /* حجم الخط داخل الأفاتار */
+        font-weight: bold;
+    }
+    .object-fit-cover {
+        object-fit: cover; /* ضمان ملء الصورة للمساحة المخصصة */
+    }
+
+    /* تنسيق زر التبديل */
+    .toggle-border {
+        border: 2px solid #e9ecef; /* لون حدود أفتح */
+        border-radius: 30px; /* جعل الحواف أكثر دائرية */
+        padding: 2px;
+        background: #fff; /* خلفية بيضاء */
+        box-shadow: inset 0 1px 3px rgba(0,0,0,.1); /* ظل داخلي خفيف */
+        cursor: pointer;
+        display: inline-flex; /* ليتناسب مع النص المجاور */
+        vertical-align: middle; /* محاذاة رأسية مع النص */
+    }
+
+    .toggle-border input[type="checkbox"] {
+        display: none;
+    }
+
+    .toggle-border label {
+        position: relative;
+        display: inline-block;
+        width: 55px; /* تصغير العرض قليلاً */
+        height: 24px; /* تصغير الارتفاع قليلاً */
+        background-color: #dc3545; /* لون أحمر افتراضي (غير نشط) */
+        border-radius: 30px;
+        cursor: pointer;
+        box-shadow: inset 0 0 8px rgba(0,0,0,.2);
+        transition: background-color .4s ease; /* انتقال سلس للون الخلفية */
+    }
+
+    .toggle-border input[type="checkbox"]:checked + label {
+        background-color: #198754; /* لون أخضر عند التحديد (نشط) */
+    }
+
+    .handle {
+        position: absolute;
+        top: 2px; /* ضبط الموضع الرأسي */
+        left: 2px; /* ضبط الموضع الأفقي */
+        width: 20px; /* تصغير حجم المقبض */
+        height: 20px; /* تصغير حجم المقبض */
+        background: white;
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0,0,0,.2); /* ظل خفيف للمقبض */
+        transition: left .3s ease; /* انتقال سلس للمقبض */
+    }
+
+    .toggle-border input[type="checkbox"]:checked + label > .handle {
+        left: calc(100% - 20px - 2px); /* حساب الموضع عند التحديد */
+    }
+
+    /* تنسيق بطاقات الروابط السريعة */
+    .action-card {
+        border: 1px solid #e9ecef;
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    .action-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 .25rem .75rem rgba(0,0,0,.08)!important;
+    }
+    .action-icon {
+        width: 45px;
+        height: 45px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+    .shadow-hover:hover {
+         box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+
+    /* تطبيق التنسيقات على عناصر النموذج */
+    .form-control, .form-select {
+        font-size: 0.9rem; /* تصغير حجم خط حقول الإدخال */
+        border-radius: 0.3rem; /* حواف دائرية قليلاً */
+    }
+    .form-label {
+        margin-bottom: 0.3rem; /* تقليل الهامش السفلي للعناوين */
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const toggleCheckbox = document.getElementById('employeeStatusToggle');
+    const toggleStatusText = document.getElementById('toggleStatusText');
+    const employeeListTitle = document.getElementById('employeeListTitle'); // عنوان قائمة الموظفين
+
+    // دالة لتحديث النص بناءً على حالة التبديل
+    function updateToggleText() {
+        if (toggleCheckbox.checked) {
+            toggleStatusText.textContent = 'موظفين نشطين';
+            toggleStatusText.classList.remove('text-danger'); // إزالة اللون الأحمر
+            toggleStatusText.classList.add('text-success'); // إضافة اللون الأخضر
+            if (employeeListTitle) {
+                employeeListTitle.textContent = 'قائمة الموظفين النشطين'; // تحديث عنوان الجدول
+            }
+            // هنا يمكنك إضافة الكود الخاص بفلترة القائمة لعرض الموظفين النشطين
+            // مثال: window.location.href = '?status=active'; (يتطلب تعديل في الواجهة الخلفية)
+            console.log("عرض الموظفين النشطين");
+        } else {
+            toggleStatusText.textContent = 'موظفين غير نشطين';
+            toggleStatusText.classList.remove('text-success'); // إزالة اللون الأخضر
+            toggleStatusText.classList.add('text-danger'); // إضافة اللون الأحمر
+             if (employeeListTitle) {
+                employeeListTitle.textContent = 'قائمة الموظفين غير النشطين'; // تحديث عنوان الجدول
+            }
+            // هنا يمكنك إضافة الكود الخاص بفلترة القائمة لعرض الموظفين غير النشطين
+            // مثال: window.location.href = '?status=inactive'; (يتطلب تعديل في الواجهة الخلفية)
+             console.log("عرض الموظفين غير النشطين");
+        }
+    }
+
+    // استدعاء الدالة عند تحميل الصفحة لضبط النص الأولي
+    updateToggleText();
+
+    // إضافة مستمع حدث لتغيير حالة الـ checkbox
+    toggleCheckbox.addEventListener('change', updateToggleText);
+
+    // ملاحظة: الكود أعلاه يغير النص فقط.
+    // لفلترة البيانات فعلياً بناءً على حالة الزر،
+    // ستحتاج إلى إرسال قيمة الزر (مثلاً كـ query parameter في الـ URL)
+    // إلى الواجهة الخلفية (Django view) وتحديث الـ QuerySet بناءً على هذه القيمة.
+    // يمكنك استخدام JavaScript لتحديث الـ URL أو استخدام AJAX لإعادة تحميل جزء من الصفحة.
+});
+</script>
+{% endblock %}

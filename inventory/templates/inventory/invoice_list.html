@@ -1,0 +1,267 @@
+{% extends 'inventory/base_inventory.html' %}
+{% load static %}
+
+{% block title %}قائمة الفواتير - نظام إدارة المخزن{% endblock %}
+
+{% block page_icon %}file-invoice{% endblock %}
+{% block page_header %}إدارة الفواتير{% endblock %}
+
+{% load inventory_permission_tags %}
+
+{% block content %}
+<div class="row">
+    <div class="row ps-4">
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-file-invoice me-2"></i>
+                        قائمة الفواتير
+                    </h5>
+                    {% has_inventory_module_permission "invoices" "add" as can_add_invoice %}
+                    {% if can_add_invoice %}
+                    <a href="{% url 'inventory:invoice_add' %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus-circle me-2"></i>
+                        إضافة فاتورة جديدة
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-12">
+                            <form method="get" class="row g-3">
+                                <div class="col-md-4">
+                                    <div class="input-group">
+                                        <input type="text" name="search" value="{{ search_query }}" class="form-control" placeholder="بحث برقم الفاتورة أو المستلم">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="input-group">
+                                        <select name="invoice_type" class="form-select">
+                                            <option value="">كل الأنواع</option>
+                                            <option value="إضافة" {% if selected_type == 'إضافة' %}selected{% endif %}>إضافة</option>
+                                            <option value="صرف" {% if selected_type == 'صرف' %}selected{% endif %}>صرف</option>
+                                            <option value="مرتجع عميل" {% if selected_type == 'مرتجع عميل' %}selected{% endif %}>مرتجع عميل</option>
+                                            <option value="مرتجع مورد" {% if selected_type == 'مرتجع مورد' %}selected{% endif %}>مرتجع مورد</option>
+                                        </select>
+                                        <button type="submit" class="btn btn-outline-secondary">
+                                            <i class="fas fa-filter"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    {% if invoices %}
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped align-middle">
+                            <thead>
+                                <tr>
+                                    <th scope="col" class="text-center">#</th>
+                                    <th scope="col">رقم الفاتورة</th>
+                                    <th scope="col">التاريخ</th>
+                                    <th scope="col">النوع</th>
+                                    <th scope="col">المستلم</th>
+                                    <th scope="col" class="text-center">عدد العناصر</th>
+                                    <th scope="col" class="text-end">القيمة الإجمالية</th>
+                                    <th scope="col">ملاحظات</th>
+                                    <th scope="col" class="text-center">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for invoice in invoices %}
+                                <tr>
+                                    <td class="text-center">{{ forloop.counter }}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge bg-light text-dark me-2">{{ invoice.invoice_number }}</span>
+                                            {% if invoice.customer_invoice_number %}
+                                                <small class="text-muted">(فاتورة العميل: {{ invoice.customer_invoice_number }})</small>
+                                            {% endif %}
+                                            {% if invoice.supplier_invoice_number %}
+                                                <small class="text-muted">(فاتورة المورد: {{ invoice.supplier_invoice_number }})</small>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>{{ invoice.invoice_date|date:"Y-m-d" }}</td>
+                                    <td>
+                                        {% if invoice.invoice_type == 'إضافة' %}
+                                            <span class="badge bg-success">{{ invoice.invoice_type }}</span>
+                                        {% elif invoice.invoice_type == 'صرف' %}
+                                            <span class="badge bg-danger">{{ invoice.invoice_type }}</span>
+                                        {% elif invoice.invoice_type == 'مرتجع عميل' %}
+                                            <span class="badge bg-primary">{{ invoice.invoice_type }}</span>
+                                        {% elif invoice.invoice_type == 'مرتجع مورد' %}
+                                            <span class="badge bg-warning">{{ invoice.invoice_type }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ invoice.invoice_type }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ invoice.recipient }}</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-info">{{ invoice.numberofitems }}</span>
+                                    </td>
+                                    <td class="text-end">
+                                        <strong>{{ invoice.total_invoice_value|floatformat:2 }}</strong>
+                                    </td>
+                                    <td>
+                                        {% if invoice.notes %}
+                                            <button type="button" class="btn btn-sm btn-link" data-bs-toggle="tooltip" title="{{ invoice.notes }}">
+                                                <i class="fas fa-info-circle"></i>
+                                            </button>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'inventory:invoice_detail' invoice.invoice_number %}" class="btn btn-sm btn-outline-info" title="عرض التفاصيل">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% has_inventory_module_permission "invoices" "edit" as can_edit_invoice %}
+                                            {% if can_edit_invoice %}
+                                            <a href="{% url 'inventory:invoice_edit' invoice.invoice_number %}" class="btn btn-sm btn-outline-warning" title="تعديل">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            {% endif %}
+                                            {% has_inventory_module_permission "invoices" "delete" as can_delete_invoice %}
+                                            {% if can_delete_invoice %}
+                                            <a href="{% url 'inventory:invoice_delete' invoice.invoice_number %}" class="btn btn-sm btn-outline-danger" title="حذف">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {% if is_paginated %}
+                    <nav aria-label="Page navigation" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_type %}&invoice_type={{ selected_type }}{% endif %}" aria-label="First">
+                                        <span aria-hidden="true">&laquo;&laquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_type %}&invoice_type={{ selected_type }}{% endif %}" aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_type %}&invoice_type={{ selected_type }}{% endif %}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_type %}&invoice_type={{ selected_type }}{% endif %}" aria-label="Next">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_type %}&invoice_type={{ selected_type }}{% endif %}" aria-label="Last">
+                                        <span aria-hidden="true">&raquo;&raquo;</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-file-invoice fa-4x mb-3 text-muted"></i>
+                        <h5>لا توجد فواتير</h5>
+                        <p class="text-muted">لم يتم إنشاء أي فواتير بعد. انقر على زر "إضافة فاتورة جديدة" لإنشاء أول فاتورة.</p>
+                        {% has_inventory_module_permission "invoices" "add" as can_add_invoice %}
+                        {% if can_add_invoice %}
+                        <a href="{% url 'inventory:invoice_add' %}" class="btn btn-primary mt-2">
+                            <i class="fas fa-plus-circle me-2"></i>
+                            إضافة فاتورة جديدة
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>
+                        <i class="fas fa-info-circle me-2"></i>
+                        معلومات حول الفواتير
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p>الفواتير هي المستندات التي تسجل عمليات البيع والشراء في النظام. يمكنك إضافة وتعديل وحذف الفواتير حسب الحاجة.</p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="mb-3">أنواع الفواتير:</h6>
+                            <ul>
+                                <li><span class="badge bg-success">إضافة</span> - فواتير شراء من الموردين</li>
+                                <li><span class="badge bg-danger">صرف</span> - فواتير بيع للعملاء</li>
+                                <li><span class="badge bg-primary">مرتجع عميل</span> - مرتجعات من العملاء</li>
+                                <li><span class="badge bg-warning">مرتجع مورد</span> - مرتجعات للموردين</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="mb-3">نصائح مهمة:</h6>
+                            <ul>
+                                <li>تأكد من إدخال جميع البيانات المطلوبة بدقة</li>
+                                <li>يمكنك إضافة ملاحظات لكل فاتورة</li>
+                                <li>استخدم خاصية البحث للعثور على الفواتير بسرعة</li>
+                                <li>يمكنك تصفية الفواتير حسب النوع</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // تفعيل tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+
+    // حفظ حالة البحث عند تغيير الصفحة
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.querySelector('input[name="search"]');
+        const typeSelect = document.querySelector('select[name="invoice_type"]');
+
+        if (searchInput) {
+            searchInput.addEventListener('change', function() {
+                this.form.submit();
+            });
+        }
+
+        if (typeSelect) {
+            typeSelect.addEventListener('change', function() {
+                this.form.submit();
+            });
+        }
+    });
+</script>
+{% endblock %}

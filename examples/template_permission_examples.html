@@ -1,0 +1,149 @@
+{% extends 'base_updated.html' %}
+{% load static %}
+{% load permission_tags %}
+
+{% block title %}مثال على استخدام نظام الصلاحيات في القوالب{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="mb-4">مثال على استخدام نظام الصلاحيات في القوالب</h1>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <h2>1. التحقق من صلاحيات المشرف</h2>
+        </div>
+        <div class="card-body">
+            {% is_admin as admin_user %}
+            {% if admin_user %}
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    أنت مشرف في النظام ولديك جميع الصلاحيات
+                </div>
+                
+                <button class="btn btn-danger">
+                    <i class="fas fa-trash me-1"></i>
+                    حذف البيانات
+                </button>
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    أنت مستخدم عادي ولديك صلاحيات محدودة
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <h2>2. التحقق من صلاحيات الوحدات</h2>
+        </div>
+        <div class="card-body">
+            <h3>قسم الموارد البشرية</h3>
+            
+            {% has_module_permission "الموارد البشرية" "إدارة الموظفين" "view" as can_view_employees %}
+            {% has_module_permission "الموارد البشرية" "إدارة الموظفين" "add" as can_add_employee %}
+            {% has_module_permission "الموارد البشرية" "إدارة الموظفين" "edit" as can_edit_employee %}
+            {% has_module_permission "الموارد البشرية" "إدارة الموظفين" "delete" as can_delete_employee %}
+            
+            <div class="mb-3">
+                {% if can_view_employees %}
+                    <a href="{% url 'Hr:list' %}" class="btn btn-primary">
+                        <i class="fas fa-list me-1"></i>
+                        عرض الموظفين
+                    </a>
+                {% else %}
+                    <button class="btn btn-secondary" disabled>
+                        <i class="fas fa-list me-1"></i>
+                        عرض الموظفين (غير مصرح)
+                    </button>
+                {% endif %}
+                
+                {% if can_add_employee %}
+                    <a href="{% url 'Hr:create' %}" class="btn btn-success">
+                        <i class="fas fa-plus me-1"></i>
+                        إضافة موظف
+                    </a>
+                {% else %}
+                    <button class="btn btn-secondary" disabled>
+                        <i class="fas fa-plus me-1"></i>
+                        إضافة موظف (غير مصرح)
+                    </button>
+                {% endif %}
+            </div>
+            
+            <h3>قسم المخزن</h3>
+            
+            {% has_module_permission "المخزن" "قطع الغيار" "view" as can_view_inventory %}
+            {% has_module_permission "المخزن" "قطع الغيار" "add" as can_add_inventory %}
+            
+            <div class="mb-3">
+                {% if can_view_inventory %}
+                    <a href="{% url 'inventory:product_list' %}" class="btn btn-primary">
+                        <i class="fas fa-boxes me-1"></i>
+                        عرض المخزون
+                    </a>
+                {% else %}
+                    <button class="btn btn-secondary" disabled>
+                        <i class="fas fa-boxes me-1"></i>
+                        عرض المخزون (غير مصرح)
+                    </button>
+                {% endif %}
+                
+                {% if can_add_inventory %}
+                    <a href="{% url 'inventory:product_create' %}" class="btn btn-success">
+                        <i class="fas fa-plus me-1"></i>
+                        إضافة صنف
+                    </a>
+                {% else %}
+                    <button class="btn btn-secondary" disabled>
+                        <i class="fas fa-plus me-1"></i>
+                        إضافة صنف (غير مصرح)
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <h2>3. التحقق من صلاحيات القوالب</h2>
+        </div>
+        <div class="card-body">
+            {% if user|has_template_permission:"Hr/reports/monthly_salary_report.html" %}
+                <a href="{% url 'Hr:monthly_salary_report' %}" class="btn btn-info">
+                    <i class="fas fa-file-alt me-1"></i>
+                    تقرير الرواتب الشهري
+                </a>
+            {% else %}
+                <button class="btn btn-secondary" disabled>
+                    <i class="fas fa-file-alt me-1"></i>
+                    تقرير الرواتب الشهري (غير مصرح)
+                </button>
+            {% endif %}
+            
+            {% if user|has_template_permission:"inventory/reports/stock_report.html" %}
+                <a href="{% url 'inventory:stock_report' %}" class="btn btn-info">
+                    <i class="fas fa-chart-bar me-1"></i>
+                    تقرير المخزون
+                </a>
+            {% else %}
+                <button class="btn btn-secondary" disabled>
+                    <i class="fas fa-chart-bar me-1"></i>
+                    تقرير المخزون (غير مصرح)
+                </button>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="card">
+        <div class="card-header">
+            <h2>4. أزرار الإجراءات</h2>
+        </div>
+        <div class="card-body">
+            <h3>مثال على استخدام action_buttons</h3>
+            
+            {% action_buttons edit_url="Hr:edit" delete_url="Hr:delete" print_url="Hr:print" back_url="Hr:list" %}
+        </div>
+    </div>
+</div>
+{% endblock %}

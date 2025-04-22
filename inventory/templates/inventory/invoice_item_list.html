@@ -1,0 +1,82 @@
+{% extends 'inventory/base_inventory.html' %}
+{% load static %}
+
+{% block title %}عناصر الفواتير - نظام إدارة المخزن{% endblock %}
+
+{% block page_title %}عناصر الفواتير{% endblock %}
+
+{% block page_actions %}
+    <a href="{% url 'inventory:invoice_item_add' %}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i> إضافة عنصر جديد
+    </a>
+{% endblock %}
+
+{% block content %}
+<div class="row ps-4">
+    <div class="card">
+        <div class="card-header bg-white">
+            <form method="get" class="d-flex">
+                <input type="text" name="search" value="{{ search_query }}" class="form-control me-2" placeholder="بحث برقم الفاتورة أو اسم المنتج">
+                <button type="submit" class="btn btn-sm btn-primary">
+                    <i class="fas fa-search"></i>
+                </button>
+            </form>
+        </div>
+        <div class="card-body">
+            {% if invoice_items %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>رقم الفاتورة</th>
+                            <th>المنتج</th>
+                            <th>الوارد</th>
+                            <th>المنصرف</th>
+                            <th>مرتجع العملاء</th>
+                            <th>مرتجع الموردين</th>
+                            <th>سعر الوحدة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in invoice_items %}
+                        <tr>
+                            <td>{{ item.invoice_number }}</td>
+                            <td>{{ item.product.product_name }}</td>
+                            <td>{{ item.quantity_elwarad|default:0 }}</td>
+                            <td>{{ item.quantity_elmonsarf|default:0 }}</td>
+                            <td>{{ item.quantity_mortagaaomalaa|default:0 }}</td>
+                            <td>{{ item.quantity_mortagaaelmawarden|default:0 }}</td>
+                            <td>{{ item.unit_price }}</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'inventory:invoice_item_detail' item.invoice_code_programing %}" class="btn btn-sm btn-info">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'inventory:invoice_item_edit' item.invoice_code_programing %}" class="btn btn-sm btn-warning">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'inventory:invoice_item_delete' item.invoice_code_programing %}" class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-clipboard-list fa-3x mb-3 text-muted"></i>
+                <p>لا توجد عناصر في النظام.</p>
+                <a href="{% url 'inventory:invoice_item_add' %}" class="btn btn-primary mt-2">
+                    <i class="fas fa-plus me-1"></i> إضافة عنصر جديد
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

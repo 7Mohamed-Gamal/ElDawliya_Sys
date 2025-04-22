@@ -1,0 +1,25 @@
+<div class="action-buttons">
+    {% if back_url %}
+    <a href="{{ back_url }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-right ml-1"></i> عودة
+    </a>
+    {% endif %}
+    
+    {% if can_print and print_url %}
+    <a href="{{ print_url }}" class="btn btn-info" target="_blank">
+        <i class="fas fa-print ml-1"></i> طباعة
+    </a>
+    {% endif %}
+    
+    {% if can_edit and edit_url %}
+    <a href="{{ edit_url }}" class="btn btn-primary">
+        <i class="fas fa-edit ml-1"></i> تعديل
+    </a>
+    {% endif %}
+    
+    {% if can_delete and delete_url %}
+    <a href="{{ delete_url }}" class="btn btn-danger" onclick="return confirm('هل أنت متأكد من حذف هذا العنصر؟');">
+        <i class="fas fa-trash-alt ml-1"></i> حذف
+    </a>
+    {% endif %}
+</div>

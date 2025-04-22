@@ -1,0 +1,130 @@
+{% extends 'inventory/base_inventory.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}تفاصيل الفاتورة - نظام إدارة المخزن{% endblock %}
+
+{% block page_title %}تفاصيل الفاتورة: {{ invoice.invoice_number }}{% endblock %}
+
+{% block page_actions %}
+    <div>
+        <a href="{% url 'inventory:invoice_edit' invoice.invoice_number %}" class="btn btn-warning me-2">
+            <i class="fas fa-edit me-1"></i> تعديل
+        </a>
+        <a href="{% url 'inventory:invoice_list' %}" class="btn btn-secondary">
+            <i class="fas fa-chevron-right me-1"></i> العودة للقائمة
+        </a>
+    </div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2 text-primary"></i>معلومات الفاتورة</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-4 text-muted">رقم الفاتورة:</div>
+                    <div class="col-md-8 fw-bold">{{ invoice.invoice_number }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4 text-muted">التاريخ:</div>
+                    <div class="col-md-8">{{ invoice.invoice_date }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4 text-muted">النوع:</div>
+                    <div class="col-md-8">
+                        {% if invoice.invoice_type == 'إضافة' %}
+                            <span class="badge bg-success">{{ invoice.invoice_type }}</span>
+                        {% elif invoice.invoice_type == 'صرف' %}
+                            <span class="badge bg-danger">{{ invoice.invoice_type }}</span>
+                        {% elif invoice.invoice_type == 'مرتجع عميل' %}
+                            <span class="badge bg-primary">{{ invoice.invoice_type }}</span>
+                        {% elif invoice.invoice_type == 'مرتجع مورد' %}
+                            <span class="badge bg-warning">{{ invoice.invoice_type }}</span>
+                        {% else %}
+                            <span class="badge bg-secondary">{{ invoice.invoice_type }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4 text-muted">المستلم:</div>
+                    <div class="col-md-8">{{ invoice.recipient }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4 text-muted">القيمة الإجمالية:</div>
+                    <div class="col-md-8">{{ invoice.total_invoice_value }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="fas fa-list-ul me-2 text-primary"></i>عناصر الفاتورة</h5>
+        <a href="{% url 'inventory:invoice_item_add' %}" class="btn btn-sm btn-primary">
+            <i class="fas fa-plus-circle me-1"></i> إضافة عنصر
+        </a>
+    </div>
+    <div class="card-body">
+        {% if invoice_items %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>المنتج</th>
+                        <th>الوحدة</th>
+                        <th>الكمية</th>
+                        <th>سعر الوحدة</th>
+                        <th>القيمة الإجمالية</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in invoice_items %}
+                    <tr>
+                        <td>{{ item.product.product_name }}</td>
+                        <td>{{ item.product.unit_name }}</td>
+                        <td>
+                            {% if invoice.invoice_type == 'إضافة' %}
+                                {{ item.quantity_elwarad|default:0 }}
+                            {% elif invoice.invoice_type == 'صرف' %}
+                                {{ item.quantity_elmonsarf|default:0 }}
+                            {% elif invoice.invoice_type == 'مرتجع عميل' %}
+                                {{ item.quantity_mortagaaomalaa|default:0 }}
+                            {% elif invoice.invoice_type == 'مرتجع مورد' %}
+                                {{ item.quantity_mortagaaelmawarden|default:0 }}
+                            {% endif %}
+                        </td>
+                        <td>{{ item.unit_price }}</td>
+                        <td>{{ item.unit_price|multiply:item.quantity_elwarad }}</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'inventory:invoice_item_detail' item.invoice_code_programing %}" class="btn btn-sm btn-info">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'inventory:invoice_item_edit' item.invoice_code_programing %}" class="btn btn-sm btn-warning">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-clipboard-list fa-3x mb-3 text-muted"></i>
+            <p>لا توجد عناصر مضافة لهذه الفاتورة</p>
+            <a href="{% url 'inventory:invoice_item_add' %}" class="btn btn-primary mt-2">
+                <i class="fas fa-plus me-1"></i> إضافة عنصر
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

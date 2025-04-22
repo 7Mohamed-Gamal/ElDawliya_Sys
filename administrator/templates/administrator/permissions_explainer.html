@@ -1,0 +1,425 @@
+{% extends 'base_updated.html' %}
+{% load static %}
+
+{% block title %}شرح نظام الصلاحيات - نظام الدولية{% endblock %}
+
+{% block page_title %}شرح نظام الصلاحيات{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'administrator:admin_dashboard' %}">لوحة تحكم المدير</a></li>
+<li class="breadcrumb-item"><a href="{% url 'administrator:simplified_permissions_dashboard' %}">إدارة الصلاحيات</a></li>
+<li class="breadcrumb-item active">شرح نظام الصلاحيات</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .feature-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .card {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    }
+    
+    .card-header {
+        background-color: #fff;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        font-weight: 600;
+        padding: 1.25rem;
+    }
+    
+    .explainer-section {
+        margin-bottom: 3rem;
+    }
+    
+    .explainer-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .explainer-title i {
+        margin-left: 0.75rem;
+        color: #3f51b5;
+    }
+    
+    .list-group-item {
+        padding: 1rem 1.25rem;
+        border-left: 3px solid transparent;
+        transition: all 0.2s ease;
+    }
+    
+    .list-group-item:hover {
+        border-left-color: #3f51b5;
+        background-color: rgba(63, 81, 181, 0.05);
+    }
+    
+    .step-number {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background-color: #3f51b5;
+        color: white;
+        font-weight: 600;
+        margin-right: 1rem;
+        flex-shrink: 0;
+    }
+    
+    .workflow-card {
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        background-color: #f8f9fa;
+        border-right: 5px solid #3f51b5;
+    }
+    
+    .workflow-card h5 {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+        color: #3f51b5;
+    }
+    
+    .workflow-card h5 i {
+        margin-left: 0.75rem;
+    }
+    
+    .table-responsive {
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    table {
+        margin-bottom: 0;
+    }
+    
+    thead th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        border-top: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mb-5">
+    <div class="card shadow-sm mb-4">
+        <div class="card-body p-4">
+            <div class="row justify-content-center">
+                <div class="col-lg-10">
+                    <!-- الشرح المبسط للصلاحيات -->
+                    <div class="text-center mb-5">
+                        <div class="feature-icon bg-primary text-white mx-auto">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <h2 class="display-6 fw-bold mb-3">نظام الصلاحيات المبسط</h2>
+                        <p class="lead text-muted">
+                            دليل شامل لفهم وإدارة صلاحيات المستخدمين في نظام الدولية
+                        </p>
+                    </div>
+                    
+                    <!-- مقدمة -->
+                    <div class="explainer-section">
+                        <div class="explainer-title">
+                            <i class="fas fa-info-circle"></i>
+                            <span>مقدمة</span>
+                        </div>
+                        <div class="card mb-4">
+                            <div class="card-body p-4">
+                                <p>
+                                    نظام الصلاحيات المبسط هو طريقة سهلة وفعالة لإدارة وصول المستخدمين إلى الأقسام والوظائف المختلفة في نظام الدولية. يعتمد النظام على ثلاثة مفاهيم أساسية:
+                                </p>
+                                <div class="row mt-4 g-4">
+                                    <div class="col-md-4">
+                                        <div class="text-center">
+                                            <div class="feature-icon bg-primary-subtle text-primary mx-auto">
+                                                <i class="fas fa-users"></i>
+                                            </div>
+                                            <h5>المجموعات</h5>
+                                            <p class="text-muted">مجموعات المستخدمين حسب أدوارهم الوظيفية مثل "موارد بشرية"، "مخزن"، "محاسبة".</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="text-center">
+                                            <div class="feature-icon bg-success-subtle text-success mx-auto">
+                                                <i class="fas fa-building"></i>
+                                            </div>
+                                            <h5>الأقسام</h5>
+                                            <p class="text-muted">أقسام النظام مثل "الموارد البشرية"، "المخزن"، "المحاسبة"، وغيرها.</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="text-center">
+                                            <div class="feature-icon bg-info-subtle text-info mx-auto">
+                                                <i class="fas fa-key"></i>
+                                            </div>
+                                            <h5>الصلاحيات</h5>
+                                            <p class="text-muted">الإجراءات التي يمكن للمستخدم القيام بها مثل "عرض"، "إضافة"، "تعديل"، "حذف".</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- كيف يعمل النظام -->
+                    <div class="explainer-section">
+                        <div class="explainer-title">
+                            <i class="fas fa-cogs"></i>
+                            <span>كيف يعمل نظام الصلاحيات</span>
+                        </div>
+                        
+                        <div class="workflow-card">
+                            <h5><i class="fas fa-sitemap"></i> التسلسل الهرمي للصلاحيات</h5>
+                            <p>
+                                يتبع النظام تسلسلاً هرمياً بسيطاً للصلاحيات:
+                            </p>
+                            <ol>
+                                <li><strong>المستخدم</strong> ينتمي إلى <strong>مجموعة</strong> أو أكثر</li>
+                                <li><strong>المجموعة</strong> لها صلاحية الوصول إلى <strong>قسم</strong> أو أكثر</li>
+                                <li>كل <strong>قسم</strong> يحتوي على مجموعة من <strong>الوحدات</strong> (مثل: المنتجات، الفواتير، التقارير)</li>
+                                <li>كل <strong>وحدة</strong> لها <strong>أنواع صلاحيات</strong> (عرض، إضافة، تعديل، حذف، طباعة)</li>
+                            </ol>
+                        </div>
+                        
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">خطوات تكوين الصلاحيات</h5>
+                            </div>
+                            <div class="card-body p-4">
+                                <div class="d-flex mb-4">
+                                    <div class="step-number">1</div>
+                                    <div>
+                                        <h5>إنشاء المجموعات</h5>
+                                        <p>أنشئ مجموعات تمثل الأدوار الوظيفية المختلفة في مؤسستك (مثل "مسؤول مخزن"، "مدير موارد بشرية").</p>
+                                    </div>
+                                </div>
+                                <div class="d-flex mb-4">
+                                    <div class="step-number">2</div>
+                                    <div>
+                                        <h5>تحديد أقسام المجموعة</h5>
+                                        <p>لكل مجموعة، حدد الأقسام التي يمكن للمستخدمين في هذه المجموعة الوصول إليها.</p>
+                                    </div>
+                                </div>
+                                <div class="d-flex mb-4">
+                                    <div class="step-number">3</div>
+                                    <div>
+                                        <h5>إضافة المستخدمين إلى المجموعات</h5>
+                                        <p>أضف المستخدمين إلى المجموعات المناسبة بناءً على أدوارهم الوظيفية.</p>
+                                    </div>
+                                </div>
+                                <div class="d-flex">
+                                    <div class="step-number">4</div>
+                                    <div>
+                                        <h5>تحديد صلاحيات خاصة (اختياري)</h5>
+                                        <p>عند الحاجة، يمكنك منح أو منع صلاحيات محددة لمستخدم معين بغض النظر عن المجموعات التي ينتمي إليها.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- أمثلة عملية -->
+                    <div class="explainer-section">
+                        <div class="explainer-title">
+                            <i class="fas fa-tasks"></i>
+                            <span>أمثلة عملية</span>
+                        </div>
+                        
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">مثال 1: إعداد صلاحيات لقسم المخزن</h5>
+                            </div>
+                            <div class="card-body p-4">
+                                <p><strong>السيناريو:</strong> تريد إنشاء مجموعتين للمستخدمين في قسم المخزن: "مدير مخزن" و"موظف مخزن".</p>
+                                <div class="table-responsive mt-3">
+                                    <table class="table table-bordered">
+                                        <thead>
+                                            <tr>
+                                                <th>المجموعة</th>
+                                                <th>الأقسام</th>
+                                                <th>الصلاحيات</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>مدير مخزن</td>
+                                                <td>المخزن</td>
+                                                <td>
+                                                    <ul>
+                                                        <li>المنتجات: عرض، إضافة، تعديل، حذف</li>
+                                                        <li>الفواتير: عرض، إضافة، تعديل، حذف</li>
+                                                        <li>التقارير: عرض، طباعة</li>
+                                                        <li>الإحصائيات: عرض</li>
+                                                    </ul>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>موظف مخزن</td>
+                                                <td>المخزن</td>
+                                                <td>
+                                                    <ul>
+                                                        <li>المنتجات: عرض فقط</li>
+                                                        <li>الفواتير: عرض، إضافة</li>
+                                                        <li>التقارير: عرض فقط</li>
+                                                    </ul>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="mt-4">
+                                    <strong>الخطوات:</strong>
+                                    <ol>
+                                        <li>إنشاء مجموعة "مدير مخزن" ومجموعة "موظف مخزن"</li>
+                                        <li>منح المجموعتين الوصول إلى قسم "المخزن"</li>
+                                        <li>إضافة المستخدمين المناسبين إلى كل مجموعة</li>
+                                        <li>تحديد صلاحيات خاصة للمستخدمين إذا لزم الأمر</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0">مثال 2: مستخدم يعمل في أكثر من قسم</h5>
+                            </div>
+                            <div class="card-body p-4">
+                                <p><strong>السيناريو:</strong> لديك مستخدم يعمل في كل من قسم الموارد البشرية وقسم المحاسبة.</p>
+                                <div class="mt-4">
+                                    <strong>الخطوات:</strong>
+                                    <ol>
+                                        <li>إنشاء مجموعة "موارد بشرية" ومجموعة "محاسبة"</li>
+                                        <li>منح مجموعة "موارد بشرية" الوصول إلى قسم "الموارد البشرية"</li>
+                                        <li>منح مجموعة "محاسبة" الوصول إلى قسم "المحاسبة"</li>
+                                        <li>إضافة المستخدم إلى كلتا المجموعتين</li>
+                                    </ol>
+                                </div>
+                                <div class="alert alert-info mt-4">
+                                    <i class="fas fa-lightbulb me-2"></i>
+                                    <strong>ملاحظة:</strong> سيتمكن المستخدم من الوصول إلى كلا القسمين وسيظهران له في القائمة الجانبية.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- المزايا والمحددات -->
+                    <div class="explainer-section">
+                        <div class="explainer-title">
+                            <i class="fas fa-thumbs-up"></i>
+                            <span>مزايا نظام الصلاحيات المبسط</span>
+                        </div>
+                        
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="mb-3 text-primary"><i class="fas fa-check-circle me-2"></i>سهولة الاستخدام</h5>
+                                        <p>واجهة بسيطة وسهلة الاستخدام لإدارة صلاحيات المستخدمين دون الحاجة لفهم تعقيدات تقنية.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="mb-3 text-primary"><i class="fas fa-check-circle me-2"></i>مرونة عالية</h5>
+                                        <p>إمكانية تخصيص الصلاحيات بشكل دقيق لكل مجموعة ومستخدم حسب احتياجات المؤسسة.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="mb-3 text-primary"><i class="fas fa-check-circle me-2"></i>فصل المسؤوليات</h5>
+                                        <p>تمكين المستخدمين من الوصول فقط إلى الأقسام والوظائف التي يحتاجونها لأداء مهامهم.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="mb-3 text-primary"><i class="fas fa-check-circle me-2"></i>سهولة الصيانة</h5>
+                                        <p>تحديث الصلاحيات لمجموعة كاملة من المستخدمين بخطوة واحدة دون الحاجة لتحديث كل مستخدم على حدة.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- نصائح مهمة -->
+                    <div class="explainer-section">
+                        <div class="explainer-title">
+                            <i class="fas fa-lightbulb"></i>
+                            <span>نصائح مهمة</span>
+                        </div>
+                        
+                        <div class="card mb-4">
+                            <div class="card-body p-4">
+                                <div class="d-flex mb-4">
+                                    <div class="me-3 text-primary">
+                                        <i class="fas fa-check-square fa-2x"></i>
+                                    </div>
+                                    <div>
+                                        <h5>اتبع مبدأ الحد الأدنى من الصلاحيات</h5>
+                                        <p>امنح المستخدمين فقط الصلاحيات التي يحتاجونها لأداء مهامهم، دون زيادة أو نقصان.</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex mb-4">
+                                    <div class="me-3 text-primary">
+                                        <i class="fas fa-check-square fa-2x"></i>
+                                    </div>
+                                    <div>
+                                        <h5>راجع الصلاحيات دورياً</h5>
+                                        <p>قم بمراجعة وتحديث صلاحيات المستخدمين بشكل دوري، خاصة عند تغيير المناصب الوظيفية.</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex">
+                                    <div class="me-3 text-primary">
+                                        <i class="fas fa-check-square fa-2x"></i>
+                                    </div>
+                                    <div>
+                                        <h5>وثق إعدادات الصلاحيات</h5>
+                                        <p>احتفظ بتوثيق واضح لصلاحيات المستخدمين والمجموعات لتسهيل الإدارة والمراجعة المستقبلية.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- زر العودة -->
+                    <div class="text-center mt-5">
+                        <a href="{% url 'administrator:simplified_permissions_dashboard' %}" class="btn btn-primary btn-lg">
+                            <i class="fas fa-arrow-right me-2"></i>
+                            العودة إلى نظام الصلاحيات
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

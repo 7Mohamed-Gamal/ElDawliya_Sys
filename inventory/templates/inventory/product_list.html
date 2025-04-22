@@ -1,0 +1,188 @@
+<!-- templates/inventory/product_list.html -->
+{% extends 'inventory/base_inventory.html' %}
+
+{% block title %}قطع الغيار - نظام إدارة المخزن{% endblock %}
+
+{% load inventory_permission_tags %}
+
+{% block content %}
+
+<div class="row ps-4">
+    <div class="container-fluid mt-4">
+            <!-- إحصائيات سريعة -->
+            <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title mb-0">إجمالي الأصناف</h6>
+                                <h2 class="mt-2 mb-0">{{ stock_stats.total }}</h2>
+                            </div>
+                            <i class="fas fa-box fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title mb-0">أصناف منخفضة</h6>
+                                <h2 class="mt-2 mb-0">{{ stock_stats.low_stock }}</h2>
+                            </div>
+                            <i class="fas fa-exclamation-triangle fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-danger text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title mb-0">أصناف نفذت</h6>
+                                <h2 class="mt-2 mb-0">{{ stock_stats.out_of_stock }}</h2>
+                            </div>
+                            <i class="fas fa-times-circle fa-3x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- بطاقة البحث والفلترة -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="search" class="form-label">بحث</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" class="form-control" id="search" name="search"
+                                value="{{ search_query }}" placeholder="ابحث عن كود أو اسم الصنف">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="category" class="form-label">التصنيف</label>
+                        <select class="form-select" id="category" name="category">
+                            <option value="">كل التصنيفات</option>
+                            {% for category in categories %}
+                            <option value="{{ category.id }}" {% if selected_category == category.id|stringformat:"s" %}selected{% endif %}>
+                                {{ category.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="stock_status" class="form-label">حالة المخزون</label>
+                        <select class="form-select" id="stock_status" name="stock_status">
+                            <option value="">الكل</option>
+                            <option value="normal" {% if selected_stock_status == 'normal' %}selected{% endif %}>طبيعي</option>
+                            <option value="low" {% if selected_stock_status == 'low' %}selected{% endif %}>منخفض</option>
+                            <option value="out" {% if selected_stock_status == 'out' %}selected{% endif %}>نفذ</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                        <div class="d-grid gap-2 w-100">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-1"></i> بحث
+                            </button>
+                            {% if search_query or selected_category or selected_stock_status %}
+                            <a href="{% url 'inventory:product_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i> مسح الفلتر
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- قائمة الأصناف -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">قائمة قطع الغيار</h5>
+                {% has_inventory_module_permission "products" "add" as can_add_product %}
+                {% if can_add_product %}
+                <a href="{% url 'inventory:product_add' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i> إضافة صنف جديد
+                </a>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if products %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped align-middle">
+                        <thead>
+                            <tr>
+                                <th>كود الصنف</th>
+                                <th>اسم الصنف</th>
+                                <th>التصنيف</th>
+                                <th>الكمية الحالية</th>
+                                <th>الحد الأدنى</th>
+                                <th>الحد الأقصى</th>
+                                <th>حالة المخزون</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in products %}
+                            <tr>
+                                <td>{{ product.product_id }}</td>
+                                <td>{{ product.product_name }}</td>
+                                <td>{{ product.cat_name }}</td>
+                                <td>{{ product.qte_in_stock }}</td>
+                                <td>{{ product.minimum_threshold|default:"-" }}</td>
+                                <td>{{ product.maximum_threshold|default:"-" }}</td>
+                                <td>
+                                    {% if product.qte_in_stock == 0 %}
+                                        <span class="badge bg-danger">نفذ</span>
+                                    {% elif product.qte_in_stock < product.minimum_threshold %}
+                                        <span class="badge bg-warning">منخفض</span>
+                                    {% else %}
+                                        <span class="badge bg-success">طبيعي</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        {% has_inventory_module_permission "products" "edit" as can_edit_product %}
+                                        {% if can_edit_product %}
+                                        <a href="{% url 'inventory:product_edit' product.product_id %}"
+                                        class="btn btn-sm btn-outline-primary" title="تعديل">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        {% endif %}
+                                        {% has_inventory_module_permission "products" "delete" as can_delete_product %}
+                                        {% if can_delete_product %}
+                                        <a href="{% url 'inventory:product_delete' product.product_id %}"
+                                        class="btn btn-sm btn-outline-danger" title="حذف">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-box fa-3x mb-3 text-muted"></i>
+                    <p>لا توجد أصناف مضافة حتى الآن.</p>
+                    {% has_inventory_module_permission "products" "add" as can_add_product %}
+                    {% if can_add_product %}
+                    <a href="{% url 'inventory:product_add' %}" class="btn btn-primary mt-2">
+                        <i class="fas fa-plus me-1"></i> إضافة صنف جديد
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

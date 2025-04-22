@@ -1,0 +1,237 @@
+{% extends 'base_updated.html' %}
+{% load static %}
+
+{% block title %}قارئ جهاز البصمة - نظام الدولية{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/zk_device_connection.css' %}">
+{% endblock %}
+
+{% block page_title %}قارئ جهاز البصمة{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'employees:dashboard' %}">الموظفين</a></li>
+<li class="breadcrumb-item active">قارئ جهاز البصمة</li>
+{% endblock %}
+
+{% block content %}
+<div id="alertContainer" class="mb-3"></div>
+
+<div class="device-connection-card">
+    <div class="device-header">
+        <img src="{% static 'img/fingerprint-icon.png' %}" alt="جهاز البصمة" onerror="this.src='https://via.placeholder.com/80?text=ZK'">
+        <h4>برنامج أدواف لقراءة سجلات جهاز البصمة</h4>
+        <span class="connection-status status-disconnected" id="connectionStatus">منقطع</span>
+    </div>
+
+    <div class="connection-tabs">
+        <ul class="nav nav-tabs" id="deviceTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <a class="nav-link active" id="connection-tab" data-bs-toggle="tab" href="#connection" role="tab" aria-controls="connection" aria-selected="true">الاتصال بالجهاز</a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="options-tab" data-bs-toggle="tab" href="#options" role="tab" aria-controls="options" aria-selected="false">خيارات</a>
+            </li>
+            <li class="nav-item" role="presentation">
+                <a class="nav-link" id="records-tab" data-bs-toggle="tab" href="#records" role="tab" aria-controls="records" aria-selected="false">السجلات</a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="tab-content" id="deviceTabsContent">
+        <div class="tab-pane fade show active connection-body" id="connection" role="tabpanel" aria-labelledby="connection-tab">
+            <form class="connection-form" id="connectionForm">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="connectionType">نوع الاتصال</label>
+                            <div class="d-flex">
+                                <div class="form-check me-3">
+                                    <input class="form-check-input" type="radio" name="connectionType" id="ethernetConnection" value="ethernet" checked>
+                                    <label class="form-check-label" for="ethernetConnection">Ethernet</label>
+                                </div>
+                                <div class="form-check me-3">
+                                    <input class="form-check-input" type="radio" name="connectionType" id="usbConnection" value="usb">
+                                    <label class="form-check-label" for="usbConnection">USB</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="connectionType" id="serialConnection" value="serial">
+                                    <label class="form-check-label" for="serialConnection">Serial</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row" id="ethernetSettings">
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="ipAddress">عنوان IP</label>
+                            <input type="text" class="form-control" id="ipAddress" value="192.168.1.201">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="port">منفذ</label>
+                            <input type="text" class="form-control" id="port" value="4370">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="mb-3">
+                            <label for="password">كلمة المرور</label>
+                            <input type="password" class="form-control" id="password">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-4">
+                    <button type="button" class="btn connect-btn" id="connectBtn">
+                        <i class="fas fa-plug me-2"></i> توصيل
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="tab-pane fade connection-body" id="options" role="tabpanel" aria-labelledby="options-tab">
+            <div class="device-options">
+                <h5>نوع السجل</h5>
+                <div class="mb-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="recordType" id="allRecords" value="all">
+                        <label class="form-check-label" for="allRecords">من جهاز البصمة</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="recordType" id="inOutRecords" value="inout" checked>
+                        <label class="form-check-label" for="inOutRecords">أول بصمة حضور وآخر بصمة انصراف ، ويوم العمل يبدأ الساعة</label>
+                        <div class="d-inline-flex align-items-center ms-2">
+                            <input type="number" class="form-control form-control-sm" style="width: 60px;" value="4">
+                            <span class="mx-2">صباحاً</span>
+                        </div>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="recordType" id="attendanceOnly" value="in">
+                        <label class="form-check-label" for="attendanceOnly">حضور فقط</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="recordType" id="departureOnly" value="out">
+                        <label class="form-check-label" for="departureOnly">انصراف فقط</label>
+                    </div>
+                </div>
+
+                <div class="time-settings">
+                    <div class="row align-items-center">
+                        <div class="col-auto">
+                            <label>حساب نوع السجل من قاعدة البيانات - GetIOTY</label>
+                        </div>
+                        <div class="col-auto">
+                            <input type="number" class="form-control form-control-sm" style="width: 60px;" value="20">
+                            <span class="mx-2">دقيقة وبعده</span>
+                        </div>
+                        <div class="col-auto">
+                            <input type="number" class="form-control form-control-sm" style="width: 60px;" value="30">
+                            <span class="mx-2">د</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="skipHeaders">
+                        <label class="form-check-label" for="skipHeaders">عدم استرجاع أي بيان (الحفاظ على بيانات اللوج)</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="readAll">
+                        <label class="form-check-label" for="readAll">القراءة من الكل</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade connection-body" id="records" role="tabpanel" aria-labelledby="records-tab">
+            <div class="records-table">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>رقم الموظف</th>
+                                <th>نقط التأكيد</th>
+                                <th>حضور / انصراف</th>
+                                <th>التاريخ</th>
+                                <th>الوردية</th>
+                                <th>ناتج القاعدة</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recordsTableBody">
+                            <!-- Records will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <div>
+                    <button type="button" class="btn btn-primary" id="readRecordsBtn">
+                        <i class="fas fa-sync-alt me-2"></i> قراءة السجلات
+                    </button>
+                    <button type="button" class="btn btn-success" id="saveToDbBtn" data-bs-toggle="modal" data-bs-target="#dbConnectionModal">
+                        <i class="fas fa-database me-2"></i> قراءة وحفظ بقاعدة البيانات
+                    </button>
+                </div>
+                <div>
+                    <button type="button" class="btn btn-info" id="saveAsBtn">
+                        <i class="fas fa-save me-2"></i> حفظ باسم
+                    </button>
+                    <button type="button" class="btn btn-danger" id="clearRecordsBtn">
+                        <i class="fas fa-trash me-2"></i> محو السجلات
+                    </button>
+                    <button type="button" class="btn btn-secondary" id="recordCountBtn">
+                        <i class="fas fa-list-ol me-2"></i> عدد السجلات
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Database Connection Modal -->
+<div class="modal fade" id="dbConnectionModal" tabindex="-1" aria-labelledby="dbConnectionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="dbConnectionModalLabel">اتصال بقاعدة البيانات</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="dbConnectionForm">
+                    <div class="mb-3">
+                        <label for="dbHost" class="form-label">المضيف (Host)</label>
+                        <input type="text" class="form-control" id="dbHost" value="localhost">
+                    </div>
+                    <div class="mb-3">
+                        <label for="dbName" class="form-label">اسم قاعدة البيانات</label>
+                        <input type="text" class="form-control" id="dbName">
+                    </div>
+                    <div class="mb-3">
+                        <label for="dbUsername" class="form-label">اسم المستخدم</label>
+                        <input type="text" class="form-control" id="dbUsername" value="root">
+                    </div>
+                    <div class="mb-3">
+                        <label for="dbPassword" class="form-label">كلمة المرور</label>
+                        <input type="password" class="form-control" id="dbPassword">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" id="saveToDbConfirmBtn">حفظ البيانات</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/zk_device_connection.js' %}"></script>
+{% endblock %}

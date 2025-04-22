@@ -1,0 +1,120 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-2 text-gray-800">{{ title }}</h1>
+    <p class="mb-4">عرض تفاصيل نقطة التجمع.</p>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">بيانات نقطة التجمع</h6>
+            <div>
+                <a href="{% url 'Hr:pickup_points:edit' pickup_point.pk %}" class="btn btn-sm btn-warning">
+                    <i class="fas fa-edit"></i> تعديل
+                </a>
+                <a href="{% url 'Hr:pickup_points:delete' pickup_point.pk %}" class="btn btn-sm btn-danger">
+                    <i class="fas fa-trash"></i> حذف
+                </a>
+                <a href="{% url 'Hr:pickup_points:list' %}" class="btn btn-sm btn-secondary">
+                    <i class="fas fa-arrow-left"></i> العودة للقائمة
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <table class="table table-bordered">
+                        <tr>
+                            <th style="width: 30%">الاسم</th>
+                            <td>{{ pickup_point.name }}</td>
+                        </tr>
+                        <tr>
+                            <th>العنوان</th>
+                            <td>{{ pickup_point.address }}</td>
+                        </tr>
+                        <tr>
+                            <th>الإحداثيات</th>
+                            <td>{{ pickup_point.coordinates|default:"غير محدد" }}</td>
+                        </tr>
+                        <tr>
+                            <th>السيارة</th>
+                            <td>
+                                {% if pickup_point.car %}
+                                <a href="{% url 'Hr:cars:detail' pickup_point.car.car_id %}">
+                                    {{ pickup_point.car.car_name|default:pickup_point.car.car_id }}
+                                </a>
+                                {% else %}
+                                غير محدد
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>الحالة</th>
+                            <td>
+                                {% if pickup_point.is_active %}
+                                <span class="badge badge-success">نشط</span>
+                                {% else %}
+                                <span class="badge badge-danger">غير نشط</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="m-0 font-weight-bold text-primary">الوصف</h6>
+                        </div>
+                        <div class="card-body">
+                            {{ pickup_point.description|linebreaks|default:"لا يوجد وصف" }}
+                        </div>
+                    </div>
+                    
+                    {% if pickup_point.coordinates %}
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h6 class="m-0 font-weight-bold text-primary">الموقع على الخريطة</h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="map" style="height: 300px;"></div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if pickup_point.coordinates %}
+<script src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY"></script>
+<script>
+    function initMap() {
+        const coordinates = "{{ pickup_point.coordinates }}".split(',');
+        const lat = parseFloat(coordinates[0]);
+        const lng = parseFloat(coordinates[1]);
+        
+        const mapOptions = {
+            center: { lat, lng },
+            zoom: 15
+        };
+        
+        const map = new google.maps.Map(document.getElementById('map'), mapOptions);
+        
+        const marker = new google.maps.Marker({
+            position: { lat, lng },
+            map: map,
+            title: "{{ pickup_point.name }}"
+        });
+    }
+    
+    $(document).ready(function() {
+        initMap();
+    });
+</script>
+{% endif %}
+{% endblock %}

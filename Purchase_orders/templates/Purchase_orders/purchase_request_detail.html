@@ -1,0 +1,120 @@
+{% extends 'Purchase_orders/base_purchase.html' %}
+{% load static %}
+{% load purchase_permission_tags %}
+
+{% block title %}تفاصيل طلب الشراء - نظام الدولية{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2 class="mb-3">
+            <i class="fas fa-file-alt me-2"></i>تفاصيل طلب الشراء #{{ purchase_request.request_number }}
+        </h2>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{% url 'Purchase_orders:purchase_request_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i>العودة للقائمة
+        </a>
+        {% has_purchase_module_permission "approvals" "edit" as can_approve_request %}
+        {% if purchase_request.status == 'pending' and user.is_staff and can_approve_request %}
+        <a href="{% url 'Purchase_orders:approve_purchase_request' pk=purchase_request.pk %}" class="btn btn-success">
+            <i class="fas fa-check me-1"></i>مراجعة الطلب
+        </a>
+        {% endif %}
+    </div>
+</div>
+
+<!-- معلومات الطلب -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">معلومات الطلب</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>رقم الطلب:</strong> {{ purchase_request.request_number }}</p>
+                <p><strong>تاريخ الطلب:</strong> {{ purchase_request.request_date|date:"Y-m-d H:i" }}</p>
+                <p><strong>مقدم الطلب:</strong> {{ purchase_request.requested_by.get_full_name|default:purchase_request.requested_by.username }}</p>
+            </div>
+            <div class="col-md-6">
+                <p>
+                    <strong>الحالة:</strong>
+                    {% if purchase_request.status == 'pending' %}
+                        <span class="badge bg-warning">قيد الانتظار</span>
+                    {% elif purchase_request.status == 'approved' %}
+                        <span class="badge bg-success">تمت الموافقة</span>
+                    {% elif purchase_request.status == 'rejected' %}
+                        <span class="badge bg-danger">مرفوض</span>
+                    {% elif purchase_request.status == 'completed' %}
+                        <span class="badge bg-info">مكتمل</span>
+                    {% endif %}
+                </p>
+                {% if purchase_request.approved_by %}
+                <p><strong>تمت الموافقة بواسطة:</strong> {{ purchase_request.approved_by.get_full_name|default:purchase_request.approved_by.username }}</p>
+                <p><strong>تاريخ الموافقة:</strong> {{ purchase_request.approval_date|date:"Y-m-d H:i" }}</p>
+                {% endif %}
+            </div>
+        </div>
+        {% if purchase_request.notes %}
+        <div class="row mt-3">
+            <div class="col-12">
+                <p><strong>ملاحظات:</strong></p>
+                <div class="p-3 bg-light rounded">{{ purchase_request.notes|linebreaks }}</div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- عناصر الطلب -->
+<div class="card">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">عناصر الطلب</h5>
+        {% if purchase_request.status == 'pending' %}
+        <a href="{% url 'Purchase_orders:add_purchase_request_item' pk=purchase_request.pk %}" class="btn btn-light btn-sm">
+            <i class="fas fa-plus me-1"></i>إضافة عنصر
+        </a>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>كود الصنف</th>
+                        <th>اسم الصنف</th>
+                        <th>الكمية المطلوبة</th>
+                        <th>الحالة</th>
+                        <th>ملاحظات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in purchase_request.items.all %}
+                    <tr>
+                        <td>{{ item.product.product_id }}</td>
+                        <td>{{ item.product.product_name }}</td>
+                        <td>{{ item.quantity_requested }}</td>
+                        <td>
+                            {% if item.status == 'pending' %}
+                                <span class="badge bg-warning">قيد الانتظار</span>
+                            {% elif item.status == 'approved' %}
+                                <span class="badge bg-success">تمت الموافقة</span>
+                            {% elif item.status == 'rejected' %}
+                                <span class="badge bg-danger">مرفوض</span>
+                            {% elif item.status == 'transferred' %}
+                                <span class="badge bg-info">تم الترحيل</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ item.notes|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center">لا توجد عناصر في هذا الطلب</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

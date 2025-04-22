@@ -1,0 +1,328 @@
+{% extends 'inventory/base_inventory.html' %}
+{% load static %}
+{% load inventory_permission_tags %}
+
+{% block title %}لوحة التحكم - نظام إدارة المخزن{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Enhanced Dashboard Styles */
+    .stats-card {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+        transition: all 0.3s ease;
+        overflow: hidden;
+        height: 100%;
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+    }
+    
+    .stats-icon-container {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 15px;
+    }
+    
+    .stats-content {
+        flex: 1;
+    }
+    
+    .stats-number {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0;
+        line-height: 1;
+    }
+    
+    .stats-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin: 0;
+        margin-top: 5px;
+    }
+    
+    .stats-footer {
+        padding: 12px 15px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background-color: rgba(0, 0, 0, 0.03);
+    }
+    
+    .stats-footer a {
+        display: flex;
+        align-items: center;
+        font-weight: 500;
+        transition: transform 0.2s;
+    }
+    
+    .stats-footer a:hover {
+        transform: translateX(-5px);
+    }
+    
+    /* Quick Action Cards */
+    .action-card {
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        background-color: #f8f9fa;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        height: 100%;
+    }
+    
+    .action-card:hover {
+        background-color: #fff;
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .action-icon {
+        width: 65px;
+        height: 65px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 15px auto;
+        border-radius: 50%;
+    }
+    
+    .action-card h6 {
+        margin-top: 10px;
+        margin-bottom: 5px;
+        font-weight: 600;
+    }
+    
+    /* Low Stock Table */
+    .table-container {
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .stock-table {
+        margin-bottom: 0;
+    }
+    
+    .stock-table th {
+        background-color: #f8f9fa;
+        color: #495057;
+        font-weight: 600;
+        border-top: none;
+    }
+    
+    .stock-table td {
+        vertical-align: middle;
+    }
+    
+    .low-quantity {
+        padding: 0.25rem 0.5rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        background-color: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+    }
+    
+    /* Empty state */
+    .empty-state {
+        padding: 50px 20px;
+        text-align: center;
+    }
+    
+    .empty-state .icon {
+        font-size: 4rem;
+        color: #28a745;
+        margin-bottom: 20px;
+    }
+    
+    /* Animation */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.5s ease-out forwards;
+    }
+    
+    /* Card header styling */
+    .card-header-custom {
+        background-color: #fff;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        padding: 1rem 1.25rem;
+    }
+    
+    .card-header-custom h5 {
+        font-weight: 600;
+    }
+    
+    .card-header-icon {
+        margin-left: 0.5rem;
+    }
+    
+    /* Card shadows and hover */
+    .hover-shadow {
+        transition: all 0.3s ease;
+    }
+    
+    .hover-shadow:hover {
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        transform: translateY(-5px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Stats Cards Row -->
+<div class="row ps-4 g-4 mb-4 fade-in" style="animation-delay: 0.1s">
+    <!-- Pending Permits Card -->
+    <div class="col-md-3">
+        <div class="stats-card">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon-container bg-info-subtle">
+                        <i class="fas fa-clipboard-list fa-2x text-info"></i>
+                    </div>
+                    <div class="stats-content">
+                        <h2 class="stats-number">{{ pending_permits }}</h2>
+                        <p class="stats-label">الأذونات المعلقة</p>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer border-0 bg-info text-white p-0">
+                <a href="{% url 'inventory:invoice_list' %}" class="d-block p-3 text-white text-decoration-none text-center">
+                    عرض التفاصيل <i class="fas fa-arrow-left ms-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Completed Permits Card -->
+    <div class="col-md-3">
+        <div class="stats-card">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon-container bg-success-subtle">
+                        <i class="fas fa-check-circle fa-2x text-success"></i>
+                    </div>
+                    <div class="stats-content">
+                        <h2 class="stats-number">{{ completed_permits }}</h2>
+                        <p class="stats-label">المنتهي التنفيذ</p>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer border-0 bg-success text-white p-0">
+                <a href="{% url 'inventory:invoice_list' %}" class="d-block p-3 text-white text-decoration-none text-center">
+                    عرض التفاصيل <i class="fas fa-arrow-left ms-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Total Permits Card -->
+    <div class="col-md-3">
+        <div class="stats-card">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon-container bg-primary-subtle">
+                        <i class="fas fa-file-invoice fa-2x text-primary"></i>
+                    </div>
+                    <div class="stats-content">
+                        <h2 class="stats-number">{{ total_permits }}</h2>
+                        <p class="stats-label">إجمالي الأذونات</p>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer border-0 bg-primary text-white p-0">
+                <a href="{% url 'inventory:invoice_list' %}" class="d-block p-3 text-white text-decoration-none text-center">
+                    عرض التفاصيل <i class="fas fa-arrow-left ms-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Low Stock Alert Card -->
+    <div class="col-md-3">
+        <div class="stats-card">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center">
+                    <div class="stats-icon-container bg-warning-subtle">
+                        <i class="fas fa-exclamation-triangle fa-2x text-warning"></i>
+                    </div>
+                    <div class="stats-content">
+                        <h2 class="stats-number">{{ low_stock_count }}</h2>
+                        <p class="stats-label">تنبيه المخزون</p>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer border-0 bg-warning text-white p-0">
+                <a href="#low-stock-section" class="d-block p-3 text-white text-decoration-none text-center">
+                    عرض التفاصيل <i class="fas fa-arrow-left ms-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions Section -->
+<div class="row ps-4 mb-4 fade-in" style="animation-delay: 0.2s">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header-custom d-flex align-items-center">
+                <i class="fas fa-bolt card-header-icon text-primary"></i>
+                <h5 class="mb-0">إجراءات سريعة</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="row g-3">
+                    <!-- Add Product -->
+                    {% has_inventory_module_permission "products" "add" as can_add_product %}
+                    {% if can_add_product %}
+                    <div class="col-md-3">
+                        <a href="{% url 'inventory:product_add' %}" class="text-decoration-none">
+                            <div class="action-card">
+                                <div class="action-icon bg-primary-subtle">
+                                    <i class="fas fa-box fa-2x text-primary"></i>
+                                </div>
+                                <h6>إضافة صنف جديد</h6>
+                                <small class="text-muted">إضافة قطعة غيار جديدة للمخزن</small>
+                            </div>
+                        </a>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Add Invoice -->
+                    {% has_inventory_module_permission "invoices" "add" as can_add_invoice %}
+                    {% if can_add_invoice %}
+                    <div class="col-md-3">
+                        <a href="{% url 'inventory:invoice_add' %}" class="text-decoration-none">
+                            <div class="action-card">
+                                <div class="action-icon bg-success-subtle">
+                                    <i class="fas fa-file-invoice fa-2x text-success"></i>
+                                </div>
+                                <h6>فاتورة جديدة</h6>
+                                <small class="text-muted">إنشاء فاتورة توريد أو صرف</small>
+                            </div>
+                        </a>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Stock Report -->
+                    {% has_inventory_module_permission "stock_report" "view" as can_view_report %}
+                    {% if can_view_report %}
+                    <div class="col-md-3">
+                        <a href="{% url 'inventory:stock_report' %}" class="text-decoration-none">
+                            <div class="action-card">
+                                <div class="action-icon bg-info-subtle">
+                                    <i class="fas fa-chart-bar fa-2x text-info"></i>
+                                </div>
+                                <h6>تقرير المخزون</h6>
+                                <small class="text-muted">عرض تقارير مفصلة عن المخزون</small>
+                            </div>

@@ -1,0 +1,62 @@
+{% extends 'Purchase_orders/base_purchase.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}إنشاء طلب شراء - نظام الدولية{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2 class="mb-3">
+            <i class="fas fa-plus me-2"></i>إنشاء طلب شراء جديد
+        </h2>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{% url 'Purchase_orders:purchase_request_list' %}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-1"></i>العودة للقائمة
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">بيانات طلب الشراء</h5>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="mb-3">
+                <label for="{{ form.request_number.id_for_label }}" class="form-label">رقم الطلب</label>
+                {{ form.request_number|add_class:"form-control"|attr:"readonly:readonly" }}
+                {% if form.request_number.errors %}
+                <div class="text-danger">
+                    {% for error in form.request_number.errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                <label for="{{ form.notes.id_for_label }}" class="form-label">ملاحظات</label>
+                {{ form.notes|add_class:"form-control" }}
+                {% if form.notes.errors %}
+                <div class="text-danger">
+                    {% for error in form.notes.errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <div class="form-text">يمكنك إضافة أي ملاحظات أو تفاصيل إضافية متعلقة بالطلب</div>
+            </div>
+            
+            <div class="text-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i>حفظ الطلب
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

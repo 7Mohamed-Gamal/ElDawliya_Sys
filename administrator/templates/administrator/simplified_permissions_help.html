@@ -1,0 +1,250 @@
+{% extends 'base_updated.html' %}
+{% load static %}
+
+{% block title %}دليل نظام الصلاحيات المبسط - نظام الدولية{% endblock %}
+
+{% block page_title %}دليل نظام الصلاحيات المبسط{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'administrator:admin_dashboard' %}">لوحة تحكم المدير</a></li>
+<li class="breadcrumb-item"><a href="{% url 'administrator:simplified_permissions_dashboard' %}">إدارة الصلاحيات المبسطة</a></li>
+<li class="breadcrumb-item active">دليل نظام الصلاحيات</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-3 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light py-3 border-bottom">
+                <h5 class="mb-0 fw-semibold">المحتويات</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    <a href="#overview" class="list-group-item list-group-item-action">نظرة عامة</a>
+                    <a href="#groups" class="list-group-item list-group-item-action">المجموعات</a>
+                    <a href="#departments" class="list-group-item list-group-item-action">الأقسام</a>
+                    <a href="#users" class="list-group-item list-group-item-action">المستخدمين</a>
+                    <a href="#examples" class="list-group-item list-group-item-action">أمثلة عملية</a>
+                    <a href="#faq" class="list-group-item list-group-item-action">الأسئلة الشائعة</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-9">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light py-3 border-bottom">
+                <h5 class="mb-0 fw-semibold">دليل نظام الصلاحيات المبسط</h5>
+            </div>
+            <div class="card-body">
+                <!-- نظرة عامة -->
+                <section id="overview" class="mb-5">
+                    <h3 class="border-bottom pb-2 mb-3">نظرة عامة</h3>
+                    <p>نظام الصلاحيات المبسط يعتمد على مفهوم المجموعات (Groups) لتحديد صلاحيات المستخدمين في النظام. يتيح هذا النظام:</p>
+                    <ul>
+                        <li>تقسيم المستخدمين إلى مجموعات حسب أدوارهم الوظيفية (مثل: موارد بشرية، مخزن، محاسبة)</li>
+                        <li>تحديد الأقسام التي يمكن لكل مجموعة الوصول إليها</li>
+                        <li>التحكم في ظهور الأقسام في القائمة الجانبية بناءً على مجموعات المستخدم</li>
+                        <li>منح صلاحيات الإضافة والتعديل والحذف والطباعة للمستخدمين حسب مجموعاتهم</li>
+                    </ul>
+                    <div class="alert alert-info">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>ملاحظة:</strong> المستخدمون الذين لديهم دور "مدير" (admin) لديهم صلاحية الوصول إلى جميع أجزاء النظام بغض النظر عن المجموعات التي ينتمون إليها.
+                    </div>
+                </section>
+                
+                <!-- المجموعات -->
+                <section id="groups" class="mb-5">
+                    <h3 class="border-bottom pb-2 mb-3">المجموعات</h3>
+                    <p>المجموعات هي الأساس في نظام الصلاحيات. كل مجموعة تمثل دوراً وظيفياً معيناً في المؤسسة.</p>
+                    
+                    <h5 class="mt-4 mb-3">كيفية إنشاء مجموعة جديدة:</h5>
+                    <ol>
+                        <li>انتقل إلى صفحة <a href="{% url 'administrator:simplified_permissions_dashboard' %}">إدارة الصلاحيات المبسطة</a></li>
+                        <li>انقر على زر "إضافة مجموعة" في قسم المجموعات</li>
+                        <li>أدخل اسم المجموعة (مثل: "موارد بشرية"، "مخزن قطع الغيار"، "محاسبة")</li>
+                        <li>انقر على زر "حفظ" لإنشاء المجموعة</li>
+                    </ol>
+                    
+                    <h5 class="mt-4 mb-3">كيفية تحديد الأقسام المسموح بها للمجموعة:</h5>
+                    <ol>
+                        <li>انتقل إلى صفحة <a href="{% url 'administrator:simplified_permissions_dashboard' %}">إدارة الصلاحيات المبسطة</a></li>
+                        <li>ابحث عن المجموعة في قائمة المجموعات</li>
+                        <li>انقر على زر "الأقسام" بجانب اسم المجموعة</li>
+                        <li>حدد الأقسام التي يمكن للمستخدمين في هذه المجموعة الوصول إليها</li>
+                        <li>انقر على زر "حفظ التغييرات" لتطبيق الإعدادات</li>
+                    </ol>
+                    
+                    <div class="alert alert-success mt-3">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>مثال:</strong> إذا كنت تريد أن يتمكن مستخدمو مجموعة "موارد بشرية" من الوصول إلى قسم الموارد البشرية فقط، قم بتحديد قسم "الموارد البشرية" فقط في قائمة الأقسام المسموح بها لهذه المجموعة.
+                    </div>
+                </section>
+                
+                <!-- الأقسام -->
+                <section id="departments" class="mb-5">
+                    <h3 class="border-bottom pb-2 mb-3">الأقسام</h3>
+                    <p>الأقسام هي الوحدات الرئيسية في النظام وتظهر في القائمة الجانبية. يمكن ربط كل قسم بمجموعة أو أكثر من المجموعات.</p>
+                    
+                    <h5 class="mt-4 mb-3">كيفية إنشاء قسم جديد:</h5>
+                    <ol>
+                        <li>انتقل إلى صفحة <a href="{% url 'administrator:department_add' %}">إضافة قسم</a></li>
+                        <li>أدخل اسم القسم (مثل: "الموارد البشرية"، "مخزن قطع الغيار")</li>
+                        <li>حدد أيقونة القسم من Font Awesome (مثل: fa-user-tie لقسم الموارد البشرية)</li>
+                        <li>أدخل اسم الرابط (URL Name) الذي سيستخدم في الروابط (مثل: hr، inventory)</li>
+                        <li>أدخل وصفاً للقسم (اختياري)</li>
+                        <li>حدد ما إذا كان القسم نشطاً أم لا</li>
+                        <li>حدد ترتيب ظهور القسم في القائمة الجانبية</li>
+                        <li>انقر على زر "حفظ" لإنشاء القسم</li>
+                    </ol>
+                    
+                    <div class="alert alert-warning mt-3">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>ملاحظة هامة:</strong> يجب أن يتطابق اسم الرابط (URL Name) مع اسم التطبيق في Django. على سبيل المثال، إذا كان لديك تطبيق باسم "Hr"، يجب أن يكون اسم الرابط "hr".
+                    </div>
+                </section>
+                
+                <!-- المستخدمين -->
+                <section id="users" class="mb-5">
+                    <h3 class="border-bottom pb-2 mb-3">المستخدمين</h3>
+                    <p>يمكن إضافة المستخدمين إلى مجموعة أو أكثر لمنحهم صلاحيات الوصول إلى الأقسام المرتبطة بتلك المجموعات.</p>
+                    
+                    <h5 class="mt-4 mb-3">كيفية إضافة مستخدم إلى مجموعة:</h5>
+                    <ol>
+                        <li>انتقل إلى صفحة <a href="{% url 'administrator:simplified_permissions_dashboard' %}">إدارة الصلاحيات المبسطة</a></li>
+                        <li>ابحث عن المستخدم في قائمة المستخدمين</li>
+                        <li>انقر على زر "المجموعات" بجانب اسم المستخدم</li>
+                        <li>حدد المجموعات التي تريد إضافة المستخدم إليها</li>
+                        <li>انقر على زر "حفظ التغييرات" لتطبيق الإعدادات</li>
+                    </ol>
+                    
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>ملاحظة:</strong> يمكن إضافة المستخدم إلى أكثر من مجموعة. في هذه الحالة، سيتمكن المستخدم من الوصول إلى جميع الأقسام المسموح بها لجميع المجموعات التي ينتمي إليها.
+                    </div>
+                </section>
+                
+                <!-- أمثلة عملية -->
+                <section id="examples" class="mb-5">
+                    <h3 class="border-bottom pb-2 mb-3">أمثلة عملية</h3>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">مثال 1: إعداد صلاحيات لقسم الموارد البشرية</h5>
+                        </div>
+                        <div class="card-body">
+                            <ol>
+                                <li>إنشاء مجموعة باسم "موارد بشرية"</li>
+                                <li>التأكد من وجود قسم "الموارد البشرية" في النظام (أو إنشائه إذا لم يكن موجوداً)</li>
+                                <li>ربط قسم "الموارد البشرية" بمجموعة "موارد بشرية"</li>
+                                <li>إضافة المستخدمين الذين يعملون في قسم الموارد البشرية إلى مجموعة "موارد بشرية"</li>
+                            </ol>
+                            <p><strong>النتيجة:</strong> سيتمكن المستخدمون في مجموعة "موارد بشرية" من رؤية قسم "الموارد البشرية" في القائمة الجانبية والوصول إلى صفحاته.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">مثال 2: إعداد صلاحيات لمستخدم يعمل في أكثر من قسم</h5>
+                        </div>
+                        <div class="card-body">
+                            <ol>
+                                <li>إنشاء مجموعة باسم "موارد بشرية" ومجموعة أخرى باسم "محاسبة"</li>
+                                <li>ربط قسم "الموارد البشرية" بمجموعة "موارد بشرية"</li>
+                                <li>ربط قسم "المحاسبة" بمجموعة "محاسبة"</li>
+                                <li>إضافة المستخدم إلى كلتا المجموعتين: "موارد بشرية" و"محاسبة"</li>
+                            </ol>
+                            <p><strong>النتيجة:</strong> سيتمكن المستخدم من رؤية كل من قسمي "الموارد البشرية" و"المحاسبة" في القائمة الجانبية والوصول إلى صفحات كلا القسمين.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">مثال 3: إعداد صلاحيات لمدير النظام</h5>
+                        </div>
+                        <div class="card-body">
+                            <ol>
+                                <li>تعيين دور المستخدم إلى "مدير" (admin) عند إنشاء المستخدم أو تعديل بياناته</li>
+                            </ol>
+                            <p><strong>النتيجة:</strong> سيتمكن المستخدم من رؤية جميع الأقسام في القائمة الجانبية والوصول إلى جميع صفحات النظام، بما في ذلك لوحة تحكم المدير.</p>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- الأسئلة الشائعة -->
+                <section id="faq">
+                    <h3 class="border-bottom pb-2 mb-3">الأسئلة الشائعة</h3>
+                    
+                    <div class="accordion" id="faqAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faqOne">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                    كيف يمكنني منع مستخدم من الوصول إلى قسم معين؟
+                                </button>
+                            </h2>
+                            <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="faqOne" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    <p>لمنع مستخدم من الوصول إلى قسم معين، تأكد من أن المستخدم ليس عضواً في أي مجموعة مرتبطة بهذا القسم. يمكنك إزالة المستخدم من المجموعات المرتبطة بالقسم من خلال صفحة إدارة مجموعات المستخدم.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faqTwo">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                    هل يمكن للمستخدم الوصول إلى قسم غير مرتبط بأي مجموعة؟
+                                </button>
+                            </h2>
+                            <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="faqTwo" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    <p>إذا لم يكن القسم مرتبطاً بأي مجموعة (أي أن قائمة المجموعات المسموح لها فارغة)، فسيتمكن جميع المستخدمين من الوصول إليه. إذا كنت تريد تقييد الوصول إلى قسم، تأكد من ربطه بمجموعة واحدة على الأقل.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faqThree">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                    كيف يمكنني التحكم في صلاحيات الإضافة والتعديل والحذف داخل قسم معين؟
+                                </button>
+                            </h2>
+                            <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="faqThree" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    <p>يتم التحكم في صلاحيات الإضافة والتعديل والحذف من خلال نظام الصلاحيات المدمج في Django. يمكنك منح هذه الصلاحيات للمجموعات من خلال صفحة تفاصيل المجموعة، ثم انقر على علامة التبويب "الصلاحيات" وحدد الصلاحيات المطلوبة.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faqFour">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFour" aria-expanded="false" aria-controls="collapseFour">
+                                    ماذا يحدث إذا كان المستخدم عضواً في أكثر من مجموعة؟
+                                </button>
+                            </h2>
+                            <div id="collapseFour" class="accordion-collapse collapse" aria-labelledby="faqFour" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    <p>إذا كان المستخدم عضواً في أكثر من مجموعة، فسيتمكن من الوصول إلى جميع الأقسام المسموح بها لجميع المجموعات التي ينتمي إليها. كما سيحصل على جميع الصلاحيات الممنوحة لهذه المجموعات.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="faqFive">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFive" aria-expanded="false" aria-controls="collapseFive">
+                                    هل يمكنني إنشاء مستخدم بدون أي مجموعات؟
+                                </button>
+                            </h2>
+                            <div id="collapseFive" class="accordion-collapse collapse" aria-labelledby="faqFive" data-bs-parent="#faqAccordion">
+                                <div class="accordion-body">
+                                    <p>نعم، يمكنك إنشاء مستخدم بدون إضافته إلى أي مجموعة. في هذه الحالة، سيتمكن المستخدم من الوصول فقط إلى الأقسام التي لا ترتبط بأي مجموعة (الأقسام المتاحة للجميع). إذا كان المستخدم لديه دور "مدير" (admin)، فسيتمكن من الوصول إلى جميع الأقسام بغض النظر عن المجموعات.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

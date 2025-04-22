@@ -1,0 +1,139 @@
+{% load static %}
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="{{ current_language }}" dir="{{ text_direction }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% trans "نظام إدارة المخزن" %}{% endblock %}</title>
+    
+    <!-- Bootstrap RTL/LTR -->
+    {% if text_direction == 'rtl' %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    {% else %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    {% endif %}
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --font-family: {{ current_font|default:'Cairo' }}, sans-serif;
+        }
+        
+        body {
+            font-family: var(--font-family);
+        }
+        
+        .navbar-brand {
+            font-weight: 600;
+        }
+        
+        .sidebar {
+            font-family: var(--font-family);
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row ps-4">   
+            <!-- Navbar -->
+            <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+                <div class="container-fluid">
+                    <a class="navbar-brand" href="{% url 'inventory:dashboard' %}">
+                        <i class="fas fa-warehouse me-2"></i>
+                        {% trans "نظام إدارة المخزن" %}
+                    </a>
+                    <a href="{% url 'accounts:home' %}" class="btn btn-outline-light me-2" title="العودة للوحة التحكم الرئيسية">
+                        <i class="fas fa-home"></i>
+                    </a>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="navbarNav">
+                        <ul class="navbar-nav me-auto">
+                            <!-- <li class="nav-item">
+                                <a class="nav-link" href="{% url 'inventory:dashboard' %}">
+                                    <i class="fas fa-home me-1"></i>
+                                    {% trans "الرئيسية" %}
+                                </a>
+                            </li> -->
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'inventory:product_list' %}">
+                                    <i class="fas fa-box me-1"></i>
+                                    {% trans "قطع الغيار" %}
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'inventory:invoice_list' %}">
+                                    <i class="fas fa-file-invoice me-1"></i>
+                                    {% trans "الفواتير" %}
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'inventory:stock_report' %}">
+                                    <i class="fas fa-chart-bar me-1"></i>
+                                    {% trans "التقارير" %}
+                                </a>
+                            </li>
+                        </ul>
+                        <ul class="navbar-nav">
+                            <!-- <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-cog me-1"></i>
+                                    {% trans "الإعدادات" %}
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'inventory:system_settings' %}">
+                                            <i class="fas fa-sliders-h me-1"></i>
+                                            {% trans "إعدادات النظام" %}
+                                        </a>
+                                    </li> -->
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item" href="#">
+                                            <i class="fas fa-sign-out-alt me-1"></i>
+                                            {% trans "تسجيل الخروج" %}
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+        
+            <!-- Main Content -->
+            <main class="py-4">
+                {% if messages %}
+                <div class="container">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                {% block content %}{% endblock %}
+            </main>
+        
+            <!-- Bootstrap Bundle with Popper -->
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+            {% block extra_js %}{% endblock %}
+            </div>
+    </div>
+</body>
+</html>

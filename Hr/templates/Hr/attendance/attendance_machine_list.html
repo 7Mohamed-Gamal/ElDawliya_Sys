@@ -1,0 +1,126 @@
+{% extends 'base_updated.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - نظام الدولية{% endblock %}
+
+{% block page_title %}{{ page_title }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'employees:dashboard' %}">الموظفين</a></li>
+<li class="breadcrumb-item active">{{ page_title }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">ماكينات البصمة</h5>
+        <a href="{% url 'employees:attendance_machine_create' %}" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus"></i> إضافة ماكينة
+        </a>
+    </div>
+    <div class="card-body">
+        {% if machines %}
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>الاسم</th>
+                        <th>IP</th>
+                        <th>المنفذ</th>
+                        <th>النوع</th>
+                        <th>الحالة</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for machine in machines %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ machine.name }}</td>
+                        <td>{{ machine.ip_address }}</td>
+                        <td>{{ machine.port }}</td>
+                        <td>
+                            {% if machine.machine_type == 'in' %}
+                            <span class="badge bg-success">حضور</span>
+                            {% elif machine.machine_type == 'out' %}
+                            <span class="badge bg-danger">انصراف</span>
+                            {% else %}
+                            <span class="badge bg-info">حضور وانصراف</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if machine.is_active %}
+                            <span class="badge bg-success">نشط</span>
+                            {% else %}
+                            <span class="badge bg-danger">غير نشط</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'employees:attendance_machine_edit' machine.id %}" class="btn btn-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'employees:attendance_machine_delete' machine.id %}" class="btn btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                                <a href="{% url 'employees:fetch_attendance_data' %}?machine={{ machine.id }}" class="btn btn-info">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                                <a href="{% url 'employees:zk_device_connection' %}" class="btn btn-secondary">
+                                    <i class="fas fa-fingerprint"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            لا توجد ماكينات بصمة مسجلة حتى الآن.
+        </div>
+        <div class="text-center mt-3">
+            <a href="{% url 'employees:attendance_machine_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> إضافة ماكينة جديدة
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header">
+        <h5 class="mb-0">أدوات إضافية</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h6 class="card-title">جلب بيانات الحضور</h6>
+                        <p class="card-text">استخدم هذه الأداة لجلب بيانات الحضور والانصراف من ماكينات البصمة.</p>
+                        <a href="{% url 'employees:fetch_attendance_data' %}" class="btn btn-primary">
+                            <i class="fas fa-download"></i> جلب البيانات
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h6 class="card-title">واجهة قارئ جهاز البصمة ZK</h6>
+                        <p class="card-text">استخدم هذه الأداة للاتصال مباشرة بأجهزة البصمة من نوع ZK وقراءة البيانات منها.</p>
+                        <a href="{% url 'employees:zk_device_connection' %}" class="btn btn-secondary">
+                            <i class="fas fa-fingerprint"></i> فتح واجهة القارئ
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

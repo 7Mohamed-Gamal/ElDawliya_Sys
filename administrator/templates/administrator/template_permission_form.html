@@ -1,0 +1,188 @@
+{% extends 'base_updated.html' %}
+{% load static %}
+
+{% block title %}
+{% if form.instance.id %}تعديل صلاحية قالب{% else %}إضافة صلاحية قالب جديدة{% endif %} - نظام الدولية
+{% endblock %}
+
+{% block page_title %}
+{% if form.instance.id %}تعديل صلاحية قالب: {{ form.instance.name }}{% else %}إضافة صلاحية قالب جديدة{% endif %}
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'administrator:admin_dashboard' %}">لوحة تحكم المدير</a></li>
+<li class="breadcrumb-item"><a href="{% url 'administrator:permission_dashboard' %}">إدارة الصلاحيات</a></li>
+<li class="breadcrumb-item"><a href="{% url 'administrator:template_permission_list' %}">صلاحيات القوالب</a></li>
+<li class="breadcrumb-item active">
+    {% if form.instance.id %}تعديل صلاحية قالب{% else %}إضافة صلاحية قالب جديدة{% endif %}
+</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light py-3 border-bottom">
+                <h5 class="mb-0 fw-semibold">
+                    {% if form.instance.id %}
+                    <i class="fas fa-edit me-2 text-primary"></i>
+                    تعديل صلاحية قالب
+                    {% else %}
+                    <i class="fas fa-plus me-2 text-success"></i>
+                    إضافة صلاحية قالب جديدة
+                    {% endif %}
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">{{ form.name.label }}</label>
+                            {{ form.name }}
+                            {% if form.name.help_text %}
+                            <div class="form-text text-muted">{{ form.name.help_text }}</div>
+                            {% endif %}
+                            {% if form.name.errors %}
+                            <div class="invalid-feedback d-block">{{ form.name.errors }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.app_name.id_for_label }}" class="form-label">{{ form.app_name.label }}</label>
+                            {{ form.app_name }}
+                            {% if form.app_name.help_text %}
+                            <div class="form-text text-muted">{{ form.app_name.help_text }}</div>
+                            {% endif %}
+                            {% if form.app_name.errors %}
+                            <div class="invalid-feedback d-block">{{ form.app_name.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.template_path.id_for_label }}" class="form-label">{{ form.template_path.label }}</label>
+                        {{ form.template_path }}
+                        {% if form.template_path.help_text %}
+                        <div class="form-text text-muted">{{ form.template_path.help_text }}</div>
+                        {% endif %}
+                        {% if form.template_path.errors %}
+                        <div class="invalid-feedback d-block">{{ form.template_path.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.url_pattern.id_for_label }}" class="form-label">{{ form.url_pattern.label }}</label>
+                        {{ form.url_pattern }}
+                        {% if form.url_pattern.help_text %}
+                        <div class="form-text text-muted">{{ form.url_pattern.help_text }}</div>
+                        {% endif %}
+                        {% if form.url_pattern.errors %}
+                        <div class="invalid-feedback d-block">{{ form.url_pattern.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">{{ form.description.label }}</label>
+                        {{ form.description }}
+                        {% if form.description.help_text %}
+                        <div class="form-text text-muted">{{ form.description.help_text }}</div>
+                        {% endif %}
+                        {% if form.description.errors %}
+                        <div class="invalid-feedback d-block">{{ form.description.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        {{ form.is_active }}
+                        <label for="{{ form.is_active.id_for_label }}" class="form-check-label">{{ form.is_active.label }}</label>
+                        {% if form.is_active.help_text %}
+                        <div class="form-text text-muted">{{ form.is_active.help_text }}</div>
+                        {% endif %}
+                        {% if form.is_active.errors %}
+                        <div class="invalid-feedback d-block">{{ form.is_active.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.groups.id_for_label }}" class="form-label">{{ form.groups.label }}</label>
+                        {{ form.groups }}
+                        {% if form.groups.help_text %}
+                        <div class="form-text text-muted">{{ form.groups.help_text }}</div>
+                        {% endif %}
+                        {% if form.groups.errors %}
+                        <div class="invalid-feedback d-block">{{ form.groups.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.users.id_for_label }}" class="form-label">{{ form.users.label }}</label>
+                        {{ form.users }}
+                        {% if form.users.help_text %}
+                        <div class="form-text text-muted">{{ form.users.help_text }}</div>
+                        {% endif %}
+                        {% if form.users.errors %}
+                        <div class="invalid-feedback d-block">{{ form.users.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'administrator:template_permission_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-right me-1"></i>
+                            رجوع
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>
+                            {% if form.instance.id %}حفظ التغييرات{% else %}إضافة{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light py-3 border-bottom">
+                <h5 class="mb-0 fw-semibold">
+                    <i class="fas fa-info-circle me-2 text-info"></i>
+                    معلومات مساعدة
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-info">
+                    <h6 class="alert-heading">ما هي صلاحيات القوالب؟</h6>
+                    <p class="small mb-0">صلاحيات القوالب تتحكم في وصول المستخدمين إلى صفحات وقوالب محددة في النظام.</p>
+                </div>
+
+                <h6 class="fw-bold mt-4">حقول النموذج:</h6>
+                <ul class="small text-muted">
+                    <li><strong>اسم القالب:</strong> اسم وصفي للقالب أو الصفحة.</li>
+                    <li><strong>اسم التطبيق:</strong> اسم تطبيق Django الذي يحتوي على القالب.</li>
+                    <li><strong>مسار القالب:</strong> المسار النسبي للقالب داخل مجلد القوالب.</li>
+                    <li><strong>نمط URL:</strong> نمط URL الذي يتطابق مع هذا القالب (اختياري).</li>
+                    <li><strong>وصف:</strong> وصف مفصل للقالب والغرض منه.</li>
+                    <li><strong>نشط:</strong> ما إذا كانت هذه الصلاحية نشطة أم لا.</li>
+                    <li><strong>المجموعات المسموح لها:</strong> المجموعات التي لها حق الوصول إلى هذا القالب.</li>
+                    <li><strong>المستخدمين المسموح لهم:</strong> المستخدمين الفرديين الذين لهم حق الوصول إلى هذا القالب.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // تحسين اختيار المجموعات والمستخدمين باستخدام select2
+        $('#id_groups, #id_users').select2({
+            placeholder: 'اختر...',
+            allowClear: true,
+            dir: 'rtl',
+            language: 'ar'
+        });
+    });
+</script>
+{% endblock %}

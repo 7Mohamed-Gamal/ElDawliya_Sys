@@ -1,0 +1,172 @@
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import login, logout, get_user_model
+from .forms import CustomUserCreationForm, CustomUserLoginForm, UserPermissionsForm
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from meetings.models import Meeting
+from tasks.models import Task
+
+User = get_user_model()
+
+def login_view(request):
+    # Add debugging information
+    print("Starting login_view function")
+
+    if request.method == 'POST':
+        form = CustomUserLoginForm(data=request.POST)
+        if form.is_valid():
+            user = form.get_user()
+
+            login(request, user)
+            messages.success(request, f'مرحباً بك في نظام الشركة الدولية انترناشونال، {user.username}!')
+            return redirect('accounts:home')
+        else:
+            messages.error(request, 'اسم المستخدم أو كلمة المرور غير صحيحة.')
+    else:
+        form = CustomUserLoginForm()
+
+    # Add more debugging information
+    print("Rendering login template")
+
+    # Simplify the context to rule out any issues
+    return render(request, 'accounts/login.html', {'form': form})
+
+def logout_view(request):
+    logout(request)
+    return redirect('accounts:login')
+
+def access_denied(request):
+    """عرض صفحة رفض الوصول"""
+    return render(request, 'accounts/access_denied.html', {'title': 'رفض الوصول'})
+
+@login_required
+def dashboard_view(request):
+    # Get all users
+    users = User.objects.all()
+
+    # Count statistics
+    total_users = users.count()
+    admin_users = users.filter(Role='admin').count()
+    manager_users = users.filter(Role='Manager').count()
+    employee_users = users.filter(Role='employee').count()
+    active_users = users.filter(IsActive=True).count()
+
+    context = {
+        'users': users,
+        'total_users': total_users,
+        'admin_users': admin_users,
+        'manager_users': manager_users,
+        'employee_users': employee_users,
+        'active_users': active_users,
+        'recent_activities': []  # Add recent activity logic if available
+    }
+
+    return render(request, 'accounts/dashboard.html', context)
+
+@login_required
+def home_view(request):
+    # Get real-time stats for dashboard
+    meetings_count = Meeting.objects.count()
+    tasks_count = Task.objects.count()
+    completed_tasks_count = Task.objects.filter(status='completed').count()
+    users_count = User.objects.count()
+
+    # Get recent meetings
+    recent_meetings = Meeting.objects.order_by('-date')[:5]
+
+    # Get recent tasks
+    recent_tasks = Task.objects.order_by('-start_date')[:5]
+
+    # Get user's tasks
+    user_tasks = Task.objects.filter(assigned_to=request.user).order_by('status', '-start_date')
+
+    # Check if user is admin
+    is_admin = request.user.Role == 'admin'
+
+    # Get departments from administrator app if it's installed
+    user_departments = []
+    all_departments = []
+    try:
+        from administrator.models import Department
+
+        # Get all active departments
+        departments = Department.objects.filter(is_active=True).order_by('order')
+        
+        # For admin users, store all departments
+        if is_admin:
+            all_departments = departments
+            
+        # Ensure url_name is set correctly for JavaScript matching
+        for dept in departments:
+            # Make sure url_name doesn't include '-cards' suffix
+            if hasattr(dept, 'url_name'):
+                if dept.url_name == 'hr':
+                    print(f"Found HR department with url_name: {dept.url_name}")
+            else:
+                # If url_name doesn't exist, set a default based on department name
+                dept.url_name = dept.name.lower().replace(' ', '-')
+                print(f"Set url_name for {dept.name}: {dept.url_name}")
+
+        # Filter departments based on user permissions
+        for dept in departments:
+            # If department requires admin and user is admin, add it
+            if dept.require_admin and is_admin:
+                user_departments.append(dept)
+            # If department doesn't require admin, check group permissions
+            elif not dept.require_admin:
+                # If no groups specified, everyone can access
+                if not dept.groups.exists():
+                    user_departments.append(dept)
+                # Otherwise, check if user is in any of the allowed groups
+                else:
+                    # Check if any of the user's groups are in the department's allowed groups
+                    if dept.groups.filter(id__in=request.user.groups.all()).exists():
+                        user_departments.append(dept)
+    except Exception as e:
+        # If administrator app is not installed or any error occurs
+        print(f"Error loading departments: {str(e)}")
+
+    context = {
+        'meetings_count': meetings_count,
+        'tasks_count': tasks_count,
+        'completed_tasks_count': completed_tasks_count,
+        'users_count': users_count,
+        'recent_meetings': recent_meetings,
+        'recent_tasks': recent_tasks,
+        'user_tasks': user_tasks,
+        'user_departments': user_departments,
+        'all_departments': all_departments,
+        'is_admin': is_admin
+    }
+
+    return render(request, 'home_dashboard.html', context)
+
+@login_required
+def create_user_view(request):
+    if request.method == 'POST':
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'تم إنشاء المستخدم بنجاح!')
+            return redirect('accounts:dashboard')
+    else:
+        form = CustomUserCreationForm()
+    return render(request, 'accounts/create_user.html', {'form': form})
+
+@login_required
+def edit_user_permissions_view(request, user_id):
+    user_to_edit = get_object_or_404(User, id=user_id)
+    if request.method == 'POST':
+        form = UserPermissionsForm(request.POST, instance=user_to_edit)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'تم تعديل صلاحيات المستخدم بنجاح!')
+            return redirect('accounts:dashboard')
+    else:
+        form = UserPermissionsForm(instance=user_to_edit)
+
+    return render(request, 'accounts/edit_permissions.html', {
+        'form': form,
+        'user_to_edit': user_to_edit,
+        'user_activities': []  # Add user activity logic if available
+    })

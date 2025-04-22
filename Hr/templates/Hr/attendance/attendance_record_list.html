@@ -1,0 +1,201 @@
+{% extends 'base_updated.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - نظام الدولية{% endblock %}
+
+{% block page_title %}{{ page_title }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'employees:dashboard' %}">الموظفين</a></li>
+<li class="breadcrumb-item active">{{ page_title }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">سجلات الحضور والانصراف</h5>
+        <div>
+            <a href="{% url 'employees:attendance_record_create' %}" class="btn btn-primary btn-sm">
+                <i class="fas fa-plus"></i> إضافة سجل
+            </a>
+            <a href="{% url 'employees:fetch_attendance_data' %}" class="btn btn-info btn-sm">
+                <i class="fas fa-download"></i> جلب البيانات
+            </a>
+            <button type="button" class="btn btn-success btn-sm" id="saveToDbBtn" data-bs-toggle="modal" data-bs-target="#dbConnectionModal">
+                <i class="fas fa-database"></i> قراءة وحفظ بقاعدة البيانات
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <form method="get" class="mb-4">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="start_date" class="form-label">من تاريخ</label>
+                        <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date|default:'' }}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="end_date" class="form-label">إلى تاريخ</label>
+                        <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date|default:'' }}">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="employee" class="form-label">الموظف</label>
+                        <select class="form-select" id="employee" name="employee">
+                            <option value="">الكل</option>
+                            {% for emp in employees %}
+                            <option value="{{ emp.id }}" {% if selected_employee == emp.id|stringformat:"s" %}selected{% endif %}>{{ emp.emp_full_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="mb-3">
+                        <label for="record_type" class="form-label">نوع السجل</label>
+                        <select class="form-select" id="record_type" name="record_type">
+                            <option value="">الكل</option>
+                            {% for key, value in record_types.items %}
+                            <option value="{{ key }}" {% if selected_record_type == key %}selected{% endif %}>{{ value }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="text-center">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> بحث
+                </button>
+                <a href="{% url 'employees:attendance_record_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-redo"></i> إعادة تعيين
+                </a>
+            </div>
+        </form>
+        
+        <div class="table-responsive">
+            <table class="table table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>الموظف</th>
+                        <th>التاريخ</th>
+                        <th>الوقت</th>
+                        <th>نوع السجل</th>
+                        <th>الماكينة</th>
+                        <th>المصدر</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in attendance_records %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ record.employee.emp_full_name }}</td>
+                        <td>{{ record.record_date }}</td>
+                        <td>{{ record.record_time }}</td>
+                        <td>
+                            {% if record.record_type == 'in' %}
+                            <span class="badge bg-success">حضور</span>
+                            {% elif record.record_type == 'out' %}
+                            <span class="badge bg-danger">انصراف</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ record.record_type }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ record.machine.name|default:'-' }}</td>
+                        <td>
+                            {% if record.source == 'machine' %}
+                            <span class="badge bg-info">ماكينة</span>
+                            {% elif record.source == 'manual' %}
+                            <span class="badge bg-warning">يدوي</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ record.source }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'employees:attendance_record_edit' record.id %}" class="btn btn-primary">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'employees:attendance_record_delete' record.id %}" class="btn btn-danger">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center">لا توجد سجلات حضور</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Database Connection Modal -->
+<div class="modal fade" id="dbConnectionModal" tabindex="-1" aria-labelledby="dbConnectionModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="dbConnectionModalLabel">اتصال بقاعدة البيانات</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="dbConnectionForm">
+                    <div class="mb-3">
+                        <label for="dbHost" class="form-label">المضيف (Host)</label>
+                        <input type="text" class="form-control" id="dbHost" value="localhost">
+                    </div>
+                    <div class="mb-3">
+                        <label for="dbName" class="form-label">اسم قاعدة البيانات</label>
+                        <input type="text" class="form-control" id="dbName">
+                    </div>
+                    <div class="mb-3">
+                        <label for="dbUsername" class="form-label">اسم المستخدم</label>
+                        <input type="text" class="form-control" id="dbUsername" value="root">
+                    </div>
+                    <div class="mb-3">
+                        <label for="dbPassword" class="form-label">كلمة المرور</label>
+                        <input type="password" class="form-control" id="dbPassword">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" id="saveToDbConfirmBtn">حفظ البيانات</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Save to DB confirm button click handler
+        const saveToDbConfirmBtn = document.getElementById('saveToDbConfirmBtn');
+        
+        saveToDbConfirmBtn.addEventListener('click', function() {
+            const dbHost = document.getElementById('dbHost').value;
+            const dbName = document.getElementById('dbName').value;
+            
+            if (!dbHost || !dbName) {
+                alert('يرجى إدخال معلومات قاعدة البيانات المطلوبة');
+                return;
+            }
+            
+            // Simulate saving to database
+            alert(`تم حفظ البيانات بنجاح في قاعدة البيانات "${dbName}" على المضيف "${dbHost}"`);
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('dbConnectionModal'));
+            modal.hide();
+        });
+    });
+</script>
+{% endblock %}

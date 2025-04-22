@@ -1,0 +1,306 @@
+{% extends 'inventory/base_inventory.html' %}
+{% load static %}
+
+{% block title %}{% if form.instance.pk %}تعديل الفاتورة{% else %}إضافة فاتورة جديدة{% endif %} - نظام إدارة المخزن{% endblock %}
+
+{% block page_title %}{% if form.instance.pk %}تعديل الفاتورة{% else %}إضافة فاتورة جديدة{% endif %}{% endblock %}
+
+{% block page_actions %}
+    <a href="{% url 'inventory:invoice_list' %}" class="btn btn-secondary">
+        <i class="fas fa-chevron-right me-1"></i> العودة للقائمة
+    </a>
+{% endblock %}
+
+{% block content %}
+<div class="row ps-4">
+    <div class="card mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0"><i class="fas fa-file-invoice me-2 text-primary"></i>معلومات الفاتورة الأساسية</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" id="invoiceForm" class="row g-3">
+                {% csrf_token %}
+                
+                <div class="col-md-6">
+                    <label class="form-label">رقم الفاتورة*</label>
+                    {{ form.invoice_number }}
+                </div>
+                
+                <div class="col-md-6">
+                    <label class="form-label">تاريخ الفاتورة*</label>
+                    {{ form.invoice_date }}
+                </div>
+                
+                <div class="col-md-6">
+                    <label class="form-label">نوع الفاتورة*</label>
+                    <select name="invoice_type" id="id_invoice_type" class="form-control">
+                        <option value="">-- اختر نوع الفاتورة --</option>
+                        <option value="إضافة">إذن إضافة</option>
+                        <option value="صرف">إذن صرف</option>
+                        <option value="مرتجع مورد">إذن مرتجع مورد</option>
+                        <option value="مرتجع عميل">إذن مرتجع عميل</option>
+                    </select>
+                    {% if form.instance.invoice_type %}
+                    <input type="hidden" id="invoice_type_value" value="{{ form.instance.invoice_type }}">
+                    {% endif %}
+                </div>
+                
+                <div class="col-md-6">
+                    <label class="form-label">المستلم*</label>
+                    {{ form.recipient }}
+                </div>
+                
+                <div class="col-md-6">
+                    <label class="form-label">المورد</label>
+                    {{ form.supplier_id }}
+                </div>
+                
+                <div class="col-md-6">
+                    <label class="form-label">العميل</label>
+                    {{ form.customer_id }}
+                </div>
+                
+                <div class="col-md-6">
+                    <label class="form-label">القيمة الإجمالية</label>
+                    {{ form.total_invoice_value }}
+                    <small class="text-muted">سيتم حسابها تلقائياً من الأصناف المضافة</small>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="row ps-4">
+    <div class="card mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-boxes me-2 text-primary"></i>إضافة الأصناف للفاتورة</h5>
+            <button type="button" class="btn btn-sm btn-success" id="addItemRow">
+                <i class="fas fa-plus-circle me-1"></i> إضافة صنف جديد
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover" id="invoiceItemsTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="15%">رقم الصنف</th>
+                            <th width="25%">اسم الصنف</th>
+                            <th width="10%">الوحدة</th>
+                            <th width="10%">الكمية</th>
+                            <th width="15%">سعر الوحدة</th>
+                            <th width="15%">الإجمالي</th>
+                            <th width="10%">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- سيتم إضافة الصفوف هنا بواسطة JavaScript -->
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="5" class="text-start">
+                                <strong>الإجمالي</strong>
+                            </td>
+                            <td class="text-start">
+                                <strong id="invoiceTotal">0.00</strong>
+                            </td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+        <div class="card-footer text-end">
+            <a href="{% url 'inventory:invoice_list' %}" class="btn btn-light me-md-2">إلغاء</a>
+            <button type="button" class="btn btn-primary" id="submitInvoice">
+                <i class="fas fa-save me-1"></i> حفظ الفاتورة
+            </button>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Apply form-control class to all form inputs
+        const formInputs = document.querySelectorAll('input, select, textarea');
+        formInputs.forEach(input => {
+            input.classList.add('form-control');
+        });
+
+        // Invoice type handling
+        const invoiceTypeSelect = document.getElementById('id_invoice_type');
+        
+        // Set the selected value if editing
+        const invoiceType = document.getElementById('invoice_type_value').value;
+        if (invoiceType) {
+            invoiceTypeSelect.value = invoiceType;
+        }
+        
+        // Add new row to the invoice items table
+        document.getElementById('addItemRow').addEventListener('click', function() {
+            addItemRow();
+        });
+
+        // Save the invoice
+        document.getElementById('submitInvoice').addEventListener('click', function() {
+            saveInvoice();
+        });
+
+        // Function to add a new row
+        function addItemRow() {
+            const tbody = document.querySelector('#invoiceItemsTable tbody');
+            const rowCount = tbody.rows.length + 1;
+            
+            const newRow = document.createElement('tr');
+            newRow.innerHTML = `
+                <td>
+                    <input type="text" class="form-control product-id" placeholder="أدخل رقم الصنف" data-row="${rowCount}">
+                </td>
+                <td>
+                    <input type="text" class="form-control product-name" readonly>
+                </td>
+                <td>
+                    <input type="text" class="form-control product-unit" readonly>
+                </td>
+                <td>
+                    <input type="number" class="form-control product-quantity" value="1" min="1">
+                </td>
+                <td>
+                    <input type="number" class="form-control product-price" step="0.01">
+                </td>
+                <td>
+                    <input type="text" class="form-control product-total" readonly>
+                </td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-sm btn-danger remove-row">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(newRow);
+            
+            // Set up event listeners for the new row
+            setupRowEventListeners(newRow);
+        }
+
+        // Set up event listeners for a row
+        function setupRowEventListeners(row) {
+            // Product ID lookup
+            const productIdInput = row.querySelector('.product-id');
+            productIdInput.addEventListener('change', function() {
+                lookupProduct(this);
+            });
+            
+            // Remove row
+            const removeButton = row.querySelector('.remove-row');
+            removeButton.addEventListener('click', function() {
+                row.remove();
+                updateTotals();
+            });
+            
+            // Update calculations when quantity or price changes
+            const quantityInput = row.querySelector('.product-quantity');
+            const priceInput = row.querySelector('.product-price');
+            
+            [quantityInput, priceInput].forEach(input => {
+                input.addEventListener('input', function() {
+                    updateRowTotal(row);
+                    updateTotals();
+                });
+            });
+        }
+
+        // Look up product details
+        function lookupProduct(productInput) {
+            const productId = productInput.value;
+            const row = productInput.closest('tr');
+            
+            // Here you would typically make an AJAX call to get the product details
+            // For demonstration, we'll simulate a product lookup
+            
+            // Show loading indicator
+            row.querySelector('.product-name').value = 'جاري البحث...';
+            
+            // Simulate AJAX call with timeout
+            setTimeout(() => {
+                // In a real implementation, you would fetch this data from the server
+                // This is just a simulation
+                if (productId.startsWith('P')) {
+                    // Found product
+                    row.querySelector('.product-name').value = 'اسم المنتج ' + productId;
+                    row.querySelector('.product-unit').value = 'قطعة';
+                    row.querySelector('.product-price').value = '100.00';
+                    updateRowTotal(row);
+                    updateTotals();
+                } else {
+                    // Product not found
+                    row.querySelector('.product-name').value = 'المنتج غير موجود';
+                    row.querySelector('.product-unit').value = '';
+                    row.querySelector('.product-price').value = '';
+                    row.querySelector('.product-total').value = '';
+                }
+            }, 500);
+        }
+
+        // Update row total
+        function updateRowTotal(row) {
+            const quantity = parseFloat(row.querySelector('.product-quantity').value) || 0;
+            const price = parseFloat(row.querySelector('.product-price').value) || 0;
+            const total = quantity * price;
+            row.querySelector('.product-total').value = total.toFixed(2);
+        }
+
+        // Update all totals
+        function updateTotals() {
+            let invoiceTotal = 0;
+            
+            // Sum all row totals
+            document.querySelectorAll('.product-total').forEach(totalInput => {
+                invoiceTotal += parseFloat(totalInput.value) || 0;
+            });
+            
+            // Update the invoice total
+            document.getElementById('invoiceTotal').textContent = invoiceTotal.toFixed(2);
+            document.getElementById('id_total_invoice_value').value = invoiceTotal.toFixed(2);
+        }
+
+        // Save the invoice
+        function saveInvoice() {
+            // Validate form
+            const form = document.getElementById('invoiceForm');
+            const requiredFields = ['invoice_number', 'invoice_date', 'invoice_type', 'recipient'];
+            let valid = true;
+            
+            requiredFields.forEach(field => {
+                const input = document.getElementById('id_' + field);
+                if (!input.value) {
+                    valid = false;
+                    input.classList.add('is-invalid');
+                } else {
+                    input.classList.remove('is-invalid');
+                }
+            });
+            
+            // Add validation for items
+            const hasItems = document.querySelector('#invoiceItemsTable tbody tr');
+            if (!hasItems) {
+                alert('يرجى إضافة صنف واحد على الأقل للفاتورة');
+                return;
+            }
+            
+            if (!valid) {
+                alert('يرجى ملء جميع الحقول المطلوبة');
+                return;
+            }
+            
+            // Submit the form - in a real implementation, you would also save the invoice items
+            form.submit();
+        }
+        
+        // Add an initial row
+        addItemRow();
+    });
+</script>
+{% endblock %}

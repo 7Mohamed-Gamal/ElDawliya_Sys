@@ -1,0 +1,65 @@
+{% extends 'base_updated.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - نظام الدولية{% endblock %}
+
+{% block page_title %}{{ page_title }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'employees:dashboard' %}">الموظفين</a></li>
+<li class="breadcrumb-item"><a href="{% url 'employees:attendance_rule_list' %}">قواعد الحضور</a></li>
+<li class="breadcrumb-item active">{{ page_title }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">{{ page_title }}</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>تحذير:</strong> هل أنت متأكد من رغبتك في حذف قاعدة الحضور "{{ attendance_rule.name }}"؟ هذا الإجراء لا يمكن التراجع عنه.
+                </div>
+                
+                <div class="mb-4">
+                    <h6>تفاصيل قاعدة الحضور:</h6>
+                    <ul class="list-group">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            الاسم
+                            <span>{{ attendance_rule.name }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            الوصف
+                            <span>{{ attendance_rule.description }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            فترة سماح التأخير
+                            <span>{{ attendance_rule.late_grace_minutes }} دقيقة</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            فترة سماح الانصراف المبكر
+                            <span>{{ attendance_rule.early_leave_grace_minutes }} دقيقة</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash-alt me-1"></i> تأكيد الحذف
+                        </button>
+                        <a href="{% url 'employees:attendance_rule_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-right me-1"></i> إلغاء
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

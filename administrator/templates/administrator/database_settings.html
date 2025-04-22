@@ -1,0 +1,667 @@
+{% extends 'administrator/base_admin.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    .db-settings-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+
+    .card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .card:hover {
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        transform: translateY(-5px);
+    }
+
+    .card-header {
+        background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+        padding: 1.5rem;
+        border-bottom: none;
+    }
+
+    .card-title {
+        font-weight: 700;
+        margin-bottom: 0;
+        display: flex;
+        align-items: center;
+    }
+
+    .card-title i {
+        margin-left: 10px;
+        font-size: 1.5rem;
+    }
+
+    .card-body {
+        padding: 2rem;
+        background-color: #f8f9fc;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+        position: relative;
+    }
+
+    .form-control, .form-select {
+        border-radius: 10px;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e3e6f0;
+        transition: all 0.3s;
+        background-color: white;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #4e73df;
+        box-shadow: 0 0 0 0.25rem rgba(78, 115, 223, 0.25);
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #5a5c69;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-text {
+        color: #858796;
+    }
+
+    .btn {
+        border-radius: 10px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+        border: none;
+    }
+
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #224abe 0%, #1a3a94 100%);
+        transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+        background: linear-gradient(135deg, #858796 0%, #636678 100%);
+        border: none;
+    }
+
+    .btn-secondary:hover {
+        background: linear-gradient(135deg, #636678 0%, #4e4f5c 100%);
+        transform: translateY(-2px);
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, #1cc88a 0%, #13855c 100%);
+        border: none;
+    }
+
+    .btn-success:hover {
+        background: linear-gradient(135deg, #13855c 0%, #0f6848 100%);
+        transform: translateY(-2px);
+    }
+
+    .btn-lg {
+        padding: 1rem 2rem;
+    }
+
+    .input-group-text {
+        background-color: #4e73df;
+        color: white;
+        border: none;
+        border-radius: 10px 0 0 10px;
+    }
+
+    .connection-status {
+        padding: 1rem;
+        border-radius: 10px;
+        margin-bottom: 1.5rem;
+        display: none;
+    }
+
+    .connection-status.success {
+        background-color: rgba(28, 200, 138, 0.1);
+        border: 1px solid rgba(28, 200, 138, 0.5);
+        color: #13855c;
+    }
+
+    .connection-status.error {
+        background-color: rgba(231, 74, 59, 0.1);
+        border: 1px solid rgba(231, 74, 59, 0.5);
+        color: #be2617;
+    }
+
+    .connection-status.warning {
+        background-color: rgba(246, 194, 62, 0.1);
+        border: 1px solid rgba(246, 194, 62, 0.5);
+        color: #9d7c1e;
+    }
+
+    .connection-status.info {
+        background-color: rgba(78, 115, 223, 0.1);
+        border: 1px solid rgba(78, 115, 223, 0.5);
+        color: #224abe;
+    }
+
+    .connection-status i {
+        margin-left: 0.5rem;
+    }
+
+    .form-section {
+        background-color: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    }
+
+    .form-section-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #4e73df;
+        margin-bottom: 1.5rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid #e3e6f0;
+    }
+
+    .loader {
+        display: inline-block;
+        width: 1.5rem;
+        height: 1.5rem;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: white;
+        animation: spin 1s ease-in-out infinite;
+        margin-right: 0.5rem;
+        vertical-align: middle;
+        display: none;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .database-list {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+
+    /* Dropdown styling */
+    select.form-select {
+        height: calc(3.5rem + 2px);
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        background-position: right 1rem center;
+    }
+
+    select.form-select option {
+        padding: 10px;
+    }
+
+    select.form-select:disabled {
+        background-color: #f8f9fc;
+        cursor: not-allowed;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .btn-lg {
+            padding: 0.75rem 1.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5 db-settings-container">
+    <div class="card">
+        <div class="card-header">
+            <h4 class="card-title text-white mb-0">
+                <i class="fas fa-database"></i>
+                إعدادات قاعدة البيانات
+            </h4>
+        </div>
+        <div class="card-body">
+            {% if using_sqlite %}
+            <div class="connection-status success" style="display: block;">
+                <i class="fas fa-info-circle"></i>
+                <span>أنت تستخدم حاليًا قاعدة بيانات SQLite للتطوير. يمكنك تكوين إعدادات SQL Server للإنتاج.</span>
+            </div>
+            {% else %}
+            <div class="connection-status info" style="display: block;">
+                <i class="fas fa-database"></i>
+                <span>أنت تستخدم حاليًا قاعدة بيانات SQL Server. يمكنك التبديل إلى SQLite للتطوير المحلي.</span>
+            </div>
+            {% endif %}
+            <div class="connection-status" id="connectionStatus" style="display: none;">
+                <i class="fas fa-info-circle"></i>
+                <span id="statusMessage"></span>
+            </div>
+
+            <form method="post" class="needs-validation" novalidate id="dbSettingsForm">
+                {% csrf_token %}
+
+                <div class="form-section">
+                    <h5 class="form-section-title"><i class="fas fa-database me-2"></i>نوع قاعدة البيانات</h5>
+
+                    <!-- Database Engine -->
+                    <div class="form-group">
+                        <label for="db_engine" class="form-label">{{ form.db_engine.label }}</label>
+                        <select class="form-select" id="db_engine" name="db_engine" required>
+                            {% for value, text in form.db_engine.field.choices %}
+                                <option value="{{ value }}" {% if form.db_engine.value == value %}selected{% endif %}>{{ text }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">{{ form.db_engine.help_text }}</div>
+                    </div>
+                </div>
+
+                <div class="form-section" id="sqlServerSection">
+                    <h5 class="form-section-title"><i class="fas fa-server me-2"></i>معلومات الاتصال بـ SQL Server</h5>
+
+                    <!-- Windows Authentication -->
+                    <div class="form-group form-check mb-4">
+                        <input type="checkbox" class="form-check-input" id="use_windows_auth" name="use_windows_auth"
+                               {% if form.use_windows_auth.value %}checked{% endif %}>
+                        <label class="form-check-label" for="use_windows_auth">{{ form.use_windows_auth.label }}</label>
+                        <div class="form-text">{{ form.use_windows_auth.help_text }}</div>
+                    </div>
+
+                    <!-- Host Name -->
+                    <div class="form-group">
+                        <label for="host" class="form-label">اسم الخادم (Server Name)</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-server"></i></span>
+                            <input type="text" class="form-control" id="host" name="db_host"
+                                   placeholder="مثال: SERVERNAME\SQLEXPRESS أو localhost"
+                                   value="{{ form.db_host.value|default:'' }}">
+                        </div>
+                        <div class="form-text">{{ form.db_host.help_text }}</div>
+                    </div>
+
+                    <div class="row">
+                        <!-- Username -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="username" class="form-label">اسم المستخدم</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-user"></i></span>
+                                    <input type="text" class="form-control" id="username" name="db_user"
+                                           placeholder="اسم المستخدم" value="{{ form.db_user.value|default:'' }}">
+                                </div>
+                                <div class="form-text">{{ form.db_user.help_text }}</div>
+                            </div>
+                        </div>
+
+                        <!-- Password -->
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="password" class="form-label">كلمة المرور</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                                    <input type="password" class="form-control" id="password" name="db_password"
+                                           placeholder="كلمة المرور" value="{{ form.db_password.value|default:'' }}">
+                                </div>
+                                <div class="form-text">{{ form.db_password.help_text }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Test Connection Button -->
+                    <div class="form-group text-center">
+                        <button type="button" class="btn btn-secondary" id="testConnection">
+                            <span class="loader" id="connectionLoader"></span>
+                            <i class="fas fa-plug me-2"></i>اختبار الاتصال
+                        </button>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h5 class="form-section-title"><i class="fas fa-database me-2"></i>اختيار قاعدة البيانات</h5>
+
+                    <!-- Database Name -->
+                    <div class="form-group" id="sqliteDatabaseSection">
+                        <label for="db_name_sqlite" class="form-label">اسم ملف قاعدة بيانات SQLite</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-file-alt"></i></span>
+                            <input type="text" class="form-control" id="db_name_sqlite" name="db_name"
+                                   placeholder="db.sqlite3" value="{{ form.db_name.value|default:'db.sqlite3' }}">
+                        </div>
+                        <div class="form-text">اسم ملف قاعدة بيانات SQLite (سيتم حفظه في مجلد المشروع)</div>
+                    </div>
+
+                    <!-- SQL Server Database Name -->
+                    <div class="form-group" id="sqlServerDatabaseSection">
+                        <label for="database" class="form-label">اسم قاعدة البيانات</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-database"></i></span>
+                            <select class="form-select" id="database" name="db_name" disabled>
+                                <option value="">يرجى اختبار الاتصال أولاً لعرض قواعد البيانات</option>
+                                {% if form.db_name.value %}
+                                <option value="{{ form.db_name.value }}" selected>{{ form.db_name.value }}</option>
+                                {% endif %}
+                            </select>
+                        </div>
+                        <div class="form-text">اختر قاعدة بيانات SQL Server التي تريد الاتصال بها</div>
+                    </div>
+
+                    <!-- Port -->
+                    <div class="form-group" id="portSection">
+                        <label for="db_port" class="form-label">المنفذ (Port)</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-network-wired"></i></span>
+                            <input type="text" class="form-control" id="db_port" name="db_port"
+                                   placeholder="1433" value="{{ form.db_port.value|default:'1433' }}">
+                        </div>
+                        <div class="form-text">{{ form.db_port.help_text }}</div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="text-center mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg" id="saveButton">
+                        <i class="fas fa-save me-2"></i>حفظ الإعدادات
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Elements
+    const dbEngineSelect = document.getElementById('db_engine');
+    const sqlServerSection = document.getElementById('sqlServerSection');
+    const sqliteDatabaseSection = document.getElementById('sqliteDatabaseSection');
+    const sqlServerDatabaseSection = document.getElementById('sqlServerDatabaseSection');
+    const portSection = document.getElementById('portSection');
+    const useWindowsAuthCheckbox = document.getElementById('use_windows_auth');
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const hostInput = document.getElementById('host');
+    const databaseInput = document.getElementById('database');
+    const dbPortInput = document.getElementById('db_port');
+    const testConnectionBtn = document.getElementById('testConnection');
+    const connectionLoader = document.getElementById('connectionLoader');
+    const connectionStatus = document.getElementById('connectionStatus');
+    const statusMessage = document.getElementById('statusMessage');
+    const saveButton = document.getElementById('saveButton');
+    const dbSettingsForm = document.getElementById('dbSettingsForm');
+
+    // Initialize form state
+    initializeForm();
+
+    // Handle database engine change
+    dbEngineSelect.addEventListener('change', function() {
+        updateFormVisibility();
+    });
+
+    // Handle Windows authentication change
+    useWindowsAuthCheckbox.addEventListener('change', function() {
+        updateAuthFields();
+    });
+
+    // Handle test connection
+    testConnectionBtn.addEventListener('click', async function() {
+        // Only available for SQL Server
+        if (dbEngineSelect.value !== 'mssql') {
+            showStatus('error', 'اختبار الاتصال متاح فقط لقواعد بيانات SQL Server');
+            return;
+        }
+
+        // Validate required fields
+        if (!hostInput.value.trim()) {
+            showStatus('error', 'يرجى إدخال اسم الخادم أولاً');
+            hostInput.focus();
+            return;
+        }
+
+        if (!useWindowsAuthCheckbox.checked && (!usernameInput.value.trim() || !passwordInput.value.trim())) {
+            showStatus('error', 'يرجى إدخال اسم المستخدم وكلمة المرور');
+            usernameInput.focus();
+            return;
+        }
+
+        // Show loading state
+        testConnectionBtn.disabled = true;
+        connectionLoader.style.display = 'inline-block';
+        showStatus('', ''); // Clear previous status
+
+        const formData = new FormData();
+        formData.append('host', hostInput.value);
+        formData.append('auth_type', useWindowsAuthCheckbox.checked ? 'windows' : 'sql');
+        formData.append('username', usernameInput.value);
+        formData.append('password', passwordInput.value);
+
+        try {
+            const response = await fetch('{% url "administrator:test_connection" %}', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Enable database select
+                databaseInput.disabled = false;
+
+                // Clear existing options
+                databaseInput.innerHTML = '<option value="">-- اختر قاعدة البيانات --</option>';
+
+                if (data.databases && data.databases.length > 0) {
+                    // Add new database options
+                    data.databases.forEach(db => {
+                        const option = document.createElement('option');
+                        option.value = db;
+                        option.textContent = db;
+                        databaseInput.appendChild(option);
+                    });
+
+                    // Select current database if it exists
+                    const currentDb = '{{ form.db_name.value|default:"" }}';
+                    if (currentDb && data.databases.includes(currentDb)) {
+                        databaseInput.value = currentDb;
+                    } else if (data.databases.length === 1) {
+                        // If there's only one database, select it automatically
+                        databaseInput.value = data.databases[0];
+                    }
+
+                    showStatus('success', `تم الاتصال بالخادم بنجاح! تم العثور على ${data.databases.length} قاعدة بيانات. يرجى اختيار واحدة.`);
+                } else {
+                    showStatus('warning', 'تم الاتصال بالخادم بنجاح، لكن لم يتم العثور على قواعد بيانات. يرجى إدخال اسم قاعدة البيانات يدوياً.');
+
+                    // Add an input field for manual entry
+                    const manualOption = document.createElement('option');
+                    manualOption.value = "manual";
+                    manualOption.textContent = "إدخال اسم قاعدة البيانات يدوياً";
+                    databaseInput.appendChild(manualOption);
+
+                    // Add event listener for manual entry
+                    databaseInput.addEventListener('change', function() {
+                        if (this.value === 'manual') {
+                            const dbName = prompt('الرجاء إدخال اسم قاعدة البيانات:');
+                            if (dbName && dbName.trim()) {
+                                // Add the new option
+                                const newOption = document.createElement('option');
+                                newOption.value = dbName.trim();
+                                newOption.textContent = dbName.trim();
+                                databaseInput.appendChild(newOption);
+
+                                // Select the new option
+                                databaseInput.value = dbName.trim();
+                            } else {
+                                // If no name provided, revert to first option
+                                databaseInput.selectedIndex = 0;
+                            }
+                        }
+                    });
+                }
+            } else {
+                showStatus('error', 'فشل الاتصال: ' + data.error);
+                databaseInput.disabled = true;
+            }
+        } catch (error) {
+            showStatus('error', 'خطأ في الاتصال: ' + error.message);
+            databaseInput.disabled = true;
+        } finally {
+            // Reset loading state
+            testConnectionBtn.disabled = false;
+            connectionLoader.style.display = 'none';
+        }
+    });
+
+    // Handle form submission
+    dbSettingsForm.addEventListener('submit', function(event) {
+        // Validate form before submission
+        if (!validateForm()) {
+            event.preventDefault();
+            return false;
+        }
+
+        // Show loading state on save button
+        saveButton.disabled = true;
+        saveButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>جاري الحفظ...';
+
+        // Continue with form submission
+        return true;
+    });
+
+    // Helper functions
+    function initializeForm() {
+        // Set initial visibility based on database engine
+        updateFormVisibility();
+
+        // Set initial state of auth fields
+        updateAuthFields();
+    }
+
+    function updateFormVisibility() {
+        const isSqlServer = dbEngineSelect.value === 'mssql';
+
+        // Show/hide SQL Server specific sections
+        sqlServerSection.style.display = isSqlServer ? 'block' : 'none';
+        sqlServerDatabaseSection.style.display = isSqlServer ? 'block' : 'none';
+        portSection.style.display = isSqlServer ? 'block' : 'none';
+
+        // Show/hide SQLite specific sections
+        sqliteDatabaseSection.style.display = !isSqlServer ? 'block' : 'none';
+
+        // Update form field names to avoid conflicts
+        if (isSqlServer) {
+            document.getElementById('database').name = 'db_name';
+            document.getElementById('db_name_sqlite').name = 'db_name_sqlite';
+
+            // Reset database dropdown if switching to SQL Server
+            if (databaseInput.options.length <= 1) {
+                databaseInput.innerHTML = '<option value="">يرجى اختبار الاتصال أولاً لعرض قواعد البيانات</option>';
+                if ('{{ form.db_name.value|default:"" }}') {
+                    const option = document.createElement('option');
+                    option.value = '{{ form.db_name.value }}';
+                    option.textContent = '{{ form.db_name.value }}';
+                    option.selected = true;
+                    databaseInput.appendChild(option);
+                }
+                databaseInput.disabled = true;
+            }
+        } else {
+            document.getElementById('database').name = 'db_name_mssql';
+            document.getElementById('db_name_sqlite').name = 'db_name';
+        }
+    }
+
+    function updateAuthFields() {
+        // Enable/disable username and password fields based on Windows auth
+        const useWindowsAuth = useWindowsAuthCheckbox.checked;
+        usernameInput.disabled = useWindowsAuth;
+        passwordInput.disabled = useWindowsAuth;
+
+        if (useWindowsAuth) {
+            usernameInput.value = '';
+            passwordInput.value = '';
+        }
+    }
+
+    function showStatus(type, message) {
+        if (!message) {
+            connectionStatus.style.display = 'none';
+            return;
+        }
+
+        connectionStatus.className = 'connection-status';
+        if (type) {
+            connectionStatus.classList.add(type);
+        }
+
+        statusMessage.textContent = message;
+        connectionStatus.style.display = 'block';
+
+        // Scroll to status message
+        connectionStatus.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function validateForm() {
+        let isValid = true;
+        const isSqlServer = dbEngineSelect.value === 'mssql';
+
+        // For SQL Server
+        if (isSqlServer) {
+            // Check host
+            if (!hostInput.value.trim()) {
+                showStatus('error', 'يرجى إدخال اسم الخادم');
+                hostInput.focus();
+                isValid = false;
+            }
+
+            // Check SQL auth credentials if not using Windows auth
+            else if (!useWindowsAuthCheckbox.checked && (!usernameInput.value.trim() || !passwordInput.value.trim())) {
+                showStatus('error', 'يرجى إدخال اسم المستخدم وكلمة المرور');
+                usernameInput.focus();
+                isValid = false;
+            }
+
+            // Check database selection
+            else if (!databaseInput.value) {
+                showStatus('error', 'يرجى اختيار قاعدة البيانات');
+                databaseInput.focus();
+                isValid = false;
+            }
+
+            // Check port
+            else if (!dbPortInput.value.trim() || isNaN(dbPortInput.value)) {
+                showStatus('error', 'يرجى إدخال رقم منفذ صحيح');
+                dbPortInput.focus();
+                isValid = false;
+            }
+        }
+        // For SQLite
+        else {
+            // Check database name
+            if (!document.getElementById('db_name_sqlite').value.trim()) {
+                showStatus('error', 'يرجى إدخال اسم ملف قاعدة البيانات');
+                document.getElementById('db_name_sqlite').focus();
+                isValid = false;
+            }
+        }
+
+        return isValid;
+    }
+});
+</script>
+{% endblock %}

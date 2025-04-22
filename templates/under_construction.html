@@ -1,0 +1,47 @@
+{% extends 'base_updated.html' %}
+{% load static %}
+
+{% block title %}قيد التطوير | {{ system_settings.system_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card border-0 shadow-lg mt-5">
+                <div class="card-header bg-warning text-white">
+                    <h3 class="mb-0 text-center">
+                        <i class="fas fa-tools me-2"></i>
+                        قيد التطوير
+                    </h3>
+                </div>
+                <div class="card-body text-center p-5">
+                    <img src="{% static 'images/under-construction.png' %}" alt="قيد التطوير" class="img-fluid mb-4" style="max-height: 200px;" onerror="this.src='https://cdn-icons-png.flaticon.com/512/2422/2422246.png';">
+                    
+                    <h4 class="mb-3">عذراً، قسم {{ module_name }} قيد التطوير حالياً</h4>
+                    
+                    <p class="text-muted mb-4">
+                        نعمل حالياً على تطوير هذا القسم. سيتم إضافة الميزات قريباً.
+                    </p>
+                    
+                    {% if error_message %}
+                    <div class="alert alert-danger">
+                        <strong>خطأ:</strong> {{ error_message }}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                        <a href="{% url 'accounts:home' %}" class="btn btn-primary">
+                            <i class="fas fa-home me-2"></i>
+                            العودة للصفحة الرئيسية
+                        </a>
+                        <a href="javascript:history.back()" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            العودة للصفحة السابقة
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

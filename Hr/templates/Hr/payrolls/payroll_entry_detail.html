@@ -1,0 +1,149 @@
+{% extends 'base_updated.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - نظام الدولية{% endblock %}
+
+{% block page_title %}{{ page_title }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'employees:dashboard' %}">الموظفين</a></li>
+<li class="breadcrumb-item"><a href="{% url 'employees:payroll_period_list' %}">فترات الرواتب</a></li>
+<li class="breadcrumb-item"><a href="{% url 'employees:payroll_entry_list' %}">سجلات الرواتب</a></li>
+<li class="breadcrumb-item active">{{ page_title }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">معلومات الموظف</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">الاسم</label>
+                    <p>{{ payroll_entry.employee.emp_full_name }}</p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">فترة الراتب</label>
+                    <p>{{ payroll_entry.payroll_period.name }}</p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">الفترة</label>
+                    <p>{{ payroll_entry.payroll_period.start_date|date:"Y-m-d" }} إلى {{ payroll_entry.payroll_period.end_date|date:"Y-m-d" }}</p>
+                </div>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'employees:payroll_entry_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-right me-1"></i> العودة لسجلات الرواتب
+                    </a>
+                    <button type="button" class="btn btn-primary" onclick="printPayslip()">
+                        <i class="fas fa-print me-1"></i> طباعة قسيمة الراتب
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">تفاصيل الراتب</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card h-100 bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title">المستحقات</h6>
+                                <ul class="list-group list-group-flush">
+                                    {% for item in payroll_items %}
+                                        {% if item.salary_item.item_type == 'fixed' or item.salary_item.item_type == 'allowance' %}
+                                        <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
+                                            {{ item.salary_item.name }}
+                                            <span class="badge bg-success rounded-pill">{{ item.amount|floatformat:2 }}</span>
+                                        </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
+                                        العمل الإضافي
+                                        <span class="badge bg-success rounded-pill">{{ payroll_entry.overtime|floatformat:2 }}</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card h-100 bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title">الاستقطاعات</h6>
+                                <ul class="list-group list-group-flush">
+                                    {% for item in payroll_items %}
+                                        {% if item.salary_item.item_type == 'deduction' %}
+                                        <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
+                                            {{ item.salary_item.name }}
+                                            <span class="badge bg-danger rounded-pill">{{ item.amount|floatformat:2 }}</span>
+                                        </li>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center bg-transparent">
+                                        الجزاءات
+                                        <span class="badge bg-danger rounded-pill">{{ payroll_entry.penalties|floatformat:2 }}</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h6 class="card-title">ملخص الراتب</h6>
+                        <table class="table table-sm">
+                            <tbody>
+                                <tr>
+                                    <th>الراتب الأساسي</th>
+                                    <td class="text-end">{{ payroll_entry.basic_salary|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <th>الراتب المتغير</th>
+                                    <td class="text-end">{{ payroll_entry.variable_salary|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <th>البدلات</th>
+                                    <td class="text-end">{{ payroll_entry.allowances|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <th>العمل الإضافي</th>
+                                    <td class="text-end">{{ payroll_entry.overtime|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <th>الاستقطاعات</th>
+                                    <td class="text-end text-danger">-{{ payroll_entry.deductions|floatformat:2 }}</td>
+                                </tr>
+                                <tr>
+                                    <th>الجزاءات</th>
+                                    <td class="text-end text-danger">-{{ payroll_entry.penalties|floatformat:2 }}</td>
+                                </tr>
+                                <tr class="table-dark">
+                                    <th>صافي الراتب</th>
+                                    <td class="text-end fw-bold">{{ payroll_entry.total_salary|floatformat:2 }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function printPayslip() {
+        // Simulate printing a payslip
+        alert('جاري طباعة قسيمة الراتب للموظف {{ payroll_entry.employee.emp_full_name }}');
+    }
+</script>
+{% endblock %}

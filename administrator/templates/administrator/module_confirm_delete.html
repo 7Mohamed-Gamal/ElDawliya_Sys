@@ -1,0 +1,95 @@
+{% extends 'administrator/base_admin.html' %}
+{% load static %}
+
+{% block title %}حذف الوحدة - {{ object.name }} - لوحة تحكم مدير النظام{% endblock %}
+
+{% block page_icon %}trash-alt{% endblock %}
+{% block page_header %}حذف الوحدة - {{ object.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .module-icon {
+        display: inline-flex;
+        width: 60px;
+        height: 60px;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        color: white;
+        font-size: 24px;
+        margin-bottom: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card mb-4">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    تأكيد الحذف
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <strong>تحذير:</strong> حذف الوحدة سيؤدي إلى إزالتها نهائياً من النظام ومن القائمة الجانبية.
+                </div>
+                
+                <h5 class="mb-3">هل أنت متأكد من رغبتك في حذف هذه الوحدة؟</h5>
+                
+                <div class="text-center mb-4">
+                    <div class="module-icon" style="background-color: {{ object.bg_color }};">
+                        <i class="fas {{ object.icon }}"></i>
+                    </div>
+                    <h4>{{ object.name }}</h4>
+                    {% if object.description %}
+                        <p class="text-muted">{{ object.description }}</p>
+                    {% endif %}
+                </div>
+                
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3 text-muted mb-2 mb-md-0">القسم التابعة له:</div>
+                            <div class="col-md-9"><strong>{{ object.department.name }}</strong></div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-3 text-muted mb-2 mb-md-0">الرابط:</div>
+                            <div class="col-md-9"><code>{{ object.url }}</code></div>
+                        </div>
+                        <hr>
+                        <div class="row">
+                            <div class="col-md-3 text-muted mb-2 mb-md-0">الحالة:</div>
+                            <div class="col-md-9">
+                                {% if object.is_active %}
+                                    <span class="badge bg-success">نشط</span>
+                                {% else %}
+                                    <span class="badge bg-danger">غير نشط</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'administrator:module_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>
+                            إلغاء
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash-alt me-1"></i>
+                            تأكيد الحذف
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
