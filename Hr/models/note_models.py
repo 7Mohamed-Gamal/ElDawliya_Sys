@@ -20,6 +20,7 @@ class EmployeeNote(models.Model):
     class Meta:
         verbose_name = _('ملاحظة الموظف')
         verbose_name_plural = _('ملاحظات الموظفين')
-        db_table = 'Hr_EmployeeNote'
+        # Using the default table name (hr_employeenote) instead of a custom one
+        # db_table = 'Hr_EmployeeNote'
         ordering = ['-created_at']
         managed = True

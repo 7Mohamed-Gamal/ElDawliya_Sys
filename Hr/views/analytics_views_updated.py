@@ -21,9 +21,9 @@ def analytics_dashboard(request):
     
     # إحصائيات الموظفين
     total_employees = Employee.objects.count()
-    active_employees = Employee.objects.filter(working_condition='يعمل').count()
+    active_employees = Employee.objects.filter(working_condition='سارى',Insurance_Status='مؤمن عليه').count()
     on_leave_employees = Employee.objects.filter(working_condition='إجازة').count()
-    inactive_employees = Employee.objects.exclude(working_condition__in=['يعمل', 'إجازة']).count()
+    inactive_employees = Employee.objects.exclude(working_condition__in=['سارى', 'غير مؤمن عليه']).count()
     
     # نسب توزيع الموظفين
     if total_employees > 0:
@@ -231,14 +231,14 @@ def employees_by_department_chart(request):
 def employees_by_status_chart(request):
     """مخطط توزيع الموظفين حسب حالة العمل"""
     total_employees = Employee.objects.count()
-    active_employees = Employee.objects.filter(working_condition='يعمل').count()
+    active_employees = Employee.objects.filter(working_condition='سارى').count()
     on_leave_employees = Employee.objects.filter(working_condition='إجازة').count()
-    inactive_employees = Employee.objects.exclude(working_condition__in=['يعمل', 'إجازة']).count()
+    inactive_employees = Employee.objects.exclude(working_condition__in=['سارى', 'غير مؤمن عليه']).count()
     
     chart_data = {
         'title': 'توزيع الموظفين حسب حالة العمل',
         'type': 'pie',
-        'labels': ['يعمل', 'إجازة', 'غير نشط'],
+        'labels': ['سارى', 'إجازة', 'غير نشط'],
         'datasets': [{
             'data': [active_employees, on_leave_employees, inactive_employees],
             'backgroundColor': ['#4CAF50', '#FFC107', '#F44336'],

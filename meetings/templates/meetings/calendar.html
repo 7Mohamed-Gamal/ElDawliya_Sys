@@ -1,0 +1,335 @@
+{% extends "meetings/base_meetings.html" %}
+{% load static %}
+
+{% block title %}تقويم الاجتماعات{% endblock %}
+
+{% block page_title %}تقويم الاجتماعات{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'meetings:dashboard' %}">الاجتماعات</a></li>
+<li class="breadcrumb-item active">تقويم الاجتماعات</li>
+{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css" rel="stylesheet">
+<style>
+    .fc-toolbar-title {
+        font-family: var(--font-family);
+        font-size: 1.5rem !important;
+    }
+    
+    .fc-daygrid-day-number {
+        font-family: var(--font-family);
+    }
+    
+    .fc .fc-button {
+        font-family: var(--font-family);
+    }
+    
+    .fc-event {
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .fc-event:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .fc-day-today {
+        background-color: rgba(52, 152, 219, 0.1) !important;
+    }
+    
+    .meeting-pending {
+        background-color: #ff9800;
+        border-color: #f57c00;
+    }
+    
+    .meeting-completed {
+        background-color: #4caf50;
+        border-color: #388e3c;
+    }
+    
+    .meeting-cancelled {
+        background-color: #f44336;
+        border-color: #d32f2f;
+    }
+    
+    .filters-card {
+        margin-bottom: 1rem;
+        border-radius: 0.5rem;
+    }
+    
+    .meeting-modal .modal-content {
+        border-radius: 0.5rem;
+        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .meeting-modal .modal-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .meeting-modal .meeting-date {
+        display: inline-flex;
+        align-items: center;
+        background-color: #f5f5f5;
+        padding: 6px 12px;
+        border-radius: 4px;
+        margin: 0.5rem 0;
+    }
+    
+    .meeting-modal .modal-footer {
+        border-top: 1px solid rgba(0, 0, 0, 0.05);
+        padding: 1rem;
+    }
+
+    @media (max-width: 767px) {
+        .fc .fc-toolbar {
+            flex-direction: column;
+        }
+        
+        .fc .fc-toolbar-title {
+            margin: 0.5rem 0;
+        }
+    }
+
+    @media print {
+        .sidebar, .navbar, .fc-toolbar-chunk:last-child, .fc-view-harness {
+            display: none !important;
+        }
+        
+        .main-content {
+            margin-right: 0 !important;
+        }
+        
+        .fc-toolbar-title {
+            font-size: 20pt !important;
+        }
+        
+        .fc .fc-daygrid-body-unbalanced .fc-daygrid-day-events {
+            min-height: 2em !important;
+        }
+    }
+
+    /* Legend styles */
+    .calendar-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 1rem;
+    }
+    
+    .legend-item {
+        display: flex;
+        align-items: center;
+        margin-left: 10px;
+    }
+    
+    .legend-color {
+        width: 16px;
+        height: 16px;
+        border-radius: 4px;
+        margin-left: 6px;
+    }
+    
+    .legend-label {
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Filters and Actions Card -->
+    <div class="card filters-card">
+        <div class="card-body">
+            <div class="d-flex flex-wrap justify-content-between align-items-center">
+                <!-- Legend -->
+                <div class="calendar-legend">
+                    <div class="legend-item">
+                        <div class="legend-color meeting-pending"></div>
+                        <span class="legend-label">قيد الانتظار</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color meeting-completed"></div>
+                        <span class="legend-label">مكتمل</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color meeting-cancelled"></div>
+                        <span class="legend-label">ملغي</span>
+                    </div>
+                </div>
+                
+                <!-- Actions -->
+                <div class="actions">
+                    <a href="{% url 'meetings:create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus-circle me-1"></i> إنشاء اجتماع
+                    </a>
+                    <button class="btn btn-outline-primary ms-2" id="printCalendar">
+                        <i class="fas fa-print me-1"></i> طباعة
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendar Card -->
+    <div class="card">
+        <div class="card-body">
+            <div id="calendar"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Meeting Modal -->
+<div class="modal fade meeting-modal" id="meetingModal" tabindex="-1" aria-labelledby="meetingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="meetingModalLabel"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="meeting-date" id="meetingDate">
+                    <i class="fas fa-calendar-alt me-2"></i>
+                    <span></span>
+                </div>
+                <div class="meeting-time" id="meetingTime">
+                    <i class="fas fa-clock me-2"></i>
+                    <span></span>
+                </div>
+                <div class="meeting-creator mt-3" id="meetingCreator">
+                    <i class="fas fa-user me-2"></i>
+                    المنشئ: <span></span>
+                </div>
+                <div class="meeting-status mt-2" id="meetingStatus">
+                    <i class="fas fa-info-circle me-2"></i>
+                    الحالة: <span></span>
+                </div>
+                <div class="meeting-attendees mt-3" id="meetingAttendees">
+                    <i class="fas fa-users me-2"></i>
+                    عدد الحضور: <span></span>
+                </div>
+                <hr>
+                <div class="meeting-topic mt-3" id="meetingTopic">
+                    <h6>موضوع الاجتماع:</h6>
+                    <p></p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                <a href="#" class="btn btn-primary" id="viewMeetingBtn">
+                    <i class="fas fa-eye me-1"></i> عرض التفاصيل
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/locales-all.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Meeting data from Django backend
+        const meetings = [
+            {% for meeting in meetings %}
+            {
+                id: {{ meeting.id }},
+                title: "{{ meeting.title }}",
+                start: "{{ meeting.date|date:'c' }}",
+                className: "meeting-{{ meeting.status }}",
+                extendedProps: {
+                    topic: "{{ meeting.topic|escapejs }}",
+                    status: "{{ meeting.get_status_display }}",
+                    creator: "{{ meeting.created_by.get_full_name|default:meeting.created_by.username }}",
+                    attendeesCount: {{ meeting.attendees.count }},
+                    detailUrl: "{% url 'meetings:detail' pk=meeting.id %}"
+                }
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
+        
+        // Initialize FullCalendar
+        const calendarEl = document.getElementById('calendar');
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            locale: 'ar',
+            direction: 'rtl',
+            headerToolbar: {
+                start: 'prev,next today',
+                center: 'title',
+                end: 'dayGridMonth,timeGridWeek,timeGridDay,listMonth'
+            },
+            buttonText: {
+                today: 'اليوم',
+                month: 'شهر',
+                week: 'أسبوع',
+                day: 'يوم',
+                list: 'قائمة'
+            },
+            events: meetings,
+            eventTimeFormat: {
+                hour: 'numeric',
+                minute: '2-digit',
+                meridiem: 'short'
+            },
+            eventClick: function(info) {
+                showMeetingModal(info.event);
+            },
+            dayMaxEvents: 3,
+            moreLinkContent: function(args) {
+                return '+ ' + args.num + ' اجتماع';
+            }
+        });
+        
+        calendar.render();
+        
+        // Show meeting modal function
+        function showMeetingModal(event) {
+            const modalEl = document.getElementById('meetingModal');
+            const modal = new bootstrap.Modal(modalEl);
+            
+            // Set modal content
+            document.getElementById('meetingModalLabel').textContent = event.title;
+            document.querySelector('#meetingDate span').textContent = formatDate(event.start);
+            document.querySelector('#meetingTime span').textContent = formatTime(event.start);
+            document.querySelector('#meetingCreator span').textContent = event.extendedProps.creator;
+            document.querySelector('#meetingStatus span').textContent = event.extendedProps.status;
+            document.querySelector('#meetingAttendees span').textContent = event.extendedProps.attendeesCount + ' أشخاص';
+            document.querySelector('#meetingTopic p').textContent = event.extendedProps.topic;
+            
+            // Set detail link
+            document.getElementById('viewMeetingBtn').href = event.extendedProps.detailUrl;
+            
+            modal.show();
+        }
+        
+        // Format date function
+        function formatDate(date) {
+            return date.toLocaleDateString('ar-EG', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric'
+            });
+        }
+        
+        // Format time function
+        function formatTime(date) {
+            return date.toLocaleTimeString('ar-EG', { 
+                hour: 'numeric', 
+                minute: '2-digit' 
+            });
+        }
+        
+        // Print calendar function
+        document.getElementById('printCalendar').addEventListener('click', function() {
+            window.print();
+        });
+    });
+</script>
+{% endblock %}

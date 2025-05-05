@@ -14,14 +14,14 @@ class PermissionAuditLog(models.Model):
     ]
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True,
-                           related_name='permission_audit_logs', verbose_name="المستخدم")
+                           related_name='admin_permission_audit_logs', verbose_name="المستخدم")
     action_type = models.CharField(max_length=10, choices=ACTION_TYPES, verbose_name="نوع الإجراء")
     department = models.CharField(max_length=100, verbose_name="القسم")
     module = models.CharField(max_length=100, verbose_name="الوحدة")
     permission_type = models.CharField(max_length=20, verbose_name="نوع الصلاحية")
-    affected_groups = models.ManyToManyField(Group, blank=True, related_name='audit_logs', verbose_name="المجموعات المتأثرة")
+    affected_groups = models.ManyToManyField(Group, blank=True, related_name='admin_audit_logs', verbose_name="المجموعات المتأثرة")
     affected_users = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True,
-                                        related_name='affected_audit_logs', verbose_name="المستخدمين المتأثرين")
+                                        related_name='admin_affected_audit_logs', verbose_name="المستخدمين المتأثرين")
     description = models.TextField(verbose_name="الوصف")
     timestamp = models.DateTimeField(default=timezone.now, verbose_name="التاريخ والوقت")
     ip_address = models.GenericIPAddressField(null=True, blank=True, verbose_name="عنوان IP")

@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 
-# Import employee views
+# استيراد وظائف عرض الموظفين
 from Hr.views.employee_views import (
     dashboard, employee_list, employee_create, employee_detail,
     employee_edit, employee_delete, employee_search
@@ -17,56 +17,56 @@ from Hr.views.department_views_part import (
 from Hr.views.job_views import job_list
 from Hr.views.car_views import car_list
 
-# Import department views
-# Removed duplicate import of department views as they are now imported above
+# استيراد وظائف عرض الأقسام
+# تم إزالة استيراد مكرر لوظائف عرض الأقسام حيث تم استيرادها أعلاه
 
-# Import job views
+# استيراد وظائف عرض الوظائف
 from Hr.views.job_views import (
     job_create, job_detail, job_edit, job_delete
 )
 
-# Import car views
+# استيراد وظائف عرض السيارات
 from Hr.views.car_views import (
     car_create, car_detail, car_edit, car_delete
 )
 
-# Import pickup point views
+# استيراد وظائف عرض نقاط الالتقاط
 from Hr.views.pickup_point_views import (
     pickup_point_list, pickup_point_create, pickup_point_detail,
     pickup_point_edit, pickup_point_delete
 )
 
-# Import insurance job views
+# استيراد وظائف عرض التأمين
 from Hr.views.insurance_views import (
     insurance_job_list, insurance_job_create, insurance_job_detail,
     insurance_job_edit, insurance_job_delete
 )
 
-# Import task views
+# استيراد وظائف عرض المهام
 from Hr.views.task_views import (
     employee_task_list, employee_task_create, employee_task_detail,
     employee_task_edit, employee_task_delete
 )
 
-# Import note views
+# استيراد وظائف عرض الملاحظات
 from Hr.views.note_views import (
     employee_note_list, employee_note_create, employee_note_detail,
     employee_note_edit, employee_note_delete
 )
 
-# Import file views
+# استيراد وظائف عرض الملفات
 from Hr.views.file_views import (
     employee_file_list, employee_file_create, employee_file_detail,
     employee_file_edit, employee_file_delete
 )
 
-# Import HR task views
+# استيراد وظائف عرض مهام الموارد البشرية
 from Hr.views.hr_task_views import (
     hr_task_list, hr_task_create, hr_task_detail,
     hr_task_edit, hr_task_delete
 )
 
-# Import leave type views
+# استيراد وظائف عرض أنواع الإجازات
 from Hr.views.leave_views import (
     leave_type_list, leave_type_create, leave_type_detail,
     leave_type_edit, leave_type_delete,
@@ -75,33 +75,33 @@ from Hr.views.leave_views import (
     employee_leave_reject
 )
 
-# Import evaluation views
+# استيراد وظائف عرض التقييمات
 from Hr.views.evaluation_views import (
     employee_evaluation_list, employee_evaluation_create, employee_evaluation_detail,
     employee_evaluation_edit, employee_evaluation_delete
 )
 
-# Import report views
+# استيراد وظائف عرض التقارير
 from Hr.views.report_views import (
     report_list, report_detail, monthly_salary_report
 )
 
-# Import alert views
+# استيراد وظائف عرض التنبيهات
 from Hr.views.alert_views import (
     alert_list
 )
 
-# Import analytics views
+# استيراد وظائف عرض التحليلات
 from Hr.views.analytics_views import (
     analytics_dashboard, analytics_chart
 )
 
-# Import org chart views
+# استيراد وظائف عرض الهيكل التنظيمي
 from Hr.views.org_chart_views_updated import (
     org_chart, org_chart_data, department_org_chart, employee_hierarchy
 )
 
-# Placeholder for salary views
+# مكان مؤقت لوظائف عرض الرواتب
 def salary_item_list(request):
     return render(request, 'Hr/under_construction.html', {'title': 'قائمة بنود الرواتب'})
 
@@ -150,7 +150,7 @@ def payroll_entry_list(request):
 def payroll_entry_detail(request, pk):
     return render(request, 'Hr/under_construction.html', {'title': 'تفاصيل سجل راتب'})
 
-# Placeholder for attendance views
+# مكان مؤقت لوظائف عرض الحضور
 def attendance_rule_list(request):
     return render(request, 'Hr/under_construction.html', {'title': 'قائمة قواعد الحضور'})
 

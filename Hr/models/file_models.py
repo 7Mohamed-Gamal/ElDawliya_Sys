@@ -30,6 +30,7 @@ class EmployeeFile(models.Model):
     class Meta:
         verbose_name = _('ملف الموظف')
         verbose_name_plural = _('ملفات الموظفين')
-        db_table = 'Hr_EmployeeFile'
+        # Using the default table name (hr_employeefile) instead of a custom one
+        # db_table = 'Hr_EmployeeFile'
         ordering = ['-created_at']
         managed = True

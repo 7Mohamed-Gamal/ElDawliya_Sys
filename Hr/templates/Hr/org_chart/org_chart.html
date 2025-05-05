@@ -1,4 +1,4 @@
-{% extends 'base_updated.html' %}
+{% extends 'Hr/base_hr.html' %}
 {% load static %}
 
 {% block title %}الهيكل التنظيمي للشركة - الموارد البشرية{% endblock %}
@@ -295,8 +295,8 @@ $(function() {
                 // Custom node template - creates each box in the org chart
                 let statusClass = 'active';
                 if (data.status === 'إجازة') statusClass = 'on-leave';
-                else if (data.status === 'مستقيل') statusClass = 'resigned';
-                else if (data.status === 'مفصول') statusClass = 'terminated';
+                else if (data.status === 'استقالة') statusClass = 'resigned';
+                else if (data.status === 'انقطاع عن العمل') statusClass = 'terminated';
                 
                 return `
                 <div class="node ${statusClass}" data-emp-id="${data.id}">
@@ -388,14 +388,14 @@ $(function() {
         $('#managementLevel').text(employee.level || '-');
         
         // Set employee status
-        if (employee.status === 'يعمل') {
-            $('#employeeStatus').removeClass().addClass('badge bg-success').text('نشط');
+        if (employee.status === 'سارى') {
+            $('#employeeStatus').removeClass().addClass('badge bg-success').text('سارى');
         } else if (employee.status === 'إجازة') {
             $('#employeeStatus').removeClass().addClass('badge bg-info').text('إجازة');
-        } else if (employee.status === 'مستقيل') {
-            $('#employeeStatus').removeClass().addClass('badge bg-danger').text('مستقيل');
-        } else if (employee.status === 'مفصول') {
-            $('#employeeStatus').removeClass().addClass('badge bg-secondary').text('مفصول');
+        } else if (employee.status === 'استقالة') {
+            $('#employeeStatus').removeClass().addClass('badge bg-danger').text('استقالة');
+        } else if (employee.status === 'انقطاع عن العمل') {
+            $('#employeeStatus').removeClass().addClass('badge bg-secondary').text('انقطاع عن العمل');
         }
         
         // Set employee image

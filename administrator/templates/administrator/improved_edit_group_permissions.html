@@ -1,0 +1,1302 @@
+{% extends 'base_updated.html' %}
+{% load static %}
+
+{% block title %}{{ title }} | نظام الدولية{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.min.css">
+<style>
+    /* Variables de colores */
+    :root {
+        --primary-color: #0d6efd;
+        --primary-light: rgba(13, 110, 253, 0.1);
+        --success-color: #198754;
+        --success-light: rgba(25, 135, 84, 0.1);
+        --warning-color: #ffc107;
+        --warning-light: rgba(255, 193, 7, 0.1);
+        --danger-color: #dc3545;
+        --danger-light: rgba(220, 53, 69, 0.1);
+        --info-color: #0dcaf0;
+        --info-light: rgba(13, 202, 240, 0.1);
+        --light-color: #f8f9fa;
+        --dark-color: #212529;
+        --border-color: #e9ecef;
+    }
+
+    /* Estilos generales */
+    .card {
+        border-radius: 10px;
+        border: none;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+
+    .card:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+    .card-header {
+        border-bottom: 1px solid var(--border-color);
+        padding: 1rem 1.5rem;
+    }
+
+    .card-body {
+        padding: 1.5rem;
+    }
+
+    /* Estilos para la sección de información del grupo */
+    .group-info-card {
+        background-color: var(--light-color);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .group-avatar {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background-color: var(--primary-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+    }
+
+    .group-stats {
+        display: flex;
+        justify-content: space-around;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--primary-color);
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        color: var(--dark-color);
+    }
+
+    /* Estilos para la navegación de permisos */
+    .permissions-nav {
+        background-color: var(--light-color);
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        position: sticky;
+        top: 80px;
+        z-index: 100;
+    }
+
+    .nav-item {
+        margin-bottom: 0.5rem;
+    }
+
+    .nav-link {
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        transition: all 0.2s ease;
+        color: var(--dark-color);
+        display: flex;
+        align-items: center;
+    }
+
+    .nav-link:hover {
+        background-color: var(--border-color);
+    }
+
+    .nav-link.active {
+        background-color: var(--primary-color);
+        color: white;
+    }
+
+    .nav-link i {
+        margin-right: 0.5rem;
+        width: 20px;
+        text-align: center;
+    }
+
+    /* Estilos para las secciones de permisos */
+    .permission-section {
+        background-color: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+    }
+
+    .section-title i {
+        margin-right: 0.5rem;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+    }
+
+    /* Colores específicos para cada tipo de permiso */
+    .section-view .section-title i {
+        background-color: var(--primary-light);
+        color: var(--primary-color);
+    }
+
+    .section-add .section-title i {
+        background-color: var(--success-light);
+        color: var(--success-color);
+    }
+
+    .section-change .section-title i {
+        background-color: var(--warning-light);
+        color: var(--warning-color);
+    }
+
+    .section-delete .section-title i {
+        background-color: var(--danger-light);
+        color: var(--danger-color);
+    }
+
+    .section-print .section-title i {
+        background-color: var(--info-light);
+        color: var(--info-color);
+    }
+
+    /* Estilos para los departamentos */
+    .department-card {
+        background-color: white;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+        transition: all 0.3s ease;
+    }
+
+    .department-card:hover {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
+    .department-header {
+        padding: 1rem;
+        background-color: var(--light-color);
+        border-bottom: 1px solid var(--border-color);
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .department-name {
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+    }
+
+    .department-name i {
+        margin-right: 0.5rem;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background-color: var(--primary-light);
+        color: var(--primary-color);
+    }
+
+    .department-content {
+        padding: 1rem;
+    }
+
+    /* Estilos para los módulos */
+    .module-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+
+    .module-item {
+        background-color: var(--light-color);
+        border-radius: 8px;
+        padding: 1rem;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        border: 1px solid transparent;
+        display: flex;
+        align-items: center;
+    }
+
+    .module-item:hover {
+        background-color: white;
+        border-color: var(--primary-color);
+    }
+
+    .module-item.selected {
+        background-color: var(--primary-light);
+        border-color: var(--primary-color);
+    }
+
+    .module-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 1rem;
+        color: white;
+    }
+
+    .module-details {
+        flex: 1;
+    }
+
+    .module-name {
+        font-weight: 600;
+        margin: 0;
+        font-size: 0.9rem;
+    }
+
+    .module-url {
+        font-size: 0.75rem;
+        color: var(--primary-color);
+        margin: 0;
+        font-family: monospace;
+    }
+
+    /* Estilos para los permisos */
+    .permission-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 0.75rem;
+    }
+
+    .permission-item {
+        background-color: var(--light-color);
+        border-radius: 8px;
+        padding: 0.75rem;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        border: 1px solid transparent;
+        display: flex;
+        align-items: center;
+    }
+
+    .permission-item:hover {
+        background-color: white;
+        border-color: var(--primary-color);
+    }
+
+    .permission-item.selected {
+        background-color: var(--primary-light);
+        border-color: var(--primary-color);
+    }
+
+    .permission-checkbox {
+        margin-right: 0.5rem;
+    }
+
+    /* Estilos para los filtros */
+    .filter-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .filter-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        background-color: var(--light-color);
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+    }
+
+    .filter-badge:hover {
+        background-color: white;
+        border-color: var(--primary-color);
+    }
+
+    .filter-badge.active {
+        background-color: var(--primary-color);
+        color: white;
+    }
+
+    /* Estilos para la barra de búsqueda */
+    .search-container {
+        position: relative;
+        margin-bottom: 1rem;
+    }
+
+    .search-input {
+        padding-left: 2.5rem;
+    }
+
+    .search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--dark-color);
+    }
+
+    /* Estilos para la barra de acciones fija */
+    .actions-bar {
+        position: sticky;
+        bottom: 0;
+        background-color: white;
+        padding: 1rem;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 100;
+        box-shadow: 0 -0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
+    /* Estilos para los indicadores de carga y guardado */
+    .save-indicator {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        display: none;
+    }
+
+    .spinner-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        display: none;
+    }
+
+    .spinner-container {
+        background-color: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        text-align: center;
+    }
+
+    /* Estilos para el resumen de permisos */
+    .permissions-summary {
+        background-color: var(--light-color);
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .summary-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+
+    .summary-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 0.5rem;
+    }
+
+    .summary-view .summary-icon {
+        background-color: var(--primary-light);
+        color: var(--primary-color);
+    }
+
+    .summary-add .summary-icon {
+        background-color: var(--success-light);
+        color: var(--success-color);
+    }
+
+    .summary-change .summary-icon {
+        background-color: var(--warning-light);
+        color: var(--warning-color);
+    }
+
+    .summary-delete .summary-icon {
+        background-color: var(--danger-light);
+        color: var(--danger-color);
+    }
+
+    .summary-print .summary-icon {
+        background-color: var(--info-light);
+        color: var(--info-color);
+    }
+
+    .summary-count {
+        font-weight: 600;
+        margin-right: 0.5rem;
+    }
+
+    /* Estilos para el modo oscuro */
+    @media (prefers-color-scheme: dark) {
+        .card {
+            background-color: #2d3748;
+        }
+        
+        .card-header {
+            background-color: #1a202c;
+        }
+        
+        .permissions-nav {
+            background-color: #2d3748;
+        }
+        
+        .nav-link {
+            color: #e2e8f0;
+        }
+        
+        .nav-link:hover {
+            background-color: #4a5568;
+        }
+        
+        .department-card {
+            background-color: #2d3748;
+        }
+        
+        .department-header {
+            background-color: #1a202c;
+        }
+        
+        .module-item {
+            background-color: #2d3748;
+        }
+        
+        .module-item:hover {
+            background-color: #4a5568;
+        }
+        
+        .permission-item {
+            background-color: #2d3748;
+        }
+        
+        .permission-item:hover {
+            background-color: #4a5568;
+        }
+    }
+
+    /* Estilos responsivos */
+    @media (max-width: 768px) {
+        .module-list {
+            grid-template-columns: repeat(auto-fill, minmax(100%, 1fr));
+        }
+        
+        .permission-list {
+            grid-template-columns: repeat(auto-fill, minmax(100%, 1fr));
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Encabezado de la página -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="page-title">{{ title }}</h2>
+                <div>
+                    <a href="{% url 'administrator:group_permission_list' %}" class="btn btn-outline-primary me-2">
+                        <i class="fas fa-arrow-right ml-1"></i>
+                        العودة إلى قائمة صلاحيات المجموعات
+                    </a>
+                    <a href="{% url 'administrator:permission_dashboard' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-tachometer-alt ml-1"></i>
+                        لوحة الصلاحيات
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Columna de información y navegación -->
+        <div class="col-lg-3 mb-4">
+            <!-- Tarjeta de información del grupo -->
+            <div class="card group-info-card mb-4">
+                <div class="card-body text-center">
+                    <div class="group-avatar">
+                        <i class="fas fa-users fa-3x text-primary"></i>
+                    </div>
+                    <h4 class="mb-1">{{ group.name }}</h4>
+                    <p class="text-muted mb-3">{{ group.user_set.count }} مستخدم</p>
+                    
+                    <a href="{% url 'administrator:group_edit' pk=group.id %}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-edit me-1"></i> تعديل بيانات المجموعة
+                    </a>
+                    
+                    <div class="group-stats">
+                        <div class="stat-item">
+                            <div class="stat-value" id="deptCount">{{ group.allowed_departments.count }}</div>
+                            <div class="stat-label">الأقسام</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="moduleCount">{{ group.allowed_modules.count }}</div>
+                            <div class="stat-label">الوحدات</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="permCount">{{ group.custom_permissions.count }}</div>
+                            <div class="stat-label">الصلاحيات</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Navegación de permisos -->
+            <div class="permissions-nav">
+                <h5 class="mb-3">أقسام الصلاحيات</h5>
+                <ul class="nav flex-column" id="permissionsNav">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#departments-section">
+                            <i class="fas fa-building"></i> الأقسام والوحدات
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#templates-section">
+                            <i class="fas fa-file-code"></i> القوالب
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#view-permissions-section">
+                            <i class="fas fa-eye"></i> صلاحيات العرض
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#add-permissions-section">
+                            <i class="fas fa-plus-circle"></i> صلاحيات الإضافة
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#change-permissions-section">
+                            <i class="fas fa-edit"></i> صلاحيات التعديل
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#delete-permissions-section">
+                            <i class="fas fa-trash-alt"></i> صلاحيات الحذف
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#print-permissions-section">
+                            <i class="fas fa-print"></i> صلاحيات الطباعة
+                        </a>
+                    </li>
+                </ul>
+                
+                <!-- Resumen de permisos -->
+                <div class="permissions-summary mt-4">
+                    <h6 class="mb-2">ملخص الصلاحيات</h6>
+                    <div class="summary-item summary-view">
+                        <div class="summary-icon">
+                            <i class="fas fa-eye"></i>
+                        </div>
+                        <span class="summary-count" id="viewCount">0</span>
+                        <span>صلاحيات العرض</span>
+                    </div>
+                    <div class="summary-item summary-add">
+                        <div class="summary-icon">
+                            <i class="fas fa-plus-circle"></i>
+                        </div>
+                        <span class="summary-count" id="addCount">0</span>
+                        <span>صلاحيات الإضافة</span>
+                    </div>
+                    <div class="summary-item summary-change">
+                        <div class="summary-icon">
+                            <i class="fas fa-edit"></i>
+                        </div>
+                        <span class="summary-count" id="changeCount">0</span>
+                        <span>صلاحيات التعديل</span>
+                    </div>
+                    <div class="summary-item summary-delete">
+                        <div class="summary-icon">
+                            <i class="fas fa-trash-alt"></i>
+                        </div>
+                        <span class="summary-count" id="deleteCount">0</span>
+                        <span>صلاحيات الحذف</span>
+                    </div>
+                    <div class="summary-item summary-print">
+                        <div class="summary-icon">
+                            <i class="fas fa-print"></i>
+                        </div>
+                        <span class="summary-count" id="printCount">0</span>
+                        <span>صلاحيات الطباعة</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Columna principal de contenido -->
+        <div class="col-lg-9">
+            <form method="post" id="permissionsForm">
+                {% csrf_token %}
+                
+                <!-- Sección de departamentos y módulos -->
+                <div class="permission-section section-view" id="departments-section">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="fas fa-building"></i>
+                            الأقسام والوحدات
+                        </h3>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="expandAllDepts">
+                                <i class="fas fa-expand-alt me-1"></i>
+                                توسيع الكل
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary ms-2" id="collapseAllDepts">
+                                <i class="fas fa-compress-alt me-1"></i>
+                                طي الكل
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Barra de búsqueda para departamentos -->
+                    <div class="search-container">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" class="form-control search-input" id="deptSearch" placeholder="البحث في الأقسام والوحدات...">
+                    </div>
+                    
+                    <!-- Lista de departamentos -->
+                    <div id="departmentsList">
+                        {% for department in departments %}
+                        <div class="department-card" data-dept-id="{{ department.id }}">
+                            <div class="department-header" data-bs-toggle="collapse" data-bs-target="#dept-{{ department.id }}-content">
+                                <div class="department-name">
+                                    <div class="form-check">
+                                        <input class="form-check-input department-checkbox" type="checkbox" id="dept-{{ department.id }}-check" name="departments" value="{{ department.id }}" {% if department in group.allowed_departments.all %}checked{% endif %}>
+                                        <label class="form-check-label" for="dept-{{ department.id }}-check">
+                                            <i class="fas fa-{{ department.icon }}"></i>
+                                            {{ department.name }}
+                                        </label>
+                                    </div>
+                                </div>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="collapse" id="dept-{{ department.id }}-content">
+                                <div class="department-content">
+                                    <h6 class="mb-3">الوحدات في قسم {{ department.name }}</h6>
+                                    <div class="module-list">
+                                        {% for module in department.module_set.all %}
+                                        <div class="module-item" data-module-id="{{ module.id }}">
+                                            <div class="module-icon" style="background-color: {{ module.bg_color }}">
+                                                <i class="fas fa-{{ module.icon }}"></i>
+                                            </div>
+                                            <div class="module-details">
+                                                <div class="form-check">
+                                                    <input class="form-check-input module-checkbox" type="checkbox" id="module-{{ module.id }}-check" name="modules" value="{{ module.id }}" data-dept-id="{{ department.id }}" {% if module in group.allowed_modules.all %}checked{% endif %}>
+                                                    <label class="form-check-label" for="module-{{ module.id }}-check">
+                                                        <div class="module-name">{{ module.name }}</div>
+                                                        <div class="module-url">{{ module.url }}</div>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Sección de plantillas -->
+                <div class="permission-section section-view" id="templates-section">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="fas fa-file-code"></i>
+                            القوالب
+                        </h3>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-outline-primary select-all" data-target="templates">
+                                <i class="fas fa-check-double me-1"></i>
+                                تحديد الكل
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Barra de búsqueda para plantillas -->
+                    <div class="search-container">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" class="form-control search-input" id="templateSearch" placeholder="البحث في القوالب...">
+                    </div>
+                    
+                    <!-- Filtros para plantillas -->
+                    <div class="filter-container" id="templateFilters">
+                        <span class="filter-badge active" data-filter="all">الكل</span>
+                        {% for app_name in template_apps %}
+                        <span class="filter-badge" data-filter="{{ app_name }}">{{ app_name }}</span>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Lista de plantillas -->
+                    <div class="template-list">
+                        {{ form.templates }}
+                    </div>
+                </div>
+                
+                <!-- Sección de permisos de visualización -->
+                <div class="permission-section section-view" id="view-permissions-section">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="fas fa-eye"></i>
+                            صلاحيات العرض
+                        </h3>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-outline-primary select-all" data-target="view_permissions">
+                                <i class="fas fa-check-double me-1"></i>
+                                تحديد الكل
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Barra de búsqueda para permisos de visualización -->
+                    <div class="search-container">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" class="form-control search-input" id="viewPermSearch" placeholder="البحث في صلاحيات العرض...">
+                    </div>
+                    
+                    <!-- Filtros para permisos de visualización -->
+                    <div class="filter-container" id="viewPermFilters">
+                        <span class="filter-badge active" data-filter="all">الكل</span>
+                        {% for department in departments %}
+                        <span class="filter-badge" data-filter="{{ department.id }}">{{ department.name }}</span>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Lista de permisos de visualización -->
+                    <div class="permission-list">
+                        {{ form.view_permissions }}
+                    </div>
+                </div>
+                
+                <!-- Sección de permisos de adición -->
+                <div class="permission-section section-add" id="add-permissions-section">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="fas fa-plus-circle"></i>
+                            صلاحيات الإضافة
+                        </h3>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-outline-success select-all" data-target="add_permissions">
+                                <i class="fas fa-check-double me-1"></i>
+                                تحديد الكل
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Barra de búsqueda para permisos de adición -->
+                    <div class="search-container">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" class="form-control search-input" id="addPermSearch" placeholder="البحث في صلاحيات الإضافة...">
+                    </div>
+                    
+                    <!-- Filtros para permisos de adición -->
+                    <div class="filter-container" id="addPermFilters">
+                        <span class="filter-badge active" data-filter="all">الكل</span>
+                        {% for department in departments %}
+                        <span class="filter-badge" data-filter="{{ department.id }}">{{ department.name }}</span>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Lista de permisos de adición -->
+                    <div class="permission-list">
+                        {{ form.add_permissions }}
+                    </div>
+                </div>
+                
+                <!-- Sección de permisos de modificación -->
+                <div class="permission-section section-change" id="change-permissions-section">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="fas fa-edit"></i>
+                            صلاحيات التعديل
+                        </h3>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-outline-warning select-all" data-target="change_permissions">
+                                <i class="fas fa-check-double me-1"></i>
+                                تحديد الكل
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Barra de búsqueda para permisos de modificación -->
+                    <div class="search-container">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" class="form-control search-input" id="changePermSearch" placeholder="البحث في صلاحيات التعديل...">
+                    </div>
+                    
+                    <!-- Filtros para permisos de modificación -->
+                    <div class="filter-container" id="changePermFilters">
+                        <span class="filter-badge active" data-filter="all">الكل</span>
+                        {% for department in departments %}
+                        <span class="filter-badge" data-filter="{{ department.id }}">{{ department.name }}</span>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Lista de permisos de modificación -->
+                    <div class="permission-list">
+                        {{ form.change_permissions }}
+                    </div>
+                </div>
+                
+                <!-- Sección de permisos de eliminación -->
+                <div class="permission-section section-delete" id="delete-permissions-section">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="fas fa-trash-alt"></i>
+                            صلاحيات الحذف
+                        </h3>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-outline-danger select-all" data-target="delete_permissions">
+                                <i class="fas fa-check-double me-1"></i>
+                                تحديد الكل
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Barra de búsqueda para permisos de eliminación -->
+                    <div class="search-container">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" class="form-control search-input" id="deletePermSearch" placeholder="البحث في صلاحيات الحذف...">
+                    </div>
+                    
+                    <!-- Filtros para permisos de eliminación -->
+                    <div class="filter-container" id="deletePermFilters">
+                        <span class="filter-badge active" data-filter="all">الكل</span>
+                        {% for department in departments %}
+                        <span class="filter-badge" data-filter="{{ department.id }}">{{ department.name }}</span>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Lista de permisos de eliminación -->
+                    <div class="permission-list">
+                        {{ form.delete_permissions }}
+                    </div>
+                </div>
+                
+                <!-- Sección de permisos de impresión -->
+                <div class="permission-section section-print" id="print-permissions-section">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="fas fa-print"></i>
+                            صلاحيات الطباعة
+                        </h3>
+                        <div>
+                            <button type="button" class="btn btn-sm btn-outline-info select-all" data-target="print_permissions">
+                                <i class="fas fa-check-double me-1"></i>
+                                تحديد الكل
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Barra de búsqueda para permisos de impresión -->
+                    <div class="search-container">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" class="form-control search-input" id="printPermSearch" placeholder="البحث في صلاحيات الطباعة...">
+                    </div>
+                    
+                    <!-- Filtros para permisos de impresión -->
+                    <div class="filter-container" id="printPermFilters">
+                        <span class="filter-badge active" data-filter="all">الكل</span>
+                        {% for department in departments %}
+                        <span class="filter-badge" data-filter="{{ department.id }}">{{ department.name }}</span>
+                        {% endfor %}
+                    </div>
+                    
+                    <!-- Lista de permisos de impresión -->
+                    <div class="permission-list">
+                        {{ form.print_permissions }}
+                    </div>
+                </div>
+                
+                <!-- Barra de acciones fija -->
+                <div class="actions-bar">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="autoSaveSwitch">
+                        <label class="form-check-label" for="autoSaveSwitch">تفعيل الحفظ التلقائي عند التغيير</label>
+                    </div>
+                    <div>
+                        <a href="{% url 'administrator:group_permission_list' %}" class="btn btn-outline-secondary me-2">
+                            <i class="fas fa-times me-1"></i> إلغاء
+                        </a>
+                        <button type="button" class="btn btn-outline-primary me-2" id="previewChangesBtn">
+                            <i class="fas fa-eye me-1"></i> معاينة التغييرات
+                        </button>
+                        <button type="submit" class="btn btn-success" id="savePermissionsBtn">
+                            <i class="fas fa-save me-1"></i> حفظ صلاحيات المجموعة
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Indicador de guardado -->
+                <div class="save-indicator alert alert-success shadow" id="saveIndicator">
+                    <i class="fas fa-check-circle me-2"></i> تم حفظ التغييرات بنجاح
+                </div>
+                
+                <!-- Indicador de carga -->
+                <div class="spinner-overlay" id="loadingOverlay">
+                    <div class="spinner-container">
+                        <div class="spinner-border text-primary mb-2" role="status">
+                            <span class="visually-hidden">جاري التحميل...</span>
+                        </div>
+                        <p class="mb-0">جاري حفظ التغييرات...</p>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.all.min.js"></script>
+<script>
+    // Configurar CSRF token para solicitudes AJAX
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    const csrftoken = getCookie('csrftoken');
+
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+
+    $(document).ready(function() {
+        // Inicializar Select2
+        $('.form-select').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            placeholder: 'اختر...',
+            allowClear: true
+        });
+
+        // Navegación suave
+        $('#permissionsNav a').on('click', function(e) {
+            e.preventDefault();
+            
+            // Actualizar clase activa
+            $('#permissionsNav a').removeClass('active');
+            $(this).addClass('active');
+            
+            // Desplazamiento suave
+            const target = $(this.getAttribute('href'));
+            if (target.length) {
+                $('html, body').animate({
+                    scrollTop: target.offset().top - 80
+                }, 500);
+            }
+        });
+
+        // Expandir/colapsar todos los departamentos
+        $('#expandAllDepts').on('click', function() {
+            $('.department-content').parent('.collapse').collapse('show');
+        });
+        
+        $('#collapseAllDepts').on('click', function() {
+            $('.department-content').parent('.collapse').collapse('hide');
+        });
+
+        // Seleccionar todos los elementos
+        $('.select-all').on('click', function() {
+            const target = $(this).data('target');
+            $(`#id_${target} option`).prop('selected', true);
+            $(`#id_${target}`).trigger('change');
+            updatePermissionCounts();
+        });
+
+        // Filtrar por departamento
+        $('.filter-badge').on('click', function() {
+            const filter = $(this).data('filter');
+            const container = $(this).closest('.filter-container');
+            
+            // Actualizar estado activo
+            container.find('.filter-badge').removeClass('active');
+            $(this).addClass('active');
+            
+            // Aplicar filtro
+            if (filter === 'all') {
+                $('.permission-item').show();
+            } else {
+                $('.permission-item').hide();
+                $(`.permission-item[data-dept-id="${filter}"]`).show();
+            }
+        });
+
+        // Búsqueda en tiempo real
+        $('.search-input').on('input', function() {
+            const searchTerm = $(this).val().toLowerCase();
+            const container = $(this).closest('.permission-section');
+            
+            if (searchTerm === '') {
+                container.find('.permission-item, .module-item, .department-card').show();
+            } else {
+                // Ocultar todos los elementos
+                container.find('.permission-item, .module-item, .department-card').hide();
+                
+                // Mostrar elementos que coinciden con la búsqueda
+                container.find('.permission-item').each(function() {
+                    if ($(this).text().toLowerCase().includes(searchTerm)) {
+                        $(this).show();
+                    }
+                });
+                
+                container.find('.module-item').each(function() {
+                    if ($(this).text().toLowerCase().includes(searchTerm)) {
+                        $(this).show();
+                        $(this).closest('.department-card').show();
+                        $(this).closest('.collapse').collapse('show');
+                    }
+                });
+                
+                container.find('.department-card').each(function() {
+                    if ($(this).find('.department-name').text().toLowerCase().includes(searchTerm)) {
+                        $(this).show();
+                        $(this).find('.collapse').collapse('show');
+                    }
+                });
+            }
+        });
+
+        // Lógica para marcar/desmarcar departamentos y módulos
+        $('.department-checkbox').on('change', function() {
+            const deptId = $(this).val();
+            const isChecked = $(this).prop('checked');
+            
+            // Marcar/desmarcar todos los módulos del departamento
+            $(`.module-checkbox[data-dept-id="${deptId}"]`).prop('checked', isChecked);
+            
+            updateModuleCount();
+        });
+        
+        $('.module-checkbox').on('change', function() {
+            const deptId = $(this).data('dept-id');
+            
+            // Verificar si todos los módulos del departamento están marcados
+            const totalModules = $(`.module-checkbox[data-dept-id="${deptId}"]`).length;
+            const checkedModules = $(`.module-checkbox[data-dept-id="${deptId}"]:checked`).length;
+            
+            // Actualizar estado del checkbox del departamento
+            $(`#dept-${deptId}-check`).prop('checked', checkedModules > 0);
+            $(`#dept-${deptId}-check`).prop('indeterminate', checkedModules > 0 && checkedModules < totalModules);
+            
+            updateModuleCount();
+        });
+
+        // Función para actualizar contadores
+        function updateModuleCount() {
+            const deptCount = $('.department-checkbox:checked').length;
+            const moduleCount = $('.module-checkbox:checked').length;
+            
+            $('#deptCount').text(deptCount);
+            $('#moduleCount').text(moduleCount);
+        }
+        
+        function updatePermissionCounts() {
+            const viewCount = $('#id_view_permissions option:selected').length;
+            const addCount = $('#id_add_permissions option:selected').length;
+            const changeCount = $('#id_change_permissions option:selected').length;
+            const deleteCount = $('#id_delete_permissions option:selected').length;
+            const printCount = $('#id_print_permissions option:selected').length;
+            const totalCount = viewCount + addCount + changeCount + deleteCount + printCount;
+            
+            $('#viewCount').text(viewCount);
+            $('#addCount').text(addCount);
+            $('#changeCount').text(changeCount);
+            $('#deleteCount').text(deleteCount);
+            $('#printCount').text(printCount);
+            $('#permCount').text(totalCount);
+        }
+
+        // Inicializar contadores
+        updateModuleCount();
+        updatePermissionCounts();
+
+        // Guardar automáticamente
+        let autoSaveTimeout;
+        
+        $('#autoSaveSwitch').on('change', function() {
+            if ($(this).prop('checked')) {
+                // Activar guardado automático
+                $('.form-select, .form-check-input').on('change', function() {
+                    clearTimeout(autoSaveTimeout);
+                    autoSaveTimeout = setTimeout(function() {
+                        savePermissions(true);
+                    }, 2000);
+                });
+                
+                Swal.fire({
+                    title: 'تم تفعيل الحفظ التلقائي',
+                    text: 'سيتم حفظ التغييرات تلقائياً بعد كل تعديل',
+                    icon: 'info',
+                    confirmButtonText: 'حسناً'
+                });
+            } else {
+                // Desactivar guardado automático
+                $('.form-select, .form-check-input').off('change');
+                clearTimeout(autoSaveTimeout);
+            }
+        });
+
+        // Guardar permisos
+        function savePermissions(isAutoSave = false) {
+            $('#loadingOverlay').show();
+            
+            const formData = $('#permissionsForm').serialize();
+            
+            $.ajax({
+                url: window.location.href,
+                type: 'POST',
+                data: formData,
+                success: function(response) {
+                    $('#loadingOverlay').hide();
+                    
+                    if (isAutoSave) {
+                        // Mostrar indicador de guardado
+                        $('#saveIndicator').fadeIn().delay(2000).fadeOut();
+                    } else {
+                        // Mostrar mensaje de éxito
+                        Swal.fire({
+                            title: 'تم الحفظ بنجاح',
+                            text: 'تم حفظ صلاحيات المجموعة بنجاح',
+                            icon: 'success',
+                            confirmButtonText: 'حسناً'
+                        });
+                    }
+                    
+                    // Actualizar contadores
+                    updateModuleCount();
+                    updatePermissionCounts();
+                },
+                error: function(xhr, status, error) {
+                    $('#loadingOverlay').hide();
+                    
+                    Swal.fire({
+                        title: 'خطأ',
+                        text: 'حدث خطأ أثناء حفظ الصلاحيات. يرجى المحاولة مرة أخرى.',
+                        icon: 'error',
+                        confirmButtonText: 'حسناً'
+                    });
+                }
+            });
+        }
+
+        // Manejar envío del formulario
+        $('#permissionsForm').on('submit', function(e) {
+            e.preventDefault();
+            savePermissions();
+        });
+
+        // Previsualizar cambios
+        $('#previewChangesBtn').on('click', function() {
+            const deptCount = $('.department-checkbox:checked').length;
+            const moduleCount = $('.module-checkbox:checked').length;
+            const viewCount = $('#id_view_permissions option:selected').length;
+            const addCount = $('#id_add_permissions option:selected').length;
+            const changeCount = $('#id_change_permissions option:selected').length;
+            const deleteCount = $('#id_delete_permissions option:selected').length;
+            const printCount = $('#id_print_permissions option:selected').length;
+            const totalCount = viewCount + addCount + changeCount + deleteCount + printCount;
+            
+            Swal.fire({
+                title: 'ملخص التغييرات',
+                html: `
+                    <div class="text-start">
+                        <p><strong>المجموعة:</strong> {{ group.name }}</p>
+                        <p><strong>الأقسام المحددة:</strong> ${deptCount}</p>
+                        <p><strong>الوحدات المحددة:</strong> ${moduleCount}</p>
+                        <p><strong>إجمالي الصلاحيات:</strong> ${totalCount}</p>
+                        <ul>
+                            <li>صلاحيات العرض: ${viewCount}</li>
+                            <li>صلاحيات الإضافة: ${addCount}</li>
+                            <li>صلاحيات التعديل: ${changeCount}</li>
+                            <li>صلاحيات الحذف: ${deleteCount}</li>
+                            <li>صلاحيات الطباعة: ${printCount}</li>
+                        </ul>
+                    </div>
+                `,
+                icon: 'info',
+                confirmButtonText: 'حسناً'
+            });
+        });
+
+        // Detectar cambios en el desplazamiento para actualizar navegación
+        $(window).on('scroll', function() {
+            const scrollPosition = $(window).scrollTop();
+            
+            // Encontrar la sección visible actual
+            $('.permission-section').each(function() {
+                const sectionTop = $(this).offset().top - 100;
+                const sectionBottom = sectionTop + $(this).outerHeight();
+                
+                if (scrollPosition >= sectionTop && scrollPosition < sectionBottom) {
+                    const id = $(this).attr('id');
+                    
+                    // Actualizar navegación
+                    $('#permissionsNav a').removeClass('active');
+                    $(`#permissionsNav a[href="#${id}"]`).addClass('active');
+                    
+                    return false; // Salir del bucle
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

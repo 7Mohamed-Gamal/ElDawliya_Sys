@@ -1,0 +1,188 @@
+{% extends "inventory/base_inventory.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "قائمة الأقسام" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">{% trans "قائمة الأقسام" %}</h1>
+        <a href="{% url 'inventory:department_add' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> {% trans "إضافة قسم جديد" %}
+        </a>
+    </div>
+
+    <!-- فلترة البيانات -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">{% trans "بحث" %}</h6>
+        </div>
+        <div class="card-body">
+            <form method="get" action="{% url 'inventory:department_list' %}">
+                <div class="row">
+                    <div class="col-md-8 form-group">
+                        <label class="control-label">{% trans "بحث" %}</label>
+                        <input type="text" name="q" value="{{ search_query }}" class="form-control" placeholder="{% trans 'اسم القسم، الكود، المدير، إلخ' %}">
+                    </div>
+                    <div class="col-md-4 form-group d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i> {% trans "بحث" %}
+                        </button>
+                        <a href="{% url 'inventory:department_list' %}" class="btn btn-secondary ml-2">
+                            <i class="fas fa-sync-alt"></i> {% trans "إعادة تعيين" %}
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- قائمة الأقسام -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">{% trans "الأقسام" %}</h6>
+        </div>
+        <div class="card-body">
+            {% if departments %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>{% trans "الكود" %}</th>
+                            <th>{% trans "اسم القسم" %}</th>
+                            <th>{% trans "مدير القسم" %}</th>
+                            <th>{% trans "الموقع" %}</th>
+                            <th>{% trans "ملاحظات" %}</th>
+                            <th>{% trans "إجراءات" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for department in departments %}
+                        <tr>
+                            <td>{{ department.code|default:"-" }}</td>
+                            <td>{{ department.name }}</td>
+                            <td>{{ department.manager|default:"-" }}</td>
+                            <td>{{ department.location|default:"-" }}</td>
+                            <td>{{ department.notes|truncatechars:30|default:"-" }}</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'inventory:department_edit' department.id %}" class="btn btn-warning btn-sm">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'inventory:department_delete' department.id %}" class="btn btn-danger btn-sm">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <div class="pagination justify-content-center mt-4">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if search_query %}&q={{ search_query }}{% endif %}" aria-label="First">
+                                    <span aria-hidden="true">&laquo;&laquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if search_query %}&q={{ search_query }}{% endif %}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&q={{ search_query }}{% endif %}" aria-label="Last">
+                                <span aria-hidden="true">&raquo;&raquo;</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+            
+            {% else %}
+            <div class="alert alert-info">
+                {% if search_query %}
+                    {% trans "لا توجد أقسام تطابق عملية البحث." %}
+                {% else %}
+                    {% trans "لا توجد أقسام حتى الآن." %}
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- إحصائيات -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">{% trans "إحصائيات" %}</h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card border-left-primary shadow py-2 mb-4">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">{% trans "إجمالي الأقسام" %}</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ total_departments }}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-building fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card border-left-success shadow py-2 mb-4">
+                        <div class="card-body">
+                            <div class="row no-gutters align-items-center">
+                                <div class="col mr-2">
+                                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">{% trans "الأذونات المرتبطة بالأقسام" %}</div>
+                                    <div class="h5 mb-0 font-weight-bold text-gray-800">{{ department_vouchers }}</div>
+                                </div>
+                                <div class="col-auto">
+                                    <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // يمكن إضافة أي أكواد جافاسكريبت هنا
+</script>
+{% endblock %}

@@ -165,6 +165,8 @@
                 {% endif %}
                 <form method="post" class="login-form needs-validation" novalidate>
                     {% csrf_token %}
+                    <!-- Hidden field to ensure CSRF token is included -->
+                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
                     <div class="mb-4">
                         <label for="username" class="form-label">اسم المستخدم</label>
                         <div class="input-group">
@@ -244,6 +246,31 @@
                     infoModal.style.display = 'none';
                 }
             });
+
+            // CSRF token handling
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+
+            // Update CSRF token in form
+            const csrftoken = getCookie('csrftoken');
+            if (csrftoken) {
+                const csrfInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
+                if (csrfInput) {
+                    csrfInput.value = csrftoken;
+                }
+            }
         });
     </script>
 </body>

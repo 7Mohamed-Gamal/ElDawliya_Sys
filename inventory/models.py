@@ -1,4 +1,4 @@
-# inventory/models.py
+# ملف models.py لتطبيق المخزون
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -108,7 +108,7 @@ class SystemSettings(models.Model):
         ('ar', 'العربية'),
         ('en', 'English'),
     ]
-    
+
     FONT_CHOICES = [
         ('cairo', 'Cairo'),
         ('tajawal', 'Tajawal'),
@@ -116,40 +116,40 @@ class SystemSettings(models.Model):
         ('ibm-plex-sans-arabic', 'IBM Plex Sans Arabic'),
         ('noto-sans-arabic', 'Noto Sans Arabic'),
     ]
-    
+
     DIRECTION_CHOICES = [
         ('rtl', 'من اليمين إلى اليسار'),
         ('ltr', 'من اليسار إلى اليمين'),
     ]
-    
+
     language = models.CharField(
         max_length=2,
         choices=LANGUAGE_CHOICES,
         default='ar',
         verbose_name=_('لغة النظام')
     )
-    
+
     font_family = models.CharField(
         max_length=50,
         choices=FONT_CHOICES,
         default='cairo',
         verbose_name=_('الخط المستخدم')
     )
-    
+
     text_direction = models.CharField(
         max_length=3,
         choices=DIRECTION_CHOICES,
         default='rtl',
         verbose_name=_('اتجاه النص')
     )
-    
+
     class Meta:
         verbose_name = _('إعدادات النظام')
         verbose_name_plural = _('إعدادات النظام')
-    
+
     def __str__(self):
         return f"System Settings - {self.language} - {self.font_family}"
-    
+
     @classmethod
     def get_settings(cls):
         settings = cls.objects.first()

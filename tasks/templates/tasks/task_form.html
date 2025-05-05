@@ -1,4 +1,4 @@
-{% extends 'base_updated.html' %}
+{% extends 'tasks/base_tasks.html' %}
 {% load static %}
 
 {% block title %}
@@ -30,7 +30,7 @@
     <div class="card-body">
         <form method="post" class="needs-validation" novalidate>
             {% csrf_token %}
-            
+
             <div class="row g-3">
                 <div class="col-md-12 mb-3">
                     <label for="{{ form.description.id_for_label }}" class="form-label">وصف المهمة <span class="text-danger">*</span></label>
@@ -49,7 +49,17 @@
                 <div class="col-md-6 mb-3">
                     <label for="{{ form.assigned_to.id_for_label }}" class="form-label">المكلف بالمهمة <span class="text-danger">*</span></label>
                     <div class="form-control-wrapper">
-                        {{ form.assigned_to }}
+                        {% if request.user.is_superuser %}
+                            {{ form.assigned_to }}
+                        {% else %}
+                            <select class="form-select" disabled>
+                                <option>{{ form.assigned_to.value }}</option>
+                            </select>
+                            <input type="hidden" name="assigned_to" value="{{ form.assigned_to.value.id }}" />
+                            <div class="form-text text-muted">
+                                <i class="fas fa-info-circle"></i> فقط المشرفين يمكنهم تغيير المكلف بالمهمة
+                            </div>
+                        {% endif %}
                     </div>
                     {% if form.assigned_to.errors %}
                     <div class="invalid-feedback d-block">
@@ -101,7 +111,7 @@
                     </div>
                     {% endif %}
                 </div>
-                
+
                 {% if form.meeting %}
                 <div class="col-md-12 mb-3 d-none">
                     {{ form.meeting }}

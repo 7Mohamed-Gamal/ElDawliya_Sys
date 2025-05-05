@@ -1,0 +1,250 @@
+{% extends 'employee_tasks/base_employee_tasks.html' %}
+
+{% block title %}
+    {% if is_create %}
+        إنشاء مهمة جديدة - نظام الدولية
+    {% else %}
+        تعديل مهمة - نظام الدولية
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'employee_tasks:dashboard' %}">لوحة التحكم</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'employee_tasks:task_list' %}">المهام</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">
+                        {% if is_create %}
+                            إنشاء مهمة جديدة
+                        {% else %}
+                            تعديل مهمة
+                        {% endif %}
+                    </li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        {% if is_create %}
+                            إنشاء مهمة جديدة
+                        {% else %}
+                            تعديل مهمة: {{ task.title }}
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="
+                        {% if is_create %}
+                            {% url 'employee_tasks:task_create' %}
+                        {% else %}
+                            {% url 'employee_tasks:task_edit' task.pk %}
+                        {% endif %}
+                    ">
+                        {% csrf_token %}
+                        
+                        <!-- Title -->
+                        <div class="mb-3">
+                            <label for="{{ form.title.id_for_label }}" class="form-label">عنوان المهمة <span class="text-danger">*</span></label>
+                            {{ form.title }}
+                            {% if form.title.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.title.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Description -->
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">وصف المهمة <span class="text-danger">*</span></label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.description.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row">
+                            <!-- Category -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.category.id_for_label }}" class="form-label">التصنيف</label>
+                                {{ form.category }}
+                                {% if form.category.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.category.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    <a href="{% url 'employee_tasks:category_create' %}" target="_blank">
+                                        <i class="fas fa-plus-circle me-1"></i> إنشاء تصنيف جديد
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            <!-- Assigned To -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.assigned_to.id_for_label }}" class="form-label">تكليف إلى</label>
+                                {{ form.assigned_to }}
+                                {% if form.assigned_to.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.assigned_to.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">اترك فارغًا إذا كانت المهمة لك فقط</div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <!-- Status -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.status.id_for_label }}" class="form-label">الحالة <span class="text-danger">*</span></label>
+                                {{ form.status }}
+                                {% if form.status.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.status.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Priority -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.priority.id_for_label }}" class="form-label">الأولوية <span class="text-danger">*</span></label>
+                                {{ form.priority }}
+                                {% if form.priority.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.priority.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <!-- Start Date -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.start_date.id_for_label }}" class="form-label">تاريخ البداية <span class="text-danger">*</span></label>
+                                {{ form.start_date }}
+                                {% if form.start_date.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.start_date.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Due Date -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.due_date.id_for_label }}" class="form-label">تاريخ الاستحقاق <span class="text-danger">*</span></label>
+                                {{ form.due_date }}
+                                {% if form.due_date.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.due_date.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <!-- Progress -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.progress.id_for_label }}" class="form-label">نسبة الإنجاز (%)</label>
+                                {{ form.progress }}
+                                {% if form.progress.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.progress.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Is Private -->
+                            <div class="col-md-6 mb-3">
+                                <div class="form-check mt-4">
+                                    {{ form.is_private }}
+                                    <label class="form-check-label" for="{{ form.is_private.id_for_label }}">
+                                        خاص (لا يمكن رؤيته إلا من قبل المنشئ والمشرف)
+                                    </label>
+                                    {% if form.is_private.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.is_private.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="
+                                {% if task %}
+                                    {% url 'employee_tasks:task_detail' task.pk %}
+                                {% else %}
+                                    {% url 'employee_tasks:task_list' %}
+                                {% endif %}
+                            " class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-right me-1"></i> إلغاء
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>
+                                {% if is_create %}
+                                    إنشاء المهمة
+                                {% else %}
+                                    حفظ التغييرات
+                                {% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set default dates if creating a new task
+        {% if is_create %}
+            const today = new Date();
+            const tomorrow = new Date();
+            tomorrow.setDate(today.getDate() + 1);
+            
+            const startDateInput = document.getElementById('{{ form.start_date.id_for_label }}');
+            const dueDateInput = document.getElementById('{{ form.due_date.id_for_label }}');
+            
+            if (!startDateInput.value) {
+                startDateInput.value = today.toISOString().split('T')[0];
+            }
+            
+            if (!dueDateInput.value) {
+                dueDateInput.value = tomorrow.toISOString().split('T')[0];
+            }
+        {% endif %}
+    });
+</script>
+{% endblock %}

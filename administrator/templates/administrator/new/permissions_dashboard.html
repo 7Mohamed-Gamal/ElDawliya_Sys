@@ -1,0 +1,119 @@
+{% extends 'administrator/new/base.html' %}
+{% load static %}
+
+{% block permissions_content %}
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <div class="alert alert-info">
+            <h4 class="alert-heading"><i class="fas fa-info-circle"></i> نظام الصلاحيات الجديد</h4>
+            <p>مرحبًا بك في نظام الصلاحيات الجديد. يمكنك من خلال هذا النظام إدارة صلاحيات المستخدمين بطريقة سهلة ومرنة.</p>
+            <hr>
+            <p class="mb-0">استخدم القائمة الجانبية للتنقل بين أقسام النظام المختلفة.</p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title">المستخدمين</h5>
+                        <h2 class="mb-0">{{ users_count }}</h2>
+                    </div>
+                    <i class="fas fa-users fa-3x"></i>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-top-0">
+                <a href="{% url 'administrator:user_permission_list' %}" class="text-white">عرض المستخدمين <i class="fas fa-arrow-circle-right"></i></a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title">التطبيقات</h5>
+                        <h2 class="mb-0">{{ app_modules_count }}</h2>
+                    </div>
+                    <i class="fas fa-cubes fa-3x"></i>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-top-0">
+                <a href="{% url 'administrator:app_module_list' %}" class="text-white">عرض التطبيقات <i class="fas fa-arrow-circle-right"></i></a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title">صلاحيات العمليات</h5>
+                        <h2 class="mb-0">{{ operation_permissions_count }}</h2>
+                    </div>
+                    <i class="fas fa-cogs fa-3x"></i>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-top-0">
+                <a href="{% url 'administrator:operation_permission_list' %}" class="text-white">عرض صلاحيات العمليات <i class="fas fa-arrow-circle-right"></i></a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3 mb-4">
+        <div class="card text-white bg-danger">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title">صلاحيات الصفحات</h5>
+                        <h2 class="mb-0">{{ page_permissions_count }}</h2>
+                    </div>
+                    <i class="fas fa-file-alt fa-3x"></i>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-top-0">
+                <a href="{% url 'administrator:page_permission_list' %}" class="text-white">عرض صلاحيات الصفحات <i class="fas fa-arrow-circle-right"></i></a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> كيفية استخدام النظام</h5>
+            </div>
+            <div class="card-body">
+                <ol>
+                    <li>قم بإنشاء التطبيقات التي تريد إدارة صلاحياتها.</li>
+                    <li>أضف صلاحيات العمليات لكل تطبيق (عرض، إضافة، تعديل، حذف، طباعة).</li>
+                    <li>أضف صلاحيات الصفحات لكل تطبيق.</li>
+                    <li>قم بإدارة صلاحيات المستخدمين من خلال تعيين صلاحيات العمليات والصفحات لكل مستخدم.</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-lightbulb"></i> نصائح سريعة</h5>
+            </div>
+            <div class="card-body">
+                <ul>
+                    <li>استخدم أكواد قصيرة ومعبرة للتطبيقات والعمليات لسهولة الاستخدام.</li>
+                    <li>قم بتنظيم الصلاحيات بشكل منطقي حسب التطبيقات والوظائف.</li>
+                    <li>استخدم خاصية البحث والتصفية للعثور بسرعة على الصلاحيات المطلوبة.</li>
+                    <li>قم بمراجعة صلاحيات المستخدمين بشكل دوري للتأكد من أنها محدثة.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

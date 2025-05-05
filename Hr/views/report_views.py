@@ -1,13 +1,10 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.http import HttpResponse
 from django.db.models import Count, Sum, Avg, Q
 from django.utils import timezone
 import csv
 from datetime import datetime, timedelta
-
-from administrator.decorators_new import template_permission_required
-from Hr.decorators import permission_required
 
 from Hr.models.employee_model import Employee
 from Hr.models.leave_models import EmployeeLeave
@@ -293,7 +290,7 @@ def employee_report(request):
     context = {
         'employees': employees,
         'departments': Department.objects.all(),
-        'working_conditions': Employee.WORKING_CONDITIONS,
+        'employee': Employee,  # Pass the Employee model to access WORKING_CONDITION_CHOICES
         'selected_department': department_id,
         'selected_working_condition': working_condition,
         'title': 'تقرير الموظفين'

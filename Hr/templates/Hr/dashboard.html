@@ -1,4 +1,4 @@
-{% extends 'base_updated.html' %}
+{% extends 'Hr/base_hr.html' %}
 {% load static %}
 
 {% block title %}لوحة تحكم الموارد البشرية - نظام الدولية{% endblock %}
@@ -16,20 +16,20 @@
         // Quick Search Functionality
         const quickSearch = document.getElementById('quickSearch');
         const quickSearchBtn = document.getElementById('quickSearchBtn');
-        
+
         if (quickSearch && quickSearchBtn) {
             // Handle search button click
             quickSearchBtn.addEventListener('click', function() {
                 handleSearch();
             });
-            
+
             // Handle Enter key press in search input
             quickSearch.addEventListener('keypress', function(e) {
                 if (e.key === 'Enter') {
                     handleSearch();
                 }
             });
-            
+
             function handleSearch() {
                 const searchTerm = quickSearch.value.trim();
                 if (searchTerm) {
@@ -38,21 +38,21 @@
                 }
             }
         }
-        
+
         // Alert Dismissal
         const dismissButtons = document.querySelectorAll('.dismiss-alert');
         dismissButtons.forEach(button => {
             button.addEventListener('click', function() {
                 const alertItem = this.closest('.alert-item');
                 const alertId = this.getAttribute('data-alert-id');
-                
+
                 // Add fade-out animation
                 alertItem.classList.add('fade-out');
-                
+
                 // Remove from DOM after animation completes
                 alertItem.addEventListener('animationend', function() {
                     alertItem.remove();
-                    
+
                     // Check if there are any alerts left
                     const remainingAlerts = document.querySelectorAll('.alert-item');
                     if (remainingAlerts.length === 0) {
@@ -67,13 +67,13 @@
                             `;
                         }
                     }
-                    
+
                     // In a real application, you would make an AJAX call here to mark the alert as dismissed
                     console.log('Alert dismissed:', alertId);
                 });
             });
         });
-        
+
         // Interactive Card Effects
         const actionCards = document.querySelectorAll('.action-card');
         actionCards.forEach(card => {
@@ -81,7 +81,7 @@
                 const icon = this.querySelector('.action-icon');
                 if (icon) {
                     icon.classList.add('pulse');
-                    
+
                     // Remove the animation class after it completes
                     icon.addEventListener('animationend', function() {
                         icon.classList.remove('pulse');
@@ -89,13 +89,13 @@
                 }
             });
         });
-        
+
         // Collapsible sections toggle icon rotation
         const collapsibleButtons = document.querySelectorAll('[data-bs-toggle="collapse"]');
         collapsibleButtons.forEach(button => {
             const targetId = button.getAttribute('data-bs-target');
             const target = document.querySelector(targetId);
-            
+
             if (target) {
                 target.addEventListener('shown.bs.collapse', function() {
                     const icon = button.querySelector('i');
@@ -104,7 +104,7 @@
                         icon.classList.add('fa-chevron-up');
                     }
                 });
-                
+
                 target.addEventListener('hidden.bs.collapse', function() {
                     const icon = button.querySelector('i');
                     if (icon) {
@@ -613,7 +613,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Tasks Card -->
         <div class="card shadow-sm">
             <div class="card-header bg-light py-3 border-bottom">
@@ -669,7 +669,7 @@
         box-shadow: 0 .5rem 1rem rgba(0,0,0,.1)!important;
     }
     .card-header {
-        background-color: #f8f9fa; 
+        background-color: #f8f9fa;
     }
 
     /* Quick Access Toolbar */
@@ -770,7 +770,7 @@
         background-color: rgba(0,123,255,0.05);
         border-left-color: #0d6efd;
     }
-    
+
     /* تأثيرات متنوعة */
     .badge {
         font-weight: 500;
@@ -794,7 +794,7 @@
     .bg-secondary-subtle {
         background-color: rgba(108, 117, 125, 0.15);
     }
-    
+
     /* تأثيرات التفاعل */
     .fade-out {
         animation: fadeOut 0.5s ease forwards;

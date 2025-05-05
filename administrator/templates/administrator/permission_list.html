@@ -1,4 +1,4 @@
-{% extends 'base_updated.html' %}
+{% extends 'administrator/base_admin.html' %}
 
 {% block title %}{{ page_title|default:"صلاحيات الوحدات" }} | {{ system_settings.system_name }}{% endblock %}
 
@@ -30,11 +30,72 @@
         </div>
     </div>
 
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">بحث عن الصلاحيات</h5>
+                </div>
+                <div class="card-body">
+                    <form method="get" id="search-form">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="search" class="form-label">بحث عام</label>
+                                <input type="text" class="form-control" id="search" name="search"
+                                       placeholder="اسم الوحدة أو القسم" value="{{ current_search }}">
+                                <div class="form-text">البحث في اسم الوحدة أو اسم القسم</div>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="department" class="form-label">القسم</label>
+                                <select class="form-select" id="department" name="department">
+                                    <option value="">جميع الأقسام</option>
+                                    {% for department in departments %}
+                                    <option value="{{ department.id }}" {% if current_department == department.id|stringformat:"s" %}selected{% endif %}>
+                                        {{ department.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="permission_type" class="form-label">نوع الصلاحية</label>
+                                <select class="form-select" id="permission_type" name="permission_type">
+                                    <option value="">جميع الأنواع</option>
+                                    {% for ptype, pname in permission_types %}
+                                    <option value="{{ ptype }}" {% if current_permission_type == ptype %}selected{% endif %}>
+                                        {{ pname }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <label for="is_active" class="form-label">الحالة</label>
+                                <select class="form-select" id="is_active" name="is_active">
+                                    <option value="">الكل</option>
+                                    <option value="true" {% if current_is_active == 'true' %}selected{% endif %}>نشطة</option>
+                                    <option value="false" {% if current_is_active == 'false' %}selected{% endif %}>غير نشطة</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mt-3 d-flex justify-content-between">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-1"></i> بحث
+                            </button>
+                            <a href="{% url 'administrator:permission_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-redo me-1"></i> إعادة ضبط
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="row">
         <div class="col-12">
             <div class="card border-0 shadow">
-                <div class="card-header bg-light">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">قائمة الصلاحيات</h5>
+                    <span class="badge bg-primary">{{ paginator.count|default:permissions.count }} صلاحية</span>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -82,8 +143,8 @@
                                     <td>
                                         <span class="badge bg-secondary">{{ permission.groups.count }}</span>
                                         {% if permission.groups.count > 0 %}
-                                        <button class="btn btn-sm btn-outline-secondary" 
-                                                data-bs-toggle="popover" 
+                                        <button class="btn btn-sm btn-outline-secondary"
+                                                data-bs-toggle="popover"
                                                 data-bs-trigger="focus"
                                                 data-bs-html="true"
                                                 title="المجموعات"
@@ -95,8 +156,8 @@
                                     <td>
                                         <span class="badge bg-secondary">{{ permission.users.count }}</span>
                                         {% if permission.users.count > 0 %}
-                                        <button class="btn btn-sm btn-outline-secondary" 
-                                                data-bs-toggle="popover" 
+                                        <button class="btn btn-sm btn-outline-secondary"
+                                                data-bs-toggle="popover"
                                                 data-bs-trigger="focus"
                                                 data-bs-html="true"
                                                 title="المستخدمين"
@@ -107,10 +168,10 @@
                                     </td>
                                     <td>
                                         <div class="btn-group" role="group">
-                                            <a href="{% url 'administrator:permission_edit' permission.id %}" class="btn btn-sm btn-outline-primary">
+                                            <a href="{% url 'administrator:permission_edit' permission.id %}" class="btn btn-sm btn-outline-primary" data-bs-toggle="tooltip" title="تعديل الصلاحية">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                            <a href="{% url 'administrator:permission_delete' permission.id %}" class="btn btn-sm btn-outline-danger">
+                                            <a href="{% url 'administrator:permission_delete' permission.id %}" class="btn btn-sm btn-outline-danger" data-bs-toggle="tooltip" title="حذف الصلاحية">
                                                 <i class="fas fa-trash-alt"></i>
                                             </a>
                                         </div>
@@ -124,6 +185,77 @@
                             </tbody>
                         </table>
                     </div>
+
+                    {% if is_paginated %}
+                    <div class="mt-4">
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination justify-content-center">
+                                {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.department %}&department={{ request.GET.department }}{% endif %}{% if request.GET.permission_type %}&permission_type={{ request.GET.permission_type }}{% endif %}{% if request.GET.is_active %}&is_active={{ request.GET.is_active }}{% endif %}" aria-label="First">
+                                        <span aria-hidden="true">&laquo;&laquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.department %}&department={{ request.GET.department }}{% endif %}{% if request.GET.permission_type %}&permission_type={{ request.GET.permission_type }}{% endif %}{% if request.GET.is_active %}&is_active={{ request.GET.is_active }}{% endif %}" aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                                {% else %}
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="First">
+                                        <span aria-hidden="true">&laquo;&laquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                                {% endif %}
+
+                                {% for num in page_obj.paginator.page_range %}
+                                    {% if page_obj.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.department %}&department={{ request.GET.department }}{% endif %}{% if request.GET.permission_type %}&permission_type={{ request.GET.permission_type }}{% endif %}{% if request.GET.is_active %}&is_active={{ request.GET.is_active }}{% endif %}">{{ num }}</a>
+                                    </li>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.department %}&department={{ request.GET.department }}{% endif %}{% if request.GET.permission_type %}&permission_type={{ request.GET.permission_type }}{% endif %}{% if request.GET.is_active %}&is_active={{ request.GET.is_active }}{% endif %}" aria-label="Next">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.department %}&department={{ request.GET.department }}{% endif %}{% if request.GET.permission_type %}&permission_type={{ request.GET.permission_type }}{% endif %}{% if request.GET.is_active %}&is_active={{ request.GET.is_active }}{% endif %}" aria-label="Last">
+                                        <span aria-hidden="true">&raquo;&raquo;</span>
+                                    </a>
+                                </li>
+                                {% else %}
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="Next">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="Last">
+                                        <span aria-hidden="true">&raquo;&raquo;</span>
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        <div class="text-center text-muted">
+                            عرض {{ page_obj.start_index }} إلى {{ page_obj.end_index }} من إجمالي {{ page_obj.paginator.count }} صلاحية
+                        </div>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -139,6 +271,40 @@
         var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
             return new bootstrap.Popover(popoverTriggerEl)
         });
+
+        // تحسين تجربة البحث
+
+        // البحث الفوري عند تغيير القائمة المنسدلة
+        $('#department, #permission_type, #is_active').on('change', function() {
+            $('#search-form').submit();
+        });
+
+        // إضافة زر مسح لحقل البحث
+        $('#search').after('<button type="button" class="btn btn-sm btn-outline-secondary position-absolute end-0 top-50 translate-middle-y me-2" id="clear-search" style="display:none;"><i class="fas fa-times"></i></button>');
+
+        // إظهار/إخفاء زر المسح
+        function toggleClearButton() {
+            if ($('#search').val()) {
+                $('#clear-search').show();
+            } else {
+                $('#clear-search').hide();
+            }
+        }
+
+        // تحقق عند تحميل الصفحة
+        toggleClearButton();
+
+        // تحقق عند الكتابة
+        $('#search').on('input', toggleClearButton);
+
+        // مسح البحث عند النقر على الزر
+        $('#clear-search').on('click', function() {
+            $('#search').val('').focus();
+            $(this).hide();
+        });
+
+        // إضافة تلميحات للأزرار
+        $('[data-bs-toggle="tooltip"]').tooltip();
     });
 </script>
 {% endblock %}

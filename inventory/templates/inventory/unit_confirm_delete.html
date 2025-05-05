@@ -1,0 +1,40 @@
+{% extends 'inventory/base_inventory.html' %}
+{% load static %}
+
+{% block title %}حذف وحدة قياس{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header pb-0">
+                    <h5 class="mb-0">حذف وحدة قياس</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <h6 class="alert-heading">تأكيد الحذف</h6>
+                        <p>هل أنت متأكد من حذف وحدة القياس "{{ object.name }}"؟</p>
+                        <hr>
+                        <p class="mb-0">ملاحظة: سيتم حذف وحدة القياس نهائياً ولن يمكن استرجاعها.</p>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'inventory:unit_list' %}" class="btn btn-light">
+                                <i class="fas fa-times me-1"></i>
+                                إلغاء
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash me-1"></i>
+                                تأكيد الحذف
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

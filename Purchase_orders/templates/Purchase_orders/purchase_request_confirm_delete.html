@@ -1,0 +1,61 @@
+{% extends 'Purchase_orders/base_purchase_orders.html' %}
+{% load static %}
+
+{% block title %}حذف طلب الشراء - نظام الدولية{% endblock %}
+
+{% block page_title %}حذف طلب الشراء #{{ purchase_request.request_number }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Purchase_orders:dashboard' %}">طلبات الشراء</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Purchase_orders:purchase_request_list' %}">قائمة طلبات الشراء</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Purchase_orders:purchase_request_detail' pk=purchase_request.pk %}">تفاصيل الطلب #{{ purchase_request.request_number }}</a></li>
+<li class="breadcrumb-item active">حذف الطلب</li>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-danger text-white">
+        <h5 class="card-title mb-0">تأكيد حذف طلب الشراء</h5>
+    </div>
+    <div class="card-body">
+        <div class="alert alert-warning">
+            <h5 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>تحذير!</h5>
+            <p>أنت على وشك حذف طلب الشراء <strong>#{{ purchase_request.request_number }}</strong> وجميع العناصر المرتبطة به.</p>
+            <p>هذا الإجراء لا يمكن التراجع عنه. هل أنت متأكد من رغبتك في الاستمرار؟</p>
+        </div>
+
+        <!-- معلومات الطلب -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="card-title mb-0">معلومات الطلب</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>رقم الطلب:</strong> {{ purchase_request.request_number }}</p>
+                        <p><strong>تاريخ الطلب:</strong> {{ purchase_request.request_date|date:"Y-m-d H:i" }}</p>
+                        <p><strong>مقدم الطلب:</strong> {{ purchase_request.requested_by.get_full_name|default:purchase_request.requested_by.username }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>الحالة:</strong> <span class="badge bg-warning">قيد الانتظار</span></p>
+                        <p><strong>عدد العناصر:</strong> {{ purchase_request.items.count }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <form method="post" class="mt-4">
+            {% csrf_token %}
+            <div class="d-flex justify-content-end">
+                <a href="{% url 'Purchase_orders:purchase_request_detail' pk=purchase_request.pk %}" class="btn btn-secondary me-2">
+                    <i class="fas fa-times me-1"></i> إلغاء
+                </a>
+                <button type="submit" class="btn btn-danger">
+                    <i class="fas fa-trash me-1"></i> تأكيد الحذف
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

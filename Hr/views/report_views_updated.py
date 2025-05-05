@@ -102,13 +102,13 @@ def export_data(request):
         # تصفية حسب حالة الموظف
         status_filters = []
         if request.POST.get('status_active'):
-            status_filters.append('يعمل')
+            status_filters.append('سارى')
         if request.POST.get('status_leave'):
             status_filters.append('إجازة')
         if request.POST.get('status_resigned'):
-            status_filters.append('مستقيل')
+            status_filters.append('استقالة')
         if request.POST.get('status_terminated'):
-            status_filters.append('مفصول')
+            status_filters.append('انقطاع عن العمل')
         
         if status_filters:
             employees = employees.filter(working_condition__in=status_filters)
@@ -170,9 +170,9 @@ def department_report(request, dept_code):
     
     # إحصائيات عامة
     total_employees = employees.count()
-    active_employees = employees.filter(working_condition='يعمل').count()
+    active_employees = employees.filter(working_condition='سارى',Insurance_Status='مؤمن عليه').count()
     on_leave_employees = employees.filter(working_condition='إجازة').count()
-    resigned_employees = employees.filter(working_condition='مستقيل').count()
+    resigned_employees = employees.filter(working_condition='استقالة').count()
     
     # إحصائيات التأمين
     insured_employees = employees.filter(insurance_status='مؤمن عليه').count()
@@ -374,11 +374,11 @@ def export_department_to_excel(department, employees):
     ws.write(5, 0, 'إجمالي الموظفين:')
     ws.write(5, 1, employees.count())
     ws.write(6, 0, 'الموظفين النشطين:')
-    ws.write(6, 1, employees.filter(working_condition='يعمل').count())
+    ws.write(6, 1, employees.filter(working_condition='سارى').count())
     ws.write(7, 0, 'الموظفين في إجازة:')
     ws.write(7, 1, employees.filter(working_condition='إجازة').count())
     ws.write(8, 0, 'الموظفين المستقيلين:')
-    ws.write(8, 1, employees.filter(working_condition='مستقيل').count())
+    ws.write(8, 1, employees.filter(working_condition='استقالة').count())
     
     # قائمة الموظفين
     row_num = 10
@@ -421,9 +421,9 @@ def export_department_to_pdf(department, employees):
     
     content += "إحصائيات الموظفين\n"
     content += f"إجمالي الموظفين: {employees.count()}\n"
-    content += f"الموظفين النشطين: {employees.filter(working_condition='يعمل').count()}\n"
+    content += f"الموظفين النشطين: {employees.filter(working_condition='سارى').count()}\n"
     content += f"الموظفين في إجازة: {employees.filter(working_condition='إجازة').count()}\n"
-    content += f"الموظفين المستقيلين: {employees.filter(working_condition='مستقيل').count()}\n\n"
+    content += f"الموظفين المستقيلين: {employees.filter(working_condition='استقالة').count()}\n\n"
     
     content += "قائمة الموظفين\n"
     content += "الرقم | الاسم | المسمى الوظيفي | حالة العمل\n"

@@ -1,0 +1,17 @@
+{% if can_view and view_url %}
+<a href="{% url view_url %}" class="btn btn-sm btn-outline-primary" title="عرض">
+    <i class="fas fa-eye"></i>
+</a>
+{% endif %}
+
+{% if can_edit and edit_url %}
+<a href="{% url edit_url %}" class="btn btn-sm btn-outline-secondary" title="تعديل">
+    <i class="fas fa-edit"></i>
+</a>
+{% endif %}
+
+{% if can_delete and delete_url %}
+<a href="{% url delete_url %}" class="btn btn-sm btn-outline-danger" title="حذف">
+    <i class="fas fa-trash"></i>
+</a>
+{% endif %}

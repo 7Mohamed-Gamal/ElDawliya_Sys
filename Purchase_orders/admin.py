@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import PurchaseRequest, PurchaseRequestItem
+from .models import PurchaseRequest, PurchaseRequestItem, Vendor
 
 class PurchaseRequestItemInline(admin.TabularInline):
     model = PurchaseRequestItem
@@ -18,4 +18,11 @@ class PurchaseRequestItemAdmin(admin.ModelAdmin):
     list_display = ('purchase_request', 'product', 'quantity_requested', 'status')
     list_filter = ('status', 'created_at')
     search_fields = ('product__product_name', 'notes')
+    readonly_fields = ('created_at', 'updated_at')
+
+@admin.register(Vendor)
+class VendorAdmin(admin.ModelAdmin):
+    list_display = ('name', 'contact_person', 'phone', 'email')
+    search_fields = ('name', 'contact_person', 'phone', 'email', 'address')
+    list_filter = ('created_at', 'updated_at')
     readonly_fields = ('created_at', 'updated_at')

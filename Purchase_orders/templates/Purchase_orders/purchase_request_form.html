@@ -1,43 +1,61 @@
-{% extends 'Purchase_orders/base_purchase.html' %}
+{% extends 'Purchase_orders/base_purchase_orders.html' %}
 {% load static %}
 {% load widget_tweaks %}
 
 {% block title %}إنشاء طلب شراء - نظام الدولية{% endblock %}
 
+{% block page_title %}إنشاء طلب شراء جديد{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Purchase_orders:dashboard' %}">طلبات الشراء</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Purchase_orders:purchase_request_list' %}">قائمة طلبات الشراء</a></li>
+<li class="breadcrumb-item active">إنشاء طلب جديد</li>
+{% endblock %}
+
 {% block content %}
-<div class="row mb-4">
-    <div class="col-md-8">
-        <h2 class="mb-3">
-            <i class="fas fa-plus me-2"></i>إنشاء طلب شراء جديد
-        </h2>
-    </div>
-    <div class="col-md-4 text-end">
-        <a href="{% url 'Purchase_orders:purchase_request_list' %}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left me-1"></i>العودة للقائمة
-        </a>
-    </div>
+<div class="d-flex justify-content-end mb-4">
+    <a href="{% url 'Purchase_orders:purchase_request_list' %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-1"></i> العودة للقائمة
+    </a>
 </div>
 
 <div class="card">
-    <div class="card-header bg-primary text-white">
-        <h5 class="mb-0">بيانات طلب الشراء</h5>
+    <div class="card-header">
+        <h5 class="card-title mb-0">بيانات طلب الشراء</h5>
     </div>
     <div class="card-body">
         <form method="post">
             {% csrf_token %}
-            
-            <div class="mb-3">
-                <label for="{{ form.request_number.id_for_label }}" class="form-label">رقم الطلب</label>
-                {{ form.request_number|add_class:"form-control"|attr:"readonly:readonly" }}
-                {% if form.request_number.errors %}
-                <div class="text-danger">
-                    {% for error in form.request_number.errors %}
-                    {{ error }}
-                    {% endfor %}
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ form.request_number.id_for_label }}" class="form-label">رقم الطلب</label>
+                        {{ form.request_number|add_class:"form-control"|attr:"readonly:readonly" }}
+                        {% if form.request_number.errors %}
+                        <div class="text-danger">
+                            {% for error in form.request_number.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
                 </div>
-                {% endif %}
+
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="vendor" class="form-label">المورد</label>
+                        <select class="form-select" id="vendor" name="vendor">
+                            <option value="">-- اختر المورد --</option>
+                            <option value="1">شركة الأمل للتوريدات</option>
+                            <option value="2">مؤسسة النور التجارية</option>
+                            <option value="3">شركة الرواد للمعدات</option>
+                        </select>
+                    </div>
+                </div>
             </div>
-            
+
             <div class="mb-3">
                 <label for="{{ form.notes.id_for_label }}" class="form-label">ملاحظات</label>
                 {{ form.notes|add_class:"form-control" }}
@@ -50,10 +68,13 @@
                 {% endif %}
                 <div class="form-text">يمكنك إضافة أي ملاحظات أو تفاصيل إضافية متعلقة بالطلب</div>
             </div>
-            
-            <div class="text-end">
+
+            <div class="d-flex justify-content-between">
+                <button type="reset" class="btn btn-secondary">
+                    <i class="fas fa-undo me-1"></i> إعادة تعيين
+                </button>
                 <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save me-1"></i>حفظ الطلب
+                    <i class="fas fa-save me-1"></i> حفظ الطلب
                 </button>
             </div>
         </form>

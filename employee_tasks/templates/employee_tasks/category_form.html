@@ -1,0 +1,408 @@
+{% extends 'employee_tasks/base_employee_tasks.html' %}
+
+{% block title %}
+    {% if is_create %}
+        إنشاء تصنيف جديد - نظام الدولية
+    {% else %}
+        تعديل تصنيف - نظام الدولية
+    {% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/spectrum-colorpicker2/dist/spectrum.min.css">
+<style>
+    .icon-preview {
+        font-size: 2rem;
+        margin-top: 10px;
+        color: #3498db;
+    }
+    
+    .icon-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 10px;
+        max-height: 300px;
+        overflow-y: auto;
+        margin-top: 10px;
+    }
+    
+    .icon-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 10px;
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .icon-item:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-2px);
+    }
+    
+    .icon-item.selected {
+        background-color: #e3f2fd;
+        border-color: #3498db;
+    }
+    
+    .icon-item i {
+        font-size: 1.5rem;
+        margin-bottom: 5px;
+    }
+    
+    .icon-item span {
+        font-size: 0.7rem;
+        text-align: center;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        width: 100%;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'employee_tasks:dashboard' %}">لوحة التحكم</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'employee_tasks:category_list' %}">التصنيفات</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">
+                        {% if is_create %}
+                            إنشاء تصنيف جديد
+                        {% else %}
+                            تعديل تصنيف: {{ category.name }}
+                        {% endif %}
+                    </li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        {% if is_create %}
+                            إنشاء تصنيف جديد
+                        {% else %}
+                            تعديل تصنيف: {{ category.name }}
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="
+                        {% if is_create %}
+                            {% url 'employee_tasks:category_create' %}
+                        {% else %}
+                            {% url 'employee_tasks:category_edit' category.pk %}
+                        {% endif %}
+                    ">
+                        {% csrf_token %}
+                        
+                        <!-- Name -->
+                        <div class="mb-3">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">اسم التصنيف <span class="text-danger">*</span></label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.name.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Description -->
+                        <div class="mb-3">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">وصف التصنيف</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.description.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="row">
+                            <!-- Color -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.color.id_for_label }}" class="form-label">اللون</label>
+                                {{ form.color }}
+                                {% if form.color.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.color.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Icon -->
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.icon.id_for_label }}" class="form-label">الأيقونة</label>
+                                {{ form.icon }}
+                                {% if form.icon.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.icon.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <div class="icon-preview mt-2 text-center">
+                                    <i id="iconPreview" class="{{ form.icon.value|default:'fas fa-tasks' }}"></i>
+                                </div>
+                                <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="showIconPicker">
+                                    <i class="fas fa-icons me-1"></i> اختر أيقونة
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Icon Picker Modal -->
+                        <div class="modal fade" id="iconPickerModal" tabindex="-1" aria-labelledby="iconPickerModalLabel" aria-hidden="true">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="iconPickerModalLabel">اختر أيقونة</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <input type="text" class="form-control" id="iconSearch" placeholder="ابحث عن أيقونة...">
+                                        </div>
+                                        <div class="icon-grid" id="iconGrid"></div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                                        <button type="button" class="btn btn-primary" id="selectIcon">اختيار</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'employee_tasks:category_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-right me-1"></i> إلغاء
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>
+                                {% if is_create %}
+                                    إنشاء التصنيف
+                                {% else %}
+                                    حفظ التغييرات
+                                {% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/spectrum-colorpicker2/dist/spectrum.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize color picker
+        $("#{{ form.color.id_for_label }}").spectrum({
+            type: "component",
+            showInput: true,
+            showInitial: true,
+            showAlpha: false,
+            allowEmpty: false,
+            preferredFormat: "hex",
+            showPalette: true,
+            palette: [
+                ["#3498db", "#2ecc71", "#e74c3c", "#f39c12", "#9b59b6"],
+                ["#1abc9c", "#d35400", "#34495e", "#7f8c8d", "#2c3e50"],
+                ["#2980b9", "#27ae60", "#c0392b", "#f1c40f", "#8e44ad"]
+            ]
+        });
+        
+        // Icon preview
+        const iconInput = document.getElementById('{{ form.icon.id_for_label }}');
+        const iconPreview = document.getElementById('iconPreview');
+        
+        iconInput.addEventListener('input', function() {
+            iconPreview.className = this.value;
+        });
+        
+        // Icon picker
+        const showIconPickerBtn = document.getElementById('showIconPicker');
+        const iconPickerModal = new bootstrap.Modal(document.getElementById('iconPickerModal'));
+        const iconGrid = document.getElementById('iconGrid');
+        const iconSearch = document.getElementById('iconSearch');
+        const selectIconBtn = document.getElementById('selectIcon');
+        
+        // Font Awesome icons (common ones)
+        const icons = [
+            { name: 'fas fa-tasks', label: 'Tasks' },
+            { name: 'fas fa-clipboard-list', label: 'Clipboard List' },
+            { name: 'fas fa-check-circle', label: 'Check Circle' },
+            { name: 'fas fa-calendar', label: 'Calendar' },
+            { name: 'fas fa-calendar-alt', label: 'Calendar Alt' },
+            { name: 'fas fa-clock', label: 'Clock' },
+            { name: 'fas fa-hourglass-half', label: 'Hourglass' },
+            { name: 'fas fa-bell', label: 'Bell' },
+            { name: 'fas fa-star', label: 'Star' },
+            { name: 'fas fa-flag', label: 'Flag' },
+            { name: 'fas fa-bookmark', label: 'Bookmark' },
+            { name: 'fas fa-tag', label: 'Tag' },
+            { name: 'fas fa-tags', label: 'Tags' },
+            { name: 'fas fa-home', label: 'Home' },
+            { name: 'fas fa-building', label: 'Building' },
+            { name: 'fas fa-briefcase', label: 'Briefcase' },
+            { name: 'fas fa-user', label: 'User' },
+            { name: 'fas fa-users', label: 'Users' },
+            { name: 'fas fa-user-tie', label: 'User Tie' },
+            { name: 'fas fa-user-cog', label: 'User Cog' },
+            { name: 'fas fa-cog', label: 'Cog' },
+            { name: 'fas fa-wrench', label: 'Wrench' },
+            { name: 'fas fa-tools', label: 'Tools' },
+            { name: 'fas fa-folder', label: 'Folder' },
+            { name: 'fas fa-folder-open', label: 'Folder Open' },
+            { name: 'fas fa-file', label: 'File' },
+            { name: 'fas fa-file-alt', label: 'File Alt' },
+            { name: 'fas fa-file-pdf', label: 'File PDF' },
+            { name: 'fas fa-file-word', label: 'File Word' },
+            { name: 'fas fa-file-excel', label: 'File Excel' },
+            { name: 'fas fa-file-image', label: 'File Image' },
+            { name: 'fas fa-image', label: 'Image' },
+            { name: 'fas fa-camera', label: 'Camera' },
+            { name: 'fas fa-video', label: 'Video' },
+            { name: 'fas fa-music', label: 'Music' },
+            { name: 'fas fa-headphones', label: 'Headphones' },
+            { name: 'fas fa-phone', label: 'Phone' },
+            { name: 'fas fa-envelope', label: 'Envelope' },
+            { name: 'fas fa-comment', label: 'Comment' },
+            { name: 'fas fa-comments', label: 'Comments' },
+            { name: 'fas fa-chart-bar', label: 'Chart Bar' },
+            { name: 'fas fa-chart-line', label: 'Chart Line' },
+            { name: 'fas fa-chart-pie', label: 'Chart Pie' },
+            { name: 'fas fa-chart-area', label: 'Chart Area' },
+            { name: 'fas fa-money-bill', label: 'Money Bill' },
+            { name: 'fas fa-credit-card', label: 'Credit Card' },
+            { name: 'fas fa-shopping-cart', label: 'Shopping Cart' },
+            { name: 'fas fa-truck', label: 'Truck' },
+            { name: 'fas fa-shipping-fast', label: 'Shipping Fast' },
+            { name: 'fas fa-box', label: 'Box' },
+            { name: 'fas fa-boxes', label: 'Boxes' },
+            { name: 'fas fa-warehouse', label: 'Warehouse' },
+            { name: 'fas fa-store', label: 'Store' },
+            { name: 'fas fa-store-alt', label: 'Store Alt' },
+            { name: 'fas fa-car', label: 'Car' },
+            { name: 'fas fa-bus', label: 'Bus' },
+            { name: 'fas fa-plane', label: 'Plane' },
+            { name: 'fas fa-train', label: 'Train' },
+            { name: 'fas fa-bicycle', label: 'Bicycle' },
+            { name: 'fas fa-walking', label: 'Walking' },
+            { name: 'fas fa-running', label: 'Running' },
+            { name: 'fas fa-swimmer', label: 'Swimmer' },
+            { name: 'fas fa-heartbeat', label: 'Heartbeat' },
+            { name: 'fas fa-medkit', label: 'Medkit' },
+            { name: 'fas fa-hospital', label: 'Hospital' },
+            { name: 'fas fa-stethoscope', label: 'Stethoscope' },
+            { name: 'fas fa-user-md', label: 'User MD' },
+            { name: 'fas fa-book', label: 'Book' },
+            { name: 'fas fa-book-open', label: 'Book Open' },
+            { name: 'fas fa-graduation-cap', label: 'Graduation Cap' },
+            { name: 'fas fa-university', label: 'University' },
+            { name: 'fas fa-school', label: 'School' },
+            { name: 'fas fa-chalkboard-teacher', label: 'Chalkboard Teacher' },
+            { name: 'fas fa-laptop', label: 'Laptop' },
+            { name: 'fas fa-desktop', label: 'Desktop' },
+            { name: 'fas fa-mobile-alt', label: 'Mobile Alt' },
+            { name: 'fas fa-tablet-alt', label: 'Tablet Alt' },
+            { name: 'fas fa-keyboard', label: 'Keyboard' },
+            { name: 'fas fa-mouse', label: 'Mouse' },
+            { name: 'fas fa-wifi', label: 'WiFi' },
+            { name: 'fas fa-network-wired', label: 'Network Wired' },
+            { name: 'fas fa-server', label: 'Server' },
+            { name: 'fas fa-database', label: 'Database' },
+            { name: 'fas fa-cloud', label: 'Cloud' },
+            { name: 'fas fa-cloud-upload-alt', label: 'Cloud Upload' },
+            { name: 'fas fa-cloud-download-alt', label: 'Cloud Download' },
+            { name: 'fas fa-code', label: 'Code' },
+            { name: 'fas fa-terminal', label: 'Terminal' },
+            { name: 'fas fa-bug', label: 'Bug' },
+            { name: 'fas fa-shield-alt', label: 'Shield Alt' },
+            { name: 'fas fa-lock', label: 'Lock' },
+            { name: 'fas fa-unlock', label: 'Unlock' },
+            { name: 'fas fa-key', label: 'Key' },
+            { name: 'fas fa-user-shield', label: 'User Shield' },
+            { name: 'fas fa-user-lock', label: 'User Lock' },
+            { name: 'fas fa-exclamation-triangle', label: 'Exclamation Triangle' },
+            { name: 'fas fa-exclamation-circle', label: 'Exclamation Circle' },
+            { name: 'fas fa-question-circle', label: 'Question Circle' },
+            { name: 'fas fa-info-circle', label: 'Info Circle' }
+        ];
+        
+        // Populate icon grid
+        function populateIconGrid(searchTerm = '') {
+            iconGrid.innerHTML = '';
+            
+            const filteredIcons = searchTerm 
+                ? icons.filter(icon => 
+                    icon.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                    icon.label.toLowerCase().includes(searchTerm.toLowerCase())
+                  )
+                : icons;
+            
+            filteredIcons.forEach(icon => {
+                const iconItem = document.createElement('div');
+                iconItem.className = 'icon-item';
+                iconItem.dataset.icon = icon.name;
+                
+                if (icon.name === iconInput.value) {
+                    iconItem.classList.add('selected');
+                }
+                
+                iconItem.innerHTML = `
+                    <i class="${icon.name}"></i>
+                    <span>${icon.label}</span>
+                `;
+                
+                iconItem.addEventListener('click', function() {
+                    document.querySelectorAll('.icon-item').forEach(item => {
+                        item.classList.remove('selected');
+                    });
+                    this.classList.add('selected');
+                });
+                
+                iconGrid.appendChild(iconItem);
+            });
+        }
+        
+        // Show icon picker
+        showIconPickerBtn.addEventListener('click', function() {
+            populateIconGrid();
+            iconPickerModal.show();
+        });
+        
+        // Search icons
+        iconSearch.addEventListener('input', function() {
+            populateIconGrid(this.value);
+        });
+        
+        // Select icon
+        selectIconBtn.addEventListener('click', function() {
+            const selectedIcon = document.querySelector('.icon-item.selected');
+            if (selectedIcon) {
+                const iconName = selectedIcon.dataset.icon;
+                iconInput.value = iconName;
+                iconPreview.className = iconName;
+                iconPickerModal.hide();
+            }
+        });
+    });
+</script>
+{% endblock %}

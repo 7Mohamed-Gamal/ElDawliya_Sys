@@ -1,0 +1,73 @@
+{% extends 'employee_tasks/base_employee_tasks.html' %}
+
+{% block title %}حذف تصنيف - نظام الدولية{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'employee_tasks:dashboard' %}">لوحة التحكم</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'employee_tasks:category_list' %}">التصنيفات</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">حذف تصنيف</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6 mx-auto">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        تأكيد الحذف
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        هل أنت متأكد من رغبتك في حذف التصنيف <strong>"{{ category.name }}"</strong>؟
+                    </div>
+                    
+                    <div class="p-3 bg-light rounded mb-3">
+                        <p><strong>اسم التصنيف:</strong> 
+                            <span class="badge" style="background-color: {{ category.color }};">
+                                <i class="{{ category.icon }} me-1"></i>
+                                {{ category.name }}
+                            </span>
+                        </p>
+                        {% if category.description %}
+                            <p><strong>الوصف:</strong> {{ category.description }}</p>
+                        {% endif %}
+                        <p><strong>تاريخ الإنشاء:</strong> {{ category.created_at|date:"Y-m-d" }}</p>
+                        <p><strong>عدد المهام المرتبطة:</strong> {{ category.tasks.count }}</p>
+                    </div>
+                    
+                    {% if category.tasks.count > 0 %}
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <strong>تحذير:</strong> هناك {{ category.tasks.count }} مهمة مرتبطة بهذا التصنيف. إذا قمت بحذف هذا التصنيف، سيتم إزالة ارتباط هذه المهام بالتصنيف.
+                        </div>
+                    {% endif %}
+                    
+                    <p class="text-danger">هذا الإجراء لا يمكن التراجع عنه!</p>
+                    
+                    <form method="post" action="{% url 'employee_tasks:category_delete' category.pk %}">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'employee_tasks:category_list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-right me-1"></i> إلغاء
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash me-1"></i> حذف التصنيف
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

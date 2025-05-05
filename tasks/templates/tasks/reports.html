@@ -1,0 +1,222 @@
+{% extends 'tasks/base_tasks.html' %}
+{% load static %}
+
+{% block title %}تقارير المهام - نظام الدولية{% endblock %}
+
+{% block page_title %}تقارير المهام{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'tasks:dashboard' %}">المهام</a></li>
+<li class="breadcrumb-item active">التقارير</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">توزيع المهام حسب الحالة</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="statusChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">توزيع المهام حسب الأولوية</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="priorityChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">تقرير المهام الشهري</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="monthlyChart" width="800" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">تقرير المهام المفصل</h5>
+                <div>
+                    <button class="btn btn-success">
+                        <i class="fas fa-file-excel me-1"></i> تصدير Excel
+                    </button>
+                    <button class="btn btn-danger">
+                        <i class="fas fa-file-pdf me-1"></i> تصدير PDF
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>العنوان</th>
+                                <th>تاريخ الإنشاء</th>
+                                <th>تاريخ الاستحقاق</th>
+                                <th>المسؤول</th>
+                                <th>الحالة</th>
+                                <th>الأولوية</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for task in tasks %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'tasks:detail' task.id %}">{{ task.description }}</a>
+                                </td>
+                                <td>{{ task.created_at|date:"Y-m-d" }}</td>
+                                <td>{{ task.end_date|date:"Y-m-d" }}</td>
+                                <td>{{ task.assigned_to.get_full_name|default:task.assigned_to.username }}</td>
+                                <td>
+                                    {% if task.status == 'pending' %}
+                                    <span class="badge bg-warning">قيد الانتظار</span>
+                                    {% elif task.status == 'in_progress' %}
+                                    <span class="badge bg-info">قيد التنفيذ</span>
+                                    {% elif task.status == 'completed' %}
+                                    <span class="badge bg-success">مكتمل</span>
+                                    {% elif task.status == 'cancelled' %}
+                                    <span class="badge bg-danger">ملغي</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if task.priority == 'high' %}
+                                    <span class="badge bg-danger">عالية</span>
+                                    {% elif task.priority == 'medium' %}
+                                    <span class="badge bg-warning">متوسطة</span>
+                                    {% else %}
+                                    <span class="badge bg-info">منخفضة</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center py-4">لا توجد مهام</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Status Chart
+        const statusCtx = document.getElementById('statusChart').getContext('2d');
+        const statusChart = new Chart(statusCtx, {
+            type: 'pie',
+            data: {
+                labels: ['قيد الانتظار', 'قيد التنفيذ', 'مكتمل', 'ملغي'],
+                datasets: [{
+                    data: [
+                        {{ tasks.filter.status_pending|default:0 }},
+                        {{ tasks.filter.status_in_progress|default:0 }},
+                        {{ tasks.filter.status_completed|default:0 }},
+                        {{ tasks.filter.status_cancelled|default:0 }}
+                    ],
+                    backgroundColor: [
+                        '#ffc107',
+                        '#17a2b8',
+                        '#28a745',
+                        '#dc3545'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+
+        // Priority Chart
+        const priorityCtx = document.getElementById('priorityChart').getContext('2d');
+        const priorityChart = new Chart(priorityCtx, {
+            type: 'pie',
+            data: {
+                labels: ['عالية', 'متوسطة', 'منخفضة'],
+                datasets: [{
+                    data: [
+                        {{ tasks.filter.priority_high|default:0 }},
+                        {{ tasks.filter.priority_medium|default:0 }},
+                        {{ tasks.filter.priority_low|default:0 }}
+                    ],
+                    backgroundColor: [
+                        '#dc3545',
+                        '#ffc107',
+                        '#17a2b8'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+
+        // Monthly Chart
+        const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+        const monthlyChart = new Chart(monthlyCtx, {
+            type: 'bar',
+            data: {
+                labels: ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'],
+                datasets: [{
+                    label: 'المهام المنشأة',
+                    data: [12, 19, 3, 5, 2, 3, 7, 8, 9, 10, 11, 15],
+                    backgroundColor: '#9c27b0',
+                    borderWidth: 1
+                }, {
+                    label: 'المهام المكتملة',
+                    data: [7, 11, 5, 8, 3, 7, 9, 13, 4, 8, 7, 10],
+                    backgroundColor: '#28a745',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

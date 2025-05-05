@@ -1,0 +1,414 @@
+{% extends 'employee_tasks/base_employee_tasks.html' %}
+
+{% block title %}تحليلات المهام - نظام الدولية{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chart-container {
+        position: relative;
+        height: 300px;
+        margin-bottom: 20px;
+    }
+    
+    .stat-card {
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        min-height: 120px;
+    }
+    
+    .stat-card .stat-icon {
+        position: absolute;
+        bottom: -15px;
+        left: 10px;
+        font-size: 4rem;
+        opacity: 0.3;
+    }
+    
+    .stat-card .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    
+    .stat-card .stat-title {
+        font-size: 1rem;
+        opacity: 0.8;
+    }
+    
+    .stat-card.primary {
+        background-color: var(--primary-color);
+    }
+    
+    .stat-card.success {
+        background-color: var(--success-color);
+    }
+    
+    .stat-card.warning {
+        background-color: var(--warning-color);
+    }
+    
+    .stat-card.danger {
+        background-color: var(--danger-color);
+    }
+    
+    .stat-card.info {
+        background-color: var(--info-color);
+    }
+    
+    .stat-card.secondary {
+        background-color: var(--secondary-color);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h3 mb-0 text-gray-800">تحليلات المهام</h1>
+            <p class="text-muted">عرض إحصائيات ورسوم بيانية للمهام</p>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4 col-sm-6">
+            <div class="stat-card primary">
+                <div class="stat-number">{{ status_stats.pending }}</div>
+                <div class="stat-title">مهام قيد الانتظار</div>
+                <div class="stat-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-sm-6">
+            <div class="stat-card info">
+                <div class="stat-number">{{ status_stats.in_progress }}</div>
+                <div class="stat-title">مهام قيد التنفيذ</div>
+                <div class="stat-icon">
+                    <i class="fas fa-spinner"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-sm-6">
+            <div class="stat-card success">
+                <div class="stat-number">{{ status_stats.completed }}</div>
+                <div class="stat-title">مهام مكتملة</div>
+                <div class="stat-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Status Chart -->
+        <div class="col-lg-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">توزيع المهام حسب الحالة</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Priority Chart -->
+        <div class="col-lg-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">توزيع المهام حسب الأولوية</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="priorityChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Category Chart -->
+        <div class="col-lg-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">توزيع المهام حسب التصنيف</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monthly Tasks Chart -->
+        <div class="col-lg-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">المهام الشهرية</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="monthlyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Efficiency Metrics -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">مقاييس الكفاءة</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">نسبة الإكمال</h6>
+                                    <h2 class="mb-0">
+                                        {% if status_stats.pending|add:status_stats.in_progress|add:status_stats.completed > 0 %}
+                                            {{ status_stats.completed|floatformat:0 }}%
+                                        {% else %}
+                                            0%
+                                        {% endif %}
+                                    </h2>
+                                    <small class="text-muted">المهام المكتملة / إجمالي المهام</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">نسبة التقدم</h6>
+                                    <h2 class="mb-0" id="averageProgress">0%</h2>
+                                    <small class="text-muted">متوسط نسبة الإنجاز لجميع المهام</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">المهام المتأخرة</h6>
+                                    <h2 class="mb-0" id="overdueTasks">0</h2>
+                                    <small class="text-muted">المهام التي تجاوزت تاريخ الاستحقاق</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-3">
+                            <div class="card bg-light">
+                                <div class="card-body text-center">
+                                    <h6 class="card-title">المهام الحرجة</h6>
+                                    <h2 class="mb-0">{{ priority_stats.urgent }}</h2>
+                                    <small class="text-muted">المهام ذات الأولوية العاجلة</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Status Chart
+        const statusCtx = document.getElementById('statusChart').getContext('2d');
+        const statusChart = new Chart(statusCtx, {
+            type: 'pie',
+            data: {
+                labels: ['قيد الانتظار', 'قيد التنفيذ', 'مكتملة', 'ملغاة', 'مؤجلة'],
+                datasets: [{
+                    data: [
+                        {{ status_stats.pending }},
+                        {{ status_stats.in_progress }},
+                        {{ status_stats.completed }},
+                        {{ status_stats.cancelled }},
+                        {{ status_stats.deferred }}
+                    ],
+                    backgroundColor: [
+                        '#f39c12',
+                        '#3498db',
+                        '#2ecc71',
+                        '#e74c3c',
+                        '#95a5a6'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+        
+        // Priority Chart
+        const priorityCtx = document.getElementById('priorityChart').getContext('2d');
+        const priorityChart = new Chart(priorityCtx, {
+            type: 'bar',
+            data: {
+                labels: ['منخفضة', 'متوسطة', 'عالية', 'عاجلة'],
+                datasets: [{
+                    label: 'عدد المهام',
+                    data: [
+                        {{ priority_stats.low }},
+                        {{ priority_stats.medium }},
+                        {{ priority_stats.high }},
+                        {{ priority_stats.urgent }}
+                    ],
+                    backgroundColor: [
+                        '#3498db',
+                        '#f39c12',
+                        '#e67e22',
+                        '#e74c3c'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+        
+        // Category Chart
+        const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+        const categoryChart = new Chart(categoryCtx, {
+            type: 'doughnut',
+            data: {
+                labels: [
+                    {% for category, count in category_stats.items %}
+                        "{{ category }}"{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                ],
+                datasets: [{
+                    data: [
+                        {% for category, count in category_stats.items %}
+                            {{ count }}{% if not forloop.last %},{% endif %}
+                        {% endfor %}
+                    ],
+                    backgroundColor: [
+                        '#3498db',
+                        '#2ecc71',
+                        '#e74c3c',
+                        '#f39c12',
+                        '#9b59b6',
+                        '#1abc9c',
+                        '#d35400',
+                        '#34495e'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+        
+        // Monthly Tasks Chart
+        const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+        const monthlyChart = new Chart(monthlyCtx, {
+            type: 'line',
+            data: {
+                labels: [
+                    {% for month, data in monthly_tasks.items %}
+                        "{{ month }}"{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                ],
+                datasets: [
+                    {
+                        label: 'المهام المنشأة',
+                        data: [
+                            {% for month, data in monthly_tasks.items %}
+                                {{ data.created }}{% if not forloop.last %},{% endif %}
+                            {% endfor %}
+                        ],
+                        borderColor: '#3498db',
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'المهام المكتملة',
+                        data: [
+                            {% for month, data in monthly_tasks.items %}
+                                {{ data.completed }}{% if not forloop.last %},{% endif %}
+                            {% endfor %}
+                        ],
+                        borderColor: '#2ecc71',
+                        backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Calculate average progress
+        const totalTasks = {{ status_stats.pending }} + {{ status_stats.in_progress }} + {{ status_stats.completed }} + {{ status_stats.cancelled }} + {{ status_stats.deferred }};
+        const averageProgress = Math.round(
+            ({{ status_stats.completed }} * 100 + 
+             {{ status_stats.in_progress }} * 50 + 
+             {{ status_stats.pending }} * 0 + 
+             {{ status_stats.cancelled }} * 0 + 
+             {{ status_stats.deferred }} * 25) / 
+            (totalTasks > 0 ? totalTasks : 1)
+        );
+        document.getElementById('averageProgress').textContent = averageProgress + '%';
+        
+        // Set overdue tasks
+        // This is a placeholder - in a real implementation, you would get this from the backend
+        document.getElementById('overdueTasks').textContent = '{{ overdue_tasks|default:0 }}';
+    });
+</script>
+{% endblock %}

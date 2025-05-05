@@ -1,306 +1,712 @@
 {% extends 'inventory/base_inventory.html' %}
 {% load static %}
+{% load inventory_permission_tags %}
 
-{% block title %}{% if form.instance.pk %}تعديل الفاتورة{% else %}إضافة فاتورة جديدة{% endif %} - نظام إدارة المخزن{% endblock %}
+{% block title %}{{ page_title|default:"إضافة فاتورة" }} - نظام إدارة المخزن{% endblock %}
 
-{% block page_title %}{% if form.instance.pk %}تعديل الفاتورة{% else %}إضافة فاتورة جديدة{% endif %}{% endblock %}
+{% block extra_css %}
+<style>
+    /* Enhanced Form Styles */
+    .form-container {
+        padding: 1.5rem;
+    }
 
-{% block page_actions %}
-    <a href="{% url 'inventory:invoice_list' %}" class="btn btn-secondary">
-        <i class="fas fa-chevron-right me-1"></i> العودة للقائمة
-    </a>
+    .form-card {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+
+    .form-card .card-header {
+        border-radius: 0;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        display: flex;
+        align-items: center;
+        padding: 1.25rem 1.5rem;
+    }
+
+    .form-section {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 1.25rem;
+        color: #3f51b5;
+        display: flex;
+        align-items: center;
+    }
+
+    .section-title i {
+        margin-left: 0.75rem;
+        opacity: 0.8;
+    }
+
+    /* Buttons */
+    .btn-action {
+        padding: 0.6rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary {
+        background-color: #3f51b5;
+        border-color: #3f51b5;
+    }
+
+    .btn-primary:hover {
+        background-color: #303f9f;
+        border-color: #303f9f;
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(63, 81, 181, 0.3);
+    }
+
+    .btn-secondary {
+        background-color: #f8f9fa;
+        border-color: #ced4da;
+        color: #495057;
+    }
+
+    .btn-secondary:hover {
+        background-color: #e9ecef;
+        border-color: #adb5bd;
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    /* Invoice items list */
+    .invoice-items {
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .item-form {
+        position: relative;
+        padding: 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+        background-color: white;
+    }
+
+    .item-form:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .item-form .form-control {
+        padding: 0.5rem;
+    }
+
+    .item-actions {
+        position: absolute;
+        top: 0.5rem;
+        left: 0.5rem;
+    }
+
+    .remove-item {
+        color: #dc3545;
+        background: none;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        font-size: 1.2rem;
+    }
+
+    .item-total {
+        font-weight: 600;
+        padding: 0.5rem;
+        text-align: left;
+        border-top: 1px solid #dee2e6;
+    }
+
+    .add-item-btn {
+        width: 100%;
+        margin-top: 1rem;
+        border-style: dashed;
+        padding: 10px 0;
+        color: #6c757d;
+        background-color: white;
+        transition: all 0.3s ease;
+    }
+
+    .add-item-btn:hover {
+        background-color: #f8f9fa;
+        color: #495057;
+    }
+
+    /* Invoice details section */
+    .invoice-summary {
+        padding: 1.5rem;
+        background-color: #f8f9fa;
+        border-radius: 10px;
+    }
+
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+    }
+
+    .summary-total {
+        font-weight: 600;
+        font-size: 1.2rem;
+        padding-top: 0.5rem;
+        border-top: 1px solid #dee2e6;
+    }
+
+    /* Status badge */
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 2rem;
+        font-weight: 500;
+        text-align: center;
+    }
+
+    .status-pending {
+        background-color: rgba(255, 193, 7, 0.1);
+        color: #ff9800;
+    }
+
+    .status-completed {
+        background-color: rgba(76, 175, 80, 0.1);
+        color: #4caf50;
+    }
+
+    .status-cancelled {
+        background-color: rgba(244, 67, 54, 0.1);
+        color: #f44336;
+    }
+
+    /* Product selector */
+    .product-selector {
+        position: relative;
+    }
+
+    .product-search-results {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        left: 0;
+        z-index: 1000;
+        background-color: white;
+        border-radius: 0 0 8px 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        max-height: 250px;
+        overflow-y: auto;
+        display: none;
+    }
+
+    .product-search-results.active {
+        display: block;
+    }
+
+    .product-item {
+        padding: 10px 15px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .product-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .product-item-code {
+        font-weight: 500;
+        margin-left: 10px;
+    }
+
+    .product-item-details {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+
+    /* Info Alert */
+    .info-alert {
+        background-color: rgba(0, 188, 212, 0.1);
+        color: #00bcd4;
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
 <div class="row ps-4">
-    <div class="card mb-4">
-        <div class="card-header bg-white">
-            <h5 class="mb-0"><i class="fas fa-file-invoice me-2 text-primary"></i>معلومات الفاتورة الأساسية</h5>
-        </div>
-        <div class="card-body">
-            <form method="post" id="invoiceForm" class="row g-3">
-                {% csrf_token %}
-                
-                <div class="col-md-6">
-                    <label class="form-label">رقم الفاتورة*</label>
-                    {{ form.invoice_number }}
-                </div>
-                
-                <div class="col-md-6">
-                    <label class="form-label">تاريخ الفاتورة*</label>
-                    {{ form.invoice_date }}
-                </div>
-                
-                <div class="col-md-6">
-                    <label class="form-label">نوع الفاتورة*</label>
-                    <select name="invoice_type" id="id_invoice_type" class="form-control">
-                        <option value="">-- اختر نوع الفاتورة --</option>
-                        <option value="إضافة">إذن إضافة</option>
-                        <option value="صرف">إذن صرف</option>
-                        <option value="مرتجع مورد">إذن مرتجع مورد</option>
-                        <option value="مرتجع عميل">إذن مرتجع عميل</option>
-                    </select>
-                    {% if form.instance.invoice_type %}
-                    <input type="hidden" id="invoice_type_value" value="{{ form.instance.invoice_type }}">
-                    {% endif %}
-                </div>
-                
-                <div class="col-md-6">
-                    <label class="form-label">المستلم*</label>
-                    {{ form.recipient }}
-                </div>
-                
-                <div class="col-md-6">
-                    <label class="form-label">المورد</label>
-                    {{ form.supplier_id }}
-                </div>
-                
-                <div class="col-md-6">
-                    <label class="form-label">العميل</label>
-                    {{ form.customer_id }}
-                </div>
-                
-                <div class="col-md-6">
-                    <label class="form-label">القيمة الإجمالية</label>
-                    {{ form.total_invoice_value }}
-                    <small class="text-muted">سيتم حسابها تلقائياً من الأصناف المضافة</small>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+    <div class="col-12 mb-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-file-invoice me-2"></i>
+                    {{ page_title|default:"إضافة فاتورة جديدة" }}
+                </h4>
+                <a href="{% url 'inventory:invoice_list' %}" class="btn btn-light btn-sm">
+                    <i class="fas fa-arrow-right me-1"></i>
+                    العودة للفواتير
+                </a>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" id="invoiceForm" class="needs-validation" novalidate>
+                    {% csrf_token %}
 
-<div class="row ps-4">
-    <div class="card mb-4">
-        <div class="card-header bg-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0"><i class="fas fa-boxes me-2 text-primary"></i>إضافة الأصناف للفاتورة</h5>
-            <button type="button" class="btn btn-sm btn-success" id="addItemRow">
-                <i class="fas fa-plus-circle me-1"></i> إضافة صنف جديد
-            </button>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-bordered table-hover" id="invoiceItemsTable">
-                    <thead class="table-light">
-                        <tr>
-                            <th width="15%">رقم الصنف</th>
-                            <th width="25%">اسم الصنف</th>
-                            <th width="10%">الوحدة</th>
-                            <th width="10%">الكمية</th>
-                            <th width="15%">سعر الوحدة</th>
-                            <th width="15%">الإجمالي</th>
-                            <th width="10%">إجراءات</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- سيتم إضافة الصفوف هنا بواسطة JavaScript -->
-                    </tbody>
-                    <tfoot>
-                        <tr>
-                            <td colspan="5" class="text-start">
-                                <strong>الإجمالي</strong>
-                            </td>
-                            <td class="text-start">
-                                <strong id="invoiceTotal">0.00</strong>
-                            </td>
-                            <td></td>
-                        </tr>
-                    </tfoot>
-                </table>
+                    <!-- بيانات الفاتورة -->
+                    <div class="form-section mb-4">
+                        <div class="section-title">
+                            <i class="fas fa-info-circle"></i>
+                            بيانات الفاتورة الأساسية
+                        </div>
+                        <div class="row g-3">
+                            <!-- رقم الفاتورة -->
+                            <div class="col-md-3">
+                                <label for="id_invoice_number" class="form-label">رقم الفاتورة *</label>
+                                <input type="text" id="id_invoice_number" name="invoice_number" class="form-control {% if form.invoice_number.errors %}is-invalid{% endif %}"
+                                       value="{{ form.invoice_number.value|default:'' }}" required {% if form.instance.pk %}readonly{% endif %}>
+                                {% if form.invoice_number.errors %}
+                                <div class="invalid-feedback">{{ form.invoice_number.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <!-- نوع الفاتورة -->
+                            <div class="col-md-3">
+                                <label for="id_invoice_type" class="form-label">نوع الفاتورة *</label>
+                                <select id="id_invoice_type" name="invoice_type" class="form-select {% if form.invoice_type.errors %}is-invalid{% endif %}" required {% if form.instance.pk %}disabled{% endif %}>
+                                    <option value="">اختر النوع</option>
+                                    <option value="in" {% if form.invoice_type.value == 'in' %}selected{% endif %}>إضافة (توريد)</option>
+                                    <option value="out" {% if form.invoice_type.value == 'out' %}selected{% endif %}>صرف</option>
+                                </select>
+                                {% if form.invoice_type.errors %}
+                                <div class="invalid-feedback">{{ form.invoice_type.errors }}</div>
+                                {% endif %}
+                                {% if form.instance.pk %}
+                                <input type="hidden" name="invoice_type" value="{{ form.invoice_type.value }}">
+                                {% endif %}
+                            </div>
+
+                            <!-- تاريخ الفاتورة -->
+                            <div class="col-md-3">
+                                <label for="id_date" class="form-label">التاريخ *</label>
+                                <input type="date" id="id_date" name="date" class="form-control {% if form.date.errors %}is-invalid{% endif %}"
+                                       value="{{ form.date.value|date:'Y-m-d'|default:today }}" required>
+                                {% if form.date.errors %}
+                                <div class="invalid-feedback">{{ form.date.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <!-- حالة الفاتورة -->
+                            <div class="col-md-3">
+                                <label for="id_status" class="form-label">الحالة *</label>
+                                <select id="id_status" name="status" class="form-select {% if form.status.errors %}is-invalid{% endif %}" required>
+                                    <option value="pending" {% if form.status.value == 'pending' %}selected{% endif %}>معلقة</option>
+                                    <option value="completed" {% if form.status.value == 'completed' %}selected{% endif %}>تم التنفيذ</option>
+                                    <option value="cancelled" {% if form.status.value == 'cancelled' %}selected{% endif %}>ملغية</option>
+                                </select>
+                                {% if form.status.errors %}
+                                <div class="invalid-feedback">{{ form.status.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <!-- الملاحظات -->
+                            <div class="col-12">
+                                <label for="id_notes" class="form-label">ملاحظات</label>
+                                <textarea id="id_notes" name="notes" class="form-control" rows="3">{{ form.notes.value|default:'' }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- بنود الفاتورة -->
+                    <div class="form-section mb-4">
+                        <div class="section-title d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="fas fa-boxes"></i>
+                                بنود الفاتورة
+                            </div>
+                            <div>
+                                <button type="button" id="addItemBtn" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-plus-circle me-1"></i>
+                                    إضافة صنف
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="itemsContainer">
+                            {% if form.instance.pk %}
+                                {% for item in form.instance.items.all %}
+                                <div class="item-form">
+                                    <div class="item-actions">
+                                        <button type="button" class="remove-item"><i class="fas fa-times"></i></button>
+                                    </div>
+                                    <div class="row g-2">
+                                        <input type="hidden" name="item_id[]" value="{{ item.id }}">
+
+                                        <!-- المنتج -->
+                                        <div class="col-md-5 product-selector">
+                                            <label class="form-label">الصنف *</label>
+                                            <input type="hidden" name="product_id[]" value="{{ item.product.product_id }}" required>
+                                            <input type="text" name="product_name[]" class="form-control product-search"
+                                                   value="{{ item.product.name }}" placeholder="البحث عن صنف..." readonly>
+                                            <div class="product-search-results"></div>
+                                        </div>
+
+                                        <!-- الكمية -->
+                                        <div class="col-md-2">
+                                            <label class="form-label">الكمية *</label>
+                                            <input type="number" name="quantity[]" class="form-control item-quantity"
+                                                   value="{{ item.quantity }}" min="0.01" step="0.01" required>
+                                            {% if not editable %}
+                                            <small class="text-muted">متوفر: {{ item.product.quantity }}</small>
+                                            {% endif %}
+                                        </div>
+
+                                        <!-- السعر -->
+                                        <div class="col-md-2">
+                                            <label class="form-label">السعر *</label>
+                                            <input type="number" name="price[]" class="form-control item-price"
+                                                   value="{{ item.price }}" min="0" step="0.01" required>
+                                        </div>
+
+                                        <!-- الإجمالي -->
+                                        <div class="col-md-3">
+                                            <label class="form-label">الإجمالي</label>
+                                            <div class="form-control item-total">{{ item.total_price }} ج.م</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <!-- مثال افتراضي فارغ للإضافة -->
+                                <div class="item-form">
+                                    <div class="item-actions">
+                                        <button type="button" class="remove-item"><i class="fas fa-times"></i></button>
+                                    </div>
+                                    <div class="row g-2">
+                                        <input type="hidden" name="item_id[]" value="">
+
+                                        <!-- المنتج -->
+                                        <div class="col-md-5 product-selector">
+                                            <label class="form-label">الصنف *</label>
+                                            <input type="hidden" name="product_id[]" required>
+                                            <input type="text" name="product_name[]" class="form-control product-search"
+                                                   placeholder="البحث عن صنف...">
+                                            <div class="product-search-results"></div>
+                                        </div>
+
+                                        <!-- الكمية -->
+                                        <div class="col-md-2">
+                                            <label class="form-label">الكمية *</label>
+                                            <input type="number" name="quantity[]" class="form-control item-quantity"
+                                                   value="1" min="0.01" step="0.01" required>
+                                        </div>
+
+                                        <!-- السعر -->
+                                        <div class="col-md-2">
+                                            <label class="form-label">السعر *</label>
+                                            <input type="number" name="price[]" class="form-control item-price"
+                                                   value="0" min="0" step="0.01" required>
+                                        </div>
+
+                                        <!-- الإجمالي -->
+                                        <div class="col-md-3">
+                                            <label class="form-label">الإجمالي</label>
+                                            <div class="form-control item-total">0 ج.م</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- زر إضافة صنف -->
+                        <button type="button" id="addRowBtn" class="add-item-btn">
+                            <i class="fas fa-plus-circle me-1"></i>
+                            إضافة صنف آخر
+                        </button>
+                    </div>
+
+                    <!-- ملخص الفاتورة -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {% for error in form.non_field_errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+
+                            {% if form.instance.pk %}
+                                {% if form.instance.status == 'completed' %}
+                                <div class="info-alert">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    تم تنفيذ هذه الفاتورة بالفعل وقد تم تحديث كميات المخزون.
+                                </div>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <div class="invoice-summary mb-4">
+                                <h5 class="mb-3">ملخص الفاتورة</h5>
+                                <div class="summary-item">
+                                    <div>إجمالي البنود:</div>
+                                    <div id="itemsCount">0</div>
+                                </div>
+                                <div class="summary-item">
+                                    <div>المجموع الفرعي:</div>
+                                    <div id="subtotal">0 ج.م</div>
+                                </div>
+                                <div class="summary-total summary-item">
+                                    <div>الإجمالي:</div>
+                                    <div id="total">0 ج.م</div>
+                                </div>
+                                <input type="hidden" name="total_amount" id="totalAmountInput" value="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- أزرار التحكم -->
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'inventory:invoice_list' %}" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-times me-1"></i>
+                            إلغاء
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save me-1"></i>
+                            حفظ الفاتورة
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
-        <div class="card-footer text-end">
-            <a href="{% url 'inventory:invoice_list' %}" class="btn btn-light me-md-2">إلغاء</a>
-            <button type="button" class="btn btn-primary" id="submitInvoice">
-                <i class="fas fa-save me-1"></i> حفظ الفاتورة
-            </button>
-        </div>
     </div>
 </div>
-
 {% endblock %}
 
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Apply form-control class to all form inputs
-        const formInputs = document.querySelectorAll('input, select, textarea');
-        formInputs.forEach(input => {
-            input.classList.add('form-control');
-        });
+        // تهيئة متغيرات عامة
+        const itemsContainer = document.getElementById('itemsContainer');
+        const addRowBtn = document.getElementById('addRowBtn');
+        const addItemBtn = document.getElementById('addItemBtn');
+        const invoiceType = document.getElementById('id_invoice_type');
 
-        // Invoice type handling
-        const invoiceTypeSelect = document.getElementById('id_invoice_type');
-        
-        // Set the selected value if editing
-        const invoiceType = document.getElementById('invoice_type_value').value;
-        if (invoiceType) {
-            invoiceTypeSelect.value = invoiceType;
+        // إعداد نموذج الصنف
+        const itemTemplate = `
+            <div class="item-form">
+                <div class="item-actions">
+                    <button type="button" class="remove-item"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="row g-2">
+                    <input type="hidden" name="item_id[]" value="">
+
+                    <!-- المنتج -->
+                    <div class="col-md-5 product-selector">
+                        <label class="form-label">الصنف *</label>
+                        <input type="hidden" name="product_id[]" required>
+                        <input type="text" name="product_name[]" class="form-control product-search"
+                               placeholder="البحث عن صنف...">
+                        <div class="product-search-results"></div>
+                    </div>
+
+                    <!-- الكمية -->
+                    <div class="col-md-2">
+                        <label class="form-label">الكمية *</label>
+                        <input type="number" name="quantity[]" class="form-control item-quantity"
+                               value="1" min="0.01" step="0.01" required>
+                    </div>
+
+                    <!-- السعر -->
+                    <div class="col-md-2">
+                        <label class="form-label">السعر *</label>
+                        <input type="number" name="price[]" class="form-control item-price"
+                               value="0" min="0" step="0.01" required>
+                    </div>
+
+                    <!-- الإجمالي -->
+                    <div class="col-md-3">
+                        <label class="form-label">الإجمالي</label>
+                        <div class="form-control item-total">0 ج.م</div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // إضافة صف جديد
+        function addRow() {
+            // إنشاء عنصر
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = itemTemplate;
+            const newRow = wrapper.firstElementChild;
+
+            // إضافة للحاوية
+            itemsContainer.appendChild(newRow);
+
+            // تفعيل الأحداث للصف الجديد
+            initRow(newRow);
+
+            // تحديث الملخص
+            updateSummary();
         }
-        
-        // Add new row to the invoice items table
-        document.getElementById('addItemRow').addEventListener('click', function() {
-            addItemRow();
-        });
 
-        // Save the invoice
-        document.getElementById('submitInvoice').addEventListener('click', function() {
-            saveInvoice();
-        });
-
-        // Function to add a new row
-        function addItemRow() {
-            const tbody = document.querySelector('#invoiceItemsTable tbody');
-            const rowCount = tbody.rows.length + 1;
-            
-            const newRow = document.createElement('tr');
-            newRow.innerHTML = `
-                <td>
-                    <input type="text" class="form-control product-id" placeholder="أدخل رقم الصنف" data-row="${rowCount}">
-                </td>
-                <td>
-                    <input type="text" class="form-control product-name" readonly>
-                </td>
-                <td>
-                    <input type="text" class="form-control product-unit" readonly>
-                </td>
-                <td>
-                    <input type="number" class="form-control product-quantity" value="1" min="1">
-                </td>
-                <td>
-                    <input type="number" class="form-control product-price" step="0.01">
-                </td>
-                <td>
-                    <input type="text" class="form-control product-total" readonly>
-                </td>
-                <td class="text-center">
-                    <button type="button" class="btn btn-sm btn-danger remove-row">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            `;
-            tbody.appendChild(newRow);
-            
-            // Set up event listeners for the new row
-            setupRowEventListeners(newRow);
-        }
-
-        // Set up event listeners for a row
-        function setupRowEventListeners(row) {
-            // Product ID lookup
-            const productIdInput = row.querySelector('.product-id');
-            productIdInput.addEventListener('change', function() {
-                lookupProduct(this);
-            });
-            
-            // Remove row
-            const removeButton = row.querySelector('.remove-row');
-            removeButton.addEventListener('click', function() {
+        // تهيئة صف
+        function initRow(row) {
+            // زر الحذف
+            const removeBtn = row.querySelector('.remove-item');
+            removeBtn.addEventListener('click', function() {
                 row.remove();
-                updateTotals();
+                updateSummary();
             });
-            
-            // Update calculations when quantity or price changes
-            const quantityInput = row.querySelector('.product-quantity');
-            const priceInput = row.querySelector('.product-price');
-            
-            [quantityInput, priceInput].forEach(input => {
-                input.addEventListener('input', function() {
-                    updateRowTotal(row);
-                    updateTotals();
-                });
-            });
-        }
 
-        // Look up product details
-        function lookupProduct(productInput) {
-            const productId = productInput.value;
-            const row = productInput.closest('tr');
-            
-            // Here you would typically make an AJAX call to get the product details
-            // For demonstration, we'll simulate a product lookup
-            
-            // Show loading indicator
-            row.querySelector('.product-name').value = 'جاري البحث...';
-            
-            // Simulate AJAX call with timeout
-            setTimeout(() => {
-                // In a real implementation, you would fetch this data from the server
-                // This is just a simulation
-                if (productId.startsWith('P')) {
-                    // Found product
-                    row.querySelector('.product-name').value = 'اسم المنتج ' + productId;
-                    row.querySelector('.product-unit').value = 'قطعة';
-                    row.querySelector('.product-price').value = '100.00';
-                    updateRowTotal(row);
-                    updateTotals();
-                } else {
-                    // Product not found
-                    row.querySelector('.product-name').value = 'المنتج غير موجود';
-                    row.querySelector('.product-unit').value = '';
-                    row.querySelector('.product-price').value = '';
-                    row.querySelector('.product-total').value = '';
+            // حقل البحث عن المنتج
+            const productSearch = row.querySelector('.product-search');
+            const productIdField = row.querySelector('input[name="product_id[]"]');
+            const productResults = row.querySelector('.product-search-results');
+
+            // حقول الكمية والسعر
+            const quantityField = row.querySelector('.item-quantity');
+            const priceField = row.querySelector('.item-price');
+            const totalField = row.querySelector('.item-total');
+
+            // حساب الإجمالي عند تغيير الكمية أو السعر
+            function calculateItemTotal() {
+                const quantity = parseFloat(quantityField.value) || 0;
+                const price = parseFloat(priceField.value) || 0;
+                const total = quantity * price;
+                totalField.textContent = total.toFixed(2) + ' ج.م';
+                updateSummary();
+            }
+
+            quantityField.addEventListener('input', calculateItemTotal);
+            priceField.addEventListener('input', calculateItemTotal);
+
+            // بحث عن المنتجات
+            productSearch.addEventListener('input', function() {
+                if (this.value.length < 2) {
+                    productResults.innerHTML = '';
+                    productResults.classList.remove('active');
+                    return;
                 }
-            }, 500);
-        }
 
-        // Update row total
-        function updateRowTotal(row) {
-            const quantity = parseFloat(row.querySelector('.product-quantity').value) || 0;
-            const price = parseFloat(row.querySelector('.product-price').value) || 0;
-            const total = quantity * price;
-            row.querySelector('.product-total').value = total.toFixed(2);
-        }
+                // محاكاة استجابة البحث
+                // في التطبيق الحقيقي، هذه ستكون طلب Ajax للبحث عن المنتجات
+                setTimeout(() => {
+                    // نموذج لنتائج البحث
+                    let searchResults = [
+                        {id: 'P001', name: 'قطعة غيار 1', quantity: 25, price: 150},
+                        {id: 'P002', name: 'قطعة غيار 2', quantity: 15, price: 200},
+                        {id: 'P003', name: 'قطعة غيار 3', quantity: 5, price: 350}
+                    ];
 
-        // Update all totals
-        function updateTotals() {
-            let invoiceTotal = 0;
-            
-            // Sum all row totals
-            document.querySelectorAll('.product-total').forEach(totalInput => {
-                invoiceTotal += parseFloat(totalInput.value) || 0;
+                    // تصفية النتائج حسب النص
+                    const query = this.value.toLowerCase();
+                    searchResults = searchResults.filter(p =>
+                        p.id.toLowerCase().includes(query) ||
+                        p.name.toLowerCase().includes(query)
+                    );
+
+                    if (searchResults.length > 0) {
+                        productResults.innerHTML = '';
+
+                        // إنشاء عناصر النتائج
+                        searchResults.forEach(product => {
+                            const item = document.createElement('div');
+                            item.className = 'product-item';
+                            item.innerHTML = `
+                                <div><span class="product-item-code">${product.id}</span> ${product.name}</div>
+                                <div class="product-item-details">
+                                    <span>المتوفر: ${product.quantity}</span>
+                                    <span>السعر: ${product.price} ج.م</span>
+                                </div>
+                            `;
+
+                            // عند اختيار منتج
+                            item.addEventListener('click', function() {
+                                productIdField.value = product.id;
+                                productSearch.value = product.name;
+                                priceField.value = product.price;
+                                calculateItemTotal();
+                                productResults.classList.remove('active');
+                            });
+
+                            productResults.appendChild(item);
+                        });
+
+                        productResults.classList.add('active');
+                    } else {
+                        productResults.innerHTML = '<div class="p-3 text-muted">لا توجد نتائج</div>';
+                        productResults.classList.add('active');
+                    }
+                }, 300);
             });
-            
-            // Update the invoice total
-            document.getElementById('invoiceTotal').textContent = invoiceTotal.toFixed(2);
-            document.getElementById('id_total_invoice_value').value = invoiceTotal.toFixed(2);
-        }
 
-        // Save the invoice
-        function saveInvoice() {
-            // Validate form
-            const form = document.getElementById('invoiceForm');
-            const requiredFields = ['invoice_number', 'invoice_date', 'invoice_type', 'recipient'];
-            let valid = true;
-            
-            requiredFields.forEach(field => {
-                const input = document.getElementById('id_' + field);
-                if (!input.value) {
-                    valid = false;
-                    input.classList.add('is-invalid');
-                } else {
-                    input.classList.remove('is-invalid');
+            // إخفاء نتائج البحث عند النقر خارجها
+            document.addEventListener('click', function(e) {
+                if (!productSearch.contains(e.target) && !productResults.contains(e.target)) {
+                    productResults.classList.remove('active');
                 }
             });
-            
-            // Add validation for items
-            const hasItems = document.querySelector('#invoiceItemsTable tbody tr');
-            if (!hasItems) {
-                alert('يرجى إضافة صنف واحد على الأقل للفاتورة');
-                return;
+        }
+
+        // تحديث ملخص الفاتورة
+        function updateSummary() {
+            const items = itemsContainer.querySelectorAll('.item-form');
+            const itemsCount = document.getElementById('itemsCount');
+            const subtotal = document.getElementById('subtotal');
+            const total = document.getElementById('total');
+            const totalAmountInput = document.getElementById('totalAmountInput');
+
+            itemsCount.textContent = items.length;
+
+            let totalAmount = 0;
+            items.forEach(item => {
+                const quantity = parseFloat(item.querySelector('.item-quantity').value) || 0;
+                const price = parseFloat(item.querySelector('.item-price').value) || 0;
+                totalAmount += quantity * price;
+            });
+
+            subtotal.textContent = totalAmount.toFixed(2) + ' ج.م';
+            total.textContent = totalAmount.toFixed(2) + ' ج.م';
+            totalAmountInput.value = totalAmount.toFixed(2);
+        }
+
+        // تهيئة الصفوف الموجودة
+        const existingRows = itemsContainer.querySelectorAll('.item-form');
+        existingRows.forEach(row => {
+            initRow(row);
+        });
+
+        // أزرار إضافة صف
+        addRowBtn.addEventListener('click', addRow);
+        addItemBtn.addEventListener('click', addRow);
+
+        // تحديث الملخص الأولي
+        updateSummary();
+
+        // التحقق من صحة النموذج قبل الإرسال
+        const invoiceForm = document.getElementById('invoiceForm');
+        invoiceForm.addEventListener('submit', function(e) {
+            if (!this.checkValidity()) {
+                e.preventDefault();
+                e.stopPropagation();
             }
             
-            if (!valid) {
-                alert('يرجى ملء جميع الحقول المطلوبة');
-                return;
+            // التحقق من وجود عناصر في الفاتورة
+            const items = itemsContainer.querySelectorAll('.item-form');
+            if (items.length === 0) {
+                e.preventDefault();
+                alert('يجب إضافة صنف واحد على الأقل للفاتورة');
             }
             
-            // Submit the form - in a real implementation, you would also save the invoice items
-            form.submit();
-        }
-        
-        // Add an initial row
-        addItemRow();
+            this.classList.add('was-validated');
+        });
     });
 </script>
 {% endblock %}

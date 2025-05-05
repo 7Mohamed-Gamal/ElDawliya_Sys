@@ -49,6 +49,7 @@ class HrTask(models.Model):
     class Meta:
         verbose_name = _('مهمة الموارد البشرية')
         verbose_name_plural = _('مهام الموارد البشرية')
-        db_table = 'Hr_HrTask'
+        # Using the default table name (hr_hrtask) instead of a custom one
+        # db_table = 'Hr_HrTask'
         ordering = ['-due_date', 'priority']
         managed = True

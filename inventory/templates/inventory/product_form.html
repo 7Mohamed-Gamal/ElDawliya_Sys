@@ -6,445 +6,935 @@
 
 {% block extra_css %}
 <style>
-    /* Enhanced Form Styles */
-    .product-form-container {
-        padding: 1.5rem;
-    }
-    
+    /* Card styling */
     .form-card {
         border-radius: 15px;
-        border: none;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-        overflow: hidden;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
     }
-    
-    .form-card .card-header {
-        border-radius: 0; 
-        border-bottom: 1px solid rgba(0,0,0,0.05);
-        display: flex;
-        align-items: center;
-        padding: 1.25rem 1.5rem;
-    }
-    
-    .form-section {
-        background-color: #f8f9fa;
-        border-radius: 10px;
-        padding: 1.25rem;
-        margin-bottom: 1.5rem;
-    }
-    
-    .section-title {
-        font-size: 1.1rem;
-        font-weight: 600;
-        margin-bottom: 1.25rem;
-        color: #3f51b5;
-        display: flex;
-        align-items: center;
-    }
-    
-    .section-title i {
-        margin-left: 0.75rem;
-        opacity: 0.8;
-    }
-    
-    .form-floating {
-        margin-bottom: 1rem;
-    }
-    
-    .form-floating > .form-control,
-    .form-floating > .form-select {
-        height: calc(3.5rem + 2px);
-        padding: 1rem 0.75rem;
-        border: 1px solid #ced4da;
-        border-radius: 8px;
-    }
-    
-    .form-floating > .form-control:focus,
-    .form-floating > .form-select:focus {
-        border-color: #3f51b5;
-        box-shadow: 0 0 0 0.25rem rgba(63, 81, 181, 0.25);
-    }
-    
-    .form-floating > label {
-        padding: 1rem 0.75rem;
-    }
-    
-    textarea.form-control {
-        min-height: 120px;
-    }
-    
-    /* Button Styles */
-    .btn-action {
-        padding: 0.6rem 1.5rem;
-        border-radius: 8px;
-        font-weight: 500;
-        transition: all 0.3s ease;
-    }
-    
-    .btn-primary {
-        background-color: #3f51b5;
-        border-color: #3f51b5;
-    }
-    
-    .btn-primary:hover {
-        background-color: #303f9f;
-        border-color: #303f9f;
-        transform: translateY(-3px);
-        box-shadow: 0 5px 15px rgba(63, 81, 181, 0.3);
-    }
-    
-    .btn-secondary {
-        background-color: #f8f9fa;
-        border-color: #ced4da;
-        color: #495057;
-    }
-    
-    .btn-secondary:hover {
-        background-color: #e9ecef;
-        border-color: #adb5bd;
-        transform: translateY(-3px);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    }
-    
-    /* Field Validation Styles */
-    .is-valid {
-        border-color: #28a745 !important;
-        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8' viewBox='0 0 8 8'%3e%3cpath fill='%2328a745' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
-        background-repeat: no-repeat;
-        background-position: right calc(0.375em + 0.1875rem) center;
-        background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
-    }
-    
-    .is-invalid {
-        border-color: #dc3545 !important;
-        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%23dc3545' viewBox='0 0 12 12'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
-        background-repeat: no-repeat;
-        background-position: right calc(0.375em + 0.1875rem) center;
-        background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
-    }
-    
-    .invalid-feedback {
-        display: none;
-        width: 100%;
-        margin-top: .25rem;
-        font-size: 80%;
-        color: #dc3545;
-    }
-    
-    /* Card shadows and hover */
-    .card {
-        border-radius: 10px;
-        border: none;
-        transition: all 0.3s ease;
-    }
-    
-    .card:hover {
-        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
-    }
-    
+
     .card-header {
-        border-radius: 10px 10px 0 0 !important;
+        background: linear-gradient(135deg, var(--primary-color) 0%, #303f9f 100%);
+        padding: 1.5rem;
     }
-    
-    /* Form Enhancements */
-    @media (max-width: 768px) {
-        .container {
-            padding: 1rem;
-        }
-    
-        .card-body {
-            padding: 1rem;
-        }
+
+    /* Form sections */
+    .form-section {
+        background-color: #ffffff;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.03);
+        transition: transform 0.3s ease;
+        border-right: 4px solid var(--primary-color);
+    }
+
+    .form-section:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    }
+
+    /* Section titles */
+    .section-title {
+        color: var(--primary-color);
+        display: flex;
+        align-items: center;
+        padding-bottom: 10px;
+        border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+        margin-bottom: 15px;
+        font-weight: 700;
+    }
+
+    .section-title i {
+        width: 32px;
+        height: 32px;
+        line-height: 32px;
+        text-align: center;
+        background-color: var(--primary-color);
+        color: white;
+        border-radius: 50%;
+        margin-left: 10px;
+    }
+
+    /* Form controls */
+    .form-control, .form-select {
+        border: 1.5px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 10px 15px;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.25rem rgba(63, 81, 181, 0.2);
+    }
+
+    /* Image preview */
+    .image-preview {
+        width: 180px;
+        height: 180px;
+        border-radius: 12px;
+        background-color: #f9f9f9;
+        margin: 0 auto 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px dashed #ccc;
+    }
+
+    /* Buttons */
+    .btn-primary {
+        background: linear-gradient(45deg, var(--primary-color), #303f9f);
+        border: none;
+        box-shadow: 0 4px 15px rgba(63, 81, 181, 0.3);
+    }
+
+    .required-label::after {
+        content: '*';
+        color: #f44336;
+        margin-right: 4px;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="row ps-4">
-    <div class="col-12 mb-4">
-        <div class="card shadow">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <h4 class="mb-0">
-                    <i class="fas fa-box-open me-2"></i>
-                    {{ page_title }}
-                </h4>
-                <a href="{% url 'inventory:product_list' %}" class="btn btn-light btn-sm">
-                    <i class="fas fa-arrow-right me-1"></i>
-                    العودة للقائمة
-                </a>
+<div class="container-fluid px-md-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card form-card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-box-open me-2"></i>
+                        {{ page_title }}
+                    </h5>
+                    <a href="{% url 'inventory:product_list' %}" class="btn btn-light btn-sm">
+                        <i class="fas fa-arrow-right me-1"></i>
+                        العودة للقائمة
+                    </a>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" class="needs-validation" action="{% if form.instance.pk %}{% url 'inventory:product_edit' form.instance.pk %}{% else %}{% url 'inventory:product_add' %}{% endif %}" enctype="multipart/form-data" novalidate>
+                        {% csrf_token %}
+                        {% if messages %}
+                        <div class="alert alert-info">
+                            {% for message in messages %}
+                                {{ message }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
+                        <div class="row g-4">
+                            <!-- صورة المنتج -->
+                            <div class="col-lg-3 col-md-4">
+                                <div class="form-section h-100">
+                                    <h6 class="section-title">
+                                        <i class="fas fa-camera"></i>
+                                        صورة المنتج
+                                    </h6>
+                                    <div class="text-center">
+                                        <div class="image-preview">
+                                            {% if form.instance.image %}
+                                                <img id="preview-img" src="{{ form.instance.image.url }}" alt="{{ form.instance.name }}" style="max-width:100%; max-height:100%; object-fit:contain;">
+                                            {% else %}
+                                                <i id="preview-icon" class="fas fa-box" style="font-size: 3.5rem; color: #bdbdbd;"></i>
+                                            {% endif %}
+                                        </div>
+
+                                        <div class="mt-3">
+                                            <label for="id_image" class="btn btn-primary btn-sm">
+                                                <i class="fas fa-upload me-1"></i>
+                                                اختر صورة
+                                            </label>
+                                            <input type="file" id="id_image" name="image" accept="image/*" class="d-none">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- البيانات الأساسية -->
+                            <div class="col-lg-9 col-md-8">
+                                <div class="form-section">
+                                    <h6 class="section-title">
+                                        <i class="fas fa-info-circle"></i>
+                                        بيانات الصنف الأساسية
+                                    </h6>
+
+                                    <div class="row">
+                                        <!-- رقم الصنف -->
+                                        <div class="col-md-6 mb-3">
+                                            <label for="id_product_id" class="form-label required-label">
+                                                رقم الصنف
+                                            </label>
+                                            <input type="text" class="form-control"
+                                                   id="id_product_id" name="product_id" value="{{ form.product_id.value|default:'' }}" required>
+                                            {% if form.product_id.errors %}
+                                                <div class="text-danger mt-1">{{ form.product_id.errors }}</div>
+                                            {% endif %}
+                                            <small class="text-muted">رمز فريد لتعريف المنتج</small>
+                                        </div>
+
+                                        <!-- اسم الصنف -->
+                                        <div class="col-md-6 mb-3">
+                                            <label for="id_name" class="form-label required-label">
+                                                اسم الصنف
+                                            </label>
+                                            <input type="text" class="form-control"
+                                                   id="id_name" name="name" value="{{ form.name.value|default:'' }}" required>
+                                            {% if form.name.errors %}
+                                                <div class="text-danger mt-1">{{ form.name.errors }}</div>
+                                            {% endif %}
+                                        </div>
+
+                                        <!-- التصنيف -->
+                                        <div class="col-md-6 mb-3">
+                                            <label for="id_category" class="form-label">التصنيف</label>
+                                            <div class="input-group">
+                                                <select class="form-select" id="id_category" name="category">
+                                                    <option value="">اختر التصنيف</option>
+                                                    {% for category in categories %}
+                                                        <option value="{{ category.id }}" {% if form.category.value == category.id %}selected{% endif %}>
+                                                            {{ category.name }}
+                                                        </option>
+                                                    {% endfor %}
+                                                </select>
+                                                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                                                    <i class="fas fa-plus"></i>
+                                                </button>
+                                            </div>
+                                            <small class="text-muted">اختر تصنيف أو أضف تصنيف جديد</small>
+                                            <div id="categoryDebugInfo" class="mt-1 text-info" style="display: none;"></div>
+                                        </div>
+
+                                        <!-- الموقع -->
+                                        <div class="col-md-6 mb-3">
+                                            <label for="id_location" class="form-label">الموقع في المخزن</label>
+                                            <input type="text" class="form-control"
+                                                   id="id_location" name="location" value="{{ form.location.value|default:'' }}">
+                                            <small class="text-muted">مثال: رف 3، قسم A</small>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- بيانات المخزون -->
+                                <div class="form-section">
+                                    <h6 class="section-title">
+                                        <i class="fas fa-boxes"></i>
+                                        المخزون والأسعار
+                                    </h6>
+
+                                    <div class="row">
+                                        <div class="col-md-3 mb-3">
+                                            <label for="id_initial_quantity" class="form-label">الرصيد الافتتاحي</label>
+                                            <input type="number" class="form-control"
+                                                   id="id_initial_quantity" name="initial_quantity" value="{{ form.initial_quantity.value|default:'0' }}" min="0" step="0.01">
+                                            <small class="text-muted">الكمية الموجودة وقت الإضافة</small>
+                                            <small class="text-info d-block mt-1">تغيير هذه القيمة سيؤثر على الرصيد الحالي</small>
+                                        </div>
+
+                                        <div class="col-md-3 mb-3">
+                                            <label for="id_quantity" class="form-label">الرصيد الحالي</label>
+                                            <input type="number" class="form-control"
+                                                   id="id_quantity" name="quantity" value="{{ form.quantity.value|default:'0' }}" min="0" step="0.01" {% if form.instance.pk %}readonly{% endif %}>
+                                            <small class="text-muted">يتم تحديثه تلقائياً بناءً على الأذونات</small>
+                                            {% if not form.instance.pk %}
+                                            <small class="text-info d-block mt-1">تغيير هذه القيمة سيؤثر على الرصيد الافتتاحي</small>
+                                            {% endif %}
+                                        </div>
+
+                                        <div class="col-md-3 mb-3">
+                                            <label for="id_unit" class="form-label">وحدة القياس</label>
+                                            <div class="input-group">
+                                                <select class="form-select" id="id_unit" name="unit">
+                                                    <option value="">اختر الوحدة</option>
+                                                    {% for unit in units %}
+                                                        <option value="{{ unit.id }}" {% if form.unit.value == unit.id %}selected{% endif %}>
+                                                            {{ unit.name }}
+                                                        </option>
+                                                    {% endfor %}
+                                                </select>
+                                                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addUnitModal">
+                                                    <i class="fas fa-plus"></i>
+                                                </button>
+                                            </div>
+                                            <small class="text-muted">اختر وحدة قياس أو أضف وحدة جديدة</small>
+                                            <div id="unitDebugInfo" class="mt-1 text-info" style="display: none;"></div>
+                                        </div>
+
+                                        <div class="col-md-3 mb-3">
+                                            <label for="id_unit_price" class="form-label">سعر الوحدة</label>
+                                            <input type="number" class="form-control"
+                                                   id="id_unit_price" name="unit_price" value="{{ form.unit_price.value|default:'0' }}" min="0" step="0.01">
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label for="id_minimum_threshold" class="form-label">الحد الأدنى</label>
+                                            <input type="number" class="form-control"
+                                                   id="id_minimum_threshold" name="minimum_threshold" value="{{ form.minimum_threshold.value|default:'0' }}" min="0" step="0.01">
+                                        </div>
+
+                                        <div class="col-md-4 mb-3">
+                                            <label for="id_maximum_threshold" class="form-label">الحد الأقصى</label>
+                                            <input type="number" class="form-control"
+                                                   id="id_maximum_threshold" name="maximum_threshold" value="{{ form.maximum_threshold.value|default:'0' }}" min="0" step="0.01">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- التفاصيل -->
+                                <div class="form-section">
+                                    <h6 class="section-title">
+                                        <i class="fas fa-align-left"></i>
+                                        التفاصيل
+                                    </h6>
+
+                                    <div class="mb-3">
+                                        <label for="id_description" class="form-label">وصف المنتج</label>
+                                        <textarea class="form-control" id="id_description" name="description" rows="4">{{ form.description.value|default:'' }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- أزرار التحكم -->
+                        <div class="text-center mt-4">
+                            <a href="{% url 'inventory:product_list' %}" class="btn btn-secondary me-2">
+                                <i class="fas fa-times me-1"></i>
+                                إلغاء
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>
+                                حفظ البيانات
+                            </button>
+                            <button type="button" id="debugFormBtn" class="btn btn-outline-info ms-2">
+                                <i class="fas fa-bug me-1"></i>
+                                فحص النموذج
+                            </button>
+                        </div>
+                        <!-- Hidden fields for new category and unit -->
+                        <input type="hidden" name="new_category" id="new_category_checkbox" value="false">
+                        <input type="hidden" name="new_category_name" id="new_category_name">
+                        <input type="hidden" name="new_category_description" id="new_category_description">
+
+                        <input type="hidden" name="new_unit" id="new_unit_checkbox" value="false">
+                        <input type="hidden" name="new_unit_name" id="new_unit_name">
+                        <input type="hidden" name="new_unit_symbol" id="new_unit_symbol">
+
+                        <!-- إضافة حقل مخفي للتأكد من إرسال النموذج بشكل صحيح -->
+                        <input type="hidden" name="form_submitted" value="true">
+
+                        <!-- Debug info -->
+                        <div id="formDebugInfo" style="display: block;" class="mt-3 p-2 bg-light border">
+                            <h6>معلومات التصحيح (للمطورين فقط)</h6>
+                            <div>حالة النموذج: <span id="formStatus">جاهز</span></div>
+                            <div>عنوان الإرسال: <span id="formAction">{{ request.path }}</span></div>
+                            <div>طريقة الإرسال: <span>POST</span></div>
+                            <div class="mt-2">
+                                <a href="{% url 'inventory:debug_form' %}" target="_blank" class="btn btn-sm btn-info">
+                                    اختبار نموذج التصحيح
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
             </div>
-            <div class="card-body p-4">
-                <form method="post" class="needs-validation" novalidate>
-                    {% csrf_token %}
-                    
-                    <!-- بيانات الصنف الأساسية -->
-                    <div class="form-section mb-4">
-                        <div class="section-title">
-                            <i class="fas fa-info-circle"></i>
-                            بيانات الصنف الأساسية
-                        </div>
-                        <div class="row g-3">
-                            <!-- رقم الصنف -->
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    <input type="text" class="form-control {% if form.product_id.errors %}is-invalid{% endif %}" 
-                                           id="id_product_id" name="product_id" value="{{ form.product_id.value|default:'' }}" required>
-                                    <label for="id_product_id">رقم الصنف *</label>
-                                    {% if form.product_id.errors %}
-                                    <div class="invalid-feedback">
-                                        {{ form.product_id.errors }}
-                                    </div>
-                                    {% endif %}
-                                </div>
-                            </div>
+        </div>
+    </div>
+</div>
 
-                            <!-- اسم الصنف -->
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    <input type="text" class="form-control {% if form.name.errors %}is-invalid{% endif %}" 
-                                           id="id_name" name="name" value="{{ form.name.value|default:'' }}" required>
-                                    <label for="id_name">اسم الصنف *</label>
-                                    {% if form.name.errors %}
-                                    <div class="invalid-feedback">
-                                        {{ form.name.errors }}
-                                    </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-
-                            <!-- التصنيف -->
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    <select class="form-select {% if form.category.errors %}is-invalid{% endif %}" 
-                                            id="id_category" name="category">
-                                        <option value="">اختر التصنيف</option>
-                                        {% for category in categories %}
-                                        <option value="{{ category.id }}" {% if form.category.value == category.id %}selected{% endif %}>
-                                            {{ category.name }}
-                                        </option>
-                                        {% endfor %}
-                                    </select>
-                                    <label for="id_category">التصنيف</label>
-                                    {% if form.category.errors %}
-                                    <div class="invalid-feedback">
-                                        {{ form.category.errors }}
-                                    </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            
-                            <!-- الموقع -->
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    <input type="text" class="form-control {% if form.location.errors %}is-invalid{% endif %}" 
-                                           id="id_location" name="location" value="{{ form.location.value|default:'' }}">
-                                    <label for="id_location">الموقع في المخزن</label>
-                                    {% if form.location.errors %}
-                                    <div class="invalid-feedback">
-                                        {{ form.location.errors }}
-                                    </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
+<!-- Category Modal -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true" dir="rtl">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="addCategoryModalLabel">إضافة تصنيف جديد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="categoryForm">
+                    <div class="mb-3">
+                        <label for="categoryName" class="form-label">اسم التصنيف</label>
+                        <input type="text" class="form-control" id="categoryName" required>
                     </div>
-                    
-                    <!-- بيانات المخزون -->
-                    <div class="form-section mb-4">
-                        <div class="section-title">
-                            <i class="fas fa-boxes"></i>
-                            بيانات المخزون
-                        </div>
-                        <div class="row g-3">
-                            <!-- الكمية -->
-                            <div class="col-md-4">
-                                <div class="form-floating">
-                                    <input type="number" class="form-control {% if form.quantity.errors %}is-invalid{% endif %}" 
-                                           id="id_quantity" name="quantity" value="{{ form.quantity.value|default:'0' }}" step="0.01">
-                                    <label for="id_quantity">الكمية المتوفرة</label>
-                                    {% if form.quantity.errors %}
-                                    <div class="invalid-feedback">
-                                        {{ form.quantity.errors }}
-                                    </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-
-                            <!-- سعر الوحدة -->
-                            <div class="col-md-4">
-                                <div class="form-floating">
-                                    <input type="number" class="form-control {% if form.unit_price.errors %}is-invalid{% endif %}" 
-                                           id="id_unit_price" name="unit_price" value="{{ form.unit_price.value|default:'0' }}" step="0.01">
-                                    <label for="id_unit_price">سعر الوحدة</label>
-                                    {% if form.unit_price.errors %}
-                                    <div class="invalid-feedback">
-                                        {{ form.unit_price.errors }}
-                                    </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            
-                            <!-- وحدة القياس -->
-                            <div class="col-md-4">
-                                <div class="form-floating">
-                                    <input type="text" class="form-control" id="id_unit" name="unit" value="{{ form.unit.value|default:'' }}">
-                                    <label for="id_unit">وحدة القياس</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- حدود المخزون -->
-                    <div class="form-section mb-4">
-                        <div class="section-title">
-                            <i class="fas fa-chart-line"></i>
-                            حدود المخزون
-                        </div>
-                        <div class="row g-3">
-                            <!-- الحد الأدنى -->
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    <input type="number" class="form-control {% if form.minimum_threshold.errors %}is-invalid{% endif %}" 
-                                           id="id_minimum_threshold" name="minimum_threshold" value="{{ form.minimum_threshold.value|default:'0' }}" step="0.01">
-                                    <label for="id_minimum_threshold">الحد الأدنى</label>
-                                    <small class="form-text text-muted">سيتم إظهار تنبيه عند انخفاض المخزون عن هذا الحد</small>
-                                    {% if form.minimum_threshold.errors %}
-                                    <div class="invalid-feedback">
-                                        {{ form.minimum_threshold.errors }}
-                                    </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-
-                            <!-- الحد الأقصى -->
-                            <div class="col-md-6">
-                                <div class="form-floating">
-                                    <input type="number" class="form-control {% if form.maximum_threshold.errors %}is-invalid{% endif %}" 
-                                           id="id_maximum_threshold" name="maximum_threshold" value="{{ form.maximum_threshold.value|default:'0' }}" step="0.01">
-                                    <label for="id_maximum_threshold">الحد الأقصى</label>
-                                    <small class="form-text text-muted">الحد الأقصى المسموح به في المخزن</small>
-                                    {% if form.maximum_threshold.errors %}
-                                    <div class="invalid-feedback">
-                                        {{ form.maximum_threshold.errors }}
-                                    </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- الوصف والملاحظات -->
-                    <div class="form-section">
-                        <div class="section-title">
-                            <i class="fas fa-align-left"></i>
-                            الوصف والملاحظات
-                        </div>
-                        <div class="row">
-                            <!-- الوصف -->
-                            <div class="col-12">
-                                <div class="form-floating">
-                                    <textarea class="form-control {% if form.description.errors %}is-invalid{% endif %}" 
-                                              id="id_description" name="description" style="height: 120px">{{ form.description.value|default:'' }}</textarea>
-                                    <label for="id_description">الوصف</label>
-                                    {% if form.description.errors %}
-                                    <div class="invalid-feedback">
-                                        {{ form.description.errors }}
-                                    </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- أزرار التحكم -->
-                    <div class="mt-4 d-flex justify-content-between">
-                        <a href="{% url 'inventory:product_list' %}" class="btn btn-secondary btn-lg">
-                            <i class="fas fa-times me-1"></i>
-                            إلغاء
-                        </a>
-                        <button type="submit" class="btn btn-primary btn-lg">
-                            <i class="fas fa-save me-1"></i>
-                            حفظ البيانات
-                        </button>
+                    <div class="mb-3">
+                        <label for="categoryDescription" class="form-label">وصف التصنيف</label>
+                        <textarea class="form-control" id="categoryDescription" rows="3"></textarea>
                     </div>
                 </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" id="saveCategoryBtn">حفظ</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Unit Modal -->
+<div class="modal fade" id="addUnitModal" tabindex="-1" aria-labelledby="addUnitModalLabel" aria-hidden="true" dir="rtl">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="addUnitModalLabel">إضافة وحدة قياس جديدة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="unitForm">
+                    <div class="mb-3">
+                        <label for="unitName" class="form-label">اسم الوحدة</label>
+                        <input type="text" class="form-control" id="unitName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="unitSymbol" class="form-label">رمز الوحدة</label>
+                        <input type="text" class="form-control" id="unitSymbol">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" id="saveUnitBtn">حفظ</button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-// Form validation
-document.addEventListener('DOMContentLoaded', function () {
-    const form = document.querySelector('.needs-validation');
-    
-    // Validate on submit
-    form.addEventListener('submit', function (event) {
-        if (!form.checkValidity()) {
-            event.preventDefault();
-            event.stopPropagation();
-            
-            // Show error messages
-            const invalidInputs = form.querySelectorAll(':invalid');
-            invalidInputs.forEach(input => {
-                input.classList.add('is-invalid');
-                
-                // Scroll to first invalid input
-                if (invalidInputs.length > 0) {
-                    invalidInputs[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    invalidInputs[0].focus();
+document.addEventListener('DOMContentLoaded', function() {
+    // Show debug info in development mode
+    const debugMode = true;
+    const formDebugInfo = document.getElementById('formDebugInfo');
+    const formStatus = document.getElementById('formStatus');
+    const formAction = document.getElementById('formAction');
+
+    // Always show debug info
+    formDebugInfo.style.display = 'block';
+
+    // Update form action display
+    if (formAction) {
+        const form = document.querySelector('form.needs-validation');
+        if (form && form.action) {
+            formAction.textContent = form.action;
+        }
+    }
+
+    // Image preview functionality
+    document.getElementById('id_image').addEventListener('change', function(e) {
+        if (this.files && this.files[0]) {
+            var reader = new FileReader();
+
+            reader.onload = function(e) {
+                var previewIcon = document.getElementById('preview-icon');
+                var previewImg = document.getElementById('preview-img');
+
+                if (previewIcon) {
+                    previewIcon.style.display = 'none';
                 }
+
+                if (previewImg) {
+                    previewImg.src = e.target.result;
+                } else {
+                    previewImg = document.createElement('img');
+                    previewImg.id = 'preview-img';
+                    previewImg.src = e.target.result;
+                    previewImg.style.maxWidth = '100%';
+                    previewImg.style.maxHeight = '100%';
+                    previewImg.style.objectFit = 'contain';
+
+                    document.querySelector('.image-preview').appendChild(previewImg);
+                }
+            }
+
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
+
+    // ربط حقلي الرصيد الافتتاحي والرصيد الحالي
+    const initialQuantityField = document.getElementById('id_initial_quantity');
+    const currentQuantityField = document.getElementById('id_quantity');
+
+    if (initialQuantityField && currentQuantityField) {
+        // عند تغيير الرصيد الافتتاحي، يتم تحديث الرصيد الحالي
+        initialQuantityField.addEventListener('input', function() {
+            currentQuantityField.value = this.value;
+            console.log(`Updated current quantity to ${this.value}`);
+        });
+
+        // عند تغيير الرصيد الحالي، يتم تحديث الرصيد الافتتاحي (فقط عند إضافة منتج جديد)
+        if (!currentQuantityField.hasAttribute('readonly')) {
+            currentQuantityField.addEventListener('input', function() {
+                initialQuantityField.value = this.value;
+                console.log(`Updated initial quantity to ${this.value}`);
             });
         }
-        
-        form.classList.add('was-validated');
+    }
+
+    // Form validation
+    var forms = document.querySelectorAll('.needs-validation');
+
+    Array.prototype.slice.call(forms).forEach(function(form) {
+        form.addEventListener('submit', function(event) {
+            if (formStatus) formStatus.textContent = "جاري التحقق من النموذج...";
+
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+                if (formStatus) formStatus.textContent = "النموذج غير صالح";
+                return;
+            }
+
+            // Check if we have a new unit selected
+            const unitDropdown = document.getElementById('id_unit');
+            if (unitDropdown && unitDropdown.value === "new") {
+                if (formStatus) formStatus.textContent = "تم اختيار وحدة جديدة";
+
+                // Make sure the hidden fields are properly set
+                const newUnitCheckbox = document.getElementById('new_unit_checkbox');
+                const newUnitName = document.getElementById('new_unit_name');
+                const newUnitSymbol = document.getElementById('new_unit_symbol');
+
+                // Double-check that the values are set correctly
+                if (newUnitCheckbox.value !== "true" || !newUnitName.value) {
+                    console.error("New unit fields not properly set!");
+                    // Set them again to be safe
+                    newUnitCheckbox.value = "true";
+                }
+
+                // Add a debug message to the page
+                console.log("Form submission - New unit checkbox:", newUnitCheckbox.value);
+                console.log("Form submission - New unit name:", newUnitName.value);
+                console.log("Form submission - New unit symbol:", newUnitSymbol.value);
+
+                if (formStatus) {
+                    formStatus.textContent = `إرسال وحدة جديدة: ${newUnitName.value}`;
+                }
+            }
+
+            // Ensure all required fields have values
+            const productId = document.getElementById('id_product_id').value;
+            const productName = document.getElementById('id_name').value;
+
+            if (!productId || !productName) {
+                event.preventDefault();
+                event.stopPropagation();
+                alert('يرجى ملء جميع الحقول المطلوبة');
+                if (formStatus) formStatus.textContent = "حقول مطلوبة مفقودة";
+                return;
+            }
+
+            if (formStatus) formStatus.textContent = "جاري إرسال النموذج...";
+            form.classList.add('was-validated');
+        }, false);
     });
-    
-    // Live validation as user types
-    const inputs = form.querySelectorAll('input, select, textarea');
-    inputs.forEach(input => {
-        input.addEventListener('blur', function () {
-            // Clear previous validation state
-            this.classList.remove('is-valid', 'is-invalid');
-            
-            // Validate and add appropriate class
-            if (this.checkValidity()) {
-                this.classList.add('is-valid');
-            } else if (this.value) {
-                this.classList.add('is-invalid');
+
+    // Handle add category functionality
+    document.getElementById('saveCategoryBtn').addEventListener('click', function() {
+        const categoryName = document.getElementById('categoryName').value.trim();
+        const categoryDescription = document.getElementById('categoryDescription').value.trim();
+
+        if (!categoryName) {
+            alert('من فضلك أدخل اسم التصنيف');
+            return;
+        }
+
+        // إرسال طلب AJAX لإضافة التصنيف الجديد
+        console.log('Sending AJAX request to add category:', categoryName);
+        console.log('CSRF Token:', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+        // Debug: Show CSRF token value
+        console.log('CSRF token:', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+        fetch('{% url "inventory:category_add_ajax" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                name: categoryName,
+                description: categoryDescription
+            }),
+            credentials: 'same-origin'  // Include cookies with request
+        })
+        .then(response => {
+            console.log('Response status:', response.status);
+            console.log('Response headers:', response.headers);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Response data:', data);
+
+            if (data.success) {
+                // Add the new category to the dropdown
+                const categoryDropdown = document.getElementById('id_category');
+                const categoryDebugInfo = document.getElementById('categoryDebugInfo');
+
+                // Show debug info
+                if (categoryDebugInfo) {
+                    categoryDebugInfo.style.display = 'block';
+                    categoryDebugInfo.textContent = `إضافة تصنيف جديد: ${categoryName} (تم الحفظ في قاعدة البيانات)`;
+                    categoryDebugInfo.style.color = 'green';
+                }
+
+                // Remove any existing "new" option to avoid duplicates
+                Array.from(categoryDropdown.options).forEach(option => {
+                    if (option.value === "new") {
+                        categoryDropdown.removeChild(option);
+                    }
+                });
+
+                // إضافة التصنيف الجديد إلى القائمة المنسدلة
+                const newOption = document.createElement('option');
+                newOption.value = data.category_id; // استخدام معرف التصنيف الجديد
+                newOption.textContent = categoryName;
+                newOption.selected = true;
+                categoryDropdown.appendChild(newOption);
+
+                // تحديث حقول النموذج المخفية
+                const newCategoryCheckbox = document.getElementById('new_category_checkbox');
+                const newCategoryName = document.getElementById('new_category_name');
+                const newCategoryDescription = document.getElementById('new_category_description');
+
+                // إلغاء تفعيل الحقول المخفية لأن التصنيف تم حفظه بالفعل
+                newCategoryCheckbox.value = "false";
+                newCategoryName.value = "";
+                newCategoryDescription.value = "";
+
+                console.log("Updated hidden fields - new_category:", newCategoryCheckbox.value);
+
+                if (formStatus) {
+                    formStatus.textContent = `تم إضافة وحفظ تصنيف جديد: ${categoryName} (معرف: ${data.category_id})`;
+                }
+
+                // Close the modal and reset form
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addCategoryModal'));
+                modal.hide();
+                document.getElementById('categoryForm').reset();
+
+                // Show success message
+                if (data.message) {
+                    alert(`${data.message} - معرف التصنيف: ${data.category_id}`);
+                } else {
+                    alert(`تمت إضافة التصنيف الجديد وحفظه في قاعدة البيانات. معرف التصنيف: ${data.category_id}`);
+                }
+            } else {
+                console.error('Error adding category:', data.error);
+                alert('حدث خطأ أثناء إضافة التصنيف: ' + data.error);
+                if (categoryDebugInfo) {
+                    categoryDebugInfo.style.display = 'block';
+                    categoryDebugInfo.textContent = `خطأ: ${data.error}`;
+                    categoryDebugInfo.style.color = 'red';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error in AJAX request:', error);
+
+            // تفاصيل أكثر عن الخطأ
+            let errorDetails = '';
+            if (error instanceof TypeError) {
+                errorDetails = 'خطأ في الاتصال بالخادم. تأكد من أن الخادم يعمل وأن الاتصال بالإنترنت متاح.';
+            } else if (error instanceof SyntaxError) {
+                errorDetails = 'خطأ في تحليل البيانات المستلمة من الخادم.';
+            } else {
+                errorDetails = error.toString();
+            }
+
+            alert(`حدث خطأ أثناء إضافة التصنيف: ${errorDetails}`);
+
+            if (categoryDebugInfo) {
+                categoryDebugInfo.style.display = 'block';
+                categoryDebugInfo.textContent = `خطأ: ${errorDetails}`;
+                categoryDebugInfo.style.color = 'red';
+            }
+
+            if (formStatus) {
+                formStatus.textContent = `خطأ في إضافة التصنيف: ${errorDetails}`;
             }
         });
     });
-    
-    // Additional field-specific validation
-    const quantityInput = document.getElementById('id_quantity');
-    const minThresholdInput = document.getElementById('id_minimum_threshold');
-    const maxThresholdInput = document.getElementById('id_maximum_threshold');
-    
-    // Validate thresholds
-    function validateThresholds() {
-        const qty = parseFloat(quantityInput.value) || 0;
-        const min = parseFloat(minThresholdInput.value) || 0;
-        const max = parseFloat(maxThresholdInput.value) || 0;
-        
-        if (max > 0 && max < min) {
-            maxThresholdInput.setCustomValidity('الحد الأقصى يجب أن يكون أكبر من الحد الأدنى');
-            maxThresholdInput.classList.add('is-invalid');
-        } else {
-            maxThresholdInput.setCustomValidity('');
+
+    // Handle add unit functionality
+    document.getElementById('saveUnitBtn').addEventListener('click', function() {
+        const unitName = document.getElementById('unitName').value.trim();
+        const unitSymbol = document.getElementById('unitSymbol').value.trim();
+
+        if (!unitName) {
+            alert('من فضلك أدخل اسم الوحدة');
+            return;
         }
-        
-        // Check if quantity is below minimum threshold
-        if (qty < min && min > 0) {
-            // Just visual indication, not preventing submission
-            quantityInput.classList.add('is-invalid');
-        }
-    }
-    
-    // Add event listeners for threshold validation
-    [quantityInput, minThresholdInput, maxThresholdInput].forEach(input => {
-        input.addEventListener('change', validateThresholds);
+
+        // إرسال طلب AJAX لإضافة وحدة قياس جديدة
+        console.log('Sending AJAX request to add unit:', unitName, unitSymbol);
+        console.log('CSRF Token:', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+        // Debug: Show CSRF token value
+        console.log('CSRF token for unit:', document.querySelector('[name=csrfmiddlewaretoken]').value);
+
+        fetch('{% url "inventory:unit_add_ajax" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({
+                name: unitName,
+                symbol: unitSymbol
+            }),
+            credentials: 'same-origin'  // Include cookies with request
+        })
+        .then(response => {
+            console.log('Unit response status:', response.status);
+            console.log('Unit response headers:', response.headers);
+            return response.json();
+        })
+        .then(data => {
+            console.log('Unit response data:', data);
+
+            if (data.success) {
+                // Add the new unit to the dropdown
+                const unitDropdown = document.getElementById('id_unit');
+                const unitDebugInfo = document.getElementById('unitDebugInfo');
+
+                // Show debug info
+                if (unitDebugInfo) {
+                    unitDebugInfo.style.display = 'block';
+                    unitDebugInfo.textContent = `إضافة وحدة جديدة: ${unitName} (تم الحفظ في قاعدة البيانات)`;
+                    unitDebugInfo.style.color = 'green';
+                }
+
+                // Remove any existing "new" option to avoid duplicates
+                Array.from(unitDropdown.options).forEach(option => {
+                    if (option.value === "new") {
+                        unitDropdown.removeChild(option);
+                    }
+                });
+
+                // إضافة وحدة القياس الجديدة إلى القائمة المنسدلة
+                const newOption = document.createElement('option');
+                newOption.value = data.unit_id; // استخدام معرف وحدة القياس الجديدة
+                newOption.textContent = unitName + (unitSymbol ? ` (${unitSymbol})` : '');
+                newOption.selected = true;
+                unitDropdown.appendChild(newOption);
+
+                // تحديث حقول النموذج المخفية
+                const newUnitCheckbox = document.getElementById('new_unit_checkbox');
+                const newUnitName = document.getElementById('new_unit_name');
+                const newUnitSymbol = document.getElementById('new_unit_symbol');
+
+                // إلغاء تفعيل الحقول المخفية لأن وحدة القياس تم حفظها بالفعل
+                newUnitCheckbox.value = "false";
+                newUnitName.value = "";
+                newUnitSymbol.value = "";
+
+                console.log("Updated unit hidden fields - new_unit:", newUnitCheckbox.value);
+
+                if (formStatus) {
+                    formStatus.textContent = `تم إضافة وحفظ وحدة قياس جديدة: ${unitName} (معرف: ${data.unit_id})`;
+                }
+
+                // Close the modal and reset form
+                const modal = bootstrap.Modal.getInstance(document.getElementById('addUnitModal'));
+                modal.hide();
+                document.getElementById('unitForm').reset();
+
+                // Show success message
+                if (data.message) {
+                    alert(`${data.message} - معرف وحدة القياس: ${data.unit_id}`);
+                } else {
+                    alert(`تمت إضافة وحدة القياس الجديدة وحفظها في قاعدة البيانات. معرف وحدة القياس: ${data.unit_id}`);
+                }
+            } else {
+                console.error('Error adding unit:', data.error);
+                alert('حدث خطأ أثناء إضافة وحدة القياس: ' + data.error);
+                if (unitDebugInfo) {
+                    unitDebugInfo.style.display = 'block';
+                    unitDebugInfo.textContent = `خطأ: ${data.error}`;
+                    unitDebugInfo.style.color = 'red';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error in unit AJAX request:', error);
+
+            // تفاصيل أكثر عن الخطأ
+            let errorDetails = '';
+            if (error instanceof TypeError) {
+                errorDetails = 'خطأ في الاتصال بالخادم. تأكد من أن الخادم يعمل وأن الاتصال بالإنترنت متاح.';
+            } else if (error instanceof SyntaxError) {
+                errorDetails = 'خطأ في تحليل البيانات المستلمة من الخادم.';
+            } else {
+                errorDetails = error.toString();
+            }
+
+            alert(`حدث خطأ أثناء إضافة وحدة القياس: ${errorDetails}`);
+
+            if (unitDebugInfo) {
+                unitDebugInfo.style.display = 'block';
+                unitDebugInfo.textContent = `خطأ: ${errorDetails}`;
+                unitDebugInfo.style.color = 'red';
+            }
+
+            if (formStatus) {
+                formStatus.textContent = `خطأ في إضافة وحدة القياس: ${errorDetails}`;
+            }
+        });
     });
+
+    // Add a submit handler to the main form
+    const mainForm = document.querySelector('form.needs-validation');
+    if (mainForm) {
+        mainForm.addEventListener('submit', function(event) {
+            // Check if we have a new category selected
+            const categoryDropdown = document.getElementById('id_category');
+            const newCategoryCheckbox = document.getElementById('new_category_checkbox');
+            const categoryDebugInfo = document.getElementById('categoryDebugInfo');
+
+            console.log("Form submission - Category dropdown value:", categoryDropdown ? categoryDropdown.value : 'not found');
+            console.log("Form submission - New category checkbox value:", newCategoryCheckbox ? newCategoryCheckbox.value : 'not found');
+
+            // إذا كانت قيمة القائمة المنسدلة هي "new"، فهذا يعني أن المستخدم اختار إضافة تصنيف جديد
+            // ولكن لم يتم حفظه بعد في قاعدة البيانات
+            if (categoryDropdown && categoryDropdown.value === "new") {
+                // Make sure the new_category checkbox is set to true
+                newCategoryCheckbox.value = "true";
+                console.log("Form submission - Setting new_category to true");
+
+                // Double check that we have a category name
+                const newCategoryName = document.getElementById('new_category_name');
+                if (!newCategoryName.value) {
+                    console.error("New category name is empty!");
+                    if (formStatus) formStatus.textContent = "خطأ: اسم التصنيف الجديد فارغ";
+                    if (categoryDebugInfo) {
+                        categoryDebugInfo.style.display = 'block';
+                        categoryDebugInfo.textContent = "خطأ: اسم التصنيف الجديد فارغ";
+                        categoryDebugInfo.style.color = 'red';
+                    }
+                    event.preventDefault();
+                    return false;
+                }
+
+                // Make sure the hidden fields are included in the form
+                if (categoryDebugInfo) {
+                    categoryDebugInfo.style.display = 'block';
+                    categoryDebugInfo.textContent = `إرسال تصنيف جديد: ${newCategoryName.value}`;
+                    categoryDebugInfo.style.color = 'blue';
+                }
+            } else {
+                // إذا كانت قيمة القائمة المنسدلة ليست "new"، فهذا يعني أن المستخدم اختار تصنيفًا موجودًا
+                // أو أضاف تصنيفًا جديدًا وتم حفظه بالفعل في قاعدة البيانات
+                newCategoryCheckbox.value = "false";
+                console.log("Form submission - Setting new_category to false");
+            }
+
+            // Check if we have a new unit selected
+            const unitDropdown = document.getElementById('id_unit');
+            const newUnitCheckbox = document.getElementById('new_unit_checkbox');
+            const unitDebugInfo = document.getElementById('unitDebugInfo');
+
+            console.log("Form submission - Unit dropdown value:", unitDropdown ? unitDropdown.value : 'not found');
+            console.log("Form submission - New unit checkbox value:", newUnitCheckbox ? newUnitCheckbox.value : 'not found');
+
+            // إذا كانت قيمة القائمة المنسدلة هي "new"، فهذا يعني أن المستخدم اختار إضافة وحدة قياس جديدة
+            // ولكن لم يتم حفظها بعد في قاعدة البيانات
+            if (unitDropdown && unitDropdown.value === "new") {
+                // Make sure the new_unit checkbox is set to true
+                newUnitCheckbox.value = "true";
+                console.log("Form submission - Setting new_unit to true");
+
+                // Double check that we have a unit name
+                const newUnitName = document.getElementById('new_unit_name');
+                if (!newUnitName.value) {
+                    console.error("New unit name is empty!");
+                    if (formStatus) formStatus.textContent = "خطأ: اسم الوحدة الجديدة فارغ";
+                    if (unitDebugInfo) {
+                        unitDebugInfo.style.display = 'block';
+                        unitDebugInfo.textContent = "خطأ: اسم الوحدة الجديدة فارغ";
+                        unitDebugInfo.style.color = 'red';
+                    }
+                    event.preventDefault();
+                    return false;
+                }
+
+                // Make sure the hidden fields are included in the form
+                if (unitDebugInfo) {
+                    unitDebugInfo.style.display = 'block';
+                    unitDebugInfo.textContent = `إرسال وحدة جديدة: ${newUnitName.value}`;
+                    unitDebugInfo.style.color = 'blue';
+                }
+            } else {
+                // إذا كانت قيمة القائمة المنسدلة ليست "new"، فهذا يعني أن المستخدم اختار وحدة قياس موجودة
+                // أو أضاف وحدة قياس جديدة وتم حفظها بالفعل في قاعدة البيانات
+                newUnitCheckbox.value = "false";
+                console.log("Form submission - Setting new_unit to false");
+            }
+
+            // Ensure product_id and name are filled
+            const productId = document.getElementById('id_product_id').value;
+            const productName = document.getElementById('id_name').value;
+
+            if (!productId || !productName) {
+                if (formStatus) formStatus.textContent = "خطأ: يجب ملء حقول رقم الصنف واسم الصنف";
+                event.preventDefault();
+                return false;
+            }
+
+            console.log("Form is being submitted...");
+            if (formStatus) formStatus.textContent = "جاري إرسال النموذج...";
+        });
+    }
+
+    // Debug button functionality
+    const debugFormBtn = document.getElementById('debugFormBtn');
+    if (debugFormBtn) {
+        debugFormBtn.addEventListener('click', function() {
+            // Get all form fields
+            const formData = new FormData(mainForm);
+            let formInfo = "معلومات النموذج:\n\n";
+
+            // Log all form fields
+            for (let [key, value] of formData.entries()) {
+                formInfo += `${key}: ${value}\n`;
+                console.log(`${key}: ${value}`);
+            }
+
+            // Check category dropdown
+            const categoryDropdown = document.getElementById('id_category');
+            const categoryValue = categoryDropdown ? categoryDropdown.value : 'غير موجود';
+            formInfo += `\nقيمة التصنيف: ${categoryValue}\n`;
+
+            // Check category hidden fields
+            const newCategoryCheckbox = document.getElementById('new_category_checkbox');
+            const newCategoryName = document.getElementById('new_category_name');
+            const newCategoryDescription = document.getElementById('new_category_description');
+
+            formInfo += `\nحقول التصنيف الجديد:\n`;
+            formInfo += `new_category: ${newCategoryCheckbox ? newCategoryCheckbox.value : 'غير موجود'}\n`;
+            formInfo += `new_category_name: ${newCategoryName ? newCategoryName.value : 'غير موجود'}\n`;
+            formInfo += `new_category_description: ${newCategoryDescription ? newCategoryDescription.value : 'غير موجود'}\n`;
+
+            // Check unit dropdown
+            const unitDropdown = document.getElementById('id_unit');
+            const unitValue = unitDropdown ? unitDropdown.value : 'غير موجود';
+            formInfo += `\nقيمة وحدة القياس: ${unitValue}\n`;
+
+            // Check unit hidden fields
+            const newUnitCheckbox = document.getElementById('new_unit_checkbox');
+            const newUnitName = document.getElementById('new_unit_name');
+            const newUnitSymbol = document.getElementById('new_unit_symbol');
+
+            formInfo += `\nحقول الوحدة الجديدة:\n`;
+            formInfo += `new_unit: ${newUnitCheckbox ? newUnitCheckbox.value : 'غير موجود'}\n`;
+            formInfo += `new_unit_name: ${newUnitName ? newUnitName.value : 'غير موجود'}\n`;
+            formInfo += `new_unit_symbol: ${newUnitSymbol ? newUnitSymbol.value : 'غير موجود'}\n`;
+
+            // Show in alert
+            alert(formInfo);
+
+            // Update status
+            if (formStatus) {
+                formStatus.textContent = "تم فحص النموذج";
+            }
+        });
+    }
 });
 </script>
 {% endblock %}

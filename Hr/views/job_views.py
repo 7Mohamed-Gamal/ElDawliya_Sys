@@ -45,8 +45,9 @@ def job_detail(request, jop_code):
     """عرض تفاصيل وظيفة"""
     job = get_object_or_404(Job, jop_code=jop_code)
 
-    # Get employees with this job
-    employees = job.employee_set.all()
+    # Get employees with this job code
+    from Hr.models.employee_model import Employee
+    employees = Employee.objects.filter(jop_code=jop_code)
 
     context = {
         'job': job,
@@ -85,9 +86,12 @@ def job_delete(request, jop_code):
     """حذف وظيفة"""
     job = get_object_or_404(Job, jop_code=jop_code)
 
+    # Import Employee model
+    from Hr.models.employee_model import Employee
+
     if request.method == 'POST':
         # Check if there are any employees with this job
-        if job.employee_set.exists():
+        if Employee.objects.filter(jop_code=jop_code).exists():
             messages.error(request, 'لا يمكن حذف الوظيفة لأنها مرتبطة بموظفين')
             return redirect('Hr:jobs:detail', jop_code=job.jop_code)
 
@@ -95,8 +99,12 @@ def job_delete(request, jop_code):
         messages.success(request, 'تم حذف الوظيفة بنجاح')
         return redirect('Hr:jobs:list')
 
+    # Get employees with this job for the template
+    employees = Employee.objects.filter(jop_code=jop_code)
+
     context = {
         'job': job,
+        'employees': employees,
         'title': f'حذف الوظيفة: {job.jop_name}'
     }
 

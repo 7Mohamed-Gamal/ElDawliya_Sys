@@ -62,33 +62,127 @@ def admin_dashboard(request):
 @system_admin_required
 def system_settings(request):
     """
-    View to edit system settings.
+    View to edit system settings - direct database approach.
     """
-    # Try to get existing settings or create new
+    print("****** DIRECT DATABASE APPROACH FOR SETTINGS ******")
+    
+    # Default values for required fields
+    default_values = {
+        'db_host': 'localhost',
+        'db_name': 'el_dawliya',
+        'db_user': 'sa',
+        'db_password': 'password',
+        'db_port': '1433',
+        'company_name': 'الشركة الدولية',
+        'company_address': '',
+        'company_phone': '',
+        'company_email': '',
+        'company_website': '',
+        'system_name': 'نظام الدولية',
+        'enable_debugging': False,
+        'maintenance_mode': False,
+        'timezone': 'Asia/Riyadh',
+        'date_format': 'Y-m-d',
+        'language': 'ar',
+        'font_family': 'cairo',
+        'text_direction': 'rtl',
+    }
+    
+    # Step 1: Get or create the SystemSettings object
     try:
-        settings = SystemSettings.objects.first()
-    except ObjectDoesNotExist:
-        settings = None
-
+        # First try to get existing setting
+        settings_obj = SystemSettings.objects.all().order_by('id').first()
+        if not settings_obj:
+            print("Creating new settings with default values")
+            settings_obj = SystemSettings(**default_values)
+            settings_obj.save()
+            print(f"Created settings with ID: {settings_obj.id}")
+    except Exception as e:
+        print(f"Error with settings object: {str(e)}")
+        messages.error(request, f"Error with settings: {str(e)}")
+        settings_obj = None
+    
     if request.method == 'POST':
-        form = SystemSettingsForm(request.POST, request.FILES, instance=settings)
+        print("Handling POST request with direct DB update")
+        
+        # Create form for validation only, but don't use its save method
+        form = SystemSettingsForm(request.POST, request.FILES, instance=settings_obj)
+        
         if form.is_valid():
-            settings = form.save()
-
-            # Apply language settings
-            from django.utils import translation
-            translation.activate(form.cleaned_data['language'])
-            request.session[translation.LANGUAGE_SESSION_KEY] = form.cleaned_data['language']
-
-            messages.success(request, 'تم حفظ الإعدادات بنجاح')
-            return redirect('administrator:settings')
+            print("Form validation passed, processing data manually")
+            
+            try:
+                # Get or create settings object if needed
+                if not settings_obj:
+                    settings_obj = SystemSettings()
+                    # Set defaults for db fields, which won't change
+                    settings_obj.db_host = default_values['db_host']
+                    settings_obj.db_name = default_values['db_name']
+                    settings_obj.db_user = default_values['db_user']
+                    settings_obj.db_password = default_values['db_password']
+                    settings_obj.db_port = default_values['db_port']
+                
+                # MANUALLY update fields from POST data
+                # Non-database fields that are in the form
+                form_fields = [
+                    'company_name', 'company_address', 'company_phone', 
+                    'company_email', 'company_website',
+                    'system_name', 'enable_debugging', 'maintenance_mode',
+                    'timezone', 'date_format', 
+                    'language', 'font_family', 'text_direction'
+                ]
+                
+                # Update each field from form data
+                for field in form_fields:
+                    if field in form.cleaned_data:
+                        print(f"Setting {field} = {form.cleaned_data[field]}")
+                        setattr(settings_obj, field, form.cleaned_data[field])
+                    else:
+                        print(f"Field {field} not in form data")
+                
+                # Handle logo upload separately
+                if 'company_logo' in request.FILES:
+                    print(f"Handling logo: {request.FILES['company_logo']}")
+                    settings_obj.company_logo = request.FILES['company_logo']
+                    
+                # Save to database
+                settings_obj.save()
+                print(f"Settings saved with ID: {settings_obj.id}")
+                
+                # Apply language settings
+                from django.utils import translation
+                translation.activate(form.cleaned_data['language'])
+                request.session[translation.LANGUAGE_SESSION_KEY] = form.cleaned_data['language']
+                
+                # Success message
+                messages.success(request, 'تم حفظ الإعدادات بنجاح')
+                
+                # Refresh the page to show updated settings
+                return redirect('administrator:settings')
+            
+            except Exception as e:
+                print(f"ERROR during manual save: {str(e)}")
+                messages.error(request, f'حدث خطأ أثناء حفظ الإعدادات: {str(e)}')
+        
+        else:
+            print(f"Form validation failed: {form.errors}")
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"خطأ في حقل {field}: {error}")
+    
     else:
-        form = SystemSettingsForm(instance=settings)
-
+        # GET request - create form with current settings
+        if settings_obj:
+            form = SystemSettingsForm(instance=settings_obj)
+        else:
+            form = SystemSettingsForm(initial=default_values)
+    
+    # Prepare context
     context = {
         'form': form,
-        'settings': settings
+        'settings': settings_obj
     }
+    
     return render(request, 'administrator/system_settings.html', context)
 
 @login_required
@@ -1269,6 +1363,970 @@ class ModuleDeleteView(DeleteView):
         return super().delete(request, *args, **kwargs)
 
 
+
+
+@login_required
+@system_admin_required
+def url_paths_helper(request):
+    """
+    عرض صفحة مساعدة تحتوي على جميع المسارات المتاحة في النظام
+    لتسهيل إنشاء الوحدات (Modules) بمسارات صحيحة
+    """
+    # المسارات الثابتة المعروفة (للاحتياط في حالة فشل الاكتشاف التلقائي)
+    default_app_paths = {
+        'Hr': [
+            {'name': 'الصفحة الرئيسية للموارد البشرية', 'path': '/Hr/'},
+            {'name': 'لوحة التحكم', 'path': '/Hr/dashboard/'},
+            {'name': 'قائمة الموظفين', 'path': '/Hr/employees/'},
+            {'name': 'إضافة موظف جديد', 'path': '/Hr/employees/create/'},
+        ],
+        'inventory': [
+            {'name': 'الصفحة الرئيسية للمخزن', 'path': '/inventory/'},
+            {'name': 'قائمة المنتجات', 'path': '/inventory/products/'},
+            {'name': 'إضافة منتج جديد', 'path': '/inventory/products/add/'},
+        ],
+        'tasks': [
+            {'name': 'الصفحة الرئيسية للمهام', 'path': '/tasks/'},
+            {'name': 'قائمة المهام', 'path': '/tasks/list/'},
+            {'name': 'إنشاء مهمة جديدة', 'path': '/tasks/create/'},
+        ],
+        'meetings': [
+            {'name': 'الصفحة الرئيسية للاجتماعات', 'path': '/meetings/'},
+            {'name': 'قائمة الاجتماعات', 'path': '/meetings/list/'},
+            {'name': 'إنشاء اجتماع جديد', 'path': '/meetings/create/'},
+        ],
+        'Purchase_orders': [
+            {'name': 'الصفحة الرئيسية لطلبات الشراء', 'path': '/purchase/'},
+            {'name': 'قائمة طلبات الشراء', 'path': '/purchase/requests/'},
+            {'name': 'إنشاء طلب شراء جديد', 'path': '/purchase/requests/create/'},
+        ],
+        'administrator': [
+            {'name': 'الصفحة الرئيسية للإدارة', 'path': '/administrator/'},
+            {'name': 'إعدادات النظام', 'path': '/administrator/settings/'},
+            {'name': 'قائمة الوحدات', 'path': '/administrator/modules/'},
+        ],
+        'accounts': [
+            {'name': 'تسجيل الدخول', 'path': '/accounts/login/'},
+            {'name': 'تسجيل الخروج', 'path': '/accounts/logout/'},
+            {'name': 'الصفحة الرئيسية', 'path': '/accounts/home/'},
+        ],
+    }
+
+    # تحديث المسارات إذا تم طلب ذلك
+    if request.method == 'POST' and 'refresh_paths' in request.POST:
+        app_paths = discover_url_paths()
+        messages.success(request, 'تم تحديث المسارات بنجاح!')
+    else:
+        # استخدام المسارات المكتشفة تلقائيًا أو الافتراضية
+        try:
+            app_paths = discover_url_paths()
+        except Exception as e:
+            app_paths = default_app_paths
+            messages.warning(request, f'حدث خطأ أثناء اكتشاف المسارات: {str(e)}. تم استخدام المسارات الافتراضية.')
+
+    context = {
+        'app_paths': app_paths,
+        'page_title': 'دليل المسارات المتاحة في النظام',
+    }
+    return render(request, 'administrator/url_paths_helper.html', context)
+
+
+@login_required
+@system_admin_required
+def template_paths_helper(request):
+    """
+    عرض صفحة مساعدة تحتوي على جميع القوالب المتاحة في النظام
+    لتسهيل إنشاء صلاحيات القوالب (Template Permissions) بمسارات صحيحة
+    """
+    # القوالب الثابتة المعروفة (للاحتياط في حالة فشل الاكتشاف التلقائي)
+    default_app_templates = {
+        'Hr': [
+            {'name': 'قائمة الموظفين', 'path': 'Hr/employees/employee_list.html'},
+            {'name': 'تفاصيل الموظف', 'path': 'Hr/employees/employee_detail.html'},
+            {'name': 'نموذج الموظف', 'path': 'Hr/employees/employee_form.html'},
+        ],
+        'inventory': [
+            {'name': 'قائمة المنتجات', 'path': 'inventory/product_list.html'},
+            {'name': 'تفاصيل المنتج', 'path': 'inventory/product_detail.html'},
+            {'name': 'نموذج المنتج', 'path': 'inventory/product_form.html'},
+        ],
+        'tasks': [
+            {'name': 'قائمة المهام', 'path': 'tasks/task_list.html'},
+            {'name': 'تفاصيل المهمة', 'path': 'tasks/task_detail.html'},
+            {'name': 'نموذج المهمة', 'path': 'tasks/task_form.html'},
+        ],
+        'meetings': [
+            {'name': 'قائمة الاجتماعات', 'path': 'meetings/meeting_list.html'},
+            {'name': 'تفاصيل الاجتماع', 'path': 'meetings/meeting_detail.html'},
+            {'name': 'نموذج الاجتماع', 'path': 'meetings/meeting_form.html'},
+        ],
+        'administrator': [
+            {'name': 'لوحة التحكم', 'path': 'administrator/dashboard.html'},
+            {'name': 'إعدادات النظام', 'path': 'administrator/system_settings.html'},
+            {'name': 'قائمة الوحدات', 'path': 'administrator/module_list.html'},
+        ],
+        'accounts': [
+            {'name': 'تسجيل الدخول', 'path': 'accounts/login.html'},
+            {'name': 'الصفحة الرئيسية', 'path': 'accounts/home.html'},
+            {'name': 'الملف الشخصي', 'path': 'accounts/profile.html'},
+        ],
+        'common': [
+            {'name': 'القالب الأساسي', 'path': 'base.html'},
+            {'name': 'القالب الأساسي المحدث', 'path': 'base_updated.html'},
+            {'name': 'قالب الصفحة الرئيسية', 'path': 'home_dashboard.html'},
+        ],
+    }
+
+    # تحديث القوالب إذا تم طلب ذلك
+    if request.method == 'POST' and 'refresh_templates' in request.POST:
+        try:
+            app_templates = discover_templates()
+            messages.success(request, 'تم تحديث القوالب بنجاح!')
+        except Exception as e:
+            app_templates = default_app_templates
+            messages.error(request, f'حدث خطأ أثناء تحديث القوالب: {str(e)}. تم استخدام القوالب الافتراضية.')
+    else:
+        # استخدام القوالب المكتشفة تلقائيًا أو الافتراضية
+        try:
+            app_templates = discover_templates()
+
+            # دمج القوالب المكتشفة مع القوالب الثابتة
+            for app_name, templates in default_app_templates.items():
+                if app_name not in app_templates:
+                    app_templates[app_name] = []
+
+                for template_item in templates:
+                    # التحقق من عدم وجود القالب بالفعل
+                    template_exists = False
+                    for existing_template in app_templates[app_name]:
+                        if existing_template['path'] == template_item['path']:
+                            template_exists = True
+                            break
+
+                    if not template_exists:
+                        app_templates[app_name].append(template_item)
+
+        except Exception as e:
+            app_templates = default_app_templates
+            messages.warning(request, f'حدث خطأ أثناء اكتشاف القوالب: {str(e)}. تم استخدام القوالب الافتراضية.')
+
+    context = {
+        'app_templates': app_templates,
+        'page_title': 'دليل القوالب المتاحة في النظام',
+    }
+    return render(request, 'administrator/template_paths_helper.html', context)
+
+
+@login_required
+@system_admin_required
+def create_modules_from_paths(request):
+    """
+    إنشاء وحدات من المسارات المكتشفة في النظام
+    """
+    if request.method == 'POST':
+        app_name = request.POST.get('app_name')
+        if not app_name:
+            messages.error(request, 'لم يتم تحديد اسم التطبيق!')
+            return redirect('administrator:url_paths_helper')
+
+        # الحصول على المسارات المكتشفة
+        try:
+            app_paths = discover_url_paths()
+        except Exception as e:
+            messages.error(request, f'حدث خطأ أثناء اكتشاف المسارات: {str(e)}')
+            return redirect('administrator:url_paths_helper')
+
+        # تحديد الأيقونة والألوان حسب التطبيق
+        icon_map = {
+            'Hr': 'fa-users',
+            'inventory': 'fa-boxes',
+            'tasks': 'fa-tasks',
+            'meetings': 'fa-handshake',
+            'Purchase_orders': 'fa-shopping-cart',
+            'administrator': 'fa-cogs',
+            'accounts': 'fa-user-circle',
+        }
+
+        color_map = {
+            'Hr': '#28a745',
+            'inventory': '#fd7e14',
+            'tasks': '#6f42c1',
+            'meetings': '#e83e8c',
+            'Purchase_orders': '#20c997',
+            'administrator': '#0d6efd',
+            'accounts': '#6c757d',
+        }
+
+        # الحصول على الأقسام المتاحة
+        departments = Department.objects.filter(is_active=True)
+        if not departments.exists():
+            messages.error(request, 'لا توجد أقسام متاحة. يرجى إنشاء قسم أولاً.')
+            return redirect('administrator:department_list')
+
+        # إنشاء قاموس للربط بين أسماء التطبيقات والأقسام
+        app_department_map = {}
+        for dept in departments:
+            # محاولة مطابقة اسم القسم مع اسم التطبيق
+            dept_name_lower = dept.name.lower()
+            dept_url_name_lower = dept.url_name.lower() if dept.url_name else ''
+
+            for app in app_paths.keys():
+                app_lower = app.lower()
+                if app_lower == dept_name_lower or app_lower == dept_url_name_lower:
+                    app_department_map[app] = dept
+
+        # إنشاء الوحدات
+        total_created = 0
+        total_skipped = 0
+
+        # إذا كان app_name هو "all"، نقوم بإنشاء وحدات لجميع التطبيقات
+        if app_name == 'all':
+            for current_app, paths in app_paths.items():
+                # البحث عن القسم المناسب للتطبيق
+                department = app_department_map.get(current_app)
+
+                # إذا لم يتم العثور على قسم مطابق، نستخدم أول قسم متاح
+                if not department:
+                    department = departments.first()
+
+                # الحصول على الأيقونة واللون المناسبين
+                icon = icon_map.get(current_app, 'fa-link')
+                bg_color = color_map.get(current_app, '#0d6efd')
+
+                # إنشاء الوحدات لهذا التطبيق
+                app_created, app_skipped = create_modules_for_app(current_app, paths, department, icon, bg_color)
+
+                total_created += app_created
+                total_skipped += app_skipped
+
+            # إرسال رسالة نجاح
+            if total_created > 0:
+                messages.success(request, f'تم إنشاء {total_created} وحدة جديدة بنجاح لجميع التطبيقات.')
+            if total_skipped > 0:
+                messages.info(request, f'تم تخطي {total_skipped} وحدة موجودة بالفعل.')
+            if total_created == 0 and total_skipped == 0:
+                messages.warning(request, 'لم يتم إنشاء أي وحدات.')
+        else:
+            # التحقق من وجود المسارات للتطبيق المحدد
+            if app_name not in app_paths:
+                messages.error(request, f'لا توجد مسارات متاحة للتطبيق: {app_name}')
+                return redirect('administrator:url_paths_helper')
+
+            # البحث عن القسم المناسب للتطبيق
+            department = app_department_map.get(app_name)
+
+            # إذا لم يتم العثور على القسم، نستخدم أول قسم متاح
+            if not department:
+                department = departments.first()
+                messages.warning(request, f'لم يتم العثور على قسم مطابق لـ {app_name}. تم استخدام القسم: {department.name}')
+
+            # الحصول على الأيقونة واللون المناسبين
+            icon = icon_map.get(app_name, 'fa-link')
+            bg_color = color_map.get(app_name, '#0d6efd')
+
+            # إنشاء الوحدات لهذا التطبيق
+            created_count, skipped_count = create_modules_for_app(app_name, app_paths[app_name], department, icon, bg_color)
+
+            # إرسال رسالة نجاح
+            if created_count > 0:
+                messages.success(request, f'تم إنشاء {created_count} وحدة جديدة بنجاح لـ {app_name}.')
+            if skipped_count > 0:
+                messages.info(request, f'تم تخطي {skipped_count} وحدة موجودة بالفعل.')
+            if created_count == 0 and skipped_count == 0:
+                messages.warning(request, f'لم يتم إنشاء أي وحدات لـ {app_name}.')
+
+        return redirect('administrator:module_list')
+
+    # إذا لم تكن الطريقة POST، نعيد توجيه المستخدم إلى صفحة دليل المسارات
+    return redirect('administrator:url_paths_helper')
+
+
+@login_required
+@system_admin_required
+def create_templates_from_paths(request):
+    """
+    إنشاء قوالب من المسارات المكتشفة في النظام
+    """
+    if request.method == 'POST':
+        app_name = request.POST.get('app_name')
+        if not app_name:
+            messages.error(request, 'لم يتم تحديد اسم التطبيق!')
+            return redirect('administrator:template_paths_helper')
+
+        # الحصول على القوالب المكتشفة
+        try:
+            app_templates = discover_templates()
+        except Exception as e:
+            messages.error(request, f'حدث خطأ أثناء اكتشاف القوالب: {str(e)}')
+            return redirect('administrator:template_paths_helper')
+
+        # إنشاء صلاحيات القوالب
+        total_created = 0
+        total_skipped = 0
+
+        # إذا كان app_name هو "all"، نقوم بإنشاء صلاحيات لجميع التطبيقات
+        if app_name == 'all':
+            for current_app, templates in app_templates.items():
+                app_created, app_skipped = create_template_permissions_for_app(current_app, templates)
+                total_created += app_created
+                total_skipped += app_skipped
+
+            # إرسال رسالة نجاح
+            if total_created > 0:
+                messages.success(request, f'تم إنشاء {total_created} صلاحية قالب جديدة بنجاح لجميع التطبيقات.')
+            if total_skipped > 0:
+                messages.info(request, f'تم تخطي {total_skipped} صلاحية قالب موجودة بالفعل.')
+            if total_created == 0 and total_skipped == 0:
+                messages.warning(request, 'لم يتم إنشاء أي صلاحيات قوالب.')
+        else:
+            # التحقق من وجود القوالب للتطبيق المحدد
+            if app_name not in app_templates:
+                messages.error(request, f'لا توجد قوالب متاحة للتطبيق: {app_name}')
+                return redirect('administrator:template_paths_helper')
+
+            # إنشاء صلاحيات القوالب لهذا التطبيق
+            created_count, skipped_count = create_template_permissions_for_app(app_name, app_templates[app_name])
+
+            # إرسال رسالة نجاح
+            if created_count > 0:
+                messages.success(request, f'تم إنشاء {created_count} صلاحية قالب جديدة بنجاح لـ {app_name}.')
+            if skipped_count > 0:
+                messages.info(request, f'تم تخطي {skipped_count} صلاحية قالب موجودة بالفعل.')
+            if created_count == 0 and skipped_count == 0:
+                messages.warning(request, f'لم يتم إنشاء أي صلاحيات قوالب لـ {app_name}.')
+
+        return redirect('administrator:template_permission_list')
+
+    # إذا لم تكن الطريقة POST، نعيد توجيه المستخدم إلى صفحة دليل القوالب
+    return redirect('administrator:template_paths_helper')
+
+
+def create_template_permissions_for_app(app_name, templates):
+    """
+    إنشاء صلاحيات قوالب لتطبيق محدد
+    """
+    created_count = 0
+    skipped_count = 0
+
+    for template_item in templates:
+        # التحقق من وجود صلاحية القالب بالفعل
+        existing_permission = TemplatePermission.objects.filter(
+            template_path=template_item['path']
+        ).first()
+
+        if existing_permission:
+            skipped_count += 1
+            continue
+
+        # إنشاء صلاحية قالب جديدة
+        name = template_item['name']
+        # Always include the app name in the template permission name
+        name = f"{name} - {app_name}"
+
+        new_permission = TemplatePermission(
+            name=name,
+            app_name=app_name,  # إضافة اسم التطبيق إلى حقل app_name
+            template_path=template_item['path'],
+            description=f"صلاحية الوصول لقالب {name}",
+            is_active=True
+        )
+        new_permission.save()
+        created_count += 1
+
+    return created_count, skipped_count
+
+
+def create_modules_for_app(app_name, paths, department, icon, bg_color):
+    """
+    إنشاء وحدات لتطبيق محدد
+    """
+    created_count = 0
+    skipped_count = 0
+
+    for path_item in paths:
+        # التحقق من وجود الوحدة بالفعل
+        existing_module = Module.objects.filter(
+            url=path_item['path'],
+            department=department
+        ).first()
+
+        if existing_module:
+            skipped_count += 1
+            continue
+
+        # إنشاء وحدة جديدة
+        new_module = Module(
+            name=path_item['name'],
+            url=path_item['path'],
+            department=department,
+            icon=icon,
+            bg_color=bg_color,
+            is_active=True,
+            order=Module.objects.filter(department=department).count() + 1
+        )
+        new_module.save()
+        created_count += 1
+
+    return created_count, skipped_count
+
+
+def normalize_url_path(path):
+    """
+    تنظيف وتنسيق مسار URL بالشكل الصحيح:
+    1. التأكد من أن المسار يبدأ بعلامة /
+    2. إزالة العلامات المتكررة // وتحويلها إلى / واحدة
+    3. التأكد من أن المسار ينتهي بعلامة / إذا كان مسار قائمة/فهرس
+    """
+    # إضافة / في بداية المسار إذا لم تكن موجودة
+    if not path.startswith('/'):
+        path = '/' + path
+    
+    # إزالة // المتكررة
+    while '//' in path:
+        path = path.replace('//', '/')
+    
+    # إضافة / في نهاية المسار إذا كانت آخر عنصر ليس / وليس له امتداد ملف مثل .html
+    if not path.endswith('/') and '.' not in path.split('/')[-1]:
+        path = path + '/'
+    
+    return path
+
+def discover_url_paths():
+    """
+    اكتشاف المسارات المتاحة في النظام بشكل ديناميكي ومع تنظيف المسارات
+    """
+    from django.urls import get_resolver, URLPattern, URLResolver
+    from django.conf import settings
+    import re
+
+    # قاموس لتخزين المسارات حسب التطبيق
+    app_paths = {}
+
+    # الحصول على جميع المسارات المسجلة في النظام
+    resolver = get_resolver()
+
+    # قاموس لتخزين أسماء التطبيقات الفعلية وأسماء العرض
+    app_display_names = {
+        'hr': 'Hr',
+        'inventory': 'inventory',
+        'tasks': 'tasks',
+        'meetings': 'meetings',
+        'purchase_orders': 'Purchase_orders',
+        'administrator': 'administrator',
+        'accounts': 'accounts',
+        'eldawliya_sys': 'ElDawliya_sys',
+        'admin_permissions': 'admin_permissions',
+    }
+
+    # قاموس لتخزين أسماء المسارات بناءً على أنماط الاسم
+    path_name_patterns = {
+        'list': 'قائمة',
+        'create': 'إضافة',
+        'add': 'إضافة',
+        'edit': 'تعديل',
+        'update': 'تحديث',
+        'delete': 'حذف',
+        'detail': 'تفاصيل',
+        'view': 'عرض',
+        'dashboard': 'لوحة التحكم',
+        'settings': 'الإعدادات',
+        'report': 'تقرير',
+        'reports': 'التقارير',
+        'export': 'تصدير',
+        'import': 'استيراد',
+        'print': 'طباعة',
+        'search': 'بحث',
+        'calendar': 'التقويم',
+        'profile': 'الملف الشخصي',
+        'login': 'تسجيل الدخول',
+        'logout': 'تسجيل الخروج',
+        'home': 'الصفحة الرئيسية',
+    }
+
+    # قاموس لتخزين أسماء الكيانات
+    entity_name_patterns = {
+        'employee': 'موظف',
+        'employees': 'الموظفين',
+        'department': 'قسم',
+        'departments': 'الأقسام',
+        'job': 'وظيفة',
+        'jobs': 'الوظائف',
+        'car': 'سيارة',
+        'cars': 'السيارات',
+        'product': 'منتج',
+        'products': 'المنتجات',
+        'category': 'تصنيف',
+        'categories': 'التصنيفات',
+        'unit': 'وحدة',
+        'units': 'وحدات القياس',
+        'invoice': 'فاتورة',
+        'invoices': 'الفواتير',
+        'task': 'مهمة',
+        'tasks': 'المهام',
+        'meeting': 'اجتماع',
+        'meetings': 'الاجتماعات',
+        'request': 'طلب',
+        'requests': 'الطلبات',
+        'vendor': 'مورد',
+        'vendors': 'الموردين',
+        'module': 'وحدة',
+        'modules': 'الوحدات',
+        'permission': 'صلاحية',
+        'permissions': 'الصلاحيات',
+        'group': 'مجموعة',
+        'groups': 'المجموعات',
+        'user': 'مستخدم',
+        'users': 'المستخدمين',
+        'stock': 'المخزون',
+        'attendance': 'الحضور',
+        'leave': 'إجازة',
+        'leaves': 'الإجازات',
+        'salary': 'راتب',
+        'salaries': 'الرواتب',
+        'evaluation': 'تقييم',
+        'evaluations': 'التقييمات',
+        'note': 'ملاحظة',
+        'notes': 'الملاحظات',
+        'file': 'ملف',
+        'files': 'الملفات',
+    }
+
+    # وظيفة مساعدة للاكتشاف التفصيلي للمسارات من خلال العقد
+    def extract_paths_from_resolver_node(resolver_node, current_path='', namespace=''):
+        paths = []
+
+        # استخراج المسارات من أنماط URL والمحللات الفرعية
+        if hasattr(resolver_node, 'url_patterns'):
+            for pattern in resolver_node.url_patterns:
+                # استخراج المسار الحالي
+                pattern_path = current_path
+                if hasattr(pattern, 'pattern'):
+                    pattern_str = str(pattern.pattern)
+                    # تنظيف المسار (إزالة أنماط التعبير العادي وإزالة المعلمات)
+                    cleaned_path = re.sub(r'<[^>]+>', '', pattern_str)
+                    cleaned_path = cleaned_path.replace('^', '').replace('$', '')
+                    pattern_path = current_path + cleaned_path
+
+                # إذا كان نمط URL، استخرج اسمه وأضف المسار
+                if isinstance(pattern, URLPattern) and hasattr(pattern, 'name') and pattern.name:
+                    path_name = pattern.name
+                    full_namespace = namespace
+                    if resolver_node.namespace:
+                        full_namespace = resolver_node.namespace
+
+                    url_name = path_name
+                    if full_namespace:
+                        url_name = f"{full_namespace}:{path_name}"
+                    
+                    paths.append({
+                        'name': url_name,
+                        'path': pattern_path
+                    })
+
+                # إذا كان محلل URL، استخرج المسارات بشكل متكرر
+                elif isinstance(pattern, URLResolver):
+                    new_namespace = namespace
+                    if pattern.namespace:
+                        if namespace:
+                            new_namespace = f"{namespace}:{pattern.namespace}"
+                        else:
+                            new_namespace = pattern.namespace
+                    
+                    # استدعاء الدالة بشكل متكرر للمحلل الفرعي
+                    paths.extend(extract_paths_from_resolver_node(
+                        pattern,
+                        current_path=pattern_path,
+                        namespace=new_namespace
+                    ))
+
+        return paths
+
+    # استخراج المسارات باستخدام الطريقة المباشرة من reverse_dict
+    for url_name, url_pattern in resolver.reverse_dict.items():
+        # تجاهل العناصر التي ليست سلاسل نصية (مثل الدوال)
+        if not isinstance(url_name, str):
+            continue
+
+        # تحديد التطبيق الذي ينتمي إليه المسار
+        if ':' in url_name:
+            app_name = url_name.split(':')[0]
+            pattern_name = url_name.split(':')[1]
+        else:
+            app_name = url_name
+            pattern_name = ''
+
+        # تحويل اسم التطبيق إلى الاسم المعروض
+        display_app_name = app_display_names.get(app_name.lower(), app_name)
+
+        # إنشاء قائمة للتطبيق إذا لم تكن موجودة
+        if display_app_name not in app_paths:
+            app_paths[display_app_name] = []
+
+        # تحديد المسار الكامل
+        path = f'/{app_name}/'
+        if pattern_name:
+            # استخراج النمط من الاسم
+            pattern = pattern_name.replace('_', '/').lower()
+            path = f'/{app_name}/{pattern}/'
+
+        # تحديد اسم المسار
+        path_name = ''
+
+    # استخراج المسارات بشكل أكثر تفصيلاً من محلل URL
+    detailed_paths = extract_paths_from_resolver_node(resolver)
+    
+    # تنظيم المسارات التفصيلية حسب التطبيق
+    for path_info in detailed_paths:
+        url_name = path_info['name']
+        path_value = path_info['path']
+        
+        # تنظيف المسار باستخدام الدالة المخصصة
+        path_value = normalize_url_path(path_value)
+        
+        # تحديد التطبيق
+        app_name = None
+        pattern_name = ''
+        
+        if ':' in url_name:
+            app_name = url_name.split(':')[0]
+            pattern_name = url_name.split(':')[1]
+        else:
+            # محاولة استنتاج التطبيق من المسار
+            path_parts = path_value.strip('/').split('/')
+            if path_parts:
+                app_name = path_parts[0]
+                if len(path_parts) > 1:
+                    # استخدام الجزء الثاني من المسار كاسم النمط
+                    pattern_name = path_parts[1]
+        
+        if not app_name:
+            app_name = 'common'
+        
+        # تحويل اسم التطبيق إلى الاسم المعروض
+        display_app_name = app_display_names.get(app_name.lower(), app_name)
+        
+        # إنشاء قائمة للتطبيق إذا لم تكن موجودة
+        if display_app_name not in app_paths:
+            app_paths[display_app_name] = []
+
+        # تحديد اسم المسار
+        path_name = ''
+
+        # محاولة استخراج اسم المسار من النمط
+        parts = pattern_name.split('_') if pattern_name else []
+        if parts:
+            # البحث عن أنماط الاسم المعروفة
+            for part in parts:
+                if part.lower() in path_name_patterns:
+                    action = path_name_patterns[part.lower()]
+
+                    # البحث عن الكيان
+                    for other_part in parts:
+                        if other_part.lower() in entity_name_patterns:
+                            entity = entity_name_patterns[other_part.lower()]
+                            if action in ['إضافة', 'تعديل', 'حذف']:
+                                # تحويل الكيان إلى المفرد للإضافة والتعديل والحذف
+                                if entity.endswith('ين'):
+                                    entity = entity[:-2]
+                                elif entity.endswith('ات'):
+                                    entity = entity[:-2]
+
+                            path_name = f"{action} {entity}"
+                            break
+
+                    if not path_name:
+                        path_name = action
+                    break
+
+        # إذا لم نتمكن من تحديد اسم، نستخدم الاسم الأصلي
+        if not path_name:
+            if not pattern_name:
+                if display_app_name == 'Hr':
+                    path_name = 'الصفحة الرئيسية للموارد البشرية'
+                elif display_app_name == 'inventory':
+                    path_name = 'الصفحة الرئيسية للمخزن'
+                elif display_app_name == 'tasks':
+                    path_name = 'الصفحة الرئيسية للمهام'
+                elif display_app_name == 'meetings':
+                    path_name = 'الصفحة الرئيسية للاجتماعات'
+                elif display_app_name == 'Purchase_orders':
+                    path_name = 'الصفحة الرئيسية لطلبات الشراء'
+                elif display_app_name == 'administrator':
+                    path_name = 'الصفحة الرئيسية للإدارة'
+                elif display_app_name == 'accounts':
+                    path_name = 'الصفحة الرئيسية للحسابات'
+                else:
+                    path_name = f'الصفحة الرئيسية لـ {display_app_name}'
+            else:
+                path_name = pattern_name.replace('_', ' ').title()
+
+        # اسم المسار النهائي
+        if path_name:
+            # إضافة المسار إلى قائمة المسارات إذا كان عندنا اسم للمسار
+            app_paths[display_app_name].append({
+                'name': path_name,
+                'path': path_value
+            })
+        else:
+            # اسم افتراضي بناء على المسار
+            path_name = url_name.replace(':', ' - ').replace('_', ' ').title()
+            app_paths[display_app_name].append({
+                'name': path_name,
+                'path': path_value
+            })
+
+    # إضافة المسارات الثابتة المعروفة
+    default_app_paths = {
+        'Hr': [
+            {'name': 'الصفحة الرئيسية للموارد البشرية', 'path': '/Hr/'},
+            {'name': 'لوحة التحكم', 'path': '/Hr/dashboard/'},
+            {'name': 'قائمة الموظفين', 'path': '/Hr/employees/'},
+            {'name': 'إضافة موظف جديد', 'path': '/Hr/employees/create/'},
+        ],
+        'inventory': [
+            {'name': 'الصفحة الرئيسية للمخزن', 'path': '/inventory/'},
+            {'name': 'قائمة المنتجات', 'path': '/inventory/products/'},
+            {'name': 'إضافة منتج جديد', 'path': '/inventory/products/add/'},
+        ],
+        'tasks': [
+            {'name': 'الصفحة الرئيسية للمهام', 'path': '/tasks/'},
+            {'name': 'قائمة المهام', 'path': '/tasks/list/'},
+            {'name': 'إنشاء مهمة جديدة', 'path': '/tasks/create/'},
+        ],
+        'meetings': [
+            {'name': 'الصفحة الرئيسية للاجتماعات', 'path': '/meetings/'},
+            {'name': 'قائمة الاجتماعات', 'path': '/meetings/list/'},
+            {'name': 'إنشاء اجتماع جديد', 'path': '/meetings/create/'},
+        ],
+        'Purchase_orders': [
+            {'name': 'الصفحة الرئيسية لطلبات الشراء', 'path': '/purchase/'},
+            {'name': 'قائمة طلبات الشراء', 'path': '/purchase/requests/'},
+            {'name': 'إنشاء طلب شراء جديد', 'path': '/purchase/requests/create/'},
+        ],
+        'administrator': [
+            {'name': 'الصفحة الرئيسية للإدارة', 'path': '/administrator/'},
+            {'name': 'إعدادات النظام', 'path': '/administrator/settings/'},
+            {'name': 'قائمة الوحدات', 'path': '/administrator/modules/'},
+        ],
+        'accounts': [
+            {'name': 'تسجيل الدخول', 'path': '/accounts/login/'},
+            {'name': 'تسجيل الخروج', 'path': '/accounts/logout/'},
+            {'name': 'الصفحة الرئيسية', 'path': '/accounts/home/'},
+        ],
+    }
+
+    # دمج المسارات المكتشفة مع المسارات الثابتة
+    for app_name, paths in default_app_paths.items():
+        if app_name not in app_paths:
+            app_paths[app_name] = []
+
+        for path_item in paths:
+            app_paths[app_name].append(path_item)
+
+    # إزالة المسارات المكررة
+    for app_name in app_paths:
+        unique_paths = []
+        path_set = set()
+
+        for path_item in app_paths[app_name]:
+            if path_item['path'] not in path_set:
+                path_set.add(path_item['path'])
+                unique_paths.append(path_item)
+
+        app_paths[app_name] = unique_paths
+
+    # إذا لم نجد أي مسارات، نرفع استثناء
+    if not app_paths:
+        raise Exception("لم يتم العثور على أي مسارات")
+
+    return app_paths
+
+
+def discover_templates():
+    """
+    اكتشاف القوالب المتاحة في النظام بشكل ديناميكي
+    """
+    import os
+    from django.conf import settings
+    from django.template.loaders.app_directories import get_app_template_dirs
+
+    # قاموس لتخزين القوالب حسب التطبيق
+    app_templates = {}
+
+    # قاموس لتخزين أسماء التطبيقات الفعلية وأسماء العرض
+    app_display_names = {
+        'hr': 'Hr',
+        'inventory': 'inventory',
+        'tasks': 'tasks',
+        'meetings': 'meetings',
+        'purchase_orders': 'Purchase_orders',
+        'administrator': 'administrator',
+        'accounts': 'accounts',
+    }
+
+    # قاموس لتخزين أسماء القوالب بناءً على أنماط الاسم
+    template_name_patterns = {
+        'list': 'قائمة',
+        'create': 'إنشاء',
+        'add': 'إضافة',
+        'edit': 'تعديل',
+        'update': 'تحديث',
+        'delete': 'حذف',
+        'detail': 'تفاصيل',
+        'view': 'عرض',
+        'dashboard': 'لوحة التحكم',
+        'settings': 'الإعدادات',
+        'report': 'تقرير',
+        'reports': 'التقارير',
+        'form': 'نموذج',
+        'profile': 'الملف الشخصي',
+        'login': 'تسجيل الدخول',
+        'logout': 'تسجيل الخروج',
+        'home': 'الصفحة الرئيسية',
+        'base': 'القالب الأساسي',
+    }
+
+    # قاموس لتخزين أسماء الكيانات
+    entity_name_patterns = {
+        'employee': 'موظف',
+        'employees': 'الموظفين',
+        'department': 'قسم',
+        'departments': 'الأقسام',
+        'job': 'وظيفة',
+        'jobs': 'الوظائف',
+        'car': 'سيارة',
+        'cars': 'السيارات',
+        'product': 'منتج',
+        'products': 'المنتجات',
+        'category': 'تصنيف',
+        'categories': 'التصنيفات',
+        'unit': 'وحدة',
+        'units': 'وحدات القياس',
+        'invoice': 'فاتورة',
+        'invoices': 'الفواتير',
+        'task': 'مهمة',
+        'tasks': 'المهام',
+        'meeting': 'اجتماع',
+        'meetings': 'الاجتماعات',
+        'request': 'طلب',
+        'requests': 'الطلبات',
+        'vendor': 'مورد',
+        'vendors': 'الموردين',
+        'module': 'وحدة',
+        'modules': 'الوحدات',
+        'permission': 'صلاحية',
+        'permissions': 'الصلاحيات',
+        'group': 'مجموعة',
+        'groups': 'المجموعات',
+        'user': 'مستخدم',
+        'users': 'المستخدمين',
+        'stock': 'المخزون',
+        'attendance': 'الحضور',
+        'leave': 'إجازة',
+        'leaves': 'الإجازات',
+        'salary': 'راتب',
+        'salaries': 'الرواتب',
+        'evaluation': 'تقييم',
+        'evaluations': 'التقييمات',
+        'note': 'ملاحظة',
+        'notes': 'الملاحظات',
+        'file': 'ملف',
+        'files': 'الملفات',
+    }
+
+    # الحصول على مجلدات القوالب لكل تطبيق
+    app_template_dirs = list(get_app_template_dirs('templates'))
+
+    # إضافة مجلد القوالب الرئيسي
+    template_dirs = list(settings.TEMPLATES[0]['DIRS']) + app_template_dirs
+
+    # البحث عن القوالب في كل مجلد
+    for template_dir in template_dirs:
+        if not os.path.exists(template_dir):
+            continue
+
+        # تحديد اسم التطبيق من مسار المجلد
+        app_name = None
+        for installed_app in settings.INSTALLED_APPS:
+            if installed_app in str(template_dir):
+                app_name = installed_app
+                break
+
+        # إذا لم نتمكن من تحديد اسم التطبيق، نستخدم "عام"
+        if not app_name:
+            app_name = "common"
+
+        # تحويل اسم التطبيق إلى الاسم المعروض
+        display_app_name = app_display_names.get(app_name.lower(), app_name)
+
+        # إنشاء قائمة للتطبيق إذا لم تكن موجودة
+        if display_app_name not in app_templates:
+            app_templates[display_app_name] = []
+
+        # البحث عن القوالب في المجلد وجميع المجلدات الفرعية
+        for root, dirs, files in os.walk(template_dir):
+            for file in files:
+                if file.endswith('.html'):
+                    # الحصول على المسار النسبي للقالب
+                    template_path = os.path.join(root, file)
+                    relative_path = os.path.relpath(template_path, template_dir)
+
+                    # تحديد اسم القالب
+                    template_name = os.path.splitext(file)[0]
+
+                    # محاولة استخراج اسم القالب من النمط
+                    template_display_name = ''
+
+                    # البحث عن أنماط الاسم المعروفة
+                    for pattern, name in template_name_patterns.items():
+                        if pattern in template_name:
+                            action = name
+
+                            # البحث عن الكيان
+                            for entity_pattern, entity_name in entity_name_patterns.items():
+                                if entity_pattern in template_name:
+                                    if action in ['إضافة', 'تعديل', 'حذف']:
+                                        # تحويل الكيان إلى المفرد للإضافة والتعديل والحذف
+                                        if entity_name.endswith('ين'):
+                                            entity_name = entity_name[:-2]
+                                        elif entity_name.endswith('ات'):
+                                            entity_name = entity_name[:-2]
+
+                                    template_display_name = f"{action} {entity_name}"
+                                    break
+
+                            if not template_display_name:
+                                template_display_name = action
+                            break
+
+                    # إذا لم نتمكن من تحديد اسم، نستخدم اسم الملف
+                    if not template_display_name:
+                        template_display_name = template_name.replace('_', ' ').replace('-', ' ').title()
+
+                    # إضافة القالب إلى قائمة القوالب
+                    app_templates[display_app_name].append({
+                        'name': template_display_name,
+                        'path': relative_path,
+                        'full_path': template_path,
+                    })
+
+    # إزالة القوالب المكررة
+    for app_name in app_templates:
+        unique_templates = []
+        path_set = set()
+
+        for template_item in app_templates[app_name]:
+            if template_item['path'] not in path_set:
+                path_set.add(template_item['path'])
+                unique_templates.append(template_item)
+
+        app_templates[app_name] = unique_templates
+
+    # إذا لم نجد أي قوالب، نرفع استثناء
+    if not app_templates:
+        raise Exception("لم يتم العثور على أي قوالب")
+
+    return app_templates
 
 
 @csrf_exempt

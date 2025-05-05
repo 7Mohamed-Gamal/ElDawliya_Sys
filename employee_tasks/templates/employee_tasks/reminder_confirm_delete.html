@@ -1,0 +1,68 @@
+{% extends 'employee_tasks/base_employee_tasks.html' %}
+
+{% block title %}حذف تذكير - نظام الدولية{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'employee_tasks:dashboard' %}">لوحة التحكم</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'employee_tasks:task_list' %}">المهام</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'employee_tasks:task_detail' task.pk %}">{{ task.title }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">حذف تذكير</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6 mx-auto">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        تأكيد الحذف
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        هل أنت متأكد من رغبتك في حذف هذا التذكير من المهمة <strong>"{{ task.title }}"</strong>؟
+                    </div>
+                    
+                    <div class="p-3 bg-light rounded mb-3">
+                        <p><strong>تاريخ التذكير:</strong> {{ reminder.reminder_date|date:"Y-m-d H:i" }}</p>
+                        <p><strong>الحالة:</strong> 
+                            {% if reminder.is_sent %}
+                                <span class="badge bg-success">تم الإرسال</span>
+                            {% else %}
+                                <span class="badge bg-warning">في انتظار الإرسال</span>
+                            {% endif %}
+                        </p>
+                        <p><strong>تاريخ الإنشاء:</strong> {{ reminder.created_at|date:"Y-m-d H:i" }}</p>
+                        {% if reminder.is_sent and reminder.sent_at %}
+                            <p><strong>تاريخ الإرسال:</strong> {{ reminder.sent_at|date:"Y-m-d H:i" }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <p class="text-danger">هذا الإجراء لا يمكن التراجع عنه!</p>
+                    
+                    <form method="post" action="{% url 'employee_tasks:reminder_delete' task.pk reminder.id %}">
+                        {% csrf_token %}
+                        <div class="d-flex justify-content-between mt-4">
+                            <a href="{% url 'employee_tasks:task_detail' task.pk %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-right me-1"></i> إلغاء
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash me-1"></i> حذف التذكير
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

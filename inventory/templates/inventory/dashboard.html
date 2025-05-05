@@ -1,0 +1,454 @@
+{% extends "inventory/base_inventory.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "لوحة تحكم المخزن" %}{% endblock %}
+
+{% block extra_css %}
+<!-- إضافة ستايل مودال طلب الشراء -->
+<style>
+    /* تنسيقات إضافية للوحة التحكم */
+    .card {
+        transition: all 0.3s ease;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-lg-3 col-md-6 col-sm-6">
+            <div class="card bg-primary text-white mb-4">
+                <div class="card-body">
+                    <h5>{% trans "عدد الأصناف" %}</h5>
+                    <h2>{{ total_products }}</h2>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="{% url 'inventory:product_list' %}">{% trans "تفاصيل" %}</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 col-sm-6">
+            <div class="card bg-warning text-white mb-4">
+                <div class="card-body">
+                    <h5>{% trans "أصناف منخفضة" %}</h5>
+                    <h2>{{ low_stock_count }}</h2>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="{% url 'inventory:product_list' %}?stock_status=low">{% trans "تفاصيل" %}</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 col-sm-6">
+            <div class="card bg-danger text-white mb-4">
+                <div class="card-body">
+                    <h5>{% trans "أصناف غير متوفرة" %}</h5>
+                    <h2>{{ out_of_stock_count }}</h2>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="{% url 'inventory:product_list' %}?stock_status=out">{% trans "تفاصيل" %}</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 col-sm-6">
+            <div class="card bg-success text-white mb-4">
+                <div class="card-body">
+                    <h5>{% trans "عدد الأذونات" %}</h5>
+                    <h2>{{ total_vouchers }}</h2>
+                </div>
+                <div class="card-footer d-flex align-items-center justify-content-between">
+                    <a class="small text-white stretched-link" href="{% url 'inventory:voucher_list' %}">{% trans "تفاصيل" %}</a>
+                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- أصناف تحتاج طلب شراء -->
+    <div class="row mt-4">
+        <div class="col-xl-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    {% trans "أصناف تحتاج لطلب شراء" %}
+                </div>
+                <div class="card-body">
+                    {% if purchase_needed_products %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>{% trans "كود الصنف" %}</th>
+                                    <th>{% trans "اسم الصنف" %}</th>
+                                    <th>{% trans "الكمية الحالية" %}</th>
+                                    <th>{% trans "الحد الأدنى" %}</th>
+                                    <th>{% trans "إجراءات" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in purchase_needed_products %}
+                                <tr>
+                                    <td>{{ product.product_id }}</td>
+                                    <td>{{ product.name }}</td>
+                                    <td>{{ product.quantity }}</td>
+                                    <td>{{ product.minimum_threshold }}</td>
+                                    <td>
+                                        <button data-product-id="{{ product.product_id }}" class="btn btn-primary btn-sm purchase-request-btn">
+                                            <i class="fas fa-shopping-cart"></i> {% trans "إنشاء طلب شراء" %}
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-success">
+                        {% trans "لا توجد أصناف تحتاج لطلب شراء حالياً." %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- آخر الاذونات -->
+        <div class="col-xl-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-clipboard-list me-1"></i>
+                    {% trans "آخر الأذونات" %}
+                </div>
+                <div class="card-body">
+                    {% if recent_vouchers %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>{% trans "رقم الإذن" %}</th>
+                                    <th>{% trans "نوع الإذن" %}</th>
+                                    <th>{% trans "التاريخ" %}</th>
+                                    <th>{% trans "إجراءات" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for voucher in recent_vouchers %}
+                                <tr>
+                                    <td>{{ voucher.voucher_number }}</td>
+                                    <td>{{ voucher.get_voucher_type_display }}</td>
+                                    <td>{{ voucher.date }}</td>
+                                    <td>
+                                        <a href="{% url 'inventory:voucher_detail' voucher.voucher_number %}" class="btn btn-info btn-sm">
+                                            <i class="fas fa-eye"></i> {% trans "عرض" %}
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        {% trans "لا توجد أذونات حتى الآن." %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- الأصناف منخفضة المخزون -->
+    <div class="row mt-4">
+        <div class="col-xl-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <i class="fas fa-bell me-1"></i>
+                    {% trans "أصناف منخفضة المخزون" %}
+                </div>
+                <div class="card-body">
+                    {% if low_stock_products %}
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>{% trans "كود الصنف" %}</th>
+                                    <th>{% trans "اسم الصنف" %}</th>
+                                    <th>{% trans "الكمية الحالية" %}</th>
+                                    <th>{% trans "الحد الأدنى" %}</th>
+                                    <th>{% trans "الحد الأقصى" %}</th>
+                                    <th>{% trans "الوحدة" %}</th>
+                                    <th>{% trans "إجراءات" %}</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in low_stock_products %}
+                                <tr>
+                                    <td>{{ product.product_id }}</td>
+                                    <td>{{ product.name }}</td>
+                                    <td>{{ product.quantity }}</td>
+                                    <td>{{ product.minimum_threshold }}</td>
+                                    <td>{{ product.maximum_threshold }}</td>
+                                    <td>{{ product.unit }}</td>
+                                    <td>
+                                        <a href="{% url 'inventory:product_edit' product.product_id %}" class="btn btn-warning btn-sm">
+                                            <i class="fas fa-edit"></i> {% trans "تعديل" %}
+                                        </a>
+                                        <button data-product-id="{{ product.product_id }}" class="btn btn-primary btn-sm purchase-request-btn">
+                                            <i class="fas fa-shopping-cart"></i> {% trans "طلب شراء" %}
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        {% trans "لا توجد أصناف منخفضة المخزون حالياً." %}
+                    </div>
+                    {% endif %}
+                    <div class="mt-3">
+                        <a href="{% url 'inventory:product_list' %}?stock_status=low" class="btn btn-primary">
+                            <i class="fas fa-list"></i> {% trans "عرض كل الأصناف منخفضة المخزون" %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- مودال طلب الشراء -->
+<div class="modal fade" id="purchaseRequestModal" tabindex="-1" aria-labelledby="purchaseRequestModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="purchaseRequestModalLabel">{% trans "طلب شراء صنف" %}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="product-info mb-3 p-3 bg-light rounded">
+                    <h5 class="mb-3">{% trans "معلومات الصنف" %}</h5>
+                    <p><strong>{% trans "رقم الصنف:" %}</strong> <span id="modal-product-id"></span></p>
+                    <p><strong>{% trans "اسم الصنف:" %}</strong> <span id="modal-product-name"></span></p>
+                    <p><strong>{% trans "الكمية الحالية:" %}</strong> <span id="modal-product-quantity"></span></p>
+                    <p><strong>{% trans "الحد الأدنى:" %}</strong> <span id="modal-product-min"></span></p>
+                </div>
+
+                <form id="purchaseRequestForm">
+                    <div class="mb-3">
+                        <label for="quantityRequested" class="form-label">{% trans "الكمية المطلوبة" %}</label>
+                        <input type="number" class="form-control" id="quantityRequested" min="1" required>
+                        <div class="form-text">{% trans "حدد الكمية المطلوبة للشراء." %}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="requestNotes" class="form-label">{% trans "ملاحظات (اختياري)" %}</label>
+                        <textarea class="form-control" id="requestNotes" rows="2"></textarea>
+                    </div>
+                    <div id="purchaseRequestStatus" class="alert alert-warning d-none">
+                        <!-- سيتم استخدام هذا العنصر لعرض حالة الطلب إذا كان موجودًا بالفعل -->
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "إلغاء" %}</button>
+                <button type="button" class="btn btn-primary" id="submitPurchaseRequest">{% trans "إرسال طلب الشراء" %}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // كائن Bootstrap Modal
+    const purchaseModal = new bootstrap.Modal(document.getElementById('purchaseRequestModal'));
+    
+    // العناصر الرئيسية
+    const modalProductId = document.getElementById('modal-product-id');
+    const modalProductName = document.getElementById('modal-product-name');
+    const modalProductQuantity = document.getElementById('modal-product-quantity');
+    const modalProductMin = document.getElementById('modal-product-min');
+    const quantityInput = document.getElementById('quantityRequested');
+    const notesInput = document.getElementById('requestNotes');
+    const statusDiv = document.getElementById('purchaseRequestStatus');
+    const submitButton = document.getElementById('submitPurchaseRequest');
+    
+    // متغير لتخزين معرف الصنف المحدد حاليا
+    let currentProductId = null;
+    let currentButton = null;
+    
+    // إضافة مستمع الحدث لأزرار طلب الشراء
+    const purchaseButtons = document.querySelectorAll('.purchase-request-btn');
+    purchaseButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const productId = this.getAttribute('data-product-id');
+            currentProductId = productId;
+            currentButton = this;
+            
+            // تجميع الصف الذي يحتوي على بيانات المنتج
+            const row = this.closest('tr');
+            
+            if (row) {
+                const productName = row.cells[1].textContent;
+                const productQuantity = row.cells[2].textContent;
+                const productMin = row.cells[3].textContent;
+                
+                // ملء بيانات المودال
+                modalProductId.textContent = productId;
+                modalProductName.textContent = productName;
+                modalProductQuantity.textContent = productQuantity;
+                modalProductMin.textContent = productMin;
+                
+                // حساب الكمية المقترحة (الفرق بين الحد الأدنى والكمية الحالية)
+                const qtyDiff = parseFloat(productMin) - parseFloat(productQuantity);
+                quantityInput.value = qtyDiff > 0 ? qtyDiff : 1;
+                
+                // التحقق إذا كان الصنف موجود بالفعل في طلب شراء
+                checkProductInPurchaseRequest(productId);
+            }
+        });
+    });
+    
+    // وظيفة للتحقق مما إذا كان المنتج موجودًا بالفعل في طلب شراء
+    function checkProductInPurchaseRequest(productId) {
+        fetch(`/purchase/api/check-product/${productId}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.in_purchase_request) {
+                    // إظهار رسالة تحذير إذا كان المنتج موجودًا بالفعل
+                    statusDiv.innerHTML = `<strong>تنبيه:</strong> هذا الصنف موجود بالفعل في طلب شراء بحالة "${data.request_status === 'pending' ? 'قيد الانتظار' : 
+                                        data.request_status === 'approved' ? 'تمت الموافقة' : 
+                                        data.request_status === 'rejected' ? 'مرفوض' : 
+                                        data.request_status === 'completed' ? 'مكتمل' : data.request_status}".`;
+                    statusDiv.classList.remove('d-none', 'alert-success', 'alert-warning', 'alert-danger');
+                    
+                    // تغيير لون التنبيه حسب الحالة
+                    if (data.request_status === 'pending' || data.request_status === 'approved') {
+                        statusDiv.classList.add('alert-warning');
+                        // تعطيل زر الإرسال لأن هناك طلب قيد المعالجة
+                        submitButton.disabled = true;
+                        submitButton.title = 'لا يمكن إنشاء طلب جديد لهذا الصنف حتى يكتمل الطلب الحالي';
+                    } else if (data.request_status === 'rejected') {
+                        statusDiv.classList.add('alert-danger');
+                        submitButton.disabled = false;
+                    } else if (data.request_status === 'completed') {
+                        statusDiv.classList.add('alert-success');
+                        submitButton.disabled = false;
+                    }
+                } else {
+                    // إذا لم يكن المنتج موجودًا في أي طلب، إخفاء حالة التحذير
+                    statusDiv.classList.add('d-none');
+                    submitButton.disabled = false;
+                    submitButton.title = '';
+                }
+                
+                // عرض المودال بعد الانتهاء من التحقق
+                purchaseModal.show();
+            })
+            .catch(error => {
+                console.error('Error checking product status:', error);
+                // عرض المودال على أي حال
+                statusDiv.classList.add('d-none');
+                purchaseModal.show();
+            });
+    }
+    
+    // إضافة مستمع لزر إرسال طلب الشراء
+    submitButton.addEventListener('click', function() {
+        if (!currentProductId || !quantityInput.value || parseFloat(quantityInput.value) <= 0) {
+            alert('يرجى إدخال كمية صالحة.');
+            return;
+        }
+        
+        // تعطيل الزر أثناء المعالجة
+        this.disabled = true;
+        const originalButtonText = this.textContent;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإرسال...';
+        
+        // الحصول على CSRF token
+        const csrfToken = getCsrfToken();
+        
+        // إرسال طلب الشراء مع الكمية المطلوبة
+        fetch('{% url "Purchase_orders:transfer_product_to_purchase_request" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({
+                'product_id': currentProductId,
+                'action': 'add',
+                'quantity_requested': parseFloat(quantityInput.value),
+                'notes': notesInput.value
+            })
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error('Request failed with status ' + response.status);
+            }
+        })
+        .then(data => {
+            console.log('Success response:', data);
+            
+            // إغلاق المودال
+            purchaseModal.hide();
+            
+            // تحديث زر الصنف في الجدول
+            if (currentButton) {
+                currentButton.className = 'btn btn-success btn-sm';
+                currentButton.innerHTML = '<i class="fas fa-check"></i> تمت الإضافة';
+                currentButton.disabled = true;
+            }
+            
+            // إظهار رسالة نجاح
+            alert('تم إضافة المنتج إلى طلب الشراء بنجاح');
+            
+            // إعادة توجيه المستخدم إلى صفحة تفاصيل طلب الشراء
+            setTimeout(function() {
+                window.location.href = '/purchase/requests/' + data.request_id + '/';
+            }, 1000);
+        })
+        .catch(error => {
+            console.error('Error creating purchase request:', error);
+            alert('حدث خطأ أثناء إنشاء طلب الشراء. الرجاء المحاولة مرة أخرى.');
+            
+            // إعادة تمكين الزر
+            this.disabled = false;
+            this.innerHTML = originalButtonText;
+        });
+    });
+    
+    // وظيفة مساعدة للحصول على CSRF token
+    function getCsrfToken() {
+        // البحث عن الـ token في عنصر input المخفي
+        const csrfInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
+        if (csrfInput) {
+            return csrfInput.value;
+        }
+        
+        // البحث عن الـ token في الكوكيز كخيار ثانوي
+        const cookieValue = document.cookie
+            .split('; ')
+            .find(row => row.startsWith('csrftoken='))
+            ?.split('=')[1];
+        
+        return cookieValue || '';
+    }
+});
+</script>
+{% endblock %}

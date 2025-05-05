@@ -1,0 +1,36 @@
+{% extends 'inventory/base_inventory.html' %}
+{% load static %}
+
+{% block title %}اختبار النموذج - نظام إدارة المخزن{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">اختبار نموذج إضافة صنف</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{% url 'inventory:product_add' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label for="product_id" class="form-label">رقم الصنف</label>
+                    <input type="text" class="form-control" id="product_id" name="product_id" value="TEST123" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="name" class="form-label">اسم الصنف</label>
+                    <input type="text" class="form-control" id="name" name="name" value="صنف اختبار" required>
+                </div>
+                
+                <div class="mb-3">
+                    <label for="initial_quantity" class="form-label">الرصيد الافتتاحي</label>
+                    <input type="number" class="form-control" id="initial_quantity" name="initial_quantity" value="10" min="0" step="0.01">
+                </div>
+                
+                <button type="submit" class="btn btn-primary">إرسال النموذج</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,666 @@
+{% extends 'administrator/base_admin.html' %}
+{% load static %}
+
+{% block title %}{{ title }} | نظام الدولية{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Cards & Animations */
+    .permission-card, .stats-card, .hover-card {
+        transition: all 0.3s ease;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .permission-card:hover, .stats-card:hover, .hover-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    .card {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+    
+    .card-header {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        background-color: #f8f9fa;
+        padding: 15px 20px;
+    }
+    
+    /* Badges & Icons */
+    .role-badge {
+        font-size: 0.85rem;
+        padding: 5px 12px;
+        border-radius: 20px;
+        background-color: #f1f5f9;
+        color: #334155;
+        margin: 0 2px 5px 0;
+        white-space: nowrap;
+        display: inline-block;
+        transition: all 0.2s ease;
+    }
+    
+    .role-badge:hover {
+        background-color: #e2e8f0;
+    }
+    
+    .stats-icon {
+        width: 70px;
+        height: 70px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        margin-bottom: 20px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .category-badge {
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        margin-right: 10px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        transition: all 0.2s ease;
+    }
+    
+    .category-badge:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Buttons & Actions */
+    .btn {
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn-sm {
+        padding: 5px 12px;
+        font-size: 0.85rem;
+    }
+    
+    .btn-group .btn {
+        border-radius: 6px;
+        margin: 0 2px;
+    }
+    
+    /* Tables */
+    .table {
+        margin-bottom: 0;
+    }
+    
+    .table th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        padding: 12px 16px;
+        border-top: none;
+        color: #495057;
+    }
+    
+    .table td {
+        padding: 12px 16px;
+        vertical-align: middle;
+    }
+    
+    .table-hover tbody tr {
+        transition: all 0.2s ease;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    
+    /* Category colors with improved contrast */
+    .category-content { background-color: #dbeafe; color: #1e40af; }
+    .category-users { background-color: #fef3c7; color: #92400e; }
+    .category-reports { background-color: #d1fae5; color: #065f46; }
+    .category-settings { background-color: #ede9fe; color: #5b21b6; }
+    .category-system { background-color: #fee2e2; color: #991b1b; }
+    .category-other { background-color: #e2e8f0; color: #1f2937; }
+    
+    /* Tooltips */
+    .tooltip {
+        font-size: 0.85rem;
+    }
+    
+    /* Animations */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.5s ease forwards;
+    }
+    
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+    .delay-4 { animation-delay: 0.4s; }
+    
+    /* Navigation path */
+    .rbac-nav-path {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 10px 15px;
+        margin-bottom: 20px;
+    }
+    
+    .rbac-nav-path a {
+        color: #6c757d;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+    
+    .rbac-nav-path a:hover {
+        color: #0d6efd;
+    }
+    
+    .rbac-nav-path .separator {
+        margin: 0 8px;
+        color: #adb5bd;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Navigation path (Breadcrumb) -->
+    <div class="rbac-nav-path mb-3 fade-in delay-1">
+        <i class="fas fa-home me-1"></i>
+        <a href="{% url 'home' %}">الرئيسية</a>
+        <span class="separator">›</span>
+        <a href="{% url 'administrator:admin_dashboard' %}">لوحة تحكم المدير</a>
+        <span class="separator">›</span>
+        <span class="fw-medium">نظام إدارة الصلاحيات</span>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-2">{{ title }}</h1>
+                    <p class="text-muted mb-0">
+                        <i class="fas fa-shield-alt me-1"></i> نظام إدارة الصلاحيات المبني على الأدوار (RBAC) لتحكم أفضل وأكثر مرونة
+                    </p>
+                </div>
+                <div>
+                    <a href="{% url 'audit:audit_list' %}" class="btn btn-outline-danger me-2">
+                        <i class="fas fa-shield-alt me-1"></i> سجلات التدقيق
+                    </a>
+                    <a href="{% url 'administrator:rbac_audit_log' %}" class="btn btn-outline-info me-2">
+                        <i class="fas fa-history me-1"></i> سجل التغييرات
+                    </a>
+                    <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-home me-1"></i> الصفحة الرئيسية
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Statistics cards -->
+    <div class="row mb-4">
+        <!-- Roles card -->
+        <div class="col-md-4 mb-4">
+            <div class="card stats-card h-100 shadow-sm fade-in delay-1">
+                <div class="card-body text-center p-4">
+                    <div class="stats-icon bg-primary text-white mx-auto">
+                        <i class="fas fa-users-cog fa-2x"></i>
+                    </div>
+                    <h5 class="mb-2 fw-bold">الأدوار</h5>
+                    <h2 class="mb-2 display-4 fw-bold">{{ roles.count }}</h2>
+                    <p class="text-muted mb-3">
+                        مجموعات المستخدمين مع صلاحيات محددة
+                    </p>
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'administrator:rbac_role_list' %}" class="btn btn-primary">
+                            <i class="fas fa-eye me-1"></i> عرض الأدوار
+                        </a>
+                        <a href="{% url 'administrator:rbac_role_create' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-plus-circle me-1"></i> إضافة دور جديد
+                        </a>
+                    </div>
+                </div>
+                <div class="card-footer bg-primary bg-opacity-10 text-center py-2">
+                    <small class="text-primary fw-medium">
+                        <i class="fas fa-info-circle me-1"></i> انقر للإدارة الكاملة للأدوار
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Permissions card -->
+        <div class="col-md-4 mb-4">
+            <div class="card stats-card h-100 shadow-sm fade-in delay-2">
+                <div class="card-body text-center p-4">
+                    <div class="stats-icon bg-success text-white mx-auto">
+                        <i class="fas fa-key fa-2x"></i>
+                    </div>
+                    <h5 class="mb-2 fw-bold">الصلاحيات</h5>
+                    <h2 class="mb-2 display-4 fw-bold">{{ permissions.count }}</h2>
+                    <p class="text-muted mb-3">
+                        الإجراءات المسموح بها لكل دور في النظام
+                    </p>
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'administrator:rbac_permission_list' %}" class="btn btn-success">
+                            <i class="fas fa-eye me-1"></i> عرض الصلاحيات
+                        </a>
+                        <a href="{% url 'administrator:rbac_permission_create' %}" class="btn btn-outline-success">
+                            <i class="fas fa-plus-circle me-1"></i> إضافة صلاحية جديدة
+                        </a>
+                    </div>
+                </div>
+                <div class="card-footer bg-success bg-opacity-10 text-center py-2">
+                    <small class="text-success fw-medium">
+                        <i class="fas fa-info-circle me-1"></i> انقر للإدارة الكاملة للصلاحيات
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Users card -->
+        <div class="col-md-4 mb-4">
+            <div class="card stats-card h-100 shadow-sm fade-in delay-3">
+                <div class="card-body text-center p-4">
+                    <div class="stats-icon bg-info text-white mx-auto">
+                        <i class="fas fa-user-shield fa-2x"></i>
+                    </div>
+                    <h5 class="mb-2 fw-bold">المستخدمين</h5>
+                    <h2 class="mb-2 display-4 fw-bold">{{ users.count }}</h2>
+                    <p class="text-muted mb-3">
+                        الأشخاص الذين لديهم حسابات وصلاحيات على النظام
+                    </p>
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'administrator:rbac_user_list' %}" class="btn btn-info">
+                            <i class="fas fa-eye me-1"></i> عرض المستخدمين
+                        </a>
+                        <a href="{% url 'administrator:rbac_user_list' %}?action=assign_roles" class="btn btn-outline-info">
+                            <i class="fas fa-user-tag me-1"></i> تعيين الأدوار للمستخدمين
+                        </a>
+                    </div>
+                </div>
+                <div class="card-footer bg-info bg-opacity-10 text-center py-2">
+                    <small class="text-info fw-medium">
+                        <i class="fas fa-info-circle me-1"></i> انقر لإدارة صلاحيات المستخدمين
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Roles section -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-users-cog me-2"></i>الأدوار المتاحة
+                    </h5>
+                    <a href="{% url 'administrator:rbac_role_create' %}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus me-1"></i> دور جديد
+                    </a>
+                </div>
+                <div class="card-body">
+                    <!-- حقل البحث -->
+                    <div class="mb-3">
+                        <div class="input-group">
+                            <span class="input-group-text bg-light">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            <input type="text" id="roleSearch" class="form-control" placeholder="البحث في الأدوار...">
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>الدور</th>
+                                    <th>المستخدمين</th>
+                                    <th>الصلاحيات</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for role in roles %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ role.name }}</strong>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ role.user_count }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success">{{ role.rbac_permissions.count }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex gap-1">
+                                            <a href="{% url 'administrator:rbac_role_detail' role_id=role.id %}" 
+                                               class="btn btn-sm btn-outline-primary" 
+                                               data-bs-toggle="tooltip" 
+                                               title="عرض تفاصيل الدور">
+                                                <i class="fas fa-eye me-1"></i> عرض
+                                            </a>
+                                            <a href="{% url 'administrator:rbac_role_permissions' role_id=role.id %}" 
+                                               class="btn btn-sm btn-outline-success" 
+                                               data-bs-toggle="tooltip" 
+                                               title="إدارة صلاحيات الدور">
+                                                <i class="fas fa-key me-1"></i> الصلاحيات
+                                            </a>
+                                            <a href="{% url 'administrator:rbac_role_edit' role_id=role.id %}" 
+                                               class="btn btn-sm btn-outline-secondary" 
+                                               data-bs-toggle="tooltip" 
+                                               title="تعديل الدور">
+                                                <i class="fas fa-edit me-1"></i> تعديل
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-4">
+                                        <div class="alert alert-info mb-0">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            لا توجد أدوار مسجلة بعد
+                                        </div>
+                                        <a href="{% url 'administrator:rbac_role_create' %}" class="btn btn-primary mt-3">
+                                            <i class="fas fa-plus me-1"></i> إنشاء دور جديد
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <a href="{% url 'administrator:rbac_role_list' %}" class="btn btn-outline-primary">
+                        عرض كل الأدوار <i class="fas fa-arrow-left ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Permissions section -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-key me-2"></i>الصلاحيات حسب الفئة
+                    </h5>
+                    <div>
+                        <a href="{% url 'administrator:rbac_permission_create' %}" class="btn btn-sm btn-success me-2">
+                            <i class="fas fa-plus me-1"></i> صلاحية جديدة
+                        </a>
+                        <a href="{% url 'administrator:rbac_create_default_permissions' %}" class="btn btn-sm btn-info">
+                            <i class="fas fa-magic me-1"></i> إنشاء الصلاحيات الافتراضية
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        {% for category_code, category_name in categories.items %}
+                        <div class="col-md-6 fade-in" style="--delay: {{ forloop.counter|add:2 }}00ms;">
+                            <div class="card permission-card h-100 border-0 shadow-sm">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <span class="category-badge category-{{ category_code }}">
+                                        {% if category_code == 'content' %}
+                                            <i class="fas fa-file-alt me-1"></i>
+                                        {% elif category_code == 'users' %}
+                                            <i class="fas fa-users me-1"></i>
+                                        {% elif category_code == 'reports' %}
+                                            <i class="fas fa-chart-bar me-1"></i>
+                                        {% elif category_code == 'settings' %}
+                                            <i class="fas fa-cogs me-1"></i>
+                                        {% elif category_code == 'system' %}
+                                            <i class="fas fa-server me-1"></i>
+                                        {% else %}
+                                            <i class="fas fa-layer-group me-1"></i>
+                                        {% endif %}
+                                        {{ category_name }}
+                                    </span>
+                                    <a href="{% url 'administrator:rbac_permission_list' %}?category={{ category_code }}" 
+                                       class="btn btn-sm btn-outline-secondary" 
+                                       data-bs-toggle="tooltip" 
+                                       title="عرض كل صلاحيات {{ category_name }}">
+                                        <i class="fas fa-filter"></i>
+                                    </a>
+                                </div>
+                                <div class="card-body">
+                                    <ul class="list-group list-group-flush">
+                                        {% for permission in permissions %}
+                                            {% if permission.category == category_code %}
+                                                <li class="list-group-item border-0 px-0 py-2 d-flex align-items-center">
+                                                    <div class="me-2 text-success">
+                                                        <i class="fas fa-check-circle"></i>
+                                                    </div>
+                                                    <div class="flex-grow-1">
+                                                        <div class="fw-medium">{{ permission.name }}</div>
+                                                        <small class="text-muted">{{ permission.codename }}</small>
+                                                    </div>
+                                                    <a href="{% url 'administrator:rbac_permission_edit' permission_id=permission.id %}" 
+                                                       class="btn btn-sm btn-link text-muted p-0" 
+                                                       data-bs-toggle="tooltip" 
+                                                       title="تعديل الصلاحية">
+                                                        <i class="fas fa-edit"></i>
+                                                    </a>
+                                                </li>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                <div class="card-footer bg-light text-center">
+                                    <a href="{% url 'administrator:rbac_permission_create' %}?category={{ category_code }}" class="btn btn-sm btn-outline-success">
+                                        <i class="fas fa-plus-circle me-1"></i> إضافة صلاحية جديدة في {{ category_name }}
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <a href="{% url 'administrator:rbac_permission_list' %}" class="btn btn-outline-success">
+                        عرض كل الصلاحيات <i class="fas fa-arrow-left ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick actions section -->
+    <div class="row mt-4 mb-5">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>إجراءات سريعة</h5>
+                </div>
+                <div class="card-body py-4">
+                    <div class="row g-4 text-center">
+                        <!-- إدارة الأدوار -->
+                        <div class="col-md-6 col-lg-3 mb-3 mb-lg-0">
+                            <div class="card h-100 border-0 shadow-sm hover-card">
+                                <div class="card-body p-4">
+                                    <div class="rounded-circle bg-primary text-white mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
+                                        <i class="fas fa-users-cog fa-2x"></i>
+                                    </div>
+                                    <h5 class="card-title mb-3">إدارة الأدوار</h5>
+                                    <p class="card-text text-muted mb-4">إنشاء وتعديل الأدوار وتحديد صلاحياتها</p>
+                                    <div class="d-grid gap-2">
+                                        <a href="{% url 'administrator:rbac_role_create' %}" class="btn btn-primary">
+                                            <i class="fas fa-plus-circle me-1"></i> إنشاء دور جديد
+                                        </a>
+                                        <a href="{% url 'administrator:rbac_role_list' %}" class="btn btn-outline-primary">
+                                            <i class="fas fa-list me-1"></i> عرض كل الأدوار
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- إدارة الصلاحيات -->
+                        <div class="col-md-6 col-lg-3 mb-3 mb-lg-0">
+                            <div class="card h-100 border-0 shadow-sm hover-card">
+                                <div class="card-body p-4">
+                                    <div class="rounded-circle bg-success text-white mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
+                                        <i class="fas fa-key fa-2x"></i>
+                                    </div>
+                                    <h5 class="card-title mb-3">إدارة الصلاحيات</h5>
+                                    <p class="card-text text-muted mb-4">إنشاء وتعديل الصلاحيات وتنظيمها</p>
+                                    <div class="d-grid gap-2">
+                                        <a href="{% url 'administrator:rbac_permission_create' %}" class="btn btn-success">
+                                            <i class="fas fa-plus-circle me-1"></i> إنشاء صلاحية جديدة
+                                        </a>
+                                        <a href="{% url 'administrator:rbac_permission_list' %}" class="btn btn-outline-success">
+                                            <i class="fas fa-list me-1"></i> عرض كل الصلاحيات
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- إدارة المستخدمين -->
+                        <div class="col-md-6 col-lg-3 mb-3 mb-lg-0">
+                            <div class="card h-100 border-0 shadow-sm hover-card">
+                                <div class="card-body p-4">
+                                    <div class="rounded-circle bg-info text-white mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
+                                        <i class="fas fa-user-shield fa-2x"></i>
+                                    </div>
+                                    <h5 class="card-title mb-3">إدارة المستخدمين</h5>
+                                    <p class="card-text text-muted mb-4">تعيين الأدوار والصلاحيات للمستخدمين</p>
+                                    <div class="d-grid gap-2">
+                                        <a href="{% url 'administrator:rbac_user_list' %}" class="btn btn-info">
+                                            <i class="fas fa-users me-1"></i> إدارة المستخدمين
+                                        </a>
+                                        <a href="{% url 'administrator:rbac_user_list' %}?action=assign_roles" class="btn btn-outline-info">
+                                            <i class="fas fa-user-tag me-1"></i> تعيين الأدوار للمستخدمين
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- أدوات مساعدة -->
+                        <div class="col-md-6 col-lg-3 mb-3 mb-lg-0">
+                            <div class="card h-100 border-0 shadow-sm hover-card">
+                                <div class="card-body p-4">
+                                    <div class="rounded-circle bg-warning text-white mx-auto mb-3 d-flex align-items-center justify-content-center" style="width: 70px; height: 70px;">
+                                        <i class="fas fa-tools fa-2x"></i>
+                                    </div>
+                                    <h5 class="card-title mb-3">أدوات مساعدة</h5>
+                                    <p class="card-text text-muted mb-4">أدوات لتسهيل إدارة نظام الصلاحيات</p>
+                                    <div class="d-grid gap-2">
+                                        <a href="{% url 'administrator:rbac_create_default_permissions' %}" class="btn btn-warning">
+                                            <i class="fas fa-magic me-1"></i> إنشاء الصلاحيات الافتراضية
+                                        </a>
+                                        <a href="{% url 'administrator:rbac_audit_log' %}" class="btn btn-outline-warning">
+                                            <i class="fas fa-history me-1"></i> سجل التغييرات
+                                        </a>
+                                        <a href="{% url 'audit:audit_list' %}" class="btn btn-outline-warning">
+                                            <i class="fas fa-shield-alt me-1"></i> سجلات التدقيق
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        console.log('RBAC Dashboard loaded');
+        
+        // تفعيل tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl, {
+                delay: { show: 500, hide: 100 }
+            });
+        });
+        
+        // تأثيرات التفاعل للبطاقات
+        $('.stats-card, .permission-card, .hover-card').hover(
+            function() {
+                $(this).addClass('border-primary');
+                $(this).find('.card-footer').addClass('bg-primary bg-opacity-10');
+            },
+            function() {
+                $(this).removeClass('border-primary');
+                $(this).find('.card-footer').removeClass('bg-primary bg-opacity-10');
+            }
+        );
+        
+        // تأثيرات التفاعل للأزرار في جدول الأدوار
+        $('.btn-outline-primary, .btn-outline-success, .btn-outline-secondary').hover(
+            function() {
+                $(this).removeClass('btn-outline-primary btn-outline-success btn-outline-secondary');
+                
+                if ($(this).find('.fa-eye').length) {
+                    $(this).addClass('btn-primary');
+                } else if ($(this).find('.fa-key').length) {
+                    $(this).addClass('btn-success');
+                } else if ($(this).find('.fa-edit').length) {
+                    $(this).addClass('btn-secondary');
+                }
+            },
+            function() {
+                if ($(this).hasClass('btn-primary')) {
+                    $(this).removeClass('btn-primary').addClass('btn-outline-primary');
+                } else if ($(this).hasClass('btn-success')) {
+                    $(this).removeClass('btn-success').addClass('btn-outline-success');
+                } else if ($(this).hasClass('btn-secondary')) {
+                    $(this).removeClass('btn-secondary').addClass('btn-outline-secondary');
+                }
+            }
+        );
+        
+        // تأثير الظهور التدريجي للعناصر
+        function animateElements() {
+            $('.fade-in').each(function() {
+                var delay = $(this).css('--delay') || '0ms';
+                $(this).css({
+                    'animation-delay': delay,
+                    'opacity': '0'
+                }).addClass('animated');
+                
+                setTimeout(() => {
+                    $(this).css('opacity', '1');
+                }, 100);
+            });
+        }
+        
+        // تشغيل التأثيرات عند تحميل الصفحة
+        animateElements();
+        
+        // إضافة تأثير عند النقر على الروابط
+        $('.btn').on('click', function() {
+            $(this).addClass('active');
+        });
+        
+        // تفعيل البحث في جدول الأدوار
+        $("#roleSearch").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            $("table tbody tr").filter(function() {
+                $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+            });
+        });
+    });
+</script>
+{% endblock %}

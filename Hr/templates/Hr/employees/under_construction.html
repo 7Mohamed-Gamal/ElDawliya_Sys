@@ -1,4 +1,4 @@
-{% extends 'base_updated.html' %}
+{% extends 'Hr/base_hr.html' %}
 {% load static %}
 
 {% block title %}{{ page_title }} - نظام الدولية{% endblock %}
@@ -7,7 +7,7 @@
 
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
-<li class="breadcrumb-item"><a href="{% url 'employees:dashboard' %}">الموظفين</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Hr:dashboard' %}">الموظفين</a></li>
 <li class="breadcrumb-item active">{{ page_title }}</li>
 {% endblock %}
 
@@ -19,7 +19,7 @@
         </div>
         <h3 class="mb-3">هذه الصفحة قيد الإنشاء</h3>
         <p class="lead mb-4">نعمل حالياً على تطوير هذه الميزة. يرجى العودة لاحقاً.</p>
-        <a href="{% url 'employees:dashboard' %}" class="btn btn-primary">
+        <a href="{% url 'Hr:dashboard' %}" class="btn btn-primary">
             <i class="fas fa-arrow-left me-2"></i> العودة للوحة التحكم
         </a>
     </div>

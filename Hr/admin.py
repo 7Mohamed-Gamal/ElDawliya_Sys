@@ -1,12 +1,12 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 
-# Customize admin site
+# تخصيص موقع الإدارة
 admin.site.site_header = _('نظام الدولية للموارد البشرية')
 admin.site.site_title = _('إدارة الموارد البشرية')
 admin.site.index_title = _('لوحة تحكم الموارد البشرية')
 
-# Import models from Hr.models
+# استيراد النماذج من Hr.models
 from Hr.models import (
     Department, Job, JobInsurance, Car,
     Employee,
@@ -21,23 +21,23 @@ from Hr.models import (
     EmployeeEvaluation
 )
 
-# Register base models
+# تسجيل النماذج الأساسية
 admin.site.register(Department)
 admin.site.register(Job)
 admin.site.register(JobInsurance)
 admin.site.register(Car)
 
-# Register employee models
+# تسجيل نماذج الموظفين
 admin.site.register(Employee)
 
-# Register salary models
+# تسجيل نماذج الرواتب
 admin.site.register(SalaryItem)
 admin.site.register(EmployeeSalaryItem)
 admin.site.register(PayrollPeriod)
 admin.site.register(PayrollEntry)
 admin.site.register(PayrollItemDetail)
 
-# Register attendance models
+# تسجيل نماذج الحضور
 admin.site.register(AttendanceRule)
 admin.site.register(EmployeeAttendanceRule)
 admin.site.register(OfficialHoliday)
@@ -45,24 +45,24 @@ admin.site.register(AttendanceMachine)
 admin.site.register(AttendanceRecord)
 admin.site.register(AttendanceSummary)
 
-# Register pickup point models
+# تسجيل نماذج نقاط الالتقاط
 admin.site.register(PickupPoint)
 
-# Register task models
+# تسجيل نماذج المهام
 admin.site.register(EmployeeTask)
 
-# Register note models
+# تسجيل نماذج الملاحظات
 admin.site.register(EmployeeNote)
 
-# Register file models
+# تسجيل نماذج الملفات
 admin.site.register(EmployeeFile)
 
-# Register HR task models
+# تسجيل نماذج مهام الموارد البشرية
 admin.site.register(HrTask)
 
-# Register leave models
+# تسجيل نماذج الإجازات
 admin.site.register(LeaveType)
 admin.site.register(EmployeeLeave)
 
-# Register evaluation models
+# تسجيل نماذج التقييمات
 admin.site.register(EmployeeEvaluation)

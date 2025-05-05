@@ -6,6 +6,28 @@ from administrator.utils import check_permission
 
 register = template.Library()
 
+@register.filter
+def filter_by(queryset, args):
+    """
+    Filter a queryset by a field and value.
+    Usage: {{ queryset|filter_by:"field_name,value" }}
+    """
+    args_list = args.split(',')
+    if len(args_list) != 2:
+        return queryset
+    
+    field_name, value = args_list
+    filter_kwargs = {field_name: value}
+    return queryset.filter(**filter_kwargs)
+
+@register.filter
+def get_item(dictionary, key):
+    """
+    Get an item from a dictionary using key.
+    Usage: {{ dictionary|get_item:key }}
+    """
+    return dictionary.get(key)
+
 @register.simple_tag(takes_context=True)
 def is_admin(context):
     """

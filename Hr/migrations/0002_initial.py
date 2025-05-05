@@ -189,7 +189,7 @@ class Migration(migrations.Migration):
                 ('emp_image', models.BinaryField(blank=True, db_column='Emp_Image', max_length='max', null=True, verbose_name='صورة الموظف')),
                 ('personal_id_expiry_date', models.DateField(blank=True, db_column='Personal_ID_Expiry_Date', null=True, verbose_name='تاريخ انتهاء البطاقة الشخصية')),
                 ('military_service_certificate', models.CharField(blank=True, choices=[('أدى الخدمة', 'أدى الخدمة'), ('إعفاء', 'إعفاء'), ('مؤجل', 'مؤجل'), ('لم يبلغ السن', 'لم يبلغ السن')], db_column='Military_Service_Certificate', max_length=50, null=True, verbose_name='شهادة الخدمة العسكرية')),
-                ('working_condition', models.CharField(blank=True, choices=[('يعمل', 'يعمل'), ('إجازة', 'إجازة'), ('مستقيل', 'مستقيل'), ('مفصول', 'مفصول')], db_column='Working_Condition', max_length=50, null=True, verbose_name='حالة العمل')),
+                ('working_condition', models.CharField(blank=True, choices=[('سارى', 'سارى') , ('إجازة', 'إجازة'), ('استقالة', 'استقالة'), ('انقطاع عن العمل', 'انقطاع عن العمل')], db_column='Working_Condition', max_length=50, null=True, verbose_name='حالة العمل')),
                 ('dept_name', models.CharField(blank=True, db_column='Dept_Name', max_length=50, null=True, verbose_name='اسم القسم')),
                 ('jop_code', models.IntegerField(blank=True, db_column='Jop_Code', null=True, verbose_name='كود الوظيفة')),
                 ('jop_name', models.CharField(blank=True, db_column='Jop_Name', max_length=50, null=True, verbose_name='اسم الوظيفة')),

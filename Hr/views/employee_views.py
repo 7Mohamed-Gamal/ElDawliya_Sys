@@ -1,21 +1,19 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from django.db.models import Q, Count
 
 from Hr.models import Department, Job, Car, Employee
 from Hr.forms import EmployeeForm, EmployeeFilterForm, DepartmentForm, JobForm, CarForm, EmployeeSearchForm
-from Hr.decorators import permission_required, template_permission_required, hr_module_permission_required
 from administrator.utils import has_permission
 
 
 @login_required
-@hr_module_permission_required('employees', 'view')
 def dashboard(request):
     """لوحة معلومات الموظفين"""
     # إحصائيات الموظفين
     total_employees = Employee.objects.count()
-    active_employees = Employee.objects.filter(working_condition='يعمل').count()
+    active_employees = Employee.objects.filter(working_condition='سارى').count()
     insured_employees = Employee.objects.filter(insurance_status='مؤمن عليه').count()
     inactive_insured_employees = Employee.objects.filter(insurance_status='غير مؤمن عليه').count()
 
@@ -71,7 +69,6 @@ def dashboard(request):
 
 
 @login_required
-@hr_module_permission_required('employees', 'view')
 def employee_list(request):
     """عرض قائمة الموظفين مع إمكانية البحث والتصفية"""
 
@@ -79,7 +76,16 @@ def employee_list(request):
     filter_form = EmployeeFilterForm(request.GET or None)
     total_employees = Employee.objects.all()
 
-    employees = Employee.objects.filter(working_condition__in=['يعمل']).all().order_by('emp_id')
+    # التحقق من حالة التبديل (نشط/غير نشط)
+    status = request.GET.get('status', 'active')
+
+    # تحديد الموظفين بناءً على الحالة
+    if status == 'inactive':
+        # عرض الموظفين غير النشطين (المستقيلين)
+        employees = Employee.objects.filter(working_condition='استقالة').order_by('emp_id')
+    else:
+        # عرض الموظفين النشطين (الافتراضي)
+        employees = Employee.objects.filter(working_condition__in=['سارى']).order_by('emp_id')
 
     # تطبيق التصفية إذا تم تقديم النموذج
     if filter_form.is_valid():
@@ -113,9 +119,9 @@ def employee_list(request):
 
     # إحصائيات الموظفين
     total_employees = employees.count()
-    active_employees = employees.filter(working_condition='يعمل').count()
+    active_employees = employees.filter(working_condition='سارى').count()
     on_leave_employees = employees.filter(working_condition='إجازة').count()
-    resigned_employees = employees.filter(working_condition='مستقيل').count()
+    resigned_employees = employees.filter(working_condition='استقالة').count()
 
     # الموظفين حسب القسم
     employees_by_department = Department.objects.annotate(
@@ -130,13 +136,13 @@ def employee_list(request):
         'on_leave_employees': on_leave_employees,
         'resigned_employees': resigned_employees,
         'employees_by_department': employees_by_department,
+        'status': status,  # إضافة حالة التبديل للقالب
     }
 
-    return render(request, 'Hr/employee_list.html', context)
+    return render(request, 'Hr/employees/employee_list.html', context)
 
 
 @login_required
-@hr_module_permission_required('employees', 'view')
 def employee_detail(request, emp_id):
     """عرض تفاصيل موظف محدد"""
     employee = get_object_or_404(Employee, emp_id=emp_id)
@@ -145,11 +151,10 @@ def employee_detail(request, emp_id):
         'employee': employee,
     }
 
-    return render(request, 'Hr/employee_detail.html', context)
+    return render(request, 'Hr/employees/employee_detail.html', context)
 
 
 @login_required
-@hr_module_permission_required('employees', 'add')
 def employee_create(request):
     """إنشاء موظف جديد"""
     if request.method == 'POST':
@@ -170,11 +175,10 @@ def employee_create(request):
         'button_text': 'إنشاء'
     }
 
-    return render(request, 'Hr/employee_form_new.html', context)
+    return render(request, 'Hr/employees/employee_form_new.html', context)
 
 
 @login_required
-@hr_module_permission_required('employees', 'edit')
 def employee_edit(request, emp_id):
     """تعديل بيانات موظف"""
     employee = get_object_or_404(Employee, emp_id=emp_id)
@@ -194,11 +198,10 @@ def employee_edit(request, emp_id):
         'title': 'تعديل بيانات الموظف',
     }
 
-    return render(request, 'Hr/employee_form.html', context)
+    return render(request, 'Hr/employees/employee_form.html', context)
 
 
 @login_required
-@hr_module_permission_required('employees', 'delete')
 def employee_delete(request, emp_id):
     """حذف موظف"""
     employee = get_object_or_404(Employee, emp_id=emp_id)
@@ -212,12 +215,11 @@ def employee_delete(request, emp_id):
         'employee': employee,
     }
 
-    return render(request, 'Hr/employee_confirm_delete.html', context)
+    return render(request, 'Hr/employees/employee_confirm_delete.html', context)
 
 
 # Move employee_search view to this file from Hr/views.py
 @login_required
-@hr_module_permission_required('employees', 'view')
 def employee_search(request):
     """صفحة البحث عن الموظف وعرض بياناته وتحليلاته"""
     form = EmployeeSearchForm(request.GET or None)
@@ -262,4 +264,4 @@ def employee_search(request):
         'analytics': analytics,
         'title': 'بحث الموظفين',
     }
-    return render(request, 'Hr/employee_search.html', context)
+    return render(request, 'Hr/employees/employee_search.html', context)

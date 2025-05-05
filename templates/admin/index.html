@@ -1,0 +1,162 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}{{ block.super }}
+<style type="text/css">
+    .permission-section {
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        padding: 15px;
+        margin-bottom: 20px;
+        border-left: 5px solid #28a745;
+    }
+    
+    .permission-section h2 {
+        color: #28a745;
+        font-size: 1.2em;
+        margin-top: 0;
+    }
+    
+    .permission-model {
+        margin-bottom: 10px;
+        padding: 8px;
+        border-radius: 3px;
+        transition: all 0.3s ease;
+    }
+    
+    .permission-model:hover {
+        background-color: #e9ecef;
+    }
+    
+    .module h2 {
+        background: #417690;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 3px 3px 0 0;
+        margin-bottom: 0;
+    }
+    
+    .app-permission .module {
+        background: #f8f8f8;
+        border: 1px solid #ddd;
+        border-radius: 3px;
+        margin-bottom: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block coltype %}colMS{% endblock %}
+
+{% block bodyclass %}{{ block.super }} dashboard{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% translate 'Home' %}</a>
+</div>
+{% endblock %}
+
+{% block nav-sidebar %}{% include "admin/nav_sidebar.html" %}{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    {% if app_list %}
+        <!-- قسم نظام الصلاحيات -->
+        {% for app in app_list %}
+            {% if app.app_label == 'permissions' %}
+                <div class="app-permission module">
+                    <div class="permission-section">
+                        <h2>{{ app.name }}</h2>
+                        <p>يوفر هذا النظام إدارة شاملة للصلاحيات والأدوار في نظام الدولية، حيث يمكنكم:</p>
+                        <ul>
+                            <li>إدارة الأدوار والمجموعات وإسناد صلاحيات محددة لها</li>
+                            <li>تعيين الصلاحيات للمستخدمين بشكل مباشر أو من خلال المجموعات</li>
+                            <li>تحديد صلاحيات الوصول للأقسام والوحدات والصفحات المختلفة</li>
+                            <li>مراقبة وتتبع التغييرات في إعدادات الصلاحيات</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="permission-models">
+                        <table>
+                            {% for model in app.models %}
+                            <tr class="permission-model">
+                                <th scope="row"><a href="{{ model.admin_url }}">{{ model.name }}</a></th>
+                                <td>
+                                    {% if model.add_url %}<a href="{{ model.add_url }}" class="addlink">{% translate 'Add' %}</a>{% endif %}
+                                </td>
+                                <td>
+                                    {% if model.admin_url %}<a href="{{ model.admin_url }}" class="changelink">{% translate 'Change' %}</a>{% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </table>
+                    </div>
+                </div>
+            {% endif %}
+        {% endfor %}
+
+        <!-- التطبيقات الأخرى -->
+        <div class="app-{{ app.app_label }} module{% if app.app_url %} has-name{% endif %}">
+            {% for app in app_list %}
+                {% if app.app_label != 'permissions' %}
+                    <table>
+                        <caption>
+                            <a href="{{ app.app_url }}" class="section" title="{% blocktranslate with name=app.name %}Models in the {{ name }} application{% endblocktranslate %}">{{ app.name }}</a>
+                        </caption>
+                        {% for model in app.models %}
+                            <tr class="model-{{ model.object_name|lower }}">
+                                <th scope="row">
+                                    {% if model.admin_url %}
+                                        <a href="{{ model.admin_url }}">{{ model.name }}</a>
+                                    {% else %}
+                                        {{ model.name }}
+                                    {% endif %}
+                                </th>
+                                <td>
+                                    {% if model.add_url %}<a href="{{ model.add_url }}" class="addlink">{% translate 'Add' %}</a>{% endif %}
+                                </td>
+                                <td>
+                                    {% if model.admin_url %}<a href="{{ model.admin_url }}" class="changelink">{% translate 'Change' %}</a>{% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </table>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>{% translate "You don't have permission to view or edit anything." %}</p>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block sidebar %}
+<div id="content-related">
+    <div class="module" id="recent-actions-module">
+        <h2>{% translate 'Recent actions' %}</h2>
+        <h3>{% translate 'My actions' %}</h3>
+            {% load log %}
+            {% get_admin_log 10 as admin_log for_user user %}
+            {% if not admin_log %}
+            <p>{% translate 'None available' %}</p>
+            {% else %}
+            <ul class="actionlist">
+            {% for entry in admin_log %}
+            <li class="{% if entry.is_addition %}addlink{% endif %}{% if entry.is_change %}changelink{% endif %}{% if entry.is_deletion %}deletelink{% endif %}">
+                {% if entry.is_deletion or not entry.get_admin_url %}
+                    {{ entry.object_repr }}
+                {% else %}
+                    <a href="{{ entry.get_admin_url }}">{{ entry.object_repr }}</a>
+                {% endif %}
+                <br/>
+                {% if entry.content_type %}
+                    <span class="mini quiet">{% filter capfirst %}{{ entry.content_type.name }}{% endfilter %}</span>
+                {% else %}
+                    <span class="mini quiet">{% translate 'Unknown content' %}</span>
+                {% endif %}
+            </li>
+            {% endfor %}
+            </ul>
+            {% endif %}
+    </div>
+</div>
+{% endblock %}

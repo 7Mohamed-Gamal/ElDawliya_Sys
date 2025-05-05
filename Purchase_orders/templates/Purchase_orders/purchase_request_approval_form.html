@@ -1,27 +1,30 @@
-{% extends 'Purchase_orders/base_purchase.html' %}
+{% extends 'Purchase_orders/base_purchase_orders.html' %}
 {% load static %}
 {% load widget_tweaks %}
 
 {% block title %}مراجعة طلب الشراء - نظام الدولية{% endblock %}
 
+{% block page_title %}مراجعة طلب الشراء #{{ purchase_request.request_number }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Purchase_orders:dashboard' %}">طلبات الشراء</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Purchase_orders:purchase_request_list' %}">قائمة طلبات الشراء</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Purchase_orders:purchase_request_detail' pk=purchase_request.pk %}">تفاصيل الطلب #{{ purchase_request.request_number }}</a></li>
+<li class="breadcrumb-item active">مراجعة الطلب</li>
+{% endblock %}
+
 {% block content %}
-<div class="row mb-4">
-    <div class="col-md-8">
-        <h2 class="mb-3">
-            <i class="fas fa-check-circle me-2"></i>مراجعة طلب الشراء #{{ purchase_request.request_number }}
-        </h2>
-    </div>
-    <div class="col-md-4 text-end">
-        <a href="{% url 'Purchase_orders:purchase_request_detail' pk=purchase_request.pk %}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left me-1"></i>العودة للطلب
-        </a>
-    </div>
+<div class="d-flex justify-content-end mb-4">
+    <a href="{% url 'Purchase_orders:purchase_request_detail' pk=purchase_request.pk %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-1"></i> العودة للطلب
+    </a>
 </div>
 
 <!-- معلومات الطلب -->
 <div class="card mb-4">
-    <div class="card-header bg-primary text-white">
-        <h5 class="mb-0">معلومات الطلب</h5>
+    <div class="card-header">
+        <h5 class="card-title mb-0">معلومات الطلب</h5>
     </div>
     <div class="card-body">
         <div class="row">
@@ -50,8 +53,8 @@
 
 <!-- عناصر الطلب -->
 <div class="card mb-4">
-    <div class="card-header bg-primary text-white">
-        <h5 class="mb-0">عناصر الطلب</h5>
+    <div class="card-header">
+        <h5 class="card-title mb-0">عناصر الطلب</h5>
     </div>
     <div class="card-body">
         <div class="table-responsive">
@@ -89,13 +92,13 @@
 
 <!-- نموذج المراجعة -->
 <div class="card">
-    <div class="card-header bg-primary text-white">
-        <h5 class="mb-0">مراجعة الطلب</h5>
+    <div class="card-header">
+        <h5 class="card-title mb-0">مراجعة الطلب</h5>
     </div>
     <div class="card-body">
         <form method="post">
             {% csrf_token %}
-            
+
             <div class="mb-3">
                 <label for="{{ form.status.id_for_label }}" class="form-label">تحديث الحالة</label>
                 {{ form.status|add_class:"form-control" }}
@@ -107,7 +110,7 @@
                 </div>
                 {% endif %}
             </div>
-            
+
             <div class="mb-3">
                 <label for="{{ form.notes.id_for_label }}" class="form-label">ملاحظات المراجعة</label>
                 {{ form.notes|add_class:"form-control" }}
@@ -120,13 +123,13 @@
                 {% endif %}
                 <div class="form-text">يرجى إضافة سبب الموافقة أو الرفض أو أي ملاحظات أخرى</div>
             </div>
-            
-            <div class="text-end">
+
+            <div class="d-flex justify-content-between">
                 <a href="{% url 'Purchase_orders:purchase_request_detail' pk=purchase_request.pk %}" class="btn btn-secondary">
-                    إلغاء
+                    <i class="fas fa-times me-1"></i> إلغاء
                 </a>
                 <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-save me-1"></i>حفظ المراجعة
+                    <i class="fas fa-save me-1"></i> حفظ المراجعة
                 </button>
             </div>
         </form>

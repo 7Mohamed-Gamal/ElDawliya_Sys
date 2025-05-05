@@ -1,0 +1,69 @@
+from django.urls import path
+from . import views
+
+app_name = 'inventory'
+
+urlpatterns = [
+    # الشاشة الرئيسية (Dashboard)
+    path('', views.dashboard, name='dashboard'),
+
+    # إدارة الأصناف (Products)
+    path('products/', views.ProductListView.as_view(), name='product_list'),
+    path('products/add/', views.ProductCreateView.as_view(), name='product_add'),
+    path('products/<str:pk>/edit/', views.ProductUpdateView.as_view(), name='product_edit'),
+    path('products/<str:pk>/delete/', views.ProductDeleteView.as_view(), name='product_delete'),
+
+    # إدارة التصنيفات (Categories)
+    path('categories/', views.CategoryListView.as_view(), name='category_list'),
+    path('categories/add/', views.CategoryCreateView.as_view(), name='category_add'),
+    path('categories/<int:pk>/edit/', views.CategoryUpdateView.as_view(), name='category_edit'),
+    path('categories/<int:pk>/delete/', views.CategoryDeleteView.as_view(), name='category_delete'),
+
+    # إدارة وحدات القياس (Units)
+    path('units/', views.UnitListView.as_view(), name='unit_list'),
+    path('units/add/', views.UnitCreateView.as_view(), name='unit_add'),
+    path('units/<int:pk>/edit/', views.UnitUpdateView.as_view(), name='unit_edit'),
+    path('units/<int:pk>/delete/', views.UnitDeleteView.as_view(), name='unit_delete'),
+    
+    # إدارة الموردين (Suppliers)
+    path('suppliers/', views.SupplierListView.as_view(), name='supplier_list'),
+    path('suppliers/add/', views.SupplierCreateView.as_view(), name='supplier_add'),
+    path('suppliers/<int:pk>/edit/', views.SupplierUpdateView.as_view(), name='supplier_edit'),
+    path('suppliers/<int:pk>/delete/', views.SupplierDeleteView.as_view(), name='supplier_delete'),
+    
+    # إدارة الأقسام (Departments)
+    path('departments/', views.DepartmentListView.as_view(), name='department_list'),
+    path('departments/add/', views.DepartmentCreateView.as_view(), name='department_add'),
+    path('departments/<int:pk>/edit/', views.DepartmentUpdateView.as_view(), name='department_edit'),
+    path('departments/<int:pk>/delete/', views.DepartmentDeleteView.as_view(), name='department_delete'),
+
+    # إدارة الأذونات (Vouchers)
+    path('vouchers/', views.VoucherListView.as_view(), name='voucher_list'),
+    path('vouchers/add/', views.VoucherCreateView.as_view(), name='voucher_add'),
+    path('vouchers/<str:pk>/edit/', views.VoucherUpdateView.as_view(), name='voucher_edit'),
+    path('vouchers/<str:pk>/delete/', views.VoucherDeleteView.as_view(), name='voucher_delete'),
+    path('vouchers/<str:pk>/', views.VoucherDetailView.as_view(), name='voucher_detail'),
+    path('vouchers/generate-number/', views.generate_voucher_number, name='generate_voucher_number'),
+
+    # إدارة طلبات الشراء (Purchase Requests)
+    path('purchase-requests/', views.PurchaseRequestListView.as_view(), name='purchase_request_list'),
+    path('purchase-requests/create/<str:product_id>/', views.create_purchase_request, name='create_purchase_request'),
+    path('purchase-requests/<int:pk>/update-status/', views.update_purchase_request_status, name='update_purchase_request_status'),
+    
+    # تقارير المخزون
+    path('stock/report/', views.StockReportView.as_view(), name='stock_report'),
+    path('export/csv/', views.export_to_csv, name='export_csv'),
+    
+    # فحص المخزون المنخفض
+    path('check-low-stock/', views.check_low_stock, name='check_low_stock'),
+
+    # إعدادات النظام
+    path('settings/', views.system_settings, name='system_settings'),
+    
+    # للتوافق مع الروابط القديمة
+    path('invoices/', views.VoucherListView.as_view(), name='invoice_list'),
+    path('invoices/add/', views.VoucherCreateView.as_view(), name='invoice_add'),
+    path('invoices/<str:pk>/edit/', views.VoucherUpdateView.as_view(), name='invoice_edit'),
+    path('invoices/<str:pk>/delete/', views.VoucherDeleteView.as_view(), name='invoice_delete'),
+    path('invoices/<str:pk>/', views.VoucherDetailView.as_view(), name='invoice_detail'),
+]

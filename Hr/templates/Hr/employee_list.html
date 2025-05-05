@@ -1,4 +1,4 @@
-{% extends 'base_updated.html' %}
+{% extends 'Hr/base_hr.html' %}
 {% load static %}
 {% load hr_permission_tags %}
 
@@ -31,7 +31,7 @@
                 <i class="fas fa-user-check stats-icon fa-2x me-2 text-success opacity-75"></i>
                 <div>
                     <div class="stats-number fs-2 fw-bold">{{ active_employees }}</div>
-                    <p class="stats-title text-muted mb-0">الموظفين النشطين</p>
+                    <p class="stats-title text-muted mb-0">المؤمن عليهم</p>
                 </div>
             </div>
         </div>
@@ -167,12 +167,12 @@
                                 <td class="px-3">{{ employee.jop_name|default:"-" }}</td>
                                 <td class="px-3">{{ employee.emp_phone1|default:"-" }}</td>
                                 <td class="px-3">
-                                    {% if employee.working_condition == 'يعمل' %}
-                                    <span class="badge bg-success">نشط</span>
+                                    {% if employee.working_condition == 'سارى' %}
+                                    <span class="badge bg-success">سارى</span>
                                     {% elif employee.working_condition == 'إجازة' %}
                                     <span class="badge rounded-pill bg-info-subtle text-info-emphasis">إجازة</span>
-                                    {% elif employee.working_condition == 'مستقيل' %}
-                                    <span class="badge rounded-pill bg-danger-subtle text-danger-emphasis">مستقيل</span>
+                                    {% elif employee.working_condition == 'استقالة' %}
+                                    <span class="badge rounded-pill bg-danger-subtle text-danger-emphasis">استقالة</span>
                                     {% else %}
                                     <span class="badge rounded-pill bg-secondary-subtle text-secondary-emphasis">{{ employee.working_condition|default:"-" }}</span>
                                     {% endif %}

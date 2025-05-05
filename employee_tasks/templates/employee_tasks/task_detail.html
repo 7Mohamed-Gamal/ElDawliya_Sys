@@ -1,0 +1,470 @@
+{% extends 'employee_tasks/base_employee_tasks.html' %}
+
+{% block title %}{{ task.title }} - نظام الدولية{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'employee_tasks:dashboard' %}">لوحة التحكم</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'employee_tasks:task_list' %}">المهام</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ task.title }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Task Details -->
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">تفاصيل المهمة</h5>
+                    <div>
+                        <a href="{% url 'employee_tasks:task_edit' task.pk %}" class="btn btn-sm btn-warning">
+                            <i class="fas fa-edit me-1"></i> تعديل
+                        </a>
+                        <a href="{% url 'employee_tasks:task_delete' task.pk %}" class="btn btn-sm btn-danger">
+                            <i class="fas fa-trash me-1"></i> حذف
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h4 class="mb-3">{{ task.title }}</h4>
+
+                    {% if task.category %}
+                        <div class="mb-3">
+                            <span class="badge" style="background-color: {{ task.category.color }};">
+                                <i class="{{ task.category.icon }} me-1"></i>
+                                {{ task.category.name }}
+                            </span>
+                        </div>
+                    {% endif %}
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>الحالة:</strong>
+                                <span class="badge badge-{{ task.status }}">{{ task.get_status_display }}</span>
+                            </p>
+                            <p class="mb-1"><strong>الأولوية:</strong>
+                                <span class="badge badge-{{ task.priority }}">{{ task.get_priority_display }}</span>
+                            </p>
+                            <p class="mb-1"><strong>تاريخ البداية:</strong> {{ task.start_date|date:"Y-m-d" }}</p>
+                            <p class="mb-1"><strong>تاريخ الاستحقاق:</strong>
+                                {% if task.due_date < today and task.status != 'completed' %}
+                                    <span class="text-danger fw-bold">{{ task.due_date|date:"Y-m-d" }}</span>
+                                {% else %}
+                                    {{ task.due_date|date:"Y-m-d" }}
+                                {% endif %}
+                            </p>
+                            {% if task.completion_date %}
+                                <p class="mb-1"><strong>تاريخ الإنجاز:</strong> {{ task.completion_date|date:"Y-m-d" }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>تم الإنشاء بواسطة:</strong> {{ task.created_by.username }}</p>
+                            <p class="mb-1"><strong>تم الإنشاء في:</strong> {{ task.created_at|date:"Y-m-d H:i" }}</p>
+                            {% if task.assigned_to %}
+                                <p class="mb-1"><strong>تم التكليف إلى:</strong> {{ task.assigned_to.username }}</p>
+                            {% endif %}
+                            <p class="mb-1"><strong>خاص:</strong>
+                                {% if task.is_private %}
+                                    <i class="fas fa-check-circle text-success"></i> نعم
+                                {% else %}
+                                    <i class="fas fa-times-circle text-danger"></i> لا
+                                {% endif %}
+                            </p>
+                            <p class="mb-1"><strong>آخر تحديث:</strong> {{ task.updated_at|date:"Y-m-d H:i" }}</p>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <h6>نسبة الإنجاز ({{ task.progress }}%)</h6>
+                        <div class="progress" style="height: 20px;">
+                            <div class="progress-bar bg-{{ task.priority }}" role="progressbar" style="width: {{ task.progress }}%;" aria-valuenow="{{ task.progress }}" aria-valuemin="0" aria-valuemax="100">{{ task.progress }}%</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <h6>الوصف</h6>
+                        <div class="p-3 bg-light rounded">
+                            {{ task.description|linebreaks }}
+                        </div>
+                    </div>
+
+                    <!-- Task Status Update -->
+                    <div class="mb-3">
+                        <h6>تحديث الحالة</h6>
+                        <div class="d-flex">
+                            <div class="btn-group me-3">
+                                <button type="button" class="btn btn-outline-warning status-btn" data-status="pending" {% if task.status == 'pending' %}disabled{% endif %}>
+                                    قيد الانتظار
+                                </button>
+                                <button type="button" class="btn btn-outline-info status-btn" data-status="in_progress" {% if task.status == 'in_progress' %}disabled{% endif %}>
+                                    قيد التنفيذ
+                                </button>
+                                <button type="button" class="btn btn-outline-success status-btn" data-status="completed" {% if task.status == 'completed' %}disabled{% endif %}>
+                                    مكتملة
+                                </button>
+                                <button type="button" class="btn btn-outline-danger status-btn" data-status="cancelled" {% if task.status == 'cancelled' %}disabled{% endif %}>
+                                    ملغاة
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary status-btn" data-status="deferred" {% if task.status == 'deferred' %}disabled{% endif %}>
+                                    مؤجلة
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Task Progress Update -->
+                    <div class="mb-3">
+                        <h6>تحديث نسبة الإنجاز</h6>
+                        <div class="d-flex align-items-center">
+                            <input type="range" class="form-range me-3" id="progressRange" min="0" max="100" step="5" value="{{ task.progress }}">
+                            <span id="progressValue">{{ task.progress }}%</span>
+                            <button type="button" class="btn btn-primary ms-3" id="updateProgressBtn">
+                                <i class="fas fa-save me-1"></i> حفظ
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Task Steps -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">خطوات المهمة</h5>
+                </div>
+                <div class="card-body">
+                    {% if steps %}
+                        <div class="steps-list mb-4">
+                            {% for step in steps %}
+                                <div class="step-item {% if step.completed %}completed{% endif %}">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="form-check">
+                                            <input class="form-check-input step-checkbox" type="checkbox" value="{{ step.id }}" id="step{{ step.id }}" {% if step.completed %}checked{% endif %} data-step-id="{{ step.id }}">
+                                            <label class="form-check-label {% if step.completed %}text-decoration-line-through{% endif %}" for="step{{ step.id }}">
+                                                {{ step.description }}
+                                            </label>
+                                        </div>
+                                        <div class="step-actions">
+                                            <a href="{% url 'employee_tasks:step_edit' task.pk step.id %}" class="btn btn-sm btn-outline-warning">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'employee_tasks:step_delete' task.pk step.id %}" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <div class="step-meta">
+                                        <small>
+                                            <i class="fas fa-user me-1"></i> {{ step.created_by.username }}
+                                            <span class="mx-1">|</span>
+                                            <i class="fas fa-calendar me-1"></i> {{ step.created_at|date:"Y-m-d" }}
+                                            {% if step.completed and step.completion_date %}
+                                                <span class="mx-1">|</span>
+                                                <i class="fas fa-check-circle me-1"></i> {{ step.completion_date|date:"Y-m-d" }}
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            لا توجد خطوات لهذه المهمة. أضف خطوات لتتبع تقدم المهمة.
+                        </div>
+                    {% endif %}
+
+                    <!-- Add Step Form -->
+                    <div class="add-step-form">
+                        <h6>إضافة خطوة جديدة</h6>
+                        <form method="post" action="{% url 'employee_tasks:task_detail' task.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="add_step" value="1">
+                            <div class="mb-3">
+                                {{ step_form.description }}
+                            </div>
+                            <div class="mb-3 form-check">
+                                {{ step_form.completed }}
+                                <label class="form-check-label" for="{{ step_form.completed.id_for_label }}">
+                                    مكتملة
+                                </label>
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-plus-circle me-1"></i> إضافة خطوة
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Reminders -->
+            <div class="card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">التذكيرات</h5>
+                </div>
+                <div class="card-body">
+                    {% if reminders %}
+                        <div class="reminders-list mb-4">
+                            {% for reminder in reminders %}
+                                <div class="reminder-item {% if reminder.is_sent %}sent{% endif %}">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="reminder-date">
+                                            <i class="fas fa-bell me-1"></i> {{ reminder.reminder_date|date:"Y-m-d H:i" }}
+                                        </div>
+                                        <div class="reminder-actions">
+                                            <a href="{% url 'employee_tasks:reminder_delete' task.pk reminder.id %}" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <div class="reminder-meta">
+                                        <small>
+                                            <i class="fas fa-calendar me-1"></i> تم الإنشاء: {{ reminder.created_at|date:"Y-m-d" }}
+                                            {% if reminder.is_sent and reminder.sent_at %}
+                                                <span class="mx-1">|</span>
+                                                <i class="fas fa-paper-plane me-1"></i> تم الإرسال: {{ reminder.sent_at|date:"Y-m-d H:i" }}
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            لا توجد تذكيرات لهذه المهمة.
+                        </div>
+                    {% endif %}
+
+                    <!-- Add Reminder Form -->
+                    <div class="add-reminder-form">
+                        <h6>إضافة تذكير جديد</h6>
+                        <form method="post" action="{% url 'employee_tasks:task_detail' task.pk %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="add_reminder" value="1">
+                            <div class="mb-3">
+                                <label for="{{ reminder_form.reminder_date.id_for_label }}" class="form-label">تاريخ التذكير</label>
+                                {{ reminder_form.reminder_date }}
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-plus-circle me-1"></i> إضافة تذكير
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Related Information -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">معلومات ذات صلة</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6>روابط سريعة</h6>
+                        <div class="list-group">
+                            <a href="{% url 'employee_tasks:calendar' %}" class="list-group-item list-group-item-action">
+                                <i class="fas fa-calendar-alt me-2"></i> عرض في التقويم
+                            </a>
+                            <a href="{% url 'employee_tasks:analytics' %}" class="list-group-item list-group-item-action">
+                                <i class="fas fa-chart-bar me-2"></i> عرض التحليلات
+                            </a>
+                            <a href="{% url 'employee_tasks:task_create' %}" class="list-group-item list-group-item-action">
+                                <i class="fas fa-plus-circle me-2"></i> إنشاء مهمة جديدة
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Task Status Update
+        const statusButtons = document.querySelectorAll('.status-btn');
+        statusButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const status = this.dataset.status;
+                updateTaskStatus(status);
+            });
+        });
+
+        function updateTaskStatus(status) {
+            // AJAX request to update task status
+            const formData = new FormData();
+            formData.append('status', status);
+
+            fetch('{% url "employee_tasks:update_task_status" task.pk %}', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update UI
+                    statusButtons.forEach(btn => {
+                        btn.disabled = (btn.dataset.status === status);
+                    });
+
+                    // Show success message
+                    const message = `تم تحديث حالة المهمة إلى "${data.status_display}"`;
+                    showAlert('success', message);
+
+                    // Reload page after a short delay
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    showAlert('danger', data.error || 'حدث خطأ أثناء تحديث الحالة');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('danger', 'حدث خطأ أثناء تحديث الحالة');
+            });
+        }
+
+        // Task Progress Update
+        const progressRange = document.getElementById('progressRange');
+        const progressValue = document.getElementById('progressValue');
+        const updateProgressBtn = document.getElementById('updateProgressBtn');
+
+        progressRange.addEventListener('input', function() {
+            progressValue.textContent = this.value + '%';
+        });
+
+        updateProgressBtn.addEventListener('click', function() {
+            const progress = progressRange.value;
+            updateTaskProgress(progress);
+        });
+
+        function updateTaskProgress(progress) {
+            // AJAX request to update task progress
+            const formData = new FormData();
+            formData.append('progress', progress);
+
+            fetch('{% url "employee_tasks:update_task_progress" task.pk %}', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success message
+                    const message = `تم تحديث نسبة الإنجاز إلى ${data.progress}%`;
+                    showAlert('success', message);
+
+                    // If progress is 100%, update status buttons
+                    if (data.status === 'completed') {
+                        statusButtons.forEach(btn => {
+                            btn.disabled = (btn.dataset.status === 'completed');
+                        });
+                    }
+
+                    // Reload page after a short delay
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    showAlert('danger', data.error || 'حدث خطأ أثناء تحديث نسبة الإنجاز');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('danger', 'حدث خطأ أثناء تحديث نسبة الإنجاز');
+            });
+        }
+
+        // Step Checkbox Toggle
+        const stepCheckboxes = document.querySelectorAll('.step-checkbox');
+        stepCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const stepId = this.dataset.stepId;
+                toggleStepStatus(stepId, this.checked);
+            });
+        });
+
+        function toggleStepStatus(stepId, completed) {
+            // AJAX request to toggle step status
+            fetch(`{% url "employee_tasks:toggle_step_status" task.pk 0 %}`.replace('0', stepId), {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update UI
+                    const label = document.querySelector(`label[for="step${stepId}"]`);
+                    const stepItem = document.querySelector(`#step${stepId}`).closest('.step-item');
+
+                    if (data.completed) {
+                        label.classList.add('text-decoration-line-through');
+                        stepItem.classList.add('completed');
+                    } else {
+                        label.classList.remove('text-decoration-line-through');
+                        stepItem.classList.remove('completed');
+                    }
+
+                    // Show success message
+                    const message = data.completed ? 'تم تعيين الخطوة كمكتملة' : 'تم تعيين الخطوة كغير مكتملة';
+                    showAlert('success', message);
+                } else {
+                    showAlert('danger', data.error || 'حدث خطأ أثناء تحديث حالة الخطوة');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('danger', 'حدث خطأ أثناء تحديث حالة الخطوة');
+            });
+        }
+
+        // Helper function to show alerts
+        function showAlert(type, message) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+
+            const messagesDiv = document.querySelector('.messages');
+            if (messagesDiv) {
+                messagesDiv.appendChild(alertDiv);
+            } else {
+                const mainContent = document.querySelector('.main-content');
+                const newMessagesDiv = document.createElement('div');
+                newMessagesDiv.className = 'messages';
+                newMessagesDiv.appendChild(alertDiv);
+                mainContent.insertBefore(newMessagesDiv, mainContent.firstChild);
+            }
+
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                const bsAlert = new bootstrap.Alert(alertDiv);
+                bsAlert.close();
+            }, 5000);
+        }
+    });
+</script>
+{% endblock %}

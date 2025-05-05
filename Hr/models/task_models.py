@@ -40,6 +40,34 @@ class EmployeeTask(models.Model):
     class Meta:
         verbose_name = _('مهمة الموظف')
         verbose_name_plural = _('مهام الموظفين')
-        db_table = 'Hr_EmployeeTask'
+        # Using the default table name (hr_employeetask) instead of a custom one
+        # db_table = 'Hr_EmployeeTask'
         ordering = ['-due_date', 'priority']
+        managed = True
+
+
+class TaskStep(models.Model):
+    """
+    نموذج لخطوات المهمة
+    """
+    task_id = models.IntegerField(verbose_name=_('رقم المهمة'))  # استخدام حقل عددي بدلاً من ForeignKey
+    description = models.TextField(verbose_name=_('وصف الخطوة'))
+    completed = models.BooleanField(default=False, verbose_name=_('مكتملة'))
+    completion_date = models.DateField(null=True, blank=True, verbose_name=_('تاريخ الإنجاز'))
+    created_by = models.ForeignKey('accounts.Users_Login_New', on_delete=models.SET_NULL, null=True, related_name='created_task_steps', verbose_name=_('تم الإنشاء بواسطة'))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('تاريخ الإنشاء'))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_('تاريخ التحديث'))
+
+    def __str__(self):
+        return f"خطوة للمهمة رقم: {self.task_id}"
+
+    @property
+    def task(self):
+        """الحصول على المهمة المرتبطة"""
+        return EmployeeTask.objects.get(pk=self.task_id)
+
+    class Meta:
+        verbose_name = _('خطوة المهمة')
+        verbose_name_plural = _('خطوات المهام')
+        ordering = ['-created_at']
         managed = True

@@ -1,0 +1,588 @@
+{% extends 'administrator/base_admin.html' %}
+{% load static %}
+
+{% block title %}{{ title }} | نظام الدولية{% endblock %}
+
+{% block extra_css %}
+<style>
+    .permission-category {
+        margin-bottom: 30px;
+        border: 1px solid rgba(0,0,0,.125);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .permission-category-header {
+        padding: 12px 20px;
+        background-color: #f8f9fa;
+        border-bottom: 1px solid rgba(0,0,0,.125);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .permission-category-body {
+        padding: 15px 20px;
+    }
+
+    .permission-item {
+        padding: 8px 15px;
+        margin-bottom: 8px;
+        border-radius: 5px;
+        background-color: #f8f9fa;
+        transition: all 0.2s;
+    }
+
+    .permission-item:hover {
+        background-color: #e9ecef;
+    }
+
+    .permission-item.selected {
+        background-color: #e3f2fd;
+        border-left: 3px solid #0d6efd;
+    }
+
+    /* Category colors */
+    .category-content .permission-category-header { background-color: #e0f2fe; color: #0369a1; }
+    .category-users .permission-category-header { background-color: #fef3c7; color: #b45309; }
+    .category-reports .permission-category-header { background-color: #dcfce7; color: #15803d; }
+    .category-settings .permission-category-header { background-color: #f3e8ff; color: #7e22ce; }
+    .category-system .permission-category-header { background-color: #ffe4e6; color: #be123c; }
+    .category-other .permission-category-header { background-color: #e2e8f0; color: #475569; }
+
+    /* Application colors */
+    .app-hr .permission-category-header { background-color: #dbeafe; color: #1e40af; }
+    .app-inventory .permission-category-header { background-color: #fef9c3; color: #854d0e; }
+    .app-meetings .permission-category-header { background-color: #d1fae5; color: #065f46; }
+    .app-purchase-orders .permission-category-header { background-color: #fce7f3; color: #9d174d; }
+    .app-tasks .permission-category-header { background-color: #f5f3ff; color: #5b21b6; }
+    .app-admin .permission-category-header { background-color: #fee2e2; color: #991b1b; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h2">{{ title }}</h1>
+                <div>
+                    <a href="{% url 'administrator:rbac_role_detail' role_id=role.id %}" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-arrow-right me-1"></i> العودة إلى تفاصيل الدور
+                    </a>
+                    <a href="{% url 'administrator:rbac_dashboard' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-tachometer-alt me-1"></i> لوحة التحكم
+                    </a>
+                </div>
+            </div>
+            <p class="text-muted">
+                حدد الصلاحيات التي يمتلكها دور "{{ role.name }}"
+            </p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-3 mb-4">
+            <!-- Role details card -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">تفاصيل الدور</h5>
+                </div>
+                <div class="card-body">
+                    <h5 class="mb-3">{{ role.name }}</h5>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="p-2 bg-light rounded-circle me-3">
+                            <i class="fas fa-users text-primary"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted">عدد المستخدمين</small>
+                            <h5 class="mb-0">{{ role.user_set.count }}</h5>
+                        </div>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <div class="p-2 bg-light rounded-circle me-3">
+                            <i class="fas fa-key text-success"></i>
+                        </div>
+                        <div>
+                            <small class="text-muted">عدد الصلاحيات</small>
+                            <h5 class="mb-0">{{ selected_permissions|length }}</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick actions card -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">إجراءات سريعة</h5>
+                </div>
+                <div class="card-body">
+                    <button type="button" id="selectAllPermissions" class="btn btn-outline-primary mb-2 w-100">
+                        <i class="fas fa-check-double me-1"></i> تحديد جميع الصلاحيات
+                    </button>
+                    <button type="button" id="deselectAllPermissions" class="btn btn-outline-secondary mb-2 w-100">
+                        <i class="fas fa-times-circle me-1"></i> إلغاء تحديد الجميع
+                    </button>
+                    <a href="{% url 'administrator:rbac_bulk_assign_permissions' role_id=role.id %}" class="btn btn-outline-success w-100">
+                        <i class="fas fa-layer-group me-1"></i> إضافة صلاحيات حسب الفئة
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-9">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">الصلاحيات المتاحة</h5>
+                        <div class="input-group w-50">
+                            <span class="input-group-text" id="search-addon">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            <input type="text" id="permissionSearch" class="form-control"
+                                   placeholder="البحث عن صلاحية..." aria-describedby="search-addon">
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div id="permissions-container">
+                            <!-- تقسيم الصلاحيات حسب التطبيقات -->
+
+                            <!-- صلاحيات تطبيق الموارد البشرية (HR) -->
+                            <div class="permission-category app-hr">
+                                <div class="permission-category-header">
+                                    <h5 class="mb-0"><i class="fas fa-users me-2"></i> صلاحيات الموارد البشرية (HR)</h5>
+                                    <div>
+                                        <button type="button" class="btn btn-sm btn-outline-dark select-app" data-app="hr">
+                                            <i class="fas fa-check me-1"></i> تحديد الكل
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-dark clear-app" data-app="hr">
+                                            <i class="fas fa-times me-1"></i> إلغاء تحديد الكل
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="permission-category-body">
+                                    <div class="row">
+                                        {% for category, permissions in all_permissions_by_category.items %}
+                                            {% for perm in permissions %}
+                                                {% if perm.codename|slice:":3" == "hr_" or perm.content_type.app_label == "hr" or "employee" in perm.codename or "department" in perm.codename or "job" in perm.codename %}
+                                                <div class="col-md-6 permission-item-container" data-app="hr">
+                                                    <div class="permission-item {% if perm.id in selected_permissions %}selected{% endif %}">
+                                                        <div class="form-check d-flex align-items-center">
+                                                            <input
+                                                                class="form-check-input me-2"
+                                                                type="checkbox"
+                                                                name="permissions"
+                                                                id="perm_{{ perm.id }}"
+                                                                value="{{ perm.id }}"
+                                                                data-category="{{ perm.category }}"
+                                                                data-app="hr"
+                                                                {% if perm.id in selected_permissions %}checked{% endif %}
+                                                            >
+                                                            <label class="form-check-label w-100" for="perm_{{ perm.id }}">
+                                                                <div class="d-flex justify-content-between align-items-center">
+                                                                    <span>{{ perm.name }}</span>
+                                                                    <span class="badge bg-light text-secondary" title="{{ perm.description }}">
+                                                                        <i class="fas fa-info-circle"></i>
+                                                                    </span>
+                                                                </div>
+                                                                {% if perm.description %}
+                                                                <small class="text-muted d-block">{{ perm.description }}</small>
+                                                                {% endif %}
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- صلاحيات تطبيق المخزن (Inventory) -->
+                            <div class="permission-category app-inventory">
+                                <div class="permission-category-header">
+                                    <h5 class="mb-0"><i class="fas fa-boxes me-2"></i> صلاحيات المخزن (Inventory)</h5>
+                                    <div>
+                                        <button type="button" class="btn btn-sm btn-outline-dark select-app" data-app="inventory">
+                                            <i class="fas fa-check me-1"></i> تحديد الكل
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-dark clear-app" data-app="inventory">
+                                            <i class="fas fa-times me-1"></i> إلغاء تحديد الكل
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="permission-category-body">
+                                    <div class="row">
+                                        {% for category, permissions in all_permissions_by_category.items %}
+                                            {% for perm in permissions %}
+                                                {% if perm.codename|slice:":9" == "inventory" or perm.content_type.app_label == "inventory" or "product" in perm.codename or "category" in perm.codename or "supplier" in perm.codename %}
+                                                <div class="col-md-6 permission-item-container" data-app="inventory">
+                                                    <div class="permission-item {% if perm.id in selected_permissions %}selected{% endif %}">
+                                                        <div class="form-check d-flex align-items-center">
+                                                            <input
+                                                                class="form-check-input me-2"
+                                                                type="checkbox"
+                                                                name="permissions"
+                                                                id="perm_{{ perm.id }}"
+                                                                value="{{ perm.id }}"
+                                                                data-category="{{ perm.category }}"
+                                                                data-app="inventory"
+                                                                {% if perm.id in selected_permissions %}checked{% endif %}
+                                                            >
+                                                            <label class="form-check-label w-100" for="perm_{{ perm.id }}">
+                                                                <div class="d-flex justify-content-between align-items-center">
+                                                                    <span>{{ perm.name }}</span>
+                                                                    <span class="badge bg-light text-secondary" title="{{ perm.description }}">
+                                                                        <i class="fas fa-info-circle"></i>
+                                                                    </span>
+                                                                </div>
+                                                                {% if perm.description %}
+                                                                <small class="text-muted d-block">{{ perm.description }}</small>
+                                                                {% endif %}
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- صلاحيات تطبيق الاجتماعات (Meetings) -->
+                            <div class="permission-category app-meetings">
+                                <div class="permission-category-header">
+                                    <h5 class="mb-0"><i class="fas fa-handshake me-2"></i> صلاحيات الاجتماعات (Meetings)</h5>
+                                    <div>
+                                        <button type="button" class="btn btn-sm btn-outline-dark select-app" data-app="meetings">
+                                            <i class="fas fa-check me-1"></i> تحديد الكل
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-dark clear-app" data-app="meetings">
+                                            <i class="fas fa-times me-1"></i> إلغاء تحديد الكل
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="permission-category-body">
+                                    <div class="row">
+                                        {% for category, permissions in all_permissions_by_category.items %}
+                                            {% for perm in permissions %}
+                                                {% if perm.codename|slice:":8" == "meetings" or perm.content_type.app_label == "meetings" or "meeting" in perm.codename %}
+                                                <div class="col-md-6 permission-item-container" data-app="meetings">
+                                                    <div class="permission-item {% if perm.id in selected_permissions %}selected{% endif %}">
+                                                        <div class="form-check d-flex align-items-center">
+                                                            <input
+                                                                class="form-check-input me-2"
+                                                                type="checkbox"
+                                                                name="permissions"
+                                                                id="perm_{{ perm.id }}"
+                                                                value="{{ perm.id }}"
+                                                                data-category="{{ perm.category }}"
+                                                                data-app="meetings"
+                                                                {% if perm.id in selected_permissions %}checked{% endif %}
+                                                            >
+                                                            <label class="form-check-label w-100" for="perm_{{ perm.id }}">
+                                                                <div class="d-flex justify-content-between align-items-center">
+                                                                    <span>{{ perm.name }}</span>
+                                                                    <span class="badge bg-light text-secondary" title="{{ perm.description }}">
+                                                                        <i class="fas fa-info-circle"></i>
+                                                                    </span>
+                                                                </div>
+                                                                {% if perm.description %}
+                                                                <small class="text-muted d-block">{{ perm.description }}</small>
+                                                                {% endif %}
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- صلاحيات تطبيق أوامر الشراء (Purchase Orders) -->
+                            <div class="permission-category app-purchase-orders">
+                                <div class="permission-category-header">
+                                    <h5 class="mb-0"><i class="fas fa-shopping-cart me-2"></i> صلاحيات أوامر الشراء (Purchase Orders)</h5>
+                                    <div>
+                                        <button type="button" class="btn btn-sm btn-outline-dark select-app" data-app="purchase-orders">
+                                            <i class="fas fa-check me-1"></i> تحديد الكل
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-dark clear-app" data-app="purchase-orders">
+                                            <i class="fas fa-times me-1"></i> إلغاء تحديد الكل
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="permission-category-body">
+                                    <div class="row">
+                                        {% for category, permissions in all_permissions_by_category.items %}
+                                            {% for perm in permissions %}
+                                                {% if perm.codename|slice:":15" == "purchase_orders" or perm.content_type.app_label == "purchase_orders" or "purchase" in perm.codename or "order" in perm.codename %}
+                                                <div class="col-md-6 permission-item-container" data-app="purchase-orders">
+                                                    <div class="permission-item {% if perm.id in selected_permissions %}selected{% endif %}">
+                                                        <div class="form-check d-flex align-items-center">
+                                                            <input
+                                                                class="form-check-input me-2"
+                                                                type="checkbox"
+                                                                name="permissions"
+                                                                id="perm_{{ perm.id }}"
+                                                                value="{{ perm.id }}"
+                                                                data-category="{{ perm.category }}"
+                                                                data-app="purchase-orders"
+                                                                {% if perm.id in selected_permissions %}checked{% endif %}
+                                                            >
+                                                            <label class="form-check-label w-100" for="perm_{{ perm.id }}">
+                                                                <div class="d-flex justify-content-between align-items-center">
+                                                                    <span>{{ perm.name }}</span>
+                                                                    <span class="badge bg-light text-secondary" title="{{ perm.description }}">
+                                                                        <i class="fas fa-info-circle"></i>
+                                                                    </span>
+                                                                </div>
+                                                                {% if perm.description %}
+                                                                <small class="text-muted d-block">{{ perm.description }}</small>
+                                                                {% endif %}
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- صلاحيات إدارة النظام (Administrator) -->
+                            <div class="permission-category app-admin">
+                                <div class="permission-category-header">
+                                    <h5 class="mb-0"><i class="fas fa-cogs me-2"></i> صلاحيات إدارة النظام (Administrator)</h5>
+                                    <div>
+                                        <button type="button" class="btn btn-sm btn-outline-dark select-app" data-app="admin">
+                                            <i class="fas fa-check me-1"></i> تحديد الكل
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-dark clear-app" data-app="admin">
+                                            <i class="fas fa-times me-1"></i> إلغاء تحديد الكل
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="permission-category-body">
+                                    <div class="row">
+                                        {% for category, permissions in all_permissions_by_category.items %}
+                                            {% for perm in permissions %}
+                                                {% if perm.codename|slice:":13" == "administrator" or perm.content_type.app_label == "administrator" or "admin" in perm.codename or "permission" in perm.codename or "role" in perm.codename or "group" in perm.codename %}
+                                                <div class="col-md-6 permission-item-container" data-app="admin">
+                                                    <div class="permission-item {% if perm.id in selected_permissions %}selected{% endif %}">
+                                                        <div class="form-check d-flex align-items-center">
+                                                            <input
+                                                                class="form-check-input me-2"
+                                                                type="checkbox"
+                                                                name="permissions"
+                                                                id="perm_{{ perm.id }}"
+                                                                value="{{ perm.id }}"
+                                                                data-category="{{ perm.category }}"
+                                                                data-app="admin"
+                                                                {% if perm.id in selected_permissions %}checked{% endif %}
+                                                            >
+                                                            <label class="form-check-label w-100" for="perm_{{ perm.id }}">
+                                                                <div class="d-flex justify-content-between align-items-center">
+                                                                    <span>{{ perm.name }}</span>
+                                                                    <span class="badge bg-light text-secondary" title="{{ perm.description }}">
+                                                                        <i class="fas fa-info-circle"></i>
+                                                                    </span>
+                                                                </div>
+                                                                {% if perm.description %}
+                                                                <small class="text-muted d-block">{{ perm.description }}</small>
+                                                                {% endif %}
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- صلاحيات أخرى (Other) -->
+                            <div class="permission-category category-other">
+                                <div class="permission-category-header">
+                                    <h5 class="mb-0"><i class="fas fa-ellipsis-h me-2"></i> صلاحيات أخرى (Other)</h5>
+                                    <div>
+                                        <button type="button" class="btn btn-sm btn-outline-dark select-app" data-app="other">
+                                            <i class="fas fa-check me-1"></i> تحديد الكل
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-dark clear-app" data-app="other">
+                                            <i class="fas fa-times me-1"></i> إلغاء تحديد الكل
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="permission-category-body">
+                                    <div class="row">
+                                        {% for category, permissions in all_permissions_by_category.items %}
+                                            {% for perm in permissions %}
+                                                {% if not perm.codename|slice:":3" == "hr_" and not perm.content_type.app_label == "hr" and not "employee" in perm.codename and not "department" in perm.codename and not "job" in perm.codename and not perm.codename|slice:":9" == "inventory" and not perm.content_type.app_label == "inventory" and not "product" in perm.codename and not "category" in perm.codename and not "supplier" in perm.codename and not perm.codename|slice:":8" == "meetings" and not perm.content_type.app_label == "meetings" and not "meeting" in perm.codename and not perm.codename|slice:":15" == "purchase_orders" and not perm.content_type.app_label == "purchase_orders" and not "purchase" in perm.codename and not "order" in perm.codename and not perm.codename|slice:":13" == "administrator" and not perm.content_type.app_label == "administrator" and not "admin" in perm.codename and not "permission" in perm.codename and not "role" in perm.codename and not "group" in perm.codename %}
+                                                <div class="col-md-6 permission-item-container" data-app="other">
+                                                    <div class="permission-item {% if perm.id in selected_permissions %}selected{% endif %}">
+                                                        <div class="form-check d-flex align-items-center">
+                                                            <input
+                                                                class="form-check-input me-2"
+                                                                type="checkbox"
+                                                                name="permissions"
+                                                                id="perm_{{ perm.id }}"
+                                                                value="{{ perm.id }}"
+                                                                data-category="{{ perm.category }}"
+                                                                data-app="other"
+                                                                {% if perm.id in selected_permissions %}checked{% endif %}
+                                                            >
+                                                            <label class="form-check-label w-100" for="perm_{{ perm.id }}">
+                                                                <div class="d-flex justify-content-between align-items-center">
+                                                                    <span>{{ perm.name }}</span>
+                                                                    <span class="badge bg-light text-secondary" title="{{ perm.description }}">
+                                                                        <i class="fas fa-info-circle"></i>
+                                                                    </span>
+                                                                </div>
+                                                                {% if perm.description %}
+                                                                <small class="text-muted d-block">{{ perm.description }}</small>
+                                                                {% endif %}
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end mt-4">
+                            <a href="{% url 'administrator:rbac_role_detail' role_id=role.id %}" class="btn btn-outline-secondary me-2">
+                                <i class="fas fa-times me-1"></i> إلغاء
+                            </a>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-save me-1"></i> حفظ الصلاحيات
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Initialize tooltips
+        $('[title]').tooltip();
+
+        // Make permission items clickable
+        $('.permission-item').click(function(e) {
+            if (!$(e.target).is('input')) {
+                const checkbox = $(this).find('input[type="checkbox"]');
+                checkbox.prop('checked', !checkbox.prop('checked')).change();
+            }
+        });
+
+        // Add selected class on checkbox change
+        $('input[type="checkbox"]').change(function() {
+            if ($(this).is(':checked')) {
+                $(this).closest('.permission-item').addClass('selected');
+            } else {
+                $(this).closest('.permission-item').removeClass('selected');
+            }
+        });
+
+        // Search functionality
+        $('#permissionSearch').on('input', function() {
+            const searchTerm = $(this).val().toLowerCase();
+
+            if (searchTerm === '') {
+                $('.permission-item-container').show();
+                $('.permission-category').show();
+                return;
+            }
+
+            $('.permission-item-container').each(function() {
+                const permText = $(this).text().toLowerCase();
+
+                if (permText.includes(searchTerm)) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+
+            // Hide application sections that don't have any visible items
+            $('.permission-category').each(function() {
+                if ($(this).find('.permission-item-container:visible').length === 0) {
+                    $(this).hide();
+                } else {
+                    $(this).show();
+                }
+            });
+
+            // If search term matches an application name, show that application section
+            const appTerms = {
+                'hr': ['hr', 'موارد بشرية', 'موظفين'],
+                'inventory': ['inventory', 'مخزن', 'قطع غيار'],
+                'meetings': ['meetings', 'اجتماعات'],
+                'purchase-orders': ['purchase', 'order', 'شراء'],
+                'admin': ['admin', 'إدارة', 'نظام']
+            };
+
+            // Check if search term matches any application keywords
+            Object.keys(appTerms).forEach(app => {
+                if (appTerms[app].some(term => searchTerm.includes(term))) {
+                    $(`.app-${app}`).show();
+                    $(`.app-${app} .permission-item-container`).show();
+                }
+            });
+        });
+
+        // Select all permissions in a category
+        $('.select-category').click(function() {
+            const category = $(this).data('category');
+            $(`input[data-category="${category}"]`).prop('checked', true).change();
+        });
+
+        // Clear all permissions in a category
+        $('.clear-category').click(function() {
+            const category = $(this).data('category');
+            $(`input[data-category="${category}"]`).prop('checked', false).change();
+        });
+
+        // Select all permissions in an application
+        $('.select-app').click(function() {
+            const app = $(this).data('app');
+            $(`input[data-app="${app}"]`).prop('checked', true).change();
+        });
+
+        // Clear all permissions in an application
+        $('.clear-app').click(function() {
+            const app = $(this).data('app');
+            $(`input[data-app="${app}"]`).prop('checked', false).change();
+        });
+
+        // Select all permissions
+        $('#selectAllPermissions').click(function() {
+            $('input[name="permissions"]').prop('checked', true).change();
+        });
+
+        // Deselect all permissions
+        $('#deselectAllPermissions').click(function() {
+            $('input[name="permissions"]').prop('checked', false).change();
+        });
+    });
+</script>
+{% endblock %}

@@ -1,4 +1,4 @@
-{% extends 'base_updated.html' %}
+{% extends 'tasks/base_tasks.html' %}
 {% load static %}
 
 {% block title %}تفاصيل المهمة - نظام الدولية{% endblock %}
@@ -17,17 +17,22 @@
             <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
                 <h4 class="card-title mb-0">تفاصيل المهمة</h4>
                 <div>
+                    {% if user.is_superuser or user == task.assigned_to %}
                     <a href="{% url 'tasks:edit' task.pk %}" class="btn btn-sm btn-primary">
                         <i class="fas fa-edit me-1"></i>
                         تعديل
                     </a>
-                    <button class="btn btn-sm btn-danger ms-2 confirm-delete" 
+                    {% endif %}
+
+                    {% if user.is_superuser %}
+                    <button class="btn btn-sm btn-danger ms-2 confirm-delete"
                             data-type="المهمة"
                             data-id="{{ task.pk }}"
                             data-url="{% url 'tasks:delete' task.pk %}">
                         <i class="fas fa-trash me-1"></i>
                         حذف
                     </button>
+                    {% endif %}
                 </div>
             </div>
             <div class="card-body">
@@ -41,7 +46,7 @@
                             <p class="mb-0">{{ task.description|linebreaks }}</p>
                         </div>
                     </div>
-                    
+
                     <div class="row mb-4">
                         <div class="col-md-6 mb-3">
                             <div class="d-flex">
@@ -92,7 +97,7 @@
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="meeting-info mb-4">
                         <h5 class="mb-3">
                             <i class="fas fa-calendar-alt me-2 text-primary"></i>
@@ -126,13 +131,14 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Task Steps -->
         <div class="card">
             <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
                 <h5 class="mb-0">خطوات المهمة</h5>
             </div>
             <div class="card-body">
+                {% if user.is_superuser or user == task.assigned_to %}
                 <form method="post" class="mb-4 needs-validation" novalidate>
                     {% csrf_token %}
                     <div class="mb-3">
@@ -151,7 +157,13 @@
                         {% endif %}
                     </div>
                 </form>
-                
+                {% else %}
+                <div class="alert alert-info mb-4">
+                    <i class="fas fa-info-circle me-2"></i>
+                    فقط المستخدم المكلف بالمهمة أو المشرف يمكنه إضافة خطوات للمهمة.
+                </div>
+                {% endif %}
+
                 <div class="timeline">
                     {% if task.steps.all %}
                         {% for step in task.steps.all %}
@@ -166,10 +178,12 @@
                                                 <p class="mb-1">{{ step.description }}</p>
                                                 <span class="text-muted small">{{ step.date|date:"j F Y, g:i A" }}</span>
                                             </div>
-                                            <button class="btn btn-sm btn-outline-danger remove-step" 
+                                            {% if user.is_superuser or user == task.assigned_to %}
+                                            <button class="btn btn-sm btn-outline-danger remove-step"
                                                     data-step-id="{{ step.id }}">
                                                 <i class="fas fa-times"></i>
                                             </button>
+                                            {% endif %}
                                         </div>
                                     </div>
                                 </div>
@@ -185,7 +199,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="col-md-4">
         <!-- Task Status Update -->
         <div class="card mb-4">
@@ -193,6 +207,7 @@
                 <h5 class="mb-0">تحديث الحالة</h5>
             </div>
             <div class="card-body">
+                {% if user.is_superuser or user == task.assigned_to %}
                 <div class="d-grid gap-2">
                     <button class="btn {% if task.status == 'pending' %}btn-primary{% else %}btn-outline-primary{% endif %} change-status" data-task-id="{{ task.id }}" data-new-status="pending">
                         <i class="fas fa-clock me-1"></i>
@@ -220,9 +235,15 @@
                         فشلت
                     </button>
                 </div>
+                {% else %}
+                <div class="alert alert-info mb-0">
+                    <i class="fas fa-info-circle me-2"></i>
+                    فقط المستخدم المكلف بالمهمة أو المشرف يمكنه تحديث حالة المهمة.
+                </div>
+                {% endif %}
             </div>
         </div>
-        
+
         <!-- Task Timer -->
         <div class="card mb-4">
             <div class="card-header bg-white py-3">
@@ -262,7 +283,7 @@
                 {% endif %}
             </div>
         </div>
-        
+
         <!-- Related Tasks -->
         {% if related_tasks %}
         <div class="card">
@@ -326,7 +347,7 @@
     .timer-display {
         font-family: 'Cairo', sans-serif;
     }
-    
+
     .timer-item {
         background-color: var(--primary-light);
         border-radius: var(--border-radius);
@@ -334,27 +355,27 @@
         min-width: 60px;
         text-align: center;
     }
-    
+
     .timer-value {
         font-size: 1.5rem;
         font-weight: 700;
         color: var(--primary-color);
     }
-    
+
     .timer-label {
         font-size: 0.8rem;
         color: var(--medium);
     }
-    
+
     .task-timer-status {
         font-weight: 600;
     }
-    
+
     /* Task Status Buttons */
     .change-status {
         transition: all 0.3s ease;
     }
-    
+
     /* Feature icon */
     .feature-icon {
         width: 45px;
@@ -371,7 +392,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Initialize delete confirmation
         initDeleteConfirmations();
-        
+
         // Handle status updates
         const statusButtons = document.querySelectorAll('.change-status');
         statusButtons.forEach(button => {
@@ -379,12 +400,12 @@
                 const taskId = this.dataset.taskId;
                 const newStatus = this.dataset.newStatus;
                 const csrfToken = document.querySelector('input[name="csrfmiddlewaretoken"]').value;
-                
+
                 // Show loading state
                 this.disabled = true;
                 const originalText = this.innerHTML;
                 this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-                
+
                 fetch(`/tasks/${taskId}/update_status/`, {
                     method: 'POST',
                     headers: {
@@ -414,13 +435,13 @@
                 });
             });
         });
-        
+
         // Handle step delete buttons
         const removeStepButtons = document.querySelectorAll('.remove-step');
         if (removeStepButtons.length > 0) {
             const stepIdInput = document.getElementById('step_id_input');
             const deleteStepModal = new bootstrap.Modal(document.getElementById('deleteStepModal'));
-            
+
             removeStepButtons.forEach(button => {
                 button.addEventListener('click', function() {
                     const stepId = this.dataset.stepId;

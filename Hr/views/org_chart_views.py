@@ -8,7 +8,7 @@ from Hr.models.employee_model import Employee
 def org_chart(request):
     """عرض الهيكل التنظيمي للشركة"""
     # Get all employees
-    employees = Employee.objects.filter(working_condition='يعمل').select_related('department')
+    employees = Employee.objects.filter(working_condition='سارى').select_related('department')
     
     # Build the organizational chart data
     org_data = build_org_chart(employees)

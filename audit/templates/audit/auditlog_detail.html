@@ -1,0 +1,176 @@
+{% extends 'administrator/base_admin.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans 'تفاصيل سجل التدقيق' %} #{{ audit_log.id }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card-header {
+        background-color: #f8f9fa;
+        font-weight: bold;
+    }
+    .action-create { color: green; }
+    .action-update { color: orange; }
+    .action-delete { color: red; }
+    .action-view { color: blue; }
+    .action-login, .action-logout { color: purple; }
+    
+    .json-viewer {
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        padding: 15px;
+        font-family: 'Courier New', monospace;
+        white-space: pre-wrap;
+    }
+    
+    .back-button {
+        margin-bottom: 20px;
+    }
+    
+    .detail-section {
+        margin-bottom: 20px;
+    }
+    
+    .detail-label {
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col">
+            <h1>{% trans 'تفاصيل سجل التدقيق' %} #{{ audit_log.id }}</h1>
+        </div>
+    </div>
+    
+    <!-- Back Button -->
+    <div class="row">
+        <div class="col">
+            <a href="{% url 'audit:audit_list' %}" class="btn btn-outline-secondary back-button">
+                <i class="fas fa-arrow-left"></i> {% trans 'العودة إلى قائمة السجلات' %}
+            </a>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Main Information -->
+        <div class="col-md-6">
+            <div class="card detail-section">
+                <div class="card-header">{% trans 'معلومات أساسية' %}</div>
+                <div class="card-body">
+                    <div class="row mb-2">
+                        <div class="col-md-4 detail-label">{% trans 'رقم السجل' %}:</div>
+                        <div class="col-md-8">{{ audit_log.id }}</div>
+                    </div>
+                    
+                    <div class="row mb-2">
+                        <div class="col-md-4 detail-label">{% trans 'الوقت' %}:</div>
+                        <div class="col-md-8">{{ audit_log.timestamp|date:"Y-m-d H:i:s" }}</div>
+                    </div>
+                    
+                    <div class="row mb-2">
+                        <div class="col-md-4 detail-label">{% trans 'المستخدم' %}:</div>
+                        <div class="col-md-8">
+                            {% if audit_log.user %}
+                                {{ audit_log.user.username }} ({{ audit_log.user.get_full_name|default:audit_log.user.email }})
+                            {% else %}
+                                {% trans 'مستخدم غير معروف' %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-2">
+                        <div class="col-md-4 detail-label">{% trans 'الإجراء' %}:</div>
+                        <div class="col-md-8 action-{{ audit_log.action|lower }}">{{ audit_log.get_action_display }}</div>
+                    </div>
+                    
+                    <div class="row mb-2">
+                        <div class="col-md-4 detail-label">{% trans 'التطبيق' %}:</div>
+                        <div class="col-md-8">{{ audit_log.app_name|default:'-' }}</div>
+                    </div>
+                    
+                    <div class="row mb-2">
+                        <div class="col-md-4 detail-label">{% trans 'نوع المحتوى' %}:</div>
+                        <div class="col-md-8">
+                            {% if audit_log.content_type %}
+                                {{ audit_log.content_type.app_label }}.{{ audit_log.content_type.model }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-2">
+                        <div class="col-md-4 detail-label">{% trans 'الكائن' %}:</div>
+                        <div class="col-md-8">{{ audit_log.object_repr|default:'-' }}</div>
+                    </div>
+                    
+                    <div class="row mb-2">
+                        <div class="col-md-4 detail-label">{% trans 'معرف الكائن' %}:</div>
+                        <div class="col-md-8">{{ audit_log.object_id|default:'-' }}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card detail-section">
+                <div class="card-header">{% trans 'تفاصيل الإجراء' %}</div>
+                <div class="card-body">
+                    <p>{{ audit_log.action_details|default:_('لا توجد تفاصيل إضافية') }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Additional Information -->
+        <div class="col-md-6">
+            <div class="card detail-section">
+                <div class="card-header">{% trans 'معلومات المتصفح' %}</div>
+                <div class="card-body">
+                    <div class="row mb-2">
+                        <div class="col-md-4 detail-label">{% trans 'عنوان IP' %}:</div>
+                        <div class="col-md-8">{{ audit_log.ip_address|default:'-' }}</div>
+                    </div>
+                    
+                    <div class="row mb-2">
+                        <div class="col-md-4 detail-label">{% trans 'متصفح المستخدم' %}:</div>
+                        <div class="col-md-8">
+                            <small>{{ audit_log.user_agent|default:'-' }}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Change Data -->
+            {% if audit_log.change_data or change_data_formatted %}
+                <div class="card detail-section">
+                    <div class="card-header">{% trans 'بيانات التغييرات' %}</div>
+                    <div class="card-body">
+                        <div class="json-viewer">
+                            {% if change_data_formatted %}
+                                <pre>{{ change_data_formatted|pprint }}</pre>
+                            {% else %}
+                                <pre>{{ audit_log.change_data }}</pre>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    $(document).ready(function() {
+        // Syntax highlight for JSON if syntax highlighting library is available
+        if (typeof hljs !== 'undefined') {
+            $('.json-viewer pre').each(function(i, block) {
+                hljs.highlightBlock(block);
+            });
+        }
+    });
+</script>
+{% endblock %}

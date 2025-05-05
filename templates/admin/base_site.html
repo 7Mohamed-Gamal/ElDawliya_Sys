@@ -1,0 +1,142 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('نظام الدولية للإدارة') }}{% endblock %}
+
+{% block extrahead %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css">
+{% endblock %}
+
+{% block extrastyle %}
+<style type="text/css">
+    :root {
+        --primary-color: #417690;
+        --secondary-color: #72C267;
+        --accent-color: #2B5470;
+        --light-bg: #f8f9fa;
+        --dark-text: #333;
+    }
+
+    #header {
+        background: var(--primary-color);
+        color: white;
+    }
+
+    #branding h1 {
+        font-weight: bold;
+    }
+
+    .module h2, .module caption {
+        background: var(--primary-color);
+    }
+
+    a:link, a:visited {
+        color: var(--accent-color);
+    }
+
+    .button.default, input[type=submit].default, .submit-row input.default {
+        background: var(--secondary-color);
+    }
+
+    div.breadcrumbs {
+        background: var(--accent-color);
+    }
+
+    /* نمط أيقونات القوائم */
+    .permission-icon {
+        margin-right: 5px;
+        width: 16px;
+        display: inline-block;
+        text-align: center;
+    }
+
+    /* تحسين أسلوب القوائم الجانبية */
+    #nav-sidebar .nav-label {
+        font-weight: bold;
+        color: var(--primary-color);
+        border-bottom: 1px solid #eee;
+        padding-bottom: 5px;
+        margin-top: 15px;
+    }
+
+    /* تنسيق عناصر نظام الصلاحيات */
+    .permissions-section {
+        background-color: var(--light-bg);
+        border-radius: 5px;
+        padding: 10px;
+        margin-bottom: 20px;
+        border-left: 4px solid var(--secondary-color);
+    }
+
+    /* تحسين عرض الجداول */
+    #result_list {
+        border-radius: 5px;
+        overflow: hidden;
+    }
+
+    #result_list thead th {
+        background-color: var(--primary-color);
+    }
+    
+    /* تحسين عرض النماذج */
+    .form-row {
+        border-bottom: 1px solid #eee;
+        padding: 10px 0;
+    }
+
+    fieldset.module {
+        border-radius: 5px;
+        overflow: hidden;
+    }
+
+    /* لوحة التحكم بنظام الصلاحيات */
+    .permission-dashboard {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+    }
+
+    .dashboard-card {
+        flex: 1 1 250px;
+        background-color: var(--light-bg);
+        border-radius: 5px;
+        padding: 15px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .dashboard-card h3 {
+        color: var(--primary-color);
+        margin-top: 0;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 8px;
+    }
+
+    .dashboard-stat {
+        font-size: 24px;
+        font-weight: bold;
+        color: var(--secondary-color);
+    }
+</style>
+{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">
+    <a href="{% url 'admin:index' %}">
+        <i class="fas fa-lock permission-icon"></i> {{ site_header|default:_('إدارة نظام الدولية') }}
+    </a>
+</h1>
+{% endblock %}
+
+{% block welcome-msg %}
+    <strong>{% firstof user.get_short_name user.get_username %}</strong> | 
+    <span class="user-tools-label">
+        <i class="fas fa-user-shield"></i> 
+        {% if user.is_superuser %}
+            مدير النظام
+        {% else %}
+            {{ user.Role }}
+        {% endif %}
+    </span>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}

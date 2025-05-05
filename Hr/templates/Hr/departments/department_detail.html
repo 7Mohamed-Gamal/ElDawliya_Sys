@@ -1,4 +1,4 @@
-{% extends 'base_updated.html' %}
+{% extends 'Hr/base_hr.html' %}
 {% load static %}
 
 {% block title %}تفاصيل القسم - {{ department.dept_name }} - نظام الدولية{% endblock %}
@@ -112,7 +112,7 @@
 </a>
                                     </div>
                                     <div class="col-md-6">
-<a href="{% url 'Hr:report_detail' 'department_report' %}?department={{ department.dept_code }}" class="btn btn-primary btn-sm d-block">
+<a href="{% url 'Hr:reports:report_detail' 'department_report' %}?department={{ department.dept_code }}" class="btn btn-primary btn-sm d-block">
     <i class="fas fa-file-alt me-1"></i> تقرير القسم
 </a>
                                     </div>
@@ -178,12 +178,12 @@
                                 <td class="px-4">{{ employee.jop_name|default:"-" }}</td>
                                 <td class="px-4">{{ employee.emp_date_hiring|date:"Y-m-d"|default:"-" }}</td>
                                 <td class="px-4">
-                                    {% if employee.working_condition == 'يعمل' %}
-                                    <span class="badge bg-success">نشط</span>
-                                    {% elif employee.working_condition == 'إجازة' %}
-                                    <span class="badge bg-info">إجازة</span>
-                                    {% elif employee.working_condition == 'مستقيل' %}
-                                    <span class="badge bg-danger">مستقيل</span>
+                                    {% if employee.working_condition == 'سارى' %}
+                                    <span class="badge bg-success">سارى</span>
+                                    {% elif employee.working_condition == 'انقطاع عن العمل' %}
+                                    <span class="badge bg-info">انقطاع عن العمل</span>
+                                    {% elif employee.working_condition == 'استقالة' %}
+                                    <span class="badge bg-danger">استقالة</span>
                                     {% else %}
                                     <span class="badge bg-secondary">{{ employee.working_condition|default:"-" }}</span>
                                     {% endif %}
@@ -325,7 +325,7 @@
         // Employee Status Chart
         const statusCtx = document.getElementById('employeeStatusChart').getContext('2d');
         const statusData = {
-            labels: ['يعمل', 'إجازة', 'مستقيل', 'أخرى'],
+            labels: ['سارى', 'انقطاع عن العمل', 'استقالة' , 'أخرى'],
             datasets: [{
                 data: [{{ active_count }}, {{ on_leave_count }}, {{ resigned_count }}, {{ other_count }}],
                 backgroundColor: ['#28a745', '#17a2b8', '#dc3545', '#6c757d'],

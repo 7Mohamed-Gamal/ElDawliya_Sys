@@ -1,0 +1,209 @@
+{% extends 'employee_tasks/base_employee_tasks.html' %}
+
+{% block title %}
+    {% if is_my_tasks %}
+        مهامي - نظام الدولية
+    {% elif is_assigned_tasks %}
+        المهام المسندة إلي - نظام الدولية
+    {% else %}
+        قائمة المهام - نظام الدولية
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h3 mb-0 text-gray-800">
+                {% if is_my_tasks %}
+                    مهامي
+                {% elif is_assigned_tasks %}
+                    المهام المسندة إلي
+                {% else %}
+                    قائمة المهام
+                {% endif %}
+            </h1>
+            <p class="text-muted">
+                {% if is_my_tasks %}
+                    عرض المهام التي قمت بإنشائها
+                {% elif is_assigned_tasks %}
+                    عرض المهام المسندة إليك
+                {% else %}
+                    عرض جميع المهام في النظام
+                {% endif %}
+            </p>
+        </div>
+    </div>
+
+    <!-- Filter Card -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">تصفية المهام</h5>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-2">
+                    <label for="id_status" class="form-label">الحالة</label>
+                    {{ filter_form.status }}
+                </div>
+                <div class="col-md-2">
+                    <label for="id_priority" class="form-label">الأولوية</label>
+                    {{ filter_form.priority }}
+                </div>
+                <div class="col-md-2">
+                    <label for="id_category" class="form-label">التصنيف</label>
+                    {{ filter_form.category }}
+                </div>
+                <div class="col-md-2">
+                    <label for="id_start_date" class="form-label">من تاريخ</label>
+                    {{ filter_form.start_date }}
+                </div>
+                <div class="col-md-2">
+                    <label for="id_end_date" class="form-label">إلى تاريخ</label>
+                    {{ filter_form.end_date }}
+                </div>
+                <div class="col-md-2">
+                    <label for="id_search" class="form-label">بحث</label>
+                    {{ filter_form.search }}
+                </div>
+                <div class="col-12 mt-3">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter me-1"></i> تصفية
+                    </button>
+                    <a href="
+                        {% if is_my_tasks %}
+                            {% url 'employee_tasks:my_tasks' %}
+                        {% elif is_assigned_tasks %}
+                            {% url 'employee_tasks:assigned_tasks' %}
+                        {% else %}
+                            {% url 'employee_tasks:task_list' %}
+                        {% endif %}
+                    " class="btn btn-outline-secondary">
+                        <i class="fas fa-redo me-1"></i> إعادة تعيين
+                    </a>
+                    <a href="{% url 'employee_tasks:task_create' %}" class="btn btn-success float-end">
+                        <i class="fas fa-plus-circle me-1"></i> إنشاء مهمة جديدة
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tasks List -->
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">
+                {% if is_my_tasks %}
+                    مهامي ({{ tasks.count }})
+                {% elif is_assigned_tasks %}
+                    المهام المسندة إلي ({{ tasks.count }})
+                {% else %}
+                    قائمة المهام ({{ tasks.count }})
+                {% endif %}
+            </h5>
+        </div>
+        <div class="card-body">
+            {% if tasks %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>العنوان</th>
+                                <th>التصنيف</th>
+                                <th>الحالة</th>
+                                <th>الأولوية</th>
+                                <th>تاريخ البداية</th>
+                                <th>تاريخ الاستحقاق</th>
+                                <th>التقدم</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for task in tasks %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'employee_tasks:task_detail' task.pk %}">{{ task.title }}</a>
+                                        <div class="small text-muted">
+                                            <i class="fas fa-user me-1"></i> {{ task.created_by.username }}
+                                            {% if task.assigned_to %}
+                                                <span class="mx-1">|</span>
+                                                <i class="fas fa-user-check me-1"></i> {{ task.assigned_to.username }}
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if task.category %}
+                                            <span class="badge" style="background-color: {{ task.category.color }};">
+                                                <i class="{{ task.category.icon }} me-1"></i>
+                                                {{ task.category.name }}
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-{{ task.status }}">
+                                            {{ task.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-{{ task.priority }}">
+                                            {{ task.get_priority_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ task.start_date|date:"Y-m-d" }}</td>
+                                    <td>
+                                        {% if task.due_date < today and task.status != 'completed' %}
+                                            <span class="text-danger fw-bold">{{ task.due_date|date:"Y-m-d" }}</span>
+                                        {% else %}
+                                            {{ task.due_date|date:"Y-m-d" }}
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="progress" style="height: 10px;">
+                                            <div class="progress-bar bg-{{ task.priority }}" role="progressbar" style="width: {{ task.progress }}%;" aria-valuenow="{{ task.progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        <div class="small text-center mt-1">{{ task.progress }}%</div>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'employee_tasks:task_detail' task.pk %}" class="btn btn-sm btn-info" title="عرض">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'employee_tasks:task_edit' task.pk %}" class="btn btn-sm btn-warning" title="تعديل">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'employee_tasks:task_delete' task.pk %}" class="btn btn-sm btn-danger" title="حذف">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    {% if is_my_tasks %}
+                        لم تقم بإنشاء أي مهام بعد.
+                    {% elif is_assigned_tasks %}
+                        لا توجد مهام مسندة إليك.
+                    {% else %}
+                        لا توجد مهام في النظام.
+                    {% endif %}
+                </div>
+                <a href="{% url 'employee_tasks:task_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus-circle me-1"></i> إنشاء مهمة جديدة
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add any task list-specific JavaScript here
+</script>
+{% endblock %}

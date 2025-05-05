@@ -1,10 +1,10 @@
-# This is an auto-generated Django model module.
-# You'll have to do the following manually to clean this up:
-#   * Rearrange models' order
-#   * Make sure each model has one field with primary_key=True
-#   * Make sure each ForeignKey and OneToOneField has `on_delete` set to the desired behavior
-#   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
-# Feel free to rename the models, but don't rename db_table values or field names.
+# هذا ملف نموذج Django تم إنشاؤه تلقائيًا.
+# ستحتاج إلى القيام بما يلي يدويًا لتنظيفه:
+#   * إعادة ترتيب النماذج
+#   * التأكد من أن كل نموذج يحتوي على حقل واحد مع primary_key=True
+#   * التأكد من أن كل ForeignKey و OneToOneField لديه `on_delete` محدد بالسلوك المطلوب
+#   * إزالة أسطر `managed = False` إذا كنت ترغب في السماح لـ Django بإنشاء وتعديل وحذف الجدول
+# يمكنك إعادة تسمية النماذج، ولكن لا تقم بإعادة تسمية قيم db_table أو أسماء الحقول.
 from django.db import models
 
 
@@ -506,3 +506,72 @@ class TblSalaryitem(models.Model):
     class Meta:
         managed = False
         db_table = 'Tbl_SalaryItem'
+
+
+class LeaveType(models.Model):
+    name = models.CharField(max_length=100, verbose_name='اسم نوع الإجازة')
+    code = models.CharField(max_length=20, unique=True, verbose_name='كود نوع الإجازة')
+    description = models.TextField(blank=True, null=True, verbose_name='وصف')
+    max_days_per_year = models.PositiveIntegerField(default=0, verbose_name='الحد الأقصى للأيام في السنة')
+    is_paid = models.BooleanField(default=True, verbose_name='مدفوعة الأجر')
+    is_active = models.BooleanField(default=True, verbose_name='نشط')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')
+
+    class Meta:
+        verbose_name = 'نوع الإجازة'
+        verbose_name_plural = 'أنواع الإجازات'
+        db_table = 'Hr_LeaveType'
+        ordering = ['name']
+        managed = True
+
+    def __str__(self):
+        return self.name
+
+
+class Employee(models.Model):
+    # This is a placeholder for the Employee model referenced in EmployeeLeave
+    # The actual implementation should be based on your system's requirements
+    name = models.CharField(max_length=100, verbose_name='اسم الموظف')
+
+    class Meta:
+        verbose_name = 'موظف'
+        verbose_name_plural = 'الموظفين'
+        db_table = 'Hr_Employee'
+        managed = True
+
+    def __str__(self):
+        return self.name
+
+
+class EmployeeLeave(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'قيد الانتظار'),
+        ('approved', 'موافق عليه'),
+        ('rejected', 'مرفوض'),
+        ('cancelled', 'ملغى')
+    ]
+
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='leaves', verbose_name='الموظف')
+    leave_type = models.ForeignKey(LeaveType, on_delete=models.CASCADE, related_name='employee_leaves', verbose_name='نوع الإجازة')
+    start_date = models.DateField(verbose_name='تاريخ البداية')
+    end_date = models.DateField(verbose_name='تاريخ النهاية')
+    days_count = models.PositiveIntegerField(verbose_name='عدد الأيام')
+    reason = models.TextField(verbose_name='السبب')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='الحالة')
+    approved_by = models.ForeignKey('accounts.Users_Login_New', on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_leaves', verbose_name='تمت الموافقة بواسطة')
+    approval_date = models.DateTimeField(null=True, blank=True, verbose_name='تاريخ الموافقة')
+    rejection_reason = models.TextField(null=True, blank=True, verbose_name='سبب الرفض')
+    notes = models.TextField(null=True, blank=True, verbose_name='ملاحظات')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')
+
+    class Meta:
+        verbose_name = 'إجازة الموظف'
+        verbose_name_plural = 'إجازات الموظفين'
+        db_table = 'Hr_EmployeeLeave'
+        ordering = ['-start_date']
+        managed = True
+
+    def __str__(self):
+        return f"{self.employee} - {self.leave_type} ({self.start_date} to {self.end_date})"

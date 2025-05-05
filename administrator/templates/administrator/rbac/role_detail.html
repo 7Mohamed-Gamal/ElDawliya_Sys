@@ -1,0 +1,307 @@
+{% extends 'administrator/base_admin.html' %}
+{% load static %}
+
+{% block title %}{{ title }} | نظام الدولية{% endblock %}
+
+{% block extra_css %}
+<style>
+    .permission-category {
+        margin-bottom: 1rem;
+        padding: 12px 15px;
+        border-radius: 8px;
+    }
+    
+    .permission-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+        display: inline-block;
+        white-space: nowrap;
+    }
+    
+    .content-bg {
+        background-color: #e0f2fe;
+        color: #0369a1;
+    }
+    
+    .users-bg {
+        background-color: #fef3c7;
+        color: #b45309;
+    }
+    
+    .reports-bg {
+        background-color: #dcfce7;
+        color: #15803d;
+    }
+    
+    .settings-bg {
+        background-color: #f3e8ff;
+        color: #7e22ce;
+    }
+    
+    .system-bg {
+        background-color: #ffe4e6;
+        color: #be123c;
+    }
+    
+    .other-bg {
+        background-color: #e2e8f0;
+        color: #475569;
+    }
+    
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: #e9ecef;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        color: #495057;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h2">{{ title }}</h1>
+                <div>
+                    <a href="{% url 'administrator:rbac_role_permissions' role_id=role.id %}" class="btn btn-success me-2">
+                        <i class="fas fa-key me-1"></i> إدارة الصلاحيات
+                    </a>
+                    <a href="{% url 'administrator:rbac_role_edit' role_id=role.id %}" class="btn btn-primary me-2">
+                        <i class="fas fa-edit me-1"></i> تعديل الدور
+                    </a>
+                    <a href="{% url 'administrator:rbac_role_list' %}" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-arrow-right me-1"></i> قائمة الأدوار
+                    </a>
+                    <a href="{% url 'administrator:rbac_dashboard' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-tachometer-alt me-1"></i> لوحة التحكم
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Role details card -->
+        <div class="col-md-3 mb-4">
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">تفاصيل الدور</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 80px; height: 80px;">
+                            <i class="fas fa-users-cog fa-3x text-primary"></i>
+                        </div>
+                        <h3 class="mb-0">{{ role.name }}</h3>
+                    </div>
+                    
+                    <div class="row g-0 text-center mb-3">
+                        <div class="col-6 border-end">
+                            <div class="p-3">
+                                <h5 class="mb-0">{{ users|length }}</h5>
+                                <small class="text-muted">المستخدمين</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3">
+                                <h5 class="mb-0">{{ permissions|length }}</h5>
+                                <small class="text-muted">الصلاحيات</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'administrator:rbac_role_permissions' role_id=role.id %}" class="btn btn-outline-success">
+                            <i class="fas fa-key me-1"></i> إدارة الصلاحيات
+                        </a>
+                        <a href="{% url 'administrator:rbac_role_edit' role_id=role.id %}" class="btn btn-outline-primary">
+                            <i class="fas fa-edit me-1"></i> تعديل الدور
+                        </a>
+                        <a href="{% url 'administrator:rbac_role_delete' role_id=role.id %}" class="btn btn-outline-danger">
+                            <i class="fas fa-trash me-1"></i> حذف الدور
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">إحصائيات الصلاحيات</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        {% for category, perms in permissions_by_category.items %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="permission-badge {{ perms.0.category }}-bg me-2">{{ category }}</span>
+                            </div>
+                            <span class="badge bg-primary rounded-pill">{{ perms|length }}</span>
+                        </div>
+                        {% empty %}
+                        <div class="list-group-item text-center py-4">
+                            <div class="text-muted">
+                                <i class="fas fa-info-circle me-1"></i> لا توجد صلاحيات لهذا الدور
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tabs for users and permissions -->
+        <div class="col-md-9">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light p-0">
+                    <ul class="nav nav-tabs card-header-tabs" id="roleDetailsTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="permissions-tab" data-bs-toggle="tab" data-bs-target="#permissions" type="button">
+                                <i class="fas fa-key me-1"></i> الصلاحيات 
+                                <span class="badge bg-success rounded-pill ms-1">{{ permissions|length }}</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button">
+                                <i class="fas fa-users me-1"></i> المستخدمين 
+                                <span class="badge bg-primary rounded-pill ms-1">{{ users|length }}</span>
+                            </button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body">
+                    <div class="tab-content" id="roleDetailsTabsContent">
+                        <!-- Permissions Tab -->
+                        <div class="tab-pane fade show active" id="permissions" role="tabpanel" aria-labelledby="permissions-tab">
+                            <div class="mb-3">
+                                <input type="text" id="permissionSearch" class="form-control" placeholder="البحث في الصلاحيات...">
+                            </div>
+                            
+                            {% if permissions %}
+                                {% for category, perms in permissions_by_category.items %}
+                                <div class="permission-category {{ perms.0.category }}-bg mb-4">
+                                    <h5 class="mb-3">{{ category }}</h5>
+                                    <div>
+                                        {% for perm in perms %}
+                                        <span class="permission-badge bg-white" data-permission-name="{{ perm.name }}">
+                                            {{ perm.name }}
+                                            {% if perm.description %}
+                                            <i class="fas fa-info-circle ms-1" title="{{ perm.description }}"></i>
+                                            {% endif %}
+                                        </span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    لا توجد صلاحيات مخصصة لهذا الدور بعد. 
+                                    <a href="{% url 'administrator:rbac_role_permissions' role_id=role.id %}" class="alert-link">إضافة صلاحيات</a>?
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Users Tab -->
+                        <div class="tab-pane fade" id="users" role="tabpanel" aria-labelledby="users-tab">
+                            <div class="mb-3">
+                                <input type="text" id="userSearch" class="form-control" placeholder="البحث عن مستخدم...">
+                            </div>
+                            
+                            {% if users %}
+                                <div class="table-responsive">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>اسم المستخدم</th>
+                                                <th>البريد الإلكتروني</th>
+                                                <th>آخر دخول</th>
+                                                <th>الإجراءات</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for user in users %}
+                                            <tr class="user-row" data-user-username="{{ user.username }}" data-user-email="{{ user.email }}">
+                                                <td>{{ forloop.counter }}</td>
+                                                <td>
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="user-avatar me-2">
+                                                            {{ user.username|first|upper }}
+                                                        </div>
+                                                        {{ user.username }}
+                                                    </div>
+                                                </td>
+                                                <td>{{ user.email }}</td>
+                                                <td>{{ user.last_login|date:"Y-m-d" }}</td>
+                                                <td>
+                                                    <a href="{% url 'administrator:rbac_user_detail' user_id=user.id %}" class="btn btn-sm btn-outline-primary">
+                                                        <i class="fas fa-eye"></i>
+                                                    </a>
+                                                    <a href="{% url 'administrator:rbac_user_roles' user_id=user.id %}" class="btn btn-sm btn-outline-success">
+                                                        <i class="fas fa-users-cog"></i>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    لا يوجد مستخدمين لهذا الدور بعد.
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Initialize tooltips
+        $('[title]').tooltip();
+        
+        // Tab functionality is handled by Bootstrap
+        
+        // Permissions search
+        $("#permissionSearch").on("input", function() {
+            var value = $(this).val().toLowerCase();
+            $(".permission-badge").filter(function() {
+                var matches = $(this).data("permission-name").toLowerCase().indexOf(value) > -1;
+                $(this).toggle(matches);
+            });
+            
+            // Hide empty categories
+            $(".permission-category").each(function() {
+                var visibleBadges = $(this).find(".permission-badge:visible").length;
+                $(this).toggle(visibleBadges > 0);
+            });
+        });
+        
+        // Users search
+        $("#userSearch").on("input", function() {
+            var value = $(this).val().toLowerCase();
+            $(".user-row").filter(function() {
+                var usernameMatch = $(this).data("user-username").toLowerCase().indexOf(value) > -1;
+                var emailMatch = $(this).data("user-email").toLowerCase().indexOf(value) > -1;
+                $(this).toggle(usernameMatch || emailMatch);
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,199 @@
+{% extends "inventory/base_inventory.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "طلبات الشراء" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">{% trans "طلبات الشراء" %}</h1>
+    </div>
+
+    <!-- إحصائيات سريعة -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">{% trans "طلبات قيد الانتظار" %}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ pending_count }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">{% trans "تمت الموافقة" %}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ approved_count }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">{% trans "مرفوضة" %}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ rejected_count }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-times fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- فلترة البيانات -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">{% trans "فلترة" %}</h6>
+        </div>
+        <div class="card-body">
+            <form method="get" action="{% url 'inventory:purchase_request_list' %}">
+                <div class="row">
+                    <div class="col-md-4 form-group">
+                        <label class="control-label">{% trans "الحالة" %}</label>
+                        <select name="status" class="form-select">
+                            <option value="">{% trans "الكل" %}</option>
+                            <option value="pending" {% if selected_status == 'pending' %}selected{% endif %}>{% trans "قيد الانتظار" %}</option>
+                            <option value="approved" {% if selected_status == 'approved' %}selected{% endif %}>{% trans "تمت الموافقة" %}</option>
+                            <option value="rejected" {% if selected_status == 'rejected' %}selected{% endif %}>{% trans "مرفوض" %}</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 form-group d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-filter"></i> {% trans "فلترة" %}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- قائمة طلبات الشراء -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">{% trans "طلبات الشراء" %}</h6>
+        </div>
+        <div class="card-body">
+            {% if purchase_requests %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>#</th>
+                            <th>{% trans "كود الصنف" %}</th>
+                            <th>{% trans "اسم الصنف" %}</th>
+                            <th>{% trans "الكمية الحالية" %}</th>
+                            <th>{% trans "الحد الأدنى" %}</th>
+                            <th>{% trans "تاريخ الطلب" %}</th>
+                            <th>{% trans "الحالة" %}</th>
+                            <th>{% trans "تاريخ الموافقة/الرفض" %}</th>
+                            <th>{% trans "إجراءات" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for request in purchase_requests %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ request.product.product_id }}</td>
+                            <td>{{ request.product.name }}</td>
+                            <td>{{ request.product.quantity }}</td>
+                            <td>{{ request.product.minimum_threshold }}</td>
+                            <td>{{ request.requested_date }}</td>
+                            <td>
+                                {% if request.status == 'pending' %}
+                                    <span class="badge bg-warning">{% trans "قيد الانتظار" %}</span>
+                                {% elif request.status == 'approved' %}
+                                    <span class="badge bg-success">{% trans "تمت الموافقة" %}</span>
+                                {% elif request.status == 'rejected' %}
+                                    <span class="badge bg-danger">{% trans "مرفوض" %}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ request.approved_date|default:"-" }}</td>
+                            <td>
+                                {% if request.status == 'pending' %}
+                                <div class="btn-group" role="group">
+                                    <form method="post" action="{% url 'inventory:update_purchase_request_status' request.id %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="status" value="approved">
+                                        <button type="submit" class="btn btn-success btn-sm" title="{% trans 'موافقة' %}">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                    </form>
+                                    <form method="post" action="{% url 'inventory:update_purchase_request_status' request.id %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="status" value="rejected">
+                                        <button type="submit" class="btn btn-danger btn-sm" title="{% trans 'رفض' %}">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                                {% else %}
+                                <span class="text-muted">{% trans "تم اتخاذ إجراء" %}</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info text-center">
+                {% if selected_status %}
+                    {% if selected_status == 'pending' %}
+                        {% trans "لا توجد طلبات شراء قيد الانتظار" %}
+                    {% elif selected_status == 'approved' %}
+                        {% trans "لا توجد طلبات شراء تمت الموافقة عليها" %}
+                    {% elif selected_status == 'rejected' %}
+                        {% trans "لا توجد طلبات شراء مرفوضة" %}
+                    {% endif %}
+                {% else %}
+                    {% trans "لا توجد طلبات شراء حالياً" %}
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- ملاحظات استخدام -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">{% trans "ملاحظات" %}</h6>
+        </div>
+        <div class="card-body">
+            <ul>
+                <li>{% trans "يتم إنشاء طلبات الشراء تلقائياً عندما تصل كمية الصنف إلى الحد الأدنى أو أقل." %}</li>
+                <li>{% trans "يمكن إنشاء طلب شراء يدوياً من صفحة قائمة الأصناف." %}</li>
+                <li>{% trans "يتم إرسال إشعار عندما يتم تقديم طلب شراء جديد." %}</li>
+                <li>{% trans "عندما تتم الموافقة على الطلب، يتم إشعار المعنيين لمتابعة عملية الشراء." %}</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // يمكن إضافة أي أكواد جافاسكريبت هنا
+</script>
+{% endblock %}

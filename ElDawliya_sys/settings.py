@@ -35,7 +35,11 @@ INSTALLED_APPS = [
     'Hr',
     'inventory',
     'administrator',
-    'Purchase_orders'
+    'admin_permissions',  # تمت إضافة تطبيق صلاحيات الإدارة
+    'Purchase_orders',
+    'notifications',  # تطبيق التنبيهات
+    'audit.apps.AuditConfig',  # تطبيق تسجيل وتدقيق الأحداث
+    'employee_tasks',  # تطبيق مهام الموظفين
 ]
 
 MIDDLEWARE = [
@@ -47,7 +51,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'administrator.middleware_simplified.SimplifiedPermissionMiddleware',
+    'audit.middleware.AuditMiddleware',  # إضافة middleware لتسجيل الأحداث تلقائيًا
 ]
 
 ROOT_URLCONF = 'ElDawliya_sys.urls'
@@ -65,6 +69,7 @@ TEMPLATES = [
                 'inventory.context_processors.inventory_stats',
                 'administrator.context_processors.system_settings',
                 'administrator.context_processors.user_permissions',
+                'notifications.context_processors.notifications_processor',
             ],
         },
     },
@@ -187,6 +192,12 @@ LOGOUT_REDIRECT_URL = '/accounts/login/'
 # Media files (User-uploaded files)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# CSRF Settings
+CSRF_FAILURE_VIEW = 'accounts.views.csrf_failure'
+CSRF_COOKIE_SECURE = False  # Set to True in production with HTTPS
+CSRF_COOKIE_HTTPONLY = False  # Set to True for added security in production
+SESSION_COOKIE_SECURE = False  # Set to True in production with HTTPS
 
 
 # # إعدادات Crispy Forms

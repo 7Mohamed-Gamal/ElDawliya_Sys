@@ -1,0 +1,262 @@
+{% extends 'administrator/base_admin.html' %}
+{% load static %}
+
+{% block title %}{{ title }} | نظام الدولية{% endblock %}
+
+{% block extra_css %}
+<style>
+    .role-card {
+        margin-bottom: 1.5rem;
+        transition: all 0.3s;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .role-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .role-card.selected {
+        border: 2px solid #0d6efd;
+    }
+    
+    .role-card .card-header {
+        font-weight: 500;
+    }
+    
+    .role-card .badge {
+        font-size: 0.85rem;
+    }
+    
+    .user-info-card {
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    }
+    
+    .user-avatar {
+        width: 100px;
+        height: 100px;
+        background-color: #f1f3f5;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        font-weight: bold;
+        color: #495057;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h2">{{ title }}</h1>
+                <div>
+                    <a href="{% url 'administrator:rbac_user_detail' user_id=user_obj.id %}" class="btn btn-outline-secondary me-2">
+                        <i class="fas fa-arrow-right me-1"></i> العودة إلى تفاصيل المستخدم
+                    </a>
+                    <a href="{% url 'administrator:rbac_dashboard' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-tachometer-alt me-1"></i> لوحة التحكم
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <!-- User info card -->
+            <div class="card user-info-card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">معلومات المستخدم</h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-4">
+                        {% if user_obj.first_name %}
+                            <div class="user-avatar mb-3 mx-auto">
+                                {{ user_obj.first_name|first|upper }}{{ user_obj.last_name|first|upper }}
+                            </div>
+                        {% else %}
+                            <div class="user-avatar mb-3 mx-auto">
+                                {{ user_obj.username|first|upper }}
+                            </div>
+                        {% endif %}
+                        
+                        <h4>
+                            {% if user_obj.first_name %}
+                                {{ user_obj.first_name }} {{ user_obj.last_name }}
+                            {% else %}
+                                {{ user_obj.username }}
+                            {% endif %}
+                        </h4>
+                        
+                        {% if user_obj.email %}
+                            <p class="text-muted mb-2">{{ user_obj.email }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row g-0 text-center mb-3">
+                        <div class="col-6 border-end">
+                            <div class="p-3">
+                                <h5 class="mb-0">{{ selected_roles|length }}</h5>
+                                <small class="text-muted">الأدوار الحالية</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3">
+                                <h5 class="mb-0">{{ all_roles|length }}</h5>
+                                <small class="text-muted">الأدوار المتاحة</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-light">
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i> قم بتحديد الأدوار التي تريد منحها لهذا المستخدم
+                    </small>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <form method="post">
+                {% csrf_token %}
+                
+                <div class="card shadow-sm">
+                    <div class="card-header bg-info text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">الأدوار المتاحة</h5>
+                            <div class="input-group w-50">
+                                <span class="input-group-text" id="search-addon">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" id="roleSearch" class="form-control" placeholder="البحث في الأدوار..." aria-describedby="search-addon">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="roles-container" class="row">
+                            {% for role in all_roles %}
+                            <div class="col-md-6 role-item">
+                                <div class="card role-card {% if role.id in selected_roles %}selected{% endif %}">
+                                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0">{{ role.name }}</h6>
+                                        <span class="badge bg-primary">{{ role.user_set.count }} مستخدم</span>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="form-check">
+                                            <input 
+                                                class="form-check-input role-checkbox" 
+                                                type="checkbox" 
+                                                name="roles" 
+                                                id="role_{{ role.id }}" 
+                                                value="{{ role.id }}" 
+                                                {% if role.id in selected_roles %}checked{% endif %}
+                                            >
+                                            <label class="form-check-label" for="role_{{ role.id }}">
+                                                تعيين دور "{{ role.name }}" لهذا المستخدم
+                                            </label>
+                                        </div>
+                                        <hr>
+                                        <small class="text-muted d-block">
+                                            <strong>الصلاحيات:</strong> {{ role.permissions.count }}
+                                        </small>
+                                        <div class="mt-2">
+                                            <a href="{% url 'administrator:rbac_role_detail' role_id=role.id %}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                                <i class="fas fa-external-link-alt me-1"></i> عرض التفاصيل
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% empty %}
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    لا توجد أدوار متاحة في النظام.
+                                    <a href="{% url 'administrator:rbac_role_create' %}" class="alert-link">إنشاء دور جديد؟</a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div class="d-flex justify-content-between mt-4">
+                            <div>
+                                <button type="button" id="selectAllRoles" class="btn btn-sm btn-outline-primary me-2">
+                                    <i class="fas fa-check-double me-1"></i> تحديد الكل
+                                </button>
+                                <button type="button" id="deselectAllRoles" class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-times me-1"></i> إلغاء تحديد الكل
+                                </button>
+                            </div>
+                            
+                            <div>
+                                <a href="{% url 'administrator:rbac_user_detail' user_id=user_obj.id %}" class="btn btn-outline-secondary me-2">
+                                    <i class="fas fa-times me-1"></i> إلغاء
+                                </a>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-save me-1"></i> حفظ الأدوار
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Make entire card clickable
+    $('.role-card').click(function(e) {
+        if (!$(e.target).is('input[type="checkbox"]') && !$(e.target).is('a') && !$(e.target).is('i')) {
+            const checkbox = $(this).find('input[type="checkbox"]');
+            checkbox.prop('checked', !checkbox.prop('checked')).change();
+        }
+    });
+    
+    // Update card selected state on checkbox change
+    $('.role-checkbox').change(function() {
+        const card = $(this).closest('.role-card');
+        if ($(this).prop('checked')) {
+            card.addClass('selected');
+        } else {
+            card.removeClass('selected');
+        }
+    });
+    
+    // Search functionality
+    $('#roleSearch').on('input', function() {
+        const searchTerm = $(this).val().toLowerCase();
+        
+        if (searchTerm === '') {
+            $('.role-item').show();
+            return;
+        }
+        
+        $('.role-item').each(function() {
+            const roleText = $(this).text().toLowerCase();
+            $(this).toggle(roleText.includes(searchTerm));
+        });
+    });
+    
+    // Select all roles
+    $('#selectAllRoles').click(function() {
+        $('.role-checkbox:visible').prop('checked', true).change();
+    });
+    
+    // Deselect all roles
+    $('#deselectAllRoles').click(function() {
+        $('.role-checkbox:visible').prop('checked', false).change();
+    });
+});
+</script>
+{% endblock %}

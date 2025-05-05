@@ -8,7 +8,7 @@ from Hr.models import (
 
 class AttendanceRuleForm(forms.ModelForm):
     """
-    Form for creating and editing attendance rules
+    نموذج لإنشاء وتعديل قواعد الحضور
     """
     class Meta:
         model = AttendanceRule
@@ -26,7 +26,7 @@ class AttendanceRuleForm(forms.ModelForm):
 
 class EmployeeAttendanceRuleForm(forms.ModelForm):
     """
-    Form for creating and editing employee attendance rules
+    نموذج لإنشاء وتعديل قواعد حضور الموظفين
     """
     class Meta:
         model = EmployeeAttendanceRule
@@ -42,7 +42,7 @@ class EmployeeAttendanceRuleForm(forms.ModelForm):
 
 class EmployeeAttendanceRuleBulkForm(forms.Form):
     """
-    Form for bulk creating employee attendance rules
+    نموذج لإنشاء قواعد حضور الموظفين بالجملة
     """
     attendance_rule = forms.ModelChoiceField(
         queryset=AttendanceRule.objects.all(),
@@ -50,7 +50,7 @@ class EmployeeAttendanceRuleBulkForm(forms.Form):
         widget=forms.Select(attrs={'class': 'form-select'})
     )
     employees = forms.ModelMultipleChoiceField(
-        queryset=Employee.objects.filter(working_condition='يعمل'),
+        queryset=Employee.objects.filter(working_condition='سارى'),
         label=_('الموظفين'),
         widget=forms.SelectMultiple(attrs={'class': 'form-select', 'size': 10})
     )
@@ -64,7 +64,7 @@ class EmployeeAttendanceRuleBulkForm(forms.Form):
         widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'})
     )
     is_active = forms.BooleanField(
-        label=_('نشط'),
+        label=_('سارى'),
         initial=True,
         required=False,
         widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
@@ -73,7 +73,7 @@ class EmployeeAttendanceRuleBulkForm(forms.Form):
 
 class OfficialHolidayForm(forms.ModelForm):
     """
-    Form for creating and editing official holidays
+    نموذج لإنشاء وتعديل الإجازات الرسمية
     """
     class Meta:
         model = OfficialHoliday
@@ -87,7 +87,7 @@ class OfficialHolidayForm(forms.ModelForm):
 
 class AttendanceMachineForm(forms.ModelForm):
     """
-    Form for creating and editing attendance machines
+    نموذج لإنشاء وتعديل أجهزة الحضور
     """
     class Meta:
         model = AttendanceMachine
@@ -104,7 +104,7 @@ class AttendanceMachineForm(forms.ModelForm):
 
 class AttendanceRecordForm(forms.ModelForm):
     """
-    Form for creating and editing attendance records
+    نموذج لإنشاء وتعديل سجلات الحضور
     """
     class Meta:
         model = AttendanceRecord
@@ -122,7 +122,7 @@ class AttendanceRecordForm(forms.ModelForm):
 
 class FetchAttendanceDataForm(forms.Form):
     """
-    Form for fetching attendance data from machines
+    نموذج لجلب بيانات الحضور من الأجهزة
     """
     machine = forms.ModelChoiceField(
         queryset=AttendanceMachine.objects.filter(is_active=True),

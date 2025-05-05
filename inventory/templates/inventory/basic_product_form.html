@@ -1,0 +1,51 @@
+{% extends 'inventory/base_inventory.html' %}
+{% load static %}
+
+{% block title %}إضافة صنف جديد (نموذج بسيط) - نظام إدارة المخزن{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="card">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">إضافة صنف جديد (نموذج بسيط)</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" action="{% url 'inventory:basic_product_add' %}" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                {% if messages %}
+                <div class="alert alert-info">
+                    {% for message in messages %}
+                        {{ message }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="mb-3">
+                    <label for="product_id" class="form-label">رقم الصنف</label>
+                    <input type="text" class="form-control" id="product_id" name="product_id" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="name" class="form-label">اسم الصنف</label>
+                    <input type="text" class="form-control" id="name" name="name" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="initial_quantity" class="form-label">الرصيد الافتتاحي والحالي</label>
+                    <input type="number" class="form-control" id="initial_quantity" name="initial_quantity" value="0" min="0" step="0.01">
+                    <small class="text-muted">سيتم تعيين هذه القيمة كرصيد افتتاحي ورصيد حالي</small>
+                </div>
+
+                <div class="mb-3">
+                    <label for="unit_price" class="form-label">سعر الوحدة</label>
+                    <input type="number" class="form-control" id="unit_price" name="unit_price" value="0" min="0" step="0.01">
+                </div>
+
+                <button type="submit" class="btn btn-primary">حفظ الصنف</button>
+                <a href="{% url 'inventory:product_list' %}" class="btn btn-secondary">العودة للقائمة</a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

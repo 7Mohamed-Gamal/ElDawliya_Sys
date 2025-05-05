@@ -1,4 +1,4 @@
-{% extends 'base_updated.html' %}
+{% extends 'Hr/base_hr.html' %}
 {% load static %}
 
 {% block title %}قارئ جهاز البصمة - نظام الدولية{% endblock %}
@@ -10,8 +10,8 @@
 {% block page_title %}قارئ جهاز البصمة{% endblock %}
 
 {% block breadcrumb %}
-<li class="breadcrumb-item"><a href="{% url 'home' %}">الرئيسية</a></li>
-<li class="breadcrumb-item"><a href="{% url 'employees:dashboard' %}">الموظفين</a></li>
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Hr:dashboard' %}">الموظفين</a></li>
 <li class="breadcrumb-item active">قارئ جهاز البصمة</li>
 {% endblock %}
 
@@ -22,7 +22,7 @@
     <div class="device-header">
         <img src="{% static 'img/fingerprint-icon.png' %}" alt="جهاز البصمة" onerror="this.src='https://via.placeholder.com/80?text=ZK'">
         <h4>برنامج أدواف لقراءة سجلات جهاز البصمة</h4>
-        <span class="connection-status status-disconnected" id="connectionStatus">منقطع</span>
+        <span class="connection-status status-disconnected" id="connectionStatus">انقطاع عن العمل</span>
     </div>
 
     <div class="connection-tabs">

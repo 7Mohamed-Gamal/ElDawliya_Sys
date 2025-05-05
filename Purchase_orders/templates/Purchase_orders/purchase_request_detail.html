@@ -1,33 +1,74 @@
-{% extends 'Purchase_orders/base_purchase.html' %}
+{% extends 'Purchase_orders/base_purchase_orders.html' %}
 {% load static %}
 {% load purchase_permission_tags %}
 
 {% block title %}تفاصيل طلب الشراء - نظام الدولية{% endblock %}
 
+{% block page_title %}تفاصيل طلب الشراء #{{ purchase_request.request_number }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Purchase_orders:dashboard' %}">طلبات الشراء</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Purchase_orders:purchase_request_list' %}">قائمة طلبات الشراء</a></li>
+<li class="breadcrumb-item active">تفاصيل الطلب #{{ purchase_request.request_number }}</li>
+{% endblock %}
+
 {% block content %}
-<div class="row mb-4">
-    <div class="col-md-8">
-        <h2 class="mb-3">
-            <i class="fas fa-file-alt me-2"></i>تفاصيل طلب الشراء #{{ purchase_request.request_number }}
-        </h2>
-    </div>
-    <div class="col-md-4 text-end">
+<div class="d-flex justify-content-end mb-4">
+    <div class="btn-group">
         <a href="{% url 'Purchase_orders:purchase_request_list' %}" class="btn btn-secondary">
-            <i class="fas fa-arrow-left me-1"></i>العودة للقائمة
+            <i class="fas fa-arrow-left me-1"></i> العودة للقائمة
         </a>
         {% has_purchase_module_permission "approvals" "edit" as can_approve_request %}
         {% if purchase_request.status == 'pending' and user.is_staff and can_approve_request %}
         <a href="{% url 'Purchase_orders:approve_purchase_request' pk=purchase_request.pk %}" class="btn btn-success">
-            <i class="fas fa-check me-1"></i>مراجعة الطلب
+            <i class="fas fa-check me-1"></i> مراجعة الطلب
         </a>
         {% endif %}
+        {% if purchase_request.status == 'pending' %}
+        <a href="#" class="btn btn-danger delete-btn"
+           data-request-id="{{ purchase_request.pk }}"
+           data-request-number="{{ purchase_request.request_number }}">
+            <i class="fas fa-trash me-1"></i> حذف الطلب
+        </a>
+        {% endif %}
+        <button class="btn btn-primary" onclick="window.print()">
+            <i class="fas fa-print me-1"></i> طباعة
+        </button>
     </div>
 </div>
 
+{% if purchase_request.status == 'pending' %}
+<div class="alert alert-warning mb-4">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="alert-heading"><i class="fas fa-exclamation-triangle me-2"></i>طلب شراء قيد الانتظار</h5>
+            <p class="mb-0">هذا الطلب في حالة قيد الانتظار ويمكن تعديله أو حذفه.</p>
+        </div>
+        <a href="#" class="btn btn-danger btn-lg delete-btn"
+           data-request-id="{{ purchase_request.pk }}"
+           data-request-number="{{ purchase_request.request_number }}">
+            <i class="fas fa-trash me-2"></i> حذف هذا الطلب
+        </a>
+    </div>
+</div>
+{% endif %}
+
 <!-- معلومات الطلب -->
 <div class="card mb-4">
-    <div class="card-header bg-primary text-white">
-        <h5 class="mb-0">معلومات الطلب</h5>
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">معلومات الطلب</h5>
+        <span class="badge {% if purchase_request.status == 'pending' %}bg-warning{% elif purchase_request.status == 'approved' %}bg-success{% elif purchase_request.status == 'rejected' %}bg-danger{% elif purchase_request.status == 'completed' %}bg-info{% endif %} fs-6">
+            {% if purchase_request.status == 'pending' %}
+                قيد الموافقة
+            {% elif purchase_request.status == 'approved' %}
+                معتمد
+            {% elif purchase_request.status == 'rejected' %}
+                مرفوض
+            {% elif purchase_request.status == 'completed' %}
+                مكتمل
+            {% endif %}
+        </span>
     </div>
     <div class="card-body">
         <div class="row">
@@ -68,11 +109,11 @@
 
 <!-- عناصر الطلب -->
 <div class="card">
-    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">عناصر الطلب</h5>
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">عناصر الطلب</h5>
         {% if purchase_request.status == 'pending' %}
-        <a href="{% url 'Purchase_orders:add_purchase_request_item' pk=purchase_request.pk %}" class="btn btn-light btn-sm">
-            <i class="fas fa-plus me-1"></i>إضافة عنصر
+        <a href="{% url 'Purchase_orders:add_purchase_request_item' pk=purchase_request.pk %}" class="btn btn-primary btn-sm">
+            <i class="fas fa-plus me-1"></i> إضافة عنصر
         </a>
         {% endif %}
     </div>
@@ -117,4 +158,31 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // عند تحميل الصفحة
+    document.addEventListener('DOMContentLoaded', function() {
+        // الحصول على جميع أزرار الحذف
+        const deleteButtons = document.querySelectorAll('.delete-btn');
+
+        // إضافة معالج حدث لكل زر حذف
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                // الحصول على بيانات طلب الشراء
+                const requestId = this.getAttribute('data-request-id');
+                const requestNumber = this.getAttribute('data-request-number');
+
+                // عرض مربع تأكيد الحذف
+                if (confirm(`هل أنت متأكد من رغبتك في حذف طلب الشراء رقم ${requestNumber}؟\nهذا الإجراء لا يمكن التراجع عنه.`)) {
+                    // إذا تم التأكيد، انتقل إلى صفحة حذف طلب الشراء
+                    window.location.href = `/purchase/requests/${requestId}/delete/`;
+                }
+            });
+        });
+    });
+</script>
 {% endblock %}

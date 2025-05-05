@@ -1,0 +1,166 @@
+{% extends 'notifications/base_notifications.html' %}
+{% load static %}
+
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'notifications:dashboard' %}">التنبيهات</a></li>
+<li class="breadcrumb-item active">{{ title }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-header bg-white py-3">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">
+                {% if notification_type == 'hr' %}
+                <i class="fas fa-user-tie me-2 text-primary"></i>
+                {% elif notification_type == 'meetings' %}
+                <i class="fas fa-users me-2 text-info"></i>
+                {% elif notification_type == 'inventory' %}
+                <i class="fas fa-boxes me-2 text-success"></i>
+                {% elif notification_type == 'purchase' %}
+                <i class="fas fa-shopping-cart me-2 text-warning"></i>
+                {% elif notification_type == 'system' %}
+                <i class="fas fa-cogs me-2 text-secondary"></i>
+                {% else %}
+                <i class="fas fa-bell me-2 text-primary"></i>
+                {% endif %}
+                {{ title }}
+            </h5>
+            
+            {% if notification_type %}
+            <a href="{% url 'notifications:mark_all_as_read_by_type' notification_type %}" class="btn btn-primary mark-all-read">
+                <i class="fas fa-check-double me-1"></i>
+                تعليم الكل كمقروء
+            </a>
+            {% else %}
+            <a href="{% url 'notifications:mark_all_as_read' %}" class="btn btn-primary mark-all-read">
+                <i class="fas fa-check-double me-1"></i>
+                تعليم الكل كمقروء
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="card-body">
+        <!-- فلاتر البحث -->
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <form method="get" class="row g-3">
+                    {% if not notification_type %}
+                    <div class="col-md-3">
+                        <label for="notification_type" class="form-label">نوع التنبيه</label>
+                        <select name="notification_type" id="notification_type" class="form-select">
+                            <option value="">الكل</option>
+                            {% for type_code, type_name in notification_types %}
+                            <option value="{{ type_code }}" {% if request.GET.notification_type == type_code %}selected{% endif %}>{{ type_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="col-md-3">
+                        <label for="is_read" class="form-label">الحالة</label>
+                        <select name="is_read" id="is_read" class="form-select">
+                            <option value="">الكل</option>
+                            <option value="read" {% if request.GET.is_read == 'read' %}selected{% endif %}>مقروءة</option>
+                            <option value="unread" {% if request.GET.is_read == 'unread' %}selected{% endif %}>غير مقروءة</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label for="priority" class="form-label">الأولوية</label>
+                        <select name="priority" id="priority" class="form-select">
+                            <option value="">الكل</option>
+                            {% for priority_code, priority_name in priority_levels %}
+                            <option value="{{ priority_code }}" {% if request.GET.priority == priority_code %}selected{% endif %}>{{ priority_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3 d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="fas fa-filter me-1"></i>
+                            تصفية
+                        </button>
+                        {% if notification_type %}
+                        <a href="{% url 'notifications:list_by_type' notification_type %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-redo me-1"></i>
+                            إعادة ضبط
+                        </a>
+                        {% else %}
+                        <a href="{% url 'notifications:list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-redo me-1"></i>
+                            إعادة ضبط
+                        </a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- قائمة التنبيهات -->
+        {% if notifications %}
+        <div class="list-group">
+            {% for notification in notifications %}
+            <a href="{% url 'notifications:detail' notification.pk %}" class="list-group-item list-group-item-action {% if not notification.is_read %}list-group-item-light{% endif %}">
+                <div class="d-flex w-100 justify-content-between">
+                    <h6 class="mb-1">
+                        <i class="{{ notification.icon }} me-2 
+                            {% if notification.notification_type == 'hr' %}text-primary
+                            {% elif notification.notification_type == 'meetings' %}text-info
+                            {% elif notification.notification_type == 'inventory' %}text-success
+                            {% elif notification.notification_type == 'purchase' %}text-warning
+                            {% elif notification.notification_type == 'system' %}text-secondary
+                            {% endif %}"></i>
+                        {{ notification.title }}
+                        {% if not notification.is_read %}
+                        <span class="badge bg-danger">جديد</span>
+                        {% endif %}
+                    </h6>
+                    <small>{{ notification.created_at|date:"Y-m-d H:i" }}</small>
+                </div>
+                <p class="mb-1 text-truncate">{{ notification.message }}</p>
+                <small>
+                    {% if notification.notification_type == 'hr' %}
+                    <span class="text-primary">الموارد البشرية</span>
+                    {% elif notification.notification_type == 'meetings' %}
+                    <span class="text-info">الاجتماعات</span>
+                    {% elif notification.notification_type == 'inventory' %}
+                    <span class="text-success">المخزن</span>
+                    {% elif notification.notification_type == 'purchase' %}
+                    <span class="text-warning">المشتريات</span>
+                    {% elif notification.notification_type == 'system' %}
+                    <span class="text-secondary">النظام</span>
+                    {% endif %}
+                    
+                    {% if notification.priority == 'urgent' %}
+                    <span class="badge bg-danger ms-2">عاجل</span>
+                    {% elif notification.priority == 'high' %}
+                    <span class="badge bg-warning ms-2">عالي</span>
+                    {% elif notification.priority == 'medium' %}
+                    <span class="badge bg-info ms-2">متوسط</span>
+                    {% elif notification.priority == 'low' %}
+                    <span class="badge bg-success ms-2">منخفض</span>
+                    {% endif %}
+                </small>
+            </a>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="fas fa-bell-slash text-muted fa-4x mb-3"></i>
+            <h5>لا توجد تنبيهات</h5>
+            <p class="text-muted">
+                {% if request.GET.is_read or request.GET.priority or request.GET.notification_type %}
+                لا توجد تنبيهات تطابق معايير البحث
+                {% else %}
+                لم يتم إنشاء أي تنبيهات بعد
+                {% endif %}
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

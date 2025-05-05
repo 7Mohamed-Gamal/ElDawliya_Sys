@@ -1,4 +1,4 @@
-{% extends 'base_updated.html' %}
+{% extends 'Hr/base_hr.html' %}
 {% load static %}
 
 {% block title %}قائمة الموظفين - نظام الدولية{% endblock %}
@@ -30,7 +30,7 @@
                 <i class="fas fa-user-check stats-icon fa-2x me-2 text-success opacity-75"></i>
                 <div>
                     <div class="stats-number fs-2 fw-bold">{{ active_employees }}</div>
-                    <p class="stats-title text-muted mb-0">الموظفين النشطين</p>
+                    <p class="stats-title text-muted mb-0">المؤمن عليهم</p>
                 </div>
             </div>
         </div>
@@ -61,12 +61,14 @@
 
 <div class="d-flex align-items-center mb-4 p-3 bg-light rounded shadow-sm">
     <div class="toggle-border me-3">
-        <input id="employeeStatusToggle" type="checkbox" checked>
+        <input id="employeeStatusToggle" type="checkbox" {% if status != 'inactive' %}checked{% endif %}>
         <label for="employeeStatusToggle">
             <div class="handle"></div>
         </label>
     </div>
-    <span id="toggleStatusText" class="fw-bold">موظفين نشطين</span>
+    <span id="toggleStatusText" class="fw-bold {% if status == 'inactive' %}text-danger{% else %}text-success{% endif %}">
+        {% if status == 'inactive' %}موظفين غير نشطين{% else %}موظفين نشطين{% endif %}
+    </span>
 </div>
 
 
@@ -116,7 +118,7 @@
                             <i class="fas fa-search me-1"></i>
                             بحث
                         </button>
-                        <a href="{% url 'employees:list' %}" class="btn btn-outline-secondary">
+                        <a href="{% url 'Hr:employees:list' %}" class="btn btn-outline-secondary">
                             <i class="fas fa-sync-alt me-1"></i>
                             إعادة تعيين
                         </a>
@@ -129,8 +131,14 @@
     <div class="col-lg-9 col-md-8">
         <div class="card shadow-sm">
             <div class="card-header bg-light d-flex justify-content-between align-items-center py-3 border-bottom">
-                <h5 id="employeeListTitle" class="mb-0 fw-semibold">قائمة الموظفين النشطين</h5>
-                <a href="{% url 'employees:create' %}" class="btn btn-success">
+                <h5 id="employeeListTitle" class="mb-0 fw-semibold">
+    {% if status == 'inactive' %}
+    قائمة الموظفين غير النشطين
+    {% else %}
+    قائمة الموظفين النشطين
+    {% endif %}
+</h5>
+                <a href="{% url 'Hr:employees:create' %}" class="btn btn-success">
                     <i class="fas fa-plus me-1"></i>
                     إضافة موظف جديد
                 </a>
@@ -164,7 +172,7 @@
                                         </div>
                                         {% endif %}
                                         <div>
-                                            <a href="{% url 'employees:detail' employee.emp_id %}" class="fw-medium d-block text-decoration-none text-dark">{{ employee.emp_full_name|default:employee.emp_first_name }}</a>
+                                            <a href="{% url 'Hr:employees:detail' employee.emp_id %}" class="fw-medium d-block text-decoration-none text-dark">{{ employee.emp_full_name|default:employee.emp_first_name }}</a>
                                             <small class="text-muted">{{ employee.national_id|default:'' }}</small>
                                         </div>
                                     </div>
@@ -179,17 +187,17 @@
                                     {% elif employee.working_condition == 'إجازة' %}
                                     <span class="badge rounded-pill bg-info-subtle text-info-emphasis">إجازة</span>
                                     {% elif employee.working_condition == 'استقالة' %}
-                                    <span class="badge rounded-pill bg-danger-subtle text-danger-emphasis">مستقيل</span>
+                                    <span class="badge rounded-pill bg-danger-subtle text-danger-emphasis">استقالة</span>
                                     {% else %}
                                     <span class="badge rounded-pill bg-secondary-subtle text-secondary-emphasis">{{ employee.working_condition|default:"-" }}</span>
                                     {% endif %}
                                 </td>
                                 <td class="px-3 text-center">
                                     <div class="btn-group btn-group-sm">
-                                        <a href="{% url 'employees:detail' employee.emp_id %}" class="btn btn-outline-primary" title="عرض التفاصيل">
+                                        <a href="{% url 'Hr:employees:detail' employee.emp_id %}" class="btn btn-outline-primary" title="عرض التفاصيل">
                                             <i class="fas fa-eye"></i>
                                         </a>
-                                        <a href="{% url 'employees:edit' employee.emp_id %}" class="btn btn-outline-secondary" title="تعديل">
+                                        <a href="{% url 'Hr:employees:edit' employee.emp_id %}" class="btn btn-outline-secondary" title="تعديل">
                                             <i class="fas fa-edit"></i>
                                         </a>
                                         {# يمكنك إضافة زر حذف هنا إذا لزم الأمر #}
@@ -244,7 +252,7 @@
                              <div class="d-flex justify-content-between align-items-center mb-1">
                                  <span class="fw-bold fs-5 text-primary">{{ dept.count }}</span>
                                  {% if dept.dept_code %}
-                                 <a href="{% url 'employees:department_detail' dept.dept_code %}" class="btn btn-sm btn-link p-0 text-decoration-none">عرض</a>
+                                 <a href="{% url 'Hr:departments:detail' dept.dept_code %}" class="btn btn-sm btn-link p-0 text-decoration-none">عرض</a>
                                  {% endif %}
                              </div>
                              <div class="progress mt-auto" style="height: 6px;">
@@ -274,7 +282,7 @@
             <div class="card-body p-4">
                 <div class="row g-3">
                     <div class="col-xl-3 col-md-6">
-                        <a href="{% url 'employees:list' %}" class="card action-card h-100 text-decoration-none shadow-hover">
+                        <a href="{% url 'Hr:employees:list' %}" class="card action-card h-100 text-decoration-none shadow-hover">
                             <div class="card-body d-flex align-items-center p-3">
                                 <div class="action-icon bg-primary-subtle text-primary rounded-circle me-3 flex-shrink-0">
                                     <i class="fas fa-users"></i>
@@ -287,7 +295,7 @@
                         </a>
                     </div>
                     <div class="col-xl-3 col-md-6">
-                        <a href="{% url 'employees:create' %}" class="card action-card h-100 text-decoration-none shadow-hover">
+                        <a href="{% url 'Hr:employees:create' %}" class="card action-card h-100 text-decoration-none shadow-hover">
                             <div class="card-body d-flex align-items-center p-3">
                                 <div class="action-icon bg-success-subtle text-success rounded-circle me-3 flex-shrink-0">
                                     <i class="fas fa-user-plus"></i>
@@ -300,7 +308,7 @@
                         </a>
                     </div>
                     <div class="col-xl-3 col-md-6">
-                        <a href="{% url 'employees:department_list' %}" class="card action-card h-100 text-decoration-none shadow-hover">
+                        <a href="{% url 'Hr:departments:list' %}" class="card action-card h-100 text-decoration-none shadow-hover">
                             <div class="card-body d-flex align-items-center p-3">
                                 <div class="action-icon bg-info-subtle text-info rounded-circle me-3 flex-shrink-0">
                                     <i class="fas fa-building"></i>
@@ -313,7 +321,7 @@
                         </a>
                     </div>
                     <div class="col-xl-3 col-md-6">
-                        <a href="{% url 'employees:job_list' %}" class="card action-card h-100 text-decoration-none shadow-hover">
+                        <a href="{% url 'Hr:jobs:list' %}" class="card action-card h-100 text-decoration-none shadow-hover">
                             <div class="card-body d-flex align-items-center p-3">
                                 <div class="action-icon bg-warning-subtle text-warning rounded-circle me-3 flex-shrink-0">
                                     <i class="fas fa-briefcase"></i>
@@ -476,6 +484,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // دالة لتحديث النص بناءً على حالة التبديل
     function updateToggleText() {
+        // الحصول على معلمات URL الحالية
+        const urlParams = new URLSearchParams(window.location.search);
+
         if (toggleCheckbox.checked) {
             toggleStatusText.textContent = 'موظفين نشطين';
             toggleStatusText.classList.remove('text-danger'); // إزالة اللون الأحمر
@@ -483,24 +494,56 @@ document.addEventListener('DOMContentLoaded', function() {
             if (employeeListTitle) {
                 employeeListTitle.textContent = 'قائمة الموظفين النشطين'; // تحديث عنوان الجدول
             }
-            // هنا يمكنك إضافة الكود الخاص بفلترة القائمة لعرض الموظفين النشطين
-            // مثال: window.location.href = '?status=active'; (يتطلب تعديل في الواجهة الخلفية)
-            console.log("عرض الموظفين النشطين");
+
+            // تحديث معلمة الحالة مع الحفاظ على المعلمات الأخرى
+            urlParams.set('status', 'active');
+            window.location.href = '{% url "Hr:employees:list" %}?' + urlParams.toString();
         } else {
             toggleStatusText.textContent = 'موظفين غير نشطين';
             toggleStatusText.classList.remove('text-success'); // إزالة اللون الأخضر
             toggleStatusText.classList.add('text-danger'); // إضافة اللون الأحمر
-             if (employeeListTitle) {
+            if (employeeListTitle) {
                 employeeListTitle.textContent = 'قائمة الموظفين غير النشطين'; // تحديث عنوان الجدول
             }
-            // هنا يمكنك إضافة الكود الخاص بفلترة القائمة لعرض الموظفين غير النشطين
-            // مثال: window.location.href = '?status=inactive'; (يتطلب تعديل في الواجهة الخلفية)
-             console.log("عرض الموظفين غير النشطين");
+
+            // تحديث معلمة الحالة مع الحفاظ على المعلمات الأخرى
+            urlParams.set('status', 'inactive');
+            window.location.href = '{% url "Hr:employees:list" %}?' + urlParams.toString();
         }
     }
 
-    // استدعاء الدالة عند تحميل الصفحة لضبط النص الأولي
-    updateToggleText();
+    // تحديد حالة الـ checkbox بناءً على معلمة الحالة في URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const statusParam = urlParams.get('status');
+
+    // ضبط حالة الـ checkbox بناءً على معلمة الحالة
+    if (statusParam === 'inactive') {
+        toggleCheckbox.checked = false;
+    } else {
+        toggleCheckbox.checked = true;
+    }
+
+    // استدعاء الدالة عند تحميل الصفحة لضبط النص الأولي (بدون تحديث الصفحة)
+    function updateToggleTextWithoutRedirect() {
+        if (toggleCheckbox.checked) {
+            toggleStatusText.textContent = 'موظفين نشطين';
+            toggleStatusText.classList.remove('text-danger');
+            toggleStatusText.classList.add('text-success');
+            if (employeeListTitle) {
+                employeeListTitle.textContent = 'قائمة الموظفين النشطين';
+            }
+        } else {
+            toggleStatusText.textContent = 'موظفين غير نشطين';
+            toggleStatusText.classList.remove('text-success');
+            toggleStatusText.classList.add('text-danger');
+            if (employeeListTitle) {
+                employeeListTitle.textContent = 'قائمة الموظفين غير النشطين';
+            }
+        }
+    }
+
+    // تحديث النص بدون إعادة تحميل الصفحة
+    updateToggleTextWithoutRedirect();
 
     // إضافة مستمع حدث لتغيير حالة الـ checkbox
     toggleCheckbox.addEventListener('change', updateToggleText);

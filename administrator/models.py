@@ -8,7 +8,7 @@ from django.dispatch import receiver
 
 User = get_user_model()
 
-# Try to import audit models
+# محاولة استيراد نماذج التدقيق
 try:
     from .models_audit import PermissionAuditLog
     HAS_AUDIT = True
@@ -17,17 +17,17 @@ except ImportError:
 
 class SystemSettings(models.Model):
     """
-    System-wide settings that can be configured by the administrator.
-    Only one instance of this model should exist (singleton).
+    إعدادات النظام العامة التي يمكن تكوينها بواسطة المسؤول.
+    يجب أن يوجد مثيل واحد فقط من هذا النموذج (singleton).
     """
-    # Database Settings
+    # إعدادات قاعدة البيانات
     db_host = models.CharField(max_length=255, verbose_name="قاعدة البيانات - المضيف")
     db_name = models.CharField(max_length=255, verbose_name="قاعدة البيانات - الاسم")
     db_user = models.CharField(max_length=255, verbose_name="قاعدة البيانات - اسم المستخدم")
     db_password = models.CharField(max_length=255, verbose_name="قاعدة البيانات - كلمة المرور")
     db_port = models.CharField(max_length=10, default='1433', verbose_name="قاعدة البيانات - المنفذ")
 
-    # Company Information
+    # معلومات الشركة
     company_name = models.CharField(max_length=255, verbose_name="اسم الشركة")
     company_address = models.TextField(blank=True, verbose_name="عنوان الشركة")
     company_phone = models.CharField(max_length=50, blank=True, verbose_name="هاتف الشركة")
@@ -35,16 +35,16 @@ class SystemSettings(models.Model):
     company_website = models.URLField(blank=True, verbose_name="موقع الشركة الإلكتروني")
     company_logo = models.ImageField(upload_to='company/', blank=True, null=True, verbose_name="شعار الشركة")
 
-    # System Configuration
+    # تكوين النظام
     system_name = models.CharField(max_length=255, default="نظام الدولية", verbose_name="اسم النظام")
     enable_debugging = models.BooleanField(default=False, verbose_name="تفعيل وضع التصحيح")
     maintenance_mode = models.BooleanField(default=False, verbose_name="وضع الصيانة")
 
-    # Date and timezone settings
+    # إعدادات التاريخ والمنطقة الزمنية
     timezone = models.CharField(max_length=50, default="Asia/Riyadh", verbose_name="المنطقة الزمنية")
     date_format = models.CharField(max_length=50, default="Y-m-d", verbose_name="تنسيق التاريخ")
 
-    # Language and UI Settings
+    # إعدادات اللغة وواجهة المستخدم
     LANGUAGE_CHOICES = [
         ('ar', 'العربية'),
         ('en', 'English'),
@@ -84,7 +84,7 @@ class SystemSettings(models.Model):
         verbose_name=_('اتجاه النص')
     )
 
-    # Last modified
+    # آخر تعديل
     last_modified = models.DateTimeField(auto_now=True, verbose_name="آخر تعديل")
 
     def __str__(self):
@@ -104,7 +104,7 @@ class SystemSettings(models.Model):
 
 class Department(models.Model):
     """
-    Departments that appear in the sidebar navigation.
+    الأقسام التي تظهر في شريط التنقل الجانبي.
     """
     name = models.CharField(max_length=100, verbose_name="اسم القسم")
     icon = models.CharField(max_length=50, verbose_name="أيقونة القسم",
@@ -128,7 +128,7 @@ class Department(models.Model):
 
 class Module(models.Model):
     """
-    Modules (features/links) available within each department.
+    الوحدات (الميزات/الروابط) المتاحة داخل كل قسم.
     """
     department = models.ForeignKey(Department, on_delete=models.CASCADE,
                                   related_name='modules', verbose_name="القسم")
@@ -153,7 +153,7 @@ class Module(models.Model):
 
 class Permission(models.Model):
     """
-    CRUD permissions for modules in the system
+    صلاحيات الإنشاء والقراءة والتحديث والحذف للوحدات في النظام
     """
     PERMISSION_TYPES = [
         ('view', 'عرض'),
@@ -182,7 +182,7 @@ class Permission(models.Model):
 
 class TemplatePermission(models.Model):
     """
-    Permissions to access specific templates/views in the system
+    صلاحيات الوصول إلى قوالب/عروض محددة في النظام
     """
     name = models.CharField(max_length=100, verbose_name="اسم القالب")
     app_name = models.CharField(max_length=50, verbose_name="اسم التطبيق")
@@ -206,7 +206,7 @@ class TemplatePermission(models.Model):
 
 class GroupProfile(models.Model):
     """
-    Extension model for the Group model to add additional fields
+    نموذج امتداد لنموذج المجموعة لإضافة حقول إضافية
     """
     group = models.OneToOneField(Group, on_delete=models.CASCADE, related_name='profile', verbose_name="المجموعة")
     description = models.TextField(blank=True, verbose_name="وصف المجموعة")
@@ -221,8 +221,8 @@ class GroupProfile(models.Model):
 
 class UserGroup(models.Model):
     """
-    Bridge model to store information about user's membership in a group
-    with additional metadata
+    نموذج وسيط لتخزين معلومات حول عضوية المستخدم في مجموعة
+    مع بيانات وصفية إضافية
     """
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
                            related_name='group_memberships', verbose_name="المستخدم")
@@ -274,15 +274,15 @@ class UserModulePermission(models.Model):
         unique_together = ('user', 'module')
 
 
-# Signal handlers for audit logging
+# معالجات الإشارات لتسجيل التدقيق
 if HAS_AUDIT:
     @receiver(post_save, sender=Permission)
     def log_permission_save(sender, instance, created, **kwargs):
-        """Log when a permission is created or updated"""
+        """تسجيل عندما يتم إنشاء أو تحديث صلاحية"""
         from django.contrib.auth import get_user_model
         User = get_user_model()
 
-        # Get the current user from the thread local storage if available
+        # الحصول على المستخدم الحالي من التخزين المحلي للخيط إذا كان متاحًا
         try:
             from threading import local
             _thread_locals = local()
@@ -290,7 +290,7 @@ if HAS_AUDIT:
         except (ImportError, AttributeError):
             user = None
 
-        # If we couldn't get the user, use a system user
+        # إذا لم نتمكن من الحصول على المستخدم، استخدم مستخدم النظام
         if not user:
             user, _ = User.objects.get_or_create(username='system')
 
@@ -306,11 +306,11 @@ if HAS_AUDIT:
 
     @receiver(post_delete, sender=Permission)
     def log_permission_delete(sender, instance, **kwargs):
-        """Log when a permission is deleted"""
+        """تسجيل عندما يتم حذف صلاحية"""
         from django.contrib.auth import get_user_model
         User = get_user_model()
 
-        # Get the current user from the thread local storage if available
+        # الحصول على المستخدم الحالي من التخزين المحلي للخيط إذا كان متاحًا
         try:
             from threading import local
             _thread_locals = local()
@@ -318,7 +318,7 @@ if HAS_AUDIT:
         except (ImportError, AttributeError):
             user = None
 
-        # If we couldn't get the user, use a system user
+        # إذا لم نتمكن من الحصول على المستخدم، استخدم مستخدم النظام
         if not user:
             user, _ = User.objects.get_or_create(username='system')
 
@@ -333,14 +333,14 @@ if HAS_AUDIT:
 
     @receiver(m2m_changed, sender=Permission.users.through)
     def log_permission_users_change(sender, instance, action, pk_set, **kwargs):
-        """Log when users are added to or removed from a permission"""
+        """تسجيل عندما تتم إضافة المستخدمين أو إزالتهم من صلاحية"""
         if action not in ['post_add', 'post_remove']:
             return
 
         from django.contrib.auth import get_user_model
         User = get_user_model()
 
-        # Get the current user from the thread local storage if available
+        # الحصول على المستخدم الحالي من التخزين المحلي للخيط إذا كان متاحًا
         try:
             from threading import local
             _thread_locals = local()
@@ -348,11 +348,11 @@ if HAS_AUDIT:
         except (ImportError, AttributeError):
             user = None
 
-        # If we couldn't get the user, use a system user
+        # إذا لم نتمكن من الحصول على المستخدم، استخدم مستخدم النظام
         if not user:
             user, _ = User.objects.get_or_create(username='system')
 
-        # Get the affected users
+        # الحصول على المستخدمين المتأثرين
         affected_users = User.objects.filter(pk__in=pk_set)
         usernames = ', '.join([u.username for u in affected_users])
 

@@ -9,6 +9,7 @@
     .wrapper {
         display: flex;
         width: 100%;
+        position: relative;
     }
 
     /* Sidebar */
@@ -16,11 +17,15 @@
         width: 280px;
         background: linear-gradient(to left, #0a58ca 0%, #063b8c 100%);
         color: #fff;
-        transition: all 0.3s;
-        position: fixed;
+        transition: all 0.4s ease;
         height: 100vh;
-        z-index: 999;
+        z-index: 1030;
+        position: fixed;
         right: 0;
+        top: 0;
+        box-shadow: -3px 0 10px rgba(0, 0, 0, 0.1);
+        overflow-y: auto;
+        padding-top: 60px; /* Space for navbar */
     }
 
     #sidebar.active {
@@ -53,11 +58,13 @@
         display: flex;
         align-items: center;
         transition: all 0.3s;
+        margin: 0.3rem 0.5rem;
     }
 
     .department-item:hover,
     .department-item.active {
-        background-color: rgba(255,255,255,0.1);
+        background-color: rgba(255,255,255,0.2);
+        transform: translateX(-5px);
     }
 
     .department-item i,
@@ -73,32 +80,89 @@
         color: #f8f9fa;
         background-color: rgba(255,255,255,0.05);
         border-radius: 5px;
-        margin-top: 1rem;
+        margin: 1rem 0.5rem;
     }
 
     /* Content */
     #content {
-        width: calc(100% - 280px);
-        margin-right: 280px;
+        width: 100%;
         min-height: 100vh;
-        transition: all 0.3s;
-        position: relative;
+        transition: all 0.4s ease;
+        padding-right: 280px;
     }
 
     #content.active {
-        width: 100%;
-        margin-right: 0;
+        padding-right: 0;
+    }
+
+    /* Top Navbar */
+    .top-navbar {
+        position: fixed;
+        top: 0;
+        right: 0;
+        left: 0;
+        z-index: 1020;
+        background: #fff;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        transition: all 0.4s ease;
+        padding: 0.5rem 1rem;
+        height: 60px;
+    }
+
+    .top-navbar.with-sidebar {
+        padding-right: 295px;
+    }
+
+    .top-navbar.sidebar-collapsed {
+        padding-right: 15px;
+    }
+
+    /* User info styles */
+    .user-info {
+        background-color: rgba(10, 88, 202, 0.05);
+        padding: 0.4rem 0.8rem;
+        border-radius: 50px;
+        transition: all 0.3s ease;
+    }
+
+    .user-info:hover {
+        background-color: rgba(10, 88, 202, 0.1);
+    }
+
+    /* Navbar buttons */
+    .navbar .btn-outline-danger {
+        border-color: #dc3545;
+        color: #dc3545;
+        transition: all 0.3s ease;
+    }
+
+    .navbar .btn-outline-danger:hover {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .navbar .btn-outline-secondary {
+        border-color: #6c757d;
+        color: #6c757d;
+        transition: all 0.3s ease;
+    }
+
+    .navbar .btn-outline-secondary:hover {
+        background-color: #6c757d;
+        color: white;
     }
 
     /* Toggle Button */
     #sidebarCollapse {
         background-color: #0a58ca;
         border-color: #0a58ca;
+        transition: all 0.3s;
     }
 
     #sidebarCollapse:hover {
         background-color: #063b8c;
         border-color: #063b8c;
+        transform: scale(1.05);
     }
 
     /* Enhanced Card Styles */
@@ -114,6 +178,12 @@
         position: relative;
         z-index: 1;
         margin-bottom: 1.5rem;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
     }
 
     .card::after {
@@ -222,9 +292,37 @@
         color: #3f51b5;
     }
 
+    .card.purchase-card {
+        --background: linear-gradient(to left, #9b59b6 0%, #8e44ad 100%);
+    }
+    .card.purchase-card .card-icon,
+    .card.purchase-card .title,
+    .card.purchase-card:hover .card-info {
+        color: #9b59b6;
+    }
+
+    .card.notifications-card {
+        --background: linear-gradient(to left, #3498db 0%, #2980b9 100%);
+    }
+    .card.notifications-card .card-icon,
+    .card.notifications-card .title,
+    .card.notifications-card:hover .card-info {
+        color: #3498db;
+    }
+
+    .card.employee_tasks-card {
+        --background: linear-gradient(to left, #3498db 0%, #2980b9 100%);
+    }
+    .card.employee_tasks-card .card-icon,
+    .card.employee_tasks-card .title,
+    .card.employee_tasks-card:hover .card-info {
+        color: #3498db;
+    }
+
     /* Dashboard container and content area */
     .dashboard-container {
         padding: 1.5rem;
+        padding-top: 70px; /* Space for navbar */
     }
 
     .content-area {
@@ -238,12 +336,81 @@
 
     .dept-cards-container.active {
         display: block;
+        animation: fadeIn 0.5s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
     /* Welcome section */
     .welcome-section {
         text-align: center;
         padding: 2rem 0;
+        animation: fadeIn 0.5s ease;
+    }
+
+    /* User dropdown in navbar */
+    .user-dropdown {
+        transition: all 0.3s;
+    }
+
+    .user-dropdown:hover {
+        background-color: rgba(10, 88, 202, 0.1);
+        border-radius: 5px;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 992px) {
+        #sidebar {
+            right: -280px;
+        }
+
+        #sidebar.active {
+            right: 0;
+        }
+
+        #content {
+            padding-right: 0;
+        }
+
+        .top-navbar {
+            padding-right: 15px !important;
+        }
+
+        #sidebarCollapse.mobile-active .fa-align-right:before {
+            content: "\f00d"; /* X icon */
+        }
+
+        /* Adjust user info on mobile */
+        .user-info {
+            max-width: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* Smaller buttons on mobile */
+        .navbar .btn {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+        }
+    }
+
+    /* Very small screens */
+    @media (max-width: 576px) {
+        .user-info {
+            max-width: 80px;
+        }
+
+        .navbar .btn {
+            padding: 0.25rem 0.4rem;
+        }
+
+        .navbar .dropdown {
+            margin-left: 0.25rem !important;
+        }
     }
 </style>
 {% endblock %}
@@ -269,6 +436,16 @@
                         <span>{{ dept.name }}</span>
                     </li>
                 {% endfor %}
+                {% if request.user.is_superuser %}
+                    <li class="department-item" data-dept="sysadmin">
+                        <i class="fas fa-cogs"></i>
+                        <span>مدير النظام</span>
+                    </li>
+                {% endif %}
+                <li class="department-item" data-dept="notifications">
+                    <i class="fas fa-bell"></i>
+                    <span>التنبيهات</span>
+                </li>
             {% else %}
                 {% for dept in user_departments %}
                     <li class="department-item" data-dept="{{ dept.url_name }}">
@@ -281,37 +458,108 @@
                         <span>لا توجد أقسام مسموح بها</span>
                     </li>
                 {% endfor %}
+                {% if request.user.is_superuser %}
+                    <li class="department-item" data-dept="sysadmin">
+                        <i class="fas fa-cogs"></i>
+                        <span>مدير النظام</span>
+                    </li>
+                {% endif %}
             {% endif %}
         </ul>
     </nav>
 
     <!-- Page Content -->
     <div id="content">
-        <!-- Navbar -->
-        <nav class="navbar navbar-expand-lg navbar-light">
+        <!-- Top Navbar -->
+        <nav class="navbar navbar-expand navbar-light top-navbar with-sidebar">
             <div class="container-fluid">
-                <button type="button" id="sidebarCollapse" class="btn btn-primary">
-                    <i class="fas fa-align-right"></i>
-                    <span>القائمة</span>
-                </button>
+                <div class="d-flex align-items-center">
+                    <button type="button" id="sidebarCollapse" class="btn btn-primary me-2">
+                        <i class="fas fa-align-right"></i>
+                        <span class="d-none d-md-inline-block">القائمة</span>
+                    </button>
 
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
+                    <span class="navbar-brand mb-0 h1 d-none d-md-inline-block">نظام الشركة الدولية</span>
+                </div>
 
-                <div class="collapse navbar-collapse" id="navbarSupportedContent">
-                    <ul class="navbar-nav ms-auto">
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-user me-2"></i> المستخدم
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
-                                <li><a class="dropdown-item" href="{% url 'administrator:admin_dashboard' %}"><i class="fas fa-user-cog me-2"></i> الإعدادات</a></li>
+                <!-- User Info and Logout - Always Visible -->
+                <div class="d-flex align-items-center">
+                    <div class="user-info me-3 d-flex align-items-center">
+                        <i class="fas fa-user-circle text-primary me-2 fs-5"></i>
+                        <span class="fw-bold">{{ request.user.username }}</span>
+                    </div>
+
+                    <!-- Notifications Dropdown -->
+                    <div class="dropdown me-2">
+                        <button class="btn btn-outline-primary btn-sm position-relative" type="button" id="notificationsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-bell"></i>
+                            {% if unread_notifications_count > 0 %}
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                {{ unread_notifications_count }}
+                                <span class="visually-hidden">تنبيهات غير مقروءة</span>
+                            </span>
+                            {% endif %}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationsDropdown" style="width: 300px;">
+                            <li>
+                                <h6 class="dropdown-header d-flex justify-content-between align-items-center">
+                                    <span>التنبيهات</span>
+                                    <a href="{% url 'notifications:mark_all_as_read' %}" class="text-primary text-decoration-none" style="font-size: 0.8rem;">
+                                        <i class="fas fa-check-double"></i> تعليم الكل كمقروء
+                                    </a>
+                                </h6>
+                            </li>
+                            {% if recent_notifications %}
+                                {% for notification in recent_notifications %}
+                                <li>
+                                    <a class="dropdown-item {% if not notification.is_read %}bg-light{% endif %}" href="{% url 'notifications:detail' notification.pk %}">
+                                        <div class="d-flex align-items-center">
+                                            <div class="flex-shrink-0">
+                                                <i class="{{ notification.icon }}
+                                                {% if notification.notification_type == 'hr' %}text-primary
+                                                {% elif notification.notification_type == 'meetings' %}text-info
+                                                {% elif notification.notification_type == 'inventory' %}text-success
+                                                {% elif notification.notification_type == 'purchase' %}text-warning
+                                                {% elif notification.notification_type == 'system' %}text-secondary
+                                                {% endif %}"></i>
+                                            </div>
+                                            <div class="ms-2 me-auto" style="max-width: 230px;">
+                                                <div class="fw-bold text-truncate">{{ notification.title }}</div>
+                                                <div class="small text-truncate">{{ notification.message }}</div>
+                                                <div class="text-muted" style="font-size: 0.7rem;">{{ notification.created_at|date:"Y-m-d H:i" }}</div>
+                                            </div>
+                                            {% if not notification.is_read %}
+                                            <span class="badge bg-primary rounded-pill">جديد</span>
+                                            {% endif %}
+                                        </div>
+                                    </a>
+                                </li>
+                                {% endfor %}
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="{% url 'accounts:logout' %}"><i class="fas fa-sign-out-alt me-2"></i> تسجيل الخروج</a></li>
-                            </ul>
-                        </li>
-                    </ul>
+                                <li><a class="dropdown-item text-center" href="{% url 'notifications:dashboard' %}">عرض جميع التنبيهات</a></li>
+                            {% else %}
+                                <li><div class="dropdown-item text-center text-muted">لا توجد تنبيهات</div></li>
+                            {% endif %}
+                        </ul>
+                    </div>
+
+                    <a href="{% url 'accounts:logout' %}" class="btn btn-outline-danger btn-sm">
+                        <i class="fas fa-sign-out-alt me-1"></i>
+                        <span class="d-none d-md-inline-block">تسجيل الخروج</span>
+                    </a>
+
+                    <!-- Settings Dropdown -->
+                    <div class="dropdown ms-2">
+                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="settingsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="settingsDropdown">
+                            <li><a class="dropdown-item" href="{% url 'administrator:admin_dashboard' %}"><i class="fas fa-user-cog me-2"></i> الإعدادات</a></li>
+                            <li><a class="dropdown-item" href="{% url 'notifications:dashboard' %}"><i class="fas fa-bell me-2"></i> التنبيهات</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'accounts:dashboard' %}"><i class="fas fa-tachometer-alt me-2"></i> لوحة التحكم</a></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </nav>
@@ -338,9 +586,9 @@
                                 <a href="{% url 'Hr:dashboard' %}" class="text-decoration-none">
                                     <div class="card hr-card">
                                         <div class="card-info">
-                                            <i class="fas fa-users card-icon"></i>
-                                            <p class="title">إدارة الموظفين</p>
-                                            <p class="card-subtitle">إدارة شؤون الموظفين</p>
+                                            <i class="fas fa-home card-icon"></i>
+                                            <p class="title">الصفحة الرئيسية</p>
+                                            <p class="card-subtitle">الصفحة الرئيسية للموارد البشرية</p>
                                         </div>
                                     </div>
                                 </a>
@@ -378,9 +626,9 @@
                                 <a href="{% url 'inventory:dashboard' %}" class="text-decoration-none">
                                     <div class="card warehouse-card">
                                         <div class="card-info">
-                                            <i class="fas fa-tachometer-alt card-icon"></i>
-                                            <p class="title">لوحة تحكم المخزن</p>
-                                            <p class="card-subtitle">عرض حالة المخزن</p>
+                                            <i class="fas fa-home card-icon"></i>
+                                            <p class="title">الصفحة الرئيسية</p>
+                                            <p class="card-subtitle">الصفحة الرئيسية للمخزن</p>
                                         </div>
                                     </div>
                                 </a>
@@ -418,6 +666,17 @@
                                 <a href="{% url 'meetings:list' %}" class="text-decoration-none">
                                     <div class="card meetings-card">
                                         <div class="card-info">
+                                            <i class="fas fa-home card-icon"></i>
+                                            <p class="title">الصفحة الرئيسية</p>
+                                            <p class="card-subtitle">الصفحة الرئيسية للاجتماعات</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <a href="{% url 'meetings:list' %}" class="text-decoration-none">
+                                    <div class="card meetings-card">
+                                        <div class="card-info">
                                             <i class="fas fa-calendar-alt card-icon"></i>
                                             <p class="title">قائمة الاجتماعات</p>
                                             <p class="card-subtitle">عرض جميع الاجتماعات</p>
@@ -447,6 +706,17 @@
                                 <a href="{% url 'tasks:list' %}" class="text-decoration-none">
                                     <div class="card tasks-card">
                                         <div class="card-info">
+                                            <i class="fas fa-home card-icon"></i>
+                                            <p class="title">الصفحة الرئيسية</p>
+                                            <p class="card-subtitle">الصفحة الرئيسية للمهام</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <a href="{% url 'tasks:list' %}" class="text-decoration-none">
+                                    <div class="card tasks-card">
+                                        <div class="card-info">
                                             <i class="fas fa-tasks card-icon"></i>
                                             <p class="title">قائمة المهام</p>
                                             <p class="card-subtitle">عرض جميع المهام</p>
@@ -468,11 +738,200 @@
                         </div>
                     </div>
 
-                    <!-- System Admin Department -->
-                    <div class="dept-cards-container" id="sysadmin-cards">
-                        <h3 class="mb-3">إدارة النظام</h3>
+                    <!-- Purchase Orders Department -->
+                    <div class="dept-cards-container" id="purchase-cards">
+                        <h3 class="mb-3">قسم طلبات الشراء</h3>
                         <div class="row">
                             <div class="col-md-6 col-lg-4">
+                                <a href="{% url 'Purchase_orders:dashboard' %}" class="text-decoration-none">
+                                    <div class="card purchase-card">
+                                        <div class="card-info">
+                                            <i class="fas fa-home card-icon"></i>
+                                            <p class="title">الصفحة الرئيسية</p>
+                                            <p class="card-subtitle">الصفحة الرئيسية لطلبات الشراء</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <a href="{% url 'Purchase_orders:purchase_request_list' %}" class="text-decoration-none">
+                                    <div class="card purchase-card">
+                                        <div class="card-info">
+                                            <i class="fas fa-shopping-cart card-icon"></i>
+                                            <p class="title">طلبات الشراء</p>
+                                            <p class="card-subtitle">عرض جميع طلبات الشراء</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <a href="{% url 'Purchase_orders:create_purchase_request' %}" class="text-decoration-none">
+                                    <div class="card purchase-card">
+                                        <div class="card-info">
+                                            <i class="fas fa-plus card-icon"></i>
+                                            <p class="title">إنشاء طلب شراء</p>
+                                            <p class="card-subtitle">إضافة طلب شراء جديد</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Employee Tasks Department -->
+                    <div class="dept-cards-container" id="employee_tasks-cards">
+                        <h3 class="mb-3">قسم مهام الموظفين</h3>
+                        <div class="row">
+                            <div class="col-md-6 col-lg-4">
+                                <a href="{% url 'employee_tasks:dashboard' %}" class="text-decoration-none">
+                                    <div class="card employee_tasks-card">
+                                        <div class="card-info">
+                                            <i class="fas fa-home card-icon"></i>
+                                            <p class="title">الصفحة الرئيسية</p>
+                                            <p class="card-subtitle">لوحة تحكم مهام الموظفين</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <a href="{% url 'employee_tasks:task_list' %}" class="text-decoration-none">
+                                    <div class="card employee_tasks-card">
+                                        <div class="card-info">
+                                            <i class="fas fa-list card-icon"></i>
+                                            <p class="title">قائمة المهام</p>
+                                            <p class="card-subtitle">عرض وإدارة جميع المهام</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <a href="{% url 'employee_tasks:my_tasks' %}" class="text-decoration-none">
+                                    <div class="card employee_tasks-card">
+                                        <div class="card-info">
+                                            <i class="fas fa-user-check card-icon"></i>
+                                            <p class="title">مهامي</p>
+                                            <p class="card-subtitle">عرض وإدارة مهامي الشخصية</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <a href="{% url 'employee_tasks:task_create' %}" class="text-decoration-none">
+                                    <div class="card employee_tasks-card">
+                                        <div class="card-info">
+                                            <i class="fas fa-plus card-icon"></i>
+                                            <p class="title">إنشاء مهمة جديدة</p>
+                                            <p class="card-subtitle">إضافة مهمة جديدة للنظام</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <a href="{% url 'employee_tasks:calendar' %}" class="text-decoration-none">
+                                    <div class="card employee_tasks-card">
+                                        <div class="card-info">
+                                            <i class="fas fa-calendar-alt card-icon"></i>
+                                            <p class="title">التقويم</p>
+                                            <p class="card-subtitle">عرض المهام في تقويم</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <a href="{% url 'employee_tasks:analytics' %}" class="text-decoration-none">
+                                    <div class="card employee_tasks-card">
+                                        <div class="card-info">
+                                            <i class="fas fa-chart-bar card-icon"></i>
+                                            <p class="title">التحليلات</p>
+                                            <p class="card-subtitle">إحصائيات وتحليلات المهام</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notifications Department -->
+                    <div class="dept-cards-container" id="notifications-cards">
+                        <h3 class="mb-3">قسم التنبيهات</h3>
+                        <div class="row">
+                            <div class="col-md-6 col-lg-4">
+                                <a href="{% url 'notifications:dashboard' %}" class="text-decoration-none">
+                                    <div class="card notifications-card">
+                                        <div class="card-info">
+                                            <i class="fas fa-bell card-icon"></i>
+                                            <p class="title">لوحة التنبيهات</p>
+                                            <p class="card-subtitle">عرض جميع التنبيهات</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <a href="{% url 'notifications:list' %}" class="text-decoration-none">
+                                    <div class="card notifications-card">
+                                        <div class="card-info">
+                                            <i class="fas fa-list card-icon"></i>
+                                            <p class="title">قائمة التنبيهات</p>
+                                            <p class="card-subtitle">عرض جميع التنبيهات</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <a href="{% url 'notifications:list_by_type' 'hr' %}" class="text-decoration-none">
+                                    <div class="card notifications-card">
+                                        <div class="card-info">
+                                            <i class="fas fa-user-tie card-icon"></i>
+                                            <p class="title">تنبيهات الموارد البشرية</p>
+                                            <p class="card-subtitle">عرض تنبيهات الموارد البشرية</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <a href="{% url 'notifications:list_by_type' 'meetings' %}" class="text-decoration-none">
+                                    <div class="card notifications-card">
+                                        <div class="card-info">
+                                            <i class="fas fa-users card-icon"></i>
+                                            <p class="title">تنبيهات الاجتماعات</p>
+                                            <p class="card-subtitle">عرض تنبيهات الاجتماعات</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <a href="{% url 'notifications:list_by_type' 'inventory' %}" class="text-decoration-none">
+                                    <div class="card notifications-card">
+                                        <div class="card-info">
+                                            <i class="fas fa-boxes card-icon"></i>
+                                            <p class="title">تنبيهات المخزن</p>
+                                            <p class="card-subtitle">عرض تنبيهات المخزن</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <a href="{% url 'notifications:mark_all_as_read' %}" class="text-decoration-none">
+                                    <div class="card notifications-card">
+                                        <div class="card-info">
+                                            <i class="fas fa-check-double card-icon"></i>
+                                            <p class="title">تعليم الكل كمقروء</p>
+                                            <p class="card-subtitle">تعليم جميع التنبيهات كمقروءة</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- System Admin Department - Only visible to superusers -->
+                    <div class="dept-cards-container" id="sysadmin-cards" {% if not request.user.is_superuser %}style="display: none !important;"{% endif %}>
+                        <h3 class="mb-3">إدارة النظام</h3>
+
+                        <!-- System Settings Section -->
+                        <h5 class="mt-4 mb-3 border-bottom pb-2">إعدادات النظام</h5>
+                        <div class="row">
+                            <div class="col-md-6 col-lg-4 mb-4">
                                 <a href="{% url 'administrator:admin_dashboard' %}" class="text-decoration-none">
                                     <div class="card sysadmin-card">
                                         <div class="card-info">
@@ -483,7 +942,7 @@
                                     </div>
                                 </a>
                             </div>
-                            <div class="col-md-6 col-lg-4">
+                            <div class="col-md-6 col-lg-4 mb-4">
                                 <a href="{% url 'administrator:department_list' %}" class="text-decoration-none">
                                     <div class="card sysadmin-card">
                                         <div class="card-info">
@@ -494,13 +953,127 @@
                                     </div>
                                 </a>
                             </div>
-                            <div class="col-md-6 col-lg-4">
+                            <div class="col-md-6 col-lg-4 mb-4">
                                 <a href="{% url 'administrator:settings' %}" class="text-decoration-none">
                                     <div class="card sysadmin-card">
                                         <div class="card-info">
                                             <i class="fas fa-sliders-h card-icon"></i>
                                             <p class="title">إعدادات النظام</p>
                                             <p class="card-subtitle">ضبط إعدادات التطبيق</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Permissions Management Section -->
+                        <h5 class="mt-4 mb-3 border-bottom pb-2">إدارة الصلاحيات</h5>
+                        <div class="row">
+                            <div class="col-md-6 col-lg-4 mb-4">
+                                <a href="{% url 'administrator:permission_dashboard' %}" class="text-decoration-none">
+                                    <div class="card sysadmin-card">
+                                        <div class="card-info">
+                                            <i class="fas fa-user-shield card-icon"></i>
+                                            <p class="title">نظام الصلاحيات</p>
+                                            <p class="card-subtitle">إدارة صلاحيات المستخدمين والمجموعات</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-md-6 col-lg-4 mb-4">
+                                <a href="{% url 'administrator:simplified_permissions_dashboard' %}" class="text-decoration-none">
+                                    <div class="card sysadmin-card">
+                                        <div class="card-info">
+                                            <i class="fas fa-shield-alt card-icon"></i>
+                                            <p class="title">الصلاحيات المبسطة</p>
+                                            <p class="card-subtitle">نظام الصلاحيات المبسط للمستخدمين</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-md-6 col-lg-4 mb-4">
+                                <a href="{% url 'administrator:permissions_help' %}" class="text-decoration-none">
+                                    <div class="card sysadmin-card">
+                                        <div class="card-info">
+                                            <i class="fas fa-question-circle card-icon"></i>
+                                            <p class="title">دليل الصلاحيات</p>
+                                            <p class="card-subtitle">شرح مفصل لنظام الصلاحيات</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- User Management Section -->
+                        <h5 class="mt-4 mb-3 border-bottom pb-2">إدارة المستخدمين</h5>
+                        <div class="row">
+                            <div class="col-md-6 col-lg-4 mb-4">
+                                <a href="{% url 'administrator:user_permission_list' %}" class="text-decoration-none">
+                                    <div class="card sysadmin-card">
+                                        <div class="card-info">
+                                            <i class="fas fa-users-cog card-icon"></i>
+                                            <p class="title">صلاحيات المستخدمين</p>
+                                            <p class="card-subtitle">إدارة صلاحيات المستخدمين</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-md-6 col-lg-4 mb-4">
+                                <a href="{% url 'administrator:group_permission_list' %}" class="text-decoration-none">
+                                    <div class="card sysadmin-card">
+                                        <div class="card-info">
+                                            <i class="fas fa-layer-group card-icon"></i>
+                                            <p class="title">صلاحيات المجموعات</p>
+                                            <p class="card-subtitle">إدارة صلاحيات مجموعات المستخدمين</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-md-6 col-lg-4 mb-4">
+                                <a href="{% url 'administrator:user_create' %}" class="text-decoration-none">
+                                    <div class="card sysadmin-card">
+                                        <div class="card-info">
+                                            <i class="fas fa-user-plus card-icon"></i>
+                                            <p class="title">إضافة مستخدم</p>
+                                            <p class="card-subtitle">إضافة مستخدم جديد للنظام</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- Advanced Tools Section -->
+                        <h5 class="mt-4 mb-3 border-bottom pb-2">أدوات متقدمة</h5>
+                        <div class="row">
+                            <div class="col-md-6 col-lg-4 mb-4">
+                                <a href="{% url 'administrator:auto_create_permissions' %}" class="text-decoration-none">
+                                    <div class="card sysadmin-card">
+                                        <div class="card-info">
+                                            <i class="fas fa-magic card-icon"></i>
+                                            <p class="title">إنشاء الصلاحيات تلقائياً</p>
+                                            <p class="card-subtitle">إنشاء صلاحيات لجميع الوحدات</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-md-6 col-lg-4 mb-4">
+                                <a href="{% url 'administrator:template_permission_list' %}" class="text-decoration-none">
+                                    <div class="card sysadmin-card">
+                                        <div class="card-info">
+                                            <i class="fas fa-file-code card-icon"></i>
+                                            <p class="title">صلاحيات القوالب</p>
+                                            <p class="card-subtitle">إدارة صلاحيات الوصول للقوالب</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-md-6 col-lg-4 mb-4">
+                                <a href="{% url 'administrator:module_list' %}" class="text-decoration-none">
+                                    <div class="card sysadmin-card">
+                                        <div class="card-info">
+                                            <i class="fas fa-puzzle-piece card-icon"></i>
+                                            <p class="title">إدارة الوحدات</p>
+                                            <p class="card-subtitle">إدارة وحدات النظام</p>
                                         </div>
                                     </div>
                                 </a>
@@ -515,22 +1088,163 @@
 {% endblock %}
 
 {% block extra_js %}
+{{ block.super }}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Toggle sidebar
+        // Elements
+        const sidebar = document.getElementById('sidebar');
+        const content = document.getElementById('content');
+        const topNavbar = document.querySelector('.top-navbar');
         const sidebarCollapseBtn = document.getElementById('sidebarCollapse');
-        if (sidebarCollapseBtn) {
-            sidebarCollapseBtn.addEventListener('click', function() {
-                document.getElementById('sidebar').classList.toggle('active');
-                document.getElementById('content').classList.toggle('active');
-            });
-        }
-
-        // Handle sidebar department clicks
         const departmentItems = document.querySelectorAll('.department-item');
         const deptContainers = document.querySelectorAll('.dept-cards-container');
         const welcomeSection = document.getElementById('welcome-section');
+        const pageHeader = document.querySelector('.page-header');
+        const messagesContainer = document.querySelector('.container.mt-3'); // حاوية الرسائل
 
+        // تطبيق الحالة الأولية للـ page-header
+        if (sidebar && pageHeader) {
+            if (!sidebar.classList.contains('active')) {
+                pageHeader.style.paddingRight = '280px';
+                if (messagesContainer) messagesContainer.style.paddingRight = '280px';
+            } else {
+                pageHeader.style.paddingRight = '0';
+                if (messagesContainer) messagesContainer.style.paddingRight = '0';
+            }
+        }
+
+        // Toggle sidebar function
+        function toggleSidebar() {
+            sidebar.classList.toggle('active');
+            content.classList.toggle('active');
+            topNavbar.classList.toggle('with-sidebar');
+            topNavbar.classList.toggle('sidebar-collapsed');
+
+            // For mobile view
+            if (window.innerWidth < 992) {
+                sidebarCollapseBtn.classList.toggle('mobile-active');
+            }
+
+            // تحديث الـ page-header وحاوية الرسائل
+            if (sidebar.classList.contains('active')) {
+                // السايدبار مغلق
+                pageHeader.style.paddingRight = '0';
+                pageHeader.style.transition = 'padding-right 0.4s ease';
+                if (messagesContainer) {
+                    messagesContainer.style.paddingRight = '0';
+                    messagesContainer.style.transition = 'padding-right 0.4s ease';
+                }
+            } else {
+                // السايدبار مفتوح
+                pageHeader.style.paddingRight = '280px';
+                pageHeader.style.transition = 'padding-right 0.4s ease';
+                if (messagesContainer) {
+                    messagesContainer.style.paddingRight = '280px';
+                    messagesContainer.style.transition = 'padding-right 0.4s ease';
+                }
+            }
+
+            // Save state to localStorage
+            const sidebarState = sidebar.classList.contains('active') ? 'collapsed' : 'expanded';
+            localStorage.setItem('sidebarState', sidebarState);
+        }
+
+        // Initialize sidebar state from localStorage
+        function initSidebarState() {
+            const savedState = localStorage.getItem('sidebarState');
+
+            // Default to expanded on desktop, collapsed on mobile
+            const defaultState = window.innerWidth < 992 ? 'collapsed' : 'expanded';
+            const sidebarState = savedState || defaultState;
+
+            if (sidebarState === 'collapsed') {
+                sidebar.classList.add('active');
+                content.classList.add('active');
+                topNavbar.classList.remove('with-sidebar');
+                topNavbar.classList.add('sidebar-collapsed');
+                // تحديث الـ page-header وحاوية الرسائل
+                pageHeader.style.paddingRight = '0';
+                if (messagesContainer) messagesContainer.style.paddingRight = '0';
+            } else {
+                sidebar.classList.remove('active');
+                content.classList.remove('active');
+                topNavbar.classList.add('with-sidebar');
+                topNavbar.classList.remove('sidebar-collapsed');
+                // تحديث الـ page-header وحاوية الرسائل
+                pageHeader.style.paddingRight = '280px';
+                if (messagesContainer) messagesContainer.style.paddingRight = '280px';
+            }
+        }
+
+        // Toggle sidebar on button click
+        if (sidebarCollapseBtn) {
+            sidebarCollapseBtn.addEventListener('click', toggleSidebar);
+        }
+
+        // Initialize sidebar state
+        initSidebarState();
+
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            if (window.innerWidth < 992) {
+                // On mobile, collapse sidebar by default
+                if (!sidebar.classList.contains('active')) {
+                    toggleSidebar();
+                }
+            }
+        });
+
+        // إضافة قسم مدير النظام للمستخدمين من نوع superuser فقط
+        const isSuperUser = document.body.getAttribute('data-is-superuser') === 'true';
+
+        // إذا كان المستخدم superuser، أضف قسم مدير النظام إذا لم يكن موجودًا بالفعل
+        if (isSuperUser) {
+            let adminDeptExists = false;
+            departmentItems.forEach(item => {
+                if (item.getAttribute('data-dept') === 'administrator' ||
+                    item.getAttribute('data-dept') === 'admin' ||
+                    item.getAttribute('data-dept') === 'sysadmin') {
+                    adminDeptExists = true;
+                }
+            });
+
+            if (!adminDeptExists && sidebar) {
+                const deptList = sidebar.querySelector('.department-list');
+                if (deptList) {
+                    const adminDeptItem = document.createElement('li');
+                    adminDeptItem.className = 'department-item';
+                    adminDeptItem.setAttribute('data-dept', 'sysadmin');
+                    adminDeptItem.innerHTML = '<i class="fas fa-cogs"></i><span>مدير النظام</span>';
+                    deptList.appendChild(adminDeptItem);
+
+                    // إضافة نفس السلوك للعنصر الجديد
+                    adminDeptItem.addEventListener('click', function() {
+                        departmentItems.forEach(i => i.classList.remove('active'));
+                        this.classList.add('active');
+
+                        const welcomeSection = document.getElementById('welcome-section');
+                        const deptContainers = document.querySelectorAll('.dept-cards-container');
+
+                        welcomeSection.style.display = 'none';
+                        deptContainers.forEach(container => {
+                            container.classList.remove('active');
+                        });
+
+                        const sysadminCards = document.getElementById('sysadmin-cards');
+                        if (sysadminCards) {
+                            sysadminCards.classList.add('active');
+                        }
+
+                        // على الأجهزة المحمولة، أغلق السايدبار تلقائيًا بعد الاختيار
+                        if (window.innerWidth < 992 && !sidebar.classList.contains('active')) {
+                            document.getElementById('sidebarCollapse').click();
+                        }
+                    });
+                }
+            }
+        }
+
+        // Handle sidebar department clicks
         departmentItems.forEach(item => {
             item.addEventListener('click', function() {
                 // Remove active class from all items
@@ -557,22 +1271,31 @@
                     'inventory': 'warehouse',       // مخزن قطع الغيار
                     'meetings_app': 'meetings',     // الاجتماعات
                     'tasks_app': 'tasks',           // المهام
+                    'Purchase_orders': 'purchase',  // طلبات الشراء
                     'administrator': 'sysadmin',    // إدارة النظام
+                    'notifications': 'notifications', // التنبيهات
+                    'employee_tasks': 'employee_tasks', // مهام الموظفين
 
                     // Standard lowercase variations
                     'hr': 'hr',
                     'warehouse': 'warehouse',
                     'meetings': 'meetings',
                     'tasks': 'tasks',
+                    'purchase': 'purchase',
+                    'purchase_orders': 'purchase',
                     'sysadmin': 'sysadmin',
                     'admin': 'sysadmin',
+                    'notifications': 'notifications',
+                    'employee_tasks': 'employee_tasks',
 
                     // Arabic names that might be used
                     'الموارد_البشرية': 'hr',
                     'المخزن': 'warehouse',
                     'الاجتماعات': 'meetings',
                     'المهام': 'tasks',
-                    'الادارة': 'sysadmin'
+                    'طلبات_الشراء': 'purchase',
+                    'الادارة': 'sysadmin',
+                    'مهام_الموظفين': 'employee_tasks'
                 };
 
                 // Initialize as null to enable partial matching if needed
@@ -608,6 +1331,11 @@
                             <i class="fas fa-tools fa-2x text-primary"></i>
                         </div>
                     `;
+                }
+
+                // On mobile, auto-collapse sidebar after selection
+                if (window.innerWidth < 992 && !sidebar.classList.contains('active')) {
+                    toggleSidebar();
                 }
             });
         });

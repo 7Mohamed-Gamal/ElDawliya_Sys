@@ -2,55 +2,8 @@ from functools import wraps
 from django.shortcuts import redirect
 from django.contrib import messages
 from django.utils.decorators import method_decorator
-
-from administrator.utils import has_template_permission, check_permission
-from administrator.decorators import module_permission_required
-
-def template_permission_required(template_path):
-    """
-    ديكوريتور للتحقق من صلاحية الوصول إلى قالب معين
-
-    الاستخدام:
-    @template_permission_required('Hr/reports/monthly_salary_report.html')
-    def monthly_salary_report(request):
-        # عرض التقرير
-        return render(request, 'Hr/reports/monthly_salary_report.html', context)
-    """
-    def decorator(view_func):
-        @wraps(view_func)
-        def _wrapped_view(request, *args, **kwargs):
-            if not has_template_permission(request.user, template_path):
-                messages.error(request, 'ليس لديك صلاحية الوصول إلى هذه الصفحة')
-                return redirect('accounts:access_denied')
-            return view_func(request, *args, **kwargs)
-        return _wrapped_view
-    return decorator
-
-def permission_required(department_name, module_name, permission_type):
-    """
-    ديكوريتور للتحقق من صلاحية العمليات (عرض، إضافة، تعديل، حذف، طباعة)
-
-    الاستخدام:
-    @permission_required('HR', 'إدارة الموظفين', 'عرض')
-    def employee_list(request):
-        # عرض قائمة الموظفين
-        employees = Employee.objects.all()
-        return render(request, 'Hr/employees/employee_list.html', {'employees': employees})
-    """
-    def decorator(view_func):
-        @wraps(view_func)
-        def _wrapped_view(request, *args, **kwargs):
-            from administrator.utils import has_permission
-            if not has_permission(request.user, department_name, module_name, permission_type):
-                messages.error(request, 'ليس لديك صلاحية الوصول إلى هذه الصفحة')
-                return redirect('accounts:access_denied')
-            return view_func(request, *args, **kwargs)
-        return _wrapped_view
-    return decorator
-
-
-# اسم القسم الرئيسي للموارد البشرية
-DEPARTMENT_NAME = "الموارد البشرية"
+from django.contrib.auth.decorators import permission_required as django_permission_required
+from django.contrib.auth.decorators import login_required
 
 # تعريف الوحدات (الموديولات) في تطبيق الموارد البشرية
 MODULES = {
@@ -74,6 +27,50 @@ MODULES = {
     "org_chart": "الهيكل التنظيمي",
 }
 
+# تحويل مفاتيح الوحدات إلى أسماء موديلات Django
+MODEL_MAP = {
+    'employees': 'employee',
+    'departments': 'department',
+    'jobs': 'job',
+    'cars': 'car',
+    'pickup_points': 'pickuppoint',
+    'tasks': 'employeetask',
+    'notes': 'employeenote',
+    'files': 'employeefile',
+    'hr_tasks': 'hrtask',
+    'leaves': 'employeeleave',
+    'evaluations': 'employeeevaluation',
+}
+
+# تحويل أنواع الصلاحيات إلى صيغة Django
+PERMISSION_TYPE_MAP = {
+    'view': 'view',
+    'add': 'add',
+    'edit': 'change',
+    'delete': 'delete',
+    'print': 'view',  # نستخدم view للطباعة لأنها عملية قراءة
+}
+
+def admin_or_permission_required(perm):
+    """
+    ديكوريتور للتحقق من أن المستخدم إما مشرف أو لديه صلاحية معينة
+    """
+    def decorator(view_func):
+        @wraps(view_func)
+        def _wrapped_view(request, *args, **kwargs):
+            # المشرفون لديهم جميع الصلاحيات
+            if request.user.is_superuser or getattr(request.user, 'Role', '') == 'admin':
+                return view_func(request, *args, **kwargs)
+                
+            # التحقق من صلاحية المستخدم
+            if not request.user.has_perm(perm):
+                messages.error(request, 'ليس لديك صلاحية الوصول إلى هذه الصفحة')
+                return redirect('accounts:access_denied')
+                
+            return view_func(request, *args, **kwargs)
+        return _wrapped_view
+    return decorator
+
 def hr_module_permission_required(module_key, permission_type='view'):
     """
     ديكوريتور للتحقق من صلاحيات الوصول لوحدة معينة في تطبيق الموارد البشرية
@@ -85,13 +82,16 @@ def hr_module_permission_required(module_key, permission_type='view'):
     if module_key not in MODULES:
         raise ValueError(f"Module key '{module_key}' not found in HR modules")
 
-    module_name = MODULES[module_key]
-
-    return module_permission_required(
-        department_name=DEPARTMENT_NAME,
-        module_name=module_name,
-        permission_type=permission_type
-    )
+    # تحويل مفتاح الوحدة إلى اسم موديل Django
+    model_name = MODEL_MAP.get(module_key, module_key)
+    
+    # تحويل نوع الصلاحية إلى صيغة Django
+    django_perm_type = PERMISSION_TYPE_MAP.get(permission_type, permission_type)
+    
+    # تكوين اسم الصلاحية بصيغة Django
+    permission_name = f'hr.{django_perm_type}_{model_name}'
+    
+    return admin_or_permission_required(permission_name)
 
 def hr_class_permission_required(module_key, permission_type='view'):
     """
@@ -105,16 +105,16 @@ def hr_class_permission_required(module_key, permission_type='view'):
     if module_key not in MODULES:
         raise ValueError(f"Module key '{module_key}' not found in HR modules")
 
-    module_name = MODULES[module_key]
+    # تحويل مفتاح الوحدة إلى اسم موديل Django
+    model_name = MODEL_MAP.get(module_key, module_key)
+    
+    # تحويل نوع الصلاحية إلى صيغة Django
+    django_perm_type = PERMISSION_TYPE_MAP.get(permission_type, permission_type)
+    
+    # تكوين اسم الصلاحية بصيغة Django
+    permission_name = f'hr.{django_perm_type}_{model_name}'
 
-    return method_decorator(
-        module_permission_required(
-            department_name=DEPARTMENT_NAME,
-            module_name=module_name,
-            permission_type=permission_type
-        ),
-        name='dispatch'
-    )
+    return method_decorator(admin_or_permission_required(permission_name), name='dispatch')
 
 def has_hr_permission(request, module_key, permission_type='view'):
     """
@@ -128,16 +128,17 @@ def has_hr_permission(request, module_key, permission_type='view'):
     if module_key not in MODULES:
         raise ValueError(f"Module key '{module_key}' not found in HR modules")
 
-    module_name = MODULES[module_key]
-
     # المشرفون لديهم جميع الصلاحيات
     if request.user.is_superuser or getattr(request.user, 'Role', '') == 'admin':
         return True
 
-    # التحقق من صلاحية المستخدم
-    return check_permission(
-        user=request.user,
-        department_name=DEPARTMENT_NAME,
-        module_name=module_name,
-        permission_type=permission_type
-    )
+    # تحويل مفتاح الوحدة إلى اسم موديل Django
+    model_name = MODEL_MAP.get(module_key, module_key)
+    
+    # تحويل نوع الصلاحية إلى صيغة Django
+    django_perm_type = PERMISSION_TYPE_MAP.get(permission_type, permission_type)
+    
+    # تكوين اسم الصلاحية بصيغة Django
+    permission_name = f'hr.{django_perm_type}_{model_name}'
+    
+    return request.user.has_perm(permission_name)

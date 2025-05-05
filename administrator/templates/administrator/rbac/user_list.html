@@ -1,0 +1,321 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} | نظام الدولية{% endblock %}
+
+{% block extra_css %}
+<style>
+    .user-card {
+        transition: all 0.3s;
+        margin-bottom: 1.5rem;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .user-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: #e9ecef;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .role-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        display: inline-block;
+        margin: 0.25rem;
+    }
+    
+    .pagination .page-item.active .page-link {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+    
+    .pagination .page-link {
+        color: #0d6efd;
+    }
+    
+    /* Navigation path */
+    .rbac-nav-path {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 10px 15px;
+        margin-bottom: 20px;
+    }
+    
+    .rbac-nav-path a {
+        color: #6c757d;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+    
+    .rbac-nav-path a:hover {
+        color: #0d6efd;
+    }
+    
+    .rbac-nav-path .separator {
+        margin: 0 8px;
+        color: #adb5bd;
+    }
+    
+    /* Animations */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.5s ease forwards;
+    }
+    
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Navigation path (Breadcrumb) -->
+    <div class="rbac-nav-path mb-3 fade-in delay-1">
+        <i class="fas fa-home me-1"></i>
+        <a href="{% url 'home' %}">الرئيسية</a>
+        <span class="separator">›</span>
+        <a href="{% url 'administrator:admin_dashboard' %}">لوحة تحكم المدير</a>
+        <span class="separator">›</span>
+        <a href="{% url 'administrator:rbac_dashboard' %}">نظام إدارة الصلاحيات</a>
+        <span class="separator">›</span>
+        <span class="fw-medium">{{ title }}</span>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h2 mb-2">{{ title }}</h1>
+                    <p class="text-muted mb-0">
+                        {% if action == 'assign_roles' %}
+                        <i class="fas fa-user-tag me-1"></i> اختر مستخدمًا لتعيين الأدوار له
+                        {% else %}
+                        <i class="fas fa-users me-1"></i> إدارة المستخدمين وأدوارهم في النظام
+                        {% endif %}
+                    </p>
+                </div>
+                <div>
+                    {% if action == 'assign_roles' %}
+                    <a href="{% url 'administrator:rbac_user_list' %}" class="btn btn-outline-info me-2">
+                        <i class="fas fa-users me-1"></i> عرض كل المستخدمين
+                    </a>
+                    {% endif %}
+                    <a href="{% url 'administrator:rbac_dashboard' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-tachometer-alt me-1"></i> لوحة التحكم
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and filters -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text" id="search-addon">
+                    <i class="fas fa-search"></i>
+                </span>
+                <input type="text" id="userSearch" class="form-control" placeholder="البحث عن مستخدم..." aria-describedby="search-addon">
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="d-flex justify-content-end">
+                <select id="roleFilter" class="form-select w-50">
+                    <option value="">جميع الأدوار</option>
+                    {% for role in all_roles %}
+                        <option value="{{ role.name }}">{{ role.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Users list -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">قائمة المستخدمين</h5>
+                <span class="badge bg-primary">{{ users.count }} مستخدم</span>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>المستخدم</th>
+                            <th>البريد الإلكتروني</th>
+                            <th>الأدوار</th>
+                            <th>آخر تسجيل دخول</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr class="user-row" data-username="{{ user.username }}" data-email="{{ user.email }}" data-roles="{% for role in user.groups.all %}{{ role.name }}{% if not forloop.last %},{% endif %}{% endfor %}">
+                            <td>{{ forloop.counter }}</td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="user-avatar me-2">
+                                        {% if user.first_name %}
+                                            {{ user.first_name|first|upper }}
+                                        {% else %}
+                                            {{ user.username|first|upper }}
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        {% if user.first_name %}
+                                            {{ user.first_name }} {{ user.last_name }}
+                                            <small class="d-block text-muted">{{ user.username }}</small>
+                                        {% else %}
+                                            {{ user.username }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ user.email }}</td>
+                            <td>
+                                {% for role in user.groups.all %}
+                                    <span class="badge bg-light text-dark role-badge">{{ role.name }}</span>
+                                {% empty %}
+                                    <span class="badge bg-light text-danger">لا توجد أدوار</span>
+                                {% endfor %}
+                            </td>
+                            <td>{{ user.last_login|date:"Y-m-d" }}</td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    {% if action == 'assign_roles' %}
+                                    <a href="{% url 'administrator:rbac_user_roles' user_id=user.id %}" class="btn btn-info" title="تعيين الأدوار">
+                                        <i class="fas fa-user-tag me-1"></i> تعيين الأدوار
+                                    </a>
+                                    {% else %}
+                                    <a href="{% url 'administrator:rbac_user_detail' user_id=user.id %}" class="btn btn-outline-primary" title="عرض التفاصيل">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'administrator:rbac_user_roles' user_id=user.id %}" class="btn btn-outline-success" title="إدارة الأدوار">
+                                        <i class="fas fa-users-cog"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-4">
+                                <div class="alert alert-info mb-0">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    لا يوجد مستخدمين مسجلين في النظام.
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <div class="d-flex justify-content-center mt-4">
+                <nav>
+                    <ul class="pagination">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1" aria-label="First">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                        
+                        {% for i in paginator.page_range %}
+                            {% if page_obj.number == i %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ i }}</span>
+                                </li>
+                            {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ i }}">{{ i }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ paginator.num_pages }}" aria-label="Last">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Search functionality
+    $('#userSearch').on('input', function() {
+        filterUsers();
+    });
+    
+    // Role filter
+    $('#roleFilter').on('change', function() {
+        filterUsers();
+    });
+    
+    function filterUsers() {
+        const searchTerm = $('#userSearch').val().toLowerCase();
+        const roleFilter = $('#roleFilter').val();
+        
+        $('.user-row').each(function() {
+            const username = $(this).data('username').toLowerCase();
+            const email = $(this).data('email').toLowerCase();
+            const roles = $(this).data('roles').toLowerCase();
+            
+            // Check if user matches search term
+            const matchesSearch = username.includes(searchTerm) || 
+                                  email.includes(searchTerm);
+            
+            // Check if user has selected role
+            const matchesRole = roleFilter === '' || 
+                               roles.includes(roleFilter.toLowerCase());
+            
+            // Show/hide row based on filters
+            $(this).toggle(matchesSearch && matchesRole);
+        });
+    }
+});
+</script>
+{% endblock %}

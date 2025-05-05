@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}نظام مهام الموظفين - نظام الدولية{% endblock %}</title>
+    
+    <!-- Bootstrap RTL CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --info-color: #3498db;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+        }
+        
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: #f8f9fa;
+        }
+        
+        .navbar {
+            background-color: var(--primary-color);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            color: white !important;
+        }
+        
+        .navbar-light .navbar-nav .nav-link {
+            color: rgba(255, 255, 255, 0.85);
+        }
+        
+        .navbar-light .navbar-nav .nav-link:hover {
+            color: white;
+        }
+        
+        .with-sidebar {
+            padding-left: 0;
+            padding-right: 0;
+        }
+        
+        .page-wrapper {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        .content-wrapper {
+            display: flex;
+            flex: 1;
+        }
+        
+        .sidebar {
+            width: 250px;
+            background-color: var(--secondary-color);
+            color: white;
+            padding-top: 20px;
+            transition: all 0.3s;
+            position: fixed;
+            height: 100%;
+            z-index: 100;
+            overflow-y: auto;
+        }
+        
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .sidebar-header h3 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: white;
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .sidebar-menu-item {
+            margin-bottom: 5px;
+        }
+        
+        .sidebar-menu-item a {
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+        
+        .sidebar-menu-item a:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        
+        .sidebar-menu-item a i {
+            margin-left: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .sidebar-menu-item.active a {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: bold;
+        }
+        
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            margin-right: 250px;
+            transition: all 0.3s;
+        }
+        
+        .sidebar-collapsed .sidebar {
+            width: 70px;
+        }
+        
+        .sidebar-collapsed .sidebar-header h3,
+        .sidebar-collapsed .sidebar-menu-item a span {
+            display: none;
+        }
+        
+        .sidebar-collapsed .main-content {
+            margin-right: 70px;
+        }
+        
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            border: none;
+        }
+        
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 10px 10px 0 0 !important;
+            padding: 15px 20px;
+        }
+        
+        .card-title {
+            margin-bottom: 0;
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+        
+        .card-body {
+            padding: 20px;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .btn-primary:hover {
+            background-color: #2980b9;
+            border-color: #2980b9;
+        }
+        
+        .btn-success {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+        }
+        
+        .btn-success:hover {
+            background-color: #27ae60;
+            border-color: #27ae60;
+        }
+        
+        .btn-danger {
+            background-color: var(--danger-color);
+            border-color: var(--danger-color);
+        }
+        
+        .btn-danger:hover {
+            background-color: #c0392b;
+            border-color: #c0392b;
+        }
+        
+        .table th {
+            font-weight: bold;
+            background-color: #f8f9fa;
+        }
+        
+        .badge-pending {
+            background-color: var(--warning-color);
+            color: white;
+        }
+        
+        .badge-in-progress {
+            background-color: var(--info-color);
+            color: white;
+        }
+        
+        .badge-completed {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        .badge-cancelled {
+            background-color: var(--danger-color);
+            color: white;
+        }
+        
+        .badge-deferred {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+        
+        .badge-low {
+            background-color: #3498db;
+            color: white;
+        }
+        
+        .badge-medium {
+            background-color: #f39c12;
+            color: white;
+        }
+        
+        .badge-high {
+            background-color: #e67e22;
+            color: white;
+        }
+        
+        .badge-urgent {
+            background-color: #e74c3c;
+            color: white;
+        }
+        
+        .stat-card {
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            min-height: 120px;
+        }
+        
+        .stat-card .stat-icon {
+            position: absolute;
+            bottom: -15px;
+            left: 10px;
+            font-size: 4rem;
+            opacity: 0.3;
+        }
+        
+        .stat-card .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .stat-card .stat-title {
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+        
+        .stat-card.primary {
+            background-color: var(--primary-color);
+        }
+        
+        .stat-card.success {
+            background-color: var(--success-color);
+        }
+        
+        .stat-card.warning {
+            background-color: var(--warning-color);
+        }
+        
+        .stat-card.danger {
+            background-color: var(--danger-color);
+        }
+        
+        .stat-card.info {
+            background-color: var(--info-color);
+        }
+        
+        .stat-card.secondary {
+            background-color: var(--secondary-color);
+        }
+        
+        .progress {
+            height: 10px;
+            border-radius: 5px;
+        }
+        
+        .task-item {
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s;
+        }
+        
+        .task-item:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .task-item .task-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .task-item .task-meta {
+            font-size: 0.85rem;
+            color: #6c757d;
+            margin-bottom: 10px;
+        }
+        
+        .task-item .task-progress {
+            margin-top: 10px;
+        }
+        
+        .task-item .task-actions {
+            margin-top: 10px;
+        }
+        
+        .step-item {
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            background-color: #f8f9fa;
+            border-right: 3px solid #dee2e6;
+        }
+        
+        .step-item.completed {
+            border-right-color: var(--success-color);
+            background-color: rgba(46, 204, 113, 0.1);
+        }
+        
+        .step-item .step-description {
+            margin-bottom: 5px;
+        }
+        
+        .step-item .step-meta {
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+        
+        .reminder-item {
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            background-color: #f8f9fa;
+            border-right: 3px solid #f39c12;
+        }
+        
+        .reminder-item.sent {
+            border-right-color: var(--success-color);
+            background-color: rgba(46, 204, 113, 0.1);
+        }
+        
+        .reminder-item .reminder-date {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .reminder-item .reminder-meta {
+            font-size: 0.85rem;
+            color: #6c757d;
+        }
+        
+        /* Calendar Styles */
+        .fc-header-toolbar {
+            margin-bottom: 1.5em;
+        }
+        
+        .fc-event {
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        
+        .fc-event-title {
+            font-weight: bold;
+        }
+        
+        .fc-event.task-pending {
+            background-color: var(--warning-color);
+            border-color: var(--warning-color);
+        }
+        
+        .fc-event.task-in-progress {
+            background-color: var(--info-color);
+            border-color: var(--info-color);
+        }
+        
+        .fc-event.task-completed {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+        }
+        
+        .fc-event.task-cancelled {
+            background-color: var(--danger-color);
+            border-color: var(--danger-color);
+        }
+        
+        .fc-event.task-deferred {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+        
+        /* Analytics Styles */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 20px;
+        }
+        
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 0;
+                padding: 0;
+            }
+            
+            .main-content {
+                margin-right: 0;
+            }
+            
+            .sidebar.show {
+                width: 250px;
+                padding-top: 20px;
+            }
+            
+            .sidebar.show + .main-content {
+                margin-right: 250px;
+            }
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="page-wrapper">
+        <!-- Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-light with-sidebar">
+            <div class="container-fluid">
+                <div class="d-flex align-items-center">
+                    <button id="sidebarToggle" class="btn btn-light me-2">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <a class="navbar-brand" href="{% url 'employee_tasks:dashboard' %}">
+                        <i class="fas fa-tasks me-2"></i>
+                        <span>نظام مهام الموظفين</span>
+                    </a>
+                </div>
+                <div class="d-flex align-items-center">
+                    <div class="user-info me-3 d-flex align-items-center">
+                        <i class="fas fa-user-circle text-light me-2 fs-5"></i>
+                        <span class="text-light fw-bold">{{ request.user.username }}</span>
+                    </div>
+                    <a href="{% url 'accounts:logout' %}" class="btn btn-outline-light btn-sm">
+                        <i class="fas fa-sign-out-alt me-1"></i> تسجيل الخروج
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+        <div class="content-wrapper">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <h3><i class="fas fa-tasks me-2"></i> مهام الموظفين</h3>
+                </div>
+                <ul class="sidebar-menu">
+                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                        <a href="{% url 'employee_tasks:dashboard' %}">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>لوحة التحكم</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'task_list' %}active{% endif %}">
+                        <a href="{% url 'employee_tasks:task_list' %}">
+                            <i class="fas fa-list"></i>
+                            <span>قائمة المهام</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'my_tasks' %}active{% endif %}">
+                        <a href="{% url 'employee_tasks:my_tasks' %}">
+                            <i class="fas fa-user-check"></i>
+                            <span>مهامي</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'assigned_tasks' %}active{% endif %}">
+                        <a href="{% url 'employee_tasks:assigned_tasks' %}">
+                            <i class="fas fa-clipboard-check"></i>
+                            <span>المهام المسندة إلي</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'task_create' %}active{% endif %}">
+                        <a href="{% url 'employee_tasks:task_create' %}">
+                            <i class="fas fa-plus"></i>
+                            <span>إنشاء مهمة جديدة</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'calendar' %}active{% endif %}">
+                        <a href="{% url 'employee_tasks:calendar' %}">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>التقويم</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'analytics' %}active{% endif %}">
+                        <a href="{% url 'employee_tasks:analytics' %}">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>التحليلات</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'category_list' %}active{% endif %}">
+                        <a href="{% url 'employee_tasks:category_list' %}">
+                            <i class="fas fa-tags"></i>
+                            <span>التصنيفات</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="{% url 'accounts:home' %}">
+                            <i class="fas fa-home"></i>
+                            <span>الرئيسية</span>
+                        </a>
+                    </li>
+                </ul>
+            </aside>
+
+            <!-- Main Content -->
+            <div class="main-content">
+                {% if messages %}
+                    <div class="messages">
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+                
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Sidebar Toggle
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const pageWrapper = document.querySelector('.page-wrapper');
+            
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    pageWrapper.classList.toggle('sidebar-collapsed');
+                });
+            }
+            
+            // Auto-dismiss alerts after 5 seconds
+            setTimeout(function() {
+                const alerts = document.querySelectorAll('.alert');
+                alerts.forEach(function(alert) {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                });
+            }, 5000);
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

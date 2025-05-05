@@ -5,7 +5,7 @@ from Hr.models import SalaryItem, EmployeeSalaryItem, PayrollPeriod, Employee
 
 class SalaryItemForm(forms.ModelForm):
     """
-    Form for creating and editing salary items
+    نموذج لإنشاء وتعديل بنود الرواتب
     """
     class Meta:
         model = SalaryItem
@@ -21,7 +21,7 @@ class SalaryItemForm(forms.ModelForm):
 
 class EmployeeSalaryItemForm(forms.ModelForm):
     """
-    Form for creating and editing employee salary items
+    نموذج لإنشاء وتعديل بنود رواتب الموظفين
     """
     class Meta:
         model = EmployeeSalaryItem
@@ -38,7 +38,7 @@ class EmployeeSalaryItemForm(forms.ModelForm):
 
 class EmployeeSalaryItemBulkForm(forms.Form):
     """
-    Form for bulk creating employee salary items
+    نموذج لإنشاء بنود رواتب الموظفين بالجملة
     """
     salary_item = forms.ModelChoiceField(
         queryset=SalaryItem.objects.all(),
@@ -46,7 +46,7 @@ class EmployeeSalaryItemBulkForm(forms.Form):
         widget=forms.Select(attrs={'class': 'form-select'})
     )
     employees = forms.ModelMultipleChoiceField(
-        queryset=Employee.objects.filter(working_condition='يعمل'),
+        queryset=Employee.objects.filter(working_condition='سارى'),
         label=_('الموظفين'),
         widget=forms.SelectMultiple(attrs={'class': 'form-select', 'size': 10})
     )
@@ -73,7 +73,7 @@ class EmployeeSalaryItemBulkForm(forms.Form):
 
 class PayrollPeriodForm(forms.ModelForm):
     """
-    Form for creating and editing payroll periods
+    نموذج لإنشاء وتعديل فترات الرواتب
     """
     class Meta:
         model = PayrollPeriod
@@ -88,7 +88,7 @@ class PayrollPeriodForm(forms.ModelForm):
 
 class PayrollCalculationForm(forms.Form):
     """
-    Form for calculating payroll
+    نموذج لحساب الرواتب
     """
     payroll_period = forms.ModelChoiceField(
         queryset=PayrollPeriod.objects.all(),
@@ -96,7 +96,7 @@ class PayrollCalculationForm(forms.Form):
         widget=forms.Select(attrs={'class': 'form-select'})
     )
     employees = forms.ModelMultipleChoiceField(
-        queryset=Employee.objects.filter(working_condition='يعمل'),
+        queryset=Employee.objects.filter(working_condition='سارى'),
         label=_('الموظفين'),
         required=False,
         widget=forms.SelectMultiple(attrs={'class': 'form-select', 'size': 10})

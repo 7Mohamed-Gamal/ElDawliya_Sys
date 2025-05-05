@@ -5,6 +5,24 @@ from inventory.models import TblProducts
 
 User = get_user_model()
 
+class Vendor(models.Model):
+    """نموذج الموردين"""
+    name = models.CharField(max_length=100, verbose_name=_('اسم المورد'))
+    contact_person = models.CharField(max_length=100, blank=True, null=True, verbose_name=_('جهة الاتصال'))
+    phone = models.CharField(max_length=20, blank=True, null=True, verbose_name=_('رقم الهاتف'))
+    email = models.EmailField(blank=True, null=True, verbose_name=_('البريد الإلكتروني'))
+    address = models.TextField(blank=True, null=True, verbose_name=_('العنوان'))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('تاريخ الإنشاء'))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_('تاريخ التحديث'))
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = _('مورد')
+        verbose_name_plural = _('الموردين')
+        ordering = ['name']
+
 class PurchaseRequest(models.Model):
     """نموذج طلبات الشراء"""
     STATUS_CHOICES = [

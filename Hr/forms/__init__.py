@@ -1,4 +1,4 @@
-# Importar formularios existentes
+# استيراد النماذج الموجودة
 from .employee_forms import (
     EmployeeForm, EmployeeFilterForm, DepartmentForm, JobForm, CarForm, EmployeeSearchForm
 )
@@ -12,7 +12,7 @@ from .attendance_forms import (
     FetchAttendanceDataForm
 )
 
-# Importar nuevos formularios
+# استيراد النماذج الجديدة
 from .pickup_point_forms import PickupPointForm
 from .insurance_forms import JobInsuranceForm
 from .task_forms import EmployeeTaskForm
@@ -23,7 +23,7 @@ from .leave_forms import LeaveTypeForm, EmployeeLeaveForm
 from .evaluation_forms import EmployeeEvaluationForm
 
 __all__ = [
-    # Formularios existentes
+    # النماذج الموجودة
     'EmployeeForm', 'EmployeeFilterForm', 'DepartmentForm', 'JobForm', 'CarForm', 'EmployeeSearchForm',
     'SalaryItemForm', 'EmployeeSalaryItemForm', 'EmployeeSalaryItemBulkForm',
     'PayrollPeriodForm', 'PayrollCalculationForm',
@@ -31,7 +31,7 @@ __all__ = [
     'OfficialHolidayForm', 'AttendanceMachineForm', 'AttendanceRecordForm',
     'FetchAttendanceDataForm',
 
-    # Nuevos formularios
+    # النماذج الجديدة
     'PickupPointForm', 'JobInsuranceForm', 'EmployeeTaskForm', 'EmployeeNoteForm',
     'EmployeeFileForm', 'HrTaskForm', 'LeaveTypeForm', 'EmployeeLeaveForm',
     'EmployeeEvaluationForm'

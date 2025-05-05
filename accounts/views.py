@@ -5,9 +5,19 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from meetings.models import Meeting
 from tasks.models import Task
+from django.utils import timezone
+from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
+
+# استيراد وظائف إنشاء التنبيهات
+try:
+    from notifications.utils import create_system_notification
+except ImportError:
+    create_system_notification = None
 
 User = get_user_model()
 
+@ensure_csrf_cookie
+@csrf_protect
 def login_view(request):
     # Add debugging information
     print("Starting login_view function")
@@ -19,6 +29,17 @@ def login_view(request):
 
             login(request, user)
             messages.success(request, f'مرحباً بك في نظام الشركة الدولية انترناشونال، {user.username}!')
+
+            # إنشاء تنبيه نظام عند تسجيل الدخول
+            if create_system_notification:
+                create_system_notification(
+                    user=user,
+                    title='تسجيل دخول ناجح',
+                    message=f'تم تسجيل دخولك بنجاح في {timezone.now().strftime("%Y-%m-%d %H:%M")}',
+                    priority='low',
+                    icon='fas fa-sign-in-alt'
+                )
+
             return redirect('accounts:home')
         else:
             messages.error(request, 'اسم المستخدم أو كلمة المرور غير صحيحة.')
@@ -38,6 +59,17 @@ def logout_view(request):
 def access_denied(request):
     """عرض صفحة رفض الوصول"""
     return render(request, 'accounts/access_denied.html', {'title': 'رفض الوصول'})
+
+def csrf_failure(request, reason=""):
+    """
+    Custom CSRF failure view
+    """
+    context = {
+        'title': 'خطأ في التحقق من CSRF',
+        'reason': reason,
+        'form': CustomUserLoginForm()
+    }
+    return render(request, 'accounts/login.html', context)
 
 @login_required
 def dashboard_view(request):
@@ -91,11 +123,11 @@ def home_view(request):
 
         # Get all active departments
         departments = Department.objects.filter(is_active=True).order_by('order')
-        
+
         # For admin users, store all departments
         if is_admin:
             all_departments = departments
-            
+
         # Ensure url_name is set correctly for JavaScript matching
         for dept in departments:
             # Make sure url_name doesn't include '-cards' suffix

@@ -1,0 +1,73 @@
+{% extends 'administrator/new/base.html' %}
+{% load static %}
+
+{% block permissions_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4>
+        {% if app_module %}
+            <i class="fas fa-edit"></i> تعديل التطبيق: {{ app_module.name }}
+        {% else %}
+            <i class="fas fa-plus"></i> إضافة تطبيق جديد
+        {% endif %}
+    </h4>
+    <a href="{% url 'administrator:app_module_list' %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left"></i> العودة للقائمة
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="name" class="form-label">اسم التطبيق <span class="text-danger">*</span></label>
+                    <input type="text" id="name" name="name" class="form-control" required
+                           value="{{ app_module.name|default:'' }}">
+                </div>
+                <div class="col-md-6">
+                    <label for="code" class="form-label">كود التطبيق <span class="text-danger">*</span></label>
+                    <input type="text" id="code" name="code" class="form-control" required
+                           value="{{ app_module.code|default:'' }}">
+                    <small class="text-muted">استخدم كودًا قصيرًا ومعبرًا، مثل: hr, inventory, meetings</small>
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="icon" class="form-label">أيقونة التطبيق</label>
+                    <input type="text" id="icon" name="icon" class="form-control"
+                           value="{{ app_module.icon|default:'' }}">
+                    <small class="text-muted">اسم أيقونة Font Awesome، مثل: fa-users, fa-box</small>
+                </div>
+                <div class="col-md-6">
+                    <label for="order" class="form-label">الترتيب</label>
+                    <input type="number" id="order" name="order" class="form-control"
+                           value="{{ app_module.order|default:'0' }}">
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="description" class="form-label">وصف التطبيق</label>
+                <textarea id="description" name="description" class="form-control" rows="3">{{ app_module.description|default:'' }}</textarea>
+            </div>
+            
+            <div class="mb-3 form-check">
+                <input type="checkbox" id="is_active" name="is_active" class="form-check-input"
+                       {% if app_module.is_active|default:True %}checked{% endif %}>
+                <label for="is_active" class="form-check-label">نشط</label>
+            </div>
+            
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> حفظ
+                </button>
+                <a href="{% url 'administrator:app_module_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> إلغاء
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

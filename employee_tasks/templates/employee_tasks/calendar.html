@@ -1,0 +1,418 @@
+{% extends 'employee_tasks/base_employee_tasks.html' %}
+
+{% block title %}تقويم المهام - نظام الدولية{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css">
+<style>
+    .calendar-legend {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+    
+    .legend-item {
+        display: flex;
+        align-items: center;
+    }
+    
+    .legend-color {
+        width: 15px;
+        height: 15px;
+        border-radius: 3px;
+        margin-left: 5px;
+    }
+    
+    .legend-label {
+        font-size: 0.85rem;
+    }
+    
+    .task-pending {
+        background-color: #f39c12;
+    }
+    
+    .task-in-progress {
+        background-color: #3498db;
+    }
+    
+    .task-completed {
+        background-color: #2ecc71;
+    }
+    
+    .task-cancelled {
+        background-color: #e74c3c;
+    }
+    
+    .task-deferred {
+        background-color: #95a5a6;
+    }
+    
+    .filters-card {
+        margin-bottom: 20px;
+    }
+    
+    .fc-event {
+        cursor: pointer;
+    }
+    
+    .fc-event-title {
+        font-weight: bold;
+    }
+    
+    /* Modal Styles */
+    .task-modal-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .task-modal-header .badge {
+        font-size: 0.8rem;
+    }
+    
+    .task-modal-body .progress {
+        height: 10px;
+        margin-top: 5px;
+    }
+    
+    .task-modal-info {
+        margin-bottom: 15px;
+    }
+    
+    .task-modal-info p {
+        margin-bottom: 5px;
+    }
+    
+    .task-modal-description {
+        background-color: #f8f9fa;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h3 mb-0 text-gray-800">تقويم المهام</h1>
+            <p class="text-muted">عرض المهام في تقويم شهري</p>
+        </div>
+    </div>
+
+    <!-- Filters and Actions Card -->
+    <div class="card filters-card">
+        <div class="card-body">
+            <div class="d-flex flex-wrap justify-content-between align-items-center">
+                <!-- Legend -->
+                <div class="calendar-legend">
+                    <div class="legend-item">
+                        <div class="legend-color task-pending"></div>
+                        <span class="legend-label">قيد الانتظار</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color task-in-progress"></div>
+                        <span class="legend-label">قيد التنفيذ</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color task-completed"></div>
+                        <span class="legend-label">مكتملة</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color task-cancelled"></div>
+                        <span class="legend-label">ملغاة</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color task-deferred"></div>
+                        <span class="legend-label">مؤجلة</span>
+                    </div>
+                </div>
+                
+                <!-- Actions -->
+                <div class="actions">
+                    <a href="{% url 'employee_tasks:task_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus-circle me-1"></i> إنشاء مهمة
+                    </a>
+                    <button class="btn btn-outline-primary ms-2" id="printCalendar">
+                        <i class="fas fa-print me-1"></i> طباعة
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendar Card -->
+    <div class="card">
+        <div class="card-body">
+            <div id="calendar"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Task Modal -->
+<div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="taskModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="taskModalLabel"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="task-modal-info">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>الحالة:</strong> <span id="taskStatus"></span></p>
+                            <p><strong>الأولوية:</strong> <span id="taskPriority"></span></p>
+                            <p><strong>تاريخ البداية:</strong> <span id="taskStartDate"></span></p>
+                            <p><strong>تاريخ الاستحقاق:</strong> <span id="taskDueDate"></span></p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>تم الإنشاء بواسطة:</strong> <span id="taskCreatedBy"></span></p>
+                            <p><strong>تم التكليف إلى:</strong> <span id="taskAssignedTo"></span></p>
+                            <p><strong>التصنيف:</strong> <span id="taskCategory"></span></p>
+                            <p><strong>نسبة الإنجاز:</strong> <span id="taskProgress"></span></p>
+                        </div>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar" id="taskProgressBar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+                
+                <div class="task-modal-description">
+                    <h6>الوصف</h6>
+                    <div id="taskDescription"></div>
+                </div>
+                
+                <div class="task-modal-steps">
+                    <h6>الخطوات</h6>
+                    <div id="taskSteps"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                <a href="#" class="btn btn-primary" id="viewTaskBtn">
+                    <i class="fas fa-eye me-1"></i> عرض التفاصيل
+                </a>
+                <a href="#" class="btn btn-warning" id="editTaskBtn">
+                    <i class="fas fa-edit me-1"></i> تعديل
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/locales-all.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Task data from Django backend
+        const tasks = [
+            {% for task in tasks %}
+            {
+                id: {{ task.id }},
+                title: "{{ task.title }}",
+                start: "{{ task.start_date|date:'c' }}",
+                end: "{{ task.due_date|date:'c' }}",
+                className: "task-{{ task.status }}",
+                extendedProps: {
+                    description: "{{ task.description|escapejs }}",
+                    status: "{{ task.get_status_display }}",
+                    statusValue: "{{ task.status }}",
+                    priority: "{{ task.get_priority_display }}",
+                    priorityValue: "{{ task.priority }}",
+                    progress: {{ task.progress }},
+                    createdBy: "{{ task.created_by.username }}",
+                    assignedTo: "{% if task.assigned_to %}{{ task.assigned_to.username }}{% else %}غير مسند{% endif %}",
+                    category: "{% if task.category %}{{ task.category.name }}{% else %}بدون تصنيف{% endif %}",
+                    categoryColor: "{% if task.category %}{{ task.category.color }}{% else %}#6c757d{% endif %}",
+                    detailUrl: "{% url 'employee_tasks:task_detail' task.id %}",
+                    editUrl: "{% url 'employee_tasks:task_edit' task.id %}",
+                    steps: [
+                        {% for step in task.steps.all %}
+                        {
+                            description: "{{ step.description|escapejs }}",
+                            completed: {% if step.completed %}true{% else %}false{% endif %}
+                        }{% if not forloop.last %},{% endif %}
+                        {% endfor %}
+                    ]
+                }
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ];
+        
+        // Initialize FullCalendar
+        const calendarEl = document.getElementById('calendar');
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            locale: 'ar',
+            direction: 'rtl',
+            headerToolbar: {
+                start: 'prev,next today',
+                center: 'title',
+                end: 'dayGridMonth,timeGridWeek,timeGridDay,listMonth'
+            },
+            buttonText: {
+                today: 'اليوم',
+                month: 'شهر',
+                week: 'أسبوع',
+                day: 'يوم',
+                list: 'قائمة'
+            },
+            events: tasks,
+            eventTimeFormat: {
+                hour: 'numeric',
+                minute: '2-digit',
+                meridiem: 'short'
+            },
+            eventClick: function(info) {
+                showTaskModal(info.event);
+            },
+            dayMaxEvents: 3,
+            moreLinkContent: function(args) {
+                return '+ ' + args.num + ' مهمة';
+            }
+        });
+        
+        calendar.render();
+        
+        // Task Modal
+        const taskModal = new bootstrap.Modal(document.getElementById('taskModal'));
+        
+        function showTaskModal(event) {
+            // Set modal title
+            document.getElementById('taskModalLabel').textContent = event.title;
+            
+            // Set task info
+            const props = event.extendedProps;
+            
+            // Status with badge
+            const statusBadge = document.createElement('span');
+            statusBadge.className = `badge badge-${props.statusValue}`;
+            statusBadge.textContent = props.status;
+            document.getElementById('taskStatus').innerHTML = '';
+            document.getElementById('taskStatus').appendChild(statusBadge);
+            
+            // Priority with badge
+            const priorityBadge = document.createElement('span');
+            priorityBadge.className = `badge badge-${props.priorityValue}`;
+            priorityBadge.textContent = props.priority;
+            document.getElementById('taskPriority').innerHTML = '';
+            document.getElementById('taskPriority').appendChild(priorityBadge);
+            
+            // Dates
+            document.getElementById('taskStartDate').textContent = formatDate(event.start);
+            document.getElementById('taskDueDate').textContent = formatDate(new Date(event.end));
+            
+            // Users
+            document.getElementById('taskCreatedBy').textContent = props.createdBy;
+            document.getElementById('taskAssignedTo').textContent = props.assignedTo;
+            
+            // Category
+            if (props.category !== 'بدون تصنيف') {
+                const categorySpan = document.createElement('span');
+                categorySpan.style.backgroundColor = props.categoryColor;
+                categorySpan.style.color = 'white';
+                categorySpan.style.padding = '2px 8px';
+                categorySpan.style.borderRadius = '3px';
+                categorySpan.textContent = props.category;
+                document.getElementById('taskCategory').innerHTML = '';
+                document.getElementById('taskCategory').appendChild(categorySpan);
+            } else {
+                document.getElementById('taskCategory').textContent = props.category;
+            }
+            
+            // Progress
+            document.getElementById('taskProgress').textContent = props.progress + '%';
+            const progressBar = document.getElementById('taskProgressBar');
+            progressBar.style.width = props.progress + '%';
+            progressBar.setAttribute('aria-valuenow', props.progress);
+            
+            // Set progress bar color based on priority
+            progressBar.className = 'progress-bar';
+            switch (props.priorityValue) {
+                case 'low':
+                    progressBar.classList.add('bg-info');
+                    break;
+                case 'medium':
+                    progressBar.classList.add('bg-warning');
+                    break;
+                case 'high':
+                    progressBar.classList.add('bg-danger');
+                    break;
+                case 'urgent':
+                    progressBar.classList.add('bg-danger');
+                    break;
+                default:
+                    progressBar.classList.add('bg-primary');
+            }
+            
+            // Description
+            document.getElementById('taskDescription').innerHTML = props.description.replace(/\n/g, '<br>');
+            
+            // Steps
+            const stepsContainer = document.getElementById('taskSteps');
+            stepsContainer.innerHTML = '';
+            
+            if (props.steps && props.steps.length > 0) {
+                const stepsList = document.createElement('ul');
+                stepsList.className = 'list-group';
+                
+                props.steps.forEach(step => {
+                    const stepItem = document.createElement('li');
+                    stepItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+                    
+                    const stepText = document.createElement('span');
+                    if (step.completed) {
+                        stepText.className = 'text-decoration-line-through';
+                    }
+                    stepText.textContent = step.description;
+                    
+                    const stepBadge = document.createElement('span');
+                    if (step.completed) {
+                        stepBadge.className = 'badge bg-success rounded-pill';
+                        stepBadge.innerHTML = '<i class="fas fa-check"></i>';
+                    } else {
+                        stepBadge.className = 'badge bg-secondary rounded-pill';
+                        stepBadge.innerHTML = '<i class="fas fa-hourglass-half"></i>';
+                    }
+                    
+                    stepItem.appendChild(stepText);
+                    stepItem.appendChild(stepBadge);
+                    stepsList.appendChild(stepItem);
+                });
+                
+                stepsContainer.appendChild(stepsList);
+            } else {
+                const noSteps = document.createElement('div');
+                noSteps.className = 'alert alert-info';
+                noSteps.textContent = 'لا توجد خطوات لهذه المهمة.';
+                stepsContainer.appendChild(noSteps);
+            }
+            
+            // Set detail and edit links
+            document.getElementById('viewTaskBtn').href = props.detailUrl;
+            document.getElementById('editTaskBtn').href = props.editUrl;
+            
+            taskModal.show();
+        }
+        
+        // Format date function
+        function formatDate(date) {
+            return date.toLocaleDateString('ar-EG', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric'
+            });
+        }
+        
+        // Print calendar function
+        document.getElementById('printCalendar').addEventListener('click', function() {
+            window.print();
+        });
+    });
+</script>
+{% endblock %}

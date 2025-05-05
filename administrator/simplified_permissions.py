@@ -125,42 +125,62 @@ def manage_user_permissions(request, user_id):
     departments = Department.objects.filter(is_active=True).order_by('order')
 
     if request.method == 'POST':
-        # Delete existing permissions
-        UserDepartmentPermission.objects.filter(user=user).delete()
-        UserModulePermission.objects.filter(user=user).delete()
+        try:
+            # استخدام المعاملات لضمان تنفيذ جميع العمليات أو عدم تنفيذ أي منها
+            from django.db import transaction
+            with transaction.atomic():
+                # حذف الصلاحيات الحالية
+                UserDepartmentPermission.objects.filter(user=user).delete()
+                UserModulePermission.objects.filter(user=user).delete()
 
-        # Process department permissions
-        for dept in departments:
-            dept_permission = request.POST.get(f'dept_{dept.id}', False) == 'on'
-            if dept_permission:
-                UserDepartmentPermission.objects.create(
-                    user=user,
-                    department=dept,
-                    can_view=True
-                )
-
-                # Process module permissions for this department
-                modules = Module.objects.filter(department=dept, is_active=True).order_by('order')
-                for module in modules:
-                    module_view = request.POST.get(f'module_{module.id}_view', False) == 'on'
-                    module_add = request.POST.get(f'module_{module.id}_add', False) == 'on'
-                    module_edit = request.POST.get(f'module_{module.id}_edit', False) == 'on'
-                    module_delete = request.POST.get(f'module_{module.id}_delete', False) == 'on'
-                    module_print = request.POST.get(f'module_{module.id}_print', False) == 'on'
-
-                    if module_view:
-                        UserModulePermission.objects.create(
+                # معالجة صلاحيات الأقسام
+                for dept in departments:
+                    dept_permission = request.POST.get(f'dept_{dept.id}', False) == 'on'
+                    if dept_permission:
+                        UserDepartmentPermission.objects.create(
                             user=user,
-                            module=module,
-                            can_view=module_view,
-                            can_add=module_add,
-                            can_edit=module_edit,
-                            can_delete=module_delete,
-                            can_print=module_print
+                            department=dept,
+                            can_view=True
                         )
 
-        messages.success(request, f'تم تحديث صلاحيات المستخدم {user.username} بنجاح')
-        return redirect('administrator:user_detail', pk=user.id)
+                        # معالجة صلاحيات الوحدات لهذا القسم
+                        modules = Module.objects.filter(department=dept, is_active=True).order_by('order')
+                        for module in modules:
+                            module_view = request.POST.get(f'module_{module.id}_view', False) == 'on'
+                            module_add = request.POST.get(f'module_{module.id}_add', False) == 'on'
+                            module_edit = request.POST.get(f'module_{module.id}_edit', False) == 'on'
+                            module_delete = request.POST.get(f'module_{module.id}_delete', False) == 'on'
+                            module_print = request.POST.get(f'module_{module.id}_print', False) == 'on'
+
+                            if module_view:
+                                UserModulePermission.objects.create(
+                                    user=user,
+                                    module=module,
+                                    can_view=module_view,
+                                    can_add=module_add,
+                                    can_edit=module_edit,
+                                    can_delete=module_delete,
+                                    can_print=module_print
+                                )
+                
+                # مسح الكاش الخاص بالصلاحيات إن وجد
+                if hasattr(user, 'clear_permissions_cache'):
+                    user.clear_permissions_cache()
+
+            messages.success(request, f'تم تحديث صلاحيات المستخدم {user.username} بنجاح')
+            return redirect('administrator:user_detail', pk=user.id)
+            
+        except Exception as e:
+            # تسجيل الخطأ للتصحيح
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"خطأ في حفظ صلاحيات المستخدم: {str(e)}")
+            
+            # رسالة خطأ للمستخدم
+            messages.error(request, f'حدث خطأ أثناء حفظ الصلاحيات: {str(e)}')
+            
+            # إعادة تحميل الصفحة مع البيانات الحالية
+            return redirect('administrator:manage_user_permissions', user_id=user.id)
 
     # Get user's current permissions
     user_dept_permissions = {

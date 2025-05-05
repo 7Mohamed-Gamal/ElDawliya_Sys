@@ -50,14 +50,14 @@
             <div class="card-body">
                 <form method="post">
                     {% csrf_token %}
-                    
+
                     {% if form.errors %}
                     <div class="alert alert-danger">
                         <i class="fas fa-exclamation-triangle me-2"></i>
                         يرجى تصحيح الأخطاء أدناه.
                     </div>
                     {% endif %}
-                    
+
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="{{ form.name.id_for_label }}" class="form-label">
@@ -71,7 +71,7 @@
                             {% endif %}
                             <div class="form-text">اسم الوحدة كما سيظهر في النظام</div>
                         </div>
-                        
+
                         <div class="col-md-6">
                             <label for="{{ form.department.id_for_label }}" class="form-label">
                                 {{ form.department.label }}*
@@ -85,7 +85,7 @@
                             <div class="form-text">القسم الذي تنتمي إليه هذه الوحدة</div>
                         </div>
                     </div>
-                    
+
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="{{ form.url.id_for_label }}" class="form-label">
@@ -97,9 +97,15 @@
                                 {{ form.url.errors }}
                             </div>
                             {% endif %}
-                            <div class="form-text">الرابط الذي سيتم توجيه المستخدم إليه. مثال: /inventory/ أو /tasks/view/</div>
+                            <div class="form-text">
+                                الرابط الذي سيتم توجيه المستخدم إليه. مثال: /inventory/ أو /tasks/view/
+                                <a href="{% url 'administrator:url_paths_helper' %}" class="btn btn-sm btn-outline-primary ms-2" target="_blank">
+                                    <i class="fas fa-link me-1"></i>
+                                    عرض دليل المسارات المتاحة
+                                </a>
+                            </div>
                         </div>
-                        
+
                         <div class="col-md-6">
                             <label for="{{ form.order.id_for_label }}" class="form-label">
                                 {{ form.order.label }}
@@ -113,7 +119,7 @@
                             <div class="form-text">ترتيب ظهور الوحدة داخل القسم (الأرقام الأقل تظهر في الأعلى)</div>
                         </div>
                     </div>
-                    
+
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label for="{{ form.icon.id_for_label }}" class="form-label">
@@ -132,7 +138,7 @@
                             {% endif %}
                             <div class="form-text">مثال: fa-users أو fa-cog. <a href="https://fontawesome.com/icons?d=gallery&m=free" target="_blank">استعرض الأيقونات</a></div>
                         </div>
-                        
+
                         <div class="col-md-6">
                             <label for="{{ form.bg_color.id_for_label }}" class="form-label">
                                 {{ form.bg_color.label }}
@@ -150,7 +156,7 @@
                             {% endif %}
                         </div>
                     </div>
-                    
+
                     <div class="row mb-3">
                         <div class="col-12">
                             <label for="{{ form.description.id_for_label }}" class="form-label">
@@ -164,7 +170,7 @@
                             {% endif %}
                         </div>
                     </div>
-                    
+
                     <div class="row mb-3">
                         <div class="col-12">
                             <div class="form-check form-switch">
@@ -181,9 +187,9 @@
                             <div class="form-text">إذا كان غير نشط، لن يظهر في قائمة الوحدات</div>
                         </div>
                     </div>
-                    
+
                     <hr class="my-4">
-                    
+
                     <div class="d-flex justify-content-between">
                         <a href="{% url 'administrator:module_list' %}" class="btn btn-outline-secondary">
                             <i class="fas fa-chevron-right me-1"></i>
@@ -212,34 +218,34 @@
         const iconInput = document.getElementById('{{ form.icon.id_for_label }}');
         const iconPreview = document.getElementById('icon-preview');
         const colorIconPreview = document.getElementById('color-icon-preview');
-        
+
         function updateIconPreview() {
             const iconValue = iconInput.value.trim();
             const iconClass = iconValue ? 'fas ' + iconValue : 'fas fa-question';
             iconPreview.className = iconClass;
             colorIconPreview.className = iconClass;
         }
-        
+
         // Color preview
         const colorInput = document.getElementById('{{ form.bg_color.id_for_label }}');
         const colorPreview = document.getElementById('color-preview');
-        
+
         function updateColorPreview() {
             const colorValue = colorInput.value;
             colorPreview.style.backgroundColor = colorValue;
         }
-        
+
         // Initial preview
         updateIconPreview();
         updateColorPreview();
-        
+
         // Update on change
         iconInput.addEventListener('input', updateIconPreview);
         iconInput.addEventListener('change', updateIconPreview);
-        
+
         colorInput.addEventListener('input', updateColorPreview);
         colorInput.addEventListener('change', updateColorPreview);
-        
+
         // Form field styling
         document.querySelectorAll('input[type="checkbox"]').forEach(function(el) {
             el.classList.add('form-check-input');

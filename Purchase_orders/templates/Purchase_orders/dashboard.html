@@ -1,8 +1,15 @@
-{% extends 'Purchase_orders/base_purchase.html' %}
+{% extends 'Purchase_orders/base_purchase_orders.html' %}
 {% load static %}
 {% load purchase_permission_tags %}
 
 {% block title %}لوحة تحكم طلبات الشراء - نظام الدولية{% endblock %}
+
+{% block page_title %}لوحة تحكم طلبات الشراء{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item active">لوحة تحكم طلبات الشراء</li>
+{% endblock %}
 
 {% block content %}
 <div class="row mb-4">

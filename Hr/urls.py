@@ -5,7 +5,7 @@ from .views.employee_views import dashboard as employee_dashboard_simple
 
 app_name = 'Hr'
 
-# Patrones de URL para empleados
+# أنماط عناوين URL للموظفين
 employee_patterns = [
     path('', views.employee_list, name='list'),
     path('create/', views.employee_create, name='create'),
@@ -15,10 +15,10 @@ employee_patterns = [
     path('search/', views.employee_search, name='employee_search'),
 ]
 
-# New employee search page
-# Removed duplicate path outside patterns list
+# صفحة بحث الموظفين الجديدة
+# تمت إزالة المسار المكرر خارج قائمة الأنماط
 
-# Patrones de URL para departamentos
+# أنماط عناوين URL للأقسام
 department_patterns = [
     path('', department_list, name='list'),
     path('create/', department_create, name='create'),
@@ -28,7 +28,7 @@ department_patterns = [
     path('<int:dept_code>/performance/', department_performance, name='performance'),
 ]
 
-# Patrones de URL para trabajos/puestos
+# أنماط عناوين URL للوظائف
 job_patterns = [
     path('', views.job_list, name='list'),
     path('create/', views.job_create, name='create'),
@@ -37,7 +37,7 @@ job_patterns = [
     path('<int:jop_code>/delete/', views.job_delete, name='delete'),
 ]
 
-# Patrones de URL para vehículos
+# أنماط عناوين URL للسيارات
 car_patterns = [
     path('', views.car_list, name='list'),
     path('create/', views.car_create, name='create'),
@@ -46,7 +46,7 @@ car_patterns = [
     path('<int:car_id>/delete/', views.car_delete, name='delete'),
 ]
 
-# Patrones de URL para puntos de recogida
+# أنماط عناوين URL لنقاط الالتقاط
 pickup_point_patterns = [
     path('', views.pickup_point_list, name='list'),
     path('create/', views.pickup_point_create, name='create'),
@@ -55,7 +55,7 @@ pickup_point_patterns = [
     path('<int:pk>/delete/', views.pickup_point_delete, name='delete'),
 ]
 
-# Patrones de URL para trabajos de seguro
+# أنماط عناوين URL لوظائف التأمين
 insurance_job_patterns = [
     path('', views.insurance_job_list, name='list'),
     path('create/', views.insurance_job_create, name='create'),
@@ -64,16 +64,19 @@ insurance_job_patterns = [
     path('<int:job_code_insurance>/delete/', views.insurance_job_delete, name='delete'),
 ]
 
-# Patrones de URL para tareas de empleados
+# أنماط عناوين URL لمهام الموظفين
 task_patterns = [
     path('', views.employee_task_list, name='list'),
     path('create/', views.employee_task_create, name='create'),
     path('<int:pk>/', views.employee_task_detail, name='detail'),
     path('<int:pk>/edit/', views.employee_task_edit, name='edit'),
     path('<int:pk>/delete/', views.employee_task_delete, name='delete'),
+    # خطوات المهمة
+    path('<int:task_pk>/steps/<int:step_pk>/toggle/', views.task_views.task_step_toggle, name='step_toggle'),
+    path('<int:task_pk>/steps/<int:step_pk>/delete/', views.task_views.task_step_delete, name='step_delete'),
 ]
 
-# Patrones de URL para notas de empleados
+# أنماط عناوين URL لملاحظات الموظفين
 note_patterns = [
     path('', views.employee_note_list, name='list'),
     path('create/', views.employee_note_create, name='create'),
@@ -82,7 +85,7 @@ note_patterns = [
     path('<int:pk>/delete/', views.employee_note_delete, name='delete'),
 ]
 
-# Patrones de URL para archivos de empleados
+# أنماط عناوين URL لملفات الموظفين
 file_patterns = [
     path('', views.employee_file_list, name='list'),
     path('create/', views.employee_file_create, name='create'),
@@ -91,7 +94,7 @@ file_patterns = [
     path('<int:pk>/delete/', views.employee_file_delete, name='delete'),
 ]
 
-# Patrones de URL para tareas de RRHH
+# أنماط عناوين URL لمهام الموارد البشرية
 hr_task_patterns = [
     path('', views.hr_task_list, name='list'),
     path('create/', views.hr_task_create, name='create'),
@@ -100,7 +103,7 @@ hr_task_patterns = [
     path('<int:pk>/delete/', views.hr_task_delete, name='delete'),
 ]
 
-# Patrones de URL para tipos de permisos
+# أنماط عناوين URL لأنواع الإجازات
 leave_type_patterns = [
     path('', views.leave_type_list, name='list'),
     path('create/', views.leave_type_create, name='create'),
@@ -109,7 +112,7 @@ leave_type_patterns = [
     path('<int:pk>/delete/', views.leave_type_delete, name='delete'),
 ]
 
-# Patrones de URL para permisos de empleados
+# أنماط عناوين URL لإجازات الموظفين
 leave_patterns = [
     path('', views.employee_leave_list, name='list'),
     path('create/', views.employee_leave_create, name='create'),
@@ -120,7 +123,7 @@ leave_patterns = [
     path('<int:pk>/reject/', views.employee_leave_reject, name='reject'),
 ]
 
-# Patrones de URL para evaluaciones de empleados
+# أنماط عناوين URL لتقييمات الموظفين
 evaluation_patterns = [
     path('', views.employee_evaluation_list, name='list'),
     path('create/', views.employee_evaluation_create, name='create'),
@@ -130,10 +133,10 @@ evaluation_patterns = [
 ]
 
 urlpatterns = [
-    # Dashboard
+    # لوحة التحكم
     path('dashboard/', views.dashboard, name='dashboard'),
     path('dashboard_simple/', employee_dashboard_simple, name='dashboard_simple'),
-    # Incluir patrones de URL para cada sección
+    # تضمين أنماط URL لكل قسم
     path('employees/', include((employee_patterns, 'employees'))),
     path('departments/', include((department_patterns, 'departments'))),
     path('jobs/', include((job_patterns, 'jobs'))),
@@ -148,65 +151,65 @@ urlpatterns = [
     path('leaves/', include((leave_patterns, 'leaves'))),
     path('evaluations/', include((evaluation_patterns, 'evaluations'))),
 
-    # Salary Items
+    # بنود الرواتب
     path('salary_items/', views.salary_item_list, name='salary_item_list'),
     path('salary_items/create/', views.salary_item_create, name='salary_item_create'),
     path('salary_items/<int:pk>/edit/', views.salary_item_edit, name='salary_item_edit'),
     path('salary_items/<int:pk>/delete/', views.salary_item_delete, name='salary_item_delete'),
 
-    # Employee Salary Items
+    # بنود رواتب الموظفين
     path('employee_salary_items/', views.employee_salary_item_list, name='employee_salary_item_list'),
     path('employee_salary_items/create/', views.employee_salary_item_create, name='employee_salary_item_create'),
     path('employee_salary_items/bulk_create/', views.employee_salary_item_bulk_create, name='employee_salary_item_bulk_create'),
     path('employee_salary_items/<int:pk>/edit/', views.employee_salary_item_edit, name='employee_salary_item_edit'),
     path('employee_salary_items/<int:pk>/delete/', views.employee_salary_item_delete, name='employee_salary_item_delete'),
 
-    # Payroll Periods
+    # فترات الرواتب
     path('payroll_periods/', views.payroll_period_list, name='payroll_period_list'),
     path('payroll_periods/create/', views.payroll_period_create, name='payroll_period_create'),
     path('payroll_periods/<int:pk>/edit/', views.payroll_period_edit, name='payroll_period_edit'),
     path('payroll_periods/<int:pk>/delete/', views.payroll_period_delete, name='payroll_period_delete'),
 
-    # Payroll Calculation
+    # حساب الرواتب
     path('payrolls/calculate/', views.payroll_calculate, name='payroll_calculate'),
     path('payrolls/entries/', views.payroll_entry_list, name='payroll_entry_list'),
     path('payrolls/entries/<int:pk>/', views.payroll_entry_detail, name='payroll_entry_detail'),
 
-    # Attendance Rules
+    # قواعد الحضور
     path('attendance_rules/', views.attendance_rule_list, name='attendance_rule_list'),
     path('attendance_rules/create/', views.attendance_rule_create, name='attendance_rule_create'),
     path('attendance_rules/<int:pk>/edit/', views.attendance_rule_edit, name='attendance_rule_edit'),
     path('attendance_rules/<int:pk>/delete/', views.attendance_rule_delete, name='attendance_rule_delete'),
 
-    # Employee Attendance Rules
+    # قواعد حضور الموظفين
     path('employee_attendance_rules/', views.employee_attendance_rule_list, name='employee_attendance_rule_list'),
     path('employee_attendance_rules/create/', views.employee_attendance_rule_create, name='employee_attendance_rule_create'),
     path('employee_attendance_rules/bulk_create/', views.employee_attendance_rule_bulk_create, name='employee_attendance_rule_bulk_create'),
     path('employee_attendance_rules/<int:pk>/edit/', views.employee_attendance_rule_edit, name='employee_attendance_rule_edit'),
     path('employee_attendance_rules/<int:pk>/delete/', views.employee_attendance_rule_delete, name='employee_attendance_rule_delete'),
 
-    # Official Holidays
+    # الإجازات الرسمية
     path('attendance/holidays/', views.official_holiday_list, name='official_holiday_list'),
     path('attendance/holidays/create/', views.official_holiday_create, name='official_holiday_create'),
     path('attendance/holidays/<int:pk>/edit/', views.official_holiday_edit, name='official_holiday_edit'),
     path('attendance/holidays/<int:pk>/delete/', views.official_holiday_delete, name='official_holiday_delete'),
 
-    # Attendance Machines
+    # أجهزة الحضور
     path('attendance/machines/', views.attendance_machine_list, name='attendance_machine_list'),
     path('attendance/machines/create/', views.attendance_machine_create, name='attendance_machine_create'),
     path('attendance/machines/<int:pk>/edit/', views.attendance_machine_edit, name='attendance_machine_edit'),
     path('attendance/machines/<int:pk>/delete/', views.attendance_machine_delete, name='attendance_machine_delete'),
 
-    # Attendance Records
+    # سجلات الحضور
     path('attendance/records/', views.attendance_record_list, name='attendance_record_list'),
     path('attendance/records/create/', views.attendance_record_create, name='attendance_record_create'),
     path('attendance/records/<int:pk>/edit/', views.attendance_record_edit, name='attendance_record_edit'),
     path('attendance/records/<int:pk>/delete/', views.attendance_record_delete, name='attendance_record_delete'),
 
-    # Fetch Attendance Data
+    # جلب بيانات الحضور
     path('attendance/fetch_data/', views.fetch_attendance_data, name='fetch_attendance_data'),
 
-    # Reports
+    # التقارير
     path('reports/', include((
         [
             path('', views.report_list, name='list'),
@@ -216,14 +219,14 @@ urlpatterns = [
         ], 'reports'
     ))),
 
-    # Alerts
+    # التنبيهات
     path('alerts/', include((
         [
             path('', views.alert_list, name='list'),
         ], 'alerts'
     ))),
 
-    # Analytics
+    # التحليلات
     path('analytics/', include((
         [
             path('', views.analytics_dashboard, name='dashboard'),
@@ -231,7 +234,7 @@ urlpatterns = [
         ], 'analytics'
     ))),
 
-    # Organizational Chart
+    # الهيكل التنظيمي
     path('org_chart/', include((
         [
             path('', views.org_chart, name='view'),
@@ -241,6 +244,6 @@ urlpatterns = [
         ], 'org_chart'
     ))),
 
-    # Redirect root to employees list for backward compatibility
+    # إعادة توجيه الجذر إلى قائمة الموظفين للتوافق مع الإصدارات السابقة
     path('', views.employee_list, name='list'),
 ]

@@ -193,7 +193,7 @@ class EmployeeForm(forms.Form):
         ]
 
         # تعيين قيم افتراضية للحقول المهمة
-        self.fields['working_condition'].initial = 'يعمل'  # يعمل
+        self.fields['working_condition'].initial = 'سارى'  # سارى
         self.fields['emp_type'].initial = 'ذكر'  # ذكر
         self.fields['emp_marital_status'].initial = 'أعزب'  # أعزب
         self.fields['insurance_status'].initial = 'غير مؤمن عليه'  # غير مؤمن عليه

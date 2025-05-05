@@ -31,9 +31,9 @@ def department_detail(request, dept_code):
     employee_count = employees.count()
     
     # Calculate employee statuses
-    active_count = employees.filter(working_condition='يعمل').count()
+    active_count = employees.filter(working_condition='سارى').count()
     on_leave_count = employees.filter(working_condition='إجازة').count()
-    resigned_count = employees.filter(working_condition='مستقيل').count()
+    resigned_count = employees.filter(working_condition='استقالة').count()
     other_count = employee_count - (active_count + on_leave_count + resigned_count)
     
     # Get limited employees for display in department detail page

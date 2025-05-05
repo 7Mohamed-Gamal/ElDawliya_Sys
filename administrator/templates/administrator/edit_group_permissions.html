@@ -1,4 +1,4 @@
-{% extends 'base_updated.html' %}
+{% extends 'administrator/base_admin.html' %}
 {% load static %}
 
 {% block title %}{{ title }} | نظام الدولية{% endblock %}
@@ -6,49 +6,614 @@
 {% block extra_css %}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
 <style>
+    :root {
+        --primary-color: #0d6efd;
+        --primary-light: rgba(13, 110, 253, 0.1);
+        --primary-dark: #0a58ca;
+        --success-color: #198754;
+        --success-light: rgba(25, 135, 84, 0.1);
+        --warning-color: #ffc107;
+        --warning-light: rgba(255, 193, 7, 0.1);
+        --danger-color: #dc3545;
+        --danger-light: rgba(220, 53, 69, 0.1);
+        --info-color: #0dcaf0;
+        --info-light: rgba(13, 202, 240, 0.1);
+        --light-color: #f8f9fa;
+        --dark-color: #212529;
+        --border-color: #e9ecef;
+        --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        --shadow-md: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        --transition-speed: 0.3s;
+    }
+
+    /* Estilos generales modernos */
+    body {
+        scroll-behavior: smooth;
+    }
+
+    .card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: var(--shadow-sm);
+        transition: all var(--transition-speed) ease;
+        overflow: hidden;
+        margin-bottom: 1.75rem;
+    }
+
+    .card:hover {
+        box-shadow: var(--shadow-md);
+    }
+
+    .card-header {
+        border-bottom: 1px solid var(--border-color);
+        padding: 1.25rem 1.5rem;
+        font-weight: 600;
+    }
+
+    .card-body {
+        padding: 1.75rem;
+    }
+
+    /* Estilos para Select2 mejorados */
     .select2-container--bootstrap-5 .select2-selection {
         min-height: 38px;
+        border-radius: 8px;
+        border-color: #dee2e6;
     }
+
+    .select2-container--bootstrap-5 .select2-selection:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__rendered {
+        display: flex;
+        flex-wrap: wrap;
+        padding: 0.375rem 0.25rem;
+    }
+
+    .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice {
+        background-color: var(--primary-light);
+        border: 1px solid var(--primary-color);
+        border-radius: 20px;
+        padding: 0.25rem 0.75rem;
+        margin-right: 0.5rem;
+        margin-bottom: 0.25rem;
+        font-size: 0.875rem;
+        color: var(--primary-color);
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+    }
+
+    .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice__remove {
+        margin-right: 0.5rem;
+        color: var(--primary-color);
+        border-right: none;
+        font-weight: 700;
+        font-size: 1rem;
+        line-height: 1;
+    }
+
+    .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice__remove:hover {
+        background-color: transparent;
+        color: var(--danger-color);
+    }
+
+    .select2-container--bootstrap-5 .select2-dropdown {
+        border-color: #dee2e6;
+        border-radius: 8px;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+    }
+
+    .select2-container--bootstrap-5 .select2-search__field:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    /* Estilos para las secciones de permisos */
     .card-permissions {
-        border-radius: 10px;
+        border-radius: 12px;
+        transition: all var(--transition-speed) ease;
+        margin-bottom: 2rem;
     }
+
     .permission-section {
-        padding: 20px;
-        margin-bottom: 20px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-radius: 10px;
+        transition: all var(--transition-speed) ease;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid transparent;
+    }
+
+    .permission-section:hover {
+        box-shadow: var(--shadow-md);
+    }
+
+    .permission-section.view {
+        background-color: var(--primary-light);
+        border-color: var(--primary-color);
+    }
+
+    .permission-section.add {
+        background-color: var(--success-light);
+        border-color: var(--success-color);
+    }
+
+    .permission-section.change {
+        background-color: var(--warning-light);
+        border-color: var(--warning-color);
+    }
+
+    .permission-section.delete {
+        background-color: var(--danger-light);
+        border-color: var(--danger-color);
+    }
+
+    .permission-section.print {
+        background-color: var(--info-light);
+        border-color: var(--info-color);
+    }
+
+    /* Estilos para grupos de permisos */
+    .permission-group {
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 1.25rem;
+        margin-bottom: 1rem;
+        transition: all var(--transition-speed) ease;
+        background-color: white;
+    }
+
+    .permission-group:hover {
+        box-shadow: var(--shadow-sm);
+        transform: translateY(-2px);
+    }
+
+    .permission-group-title {
+        font-weight: 600;
+        margin-bottom: 0.75rem;
+        color: var(--dark-color);
+        display: flex;
+        align-items: center;
+    }
+
+    .permission-group-title i {
+        margin-left: 0.5rem;
+        color: var(--primary-color);
+    }
+
+    /* Estilos para elementos de módulo */
+    .module-item {
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+        background-color: var(--light-color);
+        transition: all 0.2s ease;
+        border-left: 3px solid transparent;
+        display: flex;
+        align-items: center;
+    }
+
+    .module-item:hover {
+        background-color: white;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .module-item.selected {
+        background-color: var(--primary-light);
+        border-left: 3px solid var(--primary-color);
+    }
+
+    .module-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 0.75rem;
+        color: white;
+    }
+
+    /* Estilos para filtros */
+    .permissions-filter {
+        margin-bottom: 1rem;
+        padding: 1rem;
+        background-color: white;
+        border-radius: 10px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-color);
+    }
+
+    .filter-badge {
+        display: inline-block;
+        padding: 0.35em 0.75em;
+        font-size: 80%;
+        font-weight: 600;
+        line-height: 1.5;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: baseline;
+        border-radius: 20px;
+        background-color: var(--light-color);
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 1px solid var(--border-color);
+    }
+
+    .filter-badge:hover {
+        background-color: white;
+        box-shadow: var(--shadow-sm);
+        transform: translateY(-1px);
+    }
+
+    .filter-badge.active {
+        background-color: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    /* Estilos para pestañas */
+    .nav-tabs {
+        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 1.5rem;
+    }
+
+    .nav-tabs .nav-link {
+        border: none;
+        border-bottom: 3px solid transparent;
+        border-radius: 0;
+        font-weight: 500;
+        color: var(--dark-color);
+        padding: 0.75rem 1.25rem;
+        transition: all 0.2s ease;
+    }
+
+    .nav-tabs .nav-link:hover {
+        border-bottom-color: var(--border-color);
+    }
+
+    .nav-tabs .nav-link.active {
+        color: var(--primary-color);
+        border-bottom-color: var(--primary-color);
+        background-color: transparent;
+    }
+
+    /* Estilos para indicadores */
+    .save-indicator {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        display: none;
+        box-shadow: var(--shadow-md);
+        border-radius: 10px;
+        padding: 1rem;
+        min-width: 300px;
+    }
+
+    /* Estilos para spinner de carga */
+    .spinner-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        display: none;
+    }
+
+    .spinner-container {
+        background-color: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: var(--shadow-md);
+        text-align: center;
+        min-width: 250px;
+    }
+
+    /* Estilos para la barra de búsqueda */
+    .search-container {
+        position: relative;
+        margin-bottom: 1rem;
+    }
+
+    .search-input {
+        padding-right: 2.5rem;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        padding: 0.75rem 1rem;
+        transition: all 0.2s ease;
+    }
+
+    .search-input:focus {
+        box-shadow: 0 0 0 0.25rem var(--primary-light);
+        border-color: var(--primary-color);
+    }
+
+    .search-icon {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--dark-color);
+    }
+
+    /* Estilos para la barra de acciones fija */
+    .actions-bar {
+        position: sticky;
+        bottom: 0;
+        background-color: white;
+        padding: 1.25rem;
+        border-top: 1px solid var(--border-color);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 100;
+        box-shadow: 0 -0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        border-radius: 0 0 12px 12px;
+        margin-top: 2rem;
+        margin-bottom: -1rem;
+    }
+
+    /* Estilos para botones */
+    .btn {
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .btn-sm {
+        border-radius: 6px;
+        padding: 0.25rem 0.75rem;
+    }
+
+    .btn:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-sm);
+    }
+
+    .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .btn-primary:hover {
+        background-color: var(--primary-dark);
+        border-color: var(--primary-dark);
+    }
+
+    /* Estilos para contadores */
+    .permission-counter {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background-color: var(--primary-color);
+        color: white;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-right: 0.5rem;
+    }
+
+    /* Estilos para tooltips */
+    .tooltip-inner {
+        max-width: 300px;
+        padding: 0.5rem 1rem;
         border-radius: 8px;
     }
-    .permission-section.view {
-        background-color: rgba(13, 110, 253, 0.1);
+
+    /* Animaciones */
+    .fade-in {
+        animation: fadeIn 0.5s;
     }
-    .permission-section.add {
-        background-color: rgba(25, 135, 84, 0.1);
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
     }
-    .permission-section.change {
-        background-color: rgba(255, 193, 7, 0.1);
+
+    /* Estilos para la tarjeta de información del grupo */
+    .group-info-card {
+        background-color: white;
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
     }
-    .permission-section.delete {
-        background-color: rgba(220, 53, 69, 0.1);
+
+    .group-avatar {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background-color: var(--success-light);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        border: 3px solid var(--success-color);
     }
-    .permission-section.print {
-        background-color: rgba(13, 202, 240, 0.1);
+
+    .group-stats {
+        display: flex;
+        justify-content: space-around;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .stat-item {
+        text-align: center;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--primary-color);
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        color: var(--dark-color);
+    }
+
+    /* Estilos para la barra lateral fija */
+    .sidebar-container {
+        position: sticky;
+        top: 20px;
+    }
+
+    /* Estilos para el resumen de permisos */
+    .permissions-summary {
+        background-color: white;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-color);
+    }
+
+    .summary-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        padding: 0.5rem;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+
+    .summary-item:hover {
+        background-color: var(--light-color);
+    }
+
+    .summary-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 0.75rem;
+    }
+
+    .summary-view .summary-icon {
+        background-color: var(--primary-light);
+        color: var(--primary-color);
+    }
+
+    .summary-add .summary-icon {
+        background-color: var(--success-light);
+        color: var(--success-color);
+    }
+
+    .summary-change .summary-icon {
+        background-color: var(--warning-light);
+        color: var(--warning-color);
+    }
+
+    .summary-delete .summary-icon {
+        background-color: var(--danger-light);
+        color: var(--danger-color);
+    }
+
+    .summary-print .summary-icon {
+        background-color: var(--info-light);
+        color: var(--info-color);
+    }
+
+    .summary-count {
+        font-weight: 600;
+        margin-left: 0.5rem;
+        min-width: 30px;
+        text-align: center;
+    }
+
+    /* Estilos para la navegación de permisos */
+    .permissions-nav {
+        background-color: white;
+        border-radius: 10px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border-color);
+    }
+
+    .nav-item {
+        margin-bottom: 0.5rem;
+    }
+
+    .nav-link {
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        transition: all 0.2s ease;
+        color: var(--dark-color);
+        display: flex;
+        align-items: center;
+    }
+
+    .nav-link:hover {
+        background-color: var(--light-color);
+    }
+
+    .nav-link.active {
+        background-color: var(--primary-color);
+        color: white;
+    }
+
+    .nav-link i {
+        margin-left: 0.75rem;
+        width: 20px;
+        text-align: center;
+    }
+
+    /* Estilos responsivos */
+    @media (max-width: 992px) {
+        .sidebar-container {
+            position: relative;
+            top: 0;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
+<!-- Page Loading Overlay -->
+<div class="spinner-overlay" id="pageLoadingOverlay">
+    <div class="spinner-container animate__animated animate__fadeIn">
+        <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+            <span class="visually-hidden">جاري التحميل...</span>
+        </div>
+        <h5 class="mb-2">جاري تحميل الصفحة</h5>
+        <p class="mb-0 text-muted">يرجى الانتظار...</p>
+    </div>
+</div>
+
 <div class="container-fluid">
+    <!-- Encabezado de la página -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
                 <h2 class="page-title">{{ title }}</h2>
                 <div>
                     <a href="{% url 'administrator:group_permission_list' %}" class="btn btn-outline-primary me-2">
-                        <i class="fas fa-arrow-right ml-1"></i>
+                        <i class="fas fa-arrow-right me-1"></i>
                         العودة إلى قائمة صلاحيات المجموعات
                     </a>
                     <a href="{% url 'administrator:permission_dashboard' %}" class="btn btn-outline-secondary">
-                        <i class="fas fa-tachometer-alt ml-1"></i>
+                        <i class="fas fa-tachometer-alt me-1"></i>
                         لوحة الصلاحيات
                     </a>
                 </div>
@@ -56,168 +621,561 @@
         </div>
     </div>
 
+    {% if messages %}
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card border-0 shadow">
-                <div class="card-header bg-success text-white">
-                    <h5 class="mb-0">معلومات المجموعة</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="text-center mb-4 mb-md-0">
-                                <div class="avatar avatar-xl rounded-circle bg-light mb-3 mx-auto" style="width: 100px; height: 100px; display: flex; align-items: center; justify-content: center;">
-                                    <i class="fas fa-users fa-3x text-success"></i>
-                                </div>
-                                <h4>{{ group.name }}</h4>
-                                <p class="text-muted">{{ group.user_set.count }} مستخدم</p>
-                                <div class="mt-3">
-                                    <a href="{% url 'administrator:group_edit' pk=group.id %}" class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-edit"></i> تعديل بيانات المجموعة
-                                    </a>
-                                </div>
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'warning' %}fa-exclamation-triangle{% elif message.tags == 'error' or message.tags == 'danger' %}fa-times-circle{% else %}fa-info-circle{% endif %} me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <!-- Columna de información y navegación -->
+        <div class="col-lg-3 mb-4">
+            <div class="sidebar-container">
+                <!-- Tarjeta de información del grupo -->
+                <div class="card group-info-card mb-4 animate__animated animate__fadeIn">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">معلومات المجموعة</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <div class="group-avatar">
+                            <i class="fas fa-users fa-3x text-success"></i>
+                        </div>
+                        <h4>{{ group.name }}</h4>
+                        <p class="text-muted">{{ group.user_set.count }} مستخدم</p>
+
+                        <a href="{% url 'administrator:group_edit' pk=group.id %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-edit me-1"></i> تعديل بيانات المجموعة
+                        </a>
+
+                        <div class="group-stats">
+                            <div class="stat-item">
+                                <div class="stat-value" id="deptCount">0</div>
+                                <div class="stat-label">الأقسام</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="moduleCount">0</div>
+                                <div class="stat-label">الوحدات</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value" id="permCount">0</div>
+                                <div class="stat-label">الصلاحيات</div>
                             </div>
                         </div>
-                        <div class="col-md-9">
-                            <div class="alert alert-info">
-                                <h5 class="alert-heading">معلومات عن صلاحيات المجموعات</h5>
-                                <p>من هذه الصفحة يمكنك تعيين الصلاحيات التالية للمجموعة:</p>
-                                <ul>
-                                    <li>الأقسام المسموح بالوصول إليها</li>
-                                    <li>الوحدات المسموح بالوصول إليها</li>
-                                    <li>القوالب المسموح بالوصول إليها</li>
-                                    <li>الصلاحيات التفصيلية (عرض، إضافة، تعديل، حذف، طباعة) لكل وحدة</li>
-                                </ul>
-                                <p class="mb-0">يحصل جميع المستخدمين في هذه المجموعة على الصلاحيات المحددة هنا تلقائيًا.</p>
-                            </div>
-                            <form method="post">
-                                {% csrf_token %}
-                                <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <div class="form-group">
-                                            <label class="form-label fw-bold">الأقسام المسموح بها</label>
-                                            {{ form.departments }}
-                                            <div class="form-text text-muted">اختر الأقسام التي يمكن للمجموعة الوصول إليها</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6 mb-3">
-                                        <div class="form-group">
-                                            <label class="form-label fw-bold">الوحدات المسموح بها</label>
-                                            {{ form.modules }}
-                                            <div class="form-text text-muted">اختر الوحدات التي يمكن للمجموعة الوصول إليها</div>
-                                        </div>
-                                    </div>
-                                    <div class="col-12 mb-3">
-                                        <div class="form-group">
-                                            <label class="form-label fw-bold">القوالب المسموح بها</label>
-                                            {{ form.templates }}
-                                            <div class="form-text text-muted">اختر القوالب التي يمكن للمجموعة الوصول إليها</div>
-                                        </div>
-                                    </div>
-                                </div>
+                    </div>
+                </div>
 
-                                <div class="row mt-4">
-                                    <div class="col-12">
-                                        <div class="card card-permissions">
-                                            <div class="card-header bg-light">
-                                                <h5 class="mb-0">صلاحيات المجموعة التفصيلية</h5>
-                                            </div>
-                                            <div class="card-body">
-                                                <ul class="nav nav-tabs nav-fill mb-4" id="permissionTab" role="tablist">
-                                                    <li class="nav-item" role="presentation">
-                                                        <button class="nav-link active" id="view-tab" data-bs-toggle="tab" data-bs-target="#view" type="button" role="tab" aria-controls="view" aria-selected="true">
-                                                            <i class="fas fa-eye me-1"></i> العرض
-                                                        </button>
-                                                    </li>
-                                                    <li class="nav-item" role="presentation">
-                                                        <button class="nav-link" id="add-tab" data-bs-toggle="tab" data-bs-target="#add" type="button" role="tab" aria-controls="add" aria-selected="false">
-                                                            <i class="fas fa-plus-circle me-1"></i> الإضافة
-                                                        </button>
-                                                    </li>
-                                                    <li class="nav-item" role="presentation">
-                                                        <button class="nav-link" id="change-tab" data-bs-toggle="tab" data-bs-target="#change" type="button" role="tab" aria-controls="change" aria-selected="false">
-                                                            <i class="fas fa-edit me-1"></i> التعديل
-                                                        </button>
-                                                    </li>
-                                                    <li class="nav-item" role="presentation">
-                                                        <button class="nav-link" id="delete-tab" data-bs-toggle="tab" data-bs-target="#delete" type="button" role="tab" aria-controls="delete" aria-selected="false">
-                                                            <i class="fas fa-trash-alt me-1"></i> الحذف
-                                                        </button>
-                                                    </li>
-                                                    <li class="nav-item" role="presentation">
-                                                        <button class="nav-link" id="print-tab" data-bs-toggle="tab" data-bs-target="#print" type="button" role="tab" aria-controls="print" aria-selected="false">
-                                                            <i class="fas fa-print me-1"></i> الطباعة
-                                                        </button>
-                                                    </li>
-                                                </ul>
+                <!-- Navegación de permisos -->
+                <div class="permissions-nav animate__animated animate__fadeIn">
+                    <h5 class="mb-3">أقسام الصلاحيات</h5>
+                    <ul class="nav flex-column" id="permissionsNav">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#departments-section">
+                                <i class="fas fa-building"></i> الأقسام
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#modules-section">
+                                <i class="fas fa-puzzle-piece"></i> الوحدات
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#templates-section">
+                                <i class="fas fa-file-code"></i> القوالب
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#detailed-permissions-section">
+                                <i class="fas fa-key"></i> الصلاحيات التفصيلية
+                            </a>
+                        </li>
+                    </ul>
+                </div>
 
-                                                <div class="tab-content" id="permissionTabContent">
-                                                    <div class="tab-pane fade show active" id="view" role="tabpanel" aria-labelledby="view-tab">
-                                                        <div class="permission-section view">
-                                                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                                                <h5 class="mb-0 text-primary">صلاحيات العرض</h5>
-                                                                <button type="button" class="btn btn-sm btn-outline-primary select-all" data-target="view_permissions">تحديد الكل</button>
-                                                            </div>
-                                                            {{ form.view_permissions }}
-                                                        </div>
-                                                    </div>
-                                                    <div class="tab-pane fade" id="add" role="tabpanel" aria-labelledby="add-tab">
-                                                        <div class="permission-section add">
-                                                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                                                <h5 class="mb-0 text-success">صلاحيات الإضافة</h5>
-                                                                <button type="button" class="btn btn-sm btn-outline-success select-all" data-target="add_permissions">تحديد الكل</button>
-                                                            </div>
-                                                            {{ form.add_permissions }}
-                                                        </div>
-                                                    </div>
-                                                    <div class="tab-pane fade" id="change" role="tabpanel" aria-labelledby="change-tab">
-                                                        <div class="permission-section change">
-                                                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                                                <h5 class="mb-0 text-warning">صلاحيات التعديل</h5>
-                                                                <button type="button" class="btn btn-sm btn-outline-warning select-all" data-target="change_permissions">تحديد الكل</button>
-                                                            </div>
-                                                            {{ form.change_permissions }}
-                                                        </div>
-                                                    </div>
-                                                    <div class="tab-pane fade" id="delete" role="tabpanel" aria-labelledby="delete-tab">
-                                                        <div class="permission-section delete">
-                                                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                                                <h5 class="mb-0 text-danger">صلاحيات الحذف</h5>
-                                                                <button type="button" class="btn btn-sm btn-outline-danger select-all" data-target="delete_permissions">تحديد الكل</button>
-                                                            </div>
-                                                            {{ form.delete_permissions }}
-                                                        </div>
-                                                    </div>
-                                                    <div class="tab-pane fade" id="print" role="tabpanel" aria-labelledby="print-tab">
-                                                        <div class="permission-section print">
-                                                            <div class="d-flex justify-content-between align-items-center mb-3">
-                                                                <h5 class="mb-0 text-info">صلاحيات الطباعة</h5>
-                                                                <button type="button" class="btn btn-sm btn-outline-info select-all" data-target="print_permissions">تحديد الكل</button>
-                                                            </div>
-                                                            {{ form.print_permissions }}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                <!-- Resumen de permisos -->
+                <div class="permissions-summary animate__animated animate__fadeIn">
+                    <h6 class="mb-3">ملخص الصلاحيات</h6>
+                    <div class="summary-item summary-view" id="viewSummary">
+                        <div class="summary-icon">
+                            <i class="fas fa-eye"></i>
+                        </div>
+                        <span class="summary-count" id="viewCount">0</span>
+                        <span>صلاحيات العرض</span>
+                    </div>
+                    <div class="summary-item summary-add" id="addSummary">
+                        <div class="summary-icon">
+                            <i class="fas fa-plus-circle"></i>
+                        </div>
+                        <span class="summary-count" id="addCount">0</span>
+                        <span>صلاحيات الإضافة</span>
+                    </div>
+                    <div class="summary-item summary-change" id="changeSummary">
+                        <div class="summary-icon">
+                            <i class="fas fa-edit"></i>
+                        </div>
+                        <span class="summary-count" id="changeCount">0</span>
+                        <span>صلاحيات التعديل</span>
+                    </div>
+                    <div class="summary-item summary-delete" id="deleteSummary">
+                        <div class="summary-icon">
+                            <i class="fas fa-trash-alt"></i>
+                        </div>
+                        <span class="summary-count" id="deleteCount">0</span>
+                        <span>صلاحيات الحذف</span>
+                    </div>
+                    <div class="summary-item summary-print" id="printSummary">
+                        <div class="summary-icon">
+                            <i class="fas fa-print"></i>
+                        </div>
+                        <span class="summary-count" id="printCount">0</span>
+                        <span>صلاحيات الطباعة</span>
+                    </div>
+                </div>
 
-                                <div class="row mt-4">
-                                    <div class="col-12">
-                                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                                            <a href="{% url 'administrator:group_permission_list' %}" class="btn btn-outline-secondary">إلغاء</a>
-                                            <button type="submit" class="btn btn-success">
-                                                <i class="fas fa-save me-1"></i> حفظ صلاحيات المجموعة
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </form>
+                <!-- Información de ayuda -->
+                <div class="card mb-4 animate__animated animate__fadeIn">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">معلومات مساعدة</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="mb-2">من هذه الصفحة يمكنك تعيين الصلاحيات التالية للمجموعة:</p>
+                        <ul class="mb-3">
+                            <li>الأقسام المسموح بالوصول إليها</li>
+                            <li>الوحدات المسموح بالوصول إليها</li>
+                            <li>القوالب المسموح بالوصول إليها</li>
+                            <li>الصلاحيات التفصيلية (عرض، إضافة، تعديل، حذف، طباعة) لكل وحدة</li>
+                        </ul>
+                        <div class="alert alert-warning mb-0">
+                            <i class="fas fa-info-circle me-2"></i>
+                            يحصل جميع المستخدمين في هذه المجموعة على الصلاحيات المحددة هنا تلقائيًا.
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
+
+        <!-- Columna principal de contenido -->
+        <div class="col-lg-9">
+            <form method="post" id="permissionsForm">
+                {% csrf_token %}
+                <!-- Hidden field for group ID -->
+                <input type="hidden" name="group" value="{{ group.id }}">
+
+                <!-- Sección de departamentos -->
+                <div class="card mb-4 animate__animated animate__fadeIn" id="departments-section">
+                    <div class="card-header bg-primary text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-building me-2"></i>
+                                الأقسام المسموح بها
+                            </h5>
+                            <button type="button" class="btn btn-sm btn-light select-all" data-target="departments">
+                                <i class="fas fa-check-double me-1"></i>
+                                تحديد الكل
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Barra de búsqueda para departamentos -->
+                        <div class="search-container">
+                            <input type="text" class="form-control search-input" id="deptSearch" placeholder="البحث في الأقسام...">
+                            <i class="fas fa-search search-icon"></i>
+                        </div>
+
+                        <!-- Lista de departamentos -->
+                        <div class="departments-list">
+                            {{ form.departments }}
+                        </div>
+                        <div class="form-text text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            اختر الأقسام التي يمكن للمجموعة الوصول إليها. سيتم تحديث قائمة الوحدات المتاحة تلقائيًا.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección de módulos -->
+                <div class="card mb-4 animate__animated animate__fadeIn" id="modules-section">
+                    <div class="card-header bg-success text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-puzzle-piece me-2"></i>
+                                الوحدات المسموح بها
+                            </h5>
+                            <div>
+                                <button type="button" class="btn btn-sm btn-light filter-modules-btn me-1" data-filter="all">
+                                    <i class="fas fa-filter me-1"></i>
+                                    عرض الكل
+                                </button>
+                                <button type="button" class="btn btn-sm btn-light select-all" data-target="modules">
+                                    <i class="fas fa-check-double me-1"></i>
+                                    تحديد الكل
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Barra de búsqueda para módulos -->
+                        <div class="search-container">
+                            <input type="text" class="form-control search-input" id="moduleSearch" placeholder="البحث في الوحدات...">
+                            <i class="fas fa-search search-icon"></i>
+                        </div>
+
+                        <!-- Filtros de departamentos para módulos -->
+                        <div class="permissions-filter">
+                            <h6 class="mb-2">تصفية حسب القسم:</h6>
+                            <div class="departments-filter" id="departmentsFilter">
+                                <!-- سيتم إضافة الفلاتر هنا بواسطة جافاسكريبت -->
+                            </div>
+                        </div>
+
+                        <!-- Lista de módulos -->
+                        <div class="modules-list">
+                            {{ form.modules }}
+                        </div>
+                        <div class="form-text text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            اختر الوحدات التي يمكن للمجموعة الوصول إليها. يتم عرض الوحدات المرتبطة بالأقسام المحددة فقط.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección de plantillas -->
+                <div class="card mb-4 animate__animated animate__fadeIn" id="templates-section">
+                    <div class="card-header bg-info text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-file-code me-2"></i>
+                                القوالب المسموح بها
+                            </h5>
+                            <div>
+                                <button type="button" class="btn btn-sm btn-light filter-templates-btn me-1" data-filter="all">
+                                    <i class="fas fa-filter me-1"></i>
+                                    عرض الكل
+                                </button>
+                                <button type="button" class="btn btn-sm btn-light select-all" data-target="templates">
+                                    <i class="fas fa-check-double me-1"></i>
+                                    تحديد الكل
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Barra de búsqueda para plantillas -->
+                        <div class="search-container">
+                            <input type="text" class="form-control search-input" id="templateSearch" placeholder="البحث في القوالب...">
+                            <i class="fas fa-search search-icon"></i>
+                        </div>
+
+                        <!-- Filtros de módulos para plantillas -->
+                        <div class="permissions-filter">
+                            <h6 class="mb-2">تصفية حسب الوحدة:</h6>
+                            <div class="modules-filter" id="modulesFilter">
+                                <!-- سيتم إضافة الفلاتر هنا بواسطة جافاسكريبت -->
+                            </div>
+                        </div>
+
+                        <!-- Lista de plantillas -->
+                        <div class="templates-list">
+                            {{ form.templates }}
+                        </div>
+                        <div class="form-text text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            اختر القوالب التي يمكن للمجموعة الوصول إليها. يمكنك تصفية القوالب حسب الوحدة.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección de permisos detallados -->
+                <div class="card card-permissions mb-4 animate__animated animate__fadeIn" id="detailed-permissions-section">
+                    <div class="card-header bg-dark text-white">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-key me-2"></i>
+                                صلاحيات المجموعة التفصيلية
+                            </h5>
+                            <div class="permissions-filter-controls">
+                                <button type="button" class="btn btn-sm btn-light filter-permissions-btn me-1" data-filter="all">
+                                    <i class="fas fa-filter me-1"></i>
+                                    عرض الكل
+                                </button>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <button type="button" class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                        تصفية حسب القسم
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end" id="departmentPermissionsFilter">
+                                        <!-- سيتم إضافة الأقسام هنا بواسطة جافاسكريبت -->
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <!-- Pestañas de tipos de permisos -->
+                        <ul class="nav nav-tabs nav-fill mb-4" id="permissionTab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="view-tab" data-bs-toggle="tab" data-bs-target="#view" type="button" role="tab" aria-controls="view" aria-selected="true">
+                                    <i class="fas fa-eye me-1"></i> العرض
+                                    <span class="permission-counter" id="viewTabCount">0</span>
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="add-tab" data-bs-toggle="tab" data-bs-target="#add" type="button" role="tab" aria-controls="add" aria-selected="false">
+                                    <i class="fas fa-plus-circle me-1"></i> الإضافة
+                                    <span class="permission-counter" id="addTabCount">0</span>
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="change-tab" data-bs-toggle="tab" data-bs-target="#change" type="button" role="tab" aria-controls="change" aria-selected="false">
+                                    <i class="fas fa-edit me-1"></i> التعديل
+                                    <span class="permission-counter" id="changeTabCount">0</span>
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="delete-tab" data-bs-toggle="tab" data-bs-target="#delete" type="button" role="tab" aria-controls="delete" aria-selected="false">
+                                    <i class="fas fa-trash-alt me-1"></i> الحذف
+                                    <span class="permission-counter" id="deleteTabCount">0</span>
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="print-tab" data-bs-toggle="tab" data-bs-target="#print" type="button" role="tab" aria-controls="print" aria-selected="false">
+                                    <i class="fas fa-print me-1"></i> الطباعة
+                                    <span class="permission-counter" id="printTabCount">0</span>
+                                </button>
+                            </li>
+                        </ul>
+
+                        <!-- Contenido de las pestañas -->
+                        <div class="tab-content" id="permissionTabContent">
+                            <!-- Pestaña de permisos de visualización -->
+                            <div class="tab-pane fade show active" id="view" role="tabpanel" aria-labelledby="view-tab">
+                                <div class="permission-section view">
+                                    <!-- Barra de búsqueda para permisos de visualización -->
+                                    <div class="search-container">
+                                        <input type="text" class="form-control search-input" id="viewPermSearch" placeholder="البحث في صلاحيات العرض...">
+                                        <i class="fas fa-search search-icon"></i>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h5 class="mb-0 text-primary">صلاحيات العرض</h5>
+                                        <div>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary filter-by-module-btn me-1" data-permission-type="view">
+                                                <i class="fas fa-filter me-1"></i>
+                                                تصفية حسب الوحدة
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-primary select-all" data-target="view_permissions">
+                                                <i class="fas fa-check-double me-1"></i>
+                                                تحديد الكل
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Filtros de módulos para permisos de visualización -->
+                                    <div class="permissions-filter">
+                                        <div class="module-filter" id="viewModuleFilter">
+                                            <!-- سيتم إضافة الفلاتر هنا بواسطة جافاسكريبت -->
+                                        </div>
+                                    </div>
+
+                                    <!-- Lista de permisos de visualización -->
+                                    <div class="permissions-list">
+                                        {{ form.view_permissions }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pestaña de permisos de adición -->
+                            <div class="tab-pane fade" id="add" role="tabpanel" aria-labelledby="add-tab">
+                                <div class="permission-section add">
+                                    <!-- Barra de búsqueda para permisos de adición -->
+                                    <div class="search-container">
+                                        <input type="text" class="form-control search-input" id="addPermSearch" placeholder="البحث في صلاحيات الإضافة...">
+                                        <i class="fas fa-search search-icon"></i>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h5 class="mb-0 text-success">صلاحيات الإضافة</h5>
+                                        <div>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary filter-by-module-btn me-1" data-permission-type="add">
+                                                <i class="fas fa-filter me-1"></i>
+                                                تصفية حسب الوحدة
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-success select-all" data-target="add_permissions">
+                                                <i class="fas fa-check-double me-1"></i>
+                                                تحديد الكل
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Filtros de módulos para permisos de adición -->
+                                    <div class="permissions-filter">
+                                        <div class="module-filter" id="addModuleFilter">
+                                            <!-- سيتم إضافة الفلاتر هنا بواسطة جافاسكريبت -->
+                                        </div>
+                                    </div>
+
+                                    <!-- Lista de permisos de adición -->
+                                    <div class="permissions-list">
+                                        {{ form.add_permissions }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pestaña de permisos de modificación -->
+                            <div class="tab-pane fade" id="change" role="tabpanel" aria-labelledby="change-tab">
+                                <div class="permission-section change">
+                                    <!-- Barra de búsqueda para permisos de modificación -->
+                                    <div class="search-container">
+                                        <input type="text" class="form-control search-input" id="changePermSearch" placeholder="البحث في صلاحيات التعديل...">
+                                        <i class="fas fa-search search-icon"></i>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h5 class="mb-0 text-warning">صلاحيات التعديل</h5>
+                                        <div>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary filter-by-module-btn me-1" data-permission-type="change">
+                                                <i class="fas fa-filter me-1"></i>
+                                                تصفية حسب الوحدة
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-warning select-all" data-target="change_permissions">
+                                                <i class="fas fa-check-double me-1"></i>
+                                                تحديد الكل
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Filtros de módulos para permisos de modificación -->
+                                    <div class="permissions-filter">
+                                        <div class="module-filter" id="changeModuleFilter">
+                                            <!-- سيتم إضافة الفلاتر هنا بواسطة جافاسكريبت -->
+                                        </div>
+                                    </div>
+
+                                    <!-- Lista de permisos de modificación -->
+                                    <div class="permissions-list">
+                                        {{ form.change_permissions }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pestaña de permisos de eliminación -->
+                            <div class="tab-pane fade" id="delete" role="tabpanel" aria-labelledby="delete-tab">
+                                <div class="permission-section delete">
+                                    <!-- Barra de búsqueda para permisos de eliminación -->
+                                    <div class="search-container">
+                                        <input type="text" class="form-control search-input" id="deletePermSearch" placeholder="البحث في صلاحيات الحذف...">
+                                        <i class="fas fa-search search-icon"></i>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h5 class="mb-0 text-danger">صلاحيات الحذف</h5>
+                                        <div>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary filter-by-module-btn me-1" data-permission-type="delete">
+                                                <i class="fas fa-filter me-1"></i>
+                                                تصفية حسب الوحدة
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-danger select-all" data-target="delete_permissions">
+                                                <i class="fas fa-check-double me-1"></i>
+                                                تحديد الكل
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Filtros de módulos para permisos de eliminación -->
+                                    <div class="permissions-filter">
+                                        <div class="module-filter" id="deleteModuleFilter">
+                                            <!-- سيتم إضافة الفلاتر هنا بواسطة جافاسكريبت -->
+                                        </div>
+                                    </div>
+
+                                    <!-- Lista de permisos de eliminación -->
+                                    <div class="permissions-list">
+                                        {{ form.delete_permissions }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Pestaña de permisos de impresión -->
+                            <div class="tab-pane fade" id="print" role="tabpanel" aria-labelledby="print-tab">
+                                <div class="permission-section print">
+                                    <!-- Barra de búsqueda para permisos de impresión -->
+                                    <div class="search-container">
+                                        <input type="text" class="form-control search-input" id="printPermSearch" placeholder="البحث في صلاحيات الطباعة...">
+                                        <i class="fas fa-search search-icon"></i>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h5 class="mb-0 text-info">صلاحيات الطباعة</h5>
+                                        <div>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary filter-by-module-btn me-1" data-permission-type="print">
+                                                <i class="fas fa-filter me-1"></i>
+                                                تصفية حسب الوحدة
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-info select-all" data-target="print_permissions">
+                                                <i class="fas fa-check-double me-1"></i>
+                                                تحديد الكل
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Filtros de módulos para permisos de impresión -->
+                                    <div class="permissions-filter">
+                                        <div class="module-filter" id="printModuleFilter">
+                                            <!-- سيتم إضافة الفلاتر هنا بواسطة جافاسكريبت -->
+                                        </div>
+                                    </div>
+
+                                    <!-- Lista de permisos de impresión -->
+                                    <div class="permissions-list">
+                                        {{ form.print_permissions }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Barra de acciones fija -->
+                <div class="actions-bar animate__animated animate__fadeInUp">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" id="autoSaveSwitch">
+                        <label class="form-check-label" for="autoSaveSwitch">تفعيل الحفظ التلقائي عند التغيير</label>
+                    </div>
+                    <div>
+                        <a href="{% url 'administrator:group_permission_list' %}" class="btn btn-outline-secondary me-2">
+                            <i class="fas fa-times me-1"></i> إلغاء
+                        </a>
+                        <button type="button" class="btn btn-outline-primary me-2" id="previewChangesBtn">
+                            <i class="fas fa-eye me-1"></i> معاينة التغييرات
+                        </button>
+                        <button type="submit" class="btn btn-success" id="savePermissionsBtn">
+                            <i class="fas fa-save me-1"></i> حفظ صلاحيات المجموعة
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Indicador de guardado -->
+                <div class="save-indicator alert alert-success shadow animate__animated animate__fadeInDown" id="saveIndicator">
+                    <i class="fas fa-check-circle me-2"></i> تم حفظ التغييرات بنجاح
+                </div>
+
+                <!-- Indicador de carga -->
+                <div class="spinner-overlay" id="loadingOverlay">
+                    <div class="spinner-container animate__animated animate__fadeIn">
+                        <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+                            <span class="visually-hidden">جاري التحميل...</span>
+                        </div>
+                        <h5 class="mb-2">جاري حفظ التغييرات</h5>
+                        <p class="mb-0 text-muted">يرجى الانتظار...</p>
+                    </div>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -225,29 +1183,784 @@
 
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.all.min.js"></script>
 <script>
+    // Configurar CSRF token para solicitudes AJAX
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    const csrftoken = getCookie('csrftoken');
+
+    $.ajaxSetup({
+        beforeSend: function(xhr, settings) {
+            if (!/^(GET|HEAD|OPTIONS|TRACE)$/i.test(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+
     $(document).ready(function() {
-        // Initialize Select2 elements
+        // Ocultar el indicador de carga de la página
+        $('#pageLoadingOverlay').fadeOut();
+
+        // Inicializar tooltips
+        $('[data-bs-toggle="tooltip"]').tooltip();
+
+        // Inicializar elementos Select2 con mejoras
         $('.form-select').select2({
             theme: 'bootstrap-5',
-            width: '100%'
+            width: '100%',
+            placeholder: 'اختر...',
+            allowClear: true,
+            dir: 'rtl',
+            language: {
+                noResults: function() {
+                    return "لا توجد نتائج";
+                },
+                searching: function() {
+                    return "جاري البحث...";
+                },
+                inputTooShort: function() {
+                    return "الرجاء إدخال حرفين أو أكثر للبحث";
+                },
+                loadingMore: function() {
+                    return "جاري تحميل المزيد من النتائج...";
+                },
+                removeAllItems: function() {
+                    return "إزالة كل العناصر";
+                }
+            },
+            templateResult: formatSelectOption,
+            templateSelection: formatSelectOption
         });
 
-        // Select All buttons functionality
+        // Función para formatear las opciones de Select2
+        function formatSelectOption(option) {
+            if (!option.id) {
+                return option.text;
+            }
+
+            // Añadir iconos según el tipo de elemento
+            let $option = $(
+                '<span><i class="fas fa-check-circle me-2 text-success"></i>' + option.text + '</span>'
+            );
+
+            return $option;
+        }
+
+        // Mapeo de datos para relaciones entre entidades
+        let departmentModulesMap = {};
+        let moduleTemplatesMap = {};
+        let modulePermissionsMap = {};
+        let departmentPermissionsMap = {};
+
+        // Contadores para estadísticas
+        let permissionCounters = {
+            view: 0,
+            add: 0,
+            change: 0,
+            delete: 0,
+            print: 0,
+            total: 0
+        };
+
+        // Obtener datos de los departamentos y módulos
+        function initializeMappings() {
+            console.log("Inicializando mapeos de datos...");
+
+            // Mapear departamentos a módulos
+            $('#id_departments option').each(function() {
+                const deptId = $(this).val();
+                const deptName = $(this).text();
+                departmentModulesMap[deptId] = [];
+                departmentPermissionsMap[deptId] = [];
+
+                // Añadir filtro de departamento para módulos
+                $('#departmentsFilter').append(`
+                    <span class="filter-badge" data-dept-id="${deptId}" data-bs-toggle="tooltip" title="تصفية الوحدات حسب قسم ${deptName}">
+                        ${deptName}
+                    </span>
+                `);
+
+                // Añadir al filtro de permisos por departamento
+                $('#departmentPermissionsFilter').append(`
+                    <li><a class="dropdown-item filter-dept-permission" data-dept-id="${deptId}" href="#">${deptName}</a></li>
+                `);
+            });
+
+            // Mapear módulos a departamentos y plantillas
+            $('#id_modules option').each(function() {
+                const moduleId = $(this).val();
+                const moduleText = $(this).text();
+                const deptName = moduleText.split(' - ')[0];
+                const moduleName = moduleText.split(' - ')[1] || moduleText;
+
+                // Encontrar el ID del departamento por nombre
+                let deptId = null;
+                $('#id_departments option').each(function() {
+                    if ($(this).text() === deptName) {
+                        deptId = $(this).val();
+                    }
+                });
+
+                if (deptId) {
+                    departmentModulesMap[deptId].push({
+                        id: moduleId,
+                        name: moduleName,
+                        fullName: moduleText
+                    });
+                }
+
+                moduleTemplatesMap[moduleId] = [];
+                modulePermissionsMap[moduleId] = [];
+            });
+
+            // Mapear plantillas a módulos
+            $('#id_templates option').each(function() {
+                const templateId = $(this).val();
+                const templateText = $(this).text();
+                const parts = templateText.split(' - ');
+
+                // Buscar el módulo correspondiente
+                $('#id_modules option').each(function() {
+                    const moduleText = $(this).text();
+                    if (parts.length > 1 && moduleText.includes(parts[0])) {
+                        moduleTemplatesMap[$(this).val()].push({
+                            id: templateId,
+                            name: templateText
+                        });
+                    }
+                });
+            });
+
+            // Mapear permisos a módulos y departamentos
+            ['view', 'add', 'change', 'delete', 'print'].forEach(function(permType) {
+                $(`#id_${permType}_permissions option`).each(function() {
+                    const permId = $(this).val();
+                    const permText = $(this).text();
+                    const parts = permText.split(' - ');
+
+                    if (parts.length > 1) {
+                        const deptName = parts[0];
+                        const moduleName = parts[1];
+
+                        // Encontrar el módulo correspondiente
+                        $('#id_modules option').each(function() {
+                            const moduleText = $(this).text();
+                            if (moduleText.includes(deptName) && moduleText.includes(moduleName)) {
+                                modulePermissionsMap[$(this).val()].push({
+                                    id: permId,
+                                    type: permType,
+                                    name: permText
+                                });
+                            }
+                        });
+
+                        // Encontrar el departamento correspondiente
+                        $('#id_departments option').each(function() {
+                            if ($(this).text() === deptName) {
+                                departmentPermissionsMap[$(this).val()].push({
+                                    id: permId,
+                                    type: permType,
+                                    name: permText
+                                });
+                            }
+                        });
+                    }
+                });
+            });
+
+            // Contar permisos seleccionados inicialmente
+            ['view', 'add', 'change', 'delete', 'print'].forEach(function(permType) {
+                permissionCounters[permType] = $(`#id_${permType}_permissions option:selected`).length;
+            });
+
+            // Actualizar contadores totales
+            updatePermissionCounters();
+
+            console.log("Mapeos inicializados correctamente");
+        }
+
+        // Actualizar contadores de permisos
+        function updatePermissionCounters() {
+            permissionCounters.total = 0;
+
+            // Actualizar contadores individuales
+            for (const type in permissionCounters) {
+                if (type !== 'total') {
+                    permissionCounters[type] = $(`#id_${type}_permissions option:selected`).length;
+                    permissionCounters.total += permissionCounters[type];
+
+                    // Actualizar contadores en la interfaz
+                    $(`#${type}Count`).text(permissionCounters[type]);
+                    $(`#${type}TabCount`).text(permissionCounters[type]);
+                }
+            }
+
+            // Actualizar contador total
+            $('#permCount').text(permissionCounters.total);
+
+            // Actualizar contadores de departamentos y módulos
+            $('#deptCount').text($('#id_departments option:selected').length);
+            $('#moduleCount').text($('#id_modules option:selected').length);
+        }
+
+        // Inicializar mapeos
+        initializeMappings();
+
+        // Navegación suave al hacer clic en los enlaces de navegación
+        $('#permissionsNav a').on('click', function(e) {
+            e.preventDefault();
+
+            // Actualizar clase activa
+            $('#permissionsNav a').removeClass('active');
+            $(this).addClass('active');
+
+            // Obtener el destino
+            const target = $(this.getAttribute('href'));
+
+            // Desplazamiento suave
+            if (target.length) {
+                $('html, body').animate({
+                    scrollTop: target.offset().top - 20
+                }, 500);
+            }
+        });
+
+        // Funcionalidad de filtrado de módulos por departamento
+        $('#id_departments').on('change', function() {
+            updateModulesFilter();
+            updatePermissionCounters();
+        });
+
+        function updateModulesFilter() {
+            const selectedDepts = $('#id_departments').val() || [];
+
+            // Actualizar filtros de departamentos
+            $('.filter-badge').removeClass('active');
+            selectedDepts.forEach(function(deptId) {
+                $(`.filter-badge[data-dept-id="${deptId}"]`).addClass('active');
+            });
+
+            // Si no hay departamentos seleccionados, mostrar todos los módulos
+            if (selectedDepts.length === 0) {
+                $('#id_modules option').prop('disabled', false);
+                return;
+            }
+
+            // Filtrar módulos por departamentos seleccionados
+            $('#id_modules option').each(function() {
+                const moduleId = $(this).val();
+                const moduleText = $(this).text();
+                let shouldEnable = false;
+
+                selectedDepts.forEach(function(deptId) {
+                    departmentModulesMap[deptId].forEach(function(module) {
+                        if (module.fullName === moduleText) {
+                            shouldEnable = true;
+                        }
+                    });
+                });
+
+                $(this).prop('disabled', !shouldEnable);
+            });
+
+            // Actualizar Select2 para reflejar los cambios
+            $('#id_modules').trigger('change');
+        }
+
+        // Filtrar módulos al hacer clic en las etiquetas de departamento
+        $(document).on('click', '.filter-badge', function() {
+            const deptId = $(this).data('dept-id');
+            const currentSelection = $('#id_departments').val() || [];
+
+            if ($(this).hasClass('active')) {
+                // Quitar del filtro
+                const newSelection = currentSelection.filter(id => id !== deptId);
+                $('#id_departments').val(newSelection).trigger('change');
+            } else {
+                // Añadir al filtro
+                if (!currentSelection.includes(deptId)) {
+                    currentSelection.push(deptId);
+                    $('#id_departments').val(currentSelection).trigger('change');
+                }
+            }
+        });
+
+        // Filtrar permisos por departamento
+        $(document).on('click', '.filter-dept-permission', function(e) {
+            e.preventDefault();
+            const deptId = $(this).data('dept-id');
+
+            // Filtrar permisos por departamento
+            ['view', 'add', 'change', 'delete', 'print'].forEach(function(permType) {
+                $(`#id_${permType}_permissions option`).each(function() {
+                    const permId = $(this).val();
+                    const permText = $(this).text();
+                    let shouldShow = false;
+
+                    departmentPermissionsMap[deptId].forEach(function(perm) {
+                        if (perm.id === permId && perm.type === permType) {
+                            shouldShow = true;
+                        }
+                    });
+
+                    $(this).prop('disabled', !shouldShow);
+                });
+
+                // Actualizar Select2
+                $(`#id_${permType}_permissions`).trigger('change');
+            });
+
+            // Actualizar UI
+            $('.filter-permissions-btn').text(`تصفية: ${$(this).text()}`);
+        });
+
+        // Mostrar todos los permisos
+        $(document).on('click', '.filter-permissions-btn', function() {
+            ['view', 'add', 'change', 'delete', 'print'].forEach(function(permType) {
+                $(`#id_${permType}_permissions option`).prop('disabled', false);
+                $(`#id_${permType}_permissions`).trigger('change');
+            });
+
+            $(this).text('عرض الكل');
+        });
+
+        // Filtrar permisos por módulo
+        $(document).on('click', '.filter-by-module-btn', function() {
+            const permType = $(this).data('permission-type');
+            const moduleFilterId = `#${permType}ModuleFilter`;
+
+            // Limpiar y actualizar filtros de módulos
+            $(moduleFilterId).empty();
+
+            // Obtener módulos seleccionados
+            const selectedModules = $('#id_modules').val() || [];
+
+            if (selectedModules.length === 0) {
+                $(moduleFilterId).append(`<div class="alert alert-info">الرجاء اختيار وحدات أولاً</div>`);
+                return;
+            }
+
+            // Añadir filtros de módulos
+            selectedModules.forEach(function(moduleId) {
+                const moduleName = $(`#id_modules option[value="${moduleId}"]`).text();
+                $(moduleFilterId).append(`
+                    <span class="filter-badge module-filter-badge" data-module-id="${moduleId}" data-perm-type="${permType}">${moduleName}</span>
+                `);
+            });
+        });
+
+        // Filtrar permisos al hacer clic en las etiquetas de módulo
+        $(document).on('click', '.module-filter-badge', function() {
+            const moduleId = $(this).data('module-id');
+            const permType = $(this).data('perm-type');
+
+            // Resaltar la etiqueta seleccionada
+            $('.module-filter-badge').removeClass('active');
+            $(this).addClass('active');
+
+            // Filtrar permisos por módulo
+            $(`#id_${permType}_permissions option`).each(function() {
+                const permId = $(this).val();
+                let shouldShow = false;
+
+                modulePermissionsMap[moduleId].forEach(function(perm) {
+                    if (perm.id === permId && perm.type === permType) {
+                        shouldShow = true;
+                    }
+                });
+
+                $(this).prop('disabled', !shouldShow);
+            });
+
+            // Actualizar Select2
+            $(`#id_${permType}_permissions`).trigger('change');
+        });
+
+        // Funcionalidad de botones "Seleccionar todo"
         $('.select-all').click(function() {
             var targetSelect = $(this).data('target');
             var selectElement = $('#id_' + targetSelect);
 
-            // Get all available options
-            var allOptions = [];
-            selectElement.find('option').each(function() {
-                allOptions.push($(this).val());
+            // Obtener todas las opciones disponibles (no deshabilitadas)
+            var availableOptions = [];
+            selectElement.find('option:not(:disabled)').each(function() {
+                availableOptions.push($(this).val());
             });
 
-            // Set all options as selected
-            selectElement.val(allOptions);
+            // Establecer todas las opciones como seleccionadas
+            selectElement.val(availableOptions);
             selectElement.trigger('change');
         });
+
+        // Previsualización de cambios
+        $('#previewChangesBtn').click(function() {
+            const selectedDepts = $('#id_departments').val() || [];
+            const selectedModules = $('#id_modules').val() || [];
+            const selectedTemplates = $('#id_templates').val() || [];
+
+            let deptNames = [];
+            let moduleNames = [];
+            let templateNames = [];
+
+            // Obtener nombres
+            selectedDepts.forEach(function(deptId) {
+                deptNames.push($(`#id_departments option[value="${deptId}"]`).text());
+            });
+
+            selectedModules.forEach(function(moduleId) {
+                moduleNames.push($(`#id_modules option[value="${moduleId}"]`).text());
+            });
+
+            selectedTemplates.forEach(function(templateId) {
+                templateNames.push($(`#id_templates option[value="${templateId}"]`).text());
+            });
+
+            // Contar permisos por tipo
+            const permCounts = {
+                view: $('#id_view_permissions').val()?.length || 0,
+                add: $('#id_add_permissions').val()?.length || 0,
+                change: $('#id_change_permissions').val()?.length || 0,
+                delete: $('#id_delete_permissions').val()?.length || 0,
+                print: $('#id_print_permissions').val()?.length || 0
+            };
+
+            // Mostrar resumen
+            Swal.fire({
+                title: 'ملخص التغييرات',
+                html: `
+                    <div class="text-start">
+                        <h5>الأقسام (${deptNames.length})</h5>
+                        <p>${deptNames.join(', ') || 'لا يوجد'}</p>
+
+                        <h5>الوحدات (${moduleNames.length})</h5>
+                        <p>${moduleNames.join(', ') || 'لا يوجد'}</p>
+
+                        <h5>القوالب (${templateNames.length})</h5>
+                        <p>${templateNames.length > 10 ? templateNames.length + ' قالب' : (templateNames.join(', ') || 'لا يوجد')}</p>
+
+                        <h5>الصلاحيات</h5>
+                        <ul>
+                            <li>عرض: ${permCounts.view}</li>
+                            <li>إضافة: ${permCounts.add}</li>
+                            <li>تعديل: ${permCounts.change}</li>
+                            <li>حذف: ${permCounts.delete}</li>
+                            <li>طباعة: ${permCounts.print}</li>
+                        </ul>
+                    </div>
+                `,
+                icon: 'info',
+                confirmButtonText: 'موافق'
+            });
+        });
+
+        // Guardar con confirmación
+        $('#savePermissionsBtn').click(function(e) {
+            e.preventDefault();
+
+            // Verificar que el campo group está presente
+            if (!$('input[name="group"]').val()) {
+                Swal.fire({
+                    title: 'خطأ',
+                    text: 'حقل المجموعة مطلوب. يرجى تحديث الصفحة والمحاولة مرة أخرى.',
+                    icon: 'error',
+                    confirmButtonText: 'حسناً'
+                });
+                return;
+            }
+
+            Swal.fire({
+                title: 'تأكيد الحفظ',
+                text: 'هل أنت متأكد من حفظ هذه الصلاحيات للمجموعة؟',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'نعم، حفظ',
+                cancelButtonText: 'إلغاء'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Mostrar indicador de carga
+                    $('#loadingOverlay').show();
+
+                    // Si está habilitado el modo AJAX, usar saveFormAjax
+                    if ($('#autoSaveSwitch').is(':checked')) {
+                        saveFormAjax();
+                    } else {
+                        // Enviar el formulario normalmente
+                        $('form').submit();
+                    }
+                }
+            });
+        });
+
+        // Funcionalidad de guardado automático
+        $('#autoSaveSwitch').change(function() {
+            if ($(this).is(':checked')) {
+                // Habilitar guardado automático
+                $('.form-select').on('change.autosave', function() {
+                    // Guardar automáticamente
+                    saveFormAjax();
+                });
+
+                Swal.fire({
+                    title: 'تم تفعيل الحفظ التلقائي',
+                    text: 'سيتم حفظ التغييرات تلقائياً عند تغيير أي إعداد',
+                    icon: 'info',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+            } else {
+                // Deshabilitar guardado automático
+                $('.form-select').off('change.autosave');
+            }
+        });
+
+        // Botón de seleccionar todos los permisos
+        $('#selectAllPermissions').click(function() {
+            Swal.fire({
+                title: 'تأكيد تحديد جميع الصلاحيات',
+                text: 'هل أنت متأكد من رغبتك في منح جميع الصلاحيات لهذه المجموعة؟',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'نعم، منح جميع الصلاحيات',
+                cancelButtonText: 'إلغاء',
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#dc3545',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Mostrar indicador de carga
+                    $('#loadingOverlay').show();
+
+                    // Obtener el ID del grupo de la URL
+                    const urlParts = window.location.pathname.split('/');
+                    const groupId = urlParts[urlParts.length - 2];
+
+                    // Enviar solicitud AJAX para seleccionar todos los permisos
+                    $.ajax({
+                        url: `/administrator/group-permissions/${groupId}/select-all/`,
+                        type: 'POST',
+                        headers: {
+                            'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val(),
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        success: function(response) {
+                            // Ocultar indicador de carga
+                            $('#loadingOverlay').hide();
+
+                            // Mostrar mensaje de éxito
+                            Swal.fire({
+                                title: 'تم منح جميع الصلاحيات',
+                                text: response.message,
+                                icon: 'success',
+                                confirmButtonText: 'حسناً'
+                            }).then(() => {
+                                // Recargar la página para mostrar los cambios
+                                window.location.reload();
+                            });
+                        },
+                        error: function(xhr) {
+                            // Ocultar indicador de carga
+                            $('#loadingOverlay').hide();
+
+                            // Mostrar mensaje de error
+                            let errorMessage = 'حدث خطأ أثناء منح الصلاحيات';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMessage = xhr.responseJSON.message;
+                            }
+
+                            Swal.fire({
+                                title: 'خطأ',
+                                text: errorMessage,
+                                icon: 'error',
+                                confirmButtonText: 'حسناً'
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+        // Botón de limpiar todos los permisos
+        $('#clearAllPermissions').click(function() {
+            Swal.fire({
+                title: 'تأكيد إزالة جميع الصلاحيات',
+                text: 'هل أنت متأكد من رغبتك في إزالة جميع الصلاحيات من هذه المجموعة؟',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'نعم، إزالة جميع الصلاحيات',
+                cancelButtonText: 'إلغاء',
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Mostrar indicador de carga
+                    $('#loadingOverlay').show();
+
+                    // Obtener el ID del grupo de la URL
+                    const urlParts = window.location.pathname.split('/');
+                    const groupId = urlParts[urlParts.length - 2];
+
+                    // Enviar solicitud AJAX para limpiar todos los permisos
+                    $.ajax({
+                        url: `/administrator/group-permissions/${groupId}/clear-all/`,
+                        type: 'POST',
+                        headers: {
+                            'X-CSRFToken': $('input[name="csrfmiddlewaretoken"]').val(),
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        success: function(response) {
+                            // Ocultar indicador de carga
+                            $('#loadingOverlay').hide();
+
+                            // Mostrar mensaje de éxito
+                            Swal.fire({
+                                title: 'تم إزالة جميع الصلاحيات',
+                                text: response.message,
+                                icon: 'success',
+                                confirmButtonText: 'حسناً'
+                            }).then(() => {
+                                // Recargar la página para mostrar los cambios
+                                window.location.reload();
+                            });
+                        },
+                        error: function(xhr) {
+                            // Ocultar indicador de carga
+                            $('#loadingOverlay').hide();
+
+                            // Mostrar mensaje de error
+                            let errorMessage = 'حدث خطأ أثناء إزالة الصلاحيات';
+                            if (xhr.responseJSON && xhr.responseJSON.message) {
+                                errorMessage = xhr.responseJSON.message;
+                            }
+
+                            Swal.fire({
+                                title: 'خطأ',
+                                text: errorMessage,
+                                icon: 'error',
+                                confirmButtonText: 'حسناً'
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+        // Función para guardar el formulario mediante AJAX
+        function saveFormAjax() {
+            // Mostrar indicador de carga
+            $('#loadingOverlay').fadeIn();
+
+            // Verificar que el campo group está presente
+            if (!$('input[name="group"]').val()) {
+                $('#loadingOverlay').fadeOut();
+                Swal.fire({
+                    title: 'خطأ',
+                    text: 'حقل المجموعة مطلوب. يرجى تحديث الصفحة والمحاولة مرة أخرى.',
+                    icon: 'error',
+                    confirmButtonText: 'حسناً'
+                });
+                return;
+            }
+
+            // Obtener datos del formulario
+            const formData = $('form').serialize();
+
+            // Enviar solicitud AJAX
+            $.ajax({
+                url: window.location.href,
+                type: 'POST',
+                data: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                success: function(response) {
+                    // Ocultar indicador de carga
+                    $('#loadingOverlay').fadeOut();
+
+                    // Mostrar indicador de éxito
+                    showSaveIndicator();
+
+                    // Actualizar contadores
+                    updateModuleCount();
+                    updatePermissionCounts();
+                },
+                error: function(xhr, status, error) {
+                    // Ocultar indicador de carga
+                    $('#loadingOverlay').fadeOut();
+
+                    let errorMessage = 'حدث خطأ أثناء حفظ التغييرات';
+
+                    // Intentar extraer mensaje de error del servidor
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMessage = xhr.responseJSON.message;
+                    } else if (xhr.responseText) {
+                        try {
+                            const response = JSON.parse(xhr.responseText);
+                            if (response.message) {
+                                errorMessage = response.message;
+                            } else if (response.error) {
+                                errorMessage = response.error;
+                            } else if (response.__all__) {
+                                errorMessage = response.__all__[0];
+                            } else {
+                                // Buscar cualquier campo con error
+                                for (const field in response) {
+                                    if (response.hasOwnProperty(field)) {
+                                        errorMessage = `${field}: ${response[field]}`;
+                                        break;
+                                    }
+                                }
+                            }
+                        } catch (e) {
+                            // Si no es JSON, intentar extraer mensaje de error del HTML
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(xhr.responseText, 'text/html');
+                            const errorElements = doc.querySelectorAll('.alert-danger, .errorlist');
+                            if (errorElements.length > 0) {
+                                errorMessage = errorElements[0].textContent.trim();
+                            }
+                        }
+                    }
+
+                    // Mostrar error
+                    Swal.fire({
+                        title: 'خطأ في الحفظ',
+                        text: errorMessage,
+                        icon: 'error',
+                        confirmButtonText: 'حسناً'
+                    });
+
+                    console.error('Error saving form:', error, xhr.responseText);
+                }
+            });
+        }
+
+        // Mostrar indicador de guardado
+        function showSaveIndicator() {
+            const indicator = $('#saveIndicator');
+            indicator.fadeIn();
+
+            setTimeout(function() {
+                indicator.fadeOut();
+            }, 3000);
+        }
+
+        // Inicializar filtros
+        updateModulesFilter();
     });
 </script>
 {% endblock %}
