@@ -1,33 +1,74 @@
-from .models import SystemSettings, Department, Module, UserDepartmentPermission, UserModulePermission
+from django.db import ProgrammingError, OperationalError
+from django.conf import settings as django_settings
+
+# Import models with try/except to handle case when tables don't exist yet
+try:
+    from .models import SystemSettings, Department, Module, UserDepartmentPermission, UserModulePermission
+    MODELS_IMPORTED = True
+except (ProgrammingError, OperationalError):
+    MODELS_IMPORTED = False
+
+# Create a fallback settings class
+class DefaultSystemSettings:
+    """Default settings when database table doesn't exist"""
+    language = 'ar'
+    font_family = 'cairo'
+    text_direction = 'rtl'
+    system_name = 'نظام الدولية'
+
+    def __str__(self):
+        return "إعدادات النظام (افتراضية)"
 
 def system_settings(request):
     """
     Context processor to make system settings available to all templates.
+    Handles the case when the database table doesn't exist yet.
     """
-    settings = SystemSettings.get_settings()
+    try:
+        if MODELS_IMPORTED:
+            settings = SystemSettings.get_settings()
+        else:
+            # Use default settings if models couldn't be imported
+            settings = DefaultSystemSettings()
+    except (ProgrammingError, OperationalError):
+        # Fallback to default settings if database error occurs
+        settings = DefaultSystemSettings()
+
     return {
         'system_settings': settings,
-        'current_language': settings.language,
-        'current_font': settings.font_family,
-        'text_direction': settings.text_direction,
-        'is_rtl': settings.text_direction == 'rtl',
+        'current_language': getattr(settings, 'language', 'ar'),
+        'current_font': getattr(settings, 'font_family', 'cairo'),
+        'text_direction': getattr(settings, 'text_direction', 'rtl'),
+        'is_rtl': getattr(settings, 'text_direction', 'rtl') == 'rtl',
     }
 
 def user_permissions(request):
     """
     Context processor to make user permissions available to all templates.
+    Handles the case when the database tables don't exist yet.
     """
+    # Default empty values
+    default_response = {
+        'user_departments': [],
+        'user_department_urls': [],
+        'user_modules': {},
+        'user_module_permissions': {},
+        'is_admin': False,
+    }
+
+    # If models couldn't be imported, return default values
+    if not MODELS_IMPORTED:
+        return default_response
+
     user = request.user
     is_admin = user.is_authenticated and (user.is_superuser or getattr(user, 'Role', '') == 'admin')
 
     # Default values for unauthenticated users
     if not user.is_authenticated:
-        return {
-            'user_departments': [],
-            'user_modules': {},
-            'user_module_permissions': {},
-            'is_admin': False,
-        }
+        return default_response
+
+    # Wrap everything in try/except to handle database errors
+    try:
 
     # Get departments available to the user
     user_departments = []
