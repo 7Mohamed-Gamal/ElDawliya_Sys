@@ -10,7 +10,23 @@ from Hr.decorators import hr_module_permission_required
 @hr_module_permission_required('jobs', 'view')
 def job_list(request):
     """عرض قائمة الوظائف"""
+    # Import Employee model
+    from Hr.models.employee_model import Employee
+    from django.db.models import Count
+
+    # Get all jobs
     jobs = Job.objects.all()
+
+    # Create a dictionary to store employee counts for each job
+    # This is more efficient than making a separate query for each job
+    employee_counts = {}
+    for emp in Employee.objects.values('jop_code').annotate(count=Count('emp_id')):
+        if emp['jop_code'] is not None:
+            employee_counts[emp['jop_code']] = emp['count']
+
+    # Add employee_count attribute to each job object
+    for job in jobs:
+        job.employee_count = employee_counts.get(job.jop_code, 0)
 
     context = {
         'jobs': jobs,
