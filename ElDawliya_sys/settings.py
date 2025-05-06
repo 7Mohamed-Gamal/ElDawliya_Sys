@@ -114,7 +114,7 @@ DATABASES = {
     # الإعدادات الجديدة - المحاولة الثانية
     'secondary': {
         'ENGINE': 'mssql',
-        'NAME': 'ELDAWLIYA-Sys',
+        'NAME': 'El_Dawliya_International',
         'HOST': 'ELDAWLIYA-SYSTE',
         'PORT': '1433',
         'USER': 'admin',
