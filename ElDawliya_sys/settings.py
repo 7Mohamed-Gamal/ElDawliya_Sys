@@ -81,14 +81,15 @@ WSGI_APPLICATION = 'ElDawliya_sys.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# Configuración de bases de datos
+# تكوين قاعدة البيانات مع آلية النسخ الاحتياطي
+# استخدام مكتبة لاختبار الاتصال بقواعد البيانات
+import sys
+import django.db.utils
+
+# قواعد بيانات النظام
 DATABASES = {
-    # SQL Server como base de datos predeterminada
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.sqlite3',
-    #     'NAME': BASE_DIR / 'El_Dawliya_International',
-    # },
-    'default': {
+    # الإعدادات الأصلية - المحاولة الأولى
+    'primary': {
         'ENGINE': 'mssql',
         'NAME': 'El_Dawliya_International',
         'HOST': 'DESKTOP-H361157',
@@ -98,40 +99,42 @@ DATABASES = {
             'Trusted_Connection': 'yes',
         },
     },
-    # SQLite para desarrollo
+    
+    # الإعدادات الجديدة - المحاولة الثانية
+    'secondary': {
+        'ENGINE': 'mssql',
+        'NAME': 'ELDAWLIYA-Sys',
+        'HOST': 'ELDAWLIYA-SYSTE',
+        'PORT': '1433',
+        'USER': 'admin',
+        'PASSWORD': 'hgslduhgfwdv',
+        'OPTIONS': {
+            'driver': 'ODBC Driver 17 for SQL Server',
+            'Trusted_Connection': 'yes',
+        },
+    },
+    
+    # SQLite للتطوير
     'sqlite': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'El_Dawliya_International',
     },
-
-    # SQL Server para producción (usando mssql-django)
-    'mssql': {
-        'ENGINE': 'mssql',
-        'NAME': '',
-        'HOST': 'DESKTOP-H361157',
-        'PORT': '1433',
-        'USER': '',
-        'PASSWORD': '',
-        'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
-            'Trusted_Connection': 'yes',
-        },
-    },
-
-    # SQL Server para producción
-    'mssql_prod': {
-        'ENGINE': 'mssql',
-        'NAME': 'El_Dawliya_International',
-        'HOST': 'DESKTOP-H361157',
-        'PORT': '1433',
-        # 'USER': 'admin',
-        # 'PASSWORD': '',
-        'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
-            'Trusted_Connection': 'yes',
-        },
-    }
 }
+
+# تنفيذ آلية النسخ الاحتياطي لقواعد البيانات
+# نحاول الاتصال بقاعدة البيانات الأساسية أولاً، وإذا فشل، ننتقل إلى قاعدة البيانات الثانوية
+try:
+    # نحاول الاتصال بقاعدة البيانات الأساسية
+    from django.db import connections
+    connections['primary'].ensure_connection()
+    # إذا نجح الاتصال، نستخدم الإعدادات الأساسية
+    DATABASES['default'] = DATABASES['primary']
+    print("تم الاتصال بنجاح بقاعدة البيانات الأساسية")
+except (django.db.utils.OperationalError, Exception) as e:
+    # إذا فشل الاتصال، نستخدم الإعدادات الثانوية
+    DATABASES['default'] = DATABASES['secondary']
+    print(f"فشل الاتصال بقاعدة البيانات الأساسية: {str(e)}")
+    print("جاري استخدام قاعدة البيانات الثانوية")
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
