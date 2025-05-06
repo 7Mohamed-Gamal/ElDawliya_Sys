@@ -141,9 +141,10 @@ def mark_notification_as_read(request, pk):
     notification = get_object_or_404(Notification, pk=pk, user=request.user)
     notification.mark_as_read()
 
-    # إذا كان الطلب من AJAX، أرجع استجابة JSON
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return JsonResponse({'success': True, 'notification_id': pk})
+    # التحقق من وجود معلمة next في الطلب
+    next_url = request.GET.get('next')
+    if next_url:
+        return redirect(next_url)
 
     # إذا كان هناك رابط للتنبيه، قم بالتوجيه إليه
     if notification.url:

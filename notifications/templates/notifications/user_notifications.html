@@ -170,7 +170,7 @@
                                 </span>
                             </small>
                             {% if not notification.is_read %}
-                            <a href="{% url 'notifications:mark_as_read' notification.pk %}" class="btn btn-sm btn-outline-success mark-as-read-btn" data-notification-id="{{ notification.pk }}">
+                            <a href="{% url 'notifications:mark_as_read' notification.pk %}?next={% url 'notifications:detail' notification.pk %}" class="btn btn-sm btn-outline-success">
                                 <i class="fas fa-check"></i> تعليم كمقروء
                             </a>
                             {% else %}
@@ -270,75 +270,6 @@
         filterSelects.forEach(select => {
             select.addEventListener('change', function() {
                 filterForm.submit();
-            });
-        });
-
-        // تعليم التنبيه كمقروء باستخدام AJAX
-        const markAsReadButtons = document.querySelectorAll('.mark-as-read-btn');
-
-        markAsReadButtons.forEach(button => {
-            button.addEventListener('click', function(e) {
-                e.preventDefault();
-
-                const url = this.getAttribute('href');
-                const notificationId = this.getAttribute('data-notification-id');
-
-                // الحصول على رابط تفاصيل التنبيه
-                const notificationItem = this.closest('.list-group-item');
-                const detailUrl = notificationItem.getAttribute('href');
-
-                // إرسال طلب AJAX لتعليم التنبيه كمقروء
-                fetch(url, {
-                    method: 'GET',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // تحديث واجهة المستخدم
-
-                        // إزالة خلفية التنبيه غير المقروء
-                        notificationItem.classList.remove('list-group-item-light');
-
-                        // إزالة شارة "جديد"
-                        const badgeNew = notificationItem.querySelector('.badge.bg-danger');
-                        if (badgeNew) {
-                            badgeNew.remove();
-                        }
-
-                        // استبدال زر "تعليم كمقروء" بشارة "مقروء"
-                        const buttonContainer = this.parentElement;
-                        const readBadge = document.createElement('span');
-                        readBadge.className = 'badge bg-success';
-                        readBadge.innerHTML = '<i class="fas fa-check-double"></i> مقروء';
-
-                        buttonContainer.replaceChild(readBadge, this);
-
-                        // تحديث عدادات التنبيهات
-                        const unreadCountElement = document.querySelector('.card.bg-danger h2');
-                        const readCountElement = document.querySelector('.card.bg-success h2');
-
-                        if (unreadCountElement && readCountElement) {
-                            let unreadCount = parseInt(unreadCountElement.textContent);
-                            let readCount = parseInt(readCountElement.textContent);
-
-                            if (unreadCount > 0) {
-                                unreadCountElement.textContent = unreadCount - 1;
-                                readCountElement.textContent = readCount + 1;
-                            }
-                        }
-
-                        // الانتقال إلى صفحة تفاصيل التنبيه
-                        window.location.href = detailUrl;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    // في حالة حدوث خطأ، الانتقال إلى صفحة تفاصيل التنبيه على أي حال
-                    window.location.href = detailUrl;
-                });
             });
         });
     });
