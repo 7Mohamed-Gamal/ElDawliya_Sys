@@ -88,6 +88,17 @@ import django.db.utils
 
 # قواعد بيانات النظام
 DATABASES = {
+
+    'default': {
+        'ENGINE': 'mssql',
+        'NAME': 'El_Dawliya_International',
+        'HOST': 'DESKTOP-H361157',
+        'PORT': '1433',
+        'OPTIONS': {
+            'driver': 'ODBC Driver 17 for SQL Server',
+            'Trusted_Connection': 'yes',
+        },
+    },
     # الإعدادات الأصلية - المحاولة الأولى
     'primary': {
         'ENGINE': 'mssql',
