@@ -273,12 +273,40 @@ class DepartmentForm(forms.ModelForm):
     """
     # إضافة حقل مدير القسم
     manager = forms.ModelChoiceField(
-        queryset=Employee.objects.filter(working_condition='سارى'),
+        queryset=Employee.objects.filter(working_condition='سارى').order_by('emp_full_name'),
         label=_('مدير القسم'),
         required=False,
         to_field_name='emp_id',  # استخدام حقل emp_id كقيمة
-        widget=forms.Select(attrs={'class': 'form-select select2'})
+        widget=forms.Select(attrs={
+            'class': 'form-select select2',
+            'data-placeholder': 'اختر مدير القسم أو ابحث بالاسم'
+        })
     )
+
+    # تخصيص طريقة عرض الموظفين في القائمة المنسدلة
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # تخصيص طريقة عرض الموظفين في القائمة المنسدلة
+        self.fields['manager'].label_from_instance = self.employee_label_from_instance
+
+        # إذا كان إنشاء قسم جديد (وليس تعديل)
+        if not self.instance.pk:
+            self.fields['dept_code'].required = False
+            self.fields['dept_code'].help_text = 'سيتم إنشاء كود القسم تلقائيًا عند الحفظ'
+        else:
+            # إذا كان تعديل قسم موجود، حاول تعيين مدير القسم
+            if self.instance.manager_id:
+                try:
+                    manager = Employee.objects.get(emp_id=self.instance.manager_id)
+                    self.fields['manager'].initial = manager
+                except Employee.DoesNotExist:
+                    pass
+
+    # دالة لتخصيص طريقة عرض الموظفين في القائمة المنسدلة
+    def employee_label_from_instance(self, employee):
+        # عرض اسم الموظف ورقمه والوظيفة
+        job_info = f" - {employee.jop_name}" if employee.jop_name else ""
+        return f"{employee.emp_full_name} ({employee.emp_id}){job_info}"
 
     # إضافة حقل الحالة
     is_active = forms.ChoiceField(
@@ -307,20 +335,7 @@ class DepartmentForm(forms.ModelForm):
             'dept_name': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # إذا كان إنشاء قسم جديد (وليس تعديل)
-        if not self.instance.pk:
-            self.fields['dept_code'].required = False
-            self.fields['dept_code'].help_text = 'سيتم إنشاء كود القسم تلقائيًا عند الحفظ'
-        else:
-            # إذا كان تعديل قسم موجود، حاول تعيين مدير القسم
-            if self.instance.manager_id:
-                try:
-                    manager = Employee.objects.get(emp_id=self.instance.manager_id)
-                    self.fields['manager'].initial = manager
-                except Employee.DoesNotExist:
-                    pass
+
 
     def save(self, commit=True):
         instance = super().save(commit=False)
