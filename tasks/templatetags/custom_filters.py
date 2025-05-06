@@ -1,21 +1,13 @@
-from django import template
+"""
+تم نقل إلى tasks_filters.py لتجنب تعارضات التسمية
+(Moved to tasks_filters.py to avoid naming conflicts)
 
-register = template.Library()
-
-@register.filter(name='attr')
-def set_attr(field, attr_string):
-    """
-    Set an attribute on a form field
-    Usage: {{ field|attr:"disabled" }}
-    """
-    attrs = field.field.widget.attrs
-    
-    # Handle simple attribute (no value)
-    if '=' not in attr_string:
-        attrs[attr_string] = attr_string
-        return field
-    
-    # Handle attribute with value
-    attr_name, attr_value = attr_string.split('=', 1)
-    attrs[attr_name] = attr_value
-    return field
+DEPRECATED: يُنصح باستخدام tasks_filters.py بدلاً من هذا الملف
+"""
+# This file is intentionally left empty to avoid naming conflicts.
+# Please use tasks.templatetags.tasks_filters instead.
+# 
+# In your templates, replace:
+# {% load custom_filters %}
+# with:
+# {% load tasks_filters %}

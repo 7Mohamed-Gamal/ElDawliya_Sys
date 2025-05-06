@@ -866,21 +866,9 @@ class UserGroupDeleteView(DeleteView):
 @login_required
 @system_admin_required
 def permission_dashboard(request):
-    """Dashboard for permissions management"""
-    users_count = User.objects.count()
-    groups_count = Group.objects.count()
-    permissions_count = Permission.objects.count()
-    template_permissions_count = TemplatePermission.objects.count()
-
-    context = {
-        'users_count': users_count,
-        'groups_count': groups_count,
-        'permissions_count': permissions_count,
-        'template_permissions_count': template_permissions_count,
-        'page_title': 'إدارة الصلاحيات'
-    }
-
-    return render(request, 'administrator/permission_dashboard.html', context)
+    """Redirect to RBAC dashboard for permissions management"""
+    # Redirecting to RBAC dashboard which is now the main permissions system
+    return redirect('administrator:rbac_dashboard')
 
 
 @login_required

@@ -1,46 +1,16 @@
-from django import template
-from django.contrib.auth import get_user_model
-from ..rbac_permissions import has_permission
+"""
+هذا الملف موجود للتوافق مع الإصدارات السابقة. يرجى استخدام 'permissions.py' للتطوير المستقبلي.
+(This file exists for backward compatibility. Please use 'permissions.py' for future development.)
+"""
 
-User = get_user_model()
+from django import template
+from administrator.templatetags.permissions import (
+    has_rbac_permission,
+    check_rbac_permission
+)
 
 register = template.Library()
 
-@register.filter
-def has_rbac_permission(user, permission_name):
-    """
-    Template filter to check if a user has a specific RBAC permission.
-    
-    Usage: 
-    {% if user|has_rbac_permission:"edit_articles" %}
-        <a href="{% url 'edit_article' article.id %}">Edit</a>
-    {% endif %}
-    """
-    if not user or not user.is_authenticated:
-        return False
-        
-    # Superusers always have all permissions
-    if user.is_superuser:
-        return True
-        
-    return has_permission(user, permission_name)
-
-@register.simple_tag
-def check_rbac_permission(user, permission_name):
-    """
-    Template tag to check if a user has a specific RBAC permission.
-    
-    Usage:
-    {% check_rbac_permission user "edit_articles" as can_edit %}
-    {% if can_edit %}
-        <a href="{% url 'edit_article' article.id %}">Edit</a>
-    {% endif %}
-    """
-    if not user or not user.is_authenticated:
-        return False
-        
-    # Superusers always have all permissions
-    if user.is_superuser:
-        return True
-        
-    return has_permission(user, permission_name)
+# Re-register the imported filters and tags
+register.filter('has_rbac_permission', has_rbac_permission)
+register.simple_tag(check_rbac_permission)

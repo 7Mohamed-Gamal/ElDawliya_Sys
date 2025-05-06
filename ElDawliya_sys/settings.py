@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'widget_tweaks',
     # تطبيقات محلية
+    'core.apps.CoreConfig',  # تطبيق أساسي للوظائف المشتركة
     'accounts',
     'meetings',
     'tasks',
@@ -83,6 +84,10 @@ WSGI_APPLICATION = 'ElDawliya_sys.wsgi.application'
 # Configuración de bases de datos
 DATABASES = {
     # SQL Server como base de datos predeterminada
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.sqlite3',
+    #     'NAME': BASE_DIR / 'El_Dawliya_International',
+    # },
     'default': {
         'ENGINE': 'mssql',
         'NAME': 'El_Dawliya_International',
@@ -93,7 +98,6 @@ DATABASES = {
             'Trusted_Connection': 'yes',
         },
     },
-
     # SQLite para desarrollo
     'sqlite': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -103,9 +107,11 @@ DATABASES = {
     # SQL Server para producción (usando mssql-django)
     'mssql': {
         'ENGINE': 'mssql',
-        'NAME': 'El_Dawliya_International',
+        'NAME': '',
         'HOST': 'DESKTOP-H361157',
         'PORT': '1433',
+        'USER': '',
+        'PASSWORD': '',
         'OPTIONS': {
             'driver': 'ODBC Driver 17 for SQL Server',
             'Trusted_Connection': 'yes',

@@ -1,20 +1,13 @@
-from django import template
+"""
+تم نقل إلى hr_permission_tags.py لتجنب تعارضات التسمية
+(Moved to hr_permission_tags.py to avoid naming conflicts)
 
-register = template.Library()
-
-@register.filter
-def has_perm(user, perm_name):
-    """
-    تحقق مما إذا كان المستخدم لديه صلاحية معينة باستخدام نظام صلاحيات Django الأساسي
-    
-    الاستخدام في القوالب:
-    {% load permission_tags %}
-    {% if user|has_perm:"hr.view_employee" %}
-        <a href="{% url 'hr:employee_list' %}" class="btn btn-primary">عرض الموظفين</a>
-    {% endif %}
-    """
-    # المشرفون لديهم جميع الصلاحيات
-    if user.is_superuser or getattr(user, 'Role', '') == 'admin':
-        return True
-        
-    return user.has_perm(perm_name)
+DEPRECATED: يُنصح باستخدام hr_permission_tags.py بدلاً من هذا الملف
+"""
+# This file is intentionally left empty to avoid naming conflicts.
+# Please use Hr.templatetags.hr_permission_tags instead.
+# 
+# In your templates, replace:
+# {% load permission_tags %}
+# with:
+# {% load hr_permission_tags %}

@@ -1,6 +1,6 @@
 {% extends 'base_updated.html' %}
 {% load static %}
-
+{% load permissions %}
 {% block title %}الصفحة الرئيسية - نظام إدارة الشركة الدولية إنترناشونال{% endblock %}
 
 {% block extra_css %}
@@ -18,23 +18,56 @@
         background: linear-gradient(to left, #0a58ca 0%, #063b8c 100%);
         color: #fff;
         transition: all 0.4s ease;
-        height: 100vh;
+        height: calc(100vh - 60px); /* Subtract navbar height */
         z-index: 1030;
         position: fixed;
         right: 0;
-        top: 0;
+        top: 60px; /* Position below navbar */
         box-shadow: -3px 0 10px rgba(0, 0, 0, 0.1);
         overflow-y: auto;
-        padding-top: 60px; /* Space for navbar */
     }
 
-    #sidebar.active {
-        right: -280px;
+    /* Collapsed sidebar - only show icons */
+    .sidebar-collapsed #sidebar {
+        width: 70px;
+    }
+
+    .sidebar-collapsed #sidebar .sidebar-header h3,
+    .sidebar-collapsed #sidebar .department-item span {
+        display: none;
+    }
+
+    /* Adjust content margin when sidebar is collapsed */
+    .sidebar-collapsed #content {
+        padding-right: 70px;
+    }
+
+    /* Mobile view */
+    @media (max-width: 992px) {
+        #sidebar.active {
+            right: -280px;
+        }
     }
 
     .sidebar-header {
         padding: 1.5rem;
         border-bottom: 1px solid rgba(255,255,255,0.15);
+    }
+
+    /* Overlay for mobile sidebar */
+    .sidebar-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1025;
+    }
+
+    .sidebar-overlay.show {
+        display: block;
     }
 
     .sidebar-header h3 {
@@ -89,6 +122,7 @@
         min-height: 100vh;
         transition: all 0.4s ease;
         padding-right: 280px;
+        padding-top: 60px; /* Space for fixed navbar */
     }
 
     #content.active {
@@ -107,6 +141,27 @@
         transition: all 0.4s ease;
         padding: 0.5rem 1rem;
         height: 60px;
+    }
+
+    /* Sidebar Toggle Button */
+    #sidebarCollapse {
+        position: fixed;
+        top: 10px;
+        right: 290px;
+        z-index: 1025;
+        background-color: #0a58ca;
+        border-color: #0a58ca;
+        transition: all 0.3s;
+    }
+
+    .sidebar-collapsed #sidebarCollapse {
+        right: 80px;
+    }
+
+    @media (max-width: 992px) {
+        #sidebarCollapse {
+            right: 15px;
+        }
     }
 
     .top-navbar.with-sidebar {
@@ -157,6 +212,14 @@
         background-color: #0a58ca;
         border-color: #0a58ca;
         transition: all 0.3s;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     }
 
     #sidebarCollapse:hover {
@@ -322,7 +385,6 @@
     /* Dashboard container and content area */
     .dashboard-container {
         padding: 1.5rem;
-        padding-top: 70px; /* Space for navbar */
     }
 
     .content-area {
@@ -423,6 +485,11 @@
 
 {% block content %}
 <div class="wrapper">
+    <!-- Sidebar Toggle Button -->
+    <button type="button" id="sidebarCollapse" class="btn btn-primary">
+        <i class="fas fa-align-right"></i>
+    </button>
+
     <!-- Sidebar -->
     <nav id="sidebar">
         <div class="sidebar-header">
@@ -468,101 +535,98 @@
         </ul>
     </nav>
 
-    <!-- Page Content -->
-    <div id="content">
-        <!-- Top Navbar -->
-        <nav class="navbar navbar-expand navbar-light top-navbar with-sidebar">
-            <div class="container-fluid">
-                <div class="d-flex align-items-center">
-                    <button type="button" id="sidebarCollapse" class="btn btn-primary me-2">
-                        <i class="fas fa-align-right"></i>
-                        <span class="d-none d-md-inline-block">القائمة</span>
-                    </button>
+    <!-- Top Navbar -->
+    <nav class="navbar navbar-expand navbar-light top-navbar with-sidebar fixed-top">
+        <div class="container-fluid">
+            <div class="d-flex align-items-center">
+                <span class="navbar-brand mb-0 h1 d-none d-md-inline-block">نظام الشركة الدولية</span>
+            </div>
 
-                    <span class="navbar-brand mb-0 h1 d-none d-md-inline-block">نظام الشركة الدولية</span>
+            <!-- User Info and Logout - Always Visible -->
+            <div class="d-flex align-items-center">
+                <div class="user-info me-3 d-flex align-items-center">
+                    <i class="fas fa-user-circle text-primary me-2 fs-5"></i>
+                    <span class="fw-bold">{{ request.user.username }}</span>
                 </div>
 
-                <!-- User Info and Logout - Always Visible -->
-                <div class="d-flex align-items-center">
-                    <div class="user-info me-3 d-flex align-items-center">
-                        <i class="fas fa-user-circle text-primary me-2 fs-5"></i>
-                        <span class="fw-bold">{{ request.user.username }}</span>
-                    </div>
-
-                    <!-- Notifications Dropdown -->
-                    <div class="dropdown me-2">
-                        <button class="btn btn-outline-primary btn-sm position-relative" type="button" id="notificationsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-bell"></i>
-                            {% if unread_notifications_count > 0 %}
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                {{ unread_notifications_count }}
-                                <span class="visually-hidden">تنبيهات غير مقروءة</span>
-                            </span>
-                            {% endif %}
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationsDropdown" style="width: 300px;">
+                <!-- Notifications Dropdown -->
+                <div class="dropdown me-2">
+                    <button class="btn btn-outline-primary btn-sm position-relative" type="button" id="notificationsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-bell"></i>
+                        {% if unread_notifications_count > 0 %}
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                            {{ unread_notifications_count }}
+                            <span class="visually-hidden">تنبيهات غير مقروءة</span>
+                        </span>
+                        {% endif %}
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationsDropdown" style="width: 300px;">
+                        <li>
+                            <h6 class="dropdown-header d-flex justify-content-between align-items-center">
+                                <span>التنبيهات</span>
+                                <a href="{% url 'notifications:mark_all_as_read' %}" class="text-primary text-decoration-none" style="font-size: 0.8rem;">
+                                    <i class="fas fa-check-double"></i> تعليم الكل كمقروء
+                                </a>
+                            </h6>
+                        </li>
+                        {% if recent_notifications %}
+                            {% for notification in recent_notifications %}
                             <li>
-                                <h6 class="dropdown-header d-flex justify-content-between align-items-center">
-                                    <span>التنبيهات</span>
-                                    <a href="{% url 'notifications:mark_all_as_read' %}" class="text-primary text-decoration-none" style="font-size: 0.8rem;">
-                                        <i class="fas fa-check-double"></i> تعليم الكل كمقروء
-                                    </a>
-                                </h6>
-                            </li>
-                            {% if recent_notifications %}
-                                {% for notification in recent_notifications %}
-                                <li>
-                                    <a class="dropdown-item {% if not notification.is_read %}bg-light{% endif %}" href="{% url 'notifications:detail' notification.pk %}">
-                                        <div class="d-flex align-items-center">
-                                            <div class="flex-shrink-0">
-                                                <i class="{{ notification.icon }}
-                                                {% if notification.notification_type == 'hr' %}text-primary
-                                                {% elif notification.notification_type == 'meetings' %}text-info
-                                                {% elif notification.notification_type == 'inventory' %}text-success
-                                                {% elif notification.notification_type == 'purchase' %}text-warning
-                                                {% elif notification.notification_type == 'system' %}text-secondary
-                                                {% endif %}"></i>
-                                            </div>
-                                            <div class="ms-2 me-auto" style="max-width: 230px;">
-                                                <div class="fw-bold text-truncate">{{ notification.title }}</div>
-                                                <div class="small text-truncate">{{ notification.message }}</div>
-                                                <div class="text-muted" style="font-size: 0.7rem;">{{ notification.created_at|date:"Y-m-d H:i" }}</div>
-                                            </div>
-                                            {% if not notification.is_read %}
-                                            <span class="badge bg-primary rounded-pill">جديد</span>
-                                            {% endif %}
+                                <a class="dropdown-item {% if not notification.is_read %}bg-light{% endif %}" href="{% url 'notifications:detail' notification.pk %}">
+                                    <div class="d-flex align-items-center">
+                                        <div class="flex-shrink-0">
+                                            <i class="{{ notification.icon }}
+                                            {% if notification.notification_type == 'hr' %}text-primary
+                                            {% elif notification.notification_type == 'meetings' %}text-info
+                                            {% elif notification.notification_type == 'inventory' %}text-success
+                                            {% elif notification.notification_type == 'purchase' %}text-warning
+                                            {% elif notification.notification_type == 'system' %}text-secondary
+                                            {% endif %}"></i>
                                         </div>
-                                    </a>
-                                </li>
-                                {% endfor %}
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item text-center" href="{% url 'notifications:dashboard' %}">عرض جميع التنبيهات</a></li>
-                            {% else %}
-                                <li><div class="dropdown-item text-center text-muted">لا توجد تنبيهات</div></li>
-                            {% endif %}
-                        </ul>
-                    </div>
-
-                    <a href="{% url 'accounts:logout' %}" class="btn btn-outline-danger btn-sm">
-                        <i class="fas fa-sign-out-alt me-1"></i>
-                        <span class="d-none d-md-inline-block">تسجيل الخروج</span>
-                    </a>
-
-                    <!-- Settings Dropdown -->
-                    <div class="dropdown ms-2">
-                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="settingsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-cog"></i>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="settingsDropdown">
-                            <li><a class="dropdown-item" href="{% url 'administrator:admin_dashboard' %}"><i class="fas fa-user-cog me-2"></i> الإعدادات</a></li>
-                            <li><a class="dropdown-item" href="{% url 'notifications:dashboard' %}"><i class="fas fa-bell me-2"></i> التنبيهات</a></li>
+                                        <div class="ms-2 me-auto" style="max-width: 230px;">
+                                            <div class="fw-bold text-truncate">{{ notification.title }}</div>
+                                            <div class="small text-truncate">{{ notification.message }}</div>
+                                            <div class="text-muted" style="font-size: 0.7rem;">{{ notification.created_at|date:"Y-m-d H:i" }}</div>
+                                        </div>
+                                        {% if not notification.is_read %}
+                                        <span class="badge bg-primary rounded-pill">جديد</span>
+                                        {% endif %}
+                                    </div>
+                                </a>
+                            </li>
+                            {% endfor %}
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{% url 'accounts:dashboard' %}"><i class="fas fa-tachometer-alt me-2"></i> لوحة التحكم</a></li>
-                        </ul>
-                    </div>
+                            <li><a class="dropdown-item text-center" href="{% url 'notifications:dashboard' %}">عرض جميع التنبيهات</a></li>
+                        {% else %}
+                            <li><div class="dropdown-item text-center text-muted">لا توجد تنبيهات</div></li>
+                        {% endif %}
+                    </ul>
+                </div>
+
+                <a href="{% url 'accounts:logout' %}" class="btn btn-outline-danger btn-sm">
+                    <i class="fas fa-sign-out-alt me-1"></i>
+                    <span class="d-none d-md-inline-block">تسجيل الخروج</span>
+                </a>
+
+                <!-- Settings Dropdown -->
+                <div class="dropdown ms-2">
+                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="settingsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="settingsDropdown">
+                        <li><a class="dropdown-item" href="{% url 'administrator:admin_dashboard' %}"><i class="fas fa-user-cog me-2"></i> الإعدادات</a></li>
+                        <li><a class="dropdown-item" href="{% url 'notifications:dashboard' %}"><i class="fas fa-bell me-2"></i> التنبيهات</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="{% url 'accounts:dashboard' %}"><i class="fas fa-tachometer-alt me-2"></i> لوحة التحكم</a></li>
+                    </ul>
                 </div>
             </div>
-        </nav>
+        </div>
+    </nav>
+
+    <!-- Page Content -->
+    <div id="content">
+        <!-- Placeholder for top navbar space -->
 
         <!-- Main Content -->
         <div class="container-fluid">
@@ -980,17 +1044,7 @@
                                     </div>
                                 </a>
                             </div>
-                            <div class="col-md-6 col-lg-4 mb-4">
-                                <a href="{% url 'administrator:simplified_permissions_dashboard' %}" class="text-decoration-none">
-                                    <div class="card sysadmin-card">
-                                        <div class="card-info">
-                                            <i class="fas fa-shield-alt card-icon"></i>
-                                            <p class="title">الصلاحيات المبسطة</p>
-                                            <p class="card-subtitle">نظام الصلاحيات المبسط للمستخدمين</p>
-                                        </div>
-                                    </div>
-                                </a>
-                            </div>
+
                             <div class="col-md-6 col-lg-4 mb-4">
                                 <a href="{% url 'administrator:permissions_help' %}" class="text-decoration-none">
                                     <div class="card sysadmin-card">
@@ -1102,6 +1156,11 @@
         const pageHeader = document.querySelector('.page-header');
         const messagesContainer = document.querySelector('.container.mt-3'); // حاوية الرسائل
 
+        // Create overlay element for mobile
+        const overlay = document.createElement('div');
+        overlay.className = 'sidebar-overlay';
+        document.body.appendChild(overlay);
+
         // تطبيق الحالة الأولية للـ page-header
         if (sidebar && pageHeader) {
             if (!sidebar.classList.contains('active')) {
@@ -1115,23 +1174,27 @@
 
         // Toggle sidebar function
         function toggleSidebar() {
-            sidebar.classList.toggle('active');
-            content.classList.toggle('active');
-            topNavbar.classList.toggle('with-sidebar');
-            topNavbar.classList.toggle('sidebar-collapsed');
+            // For desktop view - collapse/expand sidebar
+            document.body.classList.toggle('sidebar-collapsed');
 
             // For mobile view
             if (window.innerWidth < 992) {
+                sidebar.classList.toggle('active');
+                content.classList.toggle('active');
+                topNavbar.classList.toggle('with-sidebar');
+                topNavbar.classList.toggle('sidebar-collapsed');
                 sidebarCollapseBtn.classList.toggle('mobile-active');
+                overlay.classList.toggle('show');
             }
 
             // تحديث الـ page-header وحاوية الرسائل
-            if (sidebar.classList.contains('active')) {
-                // السايدبار مغلق
-                pageHeader.style.paddingRight = '0';
+            if (window.innerWidth < 992 && sidebar.classList.contains('active') ||
+                window.innerWidth >= 992 && document.body.classList.contains('sidebar-collapsed')) {
+                // السايدبار مغلق أو مصغر
+                pageHeader.style.paddingRight = window.innerWidth < 992 ? '0' : '70px';
                 pageHeader.style.transition = 'padding-right 0.4s ease';
                 if (messagesContainer) {
-                    messagesContainer.style.paddingRight = '0';
+                    messagesContainer.style.paddingRight = window.innerWidth < 992 ? '0' : '70px';
                     messagesContainer.style.transition = 'padding-right 0.4s ease';
                 }
             } else {
@@ -1145,7 +1208,9 @@
             }
 
             // Save state to localStorage
-            const sidebarState = sidebar.classList.contains('active') ? 'collapsed' : 'expanded';
+            const sidebarState = (window.innerWidth < 992 && sidebar.classList.contains('active')) ||
+                               (window.innerWidth >= 992 && document.body.classList.contains('sidebar-collapsed'))
+                               ? 'collapsed' : 'expanded';
             localStorage.setItem('sidebarState', sidebarState);
         }
 
@@ -1158,18 +1223,33 @@
             const sidebarState = savedState || defaultState;
 
             if (sidebarState === 'collapsed') {
-                sidebar.classList.add('active');
-                content.classList.add('active');
-                topNavbar.classList.remove('with-sidebar');
-                topNavbar.classList.add('sidebar-collapsed');
-                // تحديث الـ page-header وحاوية الرسائل
-                pageHeader.style.paddingRight = '0';
-                if (messagesContainer) messagesContainer.style.paddingRight = '0';
+                if (window.innerWidth < 992) {
+                    // Mobile view - hide sidebar
+                    sidebar.classList.add('active');
+                    content.classList.add('active');
+                    topNavbar.classList.remove('with-sidebar');
+                    topNavbar.classList.add('sidebar-collapsed');
+                    // تحديث الـ page-header وحاوية الرسائل
+                    pageHeader.style.paddingRight = '0';
+                    if (messagesContainer) messagesContainer.style.paddingRight = '0';
+                } else {
+                    // Desktop view - collapse sidebar to icons only
+                    document.body.classList.add('sidebar-collapsed');
+                    // تحديث الـ page-header وحاوية الرسائل
+                    pageHeader.style.paddingRight = '70px';
+                    if (messagesContainer) messagesContainer.style.paddingRight = '70px';
+                }
             } else {
-                sidebar.classList.remove('active');
-                content.classList.remove('active');
-                topNavbar.classList.add('with-sidebar');
-                topNavbar.classList.remove('sidebar-collapsed');
+                if (window.innerWidth < 992) {
+                    // Mobile view - show sidebar
+                    sidebar.classList.remove('active');
+                    content.classList.remove('active');
+                    topNavbar.classList.add('with-sidebar');
+                    topNavbar.classList.remove('sidebar-collapsed');
+                } else {
+                    // Desktop view - expand sidebar
+                    document.body.classList.remove('sidebar-collapsed');
+                }
                 // تحديث الـ page-header وحاوية الرسائل
                 pageHeader.style.paddingRight = '280px';
                 if (messagesContainer) messagesContainer.style.paddingRight = '280px';
@@ -1180,6 +1260,13 @@
         if (sidebarCollapseBtn) {
             sidebarCollapseBtn.addEventListener('click', toggleSidebar);
         }
+
+        // Close sidebar when clicking on overlay
+        overlay.addEventListener('click', function() {
+            if (!sidebar.classList.contains('active')) {
+                toggleSidebar();
+            }
+        });
 
         // Initialize sidebar state
         initSidebarState();

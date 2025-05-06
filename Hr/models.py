@@ -3,7 +3,7 @@
 #   * إعادة ترتيب النماذج
 #   * التأكد من أن كل نموذج يحتوي على حقل واحد مع primary_key=True
 #   * التأكد من أن كل ForeignKey و OneToOneField لديه `on_delete` محدد بالسلوك المطلوب
-#   * إزالة أسطر `managed = False` إذا كنت ترغب في السماح لـ Django بإنشاء وتعديل وحذف الجدول
+#   * إزالة أسطر `managed = True` إذا كنت ترغب في السماح لـ Django بإنشاء وتعديل وحذف الجدول
 # يمكنك إعادة تسمية النماذج، ولكن لا تقم بإعادة تسمية قيم db_table أو أسماء الحقول.
 from django.db import models
 
@@ -103,7 +103,7 @@ class TblEmployee(models.Model):
     machine_name = models.CharField(db_column='Machine_Name', max_length=100, db_collation='Arabic_CI_AS', blank=True, null=True)  # Field name made lowercase.
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_Employee'
 
 
@@ -118,7 +118,7 @@ class TblAttendance(models.Model):
     machine = models.ForeignKey('TblAttendancemachine', models.DO_NOTHING, db_column='Machine_ID', blank=True, null=True)  # Field name made lowercase.
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_Attendance'
 
 
@@ -134,7 +134,7 @@ class TblAttendancemachine(models.Model):
     updated_at = models.DateTimeField()
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_AttendanceMachine'
 
 
@@ -151,7 +151,7 @@ class TblAttendancerule(models.Model):
     updated_at = models.DateTimeField()
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_AttendanceRule'
 
 
@@ -165,7 +165,7 @@ class TblAttendancerules(models.Model):
     absent_penalty = models.DecimalField(db_column='Absent_Penalty', max_digits=18, decimal_places=2, blank=True, null=True)  # Field name made lowercase.
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_AttendanceRules'
 
 
@@ -175,7 +175,7 @@ class TblBranch(models.Model):
     company = models.ForeignKey('TblCompany', models.DO_NOTHING, db_column='Company_ID')  # Field name made lowercase.
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_Branch'
 
 
@@ -197,7 +197,7 @@ class TblCar(models.Model):
     contract_type_farada = models.CharField(db_column='Contract_Type_Farada', max_length=50, db_collation='Arabic_CI_AS', blank=True, null=True)  # Field name made lowercase.
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_Car'
 
 
@@ -218,7 +218,7 @@ class TblCarAttendance(models.Model):
     attendance_year = models.IntegerField(db_column='Attendance_Year', blank=True, null=True)  # Field name made lowercase.
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_Car_Attendance'
 
 
@@ -227,7 +227,7 @@ class TblCompany(models.Model):
     company_name = models.CharField(db_column='Company_Name', max_length=100, db_collation='Arabic_CI_AS')  # Field name made lowercase.
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_Company'
 
 
@@ -236,7 +236,7 @@ class TblDepartment(models.Model):
     dept_name = models.CharField(db_column='Dept_Name', max_length=250, db_collation='Arabic_CI_AS', blank=True, null=True)  # Field name made lowercase.
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_Department'
 
 
@@ -255,7 +255,7 @@ class TblEmployeeanalytics(models.Model):
     leaves_taken = models.IntegerField(db_column='Leaves_Taken', blank=True, null=True)  # Field name made lowercase.
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_EmployeeAnalytics'
 
 
@@ -270,7 +270,7 @@ class TblEmployeeattendancerule(models.Model):
     employee = models.ForeignKey(TblEmployee, models.DO_NOTHING)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_EmployeeAttendanceRule'
 
 
@@ -286,7 +286,7 @@ class TblEmployeesalaryitem(models.Model):
     salary_item = models.ForeignKey('TblSalaryitem', models.DO_NOTHING)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_EmployeeSalaryItem'
 
 
@@ -300,7 +300,7 @@ class TblEvaluation(models.Model):
     evaluation_type = models.CharField(db_column='Evaluation_Type', max_length=50, db_collation='Arabic_CI_AS', blank=True, null=True)  # Field name made lowercase.
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_Evaluation'
 
 
@@ -310,7 +310,7 @@ class TblEvaluationcriteria(models.Model):
     description = models.TextField(db_column='Description', db_collation='Arabic_CI_AS', blank=True, null=True)  # Field name made lowercase.
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_EvaluationCriteria'
 
 
@@ -321,7 +321,7 @@ class TblEvaluationscores(models.Model):
     score = models.DecimalField(db_column='Score', max_digits=5, decimal_places=2)  # Field name made lowercase.
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_EvaluationScores'
 
 
@@ -337,7 +337,7 @@ class TblHrtask(models.Model):
     reminder_days = models.IntegerField(db_column='Reminder_Days', blank=True, null=True)  # Field name made lowercase.
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_HRTask'
 
 
@@ -347,7 +347,7 @@ class TblJop(models.Model):
     dept_code = models.IntegerField(db_column='Dept_Code', blank=True, null=True)  # Field name made lowercase.
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_Jop'
 
 
@@ -356,7 +356,7 @@ class TblJopNameInsurance(models.Model):
     jop_name_insurance = models.CharField(db_column='Jop_Name_insurance', max_length=200, db_collation='Arabic_CI_AS', blank=True, null=True)  # Field name made lowercase.
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_Jop_Name_insurance'
 
 
@@ -373,7 +373,7 @@ class TblLeave(models.Model):
     comments = models.TextField(db_column='Comments', db_collation='Arabic_CI_AS', blank=True, null=True)  # Field name made lowercase.
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_Leave'
 
 
@@ -383,7 +383,7 @@ class TblLeavetype(models.Model):
     description = models.TextField(db_column='Description', db_collation='Arabic_CI_AS', blank=True, null=True)  # Field name made lowercase.
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_LeaveType'
 
 
@@ -396,7 +396,7 @@ class TblOfficialholiday(models.Model):
     updated_at = models.DateTimeField()
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_OfficialHoliday'
         unique_together = (('name', 'date'),)
 
@@ -409,7 +409,7 @@ class TblPayroll(models.Model):
     paymentdate = models.DateField(db_column='PaymentDate', blank=True, null=True)  # Field name made lowercase.
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_Payroll'
 
 
@@ -420,7 +420,7 @@ class TblPayrolldetail(models.Model):
     computedvalue = models.DecimalField(db_column='ComputedValue', max_digits=18, decimal_places=2)  # Field name made lowercase.
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_PayrollDetail'
 
 
@@ -440,7 +440,7 @@ class TblPayrollentry(models.Model):
     payroll_period = models.ForeignKey('TblPayrollperiod', models.DO_NOTHING)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_PayrollEntry'
 
 
@@ -451,7 +451,7 @@ class TblPayrollitemdetail(models.Model):
     salary_item = models.ForeignKey('TblSalaryitem', models.DO_NOTHING)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_PayrollItemDetail'
 
 
@@ -465,7 +465,7 @@ class TblPayrollitemmaster(models.Model):
     isactive = models.BooleanField(db_column='IsActive', blank=True, null=True)  # Field name made lowercase.
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_PayrollItemMaster'
 
 
@@ -479,7 +479,7 @@ class TblPayrollitemmaster(models.Model):
     isactive = models.BooleanField(db_column='IsActive', blank=True, null=True)  # Field name made lowercase.
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_PayrollItemMaster'
 
 
@@ -489,7 +489,7 @@ class TblPickuppoint(models.Model):
     car = models.ForeignKey(TblCar, models.DO_NOTHING, db_column='Car_ID')  # Field name made lowercase.
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_PickupPoint'
 
 
@@ -504,7 +504,7 @@ class TblSalaryitem(models.Model):
     updated_at = models.DateTimeField()
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_SalaryItem'
 
 

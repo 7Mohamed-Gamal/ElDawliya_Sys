@@ -1,13 +1,13 @@
-from django import template
+"""
+تم نقل إلى inventory_filters.py لتجنب تعارضات التسمية
+(Moved to inventory_filters.py to avoid naming conflicts)
 
-register = template.Library()
-
-@register.filter(name='multiply')
-def multiply(value, arg):
-    """
-    Multiplies the value by the argument
-    """
-    try:
-        return float(value) * float(arg)
-    except (ValueError, TypeError):
-        return 0
+DEPRECATED: يُنصح باستخدام inventory_filters.py بدلاً من هذا الملف
+"""
+# This file is intentionally left empty to avoid naming conflicts.
+# Please use inventory.templatetags.inventory_filters instead.
+# 
+# In your templates, replace:
+# {% load custom_filters %}
+# with:
+# {% load inventory_filters %}

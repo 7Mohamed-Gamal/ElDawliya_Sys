@@ -7,7 +7,7 @@ class TblCategories(models.Model):
     cat_name = models.CharField(db_column='CAT_Name', max_length=100, db_collation='Arabic_CI_AS', blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_Categories'
 
 class TblCustomers(models.Model):
@@ -15,7 +15,7 @@ class TblCustomers(models.Model):
     customer_name = models.CharField(db_column='Customer_Name', max_length=100, db_collation='Arabic_CI_AS', blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_Customers'
 
 class TblProducts(models.Model):
@@ -39,7 +39,7 @@ class TblProducts(models.Model):
     expiry_warning = models.CharField(db_column='Expiry_Warning', max_length=10, db_collation='Arabic_CI_AS', blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_Products'
 
 class TblInvoices(models.Model):
@@ -56,7 +56,7 @@ class TblInvoices(models.Model):
     total_invoice_value = models.DecimalField(db_column='Total_Invoice_Value', max_digits=18, decimal_places=2, blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_Invoices'
 
 class TblInvoiceitems(models.Model):
@@ -84,7 +84,7 @@ class TblInvoiceitems(models.Model):
     notes = models.CharField(db_column='Notes', max_length=100, db_collation='Arabic_CI_AS', blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_InvoiceItems'
 
 class TblSuppliers(models.Model):
@@ -92,7 +92,7 @@ class TblSuppliers(models.Model):
     supplier_name = models.CharField(db_column='Supplier_Name', max_length=100, db_collation='Arabic_CI_AS', blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_Suppliers'
 
 class TblUnitsSpareparts(models.Model):
@@ -100,7 +100,7 @@ class TblUnitsSpareparts(models.Model):
     unit_name = models.CharField(db_column='Unit_Name', max_length=100, db_collation='Arabic_CI_AS', blank=True, null=True)
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'Tbl_Units_SpareParts'
 
 class SystemSettings(models.Model):

@@ -9,21 +9,18 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunSQL(
             """
-            IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'hr_employeenote')
-            BEGIN
-                CREATE TABLE hr_employeenote (
-                    id INT IDENTITY(1,1) PRIMARY KEY,
-                    title NVARCHAR(100) NOT NULL,
-                    content NVARCHAR(MAX) NOT NULL,
-                    employee_id INT NOT NULL,
-                    created_by_id BIGINT NULL,
-                    is_important BIT NOT NULL DEFAULT 0,
-                    created_at DATETIME NOT NULL,
-                    updated_at DATETIME NOT NULL,
-                    FOREIGN KEY (employee_id) REFERENCES Tbl_Employee(Emp_ID),
-                    FOREIGN KEY (created_by_id) REFERENCES accounts_users_login_new(id)
-                );
-            END
+            CREATE TABLE IF NOT EXISTS hr_employeenote (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                content TEXT NOT NULL,
+                employee_id INTEGER NOT NULL,
+                created_by_id INTEGER NULL,
+                is_important INTEGER NOT NULL DEFAULT 0,
+                created_at DATETIME NOT NULL,
+                updated_at DATETIME NOT NULL,
+                FOREIGN KEY (employee_id) REFERENCES Tbl_Employee(Emp_ID),
+                FOREIGN KEY (created_by_id) REFERENCES accounts_users_login_new(id)
+            );
             """,
             "DROP TABLE IF EXISTS hr_employeenote"
         ),

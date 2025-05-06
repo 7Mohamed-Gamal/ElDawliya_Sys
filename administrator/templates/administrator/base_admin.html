@@ -5,18 +5,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}لوحة تحكم مدير النظام{% endblock %} - نظام الدولية</title>
-    
+
     <!-- Bootstrap RTL CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-    
+
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
-    
+
     <!-- Google Fonts - Cairo -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
-    
+
     <style>
         :root {
             --primary-color: #3f51b5;
@@ -25,17 +25,17 @@
             --accent-color: #ff5722;
             --sidebar-width: 280px;
         }
-        
+
         body {
             font-family: 'Cairo', sans-serif;
             background-color: #f8f9fa;
         }
-        
+
         .wrapper {
             display: flex;
             align-items: stretch;
         }
-        
+
         .sidebar {
             width: var(--sidebar-width);
             position: fixed;
@@ -47,24 +47,45 @@
             transition: all 0.3s;
             z-index: 1000;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
         }
-        
+
+        /* Collapsed sidebar - only show icons */
+        .sidebar-collapsed .sidebar {
+            width: 70px;
+        }
+
+        .sidebar-collapsed .sidebar .sidebar-header h3,
+        .sidebar-collapsed .sidebar ul li a span {
+            display: none;
+        }
+
+        .sidebar-collapsed .sidebar ul li a i {
+            margin-left: 0;
+        }
+
+        /* Adjust content margin when sidebar is collapsed */
+        .sidebar-collapsed .content {
+            width: calc(100% - 70px);
+            margin-right: 70px;
+        }
+
         .sidebar .sidebar-header {
             padding: 20px;
             background: rgba(0, 0, 0, 0.1);
         }
-        
+
         .sidebar .sidebar-header h3 {
             margin: 0;
             font-size: 1.5rem;
             color: white;
         }
-        
+
         .sidebar ul.components {
             padding: 20px 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
-        
+
         .sidebar ul li a {
             padding: 12px 20px;
             display: block;
@@ -73,31 +94,31 @@
             transition: all 0.3s;
             border-right: 4px solid transparent;
         }
-        
+
         .sidebar ul li a:hover,
         .sidebar ul li a.active {
             background: rgba(255, 255, 255, 0.1);
             border-right-color: var(--accent-color);
         }
-        
+
         .sidebar ul li a i {
             margin-left: 10px;
             width: 25px;
             text-align: center;
         }
-        
+
         .sidebar ul ul a {
             padding-right: 50px !important;
             background: rgba(0, 0, 0, 0.1);
         }
-        
+
         .content {
             width: calc(100% - var(--sidebar-width));
             margin-right: var(--sidebar-width);
             min-height: 100vh;
             padding: 20px;
         }
-        
+
         .page-header {
             background-color: #fff;
             padding: 15px 25px;
@@ -105,54 +126,54 @@
             border-radius: 10px;
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
         }
-        
+
         .page-header h2 {
             margin: 0;
             font-size: 1.5rem;
             font-weight: 600;
             color: var(--primary-dark);
         }
-        
+
         .card {
             border-radius: 10px;
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
             border: none;
             margin-bottom: 25px;
         }
-        
+
         .card-header {
             background-color: #fff;
             border-bottom: 1px solid rgba(0, 0, 0, 0.05);
             padding: 15px 20px;
         }
-        
+
         .card-header h3, .card-header h4, .card-header h5 {
             margin: 0;
             color: var(--primary-dark);
         }
-        
+
         .btn-primary {
             background-color: var(--primary-color);
             border-color: var(--primary-color);
         }
-        
+
         .btn-primary:hover {
             background-color: var(--primary-dark);
             border-color: var(--primary-dark);
         }
-        
+
         .btn-accent {
             background-color: var(--accent-color);
             border-color: var(--accent-color);
             color: white;
         }
-        
+
         .btn-accent:hover {
             background-color: #e64a19;
             border-color: #e64a19;
             color: white;
         }
-        
+
         .navbar {
             padding: 15px 25px;
             background-color: #fff;
@@ -160,32 +181,103 @@
             border-radius: 10px;
             margin-bottom: 25px;
         }
-        
+
         /* Form Styles */
         .form-label {
             font-weight: 500;
         }
-        
+
         .form-control:focus {
             border-color: var(--primary-color);
             box-shadow: 0 0 0 0.2rem rgba(63, 81, 181, 0.25);
         }
-        
+
         /* Responsive */
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 70px;
+                z-index: 1050;
+            }
+
+            .sidebar .sidebar-header h3 {
+                display: none;
+            }
+
+            .sidebar ul li a span {
+                display: none;
+            }
+
+            .sidebar ul li a i {
+                margin-left: 0;
+            }
+
+            .content {
+                width: calc(100% - 70px);
+                margin-right: 70px;
+            }
+        }
+
         @media (max-width: 768px) {
             .sidebar {
-                width: 100%;
-                position: relative;
-                height: auto;
+                width: 250px;
+                position: fixed;
+                height: 100vh;
+                right: -250px;
+                transition: all 0.3s;
             }
-            
+
+            .sidebar.show {
+                right: 0;
+            }
+
+            .sidebar .sidebar-header h3 {
+                display: block;
+            }
+
+            .sidebar ul li a span {
+                display: inline;
+            }
+
+            .sidebar ul li a i {
+                margin-left: 10px;
+            }
+
             .content {
                 width: 100%;
                 margin-right: 0;
             }
+
+            /* Overlay for mobile sidebar */
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0, 0, 0, 0.5);
+                z-index: 999;
+            }
+
+            .sidebar-overlay.show {
+                display: block;
+            }
+
+            /* Mobile toggle button */
+            .mobile-toggle {
+                display: block;
+                background-color: var(--primary-color);
+                color: white;
+                border: none;
+                width: 40px;
+                height: 40px;
+                border-radius: 5px;
+                font-size: 1.2rem;
+                cursor: pointer;
+            }
         }
     </style>
-    
+
     {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -195,7 +287,7 @@
             <div class="sidebar-header">
                 <h3>لوحة تحكم مدير النظام</h3>
             </div>
-            
+
             <ul class="list-unstyled components">
                 <li>
                     <a href="{% url 'administrator:admin_dashboard' %}" class="{% if request.path == '/administrator/' %}active{% endif %}">
@@ -223,7 +315,7 @@
                     </a>
                 </li>
                 <li>
-                    <a href="{% url 'administrator:permission_dashboard' %}" class="{% if '/administrator/permissions/' in request.path %}active{% endif %}">
+                    <a href="{% url 'administrator:rbac_dashboard' %}" class="{% if '/administrator/permissions/' in request.path or '/administrator/rbac/' in request.path %}active{% endif %}">
                         <i class="fas fa-user-shield"></i> إدارة الصلاحيات
                     </a>
                 </li>
@@ -244,13 +336,16 @@
                 </li>
             </ul>
         </nav>
-        
+
         <!-- Page Content -->
         <div class="content">
             <div class="container-fluid">
                 <!-- Top Navbar -->
                 <nav class="navbar d-flex justify-content-between">
-                    <div>
+                    <div class="d-flex align-items-center">
+                        <button id="sidebarToggle" class="mobile-toggle d-md-none me-2">
+                            <i class="fas fa-bars"></i>
+                        </button>
                         <h5 class="mb-0">
                             <i class="fas fa-{% block page_icon %}cog{% endblock %} me-2"></i>
                             {% block page_header %}لوحة تحكم مدير النظام{% endblock %}
@@ -268,7 +363,7 @@
                         {% endif %}
                     </div>
                 </nav>
-                
+
                 <!-- Messages -->
                 {% if messages %}
                 <div class="messages">
@@ -280,7 +375,7 @@
                     {% endfor %}
                 </div>
                 {% endif %}
-                
+
                 <!-- Main Content -->
                 {% block content %}{% endblock %}
             </div>
@@ -290,32 +385,111 @@
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Add Bootstrap classes to form elements
             document.querySelectorAll('input, select, textarea').forEach(function(input) {
                 input.classList.add('form-control');
             });
-            
+
             document.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach(function(input) {
                 input.classList.remove('form-control');
                 input.classList.add('form-check-input');
             });
-            
+
             document.querySelectorAll('button[type="submit"]').forEach(function(button) {
                 if (!button.classList.contains('btn')) {
                     button.classList.add('btn', 'btn-primary', 'mt-3');
                 }
             });
-            
+
             // Add form-select to select elements
             document.querySelectorAll('select').forEach(function(select) {
                 select.classList.add('form-select');
             });
+
+            // Sidebar responsive functionality
+            const sidebar = document.querySelector('.sidebar');
+            const content = document.querySelector('.content');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+
+            // Create overlay element for mobile
+            const overlay = document.createElement('div');
+            overlay.className = 'sidebar-overlay';
+            document.body.appendChild(overlay);
+
+            // Toggle sidebar function
+            function toggleSidebar() {
+                // For desktop view - collapse/expand sidebar
+                document.body.classList.toggle('sidebar-collapsed');
+
+                // For mobile view
+                if (window.innerWidth < 992) {
+                    sidebar.classList.toggle('show');
+                    overlay.classList.toggle('show');
+                }
+
+                // Save state to localStorage
+                const sidebarState = (window.innerWidth < 992 && sidebar.classList.contains('show')) ||
+                                   (window.innerWidth >= 992 && document.body.classList.contains('sidebar-collapsed'))
+                                   ? 'collapsed' : 'expanded';
+                localStorage.setItem('adminSidebarState', sidebarState);
+            }
+
+            // Initialize sidebar state from localStorage
+            function initSidebarState() {
+                const savedState = localStorage.getItem('adminSidebarState');
+
+                // Default to expanded on desktop, collapsed on mobile
+                const defaultState = window.innerWidth < 992 ? 'collapsed' : 'expanded';
+                const sidebarState = savedState || defaultState;
+
+                if (sidebarState === 'collapsed') {
+                    if (window.innerWidth < 992) {
+                        // Mobile view - hide sidebar
+                        sidebar.classList.remove('show');
+                    } else {
+                        // Desktop view - collapse sidebar to icons only
+                        document.body.classList.add('sidebar-collapsed');
+                    }
+                } else {
+                    if (window.innerWidth < 992) {
+                        // Mobile view - show sidebar
+                        sidebar.classList.add('show');
+                        overlay.classList.add('show');
+                    } else {
+                        // Desktop view - expand sidebar
+                        document.body.classList.remove('sidebar-collapsed');
+                    }
+                }
+            }
+
+            // Toggle sidebar on button click
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', toggleSidebar);
+            }
+
+            // Initialize sidebar state
+            initSidebarState();
+
+            // Close sidebar when clicking on overlay
+            overlay.addEventListener('click', function() {
+                if (sidebar.classList.contains('show')) {
+                    toggleSidebar();
+                }
+            });
+
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 768) {
+                    sidebar.classList.remove('show');
+                    overlay.classList.remove('show');
+                }
+            });
         });
     </script>
-    
+
     {% block extra_js %}{% endblock %}
 </body>
 </html>

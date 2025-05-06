@@ -10,25 +10,38 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.CreateModel(
-            name='LeaveType',
-            fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=100, verbose_name='اسم نوع الإجازة')),
-                ('code', models.CharField(max_length=20, unique=True, verbose_name='كود نوع الإجازة')),
-                ('description', models.TextField(blank=True, null=True, verbose_name='وصف')),
-                ('max_days_per_year', models.PositiveIntegerField(default=0, verbose_name='الحد الأقصى للأيام في السنة')),
-                ('is_paid', models.BooleanField(default=True, verbose_name='مدفوعة الأجر')),
-                ('is_active', models.BooleanField(default=True, verbose_name='نشط')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')),
-                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')),
-            ],
-            options={
-                'verbose_name': 'نوع الإجازة',
-                'verbose_name_plural': 'أنواع الإجازات',
-                'db_table': 'Hr_LeaveType',
-                'ordering': ['name'],
-                'managed': True,
-            },
+        migrations.RunSQL(
+            """
+            -- Add 'code' column to Hr_LeaveType if it doesn't exist
+            ALTER TABLE Hr_LeaveType ADD COLUMN code TEXT DEFAULT NULL;
+            
+            -- Create a temporary table with the unique constraint
+            CREATE TABLE IF NOT EXISTS Hr_LeaveType_temp (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                affects_salary INTEGER NOT NULL DEFAULT 0,
+                is_paid INTEGER NOT NULL DEFAULT 1,
+                max_days_per_year INTEGER NOT NULL DEFAULT 0,
+                description TEXT,
+                is_active INTEGER NOT NULL DEFAULT 1,
+                created_at DATETIME NOT NULL,
+                updated_at DATETIME NOT NULL,
+                code TEXT UNIQUE
+            );
+            
+            -- Copy data from the original table to the temporary table
+            INSERT OR IGNORE INTO Hr_LeaveType_temp 
+            SELECT id, name, affects_salary, is_paid, max_days_per_year, description, is_active, created_at, updated_at, code 
+            FROM Hr_LeaveType;
+            
+            -- Drop the original table
+            DROP TABLE IF EXISTS Hr_LeaveType;
+            
+            -- Rename the temporary table to the original name
+            ALTER TABLE Hr_LeaveType_temp RENAME TO Hr_LeaveType;
+            """,
+            """
+            -- No reverse SQL needed
+            """
         ),
     ]

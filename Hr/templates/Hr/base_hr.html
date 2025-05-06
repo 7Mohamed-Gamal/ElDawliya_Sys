@@ -76,8 +76,26 @@
             padding-top: 60px; /* Space for navbar */
         }
 
-        .sidebar.collapsed {
-            right: -280px;
+        /* Collapsed sidebar - only show icons */
+        .sidebar-collapsed .sidebar {
+            width: 70px;
+        }
+
+        .sidebar-collapsed .sidebar-header h3,
+        .sidebar-collapsed .sidebar-menu-item span {
+            display: none;
+        }
+
+        /* Adjust content margin when sidebar is collapsed */
+        .sidebar-collapsed .main-content {
+            margin-right: 70px;
+        }
+
+        /* Mobile view */
+        @media (max-width: 992px) {
+            .sidebar.collapsed {
+                right: -280px;
+            }
         }
 
         .sidebar-header {
@@ -178,6 +196,7 @@
         @media (max-width: 992px) {
             .sidebar {
                 right: -280px;
+                z-index: 1050;
             }
 
             .sidebar.collapsed {
@@ -190,6 +209,22 @@
 
             .navbar {
                 padding-right: 15px !important;
+            }
+
+            /* Overlay for mobile sidebar */
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0, 0, 0, 0.5);
+                z-index: 1040;
+            }
+
+            .sidebar-overlay.show {
+                display: block;
             }
         }
 
@@ -367,15 +402,29 @@
             const navbar = document.querySelector('.navbar');
             const sidebarToggle = document.getElementById('sidebarToggle');
 
+            // Create overlay element for mobile
+            const overlay = document.createElement('div');
+            overlay.className = 'sidebar-overlay';
+            document.body.appendChild(overlay);
+
             // Toggle sidebar function
             function toggleSidebar() {
-                sidebar.classList.toggle('collapsed');
-                mainContent.classList.toggle('expanded');
-                navbar.classList.toggle('with-sidebar');
-                navbar.classList.toggle('sidebar-collapsed');
+                // For desktop view - collapse/expand sidebar
+                document.body.classList.toggle('sidebar-collapsed');
+
+                // For mobile view
+                if (window.innerWidth < 992) {
+                    sidebar.classList.toggle('collapsed');
+                    mainContent.classList.toggle('expanded');
+                    navbar.classList.toggle('with-sidebar');
+                    navbar.classList.toggle('sidebar-collapsed');
+                    overlay.classList.toggle('show');
+                }
 
                 // Save state to localStorage
-                const sidebarState = sidebar.classList.contains('collapsed') ? 'collapsed' : 'expanded';
+                const sidebarState = (window.innerWidth < 992 && sidebar.classList.contains('collapsed')) ||
+                                   (window.innerWidth >= 992 && document.body.classList.contains('sidebar-collapsed'))
+                                   ? 'collapsed' : 'expanded';
                 localStorage.setItem('hrSidebarState', sidebarState);
             }
 
@@ -388,15 +437,30 @@
                 const sidebarState = savedState || defaultState;
 
                 if (sidebarState === 'collapsed') {
-                    sidebar.classList.add('collapsed');
-                    mainContent.classList.add('expanded');
-                    navbar.classList.remove('with-sidebar');
-                    navbar.classList.add('sidebar-collapsed');
+                    if (window.innerWidth < 992) {
+                        // Mobile view - hide sidebar
+                        sidebar.classList.add('collapsed');
+                        mainContent.classList.add('expanded');
+                        navbar.classList.remove('with-sidebar');
+                        navbar.classList.add('sidebar-collapsed');
+                    } else {
+                        // Desktop view - collapse sidebar to icons only
+                        document.body.classList.add('sidebar-collapsed');
+                    }
                 } else {
-                    sidebar.classList.remove('collapsed');
-                    mainContent.classList.remove('expanded');
-                    navbar.classList.add('with-sidebar');
-                    navbar.classList.remove('sidebar-collapsed');
+                    if (window.innerWidth < 992) {
+                        // Mobile view - show sidebar
+                        sidebar.classList.remove('collapsed');
+                        mainContent.classList.remove('expanded');
+                        navbar.classList.add('with-sidebar');
+                        navbar.classList.remove('sidebar-collapsed');
+
+                        // Show overlay if sidebar is expanded on mobile
+                        overlay.classList.add('show');
+                    } else {
+                        // Desktop view - expand sidebar
+                        document.body.classList.remove('sidebar-collapsed');
+                    }
                 }
             }
 
@@ -404,6 +468,13 @@
             if (sidebarToggle) {
                 sidebarToggle.addEventListener('click', toggleSidebar);
             }
+
+            // Close sidebar when clicking on overlay
+            overlay.addEventListener('click', function() {
+                if (sidebar.classList.contains('collapsed') === false) {
+                    toggleSidebar();
+                }
+            });
 
             // Initialize sidebar state
             initSidebarState();
@@ -417,7 +488,11 @@
                         mainContent.classList.add('expanded');
                         navbar.classList.remove('with-sidebar');
                         navbar.classList.add('sidebar-collapsed');
+                        overlay.classList.remove('show');
                     }
+                } else {
+                    // Remove overlay on desktop
+                    overlay.classList.remove('show');
                 }
             });
 

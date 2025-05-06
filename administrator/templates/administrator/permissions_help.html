@@ -1,4 +1,4 @@
-{% extends 'base_updated.html' %}
+{% extends 'administrator/base_admin.html' %}
 {% load static %}
 
 {% block title %}دليل نظام الصلاحيات | {{ system_settings.system_name }}{% endblock %}
@@ -26,6 +26,11 @@
                     <div class="row">
                         <div class="col-md-6">
                             <ul class="list-group">
+                                <li class="list-group-item list-group-item-primary">
+                                    <a href="#rbac" class="text-decoration-none">
+                                        <i class="fas fa-shield-alt me-2"></i>نظام RBAC للصلاحيات
+                                    </a>
+                                </li>
                                 <li class="list-group-item">
                                     <a href="#departments" class="text-decoration-none">
                                         <i class="fas fa-building me-2"></i>صلاحيات الأقسام
@@ -60,8 +65,291 @@
                                         <i class="fas fa-user-shield me-2"></i>صلاحيات المستخدمين
                                     </a>
                                 </li>
+                                <li class="list-group-item">
+                                    <a href="#best-practices" class="text-decoration-none">
+                                        <i class="fas fa-check-circle me-2"></i>أفضل الممارسات
+                                    </a>
+                                </li>
                             </ul>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نظام RBAC للصلاحيات -->
+    <div class="row mb-5" id="rbac">
+        <div class="col-12">
+            <div class="card border-0 shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0"><i class="fas fa-shield-alt me-2"></i>نظام RBAC للصلاحيات</h4>
+                </div>
+                <div class="card-body">
+                    <h5 class="text-primary mb-3">ما هو نظام RBAC؟</h5>
+                    <p>
+                        نظام RBAC (Role-Based Access Control) هو نظام متقدم للتحكم في الصلاحيات يعتمد على الأدوار. يتيح هذا النظام تحديد صلاحيات المستخدمين بناءً على أدوارهم في المؤسسة، مما يسهل إدارة الصلاحيات بشكل أكثر مرونة وكفاءة.
+                    </p>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>ميزات نظام RBAC:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>إدارة مركزية للصلاحيات بناءً على الأدوار</li>
+                            <li>تقليل التعقيد في إدارة صلاحيات المستخدمين</li>
+                            <li>تحسين الأمان من خلال تطبيق مبدأ الحد الأدنى من الصلاحيات</li>
+                            <li>سهولة تعديل صلاحيات مجموعة كاملة من المستخدمين دفعة واحدة</li>
+                            <li>دعم التخزين المؤقت (caching) لتحسين الأداء</li>
+                        </ul>
+                    </div>
+
+                    <h5 class="text-primary mb-3">المكونات الرئيسية لنظام RBAC</h5>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card h-100 border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h5 class="mb-0"><i class="fas fa-users me-2"></i>الأدوار (Roles)</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>الأدوار هي مجموعات من الصلاحيات تمثل وظائف أو مسؤوليات محددة في المؤسسة. يتم تعيين المستخدمين إلى أدوار بدلاً من تعيين صلاحيات فردية لكل مستخدم.</p>
+                                    <p><strong>أمثلة:</strong> مدير نظام، مدير موارد بشرية، محاسب، موظف مبيعات</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100 border-success">
+                                <div class="card-header bg-success text-white">
+                                    <h5 class="mb-0"><i class="fas fa-key me-2"></i>الصلاحيات (Permissions)</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>الصلاحيات هي إجراءات محددة يمكن للمستخدم القيام بها في النظام. يتم تجميع الصلاحيات في فئات لتسهيل إدارتها.</p>
+                                    <p><strong>أمثلة:</strong> عرض_المستخدمين، إضافة_موظف، تعديل_منتج، حذف_طلب</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card h-100 border-info">
+                                <div class="card-header bg-info text-white">
+                                    <h5 class="mb-0"><i class="fas fa-user-tag me-2"></i>المستخدمون (Users)</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>المستخدمون هم الأشخاص الذين يستخدمون النظام. يتم تعيين المستخدمين إلى أدوار، ويمكن أيضًا منحهم صلاحيات إضافية بشكل فردي.</p>
+                                    <p><strong>ملاحظة:</strong> يمكن للمستخدم أن ينتمي إلى عدة أدوار في نفس الوقت.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100 border-warning">
+                                <div class="card-header bg-warning text-white">
+                                    <h5 class="mb-0"><i class="fas fa-sitemap me-2"></i>فئات الصلاحيات (Categories)</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>فئات الصلاحيات هي تصنيفات منطقية للصلاحيات تساعد في تنظيمها وإدارتها بشكل أفضل.</p>
+                                    <p><strong>أمثلة:</strong> المحتوى، المستخدمون، التقارير، الإعدادات، النظام</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h5 class="text-primary mb-3">فئات الصلاحيات في نظام RBAC</h5>
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>الفئة</th>
+                                    <th>الصلاحيات</th>
+                                    <th>الوصف</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="badge bg-primary">المحتوى</span></td>
+                                    <td>عرض_المحتوى، إضافة_المحتوى، تعديل_المحتوى، حذف_المحتوى، نشر_المحتوى، إلغاء_نشر_المحتوى، الموافقة_على_المحتوى، رفض_المحتوى</td>
+                                    <td>صلاحيات تتعلق بإدارة المحتوى في النظام</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-success">المستخدمون</span></td>
+                                    <td>عرض_المستخدمين، إضافة_مستخدم، تعديل_مستخدم، حذف_مستخدم، تعيين_أدوار، عرض_أدوار، إضافة_دور، تعديل_دور، حذف_دور</td>
+                                    <td>صلاحيات تتعلق بإدارة المستخدمين والأدوار</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-info">التقارير</span></td>
+                                    <td>عرض_التقارير، إنشاء_التقارير، تصدير_التقارير، طباعة_التقارير، مشاركة_التقارير</td>
+                                    <td>صلاحيات تتعلق بالتقارير والإحصائيات</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-warning">الإعدادات</span></td>
+                                    <td>عرض_الإعدادات، تعديل_الإعدادات، عرض_سجلات_النظام</td>
+                                    <td>صلاحيات تتعلق بإعدادات النظام</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-danger">النظام</span></td>
+                                    <td>إدارة_الصلاحيات، مدير_النظام، نسخ_احتياطي_واستعادة، عرض_التحليلات</td>
+                                    <td>صلاحيات متقدمة لإدارة النظام</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-secondary">أخرى</span></td>
+                                    <td>إرسال_إشعارات، عرض_الإشعارات</td>
+                                    <td>صلاحيات متنوعة لا تندرج تحت الفئات الأخرى</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h5 class="text-primary mb-3">كيفية استخدام نظام RBAC</h5>
+
+                    <div class="accordion mb-4" id="rbacAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingOne">
+                                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+                                    <i class="fas fa-plus-circle me-2"></i> إنشاء دور جديد
+                                </button>
+                            </h2>
+                            <div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#rbacAccordion">
+                                <div class="accordion-body">
+                                    <ol>
+                                        <li>انتقل إلى <a href="{% url 'administrator:rbac_role_list' %}">إدارة الأدوار</a></li>
+                                        <li>انقر على "إضافة دور جديد"</li>
+                                        <li>أدخل اسم الدور (مثل: "مدير الموارد البشرية")</li>
+                                        <li>أدخل وصفًا للدور</li>
+                                        <li>انقر على "حفظ" لإنشاء الدور</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingTwo">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                                    <i class="fas fa-key me-2"></i> تعيين صلاحيات للدور
+                                </button>
+                            </h2>
+                            <div id="collapseTwo" class="accordion-collapse collapse" aria-labelledby="headingTwo" data-bs-parent="#rbacAccordion">
+                                <div class="accordion-body">
+                                    <ol>
+                                        <li>انتقل إلى <a href="{% url 'administrator:rbac_role_list' %}">إدارة الأدوار</a></li>
+                                        <li>ابحث عن الدور المطلوب وانقر على "تعديل الصلاحيات"</li>
+                                        <li>حدد الصلاحيات التي تريد منحها للدور من القائمة</li>
+                                        <li>يمكنك تصفية الصلاحيات حسب الفئة لتسهيل العثور عليها</li>
+                                        <li>انقر على "حفظ" لتطبيق الصلاحيات</li>
+                                    </ol>
+                                    <div class="alert alert-success mt-3">
+                                        <i class="fas fa-lightbulb me-2"></i>
+                                        <strong>نصيحة:</strong> يمكنك استخدام زر "تعيين جميع صلاحيات الفئة" لمنح جميع الصلاحيات في فئة معينة دفعة واحدة.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="headingThree">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                    <i class="fas fa-user-plus me-2"></i> تعيين مستخدمين للدور
+                                </button>
+                            </h2>
+                            <div id="collapseThree" class="accordion-collapse collapse" aria-labelledby="headingThree" data-bs-parent="#rbacAccordion">
+                                <div class="accordion-body">
+                                    <ol>
+                                        <li>انتقل إلى <a href="{% url 'administrator:rbac_user_list' %}">إدارة المستخدمين</a></li>
+                                        <li>ابحث عن المستخدم المطلوب وانقر على "تعديل الأدوار"</li>
+                                        <li>حدد الأدوار التي تريد تعيينها للمستخدم من القائمة</li>
+                                        <li>انقر على "حفظ" لتطبيق التغييرات</li>
+                                    </ol>
+                                    <div class="alert alert-info mt-3">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        <strong>ملاحظة:</strong> يمكن للمستخدم أن ينتمي إلى عدة أدوار في نفس الوقت، وسيحصل على جميع الصلاحيات المرتبطة بتلك الأدوار.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h5 class="text-primary mb-3">استخدام نظام RBAC في الكود</h5>
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">التحقق من صلاحيات RBAC في views.py</h5>
+                        </div>
+                        <div class="card-body">
+                            <p>يمكن استخدام الديكوريتور <code>require_permission</code> للتحقق من صلاحيات المستخدم:</p>
+                            <pre class="bg-light p-3 rounded">
+<code>
+from administrator.rbac_views import require_permission
+
+@require_permission('edit_articles')
+def edit_article(request, article_id):
+    # تعديل المقال
+    article = get_object_or_404(Article, id=article_id)
+    # ...
+    return render(request, 'articles/edit.html', {'article': article})
+</code>
+</pre>
+                            <p>أو يمكن التحقق من الصلاحيات داخل الدالة:</p>
+                            <pre class="bg-light p-3 rounded">
+<code>
+from administrator.rbac_permissions import has_permission
+
+def article_detail(request, article_id):
+    article = get_object_or_404(Article, id=article_id)
+
+    can_edit = has_permission(request.user, 'edit_articles')
+    can_delete = has_permission(request.user, 'delete_articles')
+
+    return render(request, 'articles/detail.html', {
+        'article': article,
+        'can_edit': can_edit,
+        'can_delete': can_delete
+    })
+</code>
+</pre>
+                        </div>
+                    </div>
+
+                    <h5 class="text-primary mb-3">استخدام نظام RBAC في القوالب</h5>
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">التحقق من صلاحيات RBAC في القوالب</h5>
+                        </div>
+                        <div class="card-body">
+                            <p>يمكنك استخدام فلتر <code>has_rbac_permission</code> للتحقق من صلاحيات المستخدم:</p>
+                            <pre class="bg-light p-3 rounded">
+<code>
+&#123;% load permissions %&#125;
+
+&#123;% if user|has_rbac_permission:"edit_articles" %&#125;
+    &lt;a href="&#123;% url 'edit_article' article.id %&#125;" class="btn btn-primary"&gt;
+        &lt;i class="fas fa-edit"&gt;&lt;/i&gt; تعديل المقال
+    &lt;/a&gt;
+&#123;% endif %&#125;
+
+&#123;% if user|has_rbac_permission:"delete_articles" %&#125;
+    &lt;a href="&#123;% url 'delete_article' article.id %&#125;" class="btn btn-danger"&gt;
+        &lt;i class="fas fa-trash"&gt;&lt;/i&gt; حذف المقال
+    &lt;/a&gt;
+&#123;% endif %&#125;
+</code>
+</pre>
+                            <p>أو يمكنك استخدام وسم <code>check_rbac_permission</code> لتخزين نتيجة التحقق في متغير:</p>
+                            <pre class="bg-light p-3 rounded">
+<code>
+&#123;% load permissions %&#125;
+
+&#123;% check_rbac_permission user "manage_permissions" as can_manage_permissions %&#125;
+&#123;% if can_manage_permissions %&#125;
+    &lt;div class="alert alert-info"&gt;
+        يمكنك إدارة صلاحيات النظام من خلال
+        &lt;a href="&#123;% url 'administrator:rbac_dashboard' %&#125;"&gt;لوحة تحكم الصلاحيات&lt;/a&gt;.
+    &lt;/div&gt;
+&#123;% endif %&#125;
+</code>
+</pre>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>ملاحظة هامة:</strong> نظام RBAC هو النظام الرئيسي للصلاحيات في التطبيق. يجب استخدامه بدلاً من نظام الصلاحيات المبسط في التطوير الجديد.
                     </div>
                 </div>
             </div>
@@ -372,7 +660,7 @@ from administrator.utils import has_permission
 def employee_detail(request, emp_id):
     if not has_permission(request.user, 'HR', 'إدارة الموظفين', 'عرض'):
         return redirect('access_denied')
-    
+
     employee = get_object_or_404(Employee, emp_id=emp_id)
     return render(request, 'Hr/employees/employee_detail.html', {'employee': employee})
 </code>
@@ -675,6 +963,166 @@ def monthly_salary_report(request):
         </div>
     </div>
 
+    <!-- أفضل الممارسات -->
+    <div class="row mb-5" id="best-practices">
+        <div class="col-12">
+            <div class="card border-0 shadow">
+                <div class="card-header bg-success text-white">
+                    <h4 class="mb-0"><i class="fas fa-check-circle me-2"></i>أفضل الممارسات لإدارة الصلاحيات</h4>
+                </div>
+                <div class="card-body">
+                    <h5 class="text-success mb-3">مبادئ عامة لإدارة الصلاحيات</h5>
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card h-100 border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h5 class="mb-0"><i class="fas fa-shield-alt me-2"></i>مبدأ الحد الأدنى من الصلاحيات</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>امنح المستخدمين الحد الأدنى من الصلاحيات اللازمة لأداء مهامهم فقط. هذا يقلل من مخاطر الأمان ويمنع الوصول غير المصرح به للبيانات الحساسة.</p>
+                                    <div class="alert alert-info mt-2 mb-0">
+                                        <i class="fas fa-lightbulb me-2"></i>
+                                        <strong>مثال:</strong> موظف الموارد البشرية قد يحتاج إلى صلاحية عرض بيانات الموظفين، ولكن ليس بالضرورة صلاحية حذف الموظفين.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100 border-success">
+                                <div class="card-header bg-success text-white">
+                                    <h5 class="mb-0"><i class="fas fa-layer-group me-2"></i>استخدام المجموعات والأدوار</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>استخدم المجموعات والأدوار بدلاً من تعيين صلاحيات فردية لكل مستخدم. هذا يسهل إدارة الصلاحيات ويضمن اتساقها عبر المستخدمين الذين يؤدون نفس الوظيفة.</p>
+                                    <div class="alert alert-info mt-2 mb-0">
+                                        <i class="fas fa-lightbulb me-2"></i>
+                                        <strong>مثال:</strong> إنشاء مجموعة "مديري الموارد البشرية" بدلاً من تعيين نفس الصلاحيات لكل مدير بشكل فردي.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card h-100 border-warning">
+                                <div class="card-header bg-warning text-white">
+                                    <h5 class="mb-0"><i class="fas fa-sync-alt me-2"></i>المراجعة الدورية للصلاحيات</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>قم بمراجعة صلاحيات المستخدمين والمجموعات بشكل دوري للتأكد من أنها محدثة ومناسبة. هذا يساعد في تحديد وإزالة الصلاحيات غير الضرورية أو المتراكمة مع مرور الوقت.</p>
+                                    <div class="alert alert-info mt-2 mb-0">
+                                        <i class="fas fa-lightbulb me-2"></i>
+                                        <strong>نصيحة:</strong> قم بمراجعة الصلاحيات كل 3-6 أشهر أو عند حدوث تغييرات كبيرة في الهيكل التنظيمي.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100 border-danger">
+                                <div class="card-header bg-danger text-white">
+                                    <h5 class="mb-0"><i class="fas fa-user-shield me-2"></i>فصل المهام</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>طبق مبدأ فصل المهام لمنع تركيز الصلاحيات الحساسة في يد مستخدم واحد. هذا يقلل من مخاطر الاحتيال والأخطاء ويعزز الرقابة الداخلية.</p>
+                                    <div class="alert alert-info mt-2 mb-0">
+                                        <i class="fas fa-lightbulb me-2"></i>
+                                        <strong>مثال:</strong> الشخص الذي يدخل المعاملات المالية يجب أن يكون مختلفًا عن الشخص الذي يوافق عليها.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h5 class="text-success mb-3">نصائح عملية لتنفيذ نظام الصلاحيات</h5>
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>النصيحة</th>
+                                    <th>الوصف</th>
+                                    <th>الفائدة</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><i class="fas fa-sitemap text-primary me-2"></i>تنظيم الصلاحيات بشكل هرمي</td>
+                                    <td>قم بتنظيم الصلاحيات في هيكل هرمي (قسم > وحدة > عملية) لتسهيل إدارتها وفهمها.</td>
+                                    <td>تبسيط إدارة الصلاحيات وتقليل الأخطاء</td>
+                                </tr>
+                                <tr>
+                                    <td><i class="fas fa-tags text-success me-2"></i>استخدام تسميات واضحة</td>
+                                    <td>استخدم أسماء واضحة ومفهومة للأقسام والوحدات والصلاحيات لتسهيل فهمها واستخدامها.</td>
+                                    <td>تحسين قابلية الاستخدام وتقليل الارتباك</td>
+                                </tr>
+                                <tr>
+                                    <td><i class="fas fa-magic text-info me-2"></i>استخدام الإنشاء التلقائي للصلاحيات</td>
+                                    <td>استخدم ميزة إنشاء الصلاحيات تلقائيًا لتوفير الوقت وضمان تغطية جميع الوحدات.</td>
+                                    <td>توفير الوقت وتقليل الأخطاء البشرية</td>
+                                </tr>
+                                <tr>
+                                    <td><i class="fas fa-file-alt text-warning me-2"></i>توثيق هيكل الصلاحيات</td>
+                                    <td>قم بتوثيق هيكل الصلاحيات والمجموعات في مؤسستك للرجوع إليه في المستقبل.</td>
+                                    <td>تسهيل التدريب والصيانة المستقبلية</td>
+                                </tr>
+                                <tr>
+                                    <td><i class="fas fa-user-plus text-danger me-2"></i>إنشاء قوالب للأدوار الشائعة</td>
+                                    <td>قم بإنشاء قوالب للأدوار الشائعة في مؤسستك لتسهيل إعداد المستخدمين الجدد.</td>
+                                    <td>تسريع عملية إعداد المستخدمين الجدد</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h5 class="text-success mb-3">مقارنة بين نظامي الصلاحيات</h5>
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>الميزة</th>
+                                    <th>نظام RBAC</th>
+                                    <th>نظام الصلاحيات الهرمي</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>النهج الأساسي</td>
+                                    <td>يعتمد على الأدوار والصلاحيات المباشرة</td>
+                                    <td>يعتمد على هيكل هرمي (قسم > وحدة > صلاحية)</td>
+                                </tr>
+                                <tr>
+                                    <td>المرونة</td>
+                                    <td><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i></td>
+                                    <td><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i></td>
+                                </tr>
+                                <tr>
+                                    <td>سهولة الإدارة</td>
+                                    <td><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i></td>
+                                    <td><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i></td>
+                                </tr>
+                                <tr>
+                                    <td>الأداء</td>
+                                    <td><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i></td>
+                                    <td><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i><i class="fas fa-star text-warning"></i></td>
+                                </tr>
+                                <tr>
+                                    <td>التوصية</td>
+                                    <td>مناسب للتطبيقات الكبيرة والمعقدة</td>
+                                    <td>مناسب للتطبيقات البسيطة والمتوسطة</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="alert alert-success mt-4">
+                        <i class="fas fa-check-circle me-2"></i>
+                        <strong>التوصية النهائية:</strong> استخدم نظام RBAC كنظام الصلاحيات الرئيسي في التطبيق، مع الاستفادة من النظام الهرمي للحفاظ على تنظيم واضح للوظائف والميزات.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ملخص وروابط مفيدة -->
     <div class="row mb-5">
         <div class="col-12">
@@ -709,12 +1157,15 @@ def monthly_salary_report(request):
                         </div>
                         <div class="col-md-6">
                             <div class="list-group mb-4">
-                                <div class="list-group-item list-group-item-success">إدارة المجموعات</div>
+                                <div class="list-group-item list-group-item-success">إدارة المجموعات والأدوار</div>
                                 <a href="{% url 'administrator:group_list' %}" class="list-group-item list-group-item-action">
                                     <i class="fas fa-layer-group me-2"></i>إدارة المجموعات
                                 </a>
                                 <a href="{% url 'administrator:group_permission_list' %}" class="list-group-item list-group-item-action">
                                     <i class="fas fa-users-cog me-2"></i>إدارة صلاحيات المجموعات
+                                </a>
+                                <a href="{% url 'administrator:rbac_role_list' %}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-user-tag me-2"></i>إدارة الأدوار (RBAC)
                                 </a>
                             </div>
                             <div class="list-group">
@@ -724,6 +1175,9 @@ def monthly_salary_report(request):
                                 </a>
                                 <a href="{% url 'administrator:user_group_list' %}" class="list-group-item list-group-item-action">
                                     <i class="fas fa-user-friends me-2"></i>إدارة عضوية المجموعات
+                                </a>
+                                <a href="{% url 'administrator:rbac_user_list' %}" class="list-group-item list-group-item-action">
+                                    <i class="fas fa-users me-2"></i>إدارة مستخدمي RBAC
                                 </a>
                             </div>
                         </div>
@@ -740,14 +1194,14 @@ def monthly_salary_report(request):
     // تمرير سلس إلى الأقسام عند النقر على الروابط
     document.addEventListener('DOMContentLoaded', function() {
         const links = document.querySelectorAll('a[href^="#"]');
-        
+
         for (const link of links) {
             link.addEventListener('click', function(e) {
                 e.preventDefault();
-                
+
                 const targetId = this.getAttribute('href').substring(1);
                 const targetElement = document.getElementById(targetId);
-                
+
                 if (targetElement) {
                     window.scrollTo({
                         top: targetElement.offsetTop - 100,
