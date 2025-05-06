@@ -15,8 +15,30 @@ def department_list(request):
     """عرض قائمة الأقسام"""
     departments = Department.objects.annotate(employee_count=Count('employees')).order_by('dept_name')
 
+    # إضافة معلومات مدير القسم لكل قسم
+    departments_with_managers = []
+    for department in departments:
+        dept_info = {
+            'dept_code': department.dept_code,
+            'dept_name': department.dept_name,
+            'employee_count': department.employee_count,
+            'is_active': department.is_active,
+            'note': department.note,
+            'manager': None
+        }
+
+        # البحث عن مدير القسم إذا كان موجودًا
+        if department.manager_id:
+            try:
+                manager = Employee.objects.get(emp_id=department.manager_id)
+                dept_info['manager'] = manager
+            except Employee.DoesNotExist:
+                pass
+
+        departments_with_managers.append(dept_info)
+
     context = {
-        'departments': departments,
+        'departments': departments_with_managers,
         'title': 'قائمة الأقسام'
     }
 

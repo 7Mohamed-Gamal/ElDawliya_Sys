@@ -36,7 +36,8 @@ def employee_task_notification(sender, instance, created, **kwargs):
     """إنشاء تنبيه عند إنشاء أو تحديث مهمة موظف"""
     if created:
         # إنشاء تنبيه للموظف المكلف بالمهمة
-        if instance.employee and instance.employee.user:
+        # تحقق من وجود المستخدم المرتبط بالموظف (إذا كان موجوداً)
+        if instance.employee and hasattr(instance.employee, 'user') and instance.employee.user:
             create_hr_notification(
                 user=instance.employee.user,
                 title=_('تم تكليفك بمهمة جديدة'),
@@ -47,7 +48,7 @@ def employee_task_notification(sender, instance, created, **kwargs):
             )
     else:
         # إذا تم تغيير حالة المهمة إلى مكتملة
-        if instance.status == 'completed' and instance.employee and instance.employee.user:
+        if instance.status == 'completed' and instance.assigned_by:
             create_hr_notification(
                 user=instance.assigned_by,
                 title=_('تم إكمال المهمة'),
@@ -65,7 +66,7 @@ def task_step_notification(sender, instance, created, **kwargs):
         # الحصول على المهمة المرتبطة
         try:
             task = EmployeeTask.objects.get(pk=instance.task_id)
-            
+
             # إنشاء تنبيه للمستخدم الذي قام بتكليف المهمة
             if task.assigned_by:
                 create_hr_notification(
@@ -87,7 +88,7 @@ def employee_leave_notification(sender, instance, created, **kwargs):
         # إنشاء تنبيه للمدير
         managers = Employee.objects.filter(is_manager=True)
         for manager in managers:
-            if manager.user:
+            if hasattr(manager, 'user') and manager.user:
                 create_hr_notification(
                     user=manager.user,
                     title=_('طلب إجازة جديد'),
@@ -98,7 +99,7 @@ def employee_leave_notification(sender, instance, created, **kwargs):
                 )
     else:
         # إذا تم تغيير حالة الإجازة
-        if instance.status in ['approved', 'rejected'] and instance.employee.user:
+        if instance.status in ['approved', 'rejected'] and hasattr(instance.employee, 'user') and instance.employee.user:
             status_text = _('الموافقة على') if instance.status == 'approved' else _('رفض')
             create_hr_notification(
                 user=instance.employee.user,
@@ -117,15 +118,15 @@ def employee_health_card_expiry_notification(sender, instance, **kwargs):
     if instance.pk:
         try:
             old_instance = Employee.objects.get(pk=instance.pk)
-            
+
             # التحقق من تغيير تاريخ انتهاء البطاقة الصحية أو تعيين تاريخ جديد
-            if (old_instance.health_card_expiration_date != instance.health_card_expiration_date and 
+            if (old_instance.health_card_expiration_date != instance.health_card_expiration_date and
                     instance.health_card_expiration_date is not None):
-                
+
                 # إنشاء تنبيه للمستخدم المسؤول عن الموارد البشرية
                 hr_managers = Employee.objects.filter(is_manager=True)
                 for manager in hr_managers:
-                    if manager.user:
+                    if hasattr(manager, 'user') and manager.user:
                         create_hr_notification(
                             user=manager.user,
                             title=_('تحديث تاريخ انتهاء البطاقة الصحية'),
@@ -134,9 +135,9 @@ def employee_health_card_expiry_notification(sender, instance, **kwargs):
                             content_object=instance,
                             url=f'/Hr/employees/detail/{instance.emp_id}/'
                         )
-                
+
                 # إنشاء تنبيه للموظف نفسه
-                if instance.user:
+                if hasattr(instance, 'user') and instance.user:
                     create_hr_notification(
                         user=instance.user,
                         title=_('تحديث تاريخ انتهاء البطاقة الصحية'),
@@ -155,15 +156,15 @@ def employee_contract_expiry_notification(sender, instance, **kwargs):
     if instance.pk:
         try:
             old_instance = Employee.objects.get(pk=instance.pk)
-            
+
             # التحقق من تغيير تاريخ انتهاء العقد أو تعيين تاريخ جديد
-            if (old_instance.contract_expiry_date != instance.contract_expiry_date and 
+            if (old_instance.contract_expiry_date != instance.contract_expiry_date and
                     instance.contract_expiry_date is not None):
-                
+
                 # إنشاء تنبيه للمستخدمين المسؤولين عن الموارد البشرية
                 hr_managers = Employee.objects.filter(is_manager=True)
                 for manager in hr_managers:
-                    if manager.user:
+                    if hasattr(manager, 'user') and manager.user:
                         create_hr_notification(
                             user=manager.user,
                             title=_('تحديث تاريخ انتهاء العقد'),
@@ -172,9 +173,9 @@ def employee_contract_expiry_notification(sender, instance, **kwargs):
                             content_object=instance,
                             url=f'/Hr/employees/detail/{instance.emp_id}/'
                         )
-                
+
                 # إنشاء تنبيه للموظف نفسه
-                if instance.user:
+                if hasattr(instance, 'user') and instance.user:
                     create_hr_notification(
                         user=instance.user,
                         title=_('تحديث تاريخ انتهاء العقد'),
@@ -193,15 +194,15 @@ def car_license_expiry_notification(sender, instance, **kwargs):
     if instance.pk:
         try:
             old_instance = Car.objects.get(pk=instance.pk)
-            
+
             # التحقق من تغيير تاريخ انتهاء رخصة السيارة أو تعيين تاريخ جديد
-            if (old_instance.car_license_expiration_date != instance.car_license_expiration_date and 
+            if (old_instance.car_license_expiration_date != instance.car_license_expiration_date and
                     instance.car_license_expiration_date is not None):
-                
+
                 # إنشاء تنبيه للمستخدمين المسؤولين عن الموارد البشرية
                 hr_managers = Employee.objects.filter(is_manager=True)
                 for manager in hr_managers:
-                    if manager.user:
+                    if hasattr(manager, 'user') and manager.user:
                         create_hr_notification(
                             user=manager.user,
                             title=_('تحديث تاريخ انتهاء رخصة السيارة'),
@@ -220,15 +221,15 @@ def driver_license_expiry_notification(sender, instance, **kwargs):
     if instance.pk:
         try:
             old_instance = Car.objects.get(pk=instance.pk)
-            
+
             # التحقق من تغيير تاريخ انتهاء رخصة السائق أو تعيين تاريخ جديد
-            if (old_instance.driver_license_expiration_date != instance.driver_license_expiration_date and 
+            if (old_instance.driver_license_expiration_date != instance.driver_license_expiration_date and
                     instance.driver_license_expiration_date is not None):
-                
+
                 # إنشاء تنبيه للمستخدمين المسؤولين عن الموارد البشرية
                 hr_managers = Employee.objects.filter(is_manager=True)
                 for manager in hr_managers:
-                    if manager.user:
+                    if hasattr(manager, 'user') and manager.user:
                         create_hr_notification(
                             user=manager.user,
                             title=_('تحديث تاريخ انتهاء رخصة السائق'),

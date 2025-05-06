@@ -75,10 +75,22 @@ def export_employee_data(employees, export_format):
     headers = ['رقم الموظف', 'الاسم', 'القسم', 'الوظيفة', 'حالة العمل', 'تاريخ التعيين', 'حالة التأمين']
 
     def row_generator(employee):
+        # Safely get department name
+        dept_name = ''
+        try:
+            if employee.department:
+                dept_name = employee.department.dept_name
+            # Fallback to dept_name field if department relation fails
+            elif employee.dept_name:
+                dept_name = employee.dept_name
+        except:
+            # If department relation fails, use the dept_name field
+            dept_name = employee.dept_name or ''
+
         return [
             employee.emp_id,
             employee.emp_full_name or '',
-            employee.department.dept_name if employee.department else '',
+            dept_name,
             employee.jop_name or '',
             employee.working_condition or '',
             employee.emp_date_hiring.strftime('%Y-%m-%d') if employee.emp_date_hiring else '',
@@ -176,14 +188,44 @@ def export_insurance_data(employees, export_format):
     headers = ['رقم الموظف', 'الاسم', 'القسم', 'الوظيفة', 'حالة التأمين', 'رقم التأمين', 'تاريخ التأمين']
 
     def row_generator(employee):
+        # Safely get department name
+        dept_name = ''
+        try:
+            if employee.department:
+                dept_name = employee.department.dept_name
+            # Fallback to dept_name field if department relation fails
+            elif employee.dept_name:
+                dept_name = employee.dept_name
+        except:
+            # If department relation fails, use the dept_name field
+            dept_name = employee.dept_name or ''
+
+        # Handle insurance_number which might not exist
+        insurance_number = ''
+        try:
+            insurance_number = employee.insurance_number or ''
+        except AttributeError:
+            # Try number_insurance if insurance_number doesn't exist
+            insurance_number = employee.number_insurance or ''
+
+        # Handle insurance_date which might not exist
+        insurance_date = ''
+        try:
+            if hasattr(employee, 'insurance_date') and employee.insurance_date:
+                insurance_date = employee.insurance_date.strftime('%Y-%m-%d')
+            elif hasattr(employee, 'date_insurance_start') and employee.date_insurance_start:
+                insurance_date = employee.date_insurance_start.strftime('%Y-%m-%d')
+        except:
+            pass
+
         return [
             employee.emp_id,
             employee.emp_full_name or '',
-            employee.department.dept_name if employee.department else '',
+            dept_name,
             employee.jop_name or '',
             employee.insurance_status or '',
-            employee.insurance_number or '',
-            employee.insurance_date.strftime('%Y-%m-%d') if employee.insurance_date else '',
+            insurance_number,
+            insurance_date,
         ]
 
     return export_data(employees, export_format, 'insurance_report', headers, row_generator)
@@ -605,14 +647,22 @@ def insurance_report(request):
     if date_from:
         try:
             date_from = datetime.strptime(date_from, '%Y-%m-%d').date()
-            employees = employees.filter(insurance_date__gte=date_from)
+            # Try to use date_insurance_start if insurance_date doesn't exist
+            try:
+                employees = employees.filter(insurance_date__gte=date_from)
+            except:
+                employees = employees.filter(date_insurance_start__gte=date_from)
         except ValueError:
             pass
 
     if date_to:
         try:
             date_to = datetime.strptime(date_to, '%Y-%m-%d').date()
-            employees = employees.filter(insurance_date__lte=date_to)
+            # Try to use date_insurance_start if insurance_date doesn't exist
+            try:
+                employees = employees.filter(insurance_date__lte=date_to)
+            except:
+                employees = employees.filter(date_insurance_start__lte=date_to)
         except ValueError:
             pass
 
@@ -624,10 +674,14 @@ def insurance_report(request):
     # Prepare context for template
     from Hr.models.department_models import Department
 
+    # Get insurance statuses from the model's choices
+    insurance_statuses = getattr(Employee, 'INSURANCE_STATUSES',
+                                getattr(Employee, 'INSURANCE_STATUS_CHOICES', []))
+
     context = {
         'employees': employees,
         'departments': Department.objects.all(),
-        'insurance_statuses': Employee.INSURANCE_STATUSES,
+        'insurance_statuses': insurance_statuses,
         'selected_department': department_id,
         'selected_insurance_status': insurance_status,
         'selected_date_from': date_from,
