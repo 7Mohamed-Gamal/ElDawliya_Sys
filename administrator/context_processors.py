@@ -69,12 +69,11 @@ def user_permissions(request):
 
     # Wrap everything in try/except to handle database errors
     try:
-
-    # Get departments available to the user
-    user_departments = []
-    user_department_ids = []
-    user_modules = {}
-    user_module_permissions = {}
+        # Get departments available to the user
+        user_departments = []
+        user_department_ids = []
+        user_modules = {}
+        user_module_permissions = {}
 
     # Admin users have access to everything
     if is_admin:
