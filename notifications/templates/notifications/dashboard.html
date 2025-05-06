@@ -45,7 +45,7 @@
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
                                 <h6 class="mb-0">مقروءة</h6>
-                                <h2 class="mt-2 mb-0">{{ stats.total|add:"-"|add:stats.unread }}</h2>
+                                <h2 class="mt-2 mb-0">{{ stats.read }}</h2>
                             </div>
                             <i class="fas fa-check-circle fa-2x opacity-50"></i>
                         </div>
@@ -54,7 +54,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- التنبيهات حسب النوع -->
     <div class="col-md-12 mb-4">
         <div class="card shadow-sm">
@@ -150,7 +150,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- التنبيهات الأخيرة -->
     <div class="col-md-12 mb-4">
         <div class="card shadow-sm">
@@ -170,7 +170,7 @@
                     <a href="{% url 'notifications:detail' notification.pk %}" class="list-group-item list-group-item-action {% if not notification.is_read %}list-group-item-light{% endif %}">
                         <div class="d-flex w-100 justify-content-between">
                             <h6 class="mb-1">
-                                <i class="{{ notification.icon }} me-2 
+                                <i class="{{ notification.icon }} me-2
                                     {% if notification.notification_type == 'hr' %}text-primary
                                     {% elif notification.notification_type == 'meetings' %}text-info
                                     {% elif notification.notification_type == 'inventory' %}text-success
@@ -197,7 +197,7 @@
                             {% elif notification.notification_type == 'system' %}
                             <span class="text-secondary">النظام</span>
                             {% endif %}
-                            
+
                             {% if notification.priority == 'urgent' %}
                             <span class="badge bg-danger ms-2">عاجل</span>
                             {% elif notification.priority == 'high' %}
@@ -221,7 +221,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- علامات التبويب للتنبيهات حسب النوع -->
     <div class="col-md-12">
         <div class="card shadow-sm">
@@ -302,14 +302,14 @@
                             <h6>لا توجد تنبيهات للموارد البشرية</h6>
                         </div>
                         {% endif %}
-                        
+
                         {% if hr_notifications %}
                         <div class="text-center mt-3">
                             <a href="{% url 'notifications:list_by_type' 'hr' %}" class="btn btn-primary">عرض كل تنبيهات الموارد البشرية</a>
                         </div>
                         {% endif %}
                     </div>
-                    
+
                     <!-- تنبيهات الاجتماعات -->
                     <div class="tab-pane fade" id="meetings" role="tabpanel" aria-labelledby="meetings-tab">
                         {% if meetings_notifications %}
@@ -347,14 +347,14 @@
                             <h6>لا توجد تنبيهات للاجتماعات</h6>
                         </div>
                         {% endif %}
-                        
+
                         {% if meetings_notifications %}
                         <div class="text-center mt-3">
                             <a href="{% url 'notifications:list_by_type' 'meetings' %}" class="btn btn-info">عرض كل تنبيهات الاجتماعات</a>
                         </div>
                         {% endif %}
                     </div>
-                    
+
                     <!-- تنبيهات المخزن -->
                     <div class="tab-pane fade" id="inventory" role="tabpanel" aria-labelledby="inventory-tab">
                         {% if inventory_notifications %}
@@ -392,14 +392,14 @@
                             <h6>لا توجد تنبيهات للمخزن</h6>
                         </div>
                         {% endif %}
-                        
+
                         {% if inventory_notifications %}
                         <div class="text-center mt-3">
                             <a href="{% url 'notifications:list_by_type' 'inventory' %}" class="btn btn-success">عرض كل تنبيهات المخزن</a>
                         </div>
                         {% endif %}
                     </div>
-                    
+
                     <!-- تنبيهات المشتريات -->
                     <div class="tab-pane fade" id="purchase" role="tabpanel" aria-labelledby="purchase-tab">
                         {% if purchase_notifications %}
@@ -437,14 +437,14 @@
                             <h6>لا توجد تنبيهات للمشتريات</h6>
                         </div>
                         {% endif %}
-                        
+
                         {% if purchase_notifications %}
                         <div class="text-center mt-3">
                             <a href="{% url 'notifications:list_by_type' 'purchase' %}" class="btn btn-warning">عرض كل تنبيهات المشتريات</a>
                         </div>
                         {% endif %}
                     </div>
-                    
+
                     <!-- تنبيهات النظام -->
                     <div class="tab-pane fade" id="system" role="tabpanel" aria-labelledby="system-tab">
                         {% if system_notifications %}
@@ -482,7 +482,7 @@
                             <h6>لا توجد تنبيهات للنظام</h6>
                         </div>
                         {% endif %}
-                        
+
                         {% if system_notifications %}
                         <div class="text-center mt-3">
                             <a href="{% url 'notifications:list_by_type' 'system' %}" class="btn btn-secondary">عرض كل تنبيهات النظام</a>

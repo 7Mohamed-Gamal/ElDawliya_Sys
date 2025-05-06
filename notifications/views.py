@@ -15,9 +15,14 @@ def notification_dashboard(request):
     عرض لوحة التحكم الرئيسية للتنبيهات
     """
     # إحصائيات التنبيهات
+    total_notifications = Notification.objects.filter(user=request.user).count()
+    unread_notifications = Notification.objects.filter(user=request.user, is_read=False).count()
+    read_notifications = Notification.objects.filter(user=request.user, is_read=True).count()
+
     stats = {
-        'total': Notification.objects.filter(user=request.user).count(),
-        'unread': Notification.objects.filter(user=request.user, is_read=False).count(),
+        'total': total_notifications,
+        'unread': unread_notifications,
+        'read': read_notifications,
         'hr': Notification.objects.filter(user=request.user, notification_type='hr').count(),
         'meetings': Notification.objects.filter(user=request.user, notification_type='meetings').count(),
         'inventory': Notification.objects.filter(user=request.user, notification_type='inventory').count(),
@@ -136,6 +141,10 @@ def mark_notification_as_read(request, pk):
     notification = get_object_or_404(Notification, pk=pk, user=request.user)
     notification.mark_as_read()
 
+    # إذا كان الطلب من AJAX، أرجع استجابة JSON
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({'success': True, 'notification_id': pk})
+
     # إذا كان هناك رابط للتنبيه، قم بالتوجيه إليه
     if notification.url:
         # تصحيح الروابط القديمة للمهام
@@ -210,9 +219,14 @@ def user_notifications(request):
         notifications_page = paginator.page(paginator.num_pages)
 
     # إحصائيات التنبيهات
+    total_count = len(notifications)
+    unread_count = sum(1 for n in notifications if not n.is_read)
+    read_count = sum(1 for n in notifications if n.is_read)
+
     stats = {
-        'total': len(notifications),
-        'unread': sum(1 for n in notifications if not n.is_read),
+        'total': total_count,
+        'unread': unread_count,
+        'read': read_count,
         'hr': sum(1 for n in notifications if n.notification_type == 'hr'),
         'meetings': sum(1 for n in notifications if n.notification_type == 'meetings'),
         'inventory': sum(1 for n in notifications if n.notification_type == 'inventory'),
