@@ -51,7 +51,13 @@
                             </div>
                             {% endif %}
                             {% if form.dept_code.help_text %}
-                            <div class="form-text">{{ form.dept_code.help_text }}</div>
+                            <div class="form-text text-muted">
+                                <i class="fas fa-info-circle me-1"></i>{{ form.dept_code.help_text }}
+                            </div>
+                            {% else %}
+                            <div class="form-text text-muted">
+                                <i class="fas fa-info-circle me-1"></i>سيتم إنشاء كود القسم تلقائيًا عند الحفظ
+                            </div>
                             {% endif %}
                         </div>
 
@@ -87,26 +93,19 @@
                             {% endif %}
                         </div>
 
-                        <!-- Department Parent -->
-                        <div class="col-md-6">
-                            <label for="{{ form.parent.id_for_label }}" class="form-label">القسم الرئيسي</label>
-                            {{ form.parent }}
-                            {% if form.parent.errors %}
-                            <div class="invalid-feedback d-block">
-                                {% for error in form.parent.errors %}
-                                {{ error }}
+                        <!-- Department Status -->
+                        <div class="col-md-12 mt-3">
+                            <label class="form-label d-block">الحالة</label>
+                            <div class="d-flex">
+                                {% for radio in form.is_active %}
+                                <div class="form-check form-check-inline">
+                                    {{ radio.tag }}
+                                    <label class="form-check-label" for="{{ radio.id_for_label }}">
+                                        {{ radio.choice_label }}
+                                    </label>
+                                </div>
                                 {% endfor %}
                             </div>
-                            {% endif %}
-                            {% if form.parent.help_text %}
-                            <div class="form-text">{{ form.parent.help_text }}</div>
-                            {% endif %}
-                        </div>
-
-                        <!-- Department Status -->
-                        <div class="col-md-6">
-                            <label for="{{ form.is_active.id_for_label }}" class="form-label">الحالة</label>
-                            {{ form.is_active }}
                             {% if form.is_active.errors %}
                             <div class="invalid-feedback d-block">
                                 {% for error in form.is_active.errors %}
@@ -120,7 +119,7 @@
                         </div>
 
                         <!-- Department Notes -->
-                        <div class="col-md-12">
+                        <div class="col-md-12 mt-3">
                             <label for="{{ form.note.id_for_label }}" class="form-label">ملاحظات</label>
                             {{ form.note }}
                             {% if form.note.errors %}
@@ -249,8 +248,8 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Add custom class to form inputs
         document.querySelectorAll('form select, form input, form textarea').forEach(function(element) {
-            // Skip checkboxes
-            if (element.type !== 'checkbox') {
+            // Skip checkboxes and radio buttons
+            if (element.type !== 'checkbox' && element.type !== 'radio') {
                 element.classList.add('form-control');
 
                 // Add is-invalid class to inputs with errors
@@ -258,26 +257,50 @@
                     element.classList.add('is-invalid');
                 }
             } else {
-                // For checkboxes add form-check-input class
+                // For checkboxes and radio buttons add form-check-input class
                 element.classList.add('form-check-input');
             }
         });
 
         // Make select2 for dropdowns if select2 is available
         if (typeof $.fn.select2 !== 'undefined') {
+            // تفعيل البحث في حقل مدير القسم
             $('#{{ form.manager.id_for_label }}').select2({
                 placeholder: 'اختر مدير القسم',
                 allowClear: true,
                 width: '100%',
-                dir: 'rtl'
-            });
+                dir: 'rtl',
+                language: {
+                    noResults: function() {
+                        return 'لا توجد نتائج مطابقة';
+                    },
+                    searching: function() {
+                        return 'جاري البحث...';
+                    }
+                },
+                // تمكين البحث المحلي في القائمة المنسدلة
+                matcher: function(params, data) {
+                    // إذا لم يتم إدخال نص للبحث، أعد جميع الخيارات
+                    if ($.trim(params.term) === '') {
+                        return data;
+                    }
 
-            $('#{{ form.parent.id_for_label }}').select2({
-                placeholder: 'اختر القسم الرئيسي',
-                allowClear: true,
-                width: '100%',
-                dir: 'rtl'
+                    // البحث في النص
+                    if (data.text.toLowerCase().indexOf(params.term.toLowerCase()) > -1) {
+                        return data;
+                    }
+
+                    // لا توجد مطابقة
+                    return null;
+                }
             });
+        }
+
+        // تعيين حقل كود القسم كقراءة فقط
+        const deptCodeField = document.getElementById('{{ form.dept_code.id_for_label }}');
+        if (deptCodeField) {
+            deptCodeField.setAttribute('readonly', 'readonly');
+            deptCodeField.setAttribute('placeholder', 'سيتم إنشاؤه تلقائيًا');
         }
     });
 </script>

@@ -42,6 +42,14 @@ def department_detail(request, dept_code):
     # Get limited employees for display in department detail page
     employees = employees[:10]  # Limit to 10 employees
 
+    # Get department manager if exists
+    manager = None
+    if department.manager_id:
+        try:
+            manager = Employee.objects.get(emp_id=department.manager_id)
+        except Employee.DoesNotExist:
+            pass
+
     context = {
         'department': department,
         'employees': employees,
@@ -50,7 +58,8 @@ def department_detail(request, dept_code):
         'on_leave_count': on_leave_count,
         'resigned_count': resigned_count,
         'other_count': other_count,
-        'title': f'قسم {department.dept_name}'
+        'title': f'قسم {department.dept_name}',
+        'manager': manager  # إضافة مدير القسم إلى السياق
     }
 
     return render(request, 'Hr/departments/department_detail.html', context)
@@ -63,10 +72,20 @@ def department_create(request):
     if request.method == 'POST':
         form = DepartmentForm(request.POST)
         if form.is_valid():
-            form.save()
-            messages.success(request, 'تم إنشاء القسم بنجاح')
+            # إنشاء كود تلقائي للقسم
+            if not form.cleaned_data.get('dept_code'):
+                # الحصول على أعلى كود قسم موجود وإضافة 1 إليه
+                max_code = Department.objects.all().order_by('-dept_code').first()
+                next_code = 1 if not max_code else max_code.dept_code + 1
+                form.instance.dept_code = next_code
+
+            # حفظ القسم (سيتم حفظ مدير القسم تلقائيًا في وظيفة save المخصصة)
+            department = form.save()
+
+            messages.success(request, f'تم إنشاء القسم "{department.dept_name}" بنجاح. كود القسم: {department.dept_code}')
             return redirect('Hr:departments:list')
     else:
+        # إنشاء نموذج جديد
         form = DepartmentForm()
 
     context = {
@@ -91,10 +110,13 @@ def department_edit(request, dept_code):
     if request.method == 'POST':
         form = DepartmentForm(request.POST, instance=department)
         if form.is_valid():
-            form.save()
-            messages.success(request, 'تم تعديل القسم بنجاح')
+            # حفظ القسم (سيتم حفظ مدير القسم تلقائيًا في وظيفة save المخصصة)
+            department = form.save()
+
+            messages.success(request, f'تم تعديل القسم "{department.dept_name}" بنجاح')
             return redirect('Hr:departments:detail', dept_code=department.dept_code)
     else:
+        # تعيين القيم الافتراضية للحقول الجديدة
         form = DepartmentForm(instance=department)
 
     context = {

@@ -271,13 +271,74 @@ class DepartmentForm(forms.ModelForm):
     """
     Form for creating and editing departments
     """
+    # إضافة حقل مدير القسم
+    manager = forms.ModelChoiceField(
+        queryset=Employee.objects.filter(working_condition='سارى'),
+        label=_('مدير القسم'),
+        required=False,
+        to_field_name='emp_id',  # استخدام حقل emp_id كقيمة
+        widget=forms.Select(attrs={'class': 'form-select select2'})
+    )
+
+    # إضافة حقل الحالة
+    is_active = forms.ChoiceField(
+        choices=[('True', 'نشط'), ('False', 'غير نشط')],
+        label=_('الحالة'),
+        initial='True',
+        widget=forms.RadioSelect()
+    )
+
+    # إضافة حقل الملاحظات
+    note = forms.CharField(
+        label=_('ملاحظات'),
+        required=False,
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 3})
+    )
+
     class Meta:
         model = Department
-        fields = ['dept_code', 'dept_name']
+        fields = ['dept_code', 'dept_name', 'manager', 'is_active', 'note']
         widgets = {
-            'dept_code': forms.NumberInput(attrs={'class': 'form-control'}),
+            'dept_code': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'readonly': True,
+                'placeholder': 'سيتم إنشاؤه تلقائيًا'
+            }),
             'dept_name': forms.TextInput(attrs={'class': 'form-control'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # إذا كان إنشاء قسم جديد (وليس تعديل)
+        if not self.instance.pk:
+            self.fields['dept_code'].required = False
+            self.fields['dept_code'].help_text = 'سيتم إنشاء كود القسم تلقائيًا عند الحفظ'
+        else:
+            # إذا كان تعديل قسم موجود، حاول تعيين مدير القسم
+            if self.instance.manager_id:
+                try:
+                    manager = Employee.objects.get(emp_id=self.instance.manager_id)
+                    self.fields['manager'].initial = manager
+                except Employee.DoesNotExist:
+                    pass
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+
+        # حفظ مدير القسم
+        manager = self.cleaned_data.get('manager')
+        if manager:
+            instance.manager_id = manager.emp_id
+        else:
+            instance.manager_id = None
+
+        # تحويل is_active من نص إلى قيمة منطقية
+        is_active_value = self.cleaned_data.get('is_active')
+        instance.is_active = (is_active_value == 'True')
+
+        if commit:
+            instance.save()
+        return instance
 
 
 class JobForm(forms.ModelForm):
