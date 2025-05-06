@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.db.models import Count
 from django.utils import timezone
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 
 from .models import Notification
 from .utils import mark_all_as_read, get_notifications_by_type
@@ -164,3 +165,70 @@ def mark_all_notifications_as_read(request, notification_type=None):
         return redirect('notifications:list_by_type', notification_type=notification_type)
     else:
         return redirect('notifications:dashboard')
+
+
+@login_required
+def user_notifications(request):
+    """
+    عرض تنبيهات المستخدم الحالي مع خيارات التصفية والترتيب
+    """
+    # الحصول على جميع تنبيهات المستخدم
+    notifications = list(Notification.objects.filter(user=request.user))
+    notifications.sort(key=lambda x: x.created_at, reverse=True)
+
+    # تطبيق الفلاتر
+    notification_type = request.GET.get('type')
+    is_read = request.GET.get('is_read')
+    priority = request.GET.get('priority')
+
+    # فلترة حسب النوع
+    if notification_type and notification_type in dict(Notification.NOTIFICATION_TYPES).keys():
+        notifications = [n for n in notifications if n.notification_type == notification_type]
+
+    # فلترة حسب حالة القراءة
+    if is_read:
+        if is_read == 'read':
+            notifications = [n for n in notifications if n.is_read]
+        elif is_read == 'unread':
+            notifications = [n for n in notifications if not n.is_read]
+
+    # فلترة حسب الأولوية
+    if priority:
+        notifications = [n for n in notifications if n.priority == priority]
+
+    # التقسيم إلى صفحات
+    paginator = Paginator(notifications, 20)  # 20 تنبيه في كل صفحة
+    page = request.GET.get('page')
+
+    try:
+        notifications_page = paginator.page(page)
+    except PageNotAnInteger:
+        # إذا كانت الصفحة ليست رقمًا، عرض الصفحة الأولى
+        notifications_page = paginator.page(1)
+    except EmptyPage:
+        # إذا كانت الصفحة خارج النطاق، عرض آخر صفحة
+        notifications_page = paginator.page(paginator.num_pages)
+
+    # إحصائيات التنبيهات
+    stats = {
+        'total': len(notifications),
+        'unread': sum(1 for n in notifications if not n.is_read),
+        'hr': sum(1 for n in notifications if n.notification_type == 'hr'),
+        'meetings': sum(1 for n in notifications if n.notification_type == 'meetings'),
+        'inventory': sum(1 for n in notifications if n.notification_type == 'inventory'),
+        'purchase': sum(1 for n in notifications if n.notification_type == 'purchase'),
+        'system': sum(1 for n in notifications if n.notification_type == 'system'),
+    }
+
+    context = {
+        'title': 'تنبيهاتي',
+        'notifications': notifications_page,
+        'stats': stats,
+        'notification_types': Notification.NOTIFICATION_TYPES,
+        'priority_levels': Notification.PRIORITY_LEVELS,
+        'selected_type': notification_type,
+        'selected_read': is_read,
+        'selected_priority': priority,
+    }
+
+    return render(request, 'notifications/user_notifications.html', context)

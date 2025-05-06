@@ -549,9 +549,9 @@
                     <span class="fw-bold">{{ request.user.username }}</span>
                 </div>
 
-                <!-- Notifications Dropdown -->
-                <div class="dropdown me-2">
-                    <button class="btn btn-outline-primary btn-sm position-relative" type="button" id="notificationsDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <!-- Notifications Button -->
+                <div class="me-2">
+                    <a href="{% url 'notifications:user_notifications' %}" class="btn btn-outline-primary btn-sm position-relative">
                         <i class="fas fa-bell"></i>
                         {% if unread_notifications_count > 0 %}
                         <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
@@ -559,48 +559,7 @@
                             <span class="visually-hidden">تنبيهات غير مقروءة</span>
                         </span>
                         {% endif %}
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationsDropdown" style="width: 300px;">
-                        <li>
-                            <h6 class="dropdown-header d-flex justify-content-between align-items-center">
-                                <span>التنبيهات</span>
-                                <a href="{% url 'notifications:mark_all_as_read' %}" class="text-primary text-decoration-none" style="font-size: 0.8rem;">
-                                    <i class="fas fa-check-double"></i> تعليم الكل كمقروء
-                                </a>
-                            </h6>
-                        </li>
-                        {% if recent_notifications %}
-                            {% for notification in recent_notifications %}
-                            <li>
-                                <a class="dropdown-item {% if not notification.is_read %}bg-light{% endif %}" href="{% url 'notifications:detail' notification.pk %}">
-                                    <div class="d-flex align-items-center">
-                                        <div class="flex-shrink-0">
-                                            <i class="{{ notification.icon }}
-                                            {% if notification.notification_type == 'hr' %}text-primary
-                                            {% elif notification.notification_type == 'meetings' %}text-info
-                                            {% elif notification.notification_type == 'inventory' %}text-success
-                                            {% elif notification.notification_type == 'purchase' %}text-warning
-                                            {% elif notification.notification_type == 'system' %}text-secondary
-                                            {% endif %}"></i>
-                                        </div>
-                                        <div class="ms-2 me-auto" style="max-width: 230px;">
-                                            <div class="fw-bold text-truncate">{{ notification.title }}</div>
-                                            <div class="small text-truncate">{{ notification.message }}</div>
-                                            <div class="text-muted" style="font-size: 0.7rem;">{{ notification.created_at|date:"Y-m-d H:i" }}</div>
-                                        </div>
-                                        {% if not notification.is_read %}
-                                        <span class="badge bg-primary rounded-pill">جديد</span>
-                                        {% endif %}
-                                    </div>
-                                </a>
-                            </li>
-                            {% endfor %}
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-center" href="{% url 'notifications:dashboard' %}">عرض جميع التنبيهات</a></li>
-                        {% else %}
-                            <li><div class="dropdown-item text-center text-muted">لا توجد تنبيهات</div></li>
-                        {% endif %}
-                    </ul>
+                    </a>
                 </div>
 
                 <a href="{% url 'accounts:logout' %}" class="btn btn-outline-danger btn-sm">
@@ -615,7 +574,7 @@
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="settingsDropdown">
                         <li><a class="dropdown-item" href="{% url 'administrator:admin_dashboard' %}"><i class="fas fa-user-cog me-2"></i> الإعدادات</a></li>
-                        <li><a class="dropdown-item" href="{% url 'notifications:dashboard' %}"><i class="fas fa-bell me-2"></i> التنبيهات</a></li>
+                        <li><a class="dropdown-item" href="{% url 'notifications:user_notifications' %}"><i class="fas fa-bell me-2"></i> تنبيهاتي</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="{% url 'accounts:dashboard' %}"><i class="fas fa-tachometer-alt me-2"></i> لوحة التحكم</a></li>
                     </ul>
@@ -937,6 +896,17 @@
                                             <i class="fas fa-list card-icon"></i>
                                             <p class="title">قائمة التنبيهات</p>
                                             <p class="card-subtitle">عرض جميع التنبيهات</p>
+                                        </div>
+                                    </div>
+                                </a>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <a href="{% url 'notifications:user_notifications' %}" class="text-decoration-none">
+                                    <div class="card notifications-card">
+                                        <div class="card-info">
+                                            <i class="fas fa-user-check card-icon"></i>
+                                            <p class="title">تنبيهاتي</p>
+                                            <p class="card-subtitle">عرض تنبيهاتي الشخصية</p>
                                         </div>
                                     </div>
                                 </a>

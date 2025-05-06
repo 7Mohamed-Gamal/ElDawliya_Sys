@@ -31,12 +31,27 @@
                     <!-- Empty navbar - links now shown in sidebar based on user permissions -->
                 </ul>
                 <div class="d-flex">
+                    <!-- Notifications Button -->
+                    <div class="me-3">
+                        <a href="{% url 'notifications:user_notifications' %}" class="btn btn-outline-primary btn-sm position-relative">
+                            <i class="fas fa-bell"></i>
+                            {% if unread_notifications_count > 0 %}
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
+                                {{ unread_notifications_count }}
+                                <span class="visually-hidden">تنبيهات غير مقروءة</span>
+                            </span>
+                            {% endif %}
+                        </a>
+                    </div>
+
+                    <!-- User Dropdown -->
                     <div class="dropdown">
                         <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                             <i class="fas fa-user-circle me-1"></i> {{ request.user.username }}
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="{% url 'accounts:dashboard' %}"><i class="fas fa-tachometer-alt me-2"></i> لوحة التحكم</a></li>
+                            <li><a class="dropdown-item" href="{% url 'notifications:user_notifications' %}"><i class="fas fa-bell me-2"></i> تنبيهاتي</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item" href="{% url 'accounts:logout' %}"><i class="fas fa-sign-out-alt me-2"></i> تسجيل الخروج</a></li>
                         </ul>
