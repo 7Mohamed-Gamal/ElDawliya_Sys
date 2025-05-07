@@ -1,4 +1,4 @@
-from django.db import migrations
+from django.db import migrations, models
 
 class Migration(migrations.Migration):
 
@@ -7,40 +7,26 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL(
-            """
-            IF OBJECT_ID('hr_employeetask', 'U') IS NULL
-            BEGIN
-                CREATE TABLE hr_employeetask (
-                    id INT IDENTITY(1,1) PRIMARY KEY,
-                    title NVARCHAR(200) NOT NULL,
-                    description NVARCHAR(MAX) NOT NULL,
-                    employee_id INT NOT NULL,
-                    assigned_by_id INT NULL,
-                    status NVARCHAR(20) NOT NULL,
-                    priority NVARCHAR(20) NOT NULL,
-                    start_date DATE NOT NULL,
-                    due_date DATE NOT NULL,
-                    completion_date DATE NULL,
-                    progress INT NOT NULL,
-                    notes NVARCHAR(MAX) NULL,
-                    created_at DATETIME NOT NULL,
-                    updated_at DATETIME NOT NULL,
-                    CONSTRAINT FK_EmployeeTask_Employee FOREIGN KEY (employee_id) REFERENCES Tbl_Employee(Emp_ID),
-                    CONSTRAINT FK_EmployeeTask_User FOREIGN KEY (assigned_by_id) REFERENCES accounts_users_login_new(id)
-                );
-                PRINT 'Created hr_employeetask table';
-            END
-            ELSE
-            BEGIN
-                PRINT 'hr_employeetask table already exists';
-            END
-            """,
-            """
-            IF OBJECT_ID('hr_employeetask', 'U') IS NOT NULL
-            BEGIN
-                DROP TABLE hr_employeetask;
-            END
-            """
+        migrations.CreateModel(
+            name='EmployeeTask',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('title', models.CharField(max_length=200, verbose_name='عنوان المهمة')),
+                ('description', models.TextField(verbose_name='وصف المهمة')),
+                ('status', models.CharField(choices=[('pending', 'قيد الانتظار'), ('in_progress', 'قيد التنفيذ'), ('completed', 'مكتملة'), ('cancelled', 'ملغية')], default='pending', max_length=20, verbose_name='الحالة')),
+                ('priority', models.CharField(choices=[('low', 'منخفضة'), ('medium', 'متوسطة'), ('high', 'عالية'), ('urgent', 'عاجلة')], default='medium', max_length=20, verbose_name='الأولوية')),
+                ('start_date', models.DateField(verbose_name='تاريخ البدء')),
+                ('due_date', models.DateField(verbose_name='تاريخ الاستحقاق')),
+                ('completion_date', models.DateField(blank=True, null=True, verbose_name='تاريخ الإكمال')),
+                ('progress', models.IntegerField(default=0, verbose_name='نسبة الإنجاز')),
+                ('notes', models.TextField(blank=True, null=True, verbose_name='ملاحظات')),
+                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')),
+                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')),
+            ],
+            options={
+                'verbose_name': 'مهمة موظف',
+                'verbose_name_plural': 'مهام الموظفين',
+                'db_table': 'hr_employeetask',
+            },
         ),
     ]

@@ -3,6 +3,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from .admin_site import admin_site
+from .views import test_view
 
 # تطبيق نظام الصلاحيات في موقع الإدارة
 # ملاحظات:
@@ -13,6 +14,7 @@ from .admin_site import admin_site
 # 5. نموذج Group مسجل بالفعل في نظام Django الأساسي
 
 urlpatterns = [
+    path('test/', test_view, name='test'),  # مسار اختبار بسيط
     path('admin/', admin_site.urls),  # لوحة الإدارة المخصصة
     path('accounts/', include('accounts.urls')),  # مسارات تطبيق الحسابات
     path('meetings/', include('meetings.urls')),  # مسارات تطبيق الاجتماعات

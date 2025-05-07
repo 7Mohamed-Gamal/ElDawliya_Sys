@@ -88,7 +88,8 @@ import django.db.utils
 
 # قواعد بيانات النظام
 DATABASES = {
-
+    # Use SQLite for development/debugging
+    # الإعدادات الأصلية - المحاولة الأولى
     'default': {
         'ENGINE': 'mssql',
         'NAME': 'El_Dawliya_International',
@@ -99,20 +100,9 @@ DATABASES = {
             'Trusted_Connection': 'yes',
         },
     },
-    # الإعدادات الأصلية - المحاولة الأولى
-    'primary': {
-        'ENGINE': 'mssql',
-        'NAME': 'El_Dawliya_International',
-        'HOST': 'DESKTOP-H361157',
-        'PORT': '1433',
-        'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
-            'Trusted_Connection': 'yes',
-        },
-    },
-    
+
     # الإعدادات الجديدة - المحاولة الثانية
-    'secondary': {
+    'primary': {
         'ENGINE': 'mssql',
         'NAME': 'El_Dawliya_International',
         'HOST': 'ELDAWLIYA-SYSTE',
@@ -124,16 +114,9 @@ DATABASES = {
             'Trusted_Connection': 'yes',
         },
     },
-    
-    # SQLite للتطوير
-    'sqlite': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'El_Dawliya_International',
-    },
 }
 
-# تنفيذ آلية النسخ الاحتياطي لقواعد البيانات
-# نحاول الاتصال بقاعدة البيانات الأساسية أولاً، وإذا فشل، ننتقل إلى قاعدة البيانات الثانوية
+# آلية النسخ الاحتياطي لقواعد البيانات
 try:
     # نحاول الاتصال بقاعدة البيانات الأساسية
     from django.db import connections
