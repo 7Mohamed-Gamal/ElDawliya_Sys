@@ -8,8 +8,8 @@
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
 <li class="breadcrumb-item"><a href="{% url 'Hr:dashboard' %}">الموظفين</a></li>
-<li class="breadcrumb-item"><a href="{% url 'employees:payroll_period_list' %}">فترات الرواتب</a></li>
-<li class="breadcrumb-item"><a href="{% url 'employees:payroll_entry_list' %}">سجلات الرواتب</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Hr:payroll_period_list' %}">فترات الرواتب</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Hr:payroll_entry_list' %}">سجلات الرواتب</a></li>
 <li class="breadcrumb-item active">{{ page_title }}</li>
 {% endblock %}
 
@@ -34,7 +34,7 @@
                     <p>{{ payroll_entry.payroll_period.start_date|date:"Y-m-d" }} إلى {{ payroll_entry.payroll_period.end_date|date:"Y-m-d" }}</p>
                 </div>
                 <div class="d-grid gap-2">
-                    <a href="{% url 'employees:payroll_entry_list' %}" class="btn btn-secondary">
+                    <a href="{% url 'Hr:payroll_entry_list' %}" class="btn btn-secondary">
                         <i class="fas fa-arrow-right me-1"></i> العودة لسجلات الرواتب
                     </a>
                     <button type="button" class="btn btn-primary" onclick="printPayslip()">

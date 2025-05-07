@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'cars/base.html' %}
 
 {% block title %}{{ title }} - نظام إدارة نشاط النقل{% endblock %}
 
@@ -87,11 +87,11 @@
                 </div>
 
                 <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                    <a href="{% url 'supplier_list' %}" class="btn btn-secondary me-md-2">
-                        <i class="bi bi-x-circle"></i> إلغاء
+                    <a href="{% url 'cars:supplier_list' %}" class="btn btn-secondary me-md-2">
+                        <i class="fas fa-times-circle"></i> إلغاء
                     </a>
                     <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-save"></i> حفظ المورد
+                        <i class="fas fa-save"></i> حفظ المورد
                     </button>
                 </div>
             </form>

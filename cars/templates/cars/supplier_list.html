@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'cars\base.html' %}
 {% load custom_filters %}
 
 {% block title %}الموردين - نظام إدارة نشاط النقل{% endblock %}
@@ -8,7 +8,7 @@
 {% block content %}
     <div class="mb-3 d-flex justify-content-between align-items-center">
         <h4 class="mb-0">إجمالي الموردين: {{ suppliers|length }}</h4>
-        <a href="{% url 'supplier_add' %}" class="btn btn-success">
+        <a href="{% url 'cars:supplier_add' %}" class="btn btn-success">
             <i class="bi bi-plus-circle"></i> إضافة مورد جديد
         </a>
     </div>
@@ -35,10 +35,10 @@
                         <td>{{ supplier_data.cars_count }}</td>
                         <td>
                             <div class="btn-group" role="group">
-                                <a href="{% url 'supplier_edit' supplier_data.supplier.id %}" class="btn btn-sm btn-primary" title="تعديل">
+                                <a href="{% url 'cars:supplier_edit' supplier_data.supplier.id %}" class="btn btn-sm btn-primary" title="تعديل">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <a href="{% url 'supplier_delete' supplier_data.supplier.id %}" class="btn btn-sm btn-danger" title="حذف">
+                                <a href="{% url 'cars:supplier_delete' supplier_data.supplier.id %}" class="btn btn-sm btn-danger" title="حذف">
                                     <i class="bi bi-trash"></i>
                                 </a>
                             </div>

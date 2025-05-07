@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'cars\base.html' %}
 
 {% block title %}حذف موظف - نظام إدارة نشاط النقل{% endblock %}
 
@@ -35,7 +35,7 @@
             <form method="post">
                 {% csrf_token %}
                 <div class="d-flex justify-content-between">
-                    <a href="{% url 'employee_list' %}" class="btn btn-secondary">
+                    <a href="{% url 'cars:employee_list' %}" class="btn btn-secondary">
                         <i class="bi bi-x-circle"></i> إلغاء
                     </a>
                     <button type="submit" class="btn btn-danger">

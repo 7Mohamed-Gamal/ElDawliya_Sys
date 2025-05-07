@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'cars\base.html' %}
 
 {% block title %}نقاط خط السير - نظام إدارة نشاط النقل{% endblock %}
 
@@ -11,10 +11,10 @@
             <p class="text-muted mb-0">{% if car.supplier %}المورد: {{ car.supplier.name }}{% else %}لا يوجد مورد{% endif %}</p>
         </div>
         <div>
-            <a href="{% url 'car_route_report' car.id %}" class="btn btn-info me-2">
+            <a href="{% url 'cars:car_route_report' car.id %}" class="btn btn-info me-2">
                 <i class="bi bi-file-text"></i> تقرير خط السير
             </a>
-            <a href="{% url 'route_point_add' car.id %}" class="btn btn-success">
+            <a href="{% url 'cars:route_point_add' car.id %}" class="btn btn-success">
                 <i class="bi bi-plus-circle"></i> إضافة نقطة جديدة
             </a>
         </div>
@@ -40,10 +40,10 @@
                         <td>{{ point.employees.count }}</td>
                         <td>
                             <div class="btn-group" role="group">
-                                <a href="{% url 'route_point_edit' point.id %}" class="btn btn-sm btn-primary" title="تعديل">
+                                <a href="{% url 'cars:route_point_edit' point.id %}" class="btn btn-sm btn-primary" title="تعديل">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <a href="{% url 'route_point_delete' point.id %}" class="btn btn-sm btn-danger" title="حذف">
+                                <a href="{% url 'cars:route_point_delete' point.id %}" class="btn btn-sm btn-danger" title="حذف">
                                     <i class="bi bi-trash"></i>
                                 </a>
                             </div>
@@ -63,7 +63,7 @@
     </div>
     
     <div class="mt-3">
-        <a href="{% url 'car_list' %}" class="btn btn-secondary">
+        <a href="{% url 'cars:car_list' %}" class="btn btn-secondary">
             <i class="bi bi-arrow-left"></i> العودة لقائمة السيارات
         </a>
     </div>

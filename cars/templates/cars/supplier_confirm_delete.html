@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'cars\base.html' %}
 
 {% block title %}حذف مورد - نظام إدارة نشاط النقل{% endblock %}
 
@@ -49,7 +49,7 @@
                     <form method="post">
                         {% csrf_token %}
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                            <a href="{% url 'supplier_list' %}" class="btn btn-secondary me-md-2">
+                            <a href="{% url 'cars:supplier_list' %}" class="btn btn-secondary me-md-2">
                                 <i class="bi bi-x-circle"></i> إلغاء
                             </a>
                             <button type="submit" class="btn btn-danger">

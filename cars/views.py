@@ -67,7 +67,7 @@ def car_add(request):
         if form.is_valid():
             form.save()
             messages.success(request, 'Car added successfully!')
-            return redirect('car_list')
+            return redirect('cars:car_list')
     else:
         form = CarForm()
     
@@ -88,7 +88,7 @@ def car_edit(request, car_id):
         if form.is_valid():
             form.save()
             messages.success(request, 'Car updated successfully!')
-            return redirect('car_list')
+            return redirect('cars:car_list')
     else:
         form = CarForm(instance=car)
     
@@ -107,12 +107,12 @@ def car_delete(request, car_id):
     # Check if car can be deleted (has no trips)
     if Trip.objects.filter(car=car).exists():
         messages.error(request, 'Cannot delete car with existing trips!')
-        return redirect('car_list')
+        return redirect('cars:car_list')
     
     if request.method == 'POST':
         car.delete()
         messages.success(request, 'Car deleted successfully!')
-        return redirect('car_list')
+        return redirect('cars:car_list')
     
     context = {
         'car': car
@@ -148,7 +148,7 @@ def supplier_add(request):
         if form.is_valid():
             form.save()
             messages.success(request, 'Supplier added successfully!')
-            return redirect('supplier_list')
+            return redirect('cars:supplier_list')
     else:
         form = SupplierForm()
     
@@ -169,7 +169,7 @@ def supplier_edit(request, supplier_id):
         if form.is_valid():
             form.save()
             messages.success(request, 'Supplier updated successfully!')
-            return redirect('supplier_list')
+            return redirect('cars:supplier_list')
     else:
         form = SupplierForm(instance=supplier)
     
@@ -188,12 +188,12 @@ def supplier_delete(request, supplier_id):
     # Check if supplier can be deleted (has no cars)
     if Car.objects.filter(supplier=supplier).exists():
         messages.error(request, 'Cannot delete supplier with associated cars!')
-        return redirect('supplier_list')
+        return redirect('cars:supplier_list')
     
     if request.method == 'POST':
         supplier.delete()
         messages.success(request, 'Supplier deleted successfully!')
-        return redirect('supplier_list')
+        return redirect('cars:supplier_list')
     
     context = {
         'supplier': supplier
@@ -412,7 +412,7 @@ def employee_add(request):
         if form.is_valid():
             form.save()
             messages.success(request, 'Employee added successfully!')
-            return redirect('employee_list')
+            return redirect('cars:employee_list')
     else:
         form = EmployeeForm()
     
@@ -433,7 +433,7 @@ def employee_edit(request, employee_id):
         if form.is_valid():
             form.save()
             messages.success(request, 'Employee updated successfully!')
-            return redirect('employee_list')
+            return redirect('cars:employee_list')
     else:
         form = EmployeeForm(instance=employee)
     
@@ -452,12 +452,12 @@ def employee_delete(request, employee_id):
     # Check if employee can be deleted (not assigned to any route points)
     if employee.routepoint_set.exists():
         messages.error(request, 'Cannot delete employee assigned to route points!')
-        return redirect('employee_list')
+        return redirect('cars:employee_list')
     
     if request.method == 'POST':
         employee.delete()
         messages.success(request, 'Employee deleted successfully!')
-        return redirect('employee_list')
+        return redirect('cars:employee_list')
     
     context = {
         'employee': employee
@@ -489,11 +489,16 @@ def route_point_add(request, car_id):
         if form.is_valid():
             route_point = form.save(commit=False)
             route_point.car = car
+            
+            # Get the highest order value for this car and add 1
+            highest_order = RoutePoint.objects.filter(car=car).order_by('-order').values_list('order', flat=True).first()
+            route_point.order = 1 if highest_order is None else highest_order + 1
+            
             route_point.save()
             # Save many-to-many relationships
             form.save_m2m()
             messages.success(request, 'Route point added successfully!')
-            return redirect('route_point_list', car_id=car.id)
+            return redirect('cars:route_point_list', car_id=car.id)
     else:
         form = RoutePointForm()
     
@@ -510,13 +515,18 @@ def route_point_edit(request, point_id):
     """View for editing an existing route point"""
     route_point = get_object_or_404(RoutePoint, id=point_id)
     car = route_point.car
+    original_order = route_point.order
     
     if request.method == 'POST':
         form = RoutePointForm(request.POST, instance=route_point)
         if form.is_valid():
-            form.save()
+            updated_point = form.save(commit=False)
+            # Keep the original order value
+            updated_point.order = original_order
+            updated_point.save()
+            form.save_m2m()
             messages.success(request, 'Route point updated successfully!')
-            return redirect('route_point_list', car_id=car.id)
+            return redirect('cars:route_point_list', car_id=car.id)
     else:
         form = RoutePointForm(instance=route_point)
     
@@ -538,7 +548,7 @@ def route_point_delete(request, point_id):
     if request.method == 'POST':
         route_point.delete()
         messages.success(request, 'Route point deleted successfully!')
-        return redirect('route_point_list', car_id=car.id)
+        return redirect('cars:route_point_list', car_id=car.id)
     
     context = {
         'route_point': route_point,

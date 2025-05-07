@@ -103,12 +103,10 @@ class RoutePointForm(forms.ModelForm):
         fields = [
             'point_name',
             'departure_time',
-            'order',
             'employees'
         ]
         widgets = {
             'point_name': forms.TextInput(attrs={'class': 'form-control'}),
             'departure_time': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
-            'order': forms.NumberInput(attrs={'class': 'form-control'}),
             'employees': forms.SelectMultiple(attrs={'class': 'form-control'})
         }

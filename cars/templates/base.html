@@ -5,109 +5,221 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}نظام إدارة نشاط النقل{% endblock %}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+
+    <!-- Bootstrap RTL CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="{% static 'css/custom.css' %}">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+        :root {
+            --primary-color: #27ae60;
+            --secondary-color: #2c3e50;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --info-color: #3498db;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+        }
+
         body {
-            font-family: 'Cairo', sans-serif;
+            font-family: 'Tajawal', sans-serif;
             background-color: #f8f9fa;
+        }
+
+        .navbar {
+            background-color: var(--primary-color);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            color: white !important;
+        }
+
+        .navbar-light .navbar-nav .nav-link {
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        .navbar-light .navbar-nav .nav-link:hover {
+            color: white;
+        }
+
+        .with-sidebar {
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        .page-wrapper {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .content-wrapper {
+            display: flex;
+            flex: 1;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: var(--secondary-color);
+            color: white;
+            padding-top: 20px;
+            transition: all 0.3s;
+            position: fixed;
+            height: 100%;
+            z-index: 100;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .sidebar-header h3 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu-item {
+            margin-bottom: 5px;
         }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
-        <div class="container">
-            <a class="navbar-brand" href="{% url 'home' %}">نظام إدارة نشاط النقل</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'home' %}">
-                            <i class="bi bi-house-door"></i> الرئيسية
+    <div class="page-wrapper">
+        <!-- Sidebar -->
+        <div class="content-wrapper">
+            <div class="sidebar">
+                <div class="sidebar-header">
+                    <h3>نظام إدارة النقل</h3>
+                </div>
+                <ul class="sidebar-menu">
+                    <li class="sidebar-menu-item">
+                        <a href="{% url 'home' %}" class="nav-link {% if request.path == '/' %}active{% endif %}">
+                            <i class="fas fa-home"></i> الرئيسية
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if '/cars/' in request.path %}active{% endif %}" href="{% url 'car_list' %}">
-                            <i class="bi bi-car-front"></i> السيارات
+                    <li class="sidebar-menu-item">
+                        <a href="{% url 'cars:home' %}" class="nav-link {% if request.path == '/cars/' %}active{% endif %}">
+                            <i class="fas fa-tachometer-alt"></i> لوحة التحكم
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.path == '/cars/add/' %}active{% endif %}" href="{% url 'car_add' %}">
-                            <i class="bi bi-plus-circle"></i> إضافة سيارة
+                    <li class="sidebar-menu-item">
+                        <a href="{% url 'cars:car_list' %}" class="nav-link {% if '/cars/' in request.path and not '/add/' in request.path %}active{% endif %}">
+                            <i class="fas fa-car"></i> السيارات
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if '/suppliers/' in request.path %}active{% endif %}" href="{% url 'supplier_list' %}">
-                            <i class="bi bi-people"></i> الموردين
+                    <li class="sidebar-menu-item">
+                        <a href="{% url 'cars:car_add' %}" class="nav-link {% if request.path == '/cars/add/' %}active{% endif %}">
+                            <i class="fas fa-plus-circle"></i> إضافة سيارة
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.path == '/suppliers/add/' %}active{% endif %}" href="{% url 'supplier_add' %}">
-                            <i class="bi bi-plus-circle"></i> إضافة مورد
+                    <li class="sidebar-menu-item">
+                        <a href="{% url 'cars:supplier_list' %}" class="nav-link {% if '/suppliers/' in request.path and not '/add/' in request.path %}active{% endif %}">
+                            <i class="fas fa-users"></i> الموردين
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if '/trips/' in request.path %}active{% endif %}" href="{% url 'trip_list' %}">
-                            <i class="bi bi-map"></i> الرحلات
+                    <li class="sidebar-menu-item">
+                        <a href="{% url 'cars:supplier_add' %}" class="nav-link {% if request.path == '/suppliers/add/' %}active{% endif %}">
+                            <i class="fas fa-user-plus"></i> إضافة مورد
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if '/employees/' in request.path %}active{% endif %}" href="{% url 'employee_list' %}">
-                            <i class="bi bi-person-badge"></i> الموظفين
+                    <li class="sidebar-menu-item">
+                        <a href="{% url 'cars:trip_list' %}" class="nav-link {% if '/trips/' in request.path %}active{% endif %}">
+                            <i class="fas fa-route"></i> الرحلات
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.path == '/average-price/' %}active{% endif %}" href="{% url 'average_price' %}">
-                            <i class="bi bi-calculator"></i> حساب متوسط السعر
+                    <li class="sidebar-menu-item">
+                        <a href="{% url 'cars:employee_list' %}" class="nav-link {% if '/employees/' in request.path %}active{% endif %}">
+                            <i class="fas fa-id-card"></i> الموظفين
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.path == '/reports/' %}active{% endif %}" href="{% url 'reports' %}">
-                            <i class="bi bi-bar-chart"></i> التقارير
+                    <li class="sidebar-menu-item">
+                        <a href="{% url 'cars:average_price' %}" class="nav-link {% if request.path == '/average-price/' %}active{% endif %}">
+                            <i class="fas fa-calculator"></i> حساب متوسط السعر
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.path == '/settings/' %}active{% endif %}" href="{% url 'settings_edit' %}">
-                            <i class="bi bi-gear"></i> الإعدادات
+                    <li class="sidebar-menu-item">
+                        <a href="{% url 'cars:reports' %}" class="nav-link {% if request.path == '/reports/' %}active{% endif %}">
+                            <i class="fas fa-chart-bar"></i> التقارير
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="{% url 'cars:settings_edit' %}" class="nav-link {% if request.path == '/settings/' %}active{% endif %}">
+                            <i class="fas fa-cog"></i> الإعدادات
                         </a>
                     </li>
                 </ul>
             </div>
-        </div>
-    </nav>
+            
+            <!-- Main Content -->
+            <div class="main-content ms-250">
+                <!-- Top Navbar -->
+                <nav class="navbar navbar-expand-lg navbar-light">
+                    <div class="container-fluid">
+                        <a class="navbar-brand" href="{% url 'cars:home' %}">نظام إدارة نشاط النقل</a>
+                        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                            <span class="navbar-toggler-icon"></span>
+                        </button>
+                        <div class="collapse navbar-collapse" id="navbarNav">
+                            <ul class="navbar-nav ms-auto">
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'home' %}">
+                                        <i class="fas fa-home"></i> الرئيسية
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </nav>
 
-    <div class="container">
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                <div class="container mt-4">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h3 class="card-title mb-0">{% block header %}{% endblock %}</h3>
+                        </div>
+                        <div class="card-body">
+                            {% block content %}{% endblock %}
+                        </div>
+                    </div>
                 </div>
-            {% endfor %}
-        {% endif %}
-
-        <div class="card mb-4">
-            <div class="card-header bg-primary text-white">
-                <h3 class="card-title mb-0">{% block header %}{% endblock %}</h3>
-            </div>
-            <div class="card-body">
-                {% block content %}{% endblock %}
             </div>
         </div>
+
+        <footer class="bg-light text-center py-3 mt-5">
+            <div class="container">
+                <p class="mb-0">&copy; 2025 نظام إدارة نشاط النقل. جميع الحقوق محفوظة.</p>
+            </div>
+        </footer>
     </div>
-
-    <footer class="bg-light text-center py-3 mt-5">
-        <div class="container">
-            <p class="mb-0">&copy; 2025 نظام إدارة نشاط النقل. جميع الحقوق محفوظة.</p>
-        </div>
-    </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -120,6 +232,16 @@
                     bsAlert.close();
                 });
             }, 5000);
+        });
+
+        // إضافة هامش للمحتوى الرئيسي بناءً على عرض الشريط الجانبي
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+            
+            if (sidebar && mainContent) {
+                mainContent.style.marginRight = sidebar.offsetWidth + 'px';
+            }
         });
     </script>
     {% block extra_js %}{% endblock %}
