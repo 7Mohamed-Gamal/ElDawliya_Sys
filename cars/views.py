@@ -283,7 +283,7 @@ def trip_add(request):
         if form.is_valid():
             trip = form.save()
             messages.success(request, 'Trip added successfully!')
-            return redirect('trip_list')
+            return redirect('cars:trip_list')
     else:
         form = TripForm()
     
@@ -305,7 +305,7 @@ def trip_edit(request, trip_id):
             trip = form.save()
             trip.calculate_costs()  # Recalculate costs
             messages.success(request, 'Trip updated successfully!')
-            return redirect('trip_list')
+            return redirect('cars:trip_list')
     else:
         form = TripForm(instance=trip)
     
@@ -328,7 +328,7 @@ def trip_delete(request, trip_id):
         
         trip.delete()
         messages.success(request, 'Trip deleted successfully!')
-        return redirect('trip_list')
+        return redirect('cars:trip_list')
     
     context = {
         'trip': trip
