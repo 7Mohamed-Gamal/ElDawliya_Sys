@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Car, Trip, Settings, Supplier, Employee, RoutePoint
+from .models import Car, Trip, Settings, Supplier, RoutePoint
 
 @admin.register(Supplier)
 class SupplierAdmin(admin.ModelAdmin):
@@ -41,5 +41,4 @@ class SettingsAdmin(admin.ModelAdmin):
         # Don't allow deleting the Settings object
         return False
 
-admin.site.register(Employee)
 admin.site.register(RoutePoint)

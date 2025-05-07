@@ -26,6 +26,7 @@ urlpatterns = [
     path('notifications/', include('notifications.urls')),  # مسارات تطبيق التنبيهات
     path('audit/', include('audit.urls')),  # مسارات تطبيق تسجيل الأحداث
     path('employee-tasks/', include('employee_tasks.urls')),  # مسارات تطبيق مهام الموظفين
+    path('cars/', include('cars.urls')),  # مسارات تطبيق السيارات
     path('', lambda request: redirect('accounts:login'), name='home'),  # إعادة توجيه الصفحة الرئيسية إلى صفحة الحسابات
 ]
 

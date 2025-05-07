@@ -1,5 +1,6 @@
 from django import forms
-from .models import Car, Trip, Settings, Supplier, Employee, RoutePoint
+from Hr.models.employee_model import Employee
+from .models import Car, Trip, Settings, Supplier, RoutePoint
 
 class SupplierForm(forms.ModelForm):
     """Form for adding and editing suppliers"""
@@ -91,25 +92,7 @@ class SettingsForm(forms.ModelForm):
         }
 
 
-class EmployeeForm(forms.ModelForm):
-    """Form for adding and editing employees"""
-    
-    class Meta:
-        model = Employee
-        fields = [
-            'name',
-            'job_title',
-            'phone',
-            'email',
-            'address'
-        ]
-        widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control'}),
-            'job_title': forms.TextInput(attrs={'class': 'form-control'}),
-            'phone': forms.TextInput(attrs={'class': 'form-control'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3})
-        }
+# EmployeeForm removed - using HR app's Employee model instead
 
 
 class RoutePointForm(forms.ModelForm):
