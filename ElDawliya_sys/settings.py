@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'Purchase_orders',
     'notifications',  # تطبيق التنبيهات
     'audit.apps.AuditConfig',  # تطبيق تسجيل وتدقيق الأحداث
-    'employee_tasks',  # تطبيق مهام الموظفين
+    'employee_tasks',# تطبيق مهام الموظفين
+    'cars',
 ]
 
 MIDDLEWARE = [

@@ -1,0 +1,127 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}نظام إدارة نشاط النقل{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <link rel="stylesheet" href="{% static 'css/custom.css' %}">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: #f8f9fa;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'home' %}">نظام إدارة نشاط النقل</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'home' %}">
+                            <i class="bi bi-house-door"></i> الرئيسية
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/cars/' in request.path %}active{% endif %}" href="{% url 'car_list' %}">
+                            <i class="bi bi-car-front"></i> السيارات
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/cars/add/' %}active{% endif %}" href="{% url 'car_add' %}">
+                            <i class="bi bi-plus-circle"></i> إضافة سيارة
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/suppliers/' in request.path %}active{% endif %}" href="{% url 'supplier_list' %}">
+                            <i class="bi bi-people"></i> الموردين
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/suppliers/add/' %}active{% endif %}" href="{% url 'supplier_add' %}">
+                            <i class="bi bi-plus-circle"></i> إضافة مورد
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/trips/' in request.path %}active{% endif %}" href="{% url 'trip_list' %}">
+                            <i class="bi bi-map"></i> الرحلات
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if '/employees/' in request.path %}active{% endif %}" href="{% url 'employee_list' %}">
+                            <i class="bi bi-person-badge"></i> الموظفين
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/average-price/' %}active{% endif %}" href="{% url 'average_price' %}">
+                            <i class="bi bi-calculator"></i> حساب متوسط السعر
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/reports/' %}active{% endif %}" href="{% url 'reports' %}">
+                            <i class="bi bi-bar-chart"></i> التقارير
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.path == '/settings/' %}active{% endif %}" href="{% url 'settings_edit' %}">
+                            <i class="bi bi-gear"></i> الإعدادات
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h3 class="card-title mb-0">{% block header %}{% endblock %}</h3>
+            </div>
+            <div class="card-body">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-light text-center py-3 mt-5">
+        <div class="container">
+            <p class="mb-0">&copy; 2025 نظام إدارة نشاط النقل. جميع الحقوق محفوظة.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // إخفاء رسائل التنبيه بعد 5 ثوان
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                const alerts = document.querySelectorAll('.alert');
+                alerts.forEach(alert => {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                });
+            }, 5000);
+        });
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

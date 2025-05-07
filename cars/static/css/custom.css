@@ -1,0 +1,116 @@
+/* Custom CSS for Transport Management System */
+
+/* RTL (Right-to-Left) specific styling */
+body {
+    direction: rtl;
+    text-align: right;
+}
+
+/* Custom colors */
+.bg-primary-light {
+    background-color: #e1f0ff !important;
+}
+.bg-success-light {
+    background-color: #e1ffe1 !important;
+}
+.bg-warning-light {
+    background-color: #fff8e1 !important;
+}
+.bg-info-light {
+    background-color: #e1f5fe !important;
+}
+.bg-danger-light {
+    background-color: #ffe1e1 !important;
+}
+
+/* Dashboard stats */
+.dashboard-stat {
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    text-align: center;
+}
+.stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+}
+
+/* Table styling */
+.table-container {
+    overflow-x: auto;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+.table th {
+    position: sticky;
+    top: 0;
+    background-color: #343a40;
+    color: white;
+}
+
+/* Chart containers */
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+/* Card styling */
+.card {
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    border-radius: 8px;
+}
+.card-header {
+    font-weight: 600;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+/* Form styling */
+.form-label {
+    font-weight: 600;
+}
+.form-control:focus {
+    border-color: #4338ca;
+    box-shadow: 0 0 0 0.25rem rgba(67, 56, 202, 0.25);
+}
+
+/* Button hover effects */
+.btn-primary {
+    background-color: #4338ca;
+    border-color: #4338ca;
+}
+.btn-primary:hover {
+    background-color: #312997;
+    border-color: #312997;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .dashboard-stat {
+        margin-bottom: 15px;
+    }
+    .chart-container {
+        height: 250px;
+    }
+    .stat-value {
+        font-size: 1.5rem;
+    }
+}
+
+/* Print styling */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    .card {
+        box-shadow: none !important;
+        border: 1px solid #ddd;
+    }
+    .chart-container {
+        page-break-inside: avoid;
+    }
+}
