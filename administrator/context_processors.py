@@ -160,6 +160,21 @@ def user_permissions(request):
                             'can_delete': True,
                             'can_print': True
                         }
+
+                # Convert QuerySet to list of URL names for easier template use
+                user_department_urls = [dept.url_name for dept in user_departments]
+
+                # Update the default response with the actual values for admin users
+                result = {
+                    'user_departments': user_departments,
+                    'user_department_urls': user_department_urls,
+                    'user_modules': user_modules,
+                    'user_module_permissions': user_module_permissions,
+                    'is_admin': is_admin,
+                }
+
+                logger.info("Successfully retrieved admin user permissions")
+                return result
             else:
                 # Get departments the user has direct permission to
                 direct_dept_permissions = UserDepartmentPermission.objects.filter(
