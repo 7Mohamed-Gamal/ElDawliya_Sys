@@ -92,7 +92,7 @@ DATABASES = {
     # الإعدادات الأصلية - المحاولة الأولى
     'default': {
         'ENGINE': 'mssql',
-        'NAME': 'El_Dawliya_International',
+        'NAME': 'ElDawliya_Sys',
         'HOST': 'DESKTOP-H361157',
         'PORT': '1433',
         'OPTIONS': {
@@ -104,7 +104,7 @@ DATABASES = {
     # الإعدادات الجديدة - المحاولة الثانية
     'primary': {
         'ENGINE': 'mssql',
-        'NAME': 'El_Dawliya_International',
+        'NAME': 'ElDawliya_Sys',
         'HOST': 'ELDAWLIYA-SYSTE',
         'PORT': '1433',
         'USER': 'admin',
