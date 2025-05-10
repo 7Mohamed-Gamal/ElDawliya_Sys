@@ -2,6 +2,10 @@ import os
 from pathlib import Path
 from django.utils.translation import gettext_lazy as _
 
+
+SERVER_IP = '192.168.1.48'
+SERVER_HOSTNAME = 'ELDAWLIYA-SYSTE'
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
@@ -10,13 +14,15 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-#9^46q1m(@yts%
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # Set DEBUG to False in production
-DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
+DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'False'
 
 # Add production domain names/IPs when DEBUG is False
 if DEBUG:
-    ALLOWED_HOSTS = []
+    ALLOWED_HOSTS = [SERVER_IP, '127.0.0.1', 'localhost']
 else:
-    ALLOWED_HOSTS = ['eldawliya.com', 'www.eldawliya.com']  # Replace with your actual domains
+    ALLOWED_HOSTS = [SERVER_IP, '127.0.0.1', 'localhost']  # Replace with your actual domains
+
+
 
 
 # Application definition
