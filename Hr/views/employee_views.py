@@ -163,7 +163,7 @@ def employee_create(request):
             try:
                 employee = form.save()
                 messages.success(request, f'تم إنشاء الموظف {employee.emp_full_name} بنجاح')
-                return redirect('Hr:detail', emp_id=employee.emp_id)
+                return redirect('Hr:employees:detail', emp_id=employee.emp_id)
             except Exception as e:
                 messages.error(request, f'حدث خطأ أثناء حفظ الموظف: {str(e)}')
     else:
@@ -188,7 +188,7 @@ def employee_edit(request, emp_id):
         if form.is_valid():
             form.save()
             messages.success(request, f'تم تحديث بيانات الموظف {employee.emp_full_name} بنجاح')
-            return redirect('Hr:detail', emp_id=employee.emp_id)
+            return redirect('Hr:employees:detail', emp_id=employee.emp_id)
     else:
         form = EmployeeForm(instance=employee)
 
@@ -196,6 +196,7 @@ def employee_edit(request, emp_id):
         'form': form,
         'employee': employee,
         'title': 'تعديل بيانات الموظف',
+        'button_text': 'حفظ التغييرات',
     }
 
     return render(request, 'Hr/employees/employee_form.html', context)
@@ -209,7 +210,7 @@ def employee_delete(request, emp_id):
     if request.method == 'POST':
         employee.delete()
         messages.success(request, f'تم حذف الموظف {employee.emp_full_name} بنجاح')
-        return redirect('Hr:list')
+        return redirect('Hr:employees:list')
 
     context = {
         'employee': employee,

@@ -3,168 +3,75 @@ from django.utils.translation import gettext_lazy as _
 from Hr.models import Employee, Department, Job, Car
 
 
-class EmployeeForm(forms.Form):
+class EmployeeForm(forms.ModelForm):
     """
     Form for creating and editing employees
     """
-    # المعلومات الأساسية
-    emp_id = forms.IntegerField(
-        label=_('رقم الموظف'),
-        widget=forms.NumberInput(attrs={'class': 'form-control'})
-    )
-    emp_first_name = forms.CharField(
-        label=_('الاسم الأول'),
-        widget=forms.TextInput(attrs={'class': 'form-control'})
-    )
-    emp_second_name = forms.CharField(
-        label=_('الاسم الثاني'),
-        widget=forms.TextInput(attrs={'class': 'form-control'})
-    )
-    emp_full_name = forms.CharField(
-        label=_('الاسم الكامل'),
-        widget=forms.TextInput(attrs={'class': 'form-control'})
-    )
-    emp_name_english = forms.CharField(
-        label=_('الاسم بالإنجليزية'),
-        required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control'})
-    )
-    mother_name = forms.CharField(
-        label=_('اسم الأم'),
-        required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control'})
-    )
-
-    # معلومات الهوية
-    national_id = forms.CharField(
-        label=_('الرقم القومي'),
-        required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control'})
-    )
-    date_birth = forms.DateField(
-        label=_('تاريخ الميلاد'),
-        required=False,
-        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'})
-    )
-    place_birth = forms.CharField(
-        label=_('محل الميلاد'),
-        required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control'})
-    )
-    emp_nationality = forms.CharField(
-        label=_('الجنسية'),
-        required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control'})
-    )
-    emp_marital_status = forms.ChoiceField(
-        label=_('الحالة الاجتماعية'),
-        choices=Employee.MARITAL_STATUS_CHOICES,
-        required=False,
-        widget=forms.Select(attrs={'class': 'form-select'})
-    )
-    military_service_certificate = forms.ChoiceField(
-        label=_('شهادة الخدمة العسكرية'),
-        choices=Employee.MILITARY_SERVICE_CHOICES,
-        required=False,
-        widget=forms.Select(attrs={'class': 'form-select'})
-    )
-    people_with_special_needs = forms.BooleanField(
-        label=_('ذوي الاحتياجات الخاصة'),
-        required=False,
-        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
-    )
-
-    # بيانات الاتصال
-    emp_phone1 = forms.CharField(
-        label=_('رقم الهاتف 1'),
-        required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control'})
-    )
-    emp_phone2 = forms.CharField(
-        label=_('رقم الهاتف 2'),
-        required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control'})
-    )
-    emp_address = forms.CharField(
-        label=_('العنوان'),
-        required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control'})
-    )
-    governorate = forms.CharField(
-        label=_('المحافظة'),
-        required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control'})
-    )
-
-    # معلومات العمل
-    emp_type = forms.ChoiceField(
-        label=_('نوع الموظف'),
-        choices=Employee.EMP_TYPE_CHOICES,
-        required=False,
-        widget=forms.Select(attrs={'class': 'form-select'})
-    )
-    working_condition = forms.ChoiceField(
-        label=_('حالة العمل'),
-        choices=Employee.WORKING_CONDITION_CHOICES,
-        required=False,
-        widget=forms.Select(attrs={'class': 'form-select'})
-    )
-    department = forms.ModelChoiceField(
-        label=_('القسم'),
-        queryset=Department.objects.all(),
-        required=False,
-        widget=forms.Select(attrs={'class': 'form-select'})
-    )
-    jop_code = forms.IntegerField(
-        label=_('كود الوظيفة'),
-        required=False,
-        widget=forms.NumberInput(attrs={'class': 'form-control'})
-    )
-    jop_name = forms.CharField(
-        label=_('اسم الوظيفة'),
-        required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control'})
-    )
-    emp_date_hiring = forms.DateField(
-        label=_('تاريخ التعيين'),
-        required=False,
-        widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'})
-    )
-
-    # معلومات السيارة
-    emp_car = forms.CharField(
-        label=_('السيارة'),
-        required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control'})
-    )
-
-    # معلومات التأمين
-    insurance_status = forms.ChoiceField(
-        label=_('حالة التأمين'),
-        choices=Employee.INSURANCE_STATUS_CHOICES,
-        required=False,
-        widget=forms.Select(attrs={'class': 'form-select'})
-    )
-    insurance_salary = forms.DecimalField(
-        label=_('راتب التأمين'),
-        required=False,
-        widget=forms.NumberInput(attrs={'class': 'form-control'})
-    )
-    health_card = forms.ChoiceField(
-        label=_('بطاقة صحية'),
-        choices=Employee.health_card_choices,
-        required=False,
-        widget=forms.Select(attrs={'class': 'form-select'})
-    )
-    shift_type = forms.ChoiceField(
-        label=_('نوع المناوبة'),
-        choices=Employee.SHIFT_TYPE_CHOICES,
-        required=False,
-        widget=forms.Select(attrs={'class': 'form-select'})
-    )
+    class Meta:
+        model = Employee
+        fields = [
+            'emp_id', 'emp_first_name', 'emp_second_name', 'emp_full_name', 'emp_name_english', 'mother_name',
+            'national_id', 'date_birth', 'place_birth', 'emp_nationality', 'emp_marital_status',
+            'military_service_certificate', 'people_with_special_needs', 'emp_phone1', 'emp_phone2',
+            'emp_address', 'governorate', 'emp_type', 'working_condition', 'department',
+            'jop_code', 'jop_name', 'emp_date_hiring', 'emp_car', 'insurance_status',
+            'insurance_salary', 'health_card', 'shift_type'
+        ]
+        widgets = {
+            'emp_id': forms.NumberInput(attrs={'class': 'form-control'}),
+            'emp_first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'emp_second_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'emp_full_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'emp_name_english': forms.TextInput(attrs={'class': 'form-control'}),
+            'mother_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'national_id': forms.TextInput(attrs={'class': 'form-control'}),
+            'date_birth': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'place_birth': forms.TextInput(attrs={'class': 'form-control'}),
+            'emp_nationality': forms.TextInput(attrs={'class': 'form-control'}),
+            'emp_marital_status': forms.Select(attrs={'class': 'form-select'}),
+            'military_service_certificate': forms.Select(attrs={'class': 'form-select'}),
+            'people_with_special_needs': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'emp_phone1': forms.TextInput(attrs={'class': 'form-control'}),
+            'emp_phone2': forms.TextInput(attrs={'class': 'form-control'}),
+            'emp_address': forms.TextInput(attrs={'class': 'form-control'}),
+            'governorate': forms.TextInput(attrs={'class': 'form-control'}),
+            'emp_type': forms.Select(attrs={'class': 'form-select'}),
+            'working_condition': forms.Select(attrs={'class': 'form-select'}),
+            'department': forms.Select(attrs={'class': 'form-select'}),
+            'jop_code': forms.NumberInput(attrs={'class': 'form-control'}),
+            'jop_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'emp_date_hiring': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'emp_car': forms.TextInput(attrs={'class': 'form-control'}),
+            'insurance_status': forms.Select(attrs={'class': 'form-select'}),
+            'insurance_salary': forms.NumberInput(attrs={'class': 'form-control'}),
+            'health_card': forms.Select(attrs={'class': 'form-select'}),
+            'shift_type': forms.Select(attrs={'class': 'form-select'}),
+        }
 
     def __init__(self, *args, **kwargs):
+        # استدعاء super() method أولاً
         super().__init__(*args, **kwargs)
+
+        # الحصول على instance إذا كان موجوداً
+        instance = kwargs.get('instance', None)
+
+        # التأكد من أن جميع الحقول موجودة في النموذج
+        for field_name in self.Meta.fields:
+            if field_name not in self.fields:
+                print(f"Warning: Field {field_name} is missing from the form")
+
+        # طباعة القيم لتشخيص المشكلة
+        if instance:
+            print(f"Loading instance with ID: {instance.emp_id}")
+            for field_name in self.fields:
+                if hasattr(instance, field_name):
+                    field_value = getattr(instance, field_name)
+                    print(f"{field_name}: {field_value}")
+                    # التأكد من أن القيمة الأولية للحقل تم تعيينها بشكل صحيح
+                    if field_name in self.initial:
+                        print(f"  Initial value: {self.initial[field_name]}")
+                    else:
+                        print(f"  No initial value set")
 
         # تقسيم الحقول إلى مجموعات للعرض في الواجهة
         self.fieldsets = [
@@ -192,51 +99,14 @@ class EmployeeForm(forms.Form):
             ]),
         ]
 
-        # تعيين قيم افتراضية للحقول المهمة
-        self.fields['working_condition'].initial = 'سارى'  # سارى
-        self.fields['emp_type'].initial = 'ذكر'  # ذكر
-        self.fields['emp_marital_status'].initial = 'أعزب'  # أعزب
-        self.fields['insurance_status'].initial = 'غير مؤمن عليه'  # غير مؤمن عليه
-        self.fields['health_card'].initial = 'غير موجوده'  # غير موجوده
-        self.fields['shift_type'].initial = 'صباحي'  # صباحي
-
-    def save(self):
-        """
-        Save the form data to create a new Employee instance
-        """
-        data = self.cleaned_data
-        employee = Employee(
-            emp_id=data['emp_id'],
-            emp_first_name=data['emp_first_name'],
-            emp_second_name=data['emp_second_name'],
-            emp_full_name=data['emp_full_name'],
-            emp_name_english=data.get('emp_name_english', ''),
-            mother_name=data.get('mother_name', ''),
-            national_id=data.get('national_id', ''),
-            date_birth=data.get('date_birth'),
-            place_birth=data.get('place_birth', ''),
-            emp_nationality=data.get('emp_nationality', ''),
-            emp_marital_status=data.get('emp_marital_status', ''),
-            military_service_certificate=data.get('military_service_certificate', ''),
-            people_with_special_needs=data.get('people_with_special_needs', False),
-            emp_phone1=data.get('emp_phone1', ''),
-            emp_phone2=data.get('emp_phone2', ''),
-            emp_address=data.get('emp_address', ''),
-            governorate=data.get('governorate', ''),
-            emp_type=data.get('emp_type', ''),
-            working_condition=data.get('working_condition', ''),
-            department=data.get('department'),
-            jop_code=data.get('jop_code'),
-            jop_name=data.get('jop_name', ''),
-            emp_date_hiring=data.get('emp_date_hiring'),
-            emp_car=data.get('emp_car', ''),
-            insurance_status=data.get('insurance_status', ''),
-            insurance_salary=data.get('insurance_salary'),
-            health_card=data.get('health_card', ''),
-            shift_type=data.get('shift_type', '')
-        )
-        employee.save()
-        return employee
+        # تعيين قيم افتراضية للحقول المهمة للإنشاء الجديد فقط
+        if not instance:
+            self.fields['working_condition'].initial = 'سارى'
+            self.fields['emp_type'].initial = 'ذكر'
+            self.fields['emp_marital_status'].initial = 'أعزب'
+            self.fields['insurance_status'].initial = 'غير مؤمن عليه'
+            self.fields['health_card'].initial = 'غير موجوده'
+            self.fields['shift_type'].initial = 'صباحي'
 
 
 class EmployeeFilterForm(forms.Form):
@@ -334,8 +204,6 @@ class DepartmentForm(forms.ModelForm):
             }),
             'dept_name': forms.TextInput(attrs={'class': 'form-control'}),
         }
-
-
 
     def save(self, commit=True):
         instance = super().save(commit=False)
