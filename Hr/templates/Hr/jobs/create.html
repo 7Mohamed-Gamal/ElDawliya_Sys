@@ -25,7 +25,7 @@
             <div class="card-body p-4">
                 <form method="post" novalidate>
                     {% csrf_token %}
-                    
+
                     {% if form.non_field_errors %}
                     <div class="alert alert-danger mb-4">
                         {% for error in form.non_field_errors %}
@@ -33,12 +33,16 @@
                         {% endfor %}
                     </div>
                     {% endif %}
-                    
+
                     <div class="row g-3">
-                        <!-- Job Code -->
+                        <!-- Job Code (Auto-generated) -->
                         <div class="col-md-6">
-                            <label for="{{ form.jop_code.id_for_label }}" class="form-label">رمز الوظيفة <span class="text-danger">*</span></label>
-                            {{ form.jop_code }}
+                            <label for="{{ form.jop_code.id_for_label }}" class="form-label">رمز الوظيفة <span class="text-danger">*</span> <small class="text-muted">(يتم إنشاؤه تلقائياً)</small></label>
+                            {% if next_job_code %}
+                                <input type="number" name="{{ form.jop_code.html_name }}" id="{{ form.jop_code.id_for_label }}" value="{{ next_job_code }}" class="form-control" readonly>
+                            {% else %}
+                                {{ form.jop_code }}
+                            {% endif %}
                             {% if form.jop_code.errors %}
                             <div class="invalid-feedback d-block">
                                 {% for error in form.jop_code.errors %}
@@ -50,7 +54,7 @@
                             <div class="form-text">{{ form.jop_code.help_text }}</div>
                             {% endif %}
                         </div>
-                        
+
                         <!-- Job Name -->
                         <div class="col-md-6">
                             <label for="{{ form.jop_name.id_for_label }}" class="form-label">اسم الوظيفة <span class="text-danger">*</span></label>
@@ -66,7 +70,7 @@
                             <div class="form-text">{{ form.jop_name.help_text }}</div>
                             {% endif %}
                         </div>
-                        
+
                         <!-- Department -->
                         <div class="col-md-12">
                             <label for="{{ form.department.id_for_label }}" class="form-label">القسم</label>
@@ -125,7 +129,7 @@
             // Skip checkboxes
             if (element.type !== 'checkbox') {
                 element.classList.add('form-control');
-                
+
                 // Add is-invalid class to inputs with errors
                 if (element.closest('.col-md-6, .col-md-12').querySelector('.invalid-feedback')) {
                     element.classList.add('is-invalid');
@@ -135,7 +139,7 @@
                 element.classList.add('form-check-input');
             }
         });
-        
+
         // Make select2 for dropdowns if select2 is available
         if (typeof $.fn.select2 !== 'undefined') {
             $('#{{ form.department.id_for_label }}').select2({
@@ -145,6 +149,43 @@
                 dir: 'rtl'
             });
         }
+
+        // Auto-generate job code
+        generateJobCode();
     });
+
+    // Function to generate job code
+    function generateJobCode() {
+        // Get the job code input field
+        const jobCodeInput = document.getElementById('{{ form.jop_code.id_for_label }}');
+        console.log('Job code input field:', jobCodeInput);
+
+        if (!jobCodeInput) {
+            console.error('Job code input field not found!');
+            return;
+        }
+
+        console.log('Fetching next job code...');
+        // Fetch the next available job code from the server
+        fetch('/Hr/jobs/get_next_job_code/')
+            .then(response => {
+                console.log('Response received:', response);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Data received:', data);
+                if (data.next_code) {
+                    console.log('Setting job code to:', data.next_code);
+                    jobCodeInput.value = data.next_code;
+                    // Make the field read-only
+                    jobCodeInput.readOnly = true;
+                } else {
+                    console.error('No next_code in response data');
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching next job code:', error);
+            });
+    }
 </script>
 {% endblock %}

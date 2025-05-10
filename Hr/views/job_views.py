@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.http import JsonResponse
 
 from Hr.models.job_models import Job
 from Hr.forms.employee_forms import JobForm
@@ -42,15 +43,37 @@ def job_create(request):
     if request.method == 'POST':
         form = JobForm(request.POST)
         if form.is_valid():
-            form.save()
-            messages.success(request, 'تم إنشاء الوظيفة بنجاح')
-            return redirect('Hr:jobs:list')
+            try:
+                # If job code is not provided, generate it automatically
+                if not form.cleaned_data.get('jop_code'):
+                    # Get the highest job code
+                    max_job = Job.objects.all().order_by('-jop_code').first()
+                    # If there are no jobs, start with 1, otherwise increment the highest code
+                    next_code = 1 if not max_job else max_job.jop_code + 1
+                    form.instance.jop_code = next_code
+                    print(f"Auto-generated job code: {next_code}")
+                else:
+                    print(f"Using provided job code: {form.cleaned_data.get('jop_code')}")
+
+                job = form.save()
+                print(f"Job saved with code: {job.jop_code}")
+                messages.success(request, f'تم إنشاء الوظيفة بنجاح برمز {job.jop_code}')
+                return redirect('Hr:jobs:list')
+            except Exception as e:
+                print(f"Error saving job: {str(e)}")
+                messages.error(request, f'حدث خطأ أثناء حفظ الوظيفة: {str(e)}')
     else:
+        # عند تحميل الصفحة، قم بإنشاء نموذج فارغ
         form = JobForm()
+        # احصل على الرمز التالي للوظيفة
+        max_job = Job.objects.all().order_by('-jop_code').first()
+        next_code = 1 if not max_job else max_job.jop_code + 1
+        print(f"Initial job code for form: {next_code}")
 
     context = {
         'form': form,
-        'title': 'إنشاء وظيفة جديدة'
+        'title': 'إنشاء وظيفة جديدة',
+        'next_job_code': next_code if 'next_code' in locals() else None
     }
 
     return render(request, 'Hr/jobs/create.html', context)
@@ -125,3 +148,19 @@ def job_delete(request, jop_code):
     }
 
     return render(request, 'Hr/jobs/delete.html', context)
+
+@login_required
+def get_next_job_code(request):
+    """Get the next available job code"""
+    try:
+        # Get the highest job code
+        max_job = Job.objects.all().order_by('-jop_code').first()
+
+        # If there are no jobs, start with 1, otherwise increment the highest code
+        next_code = 1 if not max_job else max_job.jop_code + 1
+
+        print(f"Generated next job code: {next_code}")
+        return JsonResponse({'next_code': next_code})
+    except Exception as e:
+        print(f"Error generating job code: {str(e)}")
+        return JsonResponse({'error': str(e)}, status=500)

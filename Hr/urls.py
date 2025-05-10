@@ -28,13 +28,17 @@ department_patterns = [
     path('<int:dept_code>/performance/', department_performance, name='performance'),
 ]
 
+# Import job views
+from .views.job_views import job_list, job_create, job_detail, job_edit, job_delete, get_next_job_code
+
 # أنماط عناوين URL للوظائف
 job_patterns = [
-    path('', views.job_list, name='list'),
-    path('create/', views.job_create, name='create'),
-    path('<int:jop_code>/', views.job_detail, name='detail'),
-    path('<int:jop_code>/edit/', views.job_edit, name='edit'),
-    path('<int:jop_code>/delete/', views.job_delete, name='delete'),
+    path('', job_list, name='list'),
+    path('create/', job_create, name='create'),
+    path('get_next_job_code/', get_next_job_code, name='get_next_job_code'),
+    path('<int:jop_code>/', job_detail, name='detail'),
+    path('<int:jop_code>/edit/', job_edit, name='edit'),
+    path('<int:jop_code>/delete/', job_delete, name='delete'),
 ]
 
 # أنماط عناوين URL للسيارات

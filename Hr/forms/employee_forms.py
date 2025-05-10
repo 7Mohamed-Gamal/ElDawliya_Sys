@@ -237,6 +237,13 @@ class JobForm(forms.ModelForm):
             'department': forms.Select(attrs={'class': 'form-select'}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # إذا كان إنشاء وظيفة جديدة (وليس تعديل)
+        if not self.instance.pk:
+            self.fields['jop_code'].required = False
+            self.fields['jop_code'].help_text = 'سيتم إنشاء رمز الوظيفة تلقائيًا عند الحفظ'
+
 
 class CarForm(forms.ModelForm):
     """
