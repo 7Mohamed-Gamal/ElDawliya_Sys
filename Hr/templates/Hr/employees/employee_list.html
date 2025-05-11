@@ -82,140 +82,340 @@
                 </h5>
             </div>
             <div class="card-body p-4">
-                <form method="get" action="">
-                    <div class="mb-3">
-                        <label class="form-label small text-muted">
-                            <i class="fas fa-id-badge me-1 text-primary"></i>
-                            بحث بالكود
-                        </label>
-                        {% if filter_form.search_empID %}
-                            {{ filter_form.search_empID }}
-                        {% else %}
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-text bg-light"><i class="fas fa-search text-muted small"></i></span>
-                                <input type="text" name="emp_code" class="form-control form-control-sm" placeholder="أدخل كود الموظف">
+                <form method="get" action="" id="employeeFilterForm">
+                    <!-- إذا كانت هناك فلاتر نشطة، نعرض ملخص لها -->
+                    {% if request.GET %}
+                    <div class="active-filters mb-3 p-2 bg-light rounded border">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="small fw-medium text-primary">
+                                <i class="fas fa-filter me-1"></i> الفلاتر النشطة
+                            </span>
+                            <a href="{% url 'Hr:employees:list' %}" class="btn btn-sm btn-outline-secondary px-2 py-0">
+                                <i class="fas fa-times-circle"></i> مسح الكل
+                            </a>
+                        </div>
+                        <div class="active-filter-tags d-flex flex-wrap gap-1">
+                            {% if request.GET.search %}
+                            <span class="badge bg-primary-subtle text-primary">
+                                الاسم: {{ request.GET.search }}
+                                <a href="#" class="text-primary ms-1 remove-filter" data-field="search"><i class="fas fa-times-circle"></i></a>
+                            </span>
+                            {% endif %}
+                            {% if request.GET.emp_code %}
+                            <span class="badge bg-primary-subtle text-primary">
+                                الكود: {{ request.GET.emp_code }}
+                                <a href="#" class="text-primary ms-1 remove-filter" data-field="emp_code"><i class="fas fa-times-circle"></i></a>
+                            </span>
+                            {% endif %}
+                            {% if request.GET.department %}
+                            <span class="badge bg-primary-subtle text-primary">
+                                القسم: {{ filter_form.department.field.choices|dictsort:"0"|dict_get:request.GET.department }}
+                                <a href="#" class="text-primary ms-1 remove-filter" data-field="department"><i class="fas fa-times-circle"></i></a>
+                            </span>
+                            {% endif %}
+                            {% if request.GET.job %}
+                            <span class="badge bg-primary-subtle text-primary">
+                                الوظيفة
+                                <a href="#" class="text-primary ms-1 remove-filter" data-field="job"><i class="fas fa-times-circle"></i></a>
+                            </span>
+                            {% endif %}
+                            {% if request.GET.working_condition and request.GET.working_condition != 'سارى' %}
+                            <span class="badge bg-primary-subtle text-primary">
+                                حالة العمل: {{ request.GET.working_condition }}
+                                <a href="#" class="text-primary ms-1 remove-filter" data-field="working_condition"><i class="fas fa-times-circle"></i></a>
+                            </span>
+                            {% endif %}
+                            {% if request.GET.insurance_status %}
+                            <span class="badge bg-primary-subtle text-primary">
+                                حالة التأمين: {{ request.GET.insurance_status }}
+                                <a href="#" class="text-primary ms-1 remove-filter" data-field="insurance_status"><i class="fas fa-times-circle"></i></a>
+                            </span>
+                            {% endif %}
+                            <!-- عرض الفلاتر المتقدمة النشطة -->
+                            {% for field in 'phone,national_id,car,insurance_number,hire_date,marital_status'|split:',' %}
+                                {% if request.GET|get_item:field %}
+                                <span class="badge bg-info-subtle text-info">
+                                    {{ field|get_field_label }}: {{ request.GET|get_item:field }}
+                                    <a href="#" class="text-info ms-1 remove-filter" data-field="{{ field }}"><i class="fas fa-times-circle"></i></a>
+                                </span>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="search-section mb-4">
+                        <div class="input-group mb-3 search-main">
+                            <span class="input-group-text bg-light"><i class="fas fa-search text-primary"></i></span>
+                            <input type="text" name="search" class="form-control search-autocomplete" placeholder="بحث سريع بالاسم أو الكود أو الرقم القومي" value="{{ request.GET.search|default:'' }}" autocomplete="off">
+                            <button type="submit" class="btn btn-primary">بحث</button>
+                        </div>
+                        <div class="search-results-container position-relative">
+                            <div class="search-results-dropdown d-none position-absolute w-100 bg-white shadow-sm rounded border z-3" style="max-height: 300px; overflow-y: auto;"></div>
+                        </div>
+                    </div>
+
+                    <div class="filter-groups">
+                        <!-- مجموعة الفلاتر الأساسية -->
+                        <div class="filter-group mb-3">
+                            <h6 class="filter-group-title mb-2 fw-medium text-dark">
+                                <i class="fas fa-filter me-1 text-primary"></i> الفلاتر الأساسية
+                            </h6>
+
+                            <div class="row g-2">
+                                <div class="col-md-6 mb-2">
+                                    <label class="form-label small text-muted">
+                                        <i class="fas fa-id-badge me-1 text-primary"></i>
+                                        بحث بالكود
+                                    </label>
+                                    {% if filter_form.search_empID %}
+                                        {{ filter_form.search_empID }}
+                                    {% else %}
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text bg-light"><i class="fas fa-search text-muted small"></i></span>
+                                            <input type="text" name="emp_code" class="form-control form-control-sm" placeholder="أدخل كود الموظف" value="{{ request.GET.emp_code|default:'' }}">
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="col-md-6 mb-2">
+                                    <label class="form-label small text-muted">{{ filter_form.department.label }}</label>
+                                    {{ filter_form.department }}
+                                </div>
+
+                                <div class="col-md-6 mb-2">
+                                    <label class="form-label small text-muted">{{ filter_form.job.label }}</label>
+                                    {{ filter_form.job }}
+                                </div>
+
+                                <div class="col-md-6 mb-2">
+                                    <label class="form-label small text-muted">{{ filter_form.working_condition.label }}</label>
+                                    {{ filter_form.working_condition }}
+                                </div>
+
+                                <div class="col-md-6 mb-2">
+                                    <label class="form-label small text-muted">{{ filter_form.insurance_status.label }}</label>
+                                    {{ filter_form.insurance_status }}
+                                </div>
                             </div>
-                        {% endif %}
+                        </div>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label small text-muted">
-                            <i class="fas fa-user me-1 text-primary"></i>
-                            بحث بالاسم
-                        </label>
-                        {% if filter_form.search %}
-                            {{ filter_form.search }}
-                        {% else %}
-                            <div class="input-group input-group-sm">
-                                <span class="input-group-text bg-light"><i class="fas fa-search text-muted small"></i></span>
-                                <input type="text" name="search" class="form-control form-control-sm" placeholder="أدخل اسم الموظف">
-                            </div>
-                        {% endif %}
-                    </div>
+                    <!-- بحث متقدم محسن -->
+                    <div class="filter-group advanced-search mb-4">
+                        <div class="accordion" id="advancedSearchAccordion">
+                            <div class="accordion-item border-0 shadow-sm">
+                                <h2 class="accordion-header" id="headingAdvanced">
+                                    <button class="accordion-button collapsed bg-light fw-medium" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAdvanced" aria-expanded="{% if request.GET.phone or request.GET.national_id or request.GET.car or request.GET.insurance_number or request.GET.hire_date or request.GET.marital_status %}true{% else %}false{% endif %}" aria-controls="collapseAdvanced">
+                                        <i class="fas fa-search-plus me-2 text-primary"></i>
+                                        بحث متقدم
+                                        {% if request.GET.phone or request.GET.national_id or request.GET.car or request.GET.insurance_number or request.GET.hire_date or request.GET.marital_status %}
+                                        <span class="badge bg-primary ms-2">{{ request.GET.phone|yesno:"1,0" + request.GET.national_id|yesno:"1,0" + request.GET.car|yesno:"1,0" + request.GET.insurance_number|yesno:"1,0" + request.GET.hire_date|yesno:"1,0" + request.GET.marital_status|yesno:"1,0" }}</span>
+                                        {% endif %}
+                                    </button>
+                                </h2>
+                                <div id="collapseAdvanced" class="accordion-collapse collapse {% if request.GET.phone or request.GET.national_id or request.GET.car or request.GET.insurance_number or request.GET.hire_date or request.GET.marital_status %}show{% endif %}" aria-labelledby="headingAdvanced" data-bs-parent="#advancedSearchAccordion">
+                                    <div class="accordion-body pt-3">
+                                        <!-- نص توضيحي للبحث المتقدم -->
+                                        <div class="alert alert-light border-start border-4 border-primary p-2 mb-3 small">
+                                            <i class="fas fa-info-circle text-primary me-1"></i>
+                                            يمكنك البحث باستخدام أي من الحقول أدناه للعثور على موظف محدد
+                                        </div>
 
-                    <div class="mb-3">
-                        <label class="form-label small text-muted">{{ filter_form.department.label }}</label>
-                        {{ filter_form.department }}
-                    </div>
+                                        <!-- تبويبات البحث المتقدم -->
+                                        <ul class="nav nav-tabs nav-tabs-sm mb-3" id="advancedSearchTabs" role="tablist">
+                                            <li class="nav-item" role="presentation">
+                                                <button class="nav-link active" id="personal-tab" data-bs-toggle="tab" data-bs-target="#personal-tab-pane" type="button" role="tab" aria-controls="personal-tab-pane" aria-selected="true">
+                                                    <i class="fas fa-user me-1"></i> بيانات شخصية
+                                                </button>
+                                            </li>
+                                            <li class="nav-item" role="presentation">
+                                                <button class="nav-link" id="work-tab" data-bs-toggle="tab" data-bs-target="#work-tab-pane" type="button" role="tab" aria-controls="work-tab-pane" aria-selected="false">
+                                                    <i class="fas fa-briefcase me-1"></i> بيانات العمل
+                                                </button>
+                                            </li>
+                                            <li class="nav-item" role="presentation">
+                                                <button class="nav-link" id="dates-tab" data-bs-toggle="tab" data-bs-target="#dates-tab-pane" type="button" role="tab" aria-controls="dates-tab-pane" aria-selected="false">
+                                                    <i class="fas fa-calendar-alt me-1"></i> التواريخ
+                                                </button>
+                                            </li>
+                                        </ul>
 
-                    <div class="mb-3">
-                        <label class="form-label small text-muted">{{ filter_form.job.label }}</label>
-                        {{ filter_form.job }}
-                    </div>
+                                        <div class="tab-content" id="advancedSearchTabContent">
+                                            <!-- تبويب البيانات الشخصية -->
+                                            <div class="tab-pane fade show active" id="personal-tab-pane" role="tabpanel" aria-labelledby="personal-tab" tabindex="0">
+                                                <div class="row g-2">
+                                                    <!-- رقم الهاتف -->
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label small text-muted">
+                                                            <i class="fas fa-phone-alt me-1 text-primary"></i> رقم الهاتف
+                                                        </label>
+                                                        <div class="input-group input-group-sm">
+                                                            <span class="input-group-text bg-light"><i class="fas fa-search text-muted small"></i></span>
+                                                            <input type="text" name="phone" class="form-control form-control-sm" placeholder="أدخل رقم الهاتف" value="{{ request.GET.phone|default:'' }}">
+                                                        </div>
+                                                        <small class="form-text text-muted">يمكنك البحث بجزء من الرقم</small>
+                                                    </div>
 
-                    <div class="mb-3">
-                        <label class="form-label small text-muted">{{ filter_form.working_condition.label }}</label>
-                        {{ filter_form.working_condition }}
-                    </div>
+                                                    <!-- الرقم القومي -->
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label small text-muted">
+                                                            <i class="fas fa-id-card me-1 text-primary"></i> الرقم القومي
+                                                        </label>
+                                                        <div class="input-group input-group-sm">
+                                                            <span class="input-group-text bg-light"><i class="fas fa-search text-muted small"></i></span>
+                                                            <input type="text" name="national_id" class="form-control form-control-sm" placeholder="أدخل الرقم القومي" value="{{ request.GET.national_id|default:'' }}">
+                                                        </div>
+                                                        <small class="form-text text-muted">يمكنك البحث بجزء من الرقم</small>
+                                                    </div>
 
-                    <div class="mb-3">
-                        <label class="form-label small text-muted">{{ filter_form.insurance_status.label }}</label>
-                        {{ filter_form.insurance_status }}
-                    </div>
+                                                    <!-- الحالة الاجتماعية -->
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label small text-muted">
+                                                            <i class="fas fa-heart me-1 text-primary"></i> الحالة الاجتماعية
+                                                        </label>
+                                                        <select name="marital_status" class="form-select form-select-sm">
+                                                            <option value="">-- اختر الحالة --</option>
+                                                            <option value="أعزب" {% if request.GET.marital_status == 'أعزب' %}selected{% endif %}>أعزب</option>
+                                                            <option value="متزوج" {% if request.GET.marital_status == 'متزوج' %}selected{% endif %}>متزوج</option>
+                                                            <option value="مطلق" {% if request.GET.marital_status == 'مطلق' %}selected{% endif %}>مطلق</option>
+                                                            <option value="أرمل" {% if request.GET.marital_status == 'أرمل' %}selected{% endif %}>أرمل</option>
+                                                        </select>
+                                                    </div>
 
-                    <div class="accordion mb-3" id="advancedSearchAccordion">
-                        <div class="accordion-item border-0 shadow-sm">
-                            <h2 class="accordion-header" id="headingAdvanced">
-                                <button class="accordion-button collapsed bg-light fw-medium" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAdvanced" aria-expanded="false" aria-controls="collapseAdvanced">
-                                    <i class="fas fa-search-plus me-2 text-primary"></i>
-                                    بحث متقدم
-                                </button>
-                            </h2>
-                            <div id="collapseAdvanced" class="accordion-collapse collapse" aria-labelledby="headingAdvanced" data-bs-parent="#advancedSearchAccordion">
-                                <div class="accordion-body pt-3">
-                                    <!-- نص توضيحي للبحث المتقدم -->
-                                    <div class="alert alert-light border-start border-4 border-primary p-2 mb-3 small">
-                                        <i class="fas fa-info-circle text-primary me-1"></i>
-                                        يمكنك البحث باستخدام أي من الحقول أدناه للعثور على موظف محدد
-                                    </div>
-                                    
-                                    <div class="row g-2">
-                                        <!-- رقم الهاتف -->
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label small text-muted">
-                                                <i class="fas fa-phone-alt me-1 text-primary"></i> رقم الهاتف
-                                            </label>
-                                            <div class="input-group input-group-sm">
-                                                <span class="input-group-text bg-light"><i class="fas fa-search text-muted small"></i></span>
-                                                <input type="text" name="phone" class="form-control form-control-sm" placeholder="أدخل رقم الهاتف">
+                                                    <!-- المحافظة -->
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label small text-muted">
+                                                            <i class="fas fa-map-marker-alt me-1 text-primary"></i> المحافظة
+                                                        </label>
+                                                        <input type="text" name="governorate" class="form-control form-control-sm" placeholder="أدخل المحافظة" value="{{ request.GET.governorate|default:'' }}">
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
 
-                                        <!-- الرقم القومي -->
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label small text-muted">
-                                                <i class="fas fa-id-card me-1 text-primary"></i> الرقم القومي
-                                            </label>
-                                            <div class="input-group input-group-sm">
-                                                <span class="input-group-text bg-light"><i class="fas fa-search text-muted small"></i></span>
-                                                <input type="text" name="national_id" class="form-control form-control-sm" placeholder="أدخل الرقم القومي">
+                                            <!-- تبويب بيانات العمل -->
+                                            <div class="tab-pane fade" id="work-tab-pane" role="tabpanel" aria-labelledby="work-tab" tabindex="0">
+                                                <div class="row g-2">
+                                                    <!-- السيارة -->
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label small text-muted">
+                                                            <i class="fas fa-car me-1 text-primary"></i> السيارة
+                                                        </label>
+                                                        <select name="car" class="form-select form-select-sm">
+                                                            <option value="">-- اختر السيارة --</option>
+                                                            {% for car in cars %}
+                                                            <option value="{{ car.id }}" {% if request.GET.car == car.id|stringformat:"s" %}selected{% endif %}>{{ car.name }}</option>
+                                                            {% empty %}
+                                                            <option value="car1" {% if request.GET.car == 'car1' %}selected{% endif %}>سيارة 1</option>
+                                                            <option value="car2" {% if request.GET.car == 'car2' %}selected{% endif %}>سيارة 2</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                    </div>
+
+                                                    <!-- الرقم التأميني -->
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label small text-muted">
+                                                            <i class="fas fa-shield-alt me-1 text-primary"></i> الرقم التأميني
+                                                        </label>
+                                                        <div class="input-group input-group-sm">
+                                                            <span class="input-group-text bg-light"><i class="fas fa-search text-muted small"></i></span>
+                                                            <input type="text" name="insurance_number" class="form-control form-control-sm" placeholder="أدخل الرقم التأميني" value="{{ request.GET.insurance_number|default:'' }}">
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- نوع الوردية -->
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label small text-muted">
+                                                            <i class="fas fa-clock me-1 text-primary"></i> نوع الوردية
+                                                        </label>
+                                                        <select name="shift_type" class="form-select form-select-sm">
+                                                            <option value="">-- اختر نوع الوردية --</option>
+                                                            <option value="صباحي" {% if request.GET.shift_type == 'صباحي' %}selected{% endif %}>صباحي</option>
+                                                            <option value="مسائي" {% if request.GET.shift_type == 'مسائي' %}selected{% endif %}>مسائي</option>
+                                                            <option value="ليلي" {% if request.GET.shift_type == 'ليلي' %}selected{% endif %}>ليلي</option>
+                                                        </select>
+                                                    </div>
+
+                                                    <!-- نقطة التقاط السيارة -->
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label small text-muted">
+                                                            <i class="fas fa-map-pin me-1 text-primary"></i> نقطة التقاط السيارة
+                                                        </label>
+                                                        <input type="text" name="car_pick_up_point" class="form-control form-control-sm" placeholder="أدخل نقطة الالتقاط" value="{{ request.GET.car_pick_up_point|default:'' }}">
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
 
-                                        <!-- السيارة -->
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label small text-muted">
-                                                <i class="fas fa-car me-1 text-primary"></i> السيارة
-                                            </label>
-                                            <select name="car" class="form-select form-select-sm">
-                                                <option value="">-- اختر السيارة --</option>
-                                                <!-- يمكن تحميل قائمة السيارات ديناميكياً هنا -->
-                                                <option value="car1">سيارة 1</option>
-                                                <option value="car2">سيارة 2</option>
-                                            </select>
-                                        </div>
+                                            <!-- تبويب التواريخ -->
+                                            <div class="tab-pane fade" id="dates-tab-pane" role="tabpanel" aria-labelledby="dates-tab" tabindex="0">
+                                                <div class="row g-2">
+                                                    <!-- تاريخ التعيين -->
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label small text-muted">
+                                                            <i class="fas fa-calendar-alt me-1 text-primary"></i> تاريخ التعيين
+                                                        </label>
+                                                        <div class="row g-1">
+                                                            <div class="col-6">
+                                                                <div class="input-group input-group-sm">
+                                                                    <span class="input-group-text bg-light"><i class="fas fa-calendar-minus text-muted small"></i></span>
+                                                                    <input type="date" name="hire_date_from" class="form-control form-control-sm" placeholder="من" value="{{ request.GET.hire_date_from|default:'' }}">
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-6">
+                                                                <div class="input-group input-group-sm">
+                                                                    <span class="input-group-text bg-light"><i class="fas fa-calendar-plus text-muted small"></i></span>
+                                                                    <input type="date" name="hire_date_to" class="form-control form-control-sm" placeholder="إلى" value="{{ request.GET.hire_date_to|default:'' }}">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <small class="form-text text-muted">حدد نطاق تاريخ التعيين</small>
+                                                    </div>
 
-                                        <!-- الرقم التأميني -->
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label small text-muted">
-                                                <i class="fas fa-shield-alt me-1 text-primary"></i> الرقم التأميني
-                                            </label>
-                                            <div class="input-group input-group-sm">
-                                                <span class="input-group-text bg-light"><i class="fas fa-search text-muted small"></i></span>
-                                                <input type="text" name="insurance_number" class="form-control form-control-sm" placeholder="أدخل الرقم التأميني">
+                                                    <!-- تاريخ الميلاد -->
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label small text-muted">
+                                                            <i class="fas fa-birthday-cake me-1 text-primary"></i> تاريخ الميلاد
+                                                        </label>
+                                                        <div class="row g-1">
+                                                            <div class="col-6">
+                                                                <div class="input-group input-group-sm">
+                                                                    <span class="input-group-text bg-light"><i class="fas fa-calendar-minus text-muted small"></i></span>
+                                                                    <input type="date" name="birth_date_from" class="form-control form-control-sm" placeholder="من" value="{{ request.GET.birth_date_from|default:'' }}">
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-6">
+                                                                <div class="input-group input-group-sm">
+                                                                    <span class="input-group-text bg-light"><i class="fas fa-calendar-plus text-muted small"></i></span>
+                                                                    <input type="date" name="birth_date_to" class="form-control form-control-sm" placeholder="إلى" value="{{ request.GET.birth_date_to|default:'' }}">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <small class="form-text text-muted">حدد نطاق تاريخ الميلاد</small>
+                                                    </div>
+
+                                                    <!-- العمر -->
+                                                    <div class="col-md-6 mb-3">
+                                                        <label class="form-label small text-muted">
+                                                            <i class="fas fa-hourglass-half me-1 text-primary"></i> العمر
+                                                        </label>
+                                                        <div class="row g-1">
+                                                            <div class="col-6">
+                                                                <div class="input-group input-group-sm">
+                                                                    <span class="input-group-text bg-light"><i class="fas fa-angle-down text-muted small"></i></span>
+                                                                    <input type="number" name="age_from" class="form-control form-control-sm" placeholder="من" min="18" max="100" value="{{ request.GET.age_from|default:'' }}">
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-6">
+                                                                <div class="input-group input-group-sm">
+                                                                    <span class="input-group-text bg-light"><i class="fas fa-angle-up text-muted small"></i></span>
+                                                                    <input type="number" name="age_to" class="form-control form-control-sm" placeholder="إلى" min="18" max="100" value="{{ request.GET.age_to|default:'' }}">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <small class="form-text text-muted">حدد نطاق العمر بالسنوات</small>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                        
-                                        <!-- تاريخ التعيين -->
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label small text-muted">
-                                                <i class="fas fa-calendar-alt me-1 text-primary"></i> تاريخ التعيين
-                                            </label>
-                                            <input type="date" name="hire_date" class="form-control form-control-sm">
-                                        </div>
-
-                                        <!-- الحالة الاجتماعية -->
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label small text-muted">
-                                                <i class="fas fa-heart me-1 text-primary"></i> الحالة الاجتماعية
-                                            </label>
-                                            <select name="marital_status" class="form-select form-select-sm">
-                                                <option value="">-- اختر الحالة --</option>
-                                                <option value="أعزب">أعزب</option>
-                                                <option value="متزوج">متزوج</option>
-                                                <option value="مطلق">مطلق</option>
-                                                <option value="أرمل">أرمل</option>
-                                            </select>
                                         </div>
                                     </div>
                                 </div>
@@ -223,15 +423,19 @@
                         </div>
                     </div>
 
-                    <div class="d-grid gap-2 mt-4">
-                        <button type="submit" class="btn btn-primary">
+                    <div class="d-flex flex-wrap gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary flex-grow-1">
                             <i class="fas fa-search me-1"></i>
                             بحث
                         </button>
-                        <a href="{% url 'Hr:employees:list' %}" class="btn btn-outline-secondary">
+                        <a href="{% url 'Hr:employees:list' %}" class="btn btn-outline-secondary flex-grow-1">
                             <i class="fas fa-sync-alt me-1"></i>
                             إعادة تعيين
                         </a>
+                        <button type="button" class="btn btn-outline-info w-100 mt-2" id="toggleAdvancedSearch">
+                            <i class="fas fa-sliders-h me-1"></i>
+                            خيارات البحث المتقدم
+                        </button>
                     </div>
                 </form>
             </div>
@@ -241,65 +445,136 @@
     <div class="col-lg-9 col-md-8">
         <div class="card shadow-sm">
             <div class="card-header bg-light d-flex justify-content-between align-items-center py-3 border-bottom">
-                <h5 id="employeeListTitle" class="mb-0 fw-semibold">
-    {% if status == 'inactive' %}
-    قائمة الموظفين غير النشطين
-    {% else %}
-    قائمة الموظفين النشطين
-    {% endif %}
-</h5>
-                <a href="{% url 'Hr:employees:create' %}" class="btn btn-success">
-                    <i class="fas fa-plus me-1"></i>
-                    إضافة موظف جديد
-                </a>
+                <div>
+                    <h5 id="employeeListTitle" class="mb-0 fw-semibold">
+                        {% if status == 'inactive' %}
+                        قائمة الموظفين غير النشطين
+                        {% else %}
+                        قائمة الموظفين النشطين
+                        {% endif %}
+                    </h5>
+                    {% if employees %}
+                    <small class="text-muted mt-1 d-block">
+                        <i class="fas fa-users me-1"></i> تم العثور على <span class="fw-bold text-primary">{{ employees|length }}</span> موظف
+                        {% if request.GET %}
+                        <span class="text-muted">مطابق لمعايير البحث</span>
+                        {% endif %}
+                    </small>
+                    {% endif %}
+                </div>
+                <div class="d-flex gap-2">
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-sort me-1"></i>
+                            ترتيب
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="sortDropdown">
+                            <li><a class="dropdown-item sort-option" href="#" data-sort="emp_id"><i class="fas fa-sort-numeric-down me-2"></i>رقم الموظف</a></li>
+                            <li><a class="dropdown-item sort-option" href="#" data-sort="emp_full_name"><i class="fas fa-sort-alpha-down me-2"></i>الاسم</a></li>
+                            <li><a class="dropdown-item sort-option" href="#" data-sort="department"><i class="fas fa-sort-alpha-down me-2"></i>القسم</a></li>
+                            <li><a class="dropdown-item sort-option" href="#" data-sort="emp_date_hiring"><i class="fas fa-sort-numeric-down me-2"></i>تاريخ التعيين</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item sort-direction" href="#" data-direction="asc"><i class="fas fa-arrow-up me-2"></i>تصاعدي</a></li>
+                            <li><a class="dropdown-item sort-direction" href="#" data-direction="desc"><i class="fas fa-arrow-down me-2"></i>تنازلي</a></li>
+                        </ul>
+                    </div>
+                    <a href="{% url 'Hr:employees:create' %}" class="btn btn-success">
+                        <i class="fas fa-plus me-1"></i>
+                        إضافة موظف جديد
+                    </a>
+                </div>
             </div>
             <div class="card-body p-0">
                 {% if employees %}
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
+                    <table class="table table-hover align-middle mb-0" id="employeesTable">
+                        <thead class="table-light sticky-top">
                             <tr>
-                                <th class="py-3 px-3">الرقم</th>
-                                <th class="py-3 px-3">الاسم</th>
-                                <th class="py-3 px-3">القسم</th>
+                                <th class="py-3 px-3 sortable" data-sort="emp_id">
+                                    <div class="d-flex align-items-center">
+                                        الرقم
+                                        <i class="fas fa-sort ms-1 text-muted small"></i>
+                                    </div>
+                                </th>
+                                <th class="py-3 px-3 sortable" data-sort="emp_full_name">
+                                    <div class="d-flex align-items-center">
+                                        الاسم
+                                        <i class="fas fa-sort ms-1 text-muted small"></i>
+                                    </div>
+                                </th>
+                                <th class="py-3 px-3 sortable" data-sort="department">
+                                    <div class="d-flex align-items-center">
+                                        القسم
+                                        <i class="fas fa-sort ms-1 text-muted small"></i>
+                                    </div>
+                                </th>
                                 <th class="py-3 px-3">الوظيفة</th>
                                 <th class="py-3 px-3">الهاتف</th>
-                                <th class="py-3 px-3">الحالة</th>
+                                <th class="py-3 px-3 sortable" data-sort="working_condition">
+                                    <div class="d-flex align-items-center">
+                                        الحالة
+                                        <i class="fas fa-sort ms-1 text-muted small"></i>
+                                    </div>
+                                </th>
                                 <th class="py-3 px-3 text-center">العمليات</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for employee in employees %}
-                            <tr>
-                                <td class="px-3">{{ employee.emp_id }}</td>
+                            <tr class="employee-row" data-emp-id="{{ employee.emp_id }}" data-emp-name="{{ employee.emp_full_name|default:employee.emp_first_name }}" data-dept="{{ employee.department.dept_name|default:'' }}" data-condition="{{ employee.working_condition|default:'' }}">
+                                <td class="px-3">
+                                    <span class="badge bg-light text-dark border">{{ employee.emp_id }}</span>
+                                </td>
                                 <td class="px-3">
                                     <div class="d-flex align-items-center py-2">
                                         {% if employee.emp_image %}
                                         <img src="{{ employee.emp_image.url }}" alt="{{ employee.emp_full_name }}" class="rounded-circle me-2 object-fit-cover" width="40" height="40">
                                         {% else %}
-                                        <div class="avatar bg-secondary text-white me-2 flex-shrink-0">
+                                        <div class="avatar bg-primary text-white me-2 flex-shrink-0">
                                             {{ employee.emp_first_name|slice:":1"|upper }}
                                         </div>
                                         {% endif %}
                                         <div>
-                                            <a href="{% url 'Hr:employees:detail' employee.emp_id %}" class="fw-medium d-block text-decoration-none text-dark">{{ employee.emp_full_name|default:employee.emp_first_name }}</a>
+                                            <a href="{% url 'Hr:employees:detail' employee.emp_id %}" class="fw-medium d-block text-decoration-none text-dark employee-name">{{ employee.emp_full_name|default:employee.emp_first_name }}</a>
                                             <small class="text-muted">{{ employee.national_id|default:'' }}</small>
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-3">{{ employee.department.dept_name|default:"-" }}</td>
+                                <td class="px-3">
+                                    {% if employee.department %}
+                                    <span class="department-name">{{ employee.department.dept_name }}</span>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
                                 <td class="px-3">{{ employee.job.job_name|default:"-" }}</td>
-                                <td class="px-3">{{ employee.emp_phone1|default:"-" }}</td>
+                                <td class="px-3">
+                                    {% if employee.emp_phone1 %}
+                                    <a href="tel:{{ employee.emp_phone1 }}" class="text-decoration-none text-dark">
+                                        <i class="fas fa-phone-alt text-primary me-1 small"></i>
+                                        {{ employee.emp_phone1 }}
+                                    </a>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
                                 <td class="px-3">
                                     {% if employee.working_condition == 'سارى' %}
-                                    <!-- <span class="badge rounded-pill bg-success-subtle text-success-emphasis">نشط</span> -->
-                                    <span class="badge bg-success">نشط</span>
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                                        <i class="fas fa-check-circle me-1"></i>نشط
+                                    </span>
                                     {% elif employee.working_condition == 'إجازة' %}
-                                    <span class="badge rounded-pill bg-info-subtle text-info-emphasis">إجازة</span>
+                                    <span class="badge bg-info-subtle text-info border border-info-subtle px-2 py-1">
+                                        <i class="fas fa-pause-circle me-1"></i>إجازة
+                                    </span>
                                     {% elif employee.working_condition == 'استقالة' %}
-                                    <span class="badge rounded-pill bg-danger-subtle text-danger-emphasis">استقالة</span>
+                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">
+                                        <i class="fas fa-times-circle me-1"></i>استقالة
+                                    </span>
                                     {% else %}
-                                    <span class="badge rounded-pill bg-secondary-subtle text-secondary-emphasis">{{ employee.working_condition|default:"-" }}</span>
+                                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1">
+                                        <i class="fas fa-question-circle me-1"></i>{{ employee.working_condition|default:"-" }}
+                                    </span>
                                     {% endif %}
                                 </td>
                                 <td class="px-3 text-center">
@@ -310,8 +585,15 @@
                                         <a href="{% url 'Hr:employees:edit' employee.emp_id %}" class="btn btn-outline-secondary" title="تعديل">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        {# يمكنك إضافة زر حذف هنا إذا لزم الأمر #}
-                                        {# <a href="#" class="btn btn-sm btn-outline-danger" title="حذف"><i class="fas fa-trash-alt"></i></a> #}
+                                        <button type="button" class="btn btn-outline-info dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                                            <span class="visually-hidden">المزيد</span>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li><a class="dropdown-item" href="{% url 'Hr:employees:detail' employee.emp_id %}"><i class="fas fa-id-card me-2 text-primary"></i>البطاقة الشخصية</a></li>
+                                            <li><a class="dropdown-item" href="#"><i class="fas fa-print me-2 text-secondary"></i>طباعة البيانات</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-user-times me-2"></i>تغيير الحالة</a></li>
+                                        </ul>
                                     </div>
                                 </td>
                             </tr>
@@ -480,10 +762,12 @@
         padding: 1.5rem; /* زيادة الحشو الداخلي */
     }
     .stats-icon {
-         /* حجم الأيقونة */
+        font-size: 1.8rem;
+        opacity: 0.8;
     }
     .stats-number {
-        /* حجم رقم الإحصائية */
+        font-size: 2rem;
+        font-weight: 700;
     }
     .stats-title {
         font-size: 0.9rem; /* حجم عنوان الإحصائية */
@@ -498,6 +782,16 @@
         align-items: center;
         justify-content: center;
         font-size: 1rem; /* حجم الخط داخل الأفاتار */
+        font-weight: bold;
+    }
+    .avatar-sm {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
         font-weight: bold;
     }
     .object-fit-cover {
@@ -582,6 +876,127 @@
         margin-bottom: 0.3rem; /* تقليل الهامش السفلي للعناوين */
         font-weight: 500;
     }
+
+    /* تنسيقات البحث المحسنة */
+    .search-main {
+        box-shadow: 0 2px 5px rgba(0,0,0,.05);
+    }
+    .search-main .form-control {
+        border-color: #e9ecef;
+        padding-right: 2.5rem;
+        height: calc(2.5rem + 2px);
+        transition: all 0.3s ease;
+    }
+    .search-main .form-control:focus {
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+        border-color: #86b7fe;
+    }
+    .search-main .btn-primary {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+    }
+
+    /* تنسيق قائمة نتائج البحث */
+    .search-results-dropdown {
+        max-height: 300px;
+        overflow-y: auto;
+        z-index: 1000;
+    }
+    .search-result-item {
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+    .search-result-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    /* تنسيق الفلاتر النشطة */
+    .active-filters {
+        background-color: #f8f9fa;
+        border-radius: 0.375rem;
+    }
+    .active-filter-tags .badge {
+        font-weight: normal;
+        padding: 0.4em 0.6em;
+        margin-right: 0.25rem;
+        margin-bottom: 0.25rem;
+    }
+    .active-filter-tags .badge a {
+        text-decoration: none;
+    }
+    .active-filter-tags .badge a:hover {
+        opacity: 0.8;
+    }
+
+    /* تنسيق تبويبات البحث المتقدم */
+    .nav-tabs-sm .nav-link {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.85rem;
+    }
+
+    /* تنسيق جدول الموظفين */
+    .table {
+        margin-bottom: 0;
+    }
+    .table th.sortable {
+        cursor: pointer;
+    }
+    .table th.sortable:hover {
+        background-color: #e9ecef;
+    }
+    .employee-row {
+        cursor: pointer;
+        transition: background-color 0.15s ease-in-out;
+    }
+    .employee-row:hover {
+        background-color: rgba(0, 123, 255, 0.03);
+    }
+    .employee-name {
+        transition: color 0.15s ease-in-out;
+    }
+    .employee-row:hover .employee-name {
+        color: #0d6efd !important;
+    }
+
+    /* تنسيق الشارات والحالات */
+    .badge.bg-success-subtle {
+        background-color: rgba(25, 135, 84, 0.1) !important;
+        color: #198754 !important;
+        border-color: rgba(25, 135, 84, 0.2) !important;
+    }
+    .badge.bg-info-subtle {
+        background-color: rgba(13, 202, 240, 0.1) !important;
+        color: #0dcaf0 !important;
+        border-color: rgba(13, 202, 240, 0.2) !important;
+    }
+    .badge.bg-danger-subtle {
+        background-color: rgba(220, 53, 69, 0.1) !important;
+        color: #dc3545 !important;
+        border-color: rgba(220, 53, 69, 0.2) !important;
+    }
+    .badge.bg-secondary-subtle {
+        background-color: rgba(108, 117, 125, 0.1) !important;
+        color: #6c757d !important;
+        border-color: rgba(108, 117, 125, 0.2) !important;
+    }
+
+    /* تنسيق الجدول للشاشات الصغيرة */
+    @media (max-width: 767.98px) {
+        .table-responsive {
+            border-radius: 0.375rem;
+        }
+        .table th, .table td {
+            white-space: nowrap;
+        }
+    }
+
+    /* تنسيق الرأس الثابت للجدول */
+    .table thead.sticky-top {
+        top: 0;
+        z-index: 1020;
+        background-color: #fff;
+        box-shadow: 0 1px 2px rgba(0,0,0,.05);
+    }
 </style>
 {% endblock %}
 
@@ -593,7 +1008,289 @@ document.addEventListener('DOMContentLoaded', function() {
     const toggleStatusText = document.getElementById('toggleStatusText');
     const employeeListTitle = document.getElementById('employeeListTitle');
     const urlParams = new URLSearchParams(window.location.search);
-    
+    const searchInput = document.querySelector('.search-autocomplete');
+    const searchResultsDropdown = document.querySelector('.search-results-dropdown');
+    const employeeFilterForm = document.getElementById('employeeFilterForm');
+    const toggleAdvancedSearchBtn = document.getElementById('toggleAdvancedSearch');
+    const advancedSearchCollapse = document.getElementById('collapseAdvanced');
+    const employeesTable = document.getElementById('employeesTable');
+
+    // ===== وظائف البحث والتصفية المحسنة =====
+
+    // 1. البحث الفوري مع اقتراحات
+    if (searchInput) {
+        // إضافة مستمع لأحداث الكتابة في حقل البحث
+        searchInput.addEventListener('input', function() {
+            const searchTerm = this.value.trim().toLowerCase();
+
+            // إذا كان البحث فارغًا، أخفِ قائمة النتائج
+            if (searchTerm.length < 2) {
+                searchResultsDropdown.classList.add('d-none');
+                return;
+            }
+
+            // البحث في بيانات الموظفين المعروضة حاليًا
+            const employeeRows = document.querySelectorAll('.employee-row');
+            const matchingEmployees = [];
+
+            employeeRows.forEach(row => {
+                const empId = row.getAttribute('data-emp-id');
+                const empName = row.getAttribute('data-emp-name').toLowerCase();
+                const dept = row.getAttribute('data-dept').toLowerCase();
+
+                // البحث في الاسم ورقم الموظف والقسم
+                if (empName.includes(searchTerm) ||
+                    empId.includes(searchTerm) ||
+                    dept.includes(searchTerm)) {
+                    matchingEmployees.push({
+                        id: empId,
+                        name: row.getAttribute('data-emp-name'),
+                        dept: row.getAttribute('data-dept'),
+                        condition: row.getAttribute('data-condition')
+                    });
+                }
+            });
+
+            // عرض النتائج في القائمة المنسدلة
+            if (matchingEmployees.length > 0) {
+                searchResultsDropdown.innerHTML = '';
+                searchResultsDropdown.classList.remove('d-none');
+
+                // إنشاء عناصر القائمة
+                matchingEmployees.slice(0, 5).forEach(emp => {
+                    const resultItem = document.createElement('div');
+                    resultItem.className = 'p-2 border-bottom search-result-item';
+                    resultItem.innerHTML = `
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-sm bg-primary text-white me-2 flex-shrink-0">
+                                ${emp.name.charAt(0)}
+                            </div>
+                            <div>
+                                <div class="fw-medium">${emp.name}</div>
+                                <div class="small text-muted d-flex align-items-center">
+                                    <span class="badge bg-light text-dark border me-2">${emp.id}</span>
+                                    ${emp.dept ? `<span>${emp.dept}</span>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+
+                    // إضافة مستمع لحدث النقر على نتيجة البحث
+                    resultItem.addEventListener('click', function() {
+                        window.location.href = `{% url "Hr:employees:detail" 0 %}`.replace('0', emp.id);
+                    });
+
+                    searchResultsDropdown.appendChild(resultItem);
+                });
+
+                // إضافة رابط "عرض كل النتائج" إذا كان هناك أكثر من 5 نتائج
+                if (matchingEmployees.length > 5) {
+                    const viewAllItem = document.createElement('div');
+                    viewAllItem.className = 'p-2 text-center bg-light';
+                    viewAllItem.innerHTML = `
+                        <a href="#" class="text-primary small">عرض كل النتائج (${matchingEmployees.length})</a>
+                    `;
+                    viewAllItem.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        employeeFilterForm.submit();
+                    });
+                    searchResultsDropdown.appendChild(viewAllItem);
+                }
+            } else {
+                searchResultsDropdown.innerHTML = `
+                    <div class="p-3 text-center text-muted">
+                        <i class="fas fa-search me-1"></i>
+                        لا توجد نتائج مطابقة
+                    </div>
+                `;
+                searchResultsDropdown.classList.remove('d-none');
+            }
+        });
+
+        // إخفاء قائمة النتائج عند النقر خارجها
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !searchResultsDropdown.contains(e.target)) {
+                searchResultsDropdown.classList.add('d-none');
+            }
+        });
+
+        // إظهار القائمة عند التركيز على حقل البحث
+        searchInput.addEventListener('focus', function() {
+            if (this.value.trim().length >= 2) {
+                searchResultsDropdown.classList.remove('d-none');
+            }
+        });
+    }
+
+    // 2. إزالة الفلاتر النشطة
+    const removeFilterButtons = document.querySelectorAll('.remove-filter');
+    removeFilterButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const fieldName = this.getAttribute('data-field');
+
+            // إزالة المعلمة من URL وإعادة تحميل الصفحة
+            urlParams.delete(fieldName);
+            window.location.href = '{% url "Hr:employees:list" %}?' + urlParams.toString();
+        });
+    });
+
+    // 3. تبديل البحث المتقدم
+    if (toggleAdvancedSearchBtn && advancedSearchCollapse) {
+        toggleAdvancedSearchBtn.addEventListener('click', function() {
+            const bsCollapse = new bootstrap.Collapse(advancedSearchCollapse);
+            bsCollapse.toggle();
+        });
+    }
+
+    // 4. ترتيب جدول الموظفين
+    if (employeesTable) {
+        const sortOptions = document.querySelectorAll('.sort-option');
+        const sortDirections = document.querySelectorAll('.sort-direction');
+        let currentSortField = 'emp_id';
+        let currentSortDirection = 'asc';
+
+        // استرجاع حالة الترتيب من التخزين المحلي
+        if (localStorage.getItem('employeesSortField')) {
+            currentSortField = localStorage.getItem('employeesSortField');
+        }
+        if (localStorage.getItem('employeesSortDirection')) {
+            currentSortDirection = localStorage.getItem('employeesSortDirection');
+        }
+
+        // دالة لترتيب الصفوف
+        function sortTable() {
+            const tbody = employeesTable.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+
+            // ترتيب الصفوف بناءً على الحقل والاتجاه
+            rows.sort((a, b) => {
+                let aValue, bValue;
+
+                switch (currentSortField) {
+                    case 'emp_id':
+                        aValue = parseInt(a.getAttribute('data-emp-id'));
+                        bValue = parseInt(b.getAttribute('data-emp-id'));
+                        break;
+                    case 'emp_full_name':
+                        aValue = a.getAttribute('data-emp-name');
+                        bValue = b.getAttribute('data-emp-name');
+                        break;
+                    case 'department':
+                        aValue = a.getAttribute('data-dept');
+                        bValue = b.getAttribute('data-dept');
+                        break;
+                    case 'working_condition':
+                        aValue = a.getAttribute('data-condition');
+                        bValue = b.getAttribute('data-condition');
+                        break;
+                    default:
+                        aValue = a.getAttribute('data-emp-id');
+                        bValue = b.getAttribute('data-emp-id');
+                }
+
+                // مقارنة القيم
+                if (aValue === bValue) return 0;
+
+                // ترتيب تصاعدي أو تنازلي
+                if (currentSortDirection === 'asc') {
+                    return aValue > bValue ? 1 : -1;
+                } else {
+                    return aValue < bValue ? 1 : -1;
+                }
+            });
+
+            // إعادة ترتيب الصفوف في الجدول
+            rows.forEach(row => tbody.appendChild(row));
+
+            // تحديث أيقونات الترتيب
+            updateSortIcons();
+        }
+
+        // تحديث أيقونات الترتيب
+        function updateSortIcons() {
+            const headers = employeesTable.querySelectorAll('th.sortable');
+
+            headers.forEach(header => {
+                const sortField = header.getAttribute('data-sort');
+                const icon = header.querySelector('i');
+
+                if (sortField === currentSortField) {
+                    icon.className = currentSortDirection === 'asc'
+                        ? 'fas fa-sort-up ms-1 text-primary'
+                        : 'fas fa-sort-down ms-1 text-primary';
+                } else {
+                    icon.className = 'fas fa-sort ms-1 text-muted small';
+                }
+            });
+        }
+
+        // إضافة مستمعات أحداث لخيارات الترتيب
+        sortOptions.forEach(option => {
+            option.addEventListener('click', function(e) {
+                e.preventDefault();
+                const sortField = this.getAttribute('data-sort');
+
+                // إذا كان نفس الحقل، قم بتبديل الاتجاه
+                if (sortField === currentSortField) {
+                    currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentSortField = sortField;
+                    currentSortDirection = 'asc';
+                }
+
+                // حفظ حالة الترتيب
+                localStorage.setItem('employeesSortField', currentSortField);
+                localStorage.setItem('employeesSortDirection', currentSortDirection);
+
+                // ترتيب الجدول
+                sortTable();
+            });
+        });
+
+        // إضافة مستمعات أحداث لاتجاهات الترتيب
+        sortDirections.forEach(direction => {
+            direction.addEventListener('click', function(e) {
+                e.preventDefault();
+                currentSortDirection = this.getAttribute('data-direction');
+
+                // حفظ حالة الترتيب
+                localStorage.setItem('employeesSortDirection', currentSortDirection);
+
+                // ترتيب الجدول
+                sortTable();
+            });
+        });
+
+        // إضافة مستمعات أحداث لرؤوس الجدول
+        const sortableHeaders = employeesTable.querySelectorAll('th.sortable');
+        sortableHeaders.forEach(header => {
+            header.addEventListener('click', function() {
+                const sortField = this.getAttribute('data-sort');
+
+                // إذا كان نفس الحقل، قم بتبديل الاتجاه
+                if (sortField === currentSortField) {
+                    currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentSortField = sortField;
+                    currentSortDirection = 'asc';
+                }
+
+                // حفظ حالة الترتيب
+                localStorage.setItem('employeesSortField', currentSortField);
+                localStorage.setItem('employeesSortDirection', currentSortDirection);
+
+                // ترتيب الجدول
+                sortTable();
+            });
+        });
+
+        // ترتيب الجدول عند تحميل الصفحة
+        sortTable();
+    }
+
+    // ===== وظائف التبديل بين الموظفين النشطين وغير النشطين =====
+
     // دالة لتحديث النص بناءً على حالة التبديل
     function updateToggleText() {
         if (toggleCheckbox.checked) {
@@ -644,21 +1341,31 @@ document.addEventListener('DOMContentLoaded', function() {
     updateToggleTextWithoutRedirect();
 
     // إضافة مستمع حدث لتغيير حالة الـ checkbox
-    toggleCheckbox.addEventListener('change', updateToggleText);
-    
+    if (toggleCheckbox) {
+        toggleCheckbox.addEventListener('change', updateToggleText);
+    }
+
+    // ===== وظائف البحث المتقدم =====
+
     // معالجة لحقول البحث المتقدم - الحفاظ على قيمها بعد الإرسال
     function setAdvancedSearchFields() {
-        const fieldsToKeep = ['phone', 'national_id', 'car', 'insurance_number', 'hire_date', 'marital_status'];
-        
+        // قائمة الحقول المتقدمة
+        const fieldsToKeep = [
+            'phone', 'national_id', 'car', 'insurance_number',
+            'hire_date_from', 'hire_date_to', 'birth_date_from', 'birth_date_to',
+            'age_from', 'age_to', 'marital_status', 'governorate',
+            'shift_type', 'car_pick_up_point'
+        ];
+
+        // تعيين قيم الحقول من معلمات URL
         fieldsToKeep.forEach(field => {
             const value = urlParams.get(field);
             if (value) {
                 const input = document.querySelector(`[name="${field}"]`);
                 if (input) {
                     input.value = value;
-                    
+
                     // إظهار قسم البحث المتقدم إذا كان هناك قيمة في أحد الحقول
-                    const advancedSearchCollapse = document.getElementById('collapseAdvanced');
                     if (advancedSearchCollapse && !advancedSearchCollapse.classList.contains('show')) {
                         const bsCollapse = new bootstrap.Collapse(advancedSearchCollapse, {
                             show: true
@@ -668,10 +1375,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
-    
+
     // تنفيذ دالة استعادة قيم البحث المتقدم
     setAdvancedSearchFields();
-    
+
     // إضافة تلميح لتسهيل البحث
     const addSearchTooltips = () => {
         // إضافة تلميحات لحقول البحث
@@ -679,47 +1386,42 @@ document.addEventListener('DOMContentLoaded', function() {
         searchInputs.forEach(input => {
             if (input.name && (input.name === 'phone' || input.name === 'national_id' || input.name === 'insurance_number')) {
                 input.title = 'يمكنك البحث بجزء من الرقم أيضاً';
-                
-                // إضافة مستمع لحدث التركيز لإظهار رسالة مساعدة
-                input.addEventListener('focus', function() {
-                    const helpText = document.createElement('small');
-                    helpText.classList.add('form-text', 'text-muted', 'search-help');
-                    helpText.innerHTML = '<i class="fas fa-info-circle me-1"></i> يمكنك البحث بجزء من الرقم';
-                    
-                    // التحقق من عدم وجود نص مساعدة مسبقاً
-                    if (!this.parentElement.querySelector('.search-help')) {
-                        if (this.parentElement.classList.contains('input-group')) {
-                            this.parentElement.parentElement.appendChild(helpText);
-                        } else {
-                            this.parentElement.appendChild(helpText);
-                        }
-                    }
-                });
             }
         });
-        
-        // تفعيل أداة البحث المتقدم إذا تم استخدام أي من حقول البحث المتقدم
-        const advancedSearchFields = ['phone', 'national_id', 'car', 'insurance_number', 'hire_date', 'marital_status'];
-        let hasAdvancedSearch = false;
-        
-        advancedSearchFields.forEach(field => {
-            if (urlParams.get(field)) {
-                hasAdvancedSearch = true;
-            }
-        });
-        
-        // إظهار قسم البحث المتقدم تلقائياً إذا كان مستخدم
-        if (hasAdvancedSearch) {
-            const advancedSearchCollapse = document.getElementById('collapseAdvanced');
-            if (advancedSearchCollapse && window.bootstrap) {
-                const bsCollapse = new bootstrap.Collapse(advancedSearchCollapse);
-                bsCollapse.show();
-            }
-        }
     };
-    
+
     // تنفيذ إضافة تلميحات البحث
     addSearchTooltips();
+
+    // إضافة تأثيرات تفاعلية للجدول
+    const addTableInteractions = () => {
+        const rows = document.querySelectorAll('.employee-row');
+
+        rows.forEach(row => {
+            // إضافة تأثير عند المرور فوق الصف
+            row.addEventListener('mouseenter', function() {
+                this.classList.add('bg-light');
+            });
+
+            row.addEventListener('mouseleave', function() {
+                this.classList.remove('bg-light');
+            });
+
+            // إضافة تأثير النقر للانتقال إلى صفحة التفاصيل
+            row.addEventListener('click', function(e) {
+                // تجاهل النقر على الأزرار والروابط
+                if (e.target.closest('a') || e.target.closest('button') || e.target.closest('.btn-group')) {
+                    return;
+                }
+
+                const empId = this.getAttribute('data-emp-id');
+                window.location.href = `{% url "Hr:employees:detail" 0 %}`.replace('0', empId);
+            });
+        });
+    };
+
+    // تنفيذ إضافة التفاعلات للجدول
+    addTableInteractions();
 });
 </script>
 {% endblock %}
