@@ -1061,54 +1061,37 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function validateDatabaseSettings() {
         // Make sure database settings are valid before proceeding with backup/restore
-        const isSqlServer = dbEngineSelect.value === 'mssql';
-        
-        if (isSqlServer) {
-            if (!databaseInput.value) {
-                showStatus('error', 'يرجى اختيار قاعدة بيانات صالحة أولاً');
-                return false;
-            }
-        } else {
-            if (!document.getElementById('db_name_sqlite').value.trim()) {
-                showStatus('error', 'يرجى إدخال اسم ملف قاعدة البيانات');
-                return false;
-            }
+        if (!databaseInput.value) {
+            showStatus('error', 'يرجى اختيار قاعدة بيانات صالحة أولاً');
+            return false;
         }
         
         return true;
     }
 
     function updateFormVisibility() {
-        const isSqlServer = dbEngineSelect.value === 'mssql';
+        // Always using SQL Server now
+        const isSqlServer = true;
 
-        // Show/hide SQL Server specific sections
-        sqlServerSection.style.display = isSqlServer ? 'block' : 'none';
-        sqlServerDatabaseSection.style.display = isSqlServer ? 'block' : 'none';
-        portSection.style.display = isSqlServer ? 'block' : 'none';
+        // Always show SQL Server specific sections
+        sqlServerSection.style.display = 'block';
+        sqlServerDatabaseSection.style.display = 'block';
+        portSection.style.display = 'block';
 
-        // Show/hide SQLite specific sections
-        sqliteDatabaseSection.style.display = !isSqlServer ? 'block' : 'none';
+        // Set database name field
+        document.getElementById('database').name = 'db_name';
 
-        // Update form field names to avoid conflicts
-        if (isSqlServer) {
-            document.getElementById('database').name = 'db_name';
-            document.getElementById('db_name_sqlite').name = 'db_name_sqlite';
-
-            // Reset database dropdown if switching to SQL Server
-            if (databaseInput.options.length <= 1) {
-                databaseInput.innerHTML = '<option value="">يرجى اختبار الاتصال أولاً لعرض قواعد البيانات</option>';
-                if ('{{ form.db_name.value|default:"" }}') {
-                    const option = document.createElement('option');
-                    option.value = '{{ form.db_name.value }}';
-                    option.textContent = '{{ form.db_name.value }}';
-                    option.selected = true;
-                    databaseInput.appendChild(option);
-                }
-                databaseInput.disabled = true;
+        // Reset database dropdown if needed
+        if (databaseInput.options.length <= 1) {
+            databaseInput.innerHTML = '<option value="">يرجى اختبار الاتصال أولاً لعرض قواعد البيانات</option>';
+            if ('{{ form.db_name.value|default:"" }}') {
+                const option = document.createElement('option');
+                option.value = '{{ form.db_name.value }}';
+                option.textContent = '{{ form.db_name.value }}';
+                option.selected = true;
+                databaseInput.appendChild(option);
             }
-        } else {
-            document.getElementById('database').name = 'db_name_mssql';
-            document.getElementById('db_name_sqlite').name = 'db_name';
+            databaseInput.disabled = true;
         }
     }
 
@@ -1144,46 +1127,33 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function validateForm() {
         let isValid = true;
-        const isSqlServer = dbEngineSelect.value === 'mssql';
 
-        // For SQL Server
-        if (isSqlServer) {
-            // Check host
-            if (!hostInput.value.trim()) {
-                showStatus('error', 'يرجى إدخال اسم الخادم');
-                hostInput.focus();
-                isValid = false;
-            }
-
-            // Check SQL auth credentials if not using Windows auth
-            else if (!useWindowsAuthCheckbox.checked && (!usernameInput.value.trim() || !passwordInput.value.trim())) {
-                showStatus('error', 'يرجى إدخال اسم المستخدم وكلمة المرور');
-                usernameInput.focus();
-                isValid = false;
-            }
-
-            // Check database selection
-            else if (!databaseInput.value) {
-                showStatus('error', 'يرجى اختيار قاعدة البيانات');
-                databaseInput.focus();
-                isValid = false;
-            }
-
-            // Check port
-            else if (!dbPortInput.value.trim() || isNaN(dbPortInput.value)) {
-                showStatus('error', 'يرجى إدخال رقم منفذ صحيح');
-                dbPortInput.focus();
-                isValid = false;
-            }
+        // Check host
+        if (!hostInput.value.trim()) {
+            showStatus('error', 'يرجى إدخال اسم الخادم');
+            hostInput.focus();
+            isValid = false;
         }
-        // For SQLite
-        else {
-            // Check database name
-            if (!document.getElementById('db_name_sqlite').value.trim()) {
-                showStatus('error', 'يرجى إدخال اسم ملف قاعدة البيانات');
-                document.getElementById('db_name_sqlite').focus();
-                isValid = false;
-            }
+
+        // Check SQL auth credentials if not using Windows auth
+        else if (!useWindowsAuthCheckbox.checked && (!usernameInput.value.trim() || !passwordInput.value.trim())) {
+            showStatus('error', 'يرجى إدخال اسم المستخدم وكلمة المرور');
+            usernameInput.focus();
+            isValid = false;
+        }
+
+        // Check database selection
+        else if (!databaseInput.value) {
+            showStatus('error', 'يرجى اختيار قاعدة البيانات');
+            databaseInput.focus();
+            isValid = false;
+        }
+
+        // Check port
+        else if (!dbPortInput.value.trim() || isNaN(dbPortInput.value)) {
+            showStatus('error', 'يرجى إدخال رقم منفذ صحيح');
+            dbPortInput.focus();
+            isValid = false;
         }
 
         return isValid;

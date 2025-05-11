@@ -134,6 +134,9 @@ PRIMARY_DB = DATABASES['primary'].copy()
 # تحديد قاعدة البيانات النشطة من ملف الإعدادات
 ACTIVE_DB = os.environ.get('DJANGO_ACTIVE_DB', 'default')
 
+# آلية الانتقال بين قواعد البيانات
+DATABASE_ROUTERS = ['ElDawliya_sys.db_router.DatabaseRouter']
+
 try:
     # نحاول الاتصال بقاعدة البيانات المحددة
     from django.db import connections
