@@ -191,14 +191,30 @@ def database_settings(request):
     """
     View to configure database settings directly in settings.py file.
     """
-    # Get current settings from settings.py
     from django.conf import settings
+    import datetime
+    import os
 
     # We're always using SQL Server now
     using_sqlite = False
     
     # Get active database connection type
     active_db = getattr(settings, 'ACTIVE_DB', 'default')
+
+    # Check if this is a backup or restore request
+    request_type = request.headers.get('X-Request-Type', '')
+    
+    # Handle backup creation request
+    if request.method == 'POST' and request_type == 'backup_create':
+        return handle_database_backup(request)
+    
+    # Handle backup restore request
+    if request.method == 'POST' and request_type == 'backup_restore':
+        return handle_database_restore(request)
+    
+    # Handle backup list request
+    if request.method == 'GET' and request_type == 'list_backups':
+        return list_database_backups(request)
 
     # Get current database configuration
     # Always using SQL Server now
@@ -352,21 +368,23 @@ def database_settings(request):
                 
                 # Check if primary configuration exists
                 if "'primary':" in settings_content:
-                    # Update existing primary configuration
+                    # Update existing primary configuration - use careful regex to avoid syntax issues
                     settings_content = re.sub(
-                        r"'primary': \{[^\}]*\},",
-                        f"{primary_config},\n    ",
+                        r"'primary': \{[^\}]*\}",  # Note: no comma at the end
+                        f"{primary_config}",
                         settings_content
                     )
                 else:
                     # Add primary configuration if it doesn't exist
-                    default_match = re.search(r"'default': \{[^\}]*\},", settings_content)
+                    # Find the position right after the default configuration block
+                    default_pattern = r"'default': \{.*?\},\s*\n"
+                    default_match = re.search(default_pattern, settings_content, re.DOTALL)
                     if default_match:
                         # Insert the primary configuration after the default configuration
                         insert_pos = default_match.end()
                         settings_content = (
                             settings_content[:insert_pos] +
-                            f"\n    {primary_config}," +
+                            f"\n    # الإعدادات الاحتياطية\n    {primary_config}\n" +
                             settings_content[insert_pos:]
                         )
 
@@ -405,7 +423,308 @@ def database_settings(request):
         'page_title': 'إعدادات قاعدة البيانات'
     }
 
+    # Add current date for backup filename
+    context['current_date'] = datetime.datetime.now()
+    
     return render(request, 'administrator/database_settings.html', context)
+    
+def handle_database_backup(request):
+    """
+    Handle database backup creation request.
+    Creates a backup of the specified database using SQL Server's BACKUP DATABASE command.
+    """
+    from django.conf import settings
+    import os
+    import pyodbc
+    import datetime
+    
+    try:
+        # Get database connection details
+        db_engine = request.POST.get('db_engine', 'mssql')
+        db_name = request.POST.get('db_name')
+        
+        # Get backup options
+        filename = request.POST.get('filename', f'backup_{datetime.datetime.now().strftime("%Y%m%d_%H%M")}')
+        compression = request.POST.get('compression') == 'true'
+        verify = request.POST.get('verify') == 'true'
+        encrypt = request.POST.get('encrypt') == 'true'
+        
+        # Make sure we have a valid database name
+        if not db_name:
+            return JsonResponse({
+                'success': False, 
+                'error': 'يرجى تحديد قاعدة بيانات صالحة'
+            })
+            
+        # Create backups directory if it doesn't exist
+        backup_dir = os.path.join(settings.BASE_DIR, 'backups')
+        if not os.path.exists(backup_dir):
+            os.makedirs(backup_dir)
+            
+        # Full path to backup file - Use a location SQL Server can access
+        backup_filename = f"{filename}.bak"
+        
+        # First try using a system temp directory
+        import tempfile
+        temp_dir = tempfile.gettempdir()
+        backup_path = os.path.join(temp_dir, backup_filename)
+        
+        # Make sure path is using correct format for SQL Server
+        backup_path = backup_path.replace('/', '\\')
+        
+        # Connect to the database with autocommit mode
+        connection_string = get_connection_string(settings.DATABASES['default'])
+        conn = pyodbc.connect(connection_string, timeout=30, autocommit=True)
+        cursor = conn.cursor()
+        
+        # Build the backup SQL command
+        backup_sql = f"BACKUP DATABASE [{db_name}] TO DISK = N'{backup_path}'"
+        
+        # Add options
+        options = []
+        if compression:
+            options.append("COMPRESSION")
+            
+        # Skip encryption option as it might require certificate setup
+        # if encrypt:
+        #     options.append("ENCRYPTION (ALGORITHM = AES_256, SERVER CERTIFICATE = BackupEncryptCert)")
+        
+        if options:
+            backup_sql += " WITH " + ", ".join(options)
+            
+        print(f"Executing SQL: {backup_sql}")
+        
+        # Execute the backup command - no need for commit with autocommit=True
+        cursor.execute(backup_sql)
+        
+        # Verify the backup if requested
+        if verify:
+            verify_sql = f"RESTORE VERIFYONLY FROM DISK = N'{backup_path}'"
+            cursor.execute(verify_sql)
+            
+        cursor.close()
+        conn.close()
+        
+        # Move the backup file from temp directory to our backups directory
+        import shutil
+        final_backup_path = os.path.join(backup_dir, backup_filename)
+        shutil.copy2(backup_path, final_backup_path)
+        
+        # Return success response
+        return JsonResponse({
+            'success': True,
+            'filename': backup_filename,
+            'message': f'تم إنشاء النسخة الاحتياطية بنجاح'
+        })
+        
+    except Exception as e:
+        print(f"Backup error: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': f'فشل إنشاء النسخة الاحتياطية: {str(e)}'
+        })
+
+def handle_database_restore(request):
+    """
+    Handle database restore request.
+    Restores a database from a backup file using SQL Server's RESTORE DATABASE command.
+    """
+    from django.conf import settings
+    import os
+    import pyodbc
+    import tempfile
+    import shutil
+    
+    try:
+        # Get database connection details
+        db_engine = request.POST.get('db_engine', 'mssql')
+        db_name = request.POST.get('db_name')
+        
+        # Get restore method and filename
+        restore_method = request.POST.get('restore_method', 'existing')
+        
+        # Make sure we have a valid database name
+        if not db_name:
+            return JsonResponse({
+                'success': False, 
+                'error': 'يرجى تحديد قاعدة بيانات صالحة'
+            })
+            
+        backup_dir = os.path.join(settings.BASE_DIR, 'backups')
+        if not os.path.exists(backup_dir):
+            os.makedirs(backup_dir)
+        
+        # Get backup file path based on method
+        if restore_method == 'upload':
+            # Handle uploaded file
+            if 'backup_file' not in request.FILES:
+                return JsonResponse({
+                    'success': False, 
+                    'error': 'يرجى تحديد ملف النسخة الاحتياطية'
+                })
+                
+            # Save the uploaded file to a temp location first
+            backup_file = request.FILES['backup_file']
+            temp_path = os.path.join(tempfile.gettempdir(), backup_file.name)
+            
+            with open(temp_path, 'wb+') as destination:
+                for chunk in backup_file.chunks():
+                    destination.write(chunk)
+                    
+            # Copy to our backups directory
+            backup_path = os.path.join(backup_dir, backup_file.name)
+            shutil.copy2(temp_path, backup_path)
+        else:
+            # Use existing backup file
+            backup_filename = request.POST.get('backup_filename')
+            if not backup_filename:
+                return JsonResponse({
+                    'success': False, 
+                    'error': 'يرجى اختيار نسخة احتياطية موجودة'
+                })
+                
+            backup_path = os.path.join(backup_dir, backup_filename)
+            
+        # Make sure path is using correct format for SQL Server
+        backup_path = backup_path.replace('/', '\\')
+            
+        # Connect to the database with autocommit mode
+        connection_string = get_connection_string(settings.DATABASES['default'])
+        conn = pyodbc.connect(connection_string, timeout=30, autocommit=True)
+        cursor = conn.cursor()
+        
+        print(f"Attempting to restore database [{db_name}] from [{backup_path}]")
+        
+        # First, set database to single user mode
+        try:
+            cursor.execute(f"ALTER DATABASE [{db_name}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE")
+        except Exception as e:
+            print(f"Error setting database to single user mode: {str(e)}")
+            # Continue anyway, might be already in single user mode
+        
+        try:
+            # Restore the database
+            restore_sql = f"RESTORE DATABASE [{db_name}] FROM DISK = N'{backup_path}' WITH REPLACE"
+            print(f"Executing: {restore_sql}")
+            cursor.execute(restore_sql)
+            
+            # Set database back to multi-user mode
+            cursor.execute(f"ALTER DATABASE [{db_name}] SET MULTI_USER")
+        except Exception as e:
+            print(f"Error during restore: {str(e)}")
+            # Ensure database is set back to multi-user mode even if restore fails
+            try:
+                cursor.execute(f"ALTER DATABASE [{db_name}] SET MULTI_USER")
+            except:
+                pass
+            raise e
+        finally:
+            cursor.close()
+            conn.close()
+        
+        # Return success response
+        return JsonResponse({
+            'success': True,
+            'message': 'تم استعادة قاعدة البيانات بنجاح'
+        })
+        
+    except Exception as e:
+        print(f"Restore error: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': f'فشل استعادة قاعدة البيانات: {str(e)}'
+        })
+
+def list_database_backups(request):
+    """
+    List available database backups.
+    """
+    from django.conf import settings
+    import os
+    import datetime
+    
+    try:
+        backup_dir = os.path.join(settings.BASE_DIR, 'backups')
+        
+        # Create the directory if it doesn't exist
+        if not os.path.exists(backup_dir):
+            os.makedirs(backup_dir)
+            
+        backups = []
+        
+        # Get list of backup files
+        for filename in os.listdir(backup_dir):
+            if filename.endswith('.bak'):
+                file_path = os.path.join(backup_dir, filename)
+                file_stats = os.stat(file_path)
+                
+                # Get file size in human-readable format
+                size_bytes = file_stats.st_size
+                size = convert_size(size_bytes)
+                
+                # Get file creation date
+                ctime = datetime.datetime.fromtimestamp(file_stats.st_ctime)
+                date = ctime.strftime('%Y-%m-%d %H:%M')
+                
+                # Add backup to list
+                backups.append({
+                    'filename': filename,
+                    'display_name': filename.replace('.bak', ''),
+                    'size': size,
+                    'size_bytes': size_bytes,
+                    'date': date,
+                    'timestamp': file_stats.st_ctime
+                })
+                
+        # Sort backups by date (newest first)
+        backups.sort(key=lambda x: x['timestamp'], reverse=True)
+        
+        return JsonResponse({
+            'success': True,
+            'backups': backups
+        })
+        
+    except Exception as e:
+        print(f"List backups error: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': f'فشل قراءة النسخ الاحتياطية: {str(e)}'
+        })
+
+def get_connection_string(db_config):
+    """
+    Build a connection string for SQL Server from database configuration.
+    """
+    driver = db_config.get('OPTIONS', {}).get('driver', 'ODBC Driver 17 for SQL Server')
+    server = db_config.get('HOST', 'localhost')
+    database = db_config.get('NAME', '')
+    
+    # Determine authentication method
+    trusted_conn = db_config.get('OPTIONS', {}).get('Trusted_Connection', 'no')
+    
+    if trusted_conn.lower() == 'yes':
+        # Windows authentication
+        conn_str = f"DRIVER={{{driver}}};SERVER={server};DATABASE={database};Trusted_Connection=yes;"
+    else:
+        # SQL Server authentication
+        user = db_config.get('USER', '')
+        password = db_config.get('PASSWORD', '')
+        conn_str = f"DRIVER={{{driver}}};SERVER={server};DATABASE={database};UID={user};PWD={password};"
+        
+    return conn_str
+
+def convert_size(size_bytes):
+    """
+    Convert file size in bytes to human-readable format.
+    """
+    if size_bytes < 1024:
+        return f"{size_bytes} بايت"
+    elif size_bytes < 1024 * 1024:
+        return f"{size_bytes/1024:.2f} كيلوبايت"
+    elif size_bytes < 1024 * 1024 * 1024:
+        return f"{size_bytes/(1024*1024):.2f} ميجابايت"
+    else:
+        return f"{size_bytes/(1024*1024*1024):.2f} جيجابايت"
 
 
 # Department Views
