@@ -194,41 +194,37 @@ def database_settings(request):
     # Get current settings from settings.py
     from django.conf import settings
 
-    # Check if we're using SQLite or SQL Server
-    using_sqlite = 'sqlite' in settings.DATABASES['default']['ENGINE']
+    # We're always using SQL Server now
+    using_sqlite = False
+    
+    # Get active database connection type
+    active_db = getattr(settings, 'ACTIVE_DB', 'default')
 
     # Get current database configuration
-    if using_sqlite:
-        # Using SQLite (development mode)
-        db_config = {
-            'db_engine': 'sqlite3',
-            'db_name': str(settings.DATABASES['default']['NAME']),
-            'db_host': '',
-            'db_user': '',
-            'db_password': '',
-            'db_port': '',
-        }
-
-        # Also get SQL Server settings if available
-        if 'mssql' in settings.DATABASES:
-            mssql_config = settings.DATABASES['mssql']
+    # Always using SQL Server now
+    db_config = {
+        'db_engine': 'mssql',
+        'db_host': settings.DATABASES['default'].get('HOST', ''),
+        'db_name': settings.DATABASES['default'].get('NAME', ''),
+        'db_user': settings.DATABASES['default'].get('USER', ''),
+        'db_password': settings.DATABASES['default'].get('PASSWORD', ''),
+        'db_port': settings.DATABASES['default'].get('PORT', '1433'),
+        'db_connection_type': active_db,
+    }
+    
+    # Also get primary database settings if available
+    if 'primary' in settings.DATABASES:
+        primary_config = settings.DATABASES['primary']
+        if active_db == 'primary':
+            # If primary is active, update the form values with primary settings
             db_config.update({
-                'db_host': mssql_config.get('HOST', ''),
-                'db_name': mssql_config.get('NAME', ''),
-                'db_user': mssql_config.get('USER', ''),
-                'db_password': mssql_config.get('PASSWORD', ''),
-                'db_port': mssql_config.get('PORT', '1433'),
+                'db_host': primary_config.get('HOST', ''),
+                'db_name': primary_config.get('NAME', ''),
+                'db_user': primary_config.get('USER', ''),
+                'db_password': primary_config.get('PASSWORD', ''),
+                'db_port': primary_config.get('PORT', '1433'),
             })
-    else:
-        # Using SQL Server
-        db_config = {
-            'db_engine': 'mssql',
-            'db_host': settings.DATABASES['default'].get('HOST', ''),
-            'db_name': settings.DATABASES['default'].get('NAME', ''),
-            'db_user': settings.DATABASES['default'].get('USER', ''),
-            'db_password': settings.DATABASES['default'].get('PASSWORD', ''),
-            'db_port': settings.DATABASES['default'].get('PORT', '1433'),
-        }
+
 
     # Try to get settings from SystemSettings model if available
     try:
@@ -259,146 +255,119 @@ def database_settings(request):
                 settings_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'ElDawliya_sys/settings.py')
                 with open(settings_path, 'r', encoding='utf-8') as f:
                     settings_content = f.read()
-
-                # Get the selected database engine
-                db_engine = form.cleaned_data['db_engine']
-
-                # Determine which database configuration to update
-                if db_engine == 'sqlite3':
-                    # Switch to SQLite
-                    # Update the default configuration to use SQLite
-                    sqlite_config = (
-                        "'default': {\n"
-                        "        'ENGINE': 'django.db.backends.sqlite3',\n"
-                        f"        'NAME': BASE_DIR / '{form.cleaned_data['db_name']}',\n"
-                        "    }"
-                    )
-
-                    # Update the default database configuration
+                
+                # Get the selected database connection type
+                db_connection_type = form.cleaned_data['db_connection_type']
+                
+                # Update the ACTIVE_DB setting
+                if 'ACTIVE_DB =' in settings_content:
                     settings_content = re.sub(
-                        r"'default': \{[^\}]*\},",
-                        f"{sqlite_config},\n    ",
+                        r"ACTIVE_DB = os\.environ\.get\('DJANGO_ACTIVE_DB', '[^']*'\)",
+                        f"ACTIVE_DB = os.environ.get('DJANGO_ACTIVE_DB', '{db_connection_type}')",
                         settings_content
                     )
-
-                    # Make sure we have the SQL Server configuration saved as 'mssql'
-                    if 'mssql' not in settings.DATABASES:
-                        # Add mssql configuration if it doesn't exist
-                        mssql_config = (
-                            "'mssql': {\n"
-                            "        'ENGINE': 'mssql',\n"
-                            f"        'NAME': '{form.cleaned_data.get('db_name_mssql', 'El_Dawliya_International')}',\n"
-                            f"        'HOST': '{form.cleaned_data.get('db_host', '192.168.1.48')}',\n"
-                            f"        'PORT': '{form.cleaned_data.get('db_port', '1433')}',\n"
-                            f"        'USER': '{form.cleaned_data.get('db_user', '')}',\n"
-                            f"        'PASSWORD': '{form.cleaned_data.get('db_password', '')}',\n"
-                            "        'OPTIONS': {\n"
-                            "            'driver': 'ODBC Driver 17 for SQL Server',\n"
-                            "            'Trusted_Connection': 'yes',\n"
-                            "        },\n"
-                            "    }"
-                        )
-
-                        # Add mssql configuration after default
-                        # First, find the default configuration
-                        default_match = re.search(r"'default': \{[^\}]*\},", settings_content)
-                        if default_match:
-                            # Insert the mssql configuration after the default configuration
-                            insert_pos = default_match.end()
-                            settings_content = (
-                                settings_content[:insert_pos] +
-                                f"\n    {mssql_config}," +
-                                settings_content[insert_pos:]
-                            )
-                    else:
-                        # Update existing mssql configuration
-                        mssql_config = (
-                            "'mssql': {\n"
-                            "        'ENGINE': 'mssql',\n"
-                            f"        'NAME': '{form.cleaned_data.get('db_name_mssql', 'El_Dawliya_International')}',\n"
-                            f"        'HOST': '{form.cleaned_data.get('db_host', '192.168.1.48')}',\n"
-                            f"        'PORT': '{form.cleaned_data.get('db_port', '1433')}',\n"
-                            f"        'USER': '{form.cleaned_data.get('db_user', '')}',\n"
-                            f"        'PASSWORD': '{form.cleaned_data.get('db_password', '')}',\n"
-                            "        'OPTIONS': {\n"
-                            "            'driver': 'ODBC Driver 17 for SQL Server',\n"
-                            "            'Trusted_Connection': 'yes',\n"
-                            "        },\n"
-                            "    }"
-                        )
-                        settings_content = re.sub(
-                            r"'mssql': \{[^\}]*\},",
-                            f"{mssql_config},\n    ",
-                            settings_content
-                        )
                 else:
-                    # Switch to SQL Server
-                    # Update the default configuration to use SQL Server
-                    trusted_connection = 'yes' if form.cleaned_data.get('use_windows_auth', True) else 'no'
-
-                    default_config = (
-                        "'default': {\n"
-                        "        'ENGINE': 'mssql',\n"
-                        f"        'NAME': '{form.cleaned_data['db_name']}',\n"
-                        f"        'HOST': '{form.cleaned_data['db_host']}',\n"
-                        f"        'PORT': '{form.cleaned_data['db_port']}',\n"
-                    )
-
-                    # Add authentication details based on the selected method
-                    if not form.cleaned_data.get('use_windows_auth', True):
-                        default_config += (
-                            f"        'USER': '{form.cleaned_data['db_user']}',\n"
-                            f"        'PASSWORD': '{form.cleaned_data['db_password']}',\n"
-                        )
-
-                    default_config += (
-                        "        'OPTIONS': {\n"
-                        "            'driver': 'ODBC Driver 17 for SQL Server',\n"
-                        f"            'Trusted_Connection': '{trusted_connection}',\n"
-                        "        },\n"
-                        "    }"
-                    )
-
-                    # Update the default database configuration
+                    # If ACTIVE_DB setting doesn't exist, add it after the DATABASES definition
                     settings_content = re.sub(
-                        r"'default': \{[^\}]*\},",
-                        f"{default_config},\n    ",
+                        r"(DATABASES = \{[^\}]*\})",
+                        f"\\1\n\n# تحديد قاعدة البيانات النشطة من ملف الإعدادات\nACTIVE_DB = os.environ.get('DJANGO_ACTIVE_DB', '{db_connection_type}')",
                         settings_content
                     )
 
-                    # Make sure we have the SQLite configuration saved as 'sqlite'
-                    if 'sqlite' not in settings.DATABASES:
-                        # Add sqlite configuration if it doesn't exist
-                        sqlite_config = (
-                            "'sqlite': {\n"
-                            "        'ENGINE': 'django.db.backends.sqlite3',\n"
-                            f"        'NAME': BASE_DIR / '{form.cleaned_data.get('db_name_sqlite', 'db.sqlite3')}',\n"
-                            "    }"
-                        )
+                # Always using SQL Server now
+                # Get the selected connection type
+                db_connection_type = form.cleaned_data['db_connection_type']
+                
+                # Update the ACTIVE_DB setting
+                if 'ACTIVE_DB =' in settings_content:
+                    settings_content = re.sub(
+                        r"ACTIVE_DB = os\.environ\.get\('DJANGO_ACTIVE_DB', '[^']*'\)",
+                        f"ACTIVE_DB = os.environ.get('DJANGO_ACTIVE_DB', '{db_connection_type}')",
+                        settings_content
+                    )
+                else:
+                    # If ACTIVE_DB setting doesn't exist, add it after the DATABASES definition
+                    settings_content = re.sub(
+                        r"(DATABASES = \{[^\}]*\})",
+                        f"\1\n\n# تحديد قاعدة البيانات النشطة من ملف الإعدادات\nACTIVE_DB = os.environ.get('DJANGO_ACTIVE_DB', '{db_connection_type}')",
+                        settings_content
+                    )
+                
+                # Update the default configuration to use SQL Server
+                trusted_connection = 'yes' if form.cleaned_data.get('use_windows_auth', True) else 'no'
 
-                        # Add sqlite configuration after default
-                        # First, find the default configuration
-                        default_match = re.search(r"'default': \{[^\}]*\},", settings_content)
-                        if default_match:
-                            # Insert the sqlite configuration after the default configuration
-                            insert_pos = default_match.end()
-                            settings_content = (
-                                settings_content[:insert_pos] +
-                                f"\n    {sqlite_config}," +
-                                settings_content[insert_pos:]
-                            )
-                    else:
-                        # Update existing sqlite configuration
-                        sqlite_config = (
-                            "'sqlite': {\n"
-                            "        'ENGINE': 'django.db.backends.sqlite3',\n"
-                            f"        'NAME': BASE_DIR / '{form.cleaned_data.get('db_name_sqlite', 'db.sqlite3')}',\n"
-                            "    }"
-                        )
-                        settings_content = re.sub(
-                            r"'sqlite': \{[^\}]*\},",
-                            f"{sqlite_config},\n    ",
-                            settings_content
+                default_config = (
+                    "'default': {\n"
+                    "        'ENGINE': 'mssql',\n"
+                    f"        'NAME': '{form.cleaned_data['db_name']}',\n"
+                    f"        'HOST': '{form.cleaned_data['db_host']}',\n"
+                    f"        'PORT': '{form.cleaned_data['db_port']}',\n"
+                )
+
+                # Add authentication details based on the selected method
+                if not form.cleaned_data.get('use_windows_auth', True):
+                    default_config += (
+                        f"        'USER': '{form.cleaned_data['db_user']}',\n"
+                        f"        'PASSWORD': '{form.cleaned_data['db_password']}',\n"
+                    )
+
+                default_config += (
+                    "        'OPTIONS': {\n"
+                    "            'driver': 'ODBC Driver 17 for SQL Server',\n"
+                    f"            'Trusted_Connection': '{trusted_connection}',\n"
+                    "        },\n"
+                    "    }"
+                )
+
+                # Update the default database configuration
+                settings_content = re.sub(
+                    r"'default': \{[^\}]*\},",
+                    f"{default_config},\n    ",
+                    settings_content
+                )
+                
+                # Update the primary database configuration
+                primary_config = (
+                    "'primary': {\n"
+                    "        'ENGINE': 'mssql',\n"
+                    f"        'NAME': '{form.cleaned_data['db_name']}',\n"
+                    f"        'HOST': '{form.cleaned_data['db_host']}',\n"
+                    f"        'PORT': '{form.cleaned_data['db_port']}',\n"
+                )
+
+                # Add authentication details based on the selected method
+                if not form.cleaned_data.get('use_windows_auth', True):
+                    primary_config += (
+                        f"        'USER': '{form.cleaned_data['db_user']}',\n"
+                        f"        'PASSWORD': '{form.cleaned_data['db_password']}',\n"
+                    )
+
+                primary_config += (
+                    "        'OPTIONS': {\n"
+                    "            'driver': 'ODBC Driver 17 for SQL Server',\n"
+                    f"            'Trusted_Connection': '{trusted_connection}',\n"
+                    "        },\n"
+                    "    }"
+                )
+                
+                # Check if primary configuration exists
+                if "'primary':" in settings_content:
+                    # Update existing primary configuration
+                    settings_content = re.sub(
+                        r"'primary': \{[^\}]*\},",
+                        f"{primary_config},\n    ",
+                        settings_content
+                    )
+                else:
+                    # Add primary configuration if it doesn't exist
+                    default_match = re.search(r"'default': \{[^\}]*\},", settings_content)
+                    if default_match:
+                        # Insert the primary configuration after the default configuration
+                        insert_pos = default_match.end()
+                        settings_content = (
+                            settings_content[:insert_pos] +
+                            f"\n    {primary_config}," +
+                            settings_content[insert_pos:]
                         )
 
                 # Write back to settings file
@@ -1012,41 +981,37 @@ def database_settings(request):
     # Get current settings from settings.py
     from django.conf import settings
 
-    # Check if we're using SQLite or SQL Server
-    using_sqlite = 'sqlite' in settings.DATABASES['default']['ENGINE']
+    # We're always using SQL Server now
+    using_sqlite = False
+    
+    # Get active database connection type
+    active_db = getattr(settings, 'ACTIVE_DB', 'default')
 
     # Get current database configuration
-    if using_sqlite:
-        # Using SQLite (development mode)
-        db_config = {
-            'db_engine': 'sqlite3',
-            'db_name': str(settings.DATABASES['default']['NAME']),
-            'db_host': '',
-            'db_user': '',
-            'db_password': '',
-            'db_port': '',
-        }
-
-        # Also get SQL Server settings if available
-        if 'mssql' in settings.DATABASES:
-            mssql_config = settings.DATABASES['mssql']
+    # Always using SQL Server now
+    db_config = {
+        'db_engine': 'mssql',
+        'db_host': settings.DATABASES['default'].get('HOST', ''),
+        'db_name': settings.DATABASES['default'].get('NAME', ''),
+        'db_user': settings.DATABASES['default'].get('USER', ''),
+        'db_password': settings.DATABASES['default'].get('PASSWORD', ''),
+        'db_port': settings.DATABASES['default'].get('PORT', '1433'),
+        'db_connection_type': active_db,
+    }
+    
+    # Also get primary database settings if available
+    if 'primary' in settings.DATABASES:
+        primary_config = settings.DATABASES['primary']
+        if active_db == 'primary':
+            # If primary is active, update the form values with primary settings
             db_config.update({
-                'db_host': mssql_config.get('HOST', ''),
-                'db_name': mssql_config.get('NAME', ''),
-                'db_user': mssql_config.get('USER', ''),
-                'db_password': mssql_config.get('PASSWORD', ''),
-                'db_port': mssql_config.get('PORT', '1433'),
+                'db_host': primary_config.get('HOST', ''),
+                'db_name': primary_config.get('NAME', ''),
+                'db_user': primary_config.get('USER', ''),
+                'db_password': primary_config.get('PASSWORD', ''),
+                'db_port': primary_config.get('PORT', '1433'),
             })
-    else:
-        # Using SQL Server
-        db_config = {
-            'db_engine': 'mssql',
-            'db_host': settings.DATABASES['default'].get('HOST', ''),
-            'db_name': settings.DATABASES['default'].get('NAME', ''),
-            'db_user': settings.DATABASES['default'].get('USER', ''),
-            'db_password': settings.DATABASES['default'].get('PASSWORD', ''),
-            'db_port': settings.DATABASES['default'].get('PORT', '1433'),
-        }
+
 
     # Try to get settings from SystemSettings model if available
     try:
@@ -1077,146 +1042,119 @@ def database_settings(request):
                 settings_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'ElDawliya_sys/settings.py')
                 with open(settings_path, 'r', encoding='utf-8') as f:
                     settings_content = f.read()
-
-                # Get the selected database engine
-                db_engine = form.cleaned_data['db_engine']
-
-                # Determine which database configuration to update
-                if db_engine == 'sqlite3':
-                    # Switch to SQLite
-                    # Update the default configuration to use SQLite
-                    sqlite_config = (
-                        "'default': {\n"
-                        "        'ENGINE': 'django.db.backends.sqlite3',\n"
-                        f"        'NAME': BASE_DIR / '{form.cleaned_data['db_name']}',\n"
-                        "    }"
-                    )
-
-                    # Update the default database configuration
+                
+                # Get the selected database connection type
+                db_connection_type = form.cleaned_data['db_connection_type']
+                
+                # Update the ACTIVE_DB setting
+                if 'ACTIVE_DB =' in settings_content:
                     settings_content = re.sub(
-                        r"'default': \{[^\}]*\},",
-                        f"{sqlite_config},\n    ",
+                        r"ACTIVE_DB = os\.environ\.get\('DJANGO_ACTIVE_DB', '[^']*'\)",
+                        f"ACTIVE_DB = os.environ.get('DJANGO_ACTIVE_DB', '{db_connection_type}')",
                         settings_content
                     )
-
-                    # Make sure we have the SQL Server configuration saved as 'mssql'
-                    if 'mssql' not in settings.DATABASES:
-                        # Add mssql configuration if it doesn't exist
-                        mssql_config = (
-                            "'mssql': {\n"
-                            "        'ENGINE': 'mssql',\n"
-                            f"        'NAME': '{form.cleaned_data.get('db_name_mssql', 'El_Dawliya_International')}',\n"
-                            f"        'HOST': '{form.cleaned_data.get('db_host', '192.168.1.48')}',\n"
-                            f"        'PORT': '{form.cleaned_data.get('db_port', '1433')}',\n"
-                            f"        'USER': '{form.cleaned_data.get('db_user', '')}',\n"
-                            f"        'PASSWORD': '{form.cleaned_data.get('db_password', '')}',\n"
-                            "        'OPTIONS': {\n"
-                            "            'driver': 'ODBC Driver 17 for SQL Server',\n"
-                            "            'Trusted_Connection': 'yes',\n"
-                            "        },\n"
-                            "    }"
-                        )
-
-                        # Add mssql configuration after default
-                        # First, find the default configuration
-                        default_match = re.search(r"'default': \{[^\}]*\},", settings_content)
-                        if default_match:
-                            # Insert the mssql configuration after the default configuration
-                            insert_pos = default_match.end()
-                            settings_content = (
-                                settings_content[:insert_pos] +
-                                f"\n    {mssql_config}," +
-                                settings_content[insert_pos:]
-                            )
-                    else:
-                        # Update existing mssql configuration
-                        mssql_config = (
-                            "'mssql': {\n"
-                            "        'ENGINE': 'mssql',\n"
-                            f"        'NAME': '{form.cleaned_data.get('db_name_mssql', 'El_Dawliya_International')}',\n"
-                            f"        'HOST': '{form.cleaned_data.get('db_host', '192.168.1.48')}',\n"
-                            f"        'PORT': '{form.cleaned_data.get('db_port', '1433')}',\n"
-                            f"        'USER': '{form.cleaned_data.get('db_user', '')}',\n"
-                            f"        'PASSWORD': '{form.cleaned_data.get('db_password', '')}',\n"
-                            "        'OPTIONS': {\n"
-                            "            'driver': 'ODBC Driver 17 for SQL Server',\n"
-                            "            'Trusted_Connection': 'yes',\n"
-                            "        },\n"
-                            "    }"
-                        )
-                        settings_content = re.sub(
-                            r"'mssql': \{[^\}]*\},",
-                            f"{mssql_config},\n    ",
-                            settings_content
-                        )
                 else:
-                    # Switch to SQL Server
-                    # Update the default configuration to use SQL Server
-                    trusted_connection = 'yes' if form.cleaned_data.get('use_windows_auth', True) else 'no'
-
-                    default_config = (
-                        "'default': {\n"
-                        "        'ENGINE': 'mssql',\n"
-                        f"        'NAME': '{form.cleaned_data['db_name']}',\n"
-                        f"        'HOST': '{form.cleaned_data['db_host']}',\n"
-                        f"        'PORT': '{form.cleaned_data['db_port']}',\n"
-                    )
-
-                    # Add authentication details based on the selected method
-                    if not form.cleaned_data.get('use_windows_auth', True):
-                        default_config += (
-                            f"        'USER': '{form.cleaned_data['db_user']}',\n"
-                            f"        'PASSWORD': '{form.cleaned_data['db_password']}',\n"
-                        )
-
-                    default_config += (
-                        "        'OPTIONS': {\n"
-                        "            'driver': 'ODBC Driver 17 for SQL Server',\n"
-                        f"            'Trusted_Connection': '{trusted_connection}',\n"
-                        "        },\n"
-                        "    }"
-                    )
-
-                    # Update the default database configuration
+                    # If ACTIVE_DB setting doesn't exist, add it after the DATABASES definition
                     settings_content = re.sub(
-                        r"'default': \{[^\}]*\},",
-                        f"{default_config},\n    ",
+                        r"(DATABASES = \{[^\}]*\})",
+                        f"\\1\n\n# تحديد قاعدة البيانات النشطة من ملف الإعدادات\nACTIVE_DB = os.environ.get('DJANGO_ACTIVE_DB', '{db_connection_type}')",
                         settings_content
                     )
 
-                    # Make sure we have the SQLite configuration saved as 'sqlite'
-                    if 'sqlite' not in settings.DATABASES:
-                        # Add sqlite configuration if it doesn't exist
-                        sqlite_config = (
-                            "'sqlite': {\n"
-                            "        'ENGINE': 'django.db.backends.sqlite3',\n"
-                            f"        'NAME': BASE_DIR / '{form.cleaned_data.get('db_name_sqlite', 'db.sqlite3')}',\n"
-                            "    }"
-                        )
+                # Always using SQL Server now
+                # Get the selected connection type
+                db_connection_type = form.cleaned_data['db_connection_type']
+                
+                # Update the ACTIVE_DB setting
+                if 'ACTIVE_DB =' in settings_content:
+                    settings_content = re.sub(
+                        r"ACTIVE_DB = os\.environ\.get\('DJANGO_ACTIVE_DB', '[^']*'\)",
+                        f"ACTIVE_DB = os.environ.get('DJANGO_ACTIVE_DB', '{db_connection_type}')",
+                        settings_content
+                    )
+                else:
+                    # If ACTIVE_DB setting doesn't exist, add it after the DATABASES definition
+                    settings_content = re.sub(
+                        r"(DATABASES = \{[^\}]*\})",
+                        f"\1\n\n# تحديد قاعدة البيانات النشطة من ملف الإعدادات\nACTIVE_DB = os.environ.get('DJANGO_ACTIVE_DB', '{db_connection_type}')",
+                        settings_content
+                    )
+                
+                # Update the default configuration to use SQL Server
+                trusted_connection = 'yes' if form.cleaned_data.get('use_windows_auth', True) else 'no'
 
-                        # Add sqlite configuration after default
-                        # First, find the default configuration
-                        default_match = re.search(r"'default': \{[^\}]*\},", settings_content)
-                        if default_match:
-                            # Insert the sqlite configuration after the default configuration
-                            insert_pos = default_match.end()
-                            settings_content = (
-                                settings_content[:insert_pos] +
-                                f"\n    {sqlite_config}," +
-                                settings_content[insert_pos:]
-                            )
-                    else:
-                        # Update existing sqlite configuration
-                        sqlite_config = (
-                            "'sqlite': {\n"
-                            "        'ENGINE': 'django.db.backends.sqlite3',\n"
-                            f"        'NAME': BASE_DIR / '{form.cleaned_data.get('db_name_sqlite', 'db.sqlite3')}',\n"
-                            "    }"
-                        )
-                        settings_content = re.sub(
-                            r"'sqlite': \{[^\}]*\},",
-                            f"{sqlite_config},\n    ",
-                            settings_content
+                default_config = (
+                    "'default': {\n"
+                    "        'ENGINE': 'mssql',\n"
+                    f"        'NAME': '{form.cleaned_data['db_name']}',\n"
+                    f"        'HOST': '{form.cleaned_data['db_host']}',\n"
+                    f"        'PORT': '{form.cleaned_data['db_port']}',\n"
+                )
+
+                # Add authentication details based on the selected method
+                if not form.cleaned_data.get('use_windows_auth', True):
+                    default_config += (
+                        f"        'USER': '{form.cleaned_data['db_user']}',\n"
+                        f"        'PASSWORD': '{form.cleaned_data['db_password']}',\n"
+                    )
+
+                default_config += (
+                    "        'OPTIONS': {\n"
+                    "            'driver': 'ODBC Driver 17 for SQL Server',\n"
+                    f"            'Trusted_Connection': '{trusted_connection}',\n"
+                    "        },\n"
+                    "    }"
+                )
+
+                # Update the default database configuration
+                settings_content = re.sub(
+                    r"'default': \{[^\}]*\},",
+                    f"{default_config},\n    ",
+                    settings_content
+                )
+                
+                # Update the primary database configuration
+                primary_config = (
+                    "'primary': {\n"
+                    "        'ENGINE': 'mssql',\n"
+                    f"        'NAME': '{form.cleaned_data['db_name']}',\n"
+                    f"        'HOST': '{form.cleaned_data['db_host']}',\n"
+                    f"        'PORT': '{form.cleaned_data['db_port']}',\n"
+                )
+
+                # Add authentication details based on the selected method
+                if not form.cleaned_data.get('use_windows_auth', True):
+                    primary_config += (
+                        f"        'USER': '{form.cleaned_data['db_user']}',\n"
+                        f"        'PASSWORD': '{form.cleaned_data['db_password']}',\n"
+                    )
+
+                primary_config += (
+                    "        'OPTIONS': {\n"
+                    "            'driver': 'ODBC Driver 17 for SQL Server',\n"
+                    f"            'Trusted_Connection': '{trusted_connection}',\n"
+                    "        },\n"
+                    "    }"
+                )
+                
+                # Check if primary configuration exists
+                if "'primary':" in settings_content:
+                    # Update existing primary configuration
+                    settings_content = re.sub(
+                        r"'primary': \{[^\}]*\},",
+                        f"{primary_config},\n    ",
+                        settings_content
+                    )
+                else:
+                    # Add primary configuration if it doesn't exist
+                    default_match = re.search(r"'default': \{[^\}]*\},", settings_content)
+                    if default_match:
+                        # Insert the primary configuration after the default configuration
+                        insert_pos = default_match.end()
+                        settings_content = (
+                            settings_content[:insert_pos] +
+                            f"\n    {primary_config}," +
+                            settings_content[insert_pos:]
                         )
 
                 # Write back to settings file

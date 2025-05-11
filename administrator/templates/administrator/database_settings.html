@@ -235,17 +235,10 @@
             </h4>
         </div>
         <div class="card-body">
-            {% if using_sqlite %}
-            <div class="connection-status success" style="display: block;">
-                <i class="fas fa-info-circle"></i>
-                <span>أنت تستخدم حاليًا قاعدة بيانات SQLite للتطوير. يمكنك تكوين إعدادات SQL Server للإنتاج.</span>
-            </div>
-            {% else %}
             <div class="connection-status info" style="display: block;">
                 <i class="fas fa-database"></i>
-                <span>أنت تستخدم حاليًا قاعدة بيانات SQL Server. يمكنك التبديل إلى SQLite للتطوير المحلي.</span>
+                <span>أنت تستخدم حاليًا قاعدة بيانات SQL Server مع نوع الاتصال: <strong>{{ active_db }}</strong></span>
             </div>
-            {% endif %}
             <div class="connection-status" id="connectionStatus" style="display: none;">
                 <i class="fas fa-info-circle"></i>
                 <span id="statusMessage"></span>
@@ -255,18 +248,21 @@
                 {% csrf_token %}
 
                 <div class="form-section">
-                    <h5 class="form-section-title"><i class="fas fa-database me-2"></i>نوع قاعدة البيانات</h5>
-
-                    <!-- Database Engine -->
+                    <h5 class="form-section-title"><i class="fas fa-database me-2"></i>نوع الاتصال بقاعدة البيانات</h5>
+                    
+                    <!-- Database Connection Type -->
                     <div class="form-group">
-                        <label for="db_engine" class="form-label">{{ form.db_engine.label }}</label>
-                        <select class="form-select" id="db_engine" name="db_engine" required>
-                            {% for value, text in form.db_engine.field.choices %}
-                                <option value="{{ value }}" {% if form.db_engine.value == value %}selected{% endif %}>{{ text }}</option>
+                        <label for="db_connection_type" class="form-label">{{ form.db_connection_type.label }}</label>
+                        <select class="form-select" id="db_connection_type" name="db_connection_type" required>
+                            {% for value, text in form.db_connection_type.field.choices %}
+                                <option value="{{ value }}" {% if active_db == value %}selected{% endif %}>{{ text }}</option>
                             {% endfor %}
                         </select>
-                        <div class="form-text">{{ form.db_engine.help_text }}</div>
+                        <div class="form-text">{{ form.db_connection_type.help_text }}</div>
                     </div>
+                    
+                    <!-- Hidden Database Engine Field -->
+                    <input type="hidden" id="db_engine" name="db_engine" value="mssql">
                 </div>
 
                 <div class="form-section" id="sqlServerSection">
@@ -332,16 +328,8 @@
                 <div class="form-section">
                     <h5 class="form-section-title"><i class="fas fa-database me-2"></i>اختيار قاعدة البيانات</h5>
 
-                    <!-- Database Name -->
-                    <div class="form-group" id="sqliteDatabaseSection">
-                        <label for="db_name_sqlite" class="form-label">اسم ملف قاعدة بيانات SQLite</label>
-                        <div class="input-group">
-                            <span class="input-group-text"><i class="fas fa-file-alt"></i></span>
-                            <input type="text" class="form-control" id="db_name_sqlite" name="db_name"
-                                   placeholder="db.sqlite3" value="{{ form.db_name.value|default:'db.sqlite3' }}">
-                        </div>
-                        <div class="form-text">اسم ملف قاعدة بيانات SQLite (سيتم حفظه في مجلد المشروع)</div>
-                    </div>
+                    <!-- Hidden field for SQLite database name (not used anymore) -->
+                    <input type="hidden" id="db_name_sqlite" name="db_name_sqlite" value="db.sqlite3">
 
                     <!-- SQL Server Database Name -->
                     <div class="form-group" id="sqlServerDatabaseSection">
@@ -370,6 +358,228 @@
                     </div>
                 </div>
 
+                <div class="form-section">
+                    <h5 class="form-section-title"><i class="fas fa-backup me-2"></i>نسخ احتياطي لقاعدة البيانات</h5>
+
+                    <!-- Backup Type Selection -->
+                    <div class="form-group">
+                        <label class="form-label">نوع النسخ الاحتياطي</label>
+                        <div class="mb-3">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="backup_type" id="backupTypeScheduled" value="scheduled">
+                                <label class="form-check-label" for="backupTypeScheduled">مجدول</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="backup_type" id="backupTypeManual" value="manual" checked>
+                                <label class="form-check-label" for="backupTypeManual">غير مجدول (يدوي)</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Scheduled Backup Options -->
+                    <div id="scheduledBackupOptions" style="display: none;">
+                        <div class="row">
+                            <!-- Frequency -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="backupFrequency" class="form-label">تكرار النسخ الاحتياطي</label>
+                                    <select class="form-select" id="backupFrequency" name="backup_frequency">
+                                        <option value="daily">يومي</option>
+                                        <option value="weekly">أسبوعي</option>
+                                        <option value="monthly">شهري</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Time of Day -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="backupTime" class="form-label">وقت النسخ الاحتياطي</label>
+                                    <input type="time" class="form-control" id="backupTime" name="backup_time" value="03:00">
+                                    <div class="form-text">يفضل اختيار وقت خارج ساعات العمل</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Weekly / Monthly Options -->
+                        <div id="weeklyOptions" style="display: none;">
+                            <div class="form-group">
+                                <label class="form-label">يوم في الأسبوع</label>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="backup_day" id="day_0" value="0" checked>
+                                        <label class="form-check-label" for="day_0">الأحد</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="backup_day" id="day_1" value="1">
+                                        <label class="form-check-label" for="day_1">الاثنين</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="backup_day" id="day_2" value="2">
+                                        <label class="form-check-label" for="day_2">الثلاثاء</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="backup_day" id="day_3" value="3">
+                                        <label class="form-check-label" for="day_3">الأربعاء</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="backup_day" id="day_4" value="4">
+                                        <label class="form-check-label" for="day_4">الخميس</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="backup_day" id="day_5" value="5">
+                                        <label class="form-check-label" for="day_5">الجمعة</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="backup_day" id="day_6" value="6">
+                                        <label class="form-check-label" for="day_6">السبت</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="monthlyOptions" style="display: none;">
+                            <div class="form-group">
+                                <label for="backupDay" class="form-label">يوم في الشهر</label>
+                                <select class="form-select" id="backupDay" name="backup_day_of_month">
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                    <option value="6">6</option>
+                                    <option value="7">7</option>
+                                    <option value="8">8</option>
+                                    <option value="9">9</option>
+                                    <option value="10">10</option>
+                                    <option value="11">11</option>
+                                    <option value="12">12</option>
+                                    <option value="13">13</option>
+                                    <option value="14">14</option>
+                                    <option value="15">15</option>
+                                    <option value="16">16</option>
+                                    <option value="17">17</option>
+                                    <option value="18">18</option>
+                                    <option value="19">19</option>
+                                    <option value="20">20</option>
+                                    <option value="21">21</option>
+                                    <option value="22">22</option>
+                                    <option value="23">23</option>
+                                    <option value="24">24</option>
+                                    <option value="25">25</option>
+                                    <option value="26">26</option>
+                                    <option value="27">27</option>
+                                    <option value="28">28</option>
+                                    <option value="29">29</option>
+                                    <option value="30">30</option>
+                                    <option value="31">31</option>
+                                </select>
+                                <div class="form-text">إذا كان اليوم المحدد غير موجود في الشهر، سيتم تنفيذ النسخ الاحتياطي في آخر يوم من الشهر</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Retention Settings -->
+                        <div class="form-group">
+                            <label for="backupRetention" class="form-label">الاحتفاظ بالنسخ الاحتياطية</label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" id="backupRetention" name="backup_retention" min="1" value="7">
+                                <span class="input-group-text">نسخة احتياطية</span>
+                            </div>
+                            <div class="form-text">عدد النسخ الاحتياطية القديمة للاحتفاظ بها قبل الحذف التلقائي</div>
+                        </div>
+                    </div>
+
+                    <!-- Manual Backup Options -->
+                    <div id="manualBackupOptions">
+                        <div class="form-group">
+                            <label for="backupFilename" class="form-label">اسم ملف النسخ الاحتياطي</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-file-archive"></i></span>
+                                <input type="text" class="form-control" id="backupFilename" name="backup_filename" 
+                                    value="backup_{{ current_date|date:'Ymd_Hi' }}">
+                                <span class="input-group-text">.bak</span>
+                            </div>
+                            <div class="form-text">سيتم حفظ النسخة الاحتياطية في مجلد النسخ الاحتياطي للنظام</div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">خيارات النسخ الاحتياطي</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="backupCompression" name="backup_compression" checked>
+                                <label class="form-check-label" for="backupCompression">استخدام الضغط لتقليل حجم الملف</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="backupVerify" name="backup_verify" checked>
+                                <label class="form-check-label" for="backupVerify">التحقق من سلامة النسخ الاحتياطي بعد الإنشاء</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="backupEncrypt" name="backup_encrypt">
+                                <label class="form-check-label" for="backupEncrypt">تشفير ملف النسخ الاحتياطي</label>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group text-center mt-3">
+                            <button type="button" class="btn btn-success" id="createBackupNow">
+                                <span class="loader" id="backupLoader"></span>
+                                <i class="fas fa-download me-2"></i>إنشاء نسخة احتياطية الآن
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h5 class="form-section-title"><i class="fas fa-undo me-2"></i>استعادة قاعدة البيانات</h5>
+                    
+                    <!-- Restore Options -->
+                    <div class="form-group">
+                        <label class="form-label">مصدر الاستعادة</label>
+                        <div class="mb-3">
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="restore_source" id="restoreFromUpload" value="upload" checked>
+                                <label class="form-check-label" for="restoreFromUpload">رفع ملف نسخة احتياطية</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="restore_source" id="restoreFromExisting" value="existing">
+                                <label class="form-check-label" for="restoreFromExisting">اختيار من النسخ الاحتياطية المتوفرة</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="restoreUploadOptions">
+                        <div class="form-group">
+                            <label for="restoreFile" class="form-label">اختر ملف النسخة الاحتياطية</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-file-upload"></i></span>
+                                <input type="file" class="form-control" id="restoreFile" name="restore_file" accept=".bak">
+                            </div>
+                            <div class="form-text">حجم الملف الأقصى: 500 ميجابايت</div>
+                        </div>
+                    </div>
+                    
+                    <div id="restoreExistingOptions" style="display: none;">
+                        <div class="form-group">
+                            <label for="existingBackup" class="form-label">اختر نسخة احتياطية موجودة</label>
+                            <select class="form-select" id="existingBackup" name="existing_backup">
+                                <option value="">-- اختر نسخة احتياطية --</option>
+                                <!-- تعبئة ديناميكية بالنسخ الاحتياطية المتوفرة -->
+                            </select>
+                            <div class="form-text">قائمة النسخ الاحتياطية المتوفرة في النظام</div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-warning mt-3">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>تحذير:</strong> استعادة قاعدة البيانات ستؤدي إلى استبدال جميع البيانات الحالية. يرجى التأكد من عدم وجود مستخدمين يعملون على النظام قبل البدء!
+                    </div>
+                    
+                    <div class="form-group text-center mt-3">
+                        <button type="button" class="btn btn-danger" id="restoreBackup">
+                            <span class="loader" id="restoreLoader"></span>
+                            <i class="fas fa-undo me-2"></i>استعادة النسخة الاحتياطية
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Submit Button -->
                 <div class="text-center mt-4">
                     <button type="submit" class="btn btn-primary btn-lg" id="saveButton">
@@ -383,7 +593,7 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Elements
+    // Database Connection Elements
     const dbEngineSelect = document.getElementById('db_engine');
     const sqlServerSection = document.getElementById('sqlServerSection');
     const sqliteDatabaseSection = document.getElementById('sqliteDatabaseSection');
@@ -401,6 +611,25 @@ document.addEventListener('DOMContentLoaded', function() {
     const statusMessage = document.getElementById('statusMessage');
     const saveButton = document.getElementById('saveButton');
     const dbSettingsForm = document.getElementById('dbSettingsForm');
+    
+    // Backup Elements
+    const backupTypeScheduled = document.getElementById('backupTypeScheduled');
+    const backupTypeManual = document.getElementById('backupTypeManual');
+    const scheduledBackupOptions = document.getElementById('scheduledBackupOptions');
+    const manualBackupOptions = document.getElementById('manualBackupOptions');
+    const backupFrequency = document.getElementById('backupFrequency');
+    const weeklyOptions = document.getElementById('weeklyOptions');
+    const monthlyOptions = document.getElementById('monthlyOptions');
+    const createBackupNowBtn = document.getElementById('createBackupNow');
+    const backupLoader = document.getElementById('backupLoader');
+    
+    // Restore Elements
+    const restoreFromUpload = document.getElementById('restoreFromUpload');
+    const restoreFromExisting = document.getElementById('restoreFromExisting');
+    const restoreUploadOptions = document.getElementById('restoreUploadOptions');
+    const restoreExistingOptions = document.getElementById('restoreExistingOptions');
+    const restoreBackupBtn = document.getElementById('restoreBackup');
+    const restoreLoader = document.getElementById('restoreLoader');
 
     // Initialize form state
     initializeForm();
@@ -543,6 +772,190 @@ document.addEventListener('DOMContentLoaded', function() {
         return true;
     });
 
+    // Backup Type Change Handlers
+    backupTypeScheduled.addEventListener('change', function() {
+        if (this.checked) {
+            scheduledBackupOptions.style.display = 'block';
+            manualBackupOptions.style.display = 'none';
+            updateFrequencyOptions();
+        }
+    });
+
+    backupTypeManual.addEventListener('change', function() {
+        if (this.checked) {
+            scheduledBackupOptions.style.display = 'none';
+            manualBackupOptions.style.display = 'block';
+        }
+    });
+    
+    // Backup Frequency Change Handler
+    backupFrequency.addEventListener('change', function() {
+        updateFrequencyOptions();
+    });
+    
+    // Create Backup Button Click Handler
+    createBackupNowBtn.addEventListener('click', async function() {
+        // Validate database settings first
+        if (!validateDatabaseSettings()) {
+            return;
+        }
+        
+        // Show loading state
+        createBackupNowBtn.disabled = true;
+        backupLoader.style.display = 'inline-block';
+        
+        const backupFilename = document.getElementById('backupFilename').value;
+        const compression = document.getElementById('backupCompression').checked;
+        const verify = document.getElementById('backupVerify').checked;
+        const encrypt = document.getElementById('backupEncrypt').checked;
+        
+        const formData = new FormData();
+        formData.append('filename', backupFilename);
+        formData.append('compression', compression);
+        formData.append('verify', verify);
+        formData.append('encrypt', encrypt);
+        formData.append('db_engine', dbEngineSelect.value);
+        
+        if (dbEngineSelect.value === 'mssql') {
+            formData.append('db_name', databaseInput.value);
+        } else {
+            formData.append('db_name', document.getElementById('db_name_sqlite').value);
+        }
+        
+        try {
+            // Instead of directly using the backup endpoint, we use the form's action to post to the current page
+            const response = await fetch(window.location.href, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    // Add a custom header to indicate this is a backup request
+                    'X-Request-Type': 'backup_create'
+                }
+            });
+            
+            // Check if response is JSON
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                const data = await response.json();
+                
+                if (data.success) {
+                    showStatus('success', `تم إنشاء النسخة الاحتياطية بنجاح. تم حفظ الملف: ${data.filename}`);
+                    // Refresh existing backups list if available
+                    refreshExistingBackupsList();
+                } else {
+                    showStatus('error', 'فشل إنشاء النسخة الاحتياطية: ' + data.error);
+                }
+            } else {
+                // Handle non-JSON response (usually HTML error page)
+                showStatus('error', 'لم يمكن إنشاء النسخة الاحتياطية - هناك حاجة لتنفيذ خاصية أخذ النسخ الاحتياطية في الخادم');
+                console.error('Server returned non-JSON response. Backend might not be implemented yet.');
+            }
+        } catch (error) {
+            showStatus('error', 'خطأ: ' + error.message);
+            console.error('Error during backup creation:', error);
+        } finally {
+            // Reset loading state
+            createBackupNowBtn.disabled = false;
+            backupLoader.style.display = 'none';
+        }
+    });
+    
+    // Restore Source Change Handlers
+    restoreFromUpload.addEventListener('change', function() {
+        if (this.checked) {
+            restoreUploadOptions.style.display = 'block';
+            restoreExistingOptions.style.display = 'none';
+        }
+    });
+    
+    restoreFromExisting.addEventListener('change', function() {
+        if (this.checked) {
+            restoreUploadOptions.style.display = 'none';
+            restoreExistingOptions.style.display = 'block';
+            refreshExistingBackupsList();
+        }
+    });
+    
+    // Restore Backup Button Click Handler
+    restoreBackupBtn.addEventListener('click', async function() {
+        if (!confirm('تحذير: ستؤدي هذه العملية إلى استبدال جميع البيانات الحالية. هل أنت متأكد من أنك تريد المتابعة؟')) {
+            return;
+        }
+        
+        // Show loading state
+        restoreBackupBtn.disabled = true;
+        restoreLoader.style.display = 'inline-block';
+        
+        const formData = new FormData();
+        
+        if (restoreFromUpload.checked) {
+            const fileInput = document.getElementById('restoreFile');
+            if (!fileInput.files || fileInput.files.length === 0) {
+                showStatus('error', 'يرجى اختيار ملف النسخة الاحتياطية أولاً');
+                restoreBackupBtn.disabled = false;
+                restoreLoader.style.display = 'none';
+                return;
+            }
+            
+            formData.append('restore_method', 'upload');
+            formData.append('backup_file', fileInput.files[0]);
+        } else {
+            const existingBackupSelect = document.getElementById('existingBackup');
+            if (!existingBackupSelect.value) {
+                showStatus('error', 'يرجى اختيار نسخة احتياطية من القائمة');
+                restoreBackupBtn.disabled = false;
+                restoreLoader.style.display = 'none';
+                return;
+            }
+            
+            formData.append('restore_method', 'existing');
+            formData.append('backup_filename', existingBackupSelect.value);
+        }
+        
+        formData.append('db_engine', dbEngineSelect.value);
+        
+        try {
+            // Post to the current page with a special header to indicate this is a restore request
+            const response = await fetch(window.location.href, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'X-Request-Type': 'backup_restore'
+                }
+            });
+            
+            // Check if response is JSON
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                const data = await response.json();
+                
+                if (data.success) {
+                    showStatus('success', 'تمت استعادة قاعدة البيانات بنجاح. سيتم تحديث الصفحة...');
+                    
+                    // Reload page after successful restore
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 3000);
+                } else {
+                    showStatus('error', 'فشل استعادة قاعدة البيانات: ' + data.error);
+                }
+            } else {
+                // Handle non-JSON response (usually HTML error page)
+                showStatus('error', 'لم يمكن استعادة النسخة الاحتياطية - هناك حاجة لتنفيذ خاصية استعادة النسخ الاحتياطية في الخادم');
+                console.error('Server returned non-JSON response. Backend restore functionality might not be implemented yet.');
+            }
+        } catch (error) {
+            showStatus('error', 'خطأ: ' + error.message);
+            console.error('Error during backup restoration:', error);
+        } finally {
+            // Reset loading state
+            restoreBackupBtn.disabled = false;
+            restoreLoader.style.display = 'none';
+        }
+    });
+
     // Helper functions
     function initializeForm() {
         // Set initial visibility based on database engine
@@ -550,6 +963,119 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Set initial state of auth fields
         updateAuthFields();
+        
+        // Set initial backup options visibility
+        if (backupTypeScheduled.checked) {
+            scheduledBackupOptions.style.display = 'block';
+            manualBackupOptions.style.display = 'none';
+            updateFrequencyOptions();
+        } else {
+            scheduledBackupOptions.style.display = 'none';
+            manualBackupOptions.style.display = 'block';
+        }
+        
+        // Set initial restore options visibility
+        if (restoreFromUpload.checked) {
+            restoreUploadOptions.style.display = 'block';
+            restoreExistingOptions.style.display = 'none';
+        } else {
+            restoreUploadOptions.style.display = 'none';
+            restoreExistingOptions.style.display = 'block';
+            refreshExistingBackupsList();
+        }
+    }
+    
+    function updateFrequencyOptions() {
+        const frequency = backupFrequency.value;
+        
+        weeklyOptions.style.display = frequency === 'weekly' ? 'block' : 'none';
+        monthlyOptions.style.display = frequency === 'monthly' ? 'block' : 'none';
+    }
+    
+    function refreshExistingBackupsList() {
+        const existingBackupSelect = document.getElementById('existingBackup');
+        
+        // Clear existing options except the first one
+        while (existingBackupSelect.options.length > 1) {
+            existingBackupSelect.remove(1);
+        }
+        
+        // Add loading option
+        const loadingOption = document.createElement('option');
+        loadingOption.value = '';
+        loadingOption.textContent = 'جاري تحميل النسخ الاحتياطية...';
+        loadingOption.disabled = true;
+        existingBackupSelect.appendChild(loadingOption);
+        
+        // Fetch available backups - use a special URL parameter to avoid caching
+        fetch(`${window.location.href}?list_backups=1&_=${Date.now()}`, {
+            headers: {
+                'X-Request-Type': 'list_backups'
+            }
+        })
+            .then(response => {
+                // Check if response is JSON
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.includes('application/json')) {
+                    return response.json();
+                } else {
+                    // If not JSON, throw an error to be caught by the catch block
+                    throw new Error('قائمة النسخ الاحتياطية غير متوفرة');
+                }
+            })
+            .then(data => {
+                // Remove loading option
+                existingBackupSelect.removeChild(loadingOption);
+                
+                if (data.success && data.backups && data.backups.length > 0) {
+                    data.backups.forEach(backup => {
+                        const option = document.createElement('option');
+                        option.value = backup.filename;
+                        option.textContent = `${backup.display_name} (${backup.size}, ${backup.date})`;
+                        existingBackupSelect.appendChild(option);
+                    });
+                } else {
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = 'لا توجد نسخ احتياطية متوفرة';
+                    option.disabled = true;
+                    existingBackupSelect.appendChild(option);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching backups:', error);
+                
+                // Remove loading option
+                existingBackupSelect.removeChild(loadingOption);
+                
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = 'خاصية النسخ الاحتياطية غير متوفرة';
+                option.disabled = true;
+                existingBackupSelect.appendChild(option);
+                
+                // Show status message
+                showStatus('warning', 'لم يتم العثور على خاصية النسخ الاحتياطية - يجب تنفيذ الخادم أولاً');
+            });
+    }
+    
+    function validateDatabaseSettings() {
+        // Make sure database settings are valid before proceeding with backup/restore
+        const isSqlServer = dbEngineSelect.value === 'mssql';
+        
+        if (isSqlServer) {
+            if (!databaseInput.value) {
+                showStatus('error', 'يرجى اختيار قاعدة بيانات صالحة أولاً');
+                return false;
+            }
+        } else {
+            if (!document.getElementById('db_name_sqlite').value.trim()) {
+                showStatus('error', 'يرجى إدخال اسم ملف قاعدة البيانات');
+                return false;
+            }
+        }
+        
+        return true;
     }
 
     function updateFormVisibility() {

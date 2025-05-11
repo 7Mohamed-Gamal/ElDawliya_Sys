@@ -53,10 +53,19 @@ class DatabaseConfigForm(forms.Form):
     """Form for database configuration."""
     db_engine = forms.ChoiceField(
         choices=[
-            ('sqlite3', 'SQLite (للتطوير)'),
             ('mssql', 'SQL Server (للإنتاج)'),
         ],
         label="نوع قاعدة البيانات",
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    
+    db_connection_type = forms.ChoiceField(
+        choices=[
+            ('default', 'الاتصال الافتراضي (Default)'),
+            ('primary', 'الاتصال الاحتياطي (Primary)'),
+        ],
+        label="نوع الاتصال بقاعدة البيانات",
+        help_text="اختر نوع الاتصال بقاعدة البيانات. سيتم محاولة الاتصال بالنوع المحدد أولاً، وإذا فشل الاتصال سيتم الانتقال تلقائيًا إلى النوع الآخر.",
         widget=forms.Select(attrs={'class': 'form-select'})
     )
 

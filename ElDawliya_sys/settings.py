@@ -95,20 +95,21 @@ import django.db.utils
 
 # قواعد بيانات النظام
 DATABASES = {
-    # Use SQLite for development/debugging
-    # الإعدادات الأصلية - المحاولة الأولى
+    # الإعدادات الافتراضية
     'default': {
         'ENGINE': 'mssql',
         'NAME': 'ElDawliya_Sys',
-        'HOST': 'DESKTOP-H361157',
+        'HOST': 'ELDAWLIYA-SYSTE',
         'PORT': '1433',
+        'USER': 'admin',
+        'PASSWORD': 'hgslduhgfwdv',
         'OPTIONS': {
             'driver': 'ODBC Driver 17 for SQL Server',
-            'Trusted_Connection': 'yes',
+            'Trusted_Connection': 'no',
         },
     },
-
-    # الإعدادات الجديدة - المحاولة الثانية
+    
+    # الإعدادات الاحتياطية
     'primary': {
         'ENGINE': 'mssql',
         'NAME': 'ElDawliya_Sys',
@@ -120,22 +121,56 @@ DATABASES = {
             'driver': 'ODBC Driver 17 for SQL Server',
             'Trusted_Connection': 'yes',
         },
-    },
+    }
 }
-
 # آلية النسخ الاحتياطي لقواعد البيانات
+# نحاول الاتصال بقاعدة البيانات الافتراضية أولاً
+# إذا فشل الاتصال، ننتقل إلى قاعدة البيانات الاحتياطية
+
+# حفظ الإعدادات الأصلية
+DEFAULT_DB = DATABASES['default'].copy()
+PRIMARY_DB = DATABASES['primary'].copy()
+
+# تحديد قاعدة البيانات النشطة من ملف الإعدادات
+ACTIVE_DB = os.environ.get('DJANGO_ACTIVE_DB', 'default')
+
 try:
-    # نحاول الاتصال بقاعدة البيانات الأساسية
+    # نحاول الاتصال بقاعدة البيانات المحددة
     from django.db import connections
-    connections['primary'].ensure_connection()
-    # إذا نجح الاتصال، نستخدم الإعدادات الأساسية
-    DATABASES['default'] = DATABASES['primary']
-    print("تم الاتصال بنجاح بقاعدة البيانات الأساسية")
+    if ACTIVE_DB == 'default':
+        connections['default'].ensure_connection()
+        print("تم الاتصال بنجاح بقاعدة البيانات الافتراضية")
+    else:
+        # إذا تم اختيار primary، نستخدمها كـ default
+        DATABASES['default'] = PRIMARY_DB
+        connections['default'].ensure_connection()
+        print("تم الاتصال بنجاح بقاعدة البيانات الاحتياطية")
 except (django.db.utils.OperationalError, Exception) as e:
-    # إذا فشل الاتصال، نستخدم الإعدادات الثانوية
-    DATABASES['default'] = DATABASES['secondary']
-    print(f"فشل الاتصال بقاعدة البيانات الأساسية: {str(e)}")
-    print("جاري استخدام قاعدة البيانات الثانوية")
+    # إذا فشل الاتصال بـ default، نحاول الاتصال بـ primary
+    if ACTIVE_DB == 'default':
+        try:
+            print(f"فشل الاتصال بقاعدة البيانات الافتراضية: {str(e)}")
+            print("جاري محاولة الاتصال بقاعدة البيانات الاحتياطية...")
+            DATABASES['default'] = PRIMARY_DB
+            connections['default'].ensure_connection()
+            print("تم الاتصال بنجاح بقاعدة البيانات الاحتياطية")
+        except (django.db.utils.OperationalError, Exception) as e2:
+            print(f"فشل الاتصال بقاعدة البيانات الاحتياطية أيضًا: {str(e2)}")
+            # استعادة الإعدادات الافتراضية
+            DATABASES['default'] = DEFAULT_DB
+    else:
+        # إذا فشل الاتصال بـ primary، نعود إلى default
+        try:
+            print(f"فشل الاتصال بقاعدة البيانات الاحتياطية: {str(e)}")
+            print("جاري محاولة الاتصال بقاعدة البيانات الافتراضية...")
+            DATABASES['default'] = DEFAULT_DB
+            connections['default'].ensure_connection()
+            print("تم الاتصال بنجاح بقاعدة البيانات الافتراضية")
+        except (django.db.utils.OperationalError, Exception) as e2:
+            print(f"فشل الاتصال بقاعدة البيانات الافتراضية أيضًا: {str(e2)}")
+            # استعادة الإعدادات الأصلية
+            if ACTIVE_DB == 'primary':
+                DATABASES['default'] = PRIMARY_DB
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
