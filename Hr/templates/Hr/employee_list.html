@@ -83,8 +83,29 @@
             <div class="card-body p-4">
                 <form method="get" action="">
                     <div class="mb-3">
-                        <label class="form-label small text-muted">{{ filter_form.name.label }}</label>
-                        {{ filter_form.name }}
+                        <label class="form-label small text-muted">
+                            <i class="fas fa-id-badge me-1 text-primary"></i>
+                            بحث بالكود
+                        </label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-light"><i class="fas fa-search text-muted small"></i></span>
+                            <input type="text" name="emp_code" class="form-control form-control-sm" placeholder="أدخل كود الموظف">
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small text-muted">
+                            <i class="fas fa-user me-1 text-primary"></i>
+                            {{ filter_form.name.label|default:"بحث بالاسم" }}
+                        </label>
+                        {% if filter_form.name %}
+                            {{ filter_form.name }}
+                        {% else %}
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-light"><i class="fas fa-search text-muted small"></i></span>
+                                <input type="text" name="name" class="form-control form-control-sm" placeholder="أدخل اسم الموظف">
+                            </div>
+                        {% endif %}
                     </div>
 
                     <div class="mb-3">
@@ -100,6 +121,96 @@
                     <div class="mb-3">
                         <label class="form-label small text-muted">{{ filter_form.working_condition.label }}</label>
                         {{ filter_form.working_condition }}
+                    </div>
+
+                    <div class="accordion mb-3" id="advancedSearchAccordion">
+                        <div class="accordion-item border-0 shadow-sm">
+                            <h2 class="accordion-header" id="headingAdvanced">
+                                <button class="accordion-button collapsed bg-light fw-medium" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAdvanced" aria-expanded="false" aria-controls="collapseAdvanced">
+                                    <i class="fas fa-search-plus me-2 text-primary"></i>
+                                    بحث متقدم
+                                </button>
+                            </h2>
+                            <div id="collapseAdvanced" class="accordion-collapse collapse" aria-labelledby="headingAdvanced" data-bs-parent="#advancedSearchAccordion">
+                                <div class="accordion-body pt-3">
+                                    <!-- نص توضيحي للبحث المتقدم -->
+                                    <div class="alert alert-light border-start border-4 border-primary p-2 mb-3 small">
+                                        <i class="fas fa-info-circle text-primary me-1"></i>
+                                        يمكنك البحث باستخدام أي من الحقول أدناه للعثور على موظف محدد
+                                    </div>
+                                    
+                                    <div class="row g-2">
+                                        <!-- رقم الهاتف -->
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label small text-muted">
+                                                <i class="fas fa-phone-alt me-1 text-primary"></i> رقم الهاتف
+                                            </label>
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text bg-light"><i class="fas fa-search text-muted small"></i></span>
+                                                <input type="text" name="phone" class="form-control form-control-sm" placeholder="أدخل رقم الهاتف">
+                                            </div>
+                                        </div>
+
+                                        <!-- الرقم القومي -->
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label small text-muted">
+                                                <i class="fas fa-id-card me-1 text-primary"></i> الرقم القومي
+                                            </label>
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text bg-light"><i class="fas fa-search text-muted small"></i></span>
+                                                <input type="text" name="national_id" class="form-control form-control-sm" placeholder="أدخل الرقم القومي">
+                                            </div>
+                                        </div>
+
+                                        <!-- السيارة -->
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label small text-muted">
+                                                <i class="fas fa-car me-1 text-primary"></i> السيارة
+                                            </label>
+                                            <select name="car" class="form-select form-select-sm">
+                                                <option value="">-- اختر السيارة --</option>
+                                                <!-- يمكن تحميل قائمة السيارات ديناميكياً هنا -->
+                                                <option value="car1">سيارة 1</option>
+                                                <option value="car2">سيارة 2</option>
+                                            </select>
+                                        </div>
+
+                                        <!-- الرقم التأميني -->
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label small text-muted">
+                                                <i class="fas fa-shield-alt me-1 text-primary"></i> الرقم التأميني
+                                            </label>
+                                            <div class="input-group input-group-sm">
+                                                <span class="input-group-text bg-light"><i class="fas fa-search text-muted small"></i></span>
+                                                <input type="text" name="insurance_number" class="form-control form-control-sm" placeholder="أدخل الرقم التأميني">
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- تاريخ التعيين -->
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label small text-muted">
+                                                <i class="fas fa-calendar-alt me-1 text-primary"></i> تاريخ التعيين
+                                            </label>
+                                            <input type="date" name="hire_date" class="form-control form-control-sm">
+                                        </div>
+
+                                        <!-- الحالة الاجتماعية -->
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label small text-muted">
+                                                <i class="fas fa-heart me-1 text-primary"></i> الحالة الاجتماعية
+                                            </label>
+                                            <select name="marital_status" class="form-select form-select-sm">
+                                                <option value="">-- اختر الحالة --</option>
+                                                <option value="أعزب">أعزب</option>
+                                                <option value="متزوج">متزوج</option>
+                                                <option value="مطلق">مطلق</option>
+                                                <option value="أرمل">أرمل</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="d-grid gap-2 mt-4">
@@ -343,10 +454,14 @@
         padding: 1.5rem; /* زيادة الحشو الداخلي */
     }
     .stats-icon {
-         /* حجم الأيقونة */
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
+    
     .stats-number {
-        /* حجم رقم الإحصائية */
+        font-weight: 700;
+        color: #333;
     }
     .stats-title {
         font-size: 0.9rem; /* حجم عنوان الإحصائية */
@@ -451,42 +566,138 @@
 {% block extra_js %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // تهيئة المتغيرات
     const toggleCheckbox = document.getElementById('employeeStatusToggle');
     const toggleStatusText = document.getElementById('toggleStatusText');
-    const employeeListTitle = document.getElementById('employeeListTitle'); // عنوان قائمة الموظفين
+    const employeeListTitle = document.getElementById('employeeListTitle');
+    const searchForm = document.querySelector('.col-lg-3 form');
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // استخراج الحالة الحالية من الرابط الحالي (إذا كانت موجودة)
+    const currentStatus = urlParams.get('working_condition');
+    
+    // ضبط حالة مفتاح التبديل استنادًا إلى الرابط الحالي
+    if (currentStatus === 'استقالة' || currentStatus === 'null') {
+        toggleCheckbox.checked = false;
+    } else {
+        toggleCheckbox.checked = true;
+    }
 
     // دالة لتحديث النص بناءً على حالة التبديل
     function updateToggleText() {
         if (toggleCheckbox.checked) {
             toggleStatusText.textContent = 'موظفين نشطين';
-            toggleStatusText.classList.remove('text-danger'); // إزالة اللون الأحمر
-            toggleStatusText.classList.add('text-success'); // إضافة اللون الأخضر
+            toggleStatusText.classList.remove('text-danger');
+            toggleStatusText.classList.add('text-success');
             if (employeeListTitle) {
-                employeeListTitle.textContent = 'قائمة الموظفين النشطين'; // تحديث عنوان الجدول
+                employeeListTitle.textContent = 'قائمة الموظفين النشطين';
             }
-            // هنا يمكنك إضافة الكود الخاص بفلترة القائمة لعرض الموظفين النشطين
-            // مثال: window.location.href = '?status=active'; (يتطلب تعديل في الواجهة الخلفية)
-            console.log("عرض الموظفين النشطين");
         } else {
             toggleStatusText.textContent = 'موظفين غير نشطين';
-            toggleStatusText.classList.remove('text-success'); // إزالة اللون الأخضر
-            toggleStatusText.classList.add('text-danger'); // إضافة اللون الأحمر
-             if (employeeListTitle) {
-                employeeListTitle.textContent = 'قائمة الموظفين غير النشطين'; // تحديث عنوان الجدول
+            toggleStatusText.classList.remove('text-success');
+            toggleStatusText.classList.add('text-danger');
+            if (employeeListTitle) {
+                employeeListTitle.textContent = 'قائمة الموظفين غير النشطين';
             }
-            // هنا يمكنك إضافة الكود الخاص بفلترة القائمة لعرض الموظفين غير النشطين
-            // مثال: window.location.href = '?status=inactive'; (يتطلب تعديل في الواجهة الخلفية)
-             console.log("عرض الموظفين غير النشطين");
         }
     }
 
     // تحديث النص عند تحميل الصفحة
     updateToggleText();
 
-    // تحديث النص عند تغيير حالة التبديل
+    // تحديث النص وتغيير حالة الفلترة عند تغيير حالة التبديل
     toggleCheckbox.addEventListener('change', function() {
         updateToggleText();
+        
+        // تحديث وإرسال نموذج البحث
+        const workingConditionSelect = document.querySelector('select[name="working_condition"]');
+        if (workingConditionSelect) {
+            if (toggleCheckbox.checked) {
+                // موظفين نشطين
+                workingConditionSelect.value = 'سارى';
+            } else {
+                // موظفين غير نشطين (مستقيلين)
+                workingConditionSelect.value = 'استقالة';
+            }
+            // إرسال النموذج تلقائياً
+            searchForm.submit();
+        }
     });
+    
+    // معالجة لحقول البحث المتقدم - الحفاظ على قيمها بعد الإرسال
+    function setAdvancedSearchFields() {
+        const fieldsToKeep = ['phone', 'national_id', 'car', 'insurance_number', 'hire_date', 'marital_status'];
+        
+        fieldsToKeep.forEach(field => {
+            const value = urlParams.get(field);
+            if (value) {
+                const input = document.querySelector(`[name="${field}"]`);
+                if (input) {
+                    input.value = value;
+                    
+                    // إظهار قسم البحث المتقدم إذا كان هناك قيمة في أحد الحقول
+                    const advancedSearchCollapse = document.getElementById('collapseAdvanced');
+                    if (advancedSearchCollapse && !advancedSearchCollapse.classList.contains('show')) {
+                        const bsCollapse = new bootstrap.Collapse(advancedSearchCollapse, {
+                            show: true
+                        });
+                    }
+                }
+            }
+        });
+    }
+    
+    // تنفيذ دالة استعادة قيم البحث المتقدم
+    setAdvancedSearchFields();
+    
+    // إضافة تلميح لتسهيل البحث
+    const addSearchTooltips = () => {
+        // إضافة تلميحات لحقول البحث
+        const searchInputs = document.querySelectorAll('input[type="text"], input[type="date"]');
+        searchInputs.forEach(input => {
+            if (input.name && (input.name === 'phone' || input.name === 'national_id' || input.name === 'insurance_number')) {
+                input.title = 'يمكنك البحث بجزء من الرقم أيضاً';
+                
+                // إضافة مستمع لحدث التركيز لإظهار رسالة مساعدة
+                input.addEventListener('focus', function() {
+                    const helpText = document.createElement('small');
+                    helpText.classList.add('form-text', 'text-muted', 'search-help');
+                    helpText.innerHTML = '<i class="fas fa-info-circle me-1"></i> يمكنك البحث بجزء من الرقم';
+                    
+                    // التحقق من عدم وجود نص مساعدة مسبقاً
+                    if (!this.parentElement.querySelector('.search-help')) {
+                        if (this.parentElement.classList.contains('input-group')) {
+                            this.parentElement.parentElement.appendChild(helpText);
+                        } else {
+                            this.parentElement.appendChild(helpText);
+                        }
+                    }
+                });
+            }
+        });
+        
+        // تفعيل أداة البحث المتقدم إذا تم استخدام أي من حقول البحث المتقدم
+        const advancedSearchFields = ['phone', 'national_id', 'car', 'insurance_number', 'hire_date', 'marital_status'];
+        let hasAdvancedSearch = false;
+        
+        advancedSearchFields.forEach(field => {
+            if (urlParams.get(field)) {
+                hasAdvancedSearch = true;
+            }
+        });
+        
+        // إظهار قسم البحث المتقدم تلقائياً إذا كان مستخدم
+        if (hasAdvancedSearch) {
+            const advancedSearchCollapse = document.getElementById('collapseAdvanced');
+            if (advancedSearchCollapse && window.bootstrap) {
+                const bsCollapse = new bootstrap.Collapse(advancedSearchCollapse);
+                bsCollapse.show();
+            }
+        }
+    };
+    
+    // تنفيذ إضافة تلميحات البحث
+    addSearchTooltips();
 });
 </script>
 {% endblock %}
