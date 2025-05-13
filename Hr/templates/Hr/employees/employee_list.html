@@ -1,5 +1,6 @@
 {% extends 'Hr/base_hr.html' %}
 {% load static %}
+{% load form_utils %}
 
 {% block title %}قائمة الموظفين - نظام الدولية{% endblock %}
 
@@ -210,7 +211,7 @@
                                         <i class="fas fa-search-plus me-2 text-primary"></i>
                                         بحث متقدم
                                         {% if request.GET.phone or request.GET.national_id or request.GET.car or request.GET.insurance_number or request.GET.hire_date or request.GET.marital_status %}
-                                        <span class="badge bg-primary ms-2">{{ request.GET.phone|yesno:"1,0" + request.GET.national_id|yesno:"1,0" + request.GET.car|yesno:"1,0" + request.GET.insurance_number|yesno:"1,0" + request.GET.hire_date|yesno:"1,0" + request.GET.marital_status|yesno:"1,0" }}</span>
+                                        <span class="badge bg-primary ms-2">{{ request.GET|count_active_filters:"phone,national_id,car,insurance_number,hire_date,marital_status" }}</span>
                                         {% endif %}
                                     </button>
                                 </h2>
