@@ -404,6 +404,11 @@ function generateVoucherNumber() {
 
 // عرض نافذة البحث عن المنتجات
 function showProductSearchModal(row) {
-    // سيتم تنفيذها في الإصدار التالي
-    alert('البحث المتقدم عن المنتجات غير متاح في هذا الإصدار');
+    // استدعاء دالة showProductSearchModal المعرفة في النسخة المحسنة
+    if (typeof window.showProductSearchModal === 'function') {
+        window.showProductSearchModal(row);
+    } else {
+        console.error('لم يتم تحميل دالة البحث المتقدم عن المنتجات');
+        alert('حدث خطأ في تحميل نافذة البحث عن المنتجات');
+    }
 }

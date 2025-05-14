@@ -354,8 +354,285 @@
         </div>
     </div>
 </div>
+<!-- نافذة بحث المنتجات -->
+<div class="modal fade" id="productSearchModal" tabindex="-1" aria-labelledby="productSearchModalLabel" aria-hidden="true" dir="rtl">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="productSearchModalLabel">بحث عن صنف</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- قسم البحث والفلترة -->
+                <div class="search-section mb-3 p-3 bg-light rounded">
+                    <div class="row g-2">
+                        <!-- بحث بالاسم أو الكود -->
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <input type="text" id="modal-search-input" class="form-control" placeholder="البحث بالاسم أو الرقم...">
+                                <button type="button" id="modal-search-btn" class="btn btn-primary">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- فلتر التصنيف -->
+                        <div class="col-md-4">
+                            <select id="modal-category-filter" class="form-select">
+                                <option value="">كل التصنيفات</option>
+                                <!-- سيتم ملؤها ديناميكياً -->
+                            </select>
+                        </div>
+
+                        <!-- فلتر حالة المخزون -->
+                        <div class="col-md-2">
+                            <select id="modal-stock-filter" class="form-select">
+                                <option value="">الكل</option>
+                                <option value="available">متوفر</option>
+                                <option value="out">نفذ</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- جدول المنتجات -->
+                <div class="table-responsive">
+                    <table class="table table-hover" id="modal-products-table">
+                        <thead class="table-light">
+                            <tr>
+                                <th>رقم الصنف</th>
+                                <th>اسم الصنف</th>
+                                <th>التصنيف</th>
+                                <th>الرصيد الحالي</th>
+                                <th>وحدة القياس</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- سيتم ملؤها ديناميكياً -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- رسالة عند عدم وجود نتائج -->
+                <div id="no-products-message" class="text-center py-4 d-none">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <p>لم يتم العثور على أصناف مطابقة</p>
+                </div>
+
+                <!-- مؤشر التحميل -->
+                <div id="loading-indicator" class="text-center py-4 d-none">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">جاري التحميل...</span>
+                    </div>
+                    <p class="mt-2">جاري تحميل الأصناف...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script src="{% static 'inventory/js/voucher_form.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // تهيئة النافذة المنبثقة للبحث عن المنتجات
+        const productSearchModal = new bootstrap.Modal(document.getElementById('productSearchModal'));
+        
+        // معالج بحث المنتجات
+        let currentRow = null; // لتخزين الصف الحالي الذي يتم البحث له
+        let productsCache = []; // تخزين مؤقت للمنتجات للاستخدام المستقبلي
+        
+        // تحميل التصنيفات للفلتر
+        function loadCategories() {
+            fetch('/inventory/api/categories/')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const categoryFilter = document.getElementById('modal-category-filter');
+                        categoryFilter.innerHTML = '<option value="">كل التصنيفات</option>';
+                        
+                        data.categories.forEach(category => {
+                            const option = document.createElement('option');
+                            option.value = category.id;
+                            option.textContent = category.name;
+                            categoryFilter.appendChild(option);
+                        });
+                    }
+                })
+                .catch(error => console.error('خطأ في تحميل التصنيفات:', error));
+        }
+        
+        // البحث عن المنتجات
+        function searchProducts() {
+            const searchTerm = document.getElementById('modal-search-input').value.trim();
+            const categoryId = document.getElementById('modal-category-filter').value;
+            const stockStatus = document.getElementById('modal-stock-filter').value;
+            
+            // إظهار مؤشر التحميل
+            document.getElementById('loading-indicator').classList.remove('d-none');
+            document.getElementById('no-products-message').classList.add('d-none');
+            document.getElementById('modal-products-table').classList.add('d-none');
+            
+            // جلب البيانات من الخادم
+            fetch('/inventory/api/products-search/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({
+                    search_term: searchTerm,
+                    category_id: categoryId,
+                    stock_status: stockStatus
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // إخفاء مؤشر التحميل
+                document.getElementById('loading-indicator').classList.add('d-none');
+                
+                if (data.success && data.products.length > 0) {
+                    // تخزين النتائج في الذاكرة المؤقتة
+                    productsCache = data.products;
+                    
+                    // عرض الجدول وملئه بالبيانات
+                    document.getElementById('modal-products-table').classList.remove('d-none');
+                    populateProductsTable(data.products);
+                } else {
+                    // عرض رسالة عدم وجود نتائج
+                    document.getElementById('no-products-message').classList.remove('d-none');
+                    document.getElementById('modal-products-table').classList.add('d-none');
+                }
+            })
+            .catch(error => {
+                console.error('خطأ في البحث عن المنتجات:', error);
+                document.getElementById('loading-indicator').classList.add('d-none');
+                document.getElementById('no-products-message').classList.remove('d-none');
+            });
+        }
+        
+        // ملء جدول المنتجات
+        function populateProductsTable(products) {
+            const tableBody = document.querySelector('#modal-products-table tbody');
+            tableBody.innerHTML = '';
+            
+            products.forEach(product => {
+                const row = document.createElement('tr');
+                
+                // تنسيق خلية الحالة
+                let stockClass = '';
+                if (product.quantity <= 0) {
+                    stockClass = 'text-danger';
+                } else if (product.quantity < product.minimum_threshold) {
+                    stockClass = 'text-warning';
+                } else {
+                    stockClass = 'text-success';
+                }
+                
+                row.innerHTML = `
+                    <td>${product.product_id}</td>
+                    <td>${product.name}</td>
+                    <td>${product.category_name || '-'}</td>
+                    <td class="${stockClass}">${product.quantity}</td>
+                    <td>${product.unit_name || '-'}</td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-primary select-product" 
+                                data-product-id="${product.product_id}"
+                                data-product-name="${product.name}"
+                                data-product-quantity="${product.quantity}"
+                                data-product-unit="${product.unit_name || ''}">
+                            <i class="fas fa-check ms-1"></i> اختيار
+                        </button>
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+            
+            // تفعيل أزرار اختيار المنتج
+            document.querySelectorAll('.select-product').forEach(button => {
+                button.addEventListener('click', function() {
+                    const productId = this.getAttribute('data-product-id');
+                    const productName = this.getAttribute('data-product-name');
+                    const productQuantity = this.getAttribute('data-product-quantity');
+                    const productUnit = this.getAttribute('data-product-unit');
+                    
+                    // تحديث الصف في نموذج الإذن
+                    if (currentRow) {
+                        const productCodeInput = currentRow.querySelector('.product-code');
+                        const productIdInput = currentRow.querySelector('.product-id');
+                        const productNameSpan = currentRow.querySelector('.product-name');
+                        const currentStockSpan = currentRow.querySelector('.current-stock');
+                        const unitNameSpan = currentRow.querySelector('.unit-name');
+                        const quantityInput = currentRow.querySelector('.quantity');
+                        
+                        if (productCodeInput) productCodeInput.value = productId;
+                        if (productIdInput) productIdInput.value = productId;
+                        if (productNameSpan) productNameSpan.textContent = productName;
+                        if (currentStockSpan) currentStockSpan.textContent = productQuantity;
+                        if (unitNameSpan) unitNameSpan.textContent = productUnit;
+                        
+                        // تحديث الحد الأقصى للكمية في حالة إذن الصرف
+                        const voucherType = document.getElementById('id_voucher_type').value;
+                        if (voucherType !== 'إذن اضافة' && voucherType !== 'اذن مرتجع عميل' && quantityInput) {
+                            quantityInput.max = productQuantity;
+                            // التأكد من أن القيمة لا تتجاوز الحد الأقصى
+                            if (parseFloat(quantityInput.value) > productQuantity) {
+                                quantityInput.value = productQuantity;
+                            }
+                        }
+                    }
+                    
+                    // إغلاق النافذة المنبثقة
+                    productSearchModal.hide();
+                });
+            });
+        }
+        
+        // تفعيل معالجات الأحداث
+        document.getElementById('modal-search-btn').addEventListener('click', searchProducts);
+        
+        document.getElementById('modal-search-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchProducts();
+            }
+        });
+        
+        document.getElementById('modal-category-filter').addEventListener('change', searchProducts);
+        document.getElementById('modal-stock-filter').addEventListener('change', searchProducts);
+        
+        // تعريض الدالة للاستخدام الخارجي
+        window.showProductSearchModal = function(row) {
+            currentRow = row;
+            
+            // إعادة تعيين حقول البحث
+            document.getElementById('modal-search-input').value = '';
+            document.getElementById('modal-category-filter').selectedIndex = 0;
+            document.getElementById('modal-stock-filter').selectedIndex = 0;
+            
+            // تحميل التصنيفات إذا لم تكن محملة
+            if (document.getElementById('modal-category-filter').options.length <= 1) {
+                loadCategories();
+            }
+            
+            // إخفاء الجداول ورسائل التنبيه
+            document.getElementById('modal-products-table').classList.add('d-none');
+            document.getElementById('no-products-message').classList.add('d-none');
+            document.getElementById('loading-indicator').classList.add('d-none');
+            
+            // إظهار النافذة المنبثقة
+            productSearchModal.show();
+            
+            // التركيز على حقل البحث
+            setTimeout(() => {
+                document.getElementById('modal-search-input').focus();
+            }, 500);
+        };
+    });
+</script>
 {% endblock %}
