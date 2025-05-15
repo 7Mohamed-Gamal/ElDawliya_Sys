@@ -23,6 +23,7 @@ urlpatterns = [
     # System Settings
     path('settings/', views.system_settings, name='settings'),
     path('settings/database/', views.database_settings, name='database_settings'),
+    path('database-setup/', views.database_setup, name='database_setup'),
     path('test-connection/', views.test_connection, name='test_connection'),
 
     # Departments (for backward compatibility, will be deprecated)

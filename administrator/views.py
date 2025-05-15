@@ -37,6 +37,245 @@ def is_system_admin(user):
 # Decorator for system admin access
 system_admin_required = user_passes_test(is_system_admin)
 
+# Special exception to be raised when the database connection is being configured
+class DatabaseSetupMode(Exception):
+    """Exception raised to indicate the system is in database setup mode."""
+    pass
+
+def database_setup(request):
+    """
+    View for database setup accessible without authentication.
+
+    This view is used when the database connection fails, allowing users
+    to configure the database connection even when they can't log in
+    due to database unavailability.
+    """
+    from django.conf import settings
+    import datetime
+    import os
+    from urllib.parse import unquote
+
+    # Get error message from URL if present
+    connection_error = request.GET.get('error', '')
+    if connection_error:
+        connection_error = unquote(connection_error)
+        # Format the error message to be more user-friendly
+        if 'server is not found' in connection_error.lower() or 'network-related' in connection_error.lower():
+            connection_error = f"تعذر الاتصال بالخادم: {connection_error}"
+        elif 'login failed' in connection_error.lower():
+            connection_error = f"فشل تسجيل الدخول إلى قاعدة البيانات: {connection_error}"
+        elif 'no such host' in connection_error.lower():
+            connection_error = f"لم يتم العثور على الخادم: {connection_error}"
+
+    # Always using SQL Server now
+    # Get active database connection type
+    try:
+        active_db = getattr(settings, 'ACTIVE_DB', 'default')
+
+        # Get current database configuration
+        db_config = {
+            'db_engine': 'mssql',
+            'db_host': settings.DATABASES['default'].get('HOST', ''),
+            'db_name': settings.DATABASES['default'].get('NAME', ''),
+            'db_user': settings.DATABASES['default'].get('USER', ''),
+            'db_password': settings.DATABASES['default'].get('PASSWORD', ''),
+            'db_port': settings.DATABASES['default'].get('PORT', '1433'),
+            'db_connection_type': active_db,
+        }
+
+        # Also get primary database settings if available
+        if 'primary' in settings.DATABASES:
+            primary_config = settings.DATABASES['primary']
+            if active_db == 'primary':
+                # If primary is active, update the form values with primary settings
+                db_config.update({
+                    'db_host': primary_config.get('HOST', ''),
+                    'db_name': primary_config.get('NAME', ''),
+                    'db_user': primary_config.get('USER', ''),
+                    'db_password': primary_config.get('PASSWORD', ''),
+                    'db_port': primary_config.get('PORT', '1433'),
+                })
+
+        # Try to get settings from SystemSettings model if available
+        try:
+            system_settings = SystemSettings.objects.first()
+            if system_settings:
+                # Update config with values from database if they exist
+                if system_settings.db_host:
+                    db_config['db_host'] = system_settings.db_host
+                if system_settings.db_name:
+                    db_config['db_name'] = system_settings.db_name
+                if system_settings.db_user:
+                    db_config['db_user'] = system_settings.db_user
+                if system_settings.db_password:
+                    db_config['db_password'] = system_settings.db_password
+                if system_settings.db_port:
+                    db_config['db_port'] = system_settings.db_port
+        except Exception:
+            # If there's an error accessing the model (e.g., table doesn't exist yet),
+            # just continue with the settings from settings.py
+            pass
+    except Exception as e:
+        # If there's an error getting the database configuration, use default values
+        db_config = {
+            'db_engine': 'mssql',
+            'db_host': 'localhost',
+            'db_name': 'ElDawliya_Sys',
+            'db_user': 'sa',
+            'db_password': '',
+            'db_port': '1433',
+            'db_connection_type': 'default',
+        }
+        if not connection_error:
+            connection_error = f"تعذر قراءة إعدادات قاعدة البيانات: {str(e)}"
+
+    if request.method == 'POST':
+        form = DatabaseConfigForm(request.POST)
+        if form.is_valid():
+            # Update settings.py file
+            try:
+                # Read settings file
+                settings_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'ElDawliya_sys/settings.py')
+                with open(settings_path, 'r', encoding='utf-8') as f:
+                    settings_content = f.read()
+
+                # Get the selected database connection type
+                db_connection_type = form.cleaned_data['db_connection_type']
+
+                # Update the ACTIVE_DB setting
+                if 'ACTIVE_DB =' in settings_content:
+                    settings_content = re.sub(
+                        r"ACTIVE_DB = os\.environ\.get\('DJANGO_ACTIVE_DB', '[^']*'\)",
+                        f"ACTIVE_DB = os.environ.get('DJANGO_ACTIVE_DB', '{db_connection_type}')",
+                        settings_content
+                    )
+                else:
+                    # If ACTIVE_DB setting doesn't exist, add it after the DATABASES definition
+                    settings_content = re.sub(
+                        r"(DATABASES = \{[^\}]*\})",
+                        f"\\1\n\n# تحديد قاعدة البيانات النشطة من ملف الإعدادات\nACTIVE_DB = os.environ.get('DJANGO_ACTIVE_DB', '{db_connection_type}')",
+                        settings_content
+                    )
+
+                # Update the default configuration to use SQL Server
+                trusted_connection = 'yes' if form.cleaned_data.get('use_windows_auth', True) else 'no'
+
+                default_config = (
+                    "'default': {\n"
+                    "        'ENGINE': 'mssql',\n"
+                    f"        'NAME': '{form.cleaned_data['db_name']}',\n"
+                    f"        'HOST': '{form.cleaned_data['db_host']}',\n"
+                    f"        'PORT': '{form.cleaned_data['db_port']}',\n"
+                )
+
+                # Add authentication details based on the selected method
+                if not form.cleaned_data.get('use_windows_auth', True):
+                    default_config += (
+                        f"        'USER': '{form.cleaned_data['db_user']}',\n"
+                        f"        'PASSWORD': '{form.cleaned_data['db_password']}',\n"
+                    )
+
+                default_config += (
+                    "        'OPTIONS': {\n"
+                    "            'driver': 'ODBC Driver 17 for SQL Server',\n"
+                    f"            'Trusted_Connection': '{trusted_connection}',\n"
+                    "        },\n"
+                    "    }"
+                )
+
+                # Update the default database configuration
+                settings_content = re.sub(
+                    r"'default': \{[^\}]*\},",
+                    f"{default_config},\n    ",
+                    settings_content
+                )
+
+                # Update the primary database configuration
+                primary_config = (
+                    "'primary': {\n"
+                    "        'ENGINE': 'mssql',\n"
+                    f"        'NAME': '{form.cleaned_data['db_name']}',\n"
+                    f"        'HOST': '{form.cleaned_data['db_host']}',\n"
+                    f"        'PORT': '{form.cleaned_data['db_port']}',\n"
+                )
+
+                # Add authentication details based on the selected method
+                if not form.cleaned_data.get('use_windows_auth', True):
+                    primary_config += (
+                        f"        'USER': '{form.cleaned_data['db_user']}',\n"
+                        f"        'PASSWORD': '{form.cleaned_data['db_password']}',\n"
+                    )
+
+                primary_config += (
+                    "        'OPTIONS': {\n"
+                    "            'driver': 'ODBC Driver 17 for SQL Server',\n"
+                    f"            'Trusted_Connection': '{trusted_connection}',\n"
+                    "        },\n"
+                    "    }"
+                )
+
+                # Check if primary configuration exists
+                if "'primary':" in settings_content:
+                    # Update existing primary configuration
+                    settings_content = re.sub(
+                        r"'primary': \{[^\}]*\}",
+                        f"{primary_config}",
+                        settings_content
+                    )
+                else:
+                    # Add primary configuration if it doesn't exist
+                    default_match = re.search(r"'default': \{[^\}]*\},", settings_content)
+                    if default_match:
+                        # Insert the primary configuration after the default configuration
+                        insert_pos = default_match.end()
+                        settings_content = (
+                            settings_content[:insert_pos] +
+                            f"\n    {primary_config},\n" +
+                            settings_content[insert_pos:]
+                        )
+
+                # Write back to settings file
+                with open(settings_path, 'w', encoding='utf-8') as f:
+                    f.write(settings_content)
+
+                # Try to save to SystemSettings model
+                try:
+                    from django.db import connection
+                    connection.connect()  # Test connection
+
+                    settings_obj = SystemSettings.objects.first()
+                    if not settings_obj:
+                        settings_obj = SystemSettings()
+
+                    settings_obj.db_host = form.cleaned_data['db_host']
+                    settings_obj.db_name = form.cleaned_data['db_name']
+                    settings_obj.db_user = form.cleaned_data['db_user']
+                    settings_obj.db_password = form.cleaned_data['db_password']
+                    settings_obj.db_port = form.cleaned_data['db_port']
+                    settings_obj.save()
+                except Exception as e:
+                    print(f"Error saving to SystemSettings model: {str(e)}")
+                    # Don't fail if this doesn't work, as it might require a migration/DB connection
+
+                messages.success(request, 'تم تحديث إعدادات قاعدة البيانات بنجاح. سيتم إعادة تشغيل التطبيق الآن.')
+                return redirect('/')
+
+            except Exception as e:
+                messages.error(request, f'حدث خطأ أثناء تحديث إعدادات قاعدة البيانات: {str(e)}')
+    else:
+        form = DatabaseConfigForm(initial=db_config)
+
+    context = {
+        'form': form,
+        'page_title': 'إعداد قاعدة البيانات',
+        'connection_error': connection_error,
+        'setup_mode': True,
+        'current_date': datetime.datetime.now()
+    }
+
+    # Use a simplified template without admin layout
+    return render(request, 'administrator/database_setup.html', context)
+
 @login_required
 @system_admin_required
 def admin_dashboard(request):
@@ -65,7 +304,7 @@ def system_settings(request):
     View to edit system settings - direct database approach.
     """
     print("****** DIRECT DATABASE APPROACH FOR SETTINGS ******")
-    
+
     # Default values for required fields
     default_values = {
         'db_host': 'localhost',
@@ -87,7 +326,7 @@ def system_settings(request):
         'font_family': 'cairo',
         'text_direction': 'rtl',
     }
-    
+
     # Step 1: Get or create the SystemSettings object
     try:
         # First try to get existing setting
@@ -101,16 +340,16 @@ def system_settings(request):
         print(f"Error with settings object: {str(e)}")
         messages.error(request, f"Error with settings: {str(e)}")
         settings_obj = None
-    
+
     if request.method == 'POST':
         print("Handling POST request with direct DB update")
-        
+
         # Create form for validation only, but don't use its save method
         form = SystemSettingsForm(request.POST, request.FILES, instance=settings_obj)
-        
+
         if form.is_valid():
             print("Form validation passed, processing data manually")
-            
+
             try:
                 # Get or create settings object if needed
                 if not settings_obj:
@@ -121,17 +360,17 @@ def system_settings(request):
                     settings_obj.db_user = default_values['db_user']
                     settings_obj.db_password = default_values['db_password']
                     settings_obj.db_port = default_values['db_port']
-                
+
                 # MANUALLY update fields from POST data
                 # Non-database fields that are in the form
                 form_fields = [
-                    'company_name', 'company_address', 'company_phone', 
+                    'company_name', 'company_address', 'company_phone',
                     'company_email', 'company_website',
                     'system_name', 'enable_debugging', 'maintenance_mode',
-                    'timezone', 'date_format', 
+                    'timezone', 'date_format',
                     'language', 'font_family', 'text_direction'
                 ]
-                
+
                 # Update each field from form data
                 for field in form_fields:
                     if field in form.cleaned_data:
@@ -139,50 +378,50 @@ def system_settings(request):
                         setattr(settings_obj, field, form.cleaned_data[field])
                     else:
                         print(f"Field {field} not in form data")
-                
+
                 # Handle logo upload separately
                 if 'company_logo' in request.FILES:
                     print(f"Handling logo: {request.FILES['company_logo']}")
                     settings_obj.company_logo = request.FILES['company_logo']
-                    
+
                 # Save to database
                 settings_obj.save()
                 print(f"Settings saved with ID: {settings_obj.id}")
-                
+
                 # Apply language settings
                 from django.utils import translation
                 translation.activate(form.cleaned_data['language'])
                 request.session[translation.LANGUAGE_SESSION_KEY] = form.cleaned_data['language']
-                
+
                 # Success message
                 messages.success(request, 'تم حفظ الإعدادات بنجاح')
-                
+
                 # Refresh the page to show updated settings
                 return redirect('administrator:settings')
-            
+
             except Exception as e:
                 print(f"ERROR during manual save: {str(e)}")
                 messages.error(request, f'حدث خطأ أثناء حفظ الإعدادات: {str(e)}')
-        
+
         else:
             print(f"Form validation failed: {form.errors}")
             for field, errors in form.errors.items():
                 for error in errors:
                     messages.error(request, f"خطأ في حقل {field}: {error}")
-    
+
     else:
         # GET request - create form with current settings
         if settings_obj:
             form = SystemSettingsForm(instance=settings_obj)
         else:
             form = SystemSettingsForm(initial=default_values)
-    
+
     # Prepare context
     context = {
         'form': form,
         'settings': settings_obj
     }
-    
+
     return render(request, 'administrator/system_settings.html', context)
 
 @login_required
@@ -197,21 +436,21 @@ def database_settings(request):
 
     # We're always using SQL Server now
     using_sqlite = False
-    
+
     # Get active database connection type
     active_db = getattr(settings, 'ACTIVE_DB', 'default')
 
     # Check if this is a backup or restore request
     request_type = request.headers.get('X-Request-Type', '')
-    
+
     # Handle backup creation request
     if request.method == 'POST' and request_type == 'backup_create':
         return handle_database_backup(request)
-    
+
     # Handle backup restore request
     if request.method == 'POST' and request_type == 'backup_restore':
         return handle_database_restore(request)
-    
+
     # Handle backup list request
     if request.method == 'GET' and request_type == 'list_backups':
         return list_database_backups(request)
@@ -227,7 +466,7 @@ def database_settings(request):
         'db_port': settings.DATABASES['default'].get('PORT', '1433'),
         'db_connection_type': active_db,
     }
-    
+
     # Also get primary database settings if available
     if 'primary' in settings.DATABASES:
         primary_config = settings.DATABASES['primary']
@@ -271,10 +510,10 @@ def database_settings(request):
                 settings_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'ElDawliya_sys/settings.py')
                 with open(settings_path, 'r', encoding='utf-8') as f:
                     settings_content = f.read()
-                
+
                 # Get the selected database connection type
                 db_connection_type = form.cleaned_data['db_connection_type']
-                
+
                 # Update the ACTIVE_DB setting
                 if 'ACTIVE_DB =' in settings_content:
                     settings_content = re.sub(
@@ -293,7 +532,7 @@ def database_settings(request):
                 # Always using SQL Server now
                 # Get the selected connection type
                 db_connection_type = form.cleaned_data['db_connection_type']
-                
+
                 # Update the ACTIVE_DB setting
                 if 'ACTIVE_DB =' in settings_content:
                     settings_content = re.sub(
@@ -308,7 +547,7 @@ def database_settings(request):
                         f"\1\n\n# تحديد قاعدة البيانات النشطة من ملف الإعدادات\nACTIVE_DB = os.environ.get('DJANGO_ACTIVE_DB', '{db_connection_type}')",
                         settings_content
                     )
-                
+
                 # Update the default configuration to use SQL Server
                 trusted_connection = 'yes' if form.cleaned_data.get('use_windows_auth', True) else 'no'
 
@@ -341,7 +580,7 @@ def database_settings(request):
                     f"{default_config},\n    ",
                     settings_content
                 )
-                
+
                 # Update the primary database configuration
                 primary_config = (
                     "'primary': {\n"
@@ -365,7 +604,7 @@ def database_settings(request):
                     "        },\n"
                     "    }"
                 )
-                
+
                 # Check if primary configuration exists
                 if "'primary':" in settings_content:
                     # Update existing primary configuration - use careful regex to avoid syntax issues
@@ -425,9 +664,9 @@ def database_settings(request):
 
     # Add current date for backup filename
     context['current_date'] = datetime.datetime.now()
-    
+
     return render(request, 'administrator/database_settings.html', context)
-    
+
 def handle_database_backup(request):
     """
     Handle database backup creation request.
@@ -437,86 +676,86 @@ def handle_database_backup(request):
     import os
     import pyodbc
     import datetime
-    
+
     try:
         # Get database connection details
         db_engine = request.POST.get('db_engine', 'mssql')
         db_name = request.POST.get('db_name')
-        
+
         # Get backup options
         filename = request.POST.get('filename', f'backup_{datetime.datetime.now().strftime("%Y%m%d_%H%M")}')
         compression = request.POST.get('compression') == 'true'
         verify = request.POST.get('verify') == 'true'
         encrypt = request.POST.get('encrypt') == 'true'
-        
+
         # Make sure we have a valid database name
         if not db_name:
             return JsonResponse({
-                'success': False, 
+                'success': False,
                 'error': 'يرجى تحديد قاعدة بيانات صالحة'
             })
-            
+
         # Create backups directory if it doesn't exist
         backup_dir = os.path.join(settings.BASE_DIR, 'backups')
         if not os.path.exists(backup_dir):
             os.makedirs(backup_dir)
-            
+
         # Full path to backup file - Use a location SQL Server can access
         backup_filename = f"{filename}.bak"
-        
+
         # First try using a system temp directory
         import tempfile
         temp_dir = tempfile.gettempdir()
         backup_path = os.path.join(temp_dir, backup_filename)
-        
+
         # Make sure path is using correct format for SQL Server
         backup_path = backup_path.replace('/', '\\')
-        
+
         # Connect to the database with autocommit mode
         connection_string = get_connection_string(settings.DATABASES['default'])
         conn = pyodbc.connect(connection_string, timeout=30, autocommit=True)
         cursor = conn.cursor()
-        
+
         # Build the backup SQL command
         backup_sql = f"BACKUP DATABASE [{db_name}] TO DISK = N'{backup_path}'"
-        
+
         # Add options
         options = []
         if compression:
             options.append("COMPRESSION")
-            
+
         # Skip encryption option as it might require certificate setup
         # if encrypt:
         #     options.append("ENCRYPTION (ALGORITHM = AES_256, SERVER CERTIFICATE = BackupEncryptCert)")
-        
+
         if options:
             backup_sql += " WITH " + ", ".join(options)
-            
+
         print(f"Executing SQL: {backup_sql}")
-        
+
         # Execute the backup command - no need for commit with autocommit=True
         cursor.execute(backup_sql)
-        
+
         # Verify the backup if requested
         if verify:
             verify_sql = f"RESTORE VERIFYONLY FROM DISK = N'{backup_path}'"
             cursor.execute(verify_sql)
-            
+
         cursor.close()
         conn.close()
-        
+
         # Move the backup file from temp directory to our backups directory
         import shutil
         final_backup_path = os.path.join(backup_dir, backup_filename)
         shutil.copy2(backup_path, final_backup_path)
-        
+
         # Return success response
         return JsonResponse({
             'success': True,
             'filename': backup_filename,
             'message': f'تم إنشاء النسخة الاحتياطية بنجاح'
         })
-        
+
     except Exception as e:
         print(f"Backup error: {str(e)}")
         return JsonResponse({
@@ -534,43 +773,43 @@ def handle_database_restore(request):
     import pyodbc
     import tempfile
     import shutil
-    
+
     try:
         # Get database connection details
         db_engine = request.POST.get('db_engine', 'mssql')
         db_name = request.POST.get('db_name')
-        
+
         # Get restore method and filename
         restore_method = request.POST.get('restore_method', 'existing')
-        
+
         # Make sure we have a valid database name
         if not db_name:
             return JsonResponse({
-                'success': False, 
+                'success': False,
                 'error': 'يرجى تحديد قاعدة بيانات صالحة'
             })
-            
+
         backup_dir = os.path.join(settings.BASE_DIR, 'backups')
         if not os.path.exists(backup_dir):
             os.makedirs(backup_dir)
-        
+
         # Get backup file path based on method
         if restore_method == 'upload':
             # Handle uploaded file
             if 'backup_file' not in request.FILES:
                 return JsonResponse({
-                    'success': False, 
+                    'success': False,
                     'error': 'يرجى تحديد ملف النسخة الاحتياطية'
                 })
-                
+
             # Save the uploaded file to a temp location first
             backup_file = request.FILES['backup_file']
             temp_path = os.path.join(tempfile.gettempdir(), backup_file.name)
-            
+
             with open(temp_path, 'wb+') as destination:
                 for chunk in backup_file.chunks():
                     destination.write(chunk)
-                    
+
             # Copy to our backups directory
             backup_path = os.path.join(backup_dir, backup_file.name)
             shutil.copy2(temp_path, backup_path)
@@ -579,35 +818,35 @@ def handle_database_restore(request):
             backup_filename = request.POST.get('backup_filename')
             if not backup_filename:
                 return JsonResponse({
-                    'success': False, 
+                    'success': False,
                     'error': 'يرجى اختيار نسخة احتياطية موجودة'
                 })
-                
+
             backup_path = os.path.join(backup_dir, backup_filename)
-            
+
         # Make sure path is using correct format for SQL Server
         backup_path = backup_path.replace('/', '\\')
-            
+
         # Connect to the database with autocommit mode
         connection_string = get_connection_string(settings.DATABASES['default'])
         conn = pyodbc.connect(connection_string, timeout=30, autocommit=True)
         cursor = conn.cursor()
-        
+
         print(f"Attempting to restore database [{db_name}] from [{backup_path}]")
-        
+
         # First, set database to single user mode
         try:
             cursor.execute(f"ALTER DATABASE [{db_name}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE")
         except Exception as e:
             print(f"Error setting database to single user mode: {str(e)}")
             # Continue anyway, might be already in single user mode
-        
+
         try:
             # Restore the database
             restore_sql = f"RESTORE DATABASE [{db_name}] FROM DISK = N'{backup_path}' WITH REPLACE"
             print(f"Executing: {restore_sql}")
             cursor.execute(restore_sql)
-            
+
             # Set database back to multi-user mode
             cursor.execute(f"ALTER DATABASE [{db_name}] SET MULTI_USER")
         except Exception as e:
@@ -621,13 +860,13 @@ def handle_database_restore(request):
         finally:
             cursor.close()
             conn.close()
-        
+
         # Return success response
         return JsonResponse({
             'success': True,
             'message': 'تم استعادة قاعدة البيانات بنجاح'
         })
-        
+
     except Exception as e:
         print(f"Restore error: {str(e)}")
         return JsonResponse({
@@ -642,30 +881,30 @@ def list_database_backups(request):
     from django.conf import settings
     import os
     import datetime
-    
+
     try:
         backup_dir = os.path.join(settings.BASE_DIR, 'backups')
-        
+
         # Create the directory if it doesn't exist
         if not os.path.exists(backup_dir):
             os.makedirs(backup_dir)
-            
+
         backups = []
-        
+
         # Get list of backup files
         for filename in os.listdir(backup_dir):
             if filename.endswith('.bak'):
                 file_path = os.path.join(backup_dir, filename)
                 file_stats = os.stat(file_path)
-                
+
                 # Get file size in human-readable format
                 size_bytes = file_stats.st_size
                 size = convert_size(size_bytes)
-                
+
                 # Get file creation date
                 ctime = datetime.datetime.fromtimestamp(file_stats.st_ctime)
                 date = ctime.strftime('%Y-%m-%d %H:%M')
-                
+
                 # Add backup to list
                 backups.append({
                     'filename': filename,
@@ -675,15 +914,15 @@ def list_database_backups(request):
                     'date': date,
                     'timestamp': file_stats.st_ctime
                 })
-                
+
         # Sort backups by date (newest first)
         backups.sort(key=lambda x: x['timestamp'], reverse=True)
-        
+
         return JsonResponse({
             'success': True,
             'backups': backups
         })
-        
+
     except Exception as e:
         print(f"List backups error: {str(e)}")
         return JsonResponse({
@@ -698,10 +937,10 @@ def get_connection_string(db_config):
     driver = db_config.get('OPTIONS', {}).get('driver', 'ODBC Driver 17 for SQL Server')
     server = db_config.get('HOST', 'localhost')
     database = db_config.get('NAME', '')
-    
+
     # Determine authentication method
     trusted_conn = db_config.get('OPTIONS', {}).get('Trusted_Connection', 'no')
-    
+
     if trusted_conn.lower() == 'yes':
         # Windows authentication
         conn_str = f"DRIVER={{{driver}}};SERVER={server};DATABASE={database};Trusted_Connection=yes;"
@@ -710,7 +949,7 @@ def get_connection_string(db_config):
         user = db_config.get('USER', '')
         password = db_config.get('PASSWORD', '')
         conn_str = f"DRIVER={{{driver}}};SERVER={server};DATABASE={database};UID={user};PWD={password};"
-        
+
     return conn_str
 
 def convert_size(size_bytes):
@@ -1302,7 +1541,7 @@ def database_settings(request):
 
     # We're always using SQL Server now
     using_sqlite = False
-    
+
     # Get active database connection type
     active_db = getattr(settings, 'ACTIVE_DB', 'default')
 
@@ -1317,7 +1556,7 @@ def database_settings(request):
         'db_port': settings.DATABASES['default'].get('PORT', '1433'),
         'db_connection_type': active_db,
     }
-    
+
     # Also get primary database settings if available
     if 'primary' in settings.DATABASES:
         primary_config = settings.DATABASES['primary']
@@ -1361,10 +1600,10 @@ def database_settings(request):
                 settings_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'ElDawliya_sys/settings.py')
                 with open(settings_path, 'r', encoding='utf-8') as f:
                     settings_content = f.read()
-                
+
                 # Get the selected database connection type
                 db_connection_type = form.cleaned_data['db_connection_type']
-                
+
                 # Update the ACTIVE_DB setting
                 if 'ACTIVE_DB =' in settings_content:
                     settings_content = re.sub(
@@ -1383,7 +1622,7 @@ def database_settings(request):
                 # Always using SQL Server now
                 # Get the selected connection type
                 db_connection_type = form.cleaned_data['db_connection_type']
-                
+
                 # Update the ACTIVE_DB setting
                 if 'ACTIVE_DB =' in settings_content:
                     settings_content = re.sub(
@@ -1398,7 +1637,7 @@ def database_settings(request):
                         f"\1\n\n# تحديد قاعدة البيانات النشطة من ملف الإعدادات\nACTIVE_DB = os.environ.get('DJANGO_ACTIVE_DB', '{db_connection_type}')",
                         settings_content
                     )
-                
+
                 # Update the default configuration to use SQL Server
                 trusted_connection = 'yes' if form.cleaned_data.get('use_windows_auth', True) else 'no'
 
@@ -1431,7 +1670,7 @@ def database_settings(request):
                     f"{default_config},\n    ",
                     settings_content
                 )
-                
+
                 # Update the primary database configuration
                 primary_config = (
                     "'primary': {\n"
@@ -1455,7 +1694,7 @@ def database_settings(request):
                     "        },\n"
                     "    }"
                 )
-                
+
                 # Check if primary configuration exists
                 if "'primary':" in settings_content:
                     # Update existing primary configuration
@@ -2025,15 +2264,15 @@ def normalize_url_path(path):
     # إضافة / في بداية المسار إذا لم تكن موجودة
     if not path.startswith('/'):
         path = '/' + path
-    
+
     # إزالة // المتكررة
     while '//' in path:
         path = path.replace('//', '/')
-    
+
     # إضافة / في نهاية المسار إذا كانت آخر عنصر ليس / وليس له امتداد ملف مثل .html
     if not path.endswith('/') and '.' not in path.split('/')[-1]:
         path = path + '/'
-    
+
     return path
 
 def discover_url_paths():
@@ -2162,7 +2401,7 @@ def discover_url_paths():
                     url_name = path_name
                     if full_namespace:
                         url_name = f"{full_namespace}:{path_name}"
-                    
+
                     paths.append({
                         'name': url_name,
                         'path': pattern_path
@@ -2176,7 +2415,7 @@ def discover_url_paths():
                             new_namespace = f"{namespace}:{pattern.namespace}"
                         else:
                             new_namespace = pattern.namespace
-                    
+
                     # استدعاء الدالة بشكل متكرر للمحلل الفرعي
                     paths.extend(extract_paths_from_resolver_node(
                         pattern,
@@ -2219,19 +2458,19 @@ def discover_url_paths():
 
     # استخراج المسارات بشكل أكثر تفصيلاً من محلل URL
     detailed_paths = extract_paths_from_resolver_node(resolver)
-    
+
     # تنظيم المسارات التفصيلية حسب التطبيق
     for path_info in detailed_paths:
         url_name = path_info['name']
         path_value = path_info['path']
-        
+
         # تنظيف المسار باستخدام الدالة المخصصة
         path_value = normalize_url_path(path_value)
-        
+
         # تحديد التطبيق
         app_name = None
         pattern_name = ''
-        
+
         if ':' in url_name:
             app_name = url_name.split(':')[0]
             pattern_name = url_name.split(':')[1]
@@ -2243,13 +2482,13 @@ def discover_url_paths():
                 if len(path_parts) > 1:
                     # استخدام الجزء الثاني من المسار كاسم النمط
                     pattern_name = path_parts[1]
-        
+
         if not app_name:
             app_name = 'common'
-        
+
         # تحويل اسم التطبيق إلى الاسم المعروض
         display_app_name = app_display_names.get(app_name.lower(), app_name)
-        
+
         # إنشاء قائمة للتطبيق إذا لم تكن موجودة
         if display_app_name not in app_paths:
             app_paths[display_app_name] = []

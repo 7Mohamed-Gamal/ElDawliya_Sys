@@ -5,6 +5,10 @@ from django.conf.urls.static import static
 from .admin_site import admin_site
 from .views import test_view
 
+# Import the database setup view directly to avoid database dependency
+# This allows the database setup URL to work even when the database is unavailable
+from administrator.views import database_setup
+
 # تطبيق نظام الصلاحيات في موقع الإدارة
 # ملاحظات:
 # 1. تم نقل تسجيل النماذج إلى ملفات admin.py الخاصة بكل تطبيق
@@ -13,6 +17,14 @@ from .views import test_view
 # 4. تم نقل تسجيل نموذج Users_Login_New إلى ملف accounts/admin.py
 # 5. نموذج Group مسجل بالفعل في نظام Django الأساسي
 
+# Special URL patterns that should work even when the database is unavailable
+# These URLs are defined first to ensure they're accessible during database errors
+special_urlpatterns = [
+    # Direct access to database setup page - this must work even when DB is down
+    path('administrator/database-setup/', database_setup, name='database_setup'),
+]
+
+# Regular URL patterns that require database access
 urlpatterns = [
     path('test/', test_view, name='test'),  # مسار اختبار بسيط
     path('admin/', admin_site.urls),  # لوحة الإدارة المخصصة
@@ -29,6 +41,9 @@ urlpatterns = [
     path('cars/', include('cars.urls')),  # مسارات تطبيق السيارات
     path('', lambda request: redirect('accounts:login'), name='home'),  # إعادة توجيه الصفحة الرئيسية إلى صفحة الحسابات
 ]
+
+# Combine special and regular URL patterns
+urlpatterns = special_urlpatterns + urlpatterns
 
 # إضافة مسارات الوسائط في وضع التطوير
 if settings.DEBUG:

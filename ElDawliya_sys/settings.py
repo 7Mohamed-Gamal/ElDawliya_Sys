@@ -56,6 +56,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'audit.middleware.AuditMiddleware',
     'inventory.middleware.FilterScriptMiddleware',  # Middleware for enhanced filtering in inventory
+    'administrator.middleware.DatabaseConnectionMiddleware',  # Middleware to handle database connection errors
 ]
 
 ROOT_URLCONF = 'ElDawliya_sys.urls'
@@ -86,7 +87,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'mssql',
         'NAME': 'ElDawliya_Sys',
-        'HOST': 'ELDAWLIYA-SYSTE',
+        'HOST': 'localhost',
         'PORT': '1433',
         'USER': 'admin',
         'PASSWORD': 'hgslduhgfwdv',
@@ -94,6 +95,7 @@ DATABASES = {
             'driver': 'ODBC Driver 17 for SQL Server',
             'Trusted_Connection': 'no',
         },
+    },
     },
     'primary': {
         'ENGINE': 'mssql',
