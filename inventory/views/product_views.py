@@ -38,16 +38,25 @@ class ProductListView(ListView):
             queryset = queryset.filter(category__id=category)
 
         if stock_status == 'low':
+            # تحت الحد الأدنى - كمية أقل من الحد الأدنى
             queryset = queryset.filter(
                 quantity__lt=F('minimum_threshold'),
                 minimum_threshold__gt=0
             )
         elif stock_status == 'out':
+            # نفذت الكمية - الكمية تساوي صفر
             queryset = queryset.filter(quantity=0)
         elif stock_status == 'normal':
+            # متوفر - كمية أكبر من الحد الأدنى (وليس مساوي له)
             queryset = queryset.filter(
-                Q(quantity__gte=F('minimum_threshold')) | Q(minimum_threshold=0),
+                Q(quantity__gt=F('minimum_threshold')) | Q(minimum_threshold=0),
                 quantity__gt=0
+            )
+        elif stock_status == 'equal':
+            # مساوى الحد الأدنى - كمية تساوي الحد الأدنى بالضبط
+            queryset = queryset.filter(
+                quantity=F('minimum_threshold'),
+                minimum_threshold__gt=0
             )
 
         return queryset
@@ -57,16 +66,28 @@ class ProductListView(ListView):
         context['categories'] = Category.objects.all()
         
         # حساب إحصائيات المخزون
+        # مساوي الحد الأدنى
+        equal_stock_count = Product.objects.filter(
+            quantity=F('minimum_threshold'),
+            minimum_threshold__gt=0
+        ).count()
+        
+        # تحت الحد الأدنى
         low_stock_count = Product.objects.filter(
             quantity__lt=F('minimum_threshold'),
             minimum_threshold__gt=0
         ).count()
+        
+        # نفذت الكمية
         out_of_stock = Product.objects.filter(quantity=0).count()
+        
+        # المتوفر (كمية أكبر من الحد الأدنى، ليس مساوي له)
         normal_stock_count = Product.objects.filter(
-            Q(quantity__gte=F('minimum_threshold')) | Q(minimum_threshold=0),
+            Q(quantity__gt=F('minimum_threshold')) | Q(minimum_threshold=0),
             quantity__gt=0
         ).count()
         
+        context['equal_stock_count'] = equal_stock_count
         context['low_stock_count'] = low_stock_count
         context['out_of_stock'] = out_of_stock
         context['normal_stock_count'] = normal_stock_count

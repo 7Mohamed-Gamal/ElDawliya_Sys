@@ -43,7 +43,12 @@
         color: #f57f17;
     }
 
-    .badge-out {
+.badge-out {
+        background-color: #ffebee;
+        color: #c62828;
+    }
+
+    .badge-equal {
         background-color: #ffebee;
         color: #c62828;
     }
@@ -131,11 +136,100 @@
 
         // إضافة معالج حدث التغيير لعنصر حالة المخزون
         if (stockStatusFilter) {
-            stockStatusFilter.addEventListener('change', function() {
-                // تقديم النموذج تلقائيًا عند تغيير حالة المخزون
-                this.form.submit();
+            stockStatusFilter.addEventListener('change', function(event) {
+                const selectedValue = this.value;
+                
+                // نتعامل مع الفلتر "مساوى الحد الادنى" بشكل خاص فقط، ونترك باقي الفلاتر للخادم
+                if (selectedValue === 'equal') {
+                    // منع الإرسال التلقائي للنموذج
+                    event.preventDefault();
+                    
+                    // عرض جميع المنتجات ثم فلترة بالجافاسكريبت
+                    // إعادة توجيه للصفحة بدون معامل الفلترة
+                    const currentUrl = new URL(window.location.href);
+                    currentUrl.searchParams.delete('stock_status');
+                    
+                    // إضافة علامة خاصة للفلتر المساوي
+                    currentUrl.searchParams.set('eq_filter', 'true');
+                    
+                    // الانتقال للصفحة
+                    window.location.href = currentUrl.toString();
+                } else {
+                    // تقديم النموذج تلقائيًا عند تغيير حالة المخزون للحالات الأخرى
+                    // ون كل الفلترة على الخادم
+                    this.form.submit();
+                }
             });
         }
+        
+        // التحقق مما إذا تم اختيار الفلتر مساوى الحد الادنى من القائمة المنسدلة
+        const urlParams = new URLSearchParams(window.location.search);
+        const equalFilter = urlParams.get('eq_filter');
+        
+        // الفلترة المساوية بالجافاسكريبت
+        function filterEqualProducts() {
+            // تحديد حالة الفلتر في القائمة المنسدلة
+            if (stockStatusFilter) {
+                stockStatusFilter.value = 'equal';
+            }
+            
+            // فلترة المنتجات بالجافاسكريبت للبحث عن المنتجات المساوية للحد الأدنى
+            const productRows = document.querySelectorAll('.table-products tbody tr');
+            let equalCount = 0;
+            
+            // حساب المنتجات المساوية للحد الأدنى وإخفاء الباقي
+            productRows.forEach(row => {
+                // البحث عن النص "مساوى الحد الادنى" في صف المنتج
+                const statusCell = row.querySelector('td:nth-child(9)');
+                const isEqualToMinimum = statusCell && statusCell.textContent.includes('مساوى الحد الادنى');
+                
+                // إخفاء أو إظهار الصف حسب الفلتر
+                if (isEqualToMinimum) {
+                    row.style.display = '';
+                    equalCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // تحديث عداد المنتجات المساوية للحد الأدنى
+            const equalCountElement = document.querySelector('.badge-equal + span');
+            if (equalCountElement) {
+                equalCountElement.textContent = equalCount + ' مساوى الحد الادنى';
+            }
+            
+            // إضافة عنصر خاص في الجدول إذا لم يتم العثور على عناصر
+            if (equalCount === 0) {
+                const tableBody = document.querySelector('.table-products tbody');
+                if (tableBody) {
+                    // إنشاء صف رسالة فارغة
+                    const emptyRow = document.createElement('tr');
+                    const emptyCell = document.createElement('td');
+                    emptyCell.setAttribute('colspan', '10');
+                    emptyCell.textContent = 'لا توجد منتجات مساوية للحد الأدنى';
+                    emptyCell.style.textAlign = 'center';
+                    emptyCell.style.padding = '20px';
+                    emptyRow.appendChild(emptyCell);
+                    
+                    // إضافة الصف للجدول
+                    tableBody.appendChild(emptyRow);
+                }
+            }
+            
+            // تحديث عنوان الصفحة ليعكس الفلترة
+            const titleElement = document.querySelector('.page-title');
+            if (titleElement) {
+                titleElement.textContent = 'قائمة أصناف المخزن - مساوى الحد الأدنى';
+            }
+        }
+        
+        // تنفيذ الفلترة المساوية للحد الأدنى فقط إذا كانت موجودة
+        if (equalFilter === 'true') {
+            filterEqualProducts();
+        }
+        
+        // ملاحظة: كل الفلاتر الأخرى (المتوفر، تحت الحد الأدنى، نفذت الكمية)
+        // يتم معالجتها على الخادم عند تقديم النموذج
 
         // معالجة إضافة تصنيف جديد
         const saveCategoryBtn = document.getElementById('saveCategoryBtn');
@@ -259,6 +353,7 @@
                             <select name="stock_status" class="form-select filter-select">
                                 <option value="">كل الحالات</option>
                                 <option value="normal" {% if request.GET.stock_status == 'normal' %}selected{% endif %}>المتوفر</option>
+                                <option value="equal" {% if request.GET.stock_status == 'equal' %}selected{% endif %}>مساوى الحد الادنى</option>
                                 <option value="low" {% if request.GET.stock_status == 'low' %}selected{% endif %}>تحت الحد الأدنى</option>
                                 <option value="out" {% if request.GET.stock_status == 'out' %}selected{% endif %}>نفذت الكمية</option>
                             </select>
@@ -293,6 +388,13 @@
                             <i class="fas fa-check-circle"></i>
                         </span>
                         <span>{{ normal_stock_count }} متوفر</span>
+                    </div>
+                    
+                    <div class="d-flex align-items-center">
+                        <span class="badge-stock badge-equal me-2">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </span>
+                        <span>{{ equal_stock_count|default:"0" }} مساوى الحد الادنى</span>
                     </div>
 
                     <div class="d-flex align-items-center">
@@ -345,10 +447,15 @@
                                 <td>{{ product.unit_price }}</td>
                                 <td>{{ product.location|default:"-" }}</td>
                                 <td>
-                                    {% if product.quantity <= 0 %}
+{% if product.quantity <= 0 %}
                                     <span class="badge-stock badge-out">
                                         <i class="fas fa-times-circle"></i>
                                         نفذت الكمية
+                                    </span>
+                                    {% elif product.quantity == product.minimum_threshold %}
+                                    <span class="badge-stock badge-equal">
+                                        <i class="fas fa-exclamation-circle"></i>
+                                        مساوى الحد الادنى
                                     </span>
                                     {% elif product.quantity < product.minimum_threshold %}
                                     <span class="badge-stock badge-low">

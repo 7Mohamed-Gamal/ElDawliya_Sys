@@ -65,7 +65,42 @@ document.addEventListener('DOMContentLoaded', function() {
             return true;
         });
     }
+
+    // 8. تحميل ميزات الفلترة المحسنة
+    loadEnhancedFilterFeatures();
 });
+
+// تحميل ميزات الفلترة المحسنة (البحث حسب الوحدة)
+function loadEnhancedFilterFeatures() {
+    console.log('جاري تحميل ميزات الفلترة المحسنة...');
+    
+    // دالة تحميل ملفات JavaScript
+    function loadScript(src, callback) {
+        // التحقق ما إذا كان السكريبت مُحمّل بالفعل
+        const existingScripts = document.querySelectorAll('script');
+        for (let i = 0; i < existingScripts.length; i++) {
+            if (existingScripts[i].src.includes(src)) {
+                if (callback) callback();
+                return;
+            }
+        }
+
+        // إنشاء عنصر السكريبت الجديد
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = callback || function() {};
+        
+        // إضافة السكريبت إلى رأس المستند
+        document.head.appendChild(script);
+    }
+    
+    // تحميل ملفات الفلترة المحسنة بالترتيب
+    loadScript('/static/inventory/js/api_patch.js', function() {
+        loadScript('/static/inventory/js/product_search_enhanced.js', function() {
+            console.log('تم تحميل جميع ملفات الفلترة المحسنة بنجاح');
+        });
+    });
+}
 
 // التحقق من صحة النموذج قبل الإرسال
 function validateVoucherForm() {
@@ -297,118 +332,4 @@ function updateRowWithProductDetails(row, product) {
     if (unitNameSpan) unitNameSpan.textContent = product.unit_name || '';
     
     // تحديث الحد الأقصى للكمية في حالة إذن الصرف
-    const voucherType = document.getElementById('id_voucher_type').value;
-    if (voucherType !== 'إذن اضافة' && voucherType !== 'اذن مرتجع عميل') {
-        const quantityInput = row.querySelector('.quantity');
-        if (quantityInput) {
-            quantityInput.max = product.quantity;
-            // التأكد من أن القيمة لا تتجاوز الحد الأقصى
-            if (parseFloat(quantityInput.value) > product.quantity) {
-                quantityInput.value = product.quantity;
-            }
-        }
-    }
-}
-
-// مسح بيانات المنتج من الصف
-function clearRowProductDetails(row) {
-    const productIdInput = row.querySelector('.product-id');
-    if (productIdInput) productIdInput.value = '';
-    
-    const productNameSpan = row.querySelector('.product-name');
-    if (productNameSpan) productNameSpan.textContent = '';
-    
-    const currentStockSpan = row.querySelector('.current-stock');
-    if (currentStockSpan) currentStockSpan.textContent = '0';
-    
-    const unitNameSpan = row.querySelector('.unit-name');
-    if (unitNameSpan) unitNameSpan.textContent = '';
-}
-
-// تفعيل أزرار حذف الصفوف
-function initDeleteRowButtons() {
-    const rows = document.querySelectorAll('tr.item-row');
-    rows.forEach(row => {
-        initDeleteRowButtonForRow(row);
-    });
-}
-
-// تفعيل زر حذف الصف لصف محدد
-function initDeleteRowButtonForRow(row) {
-    const deleteButton = row.querySelector('.delete-row');
-    if (deleteButton) {
-        deleteButton.addEventListener('click', function() {
-            const tbody = row.parentElement;
-            const rows = tbody.querySelectorAll('tr.item-row');
-            
-            if (rows.length > 1) {
-                // حذف الصف
-                tbody.removeChild(row);
-                
-                // إعادة ترقيم الصفوف
-                renumberRows();
-            } else {
-                // إذا كان هذا هو الصف الوحيد، قم بمسح بياناته فقط
-                const productCodeInput = row.querySelector('.product-code');
-                if (productCodeInput) productCodeInput.value = '';
-                
-                clearRowProductDetails(row);
-                
-                const quantityInput = row.querySelector('.quantity');
-                if (quantityInput) quantityInput.value = '1';
-                
-                const machineNameInput = row.querySelector('.machine-name');
-                if (machineNameInput) machineNameInput.value = '';
-                
-                const machineUnitInput = row.querySelector('.machine-unit');
-                if (machineUnitInput) machineUnitInput.value = '';
-            }
-        });
-    }
-}
-
-// إعادة ترقيم الصفوف بعد الحذف
-function renumberRows() {
-    const tbody = document.querySelector('#items-table tbody');
-    const rows = tbody.querySelectorAll('tr.item-row');
-    
-    rows.forEach((row, index) => {
-        // تحديث أسماء الحقول
-        const inputs = row.querySelectorAll('input[name^="form-"]');
-        inputs.forEach(input => {
-            const name = input.name;
-            const newName = name.replace(/form-\d+/, `form-${index}`);
-            input.name = newName;
-        });
-    });
-    
-    // تحديث إجمالي النماذج
-    updateFormsetTotalForms();
-}
-
-// توليد رقم إذن جديد
-function generateVoucherNumber() {
-    const voucherType = document.getElementById('id_voucher_type').value;
-    
-    fetch(`/inventory/generate_voucher_number/?type=${encodeURIComponent(voucherType)}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.voucher_number) {
-                document.getElementById('id_voucher_number').value = data.voucher_number;
-            }
-        })
-        .catch(error => {
-            console.error('خطأ في توليد رقم الإذن:', error);
-        });
-}
-
-// عرض نافذة البحث عن المنتجات
-function showProductSearchModal(row) {
-    // استدعاء دالة showProductSearchModal المعرفة في النسخة المحسنة
-    if (typeof window.showProductSearchModal === 'function') {
-        window.showProductSearchModal(row);
-    } else {
-        console.error('لم يتم تحميل دالة البحث المتقدم عن المنتجات');
-        alert('حدث خطأ في تحميل نافذة البحث عن المنتجات');
-    }
-}
+    const voucherType =
