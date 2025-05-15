@@ -10,6 +10,6 @@ echo.
 echo اضغط Ctrl+C لإيقاف الخادم
 echo.
 
-python db_setup_very_basic.py
+python db_setup_simple.py
 
 pause

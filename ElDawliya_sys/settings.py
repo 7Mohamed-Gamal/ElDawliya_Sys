@@ -96,7 +96,6 @@ DATABASES = {
             'Trusted_Connection': 'no',
         },
     },
-    },
     'primary': {
         'ENGINE': 'mssql',
         'NAME': 'ElDawliya_Sys',
