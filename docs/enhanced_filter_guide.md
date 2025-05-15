@@ -1,6 +1,6 @@
 # دليل إضافة ميزة الفلترة المحسنة
 
-## الوصف
+## الوصف 
 هذا الدليل يشرح كيفية إضافة ميزة البحث المرن للأصناف في نماذج الإذونات، مما يتيح للمستخدمين البحث عن الأصناف حسب:
 - كود الصنف
 - اسم الصنف
@@ -13,32 +13,43 @@
 - فلترة حسب وحدة القياس
 - واجهة مستخدم محسنة وسريعة الاستجابة
 - خاصية تحميل تلقائي للتصنيفات ووحدات القياس
+- عداد لنتائج البحث
 
 ## طريقة الإضافة
 
-### الطريقة 1: استخدام ملف التضمين (الأسهل)
-1. افتح ملف `inventory/templates/inventory/voucher_form.html`
-2. أضف السطر التالي قبل نهاية كتلة `{% block extra_js %}`
+### الطريقة الموصى بها (بدون تعديل قوالب Django)
+لتجنب أي تعارض محتمل مع قوالب Django، نوصي باستخدام هذه الطريقة البسيطة والآمنة:
+
+1. افتح ملف `voucher_form.html` بمحرر نصوص (بدون تعديل قوالب Django)
+
+2. ابحث عن السطر الذي يحتوي على `</body>` (نهاية الصفحة)
+
+3. **قبل** علامة `</body>` مباشرة، أضف السطر التالي:
 
 ```html
-{% include 'inventory/includes/filter_scripts.html' %}
+<script src="/static/inventory/js/direct_filter.js"></script>
 ```
 
-3. قم بحفظ الملف وإعادة تحميل الصفحة
+4. احفظ الملف وقم بتحديث الصفحة
 
-هذه الطريقة ستقوم تلقائياً بتحميل جميع الملفات اللازمة وتعطيل النصوص البرمجية القديمة.
+هذه الطريقة لا تتعارض مع قوالب Django ولا تسبب أي خطأ في الصفحة.
 
-### الطريقة 2: التثبيت اليدوي
-1. افتح ملف `inventory/templates/inventory/voucher_form.html`
-2. أضف السطور التالية قبل نهاية كتلة `{% block extra_js %}`
+### الطريقة اليدوية المباشرة (للمطورين المتقدمين)
 
-```html
-<script src="{% static 'inventory/js/api_patch.js' %}"></script>
-<script src="{% static 'inventory/js/product_search_enhanced.js' %}"></script>
-<script src="{% static 'inventory/js/filter_installer.js' %}"></script>
+إذا كنت ترغب في إضافة السكريبت يدويًا داخل كتلة `{% block extra_js %}`، يمكنك استخدام الأمر التالي في نهاية الكتلة:
+
+```javascript
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // إنشاء وإضافة سكريبت الفلترة المحسنة
+    const script = document.createElement('script');
+    script.src = '/static/inventory/js/direct_filter.js';
+    document.body.appendChild(script);
+});
+</script>
 ```
 
-3. قم بحفظ الملف وإعادة تحميل الصفحة
+ملاحظة: هذه الطريقة أكثر أمانًا من إضافة السكريبت بشكل مباشر داخل قالب Django لأنها تتجنب تعارضات الكتل والأخطاء المحتملة.
 
 ## تحري الأخطاء وإصلاحها
 

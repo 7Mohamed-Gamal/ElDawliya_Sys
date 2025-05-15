@@ -1,0 +1,45 @@
+{% extends "inventory/base_inventory.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}
+{% if form.instance.voucher_number %}
+    {% trans "تعديل إذن" %}: {{ form.instance.voucher_number }}
+{% else %}
+    {% if voucher_type == 'إذن اضافة' %}
+        {% trans "إضافة إذن اضافة جديد" %}
+    {% elif voucher_type == 'إذن صرف' %}
+        {% trans "إضافة إذن صرف جديد" %}
+    {% elif voucher_type == 'اذن مرتجع عميل' %}
+        {% trans "إضافة إذن مرتجع عميل جديد" %}
+    {% elif voucher_type == 'إذن مرتجع مورد' %}
+        {% trans "إضافة إذن مرتجع مورد جديد" %}
+    {% else %}
+        {% trans "إضافة إذن جديد" %}
+    {% endif %}
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<!-- محتوى الصفحة الأصلي بدون تغيير -->
+<!-- Original page content unchanged -->
+{% endblock %}
+
+{% block extra_js %}
+<!-- 
+  ملاحظة: هذا مجرد مثال توضيحي يعرض كيفية إضافة ميزة الفلترة المحسنة.
+  هذا المثال يحتفظ فقط بجزء block extra_js، يجب عدم استبدال المحتوى الأصلي بالكامل،
+  بل إضافة السكريبت الجديد فقط في نهاية كتلة extra_js.
+-->
+<!-- السكريبتات الأصلية -->
+<script src="{% static 'inventory/js/voucher_form.js' %}"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // كود JavaScript الأصلي للصفحة
+        // ...
+    });
+</script>
+
+<!-- إضافة سكريبت الفلترة المحسنة -->
+<script src="{% static 'inventory/js/filter_script_loader.js' %}"></script>
+{% endblock %}

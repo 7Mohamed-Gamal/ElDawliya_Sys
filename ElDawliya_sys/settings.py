@@ -55,6 +55,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'audit.middleware.AuditMiddleware',
+    'inventory.middleware.FilterScriptMiddleware',  # Middleware for enhanced filtering in inventory
 ]
 
 ROOT_URLCONF = 'ElDawliya_sys.urls'
