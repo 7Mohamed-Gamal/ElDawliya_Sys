@@ -34,10 +34,40 @@ from inventory.forms import (
     InvoiceForm, InvoiceItemForm
 )
 
+# ------------------- Helper Functions -------------------
+
+def get_low_stock_count():
+    """
+    دالة مساعدة للحصول على عدد المنتجات التي تحت الحد الأدنى
+    تستخدم في العديد من الصفحات لعرض إشعارات المخزون المنخفض
+    """
+    return Product.objects.filter(
+        quantity__lt=F('minimum_threshold'),
+        minimum_threshold__gt=0
+    ).count()
+
+def get_out_of_stock_count():
+    """
+    دالة مساعدة للحصول على عدد المنتجات غير المتوفرة (الكمية = 0)
+    """
+    return Product.objects.filter(quantity=0).count()
+
+def get_common_context():
+    """
+    دالة مساعدة للحصول على السياق المشترك المستخدم في معظم الصفحات
+    """
+    return {
+        'low_stock_count': get_low_stock_count(),
+        'out_of_stock_count': get_out_of_stock_count(),
+    }
+
 @login_required
 @inventory_module_permission_required('dashboard', 'view')
 def dashboard(request):
-    """عرض لوحة تحكم المخزن"""
+    """
+    عرض لوحة تحكم المخزن
+    تعرض إحصائيات المنتجات والأذونات والأصناف التي تحتاج إلى طلب شراء
+    """
     try:
         # إحصائيات المنتجات
         total_products = Product.objects.count()
@@ -46,7 +76,8 @@ def dashboard(request):
         low_stock_products = Product.objects.filter(
             quantity__lt=F('minimum_threshold'),
             minimum_threshold__gt=0
-        )
+        ).select_related('category', 'unit')  # تحسين الأداء باستخدام select_related
+
         low_stock_count = low_stock_products.count()
 
         # الأصناف غير المتوفرة
@@ -56,7 +87,9 @@ def dashboard(request):
         total_vouchers = Voucher.objects.count()
 
         # آخر الأذونات
-        recent_vouchers = Voucher.objects.all().order_by('-date')[:5]
+        recent_vouchers = Voucher.objects.all().order_by('-date')[:5].select_related(
+            'supplier', 'department', 'customer'
+        )  # تحسين الأداء باستخدام select_related
 
         # الأصناف التي تحتاج إلى طلب شراء
         purchase_needed_products = Product.objects.filter(
@@ -64,7 +97,7 @@ def dashboard(request):
             minimum_threshold__gt=0
         ).exclude(
             purchase_requests__status='pending'
-        )[:5]
+        ).select_related('category', 'unit')[:5]  # تحسين الأداء باستخدام select_related
 
         context = {
             'total_products': total_products,
@@ -721,7 +754,7 @@ class VoucherCreateView(CreateView):
             response = super().form_valid(form)
             voucher = self.object
 
-            # تسجيل بيانات النموذج للتشخيص
+            # Process the items that were submitted
             print(f"Voucher created: {voucher.voucher_number}, Type: {voucher.voucher_type}")
             print(f"POST data: {self.request.POST}")
 
@@ -775,7 +808,7 @@ class VoucherCreateView(CreateView):
 
                 # Create the voucher item
                 item = VoucherItem(voucher=voucher, product=product)
-                
+
                 # Set the appropriate quantity field and update product quantity based on voucher type
                 if voucher.voucher_type == 'إذن اضافة' or voucher.voucher_type == 'اذن مرتجع عميل':
                     # For addition vouchers or client return vouchers
@@ -1580,7 +1613,7 @@ class VoucherCreateView(CreateView):
 
                 # Create the voucher item
                 item = VoucherItem(voucher=voucher, product=product)
-                
+
                 # Set the appropriate quantity field and update product quantity based on voucher type
                 if voucher.voucher_type == 'إذن اضافة' or voucher.voucher_type == 'اذن مرتجع عميل':
                     # For addition vouchers or client return vouchers
@@ -2852,36 +2885,16 @@ class UnitCreateView(CreateView):
 @method_decorator(login_required, name='dispatch')
 @inventory_class_permission_required('units', 'edit')
 class UnitUpdateView(UpdateView):
-
-        if date_to:
-            try:
-                date_to = datetime.strptime(date_to, '%Y-%m-%d').date()
-                queryset = queryset.filter(date__lte=date_to)
-            except (ValueError, TypeError):
-                pass
-
-        return queryset.order_by('-date', '-created_at')
+    model = Unit
+    form_class = UnitForm
+    template_name = 'inventory/unit_form.html'
+    success_url = reverse_lazy('inventory:unit_list')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['page_title'] = 'قائمة الأذونات'
-        context['search_query'] = self.request.GET.get('search', '')
-        context['voucher_type'] = self.request.GET.get('voucher_type', '')
-        context['date_from'] = self.request.GET.get('date_from', '')
-        context['date_to'] = self.request.GET.get('date_to', '')
-
-        # إحصائيات الأذونات
-        context['addition_count'] = Voucher.objects.filter(voucher_type='إذن اضافة').count()
-        context['disbursement_count'] = Voucher.objects.filter(voucher_type='إذن صرف').count()
-        context['client_return_count'] = Voucher.objects.filter(voucher_type='اذن مرتجع عميل').count()
-        context['supplier_return_count'] = Voucher.objects.filter(voucher_type='إذن مرتجع مورد').count()
-
+        context['page_title'] = 'تعديل وحدة القياس'
         # Add low stock count for sidebar
-        low_stock_count = Product.objects.filter(
-            quantity__lt=F('minimum_threshold'),
-            minimum_threshold__gt=0
-        ).count()
-        context['low_stock_count'] = low_stock_count
+        context['low_stock_count'] = get_low_stock_count()
 
         return context
 
@@ -3120,7 +3133,7 @@ class VoucherUpdateView(UpdateView):
 
                 # Create the voucher item
                 item = VoucherItem(voucher=voucher, product=product)
-                
+
                 # Set the appropriate quantity field and update product quantity based on voucher type
                 if voucher.voucher_type == 'إذن اضافة' or voucher.voucher_type == 'اذن مرتجع عميل':
                     # For addition vouchers or client return vouchers
@@ -3308,12 +3321,21 @@ def update_purchase_request_status(request, pk):
 @csrf_exempt
 @inventory_module_permission_required('dashboard', 'view')
 def check_low_stock(request):
-    """Check for low stock items and return them as JSON"""
+    """
+    Check for low stock items and return them as JSON
+    Esta vista API devuelve una lista de productos con bajo stock en formato JSON
+    """
+    # Verificar si el usuario tiene permisos para ver el dashboard
+    if not request.user.has_perm('inventory.view_dashboard'):
+        return JsonResponse({'error': 'No tienes permisos para acceder a esta información'}, status=403)
+
+    # Obtener productos con bajo stock
     low_stock_products = Product.objects.filter(
         quantity__lt=F('minimum_threshold'),
         minimum_threshold__gt=0
     ).values('product_id', 'name', 'quantity', 'minimum_threshold')
 
+    # Devolver como JSON
     return JsonResponse(list(low_stock_products), safe=False)
 
 @login_required
@@ -3348,62 +3370,7 @@ def generate_voucher_number(request):
 
     return JsonResponse({'voucher_number': voucher_number})
 
-@login_required
-@inventory_module_permission_required('dashboard', 'view')
-def dashboard(request):
-    """عرض لوحة تحكم المخزن"""
-    try:
-        # إحصائيات المنتجات
-        total_products = Product.objects.count()
 
-        # الأصناف التي تحت الحد الأدنى
-        low_stock_products = Product.objects.filter(
-            quantity__lt=F('minimum_threshold'),
-            minimum_threshold__gt=0
-        )
-        low_stock_count = low_stock_products.count()
-
-        # الأصناف غير المتوفرة
-        out_of_stock_count = Product.objects.filter(quantity=0).count()
-
-        # إحصائيات الأذونات
-        total_vouchers = Voucher.objects.count()
-
-        # آخر الأذونات
-        recent_vouchers = Voucher.objects.all().order_by('-date')[:5]
-
-        # الأصناف التي تحتاج إلى طلب شراء
-        purchase_needed_products = Product.objects.filter(
-            quantity__lte=F('minimum_threshold'),
-            minimum_threshold__gt=0
-        ).exclude(
-            purchase_requests__status='pending'
-        )[:5]
-
-        context = {
-            'total_products': total_products,
-            'low_stock_products': low_stock_products[:5],  # أول 5 منتجات فقط للعرض
-            'low_stock_count': low_stock_count,
-            'out_of_stock_count': out_of_stock_count,
-            'total_vouchers': total_vouchers,
-            'recent_vouchers': recent_vouchers,
-            'purchase_needed_products': purchase_needed_products
-        }
-
-        return render(request, 'inventory/dashboard.html', context)
-    except Exception as e:
-        # في حالة وجود خطأ في الاتصال بقاعدة البيانات أو أي خطأ آخر
-        messages.error(request, f'حدث خطأ: {str(e)}')
-        context = {
-            'error_message': str(e),
-            'total_products': 0,
-            'low_stock_products': [],
-            'low_stock_count': 0,
-            'out_of_stock_count': 0,
-            'total_vouchers': 0,
-            'recent_vouchers': []
-        }
-        return render(request, 'inventory/dashboard.html', context)
 
 # إدارة الأصناف (Products)
 @method_decorator(login_required, name='dispatch')

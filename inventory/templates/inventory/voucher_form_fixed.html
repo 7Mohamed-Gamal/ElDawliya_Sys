@@ -2,6 +2,54 @@
 {% load static %}
 {% load i18n %}
 
+{% block extra_css %}
+<style>
+    /* مؤشر التحميل للصفوف */
+    tr.item-row.loading {
+        position: relative;
+        opacity: 0.7;
+    }
+
+    tr.item-row.loading::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.7) url('{% static "inventory/img/loading.gif" %}') no-repeat center center;
+        background-size: 20px;
+        z-index: 1;
+    }
+
+    /* تنسيق حقول الإدخال مع الأزرار */
+    .product-code-container {
+        position: relative;
+    }
+
+    .search-product-btn, .barcode-scan-btn {
+        position: absolute;
+        top: 5px;
+        z-index: 2;
+    }
+
+    .search-product-btn {
+        right: 5px;
+    }
+
+    .barcode-scan-btn {
+        right: 40px;
+    }
+
+    /* تنسيق رسائل الخطأ */
+    .row-error-message {
+        font-size: 0.8rem;
+        color: #dc3545;
+        margin-top: 0.25rem;
+    }
+</style>
+{% endblock %}
+
 {% block title %}
 {% if form.instance.voucher_number %}
     {% trans "تعديل إذن" %}: {{ form.instance.voucher_number }}
@@ -251,8 +299,10 @@
                                         {% for item in voucher_items %}
                                             <tr class="item-row">
                                                 <td>
-                                                    <input type="text" class="form-control product-code" name="form-{{ forloop.counter0 }}-product_code" value="{{ item.product.product_id }}" required>
-                                                    <input type="hidden" class="product-id" name="form-{{ forloop.counter0 }}-product" value="{{ item.product.product_id }}">
+                                                    <div class="product-code-container">
+                                                        <input type="text" class="form-control product-code" name="form-{{ forloop.counter0 }}-product_code" value="{{ item.product.product_id }}" required>
+                                                        <input type="hidden" class="product-id" name="form-{{ forloop.counter0 }}-product" value="{{ item.product.product_id }}">
+                                                    </div>
                                                 </td>
                                                 <td>
                                                     <span class="product-name">{{ item.product.name }}</span>
@@ -299,8 +349,10 @@
 
                                         <tr class="item-row">
                                             <td>
-                                                <input type="text" class="form-control product-code" name="form-0-product_code" value="" required>
-                                                <input type="hidden" class="product-id" name="form-0-product" value="">
+                                                <div class="product-code-container">
+                                                    <input type="text" class="form-control product-code" name="form-0-product_code" value="" required>
+                                                    <input type="hidden" class="product-id" name="form-0-product" value="">
+                                                </div>
                                             </td>
                                             <td>
                                                 <span class="product-name"></span>
@@ -377,6 +429,9 @@
                                 <input type="text" id="modal-search-input" class="form-control" placeholder="البحث بالاسم أو الرقم أو التصنيف..." autocomplete="off">
                                 <button type="button" id="modal-search-btn" class="btn btn-primary">
                                     بحث
+                                </button>
+                                <button type="button" id="modal-barcode-btn" class="btn btn-secondary">
+                                    <i class="fas fa-barcode me-1"></i>مسح الباركود
                                 </button>
                             </div>
                             <div class="form-text text-muted">
@@ -464,66 +519,41 @@
         </div>
     </div>
 </div>
+
+<!-- نافذة قارئ الباركود -->
+<div class="modal fade" id="barcodeScannerModal" tabindex="-1" aria-labelledby="barcodeScannerModalLabel" aria-hidden="true" dir="rtl">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="barcodeScannerModalLabel">
+                    <i class="fas fa-barcode me-2"></i>مسح الباركود
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- قسم قارئ الباركود -->
+                <div id="barcode-scanner-container">
+                    <div class="text-center py-3">
+                        <div id="barcode-scanner-preview" class="mx-auto mb-3" style="width: 100%; max-width: 400px; height: 300px; border: 1px solid #ddd; background-color: #f8f9fa; position: relative;">
+                            <video id="barcode-scanner-video" style="width: 100%; height: 100%; object-fit: cover;"></video>
+                            <div id="barcode-scanner-loading" class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-light bg-opacity-75">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">جاري التحميل...</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-muted mb-2">ضع الباركود في منتصف الكاميرا للمسح التلقائي</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script src="{% static 'inventory/js/voucher_form.js' %}"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // تهيئة النافذة المنبثقة للبحث عن المنتجات
-        const productSearchModal = new bootstrap.Modal(document.getElementById('productSearchModal'));
-
-        // معالج بحث المنتجات
-        let currentRow = null; // لتخزين الصف الحالي الذي يتم البحث له
-        let productsCache = []; // تخزين مؤقت للمنتجات للاستخدام المستقبلي
-        let unitsCache = []; // تخزين مؤقت للوحدات للفلترة
-
-        // تحميل التصنيفات للفلتر
-        function loadCategories() {
-            fetch('/inventory/api/categories/')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        const categoryFilter = document.getElementById('modal-category-filter');
-                        categoryFilter.innerHTML = '<option value="">كل التصنيفات</option>';
-
-                        data.categories.forEach(category => {
-                            const option = document.createElement('option');
-                            option.value = category.id;
-                            option.textContent = category.name;
-                            categoryFilter.appendChild(option);
-                        });
-                    }
-                })
-                .catch(error => console.error('خطأ في تحميل التصنيفات:', error));
-        }
-
-        // تحميل وحدات القياس للفلتر
-        function loadUnits() {
-            fetch('/inventory/api/units/')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        const unitFilter = document.getElementById('modal-unit-filter');
-                        unitFilter.innerHTML = '<option value="">كل الوحدات</option>';
-
-                        // تخزين الوحدات في الذاكرة المؤقتة
-                        unitsCache = data.units;
-
-                        data.units.forEach(unit => {
-                            const option = document.createElement('option');
-                            option.value = unit.id;
-                            option.textContent = unit.name;
-                            unitFilter.appendChild(option);
-                        });
-                    }
-                })
-                .catch(error => console.error('خطأ في تحميل الوحدات:', error));
-        }
-
-        // تحميل البيانات عند تحميل الصفحة
-        loadCategories();
-        loadUnits();
-    });
-</script>
 {% endblock %}

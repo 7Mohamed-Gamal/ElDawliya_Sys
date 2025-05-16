@@ -92,6 +92,7 @@ urlpatterns = [
     path('api/search-products/', api_functions.search_products_api, name='search_products_api'),  # POST endpoint for search
     path('api/products-search/', api_functions.search_products_api, name='products_search_api'),  # Alias for the modal search
     path('api/categories/', api_functions.get_categories_api, name='categories_api'),  # For the modal category filter
+    path('api/units/', api_functions.get_units_api, name='units_api'),  # For the modal unit filter
     path('api/get-categories/', api_views.get_categories, name='get_categories'),
     path('api/get-units/', api_views.get_units, name='get_units'),
     path('api/get-suppliers/', api_views.get_suppliers, name='get_suppliers'),

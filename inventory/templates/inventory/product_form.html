@@ -92,6 +92,16 @@
         color: #f44336;
         margin-right: 4px;
     }
+
+    /* مؤشر التحميل للحقول */
+    .form-control.loading {
+        position: relative;
+        background-image: url('{% static "inventory/img/loading.gif" %}');
+        background-repeat: no-repeat;
+        background-position: left 10px center;
+        background-size: 20px;
+        padding-left: 40px;
+    }
 </style>
 {% endblock %}
 
@@ -937,4 +947,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'inventory/js/product_form.js' %}"></script>
 {% endblock %}

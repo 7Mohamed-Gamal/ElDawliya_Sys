@@ -466,64 +466,44 @@
 </div>
 {% endblock %}
 
+{% block extra_css %}
+<style>
+    /* مؤشر التحميل للصفوف */
+    tr.item-row.loading {
+        position: relative;
+        opacity: 0.7;
+    }
+
+    tr.item-row.loading::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.7) url('{% static "inventory/img/loading.gif" %}') no-repeat center center;
+        background-size: 20px;
+        z-index: 1;
+    }
+
+    /* تحسين مظهر حقول الإدخال */
+    .product-code {
+        position: relative;
+    }
+
+    /* تنسيق الصفوف عند التركيز */
+    tr.item-row:focus-within {
+        background-color: #f8f9fa;
+    }
+
+    /* تنسيق حقول الإدخال عند التركيز */
+    .product-code:focus, .quantity:focus {
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+</style>
+{% endblock %}
+
 {% block extra_js %}
 <script src="{% static 'inventory/js/voucher_form.js' %}"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // تهيئة النافذة المنبثقة للبحث عن المنتجات
-        const productSearchModal = new bootstrap.Modal(document.getElementById('productSearchModal'));
-
-        // معالج بحث المنتجات
-        let currentRow = null; // لتخزين الصف الحالي الذي يتم البحث له
-        let productsCache = []; // تخزين مؤقت للمنتجات للاستخدام المستقبلي
-        let unitsCache = []; // تخزين مؤقت للوحدات للفلترة
-
-        // تحميل التصنيفات للفلتر
-        function loadCategories() {
-            fetch('/inventory/api/categories/')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        const categoryFilter = document.getElementById('modal-category-filter');
-                        categoryFilter.innerHTML = '<option value="">كل التصنيفات</option>';
-
-                        data.categories.forEach(category => {
-                            const option = document.createElement('option');
-                            option.value = category.id;
-                            option.textContent = category.name;
-                            categoryFilter.appendChild(option);
-                        });
-                    }
-                })
-                .catch(error => console.error('خطأ في تحميل التصنيفات:', error));
-        }
-
-        // تحميل وحدات القياس للفلتر
-        function loadUnits() {
-            fetch('/inventory/api/units/')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        const unitFilter = document.getElementById('modal-unit-filter');
-                        unitFilter.innerHTML = '<option value="">كل الوحدات</option>';
-
-                        // تخزين الوحدات في الذاكرة المؤقتة
-                        unitsCache = data.units;
-
-                        data.units.forEach(unit => {
-                            const option = document.createElement('option');
-                            option.value = unit.id;
-                            option.textContent = unit.name;
-                            unitFilter.appendChild(option);
-                        });
-                    }
-                })
-                .catch(error => console.error('خطأ في تحميل الوحدات:', error));
-        }
-
-        // تحميل البيانات عند تحميل الصفحة
-        loadCategories();
-        loadUnits();
-    });
-</script>
 {% endblock %}

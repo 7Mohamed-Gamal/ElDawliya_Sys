@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 import json
 
-from inventory.models_local import Product, Category
+from inventory.models_local import Product, Category, Unit
 
 @login_required
 @csrf_exempt
@@ -28,14 +28,21 @@ def product_details_api(request):
                 # محاولة العثور على المنتج بالكود المحدد
                 product = Product.objects.get(product_id=product_code)
 
-                # إعداد بيانات المنتج للإرجاع
+                # إعداد بيانات المنتج للإرجاع بشكل مفصل
                 product_data = {
                     'id': product.product_id,
                     'name': product.name,
-                    'quantity': float(product.quantity),
-                    'unit_name': product.unit.name if product.unit else '',
-                    'unit_price': float(product.unit_price),
+                    'description': product.description or '',
                     'category': product.category.name if product.category else '',
+                    'category_id': product.category.id if product.category else None,
+                    'unit_name': product.unit.name if product.unit else '',
+                    'unit_id': product.unit.id if product.unit else None,
+                    'initial_quantity': float(product.initial_quantity),
+                    'quantity': float(product.quantity),
+                    'minimum_threshold': float(product.minimum_threshold),
+                    'maximum_threshold': float(product.maximum_threshold),
+                    'unit_price': float(product.unit_price),
+                    'location': product.location or '',
                 }
 
                 return JsonResponse({'success': True, 'product': product_data})
@@ -121,7 +128,7 @@ def get_categories_api(request):
     try:
         # جلب جميع التصنيفات مرتبة حسب الاسم
         categories = Category.objects.all().order_by('name')
-        
+
         # تحويل النتائج إلى قائمة
         categories_list = []
         for category in categories:
@@ -129,9 +136,33 @@ def get_categories_api(request):
                 'id': category.id,
                 'name': category.name,
             })
-        
+
         return JsonResponse({'success': True, 'categories': categories_list})
-    
+
     except Exception as e:
         print(f"Error in get_categories_api: {str(e)}")
+        return JsonResponse({'success': False, 'message': f'حدث خطأ: {str(e)}'})
+
+
+@login_required
+def get_units_api(request):
+    """
+    نقطة نهاية API لجلب قائمة وحدات القياس للاستخدام في الفلترة
+    """
+    try:
+        # جلب جميع وحدات القياس مرتبة حسب الاسم
+        units = Unit.objects.all().order_by('name')
+
+        # تحويل النتائج إلى قائمة
+        units_list = []
+        for unit in units:
+            units_list.append({
+                'id': unit.id,
+                'name': unit.name,
+            })
+
+        return JsonResponse({'success': True, 'units': units_list})
+
+    except Exception as e:
+        print(f"Error in get_units_api: {str(e)}")
         return JsonResponse({'success': False, 'message': f'حدث خطأ: {str(e)}'})
