@@ -41,3 +41,36 @@ def system_settings(request):
     Alias for settings_view for backward compatibility.
     """
     return settings_view(request)
+
+
+@login_required
+@inventory_module_permission_required('settings', 'edit')
+def reset_settings(request):
+    """
+    إعادة ضبط إعدادات المخزن إلى القيم الافتراضية
+    """
+    if request.method == 'POST':
+        # الحصول على الإعدادات الحالية
+        settings = LocalSystemSettings.objects.filter(pk=1).first()
+
+        if settings:
+            # تعيين القيم الافتراضية
+            settings.primary_color = '#3f51b5'
+            settings.secondary_color = '#ff4081'
+            settings.items_per_page = 25
+            settings.compact_tables = False
+            settings.enable_stock_alerts = True
+            settings.default_min_stock_percentage = 20
+            settings.invoice_in_prefix = 'IN-'
+            settings.invoice_out_prefix = 'OUT-'
+            settings.prevent_editing_completed_invoices = True
+            settings.currency = 'EGP'
+
+            # حفظ الإعدادات
+            settings.save()
+
+            messages.success(request, 'تم إعادة ضبط الإعدادات بنجاح')
+        else:
+            messages.error(request, 'لم يتم العثور على إعدادات لإعادة ضبطها')
+
+    return redirect('inventory:settings')

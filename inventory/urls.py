@@ -103,6 +103,7 @@ urlpatterns = [
 
     # إعدادات النظام
     path('settings/', settings_views.settings_view, name='settings'),
+    path('settings/reset/', settings_views.reset_settings, name='reset_settings'),
     path('system-settings/', settings_views.system_settings, name='system_settings'),  # للتوافق مع الروابط القديمة
 
     # صفحات التشخيص والاختبار

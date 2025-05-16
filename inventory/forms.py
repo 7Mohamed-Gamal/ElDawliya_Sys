@@ -234,13 +234,49 @@ class PurchaseRequestForm(forms.ModelForm):
 class LocalSystemSettingsForm(forms.ModelForm):
     class Meta:
         model = LocalSystemSettings
-        fields = ['company_name', 'company_logo', 'company_address', 'company_phone', 'company_email']
+        fields = [
+            # معلومات الشركة
+            'company_name', 'company_logo', 'company_address', 'company_phone', 'company_email',
+            # إعدادات واجهة المستخدم
+            'primary_color', 'secondary_color', 'items_per_page', 'compact_tables', 'currency',
+            # إعدادات المخزون
+            'enable_stock_alerts', 'default_min_stock_percentage',
+            # إعدادات الفواتير
+            'invoice_in_prefix', 'invoice_out_prefix', 'prevent_editing_completed_invoices'
+        ]
         widgets = {
+            # معلومات الشركة
             'company_name': forms.TextInput(attrs={'class': 'form-control'}),
             'company_logo': forms.FileInput(attrs={'class': 'form-control'}),
             'company_address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'company_phone': forms.TextInput(attrs={'class': 'form-control'}),
             'company_email': forms.EmailInput(attrs={'class': 'form-control'}),
+
+            # إعدادات واجهة المستخدم
+            'primary_color': forms.TextInput(attrs={'class': 'form-control', 'type': 'color'}),
+            'secondary_color': forms.TextInput(attrs={'class': 'form-control', 'type': 'color'}),
+            'items_per_page': forms.Select(attrs={'class': 'form-select'}, choices=[
+                (10, '10'),
+                (25, '25'),
+                (50, '50'),
+                (100, '100'),
+            ]),
+            'compact_tables': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'currency': forms.Select(attrs={'class': 'form-select'}, choices=[
+                ('EGP', 'جنيه مصري (ج.م)'),
+                ('USD', 'دولار أمريكي ($)'),
+                ('EUR', 'يورو (€)'),
+                ('SAR', 'ريال سعودي (ر.س)'),
+            ]),
+
+            # إعدادات المخزون
+            'enable_stock_alerts': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'default_min_stock_percentage': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'max': '100'}),
+
+            # إعدادات الفواتير
+            'invoice_in_prefix': forms.TextInput(attrs={'class': 'form-control'}),
+            'invoice_out_prefix': forms.TextInput(attrs={'class': 'form-control'}),
+            'prevent_editing_completed_invoices': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
 class InvoiceForm(forms.ModelForm):

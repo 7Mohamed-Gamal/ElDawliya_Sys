@@ -12,21 +12,21 @@
         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
         margin-bottom: 1.5rem;
     }
-    
+
     .settings-card .card-header {
         background-image: linear-gradient(to left, var(--primary-color), var(--secondary-color));
         color: white;
         padding: 1rem 1.25rem;
         border: none;
     }
-    
+
     .settings-card .card-header h5 {
         margin-bottom: 0;
         font-weight: 600;
         display: flex;
         align-items: center;
     }
-    
+
     .settings-card .card-header .card-icon {
         display: inline-flex;
         align-items: center;
@@ -38,19 +38,19 @@
         color: var(--primary-color);
         margin-left: 10px;
     }
-    
+
     .form-section {
         margin-bottom: 1.5rem;
         padding-bottom: 1.5rem;
         border-bottom: 1px solid #e9ecef;
     }
-    
+
     .form-section:last-child {
         border-bottom: none;
         padding-bottom: 0;
         margin-bottom: 0;
     }
-    
+
     .section-title {
         margin-bottom: 1rem;
         font-weight: 600;
@@ -58,17 +58,17 @@
         align-items: center;
         color: var(--primary-color);
     }
-    
+
     .section-title i {
         margin-left: 0.5rem;
     }
-    
+
     .form-help {
         font-size: 0.85rem;
         color: #6c757d;
         margin-top: 0.3rem;
     }
-    
+
     .toggle-switch {
         position: relative;
         display: inline-block;
@@ -76,7 +76,7 @@
         height: 24px;
     }
 
-    .toggle-switch input { 
+    .toggle-switch input {
         opacity: 0;
         width: 0;
         height: 0;
@@ -113,7 +113,7 @@
     input:checked + .toggle-slider:before {
         transform: translateX(-26px);
     }
-    
+
     .color-preview {
         width: 30px;
         height: 30px;
@@ -133,16 +133,16 @@
                 <i class="fas fa-cog me-2 text-primary"></i>
                 إعدادات النظام
             </h4>
-            
+
             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#resetSettingsModal">
                 <i class="fas fa-redo ms-1"></i>
                 إعادة ضبط
             </button>
         </div>
-        
+
         <form method="post" action="{% url 'inventory:settings' %}" enctype="multipart/form-data">
             {% csrf_token %}
-            
+
             <div class="row">
                 <!-- إعدادات المخزون -->
                 <div class="col-md-6">
@@ -161,7 +161,7 @@
                                     <i class="fas fa-exclamation-triangle"></i>
                                     تنبيهات المخزون
                                 </h6>
-                                
+
                                 <div class="mb-3">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <label class="form-label mb-0">تفعيل تنبيهات المخزون</label>
@@ -172,7 +172,7 @@
                                     </div>
                                     <div class="form-help">تنبيهات تلقائية عند انخفاض المخزون أو نفاده</div>
                                 </div>
-                                
+
                                 <div class="mb-3">
                                     <label class="form-label">نسبة الحد الأدنى الافتراضية</label>
                                     <div class="input-group">
@@ -182,25 +182,25 @@
                                     <div class="form-help">نسبة الحد الأدنى من الكمية الأصلية المحددة للمنتج</div>
                                 </div>
                             </div>
-                            
+
                             <div class="form-section">
                                 <h6 class="section-title">
                                     <i class="fas fa-file-invoice"></i>
                                     إعدادات الفواتير
                                 </h6>
-                                
+
                                 <div class="mb-3">
                                     <label class="form-label">بادئة أرقام فواتير التوريد</label>
                                     <input type="text" class="form-control" name="invoice_in_prefix" value="{{ settings.invoice_in_prefix }}">
                                     <div class="form-help">مثال: IN-</div>
                                 </div>
-                                
+
                                 <div class="mb-3">
                                     <label class="form-label">بادئة أرقام فواتير الصرف</label>
                                     <input type="text" class="form-control" name="invoice_out_prefix" value="{{ settings.invoice_out_prefix }}">
                                     <div class="form-help">مثال: OUT-</div>
                                 </div>
-                                
+
                                 <div class="mb-3">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <label class="form-label mb-0">منع تعديل الفواتير المكتملة</label>
@@ -214,7 +214,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- إعدادات واجهة المستخدم -->
                 <div class="col-md-6">
                     <div class="settings-card">
@@ -232,7 +232,7 @@
                                     <i class="fas fa-paint-brush"></i>
                                     التخصيص
                                 </h6>
-                                
+
                                 <div class="mb-3">
                                     <label class="form-label">اللون الأساسي</label>
                                     <div class="d-flex align-items-center">
@@ -240,7 +240,7 @@
                                         <input type="color" class="form-control form-control-color" name="primary_color" value="{{ settings.primary_color }}">
                                     </div>
                                 </div>
-                                
+
                                 <div class="mb-3">
                                     <label class="form-label">اللون الثانوي</label>
                                     <div class="d-flex align-items-center">
@@ -249,13 +249,13 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <div class="form-section">
                                 <h6 class="section-title">
                                     <i class="fas fa-table"></i>
                                     عرض الجداول
                                 </h6>
-                                
+
                                 <div class="mb-3">
                                     <label class="form-label">عدد العناصر في الصفحة</label>
                                     <select class="form-select" name="items_per_page">
@@ -265,7 +265,7 @@
                                         <option value="100" {% if settings.items_per_page == 100 %}selected{% endif %}>100</option>
                                     </select>
                                 </div>
-                                
+
                                 <div class="mb-3">
                                     <div class="d-flex justify-content-between align-items-center">
                                         <label class="form-label mb-0">وضع العرض المضغوط</label>
@@ -277,17 +277,57 @@
                                     <div class="form-help">صفوف أضيق في الجداول لعرض المزيد من البيانات</div>
                                 </div>
                             </div>
-                            
+
                             <div class="form-section">
                                 <h6 class="section-title">
                                     <i class="fas fa-language"></i>
                                     خيارات اللغة
                                 </h6>
-                                
+
                                 <div class="mb-3">
                                     <label class="form-label">العملة</label>
                                     <select class="form-select" name="currency">
                                         <option value="EGP" {% if settings.currency == 'EGP' %}selected{% endif %}>جنيه مصري (ج.م)</option>
                                         <option value="USD" {% if settings.currency == 'USD' %}selected{% endif %}>دولار أمريكي ($)</option>
                                         <option value="EUR" {% if settings.currency == 'EUR' %}selected{% endif %}>يورو (€)</option>
-                                        <option value="SAR" {% if settings.currency == 'SAR' %}selected{% endif %}>ريال سعود
+                                        <option value="SAR" {% if settings.currency == 'SAR' %}selected{% endif %}>ريال سعودي (ر.س)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end mt-4">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save ms-1"></i>
+                    حفظ الإعدادات
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal إعادة ضبط الإعدادات -->
+<div class="modal fade" id="resetSettingsModal" tabindex="-1" aria-labelledby="resetSettingsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resetSettingsModalLabel">تأكيد إعادة ضبط الإعدادات</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                هل أنت متأكد من رغبتك في إعادة ضبط جميع الإعدادات إلى القيم الافتراضية؟
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <form method="post" action="{% url 'inventory:reset_settings' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">إعادة ضبط</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

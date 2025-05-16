@@ -185,11 +185,28 @@ class PurchaseRequest(models.Model):
         verbose_name_plural = _("طلبات الشراء")
 
 class LocalSystemSettings(models.Model):
+    # معلومات الشركة
     company_name = models.CharField(max_length=100, verbose_name=_("اسم الشركة"))
     company_logo = models.ImageField(upload_to="settings/", blank=True, null=True, verbose_name=_("شعار الشركة"))
     company_address = models.TextField(blank=True, null=True, verbose_name=_("عنوان الشركة"))
     company_phone = models.CharField(max_length=20, blank=True, null=True, verbose_name=_("رقم هاتف الشركة"))
     company_email = models.EmailField(blank=True, null=True, verbose_name=_("البريد الإلكتروني للشركة"))
+
+    # إعدادات واجهة المستخدم
+    primary_color = models.CharField(max_length=20, default='#3f51b5', verbose_name=_("اللون الأساسي"))
+    secondary_color = models.CharField(max_length=20, default='#ff4081', verbose_name=_("اللون الثانوي"))
+    items_per_page = models.IntegerField(default=25, verbose_name=_("عدد العناصر في الصفحة"))
+    compact_tables = models.BooleanField(default=False, verbose_name=_("وضع العرض المضغوط"))
+    currency = models.CharField(max_length=10, default='EGP', verbose_name=_("العملة"))
+
+    # إعدادات المخزون
+    enable_stock_alerts = models.BooleanField(default=True, verbose_name=_("تفعيل تنبيهات المخزون"))
+    default_min_stock_percentage = models.IntegerField(default=20, verbose_name=_("نسبة الحد الأدنى الافتراضية"))
+
+    # إعدادات الفواتير
+    invoice_in_prefix = models.CharField(max_length=10, default='IN-', verbose_name=_("بادئة أرقام فواتير التوريد"))
+    invoice_out_prefix = models.CharField(max_length=10, default='OUT-', verbose_name=_("بادئة أرقام فواتير الصرف"))
+    prevent_editing_completed_invoices = models.BooleanField(default=True, verbose_name=_("منع تعديل الفواتير المكتملة"))
 
     def __str__(self):
         return self.company_name

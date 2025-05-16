@@ -11,12 +11,12 @@
         border-radius: 10px;
         overflow: hidden;
     }
-    
+
     .user-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
     }
-    
+
     .user-avatar {
         width: 40px;
         height: 40px;
@@ -28,7 +28,7 @@
         font-weight: 600;
         color: #495057;
     }
-    
+
     .role-badge {
         padding: 0.25rem 0.75rem;
         border-radius: 20px;
@@ -36,16 +36,16 @@
         display: inline-block;
         margin: 0.25rem;
     }
-    
+
     .pagination .page-item.active .page-link {
         background-color: #0d6efd;
         border-color: #0d6efd;
     }
-    
+
     .pagination .page-link {
         color: #0d6efd;
     }
-    
+
     /* Navigation path */
     .rbac-nav-path {
         background-color: #f8f9fa;
@@ -53,32 +53,32 @@
         padding: 10px 15px;
         margin-bottom: 20px;
     }
-    
+
     .rbac-nav-path a {
         color: #6c757d;
         text-decoration: none;
         transition: all 0.2s ease;
     }
-    
+
     .rbac-nav-path a:hover {
         color: #0d6efd;
     }
-    
+
     .rbac-nav-path .separator {
         margin: 0 8px;
         color: #adb5bd;
     }
-    
+
     /* Animations */
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
     }
-    
+
     .fade-in {
         animation: fadeIn 0.5s ease forwards;
     }
-    
+
     .delay-1 { animation-delay: 0.1s; }
     .delay-2 { animation-delay: 0.2s; }
 </style>
@@ -152,7 +152,12 @@
         <div class="card-header bg-light">
             <div class="d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">قائمة المستخدمين</h5>
-                <span class="badge bg-primary">{{ users.count }} مستخدم</span>
+                <div>
+                    <a href="{% url 'accounts:create_user' %}" class="btn btn-success btn-sm me-2">
+                        <i class="fas fa-user-plus me-1"></i> إضافة مستخدم جديد
+                    </a>
+                    <span class="badge bg-primary">{{ users.count }} مستخدم</span>
+                </div>
             </div>
         </div>
         <div class="card-body">
@@ -230,7 +235,7 @@
                     </tbody>
                 </table>
             </div>
-            
+
             <!-- Pagination -->
             {% if is_paginated %}
             <div class="d-flex justify-content-center mt-4">
@@ -248,7 +253,7 @@
                                 </a>
                             </li>
                         {% endif %}
-                        
+
                         {% for i in paginator.page_range %}
                             {% if page_obj.number == i %}
                                 <li class="page-item active">
@@ -260,7 +265,7 @@
                                 </li>
                             {% endif %}
                         {% endfor %}
-                        
+
                         {% if page_obj.has_next %}
                             <li class="page-item">
                                 <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="Next">
@@ -289,29 +294,29 @@ $(document).ready(function() {
     $('#userSearch').on('input', function() {
         filterUsers();
     });
-    
+
     // Role filter
     $('#roleFilter').on('change', function() {
         filterUsers();
     });
-    
+
     function filterUsers() {
         const searchTerm = $('#userSearch').val().toLowerCase();
         const roleFilter = $('#roleFilter').val();
-        
+
         $('.user-row').each(function() {
             const username = $(this).data('username').toLowerCase();
             const email = $(this).data('email').toLowerCase();
             const roles = $(this).data('roles').toLowerCase();
-            
+
             // Check if user matches search term
-            const matchesSearch = username.includes(searchTerm) || 
+            const matchesSearch = username.includes(searchTerm) ||
                                   email.includes(searchTerm);
-            
+
             // Check if user has selected role
-            const matchesRole = roleFilter === '' || 
+            const matchesRole = roleFilter === '' ||
                                roles.includes(roleFilter.toLowerCase());
-            
+
             // Show/hide row based on filters
             $(this).toggle(matchesSearch && matchesRole);
         });
