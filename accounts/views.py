@@ -183,7 +183,18 @@ def create_user_view(request):
             return redirect('accounts:dashboard')
     else:
         form = CustomUserCreationForm()
-    return render(request, 'accounts/create_user.html', {'form': form})
+
+    # Use the administrator template instead of the accounts template
+    from django.contrib.auth.models import Group
+    groups = Group.objects.all()
+
+    context = {
+        'form': form,
+        'groups': groups,
+        'system_settings': {'system_name': 'نظام الدولية'}
+    }
+
+    return render(request, 'administrator/user_create.html', context)
 
 @login_required
 def edit_user_permissions_view(request, user_id):
