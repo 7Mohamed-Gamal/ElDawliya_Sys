@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from django.utils import timezone
 from django.db.models import Count, Q
@@ -8,11 +8,10 @@ from datetime import datetime, timedelta
 
 from .models import TaskCategory, EmployeeTask, TaskStep, TaskReminder
 from .forms import TaskCategoryForm, EmployeeTaskForm, TaskStepForm, TaskReminderForm, TaskFilterForm
-from .decorators import employee_tasks_module_permission_required, has_employee_tasks_permission, can_access_task
 
 # Dashboard Views
 @login_required
-@employee_tasks_module_permission_required('dashboard', 'view')
+@permission_required('employee_tasks.view_employeetask', raise_exception=True)
 def dashboard(request):
     """
     عرض لوحة تحكم مهام الموظفين
@@ -105,7 +104,7 @@ def dashboard(request):
 
 # Task List Views
 @login_required
-@employee_tasks_module_permission_required('tasks', 'view')
+@permission_required('employee_tasks.view_employeetask', raise_exception=True)
 def task_list(request):
     """
     عرض قائمة المهام
@@ -165,7 +164,7 @@ def task_list(request):
     return render(request, 'employee_tasks/task_list.html', context)
 
 @login_required
-@employee_tasks_module_permission_required('my_tasks', 'view')
+@permission_required('employee_tasks.view_employeetask', raise_exception=True)
 def my_tasks(request):
     """
     عرض مهام المستخدم الحالي
@@ -220,7 +219,7 @@ def my_tasks(request):
     return render(request, 'employee_tasks/task_list.html', context)
 
 @login_required
-@employee_tasks_module_permission_required('tasks', 'view')
+@permission_required('employee_tasks.view_employeetask', raise_exception=True)
 def assigned_tasks(request):
     """
     عرض المهام المسندة إلى المستخدم الحالي
@@ -276,13 +275,14 @@ def assigned_tasks(request):
 
 # Task Detail Views
 @login_required
-@can_access_task
-def task_detail(request, pk, task=None):
+def task_detail(request, pk):
     """
     عرض تفاصيل المهمة
     """
-    # المهمة تم تمريرها من المزخرف can_access_task
-    task = task
+    task = get_object_or_404(EmployeeTask, pk=pk)
+    if not (request.user.is_superuser or request.user == task.created_by or request.user == task.assigned_to):
+        messages.error(request, "ليس لديك صلاحية للوصول إلى هذه المهمة")
+        return redirect('employee_tasks:dashboard')
 
     # الحصول على خطوات المهمة
     steps = task.steps.all().order_by('created_at')
@@ -322,7 +322,7 @@ def task_detail(request, pk, task=None):
 
 # Task Create/Edit Views
 @login_required
-@employee_tasks_module_permission_required('tasks', 'add')
+@permission_required('employee_tasks.add_employeetask', raise_exception=True)
 def task_create(request):
     """
     إنشاء مهمة جديدة
@@ -346,13 +346,14 @@ def task_create(request):
     return render(request, 'employee_tasks/task_form.html', context)
 
 @login_required
-@can_access_task
-def task_edit(request, pk, task=None):
+def task_edit(request, pk):
     """
     تعديل مهمة موجودة
     """
-    # المهمة تم تمريرها من المزخرف can_access_task
-    task = task
+    task = get_object_or_404(EmployeeTask, pk=pk)
+    if not (request.user.is_superuser or request.user == task.created_by):
+        messages.error(request, "ليس لديك صلاحية لتعديل هذه المهمة")
+        return redirect('employee_tasks:dashboard')
 
     if request.method == 'POST':
         form = EmployeeTaskForm(request.POST, instance=task, user=request.user)
@@ -372,13 +373,14 @@ def task_edit(request, pk, task=None):
     return render(request, 'employee_tasks/task_form.html', context)
 
 @login_required
-@can_access_task
-def task_delete(request, pk, task=None):
+def task_delete(request, pk):
     """
     حذف مهمة
     """
-    # المهمة تم تمريرها من المزخرف can_access_task
-    task = task
+    task = get_object_or_404(EmployeeTask, pk=pk)
+    if not (request.user.is_superuser or request.user == task.created_by):
+        messages.error(request, "ليس لديك صلاحية لحذف هذه المهمة")
+        return redirect('employee_tasks:dashboard')
 
     if request.method == 'POST':
         task.delete()
@@ -581,7 +583,7 @@ def category_delete(request, pk):
 
 # Calendar View
 @login_required
-@employee_tasks_module_permission_required('calendar', 'view')
+@permission_required('employee_tasks.view_employeetask', raise_exception=True)
 def calendar(request):
     """
     عرض تقويم المهام
@@ -605,7 +607,7 @@ def calendar(request):
 
 # Analytics View
 @login_required
-@employee_tasks_module_permission_required('analytics', 'view')
+@permission_required('employee_tasks.view_employeetask', raise_exception=True)
 def analytics(request):
     """
     عرض تحليلات المهام
