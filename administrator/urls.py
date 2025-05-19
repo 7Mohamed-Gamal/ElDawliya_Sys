@@ -27,8 +27,4 @@ urlpatterns = [
     path('modules/<int:pk>/delete/', views.ModuleDeleteView.as_view(), name='module_delete'),
 
     # Helpers
-    path('url-paths-helper/', views.url_paths_helper, name='url_paths_helper'),
-    path('template-paths-helper/', views.template_paths_helper, name='template_paths_helper'),
-    path('create-modules-from-paths/', views.create_modules_from_paths, name='create_modules_from_paths'),
-    path('create-templates-from-paths/', views.create_templates_from_paths, name='create_templates_from_paths'),
 ]

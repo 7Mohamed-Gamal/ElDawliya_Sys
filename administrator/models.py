@@ -1,52 +1,35 @@
 from django.db import models
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import Group
-from django.conf import settings
-from django.db.models.signals import m2m_changed
-from django.dispatch import receiver
-
-class GroupProfile(models.Model):
-    """
-    معلومات إضافية للمجموعات.
-    """
-    group = models.OneToOneField(Group, on_delete=models.CASCADE, related_name='profile', verbose_name="المجموعة")
-    description = models.TextField(blank=True, verbose_name="وصف المجموعة")
-
-    def __str__(self):
-        return self.group.name
-
-    class Meta:
-        verbose_name = "ملف المجموعة"
-        verbose_name_plural = "ملفات المجموعات"
 
 class SystemSettings(models.Model):
     """
-    إعدادات النظام العامة التي يمكن تكوينها بواسطة المسؤول.
-    يجب أن يوجد مثيل واحد فقط من هذا النموذج (singleton).
+    System-wide settings for the application
     """
-    # إعدادات قاعدة البيانات
-    db_host = models.CharField(max_length=255, verbose_name="قاعدة البيانات - المضيف")
-    db_name = models.CharField(max_length=255, verbose_name="قاعدة البيانات - الاسم")
-    db_user = models.CharField(max_length=255, verbose_name="قاعدة البيانات - اسم المستخدم")
-    db_password = models.CharField(max_length=255, verbose_name="قاعدة البيانات - كلمة المرور")
-    db_port = models.CharField(max_length=10, default='1433', verbose_name="قاعدة البيانات - المنفذ")
+    # قاعدة البيانات
+    db_host = models.CharField(max_length=255, default='localhost', verbose_name=_('مضيف قاعدة البيانات'))
+    db_name = models.CharField(max_length=255, default='eldawliya_db', verbose_name=_('اسم قاعدة البيانات'))
+    db_user = models.CharField(max_length=255, default='root', verbose_name=_('مستخدم قاعدة البيانات'))
+    db_password = models.CharField(max_length=255, blank=True, verbose_name=_('كلمة مرور قاعدة البيانات'))
+    db_port = models.CharField(max_length=10, default='3306', verbose_name=_('منفذ قاعدة البيانات'))
 
     # معلومات الشركة
-    company_name = models.CharField(max_length=255, verbose_name="اسم الشركة")
-    company_address = models.TextField(blank=True, verbose_name="عنوان الشركة")
-    company_phone = models.CharField(max_length=50, blank=True, verbose_name="هاتف الشركة")
-    company_email = models.EmailField(blank=True, verbose_name="البريد الإلكتروني للشركة")
-    company_website = models.URLField(blank=True, verbose_name="موقع الشركة الإلكتروني")
-    company_logo = models.ImageField(upload_to='company/', blank=True, null=True, verbose_name="شعار الشركة")
+    company_name = models.CharField(max_length=255, default="الشركة الدولية", verbose_name=_('اسم الشركة'))
+    company_address = models.TextField(blank=True, verbose_name=_('عنوان الشركة'))
+    company_phone = models.CharField(max_length=20, blank=True, verbose_name=_('هاتف الشركة'))
+    company_email = models.EmailField(blank=True, verbose_name=_('البريد الإلكتروني للشركة'))
+    company_website = models.URLField(blank=True, verbose_name=_('موقع الشركة'))
+    company_logo = models.ImageField(upload_to='company_logos/', blank=True, verbose_name=_('شعار الشركة'))
 
-    # تكوين النظام
-    system_name = models.CharField(max_length=255, default="نظام الدولية", verbose_name="اسم النظام")
-    enable_debugging = models.BooleanField(default=False, verbose_name="تفعيل وضع التصحيح")
-    maintenance_mode = models.BooleanField(default=False, verbose_name="وضع الصيانة")
+    # إعدادات النظام
+    system_name = models.CharField(max_length=255, default="نظام الدولية", verbose_name=_('اسم النظام'))
+    enable_debugging = models.BooleanField(default=False, verbose_name=_('تفعيل وضع التصحيح'))
+    maintenance_mode = models.BooleanField(default=False, verbose_name=_('وضع الصيانة'))
 
     # إعدادات التاريخ والمنطقة الزمنية
-    timezone = models.CharField(max_length=50, default="Asia/Riyadh", verbose_name="المنطقة الزمنية")
-    date_format = models.CharField(max_length=50, default="Y-m-d", verbose_name="تنسيق التاريخ")
+    timezone = models.CharField(max_length=50, default="Asia/Riyadh", verbose_name=_('المنطقة الزمنية'))
+    date_format = models.CharField(max_length=50, default="Y-m-d", verbose_name=_('تنسيق التاريخ'))
 
     # إعدادات اللغة وواجهة المستخدم
     LANGUAGE_CHOICES = [
@@ -84,83 +67,16 @@ class SystemSettings(models.Model):
     text_direction = models.CharField(
         max_length=3,
         choices=DIRECTION_CHOICES,
-        default='rtl',
+        default='rtl', 
         verbose_name=_('اتجاه النص')
     )
 
-    # آخر تعديل
-    last_modified = models.DateTimeField(auto_now=True, verbose_name="آخر تعديل")
-
-    def __str__(self):
-        return "إعدادات النظام"
+    # تاريخ آخر تعديل
+    last_modified = models.DateTimeField(auto_now=True, verbose_name=_('آخر تحديث'))
 
     class Meta:
-        verbose_name = "إعدادات النظام"
-        verbose_name_plural = "إعدادات النظام"
-
-    @classmethod
-    def get_settings(cls):
-        settings = cls.objects.first()
-        if not settings:
-            settings = cls.objects.create()
-        return settings
-
-
-class Department(models.Model):
-    """
-    الأقسام التي تظهر في شريط التنقل الجانبي.
-    """
-    name = models.CharField(max_length=100, verbose_name="اسم القسم")
-    icon = models.CharField(max_length=50, verbose_name="أيقونة القسم",
-                           help_text="اسم الأيقونة من Font Awesome مثال: fa-user")
-    url_name = models.CharField(max_length=100, verbose_name="اسم الرابط",
-                               help_text="الاسم المستخدم في الروابط")
-    description = models.CharField(max_length=255, blank=True, verbose_name="وصف القسم")
-    is_active = models.BooleanField(default=True, verbose_name="نشط")
-    order = models.IntegerField(default=0, verbose_name="الترتيب")
-    require_admin = models.BooleanField(default=False, verbose_name="يتطلب صلاحيات المدير")
-    groups = models.ManyToManyField(Group, blank=True, related_name='allowed_departments', verbose_name="المجموعات المسموح لها")
+        verbose_name = _('إعدادات النظام')
+        verbose_name_plural = _('إعدادات النظام')
 
     def __str__(self):
-        return self.name
-
-    class Meta:
-        verbose_name = "القسم"
-        verbose_name_plural = "الأقسام"
-        ordering = ['order']
-
-
-class Module(models.Model):
-    """
-    الوحدات (الميزات/الروابط) المتاحة داخل كل قسم.
-    """
-    department = models.ForeignKey(Department, on_delete=models.CASCADE,
-                                  related_name='modules', verbose_name="القسم")
-    name = models.CharField(max_length=100, verbose_name="اسم الوحدة")
-    icon = models.CharField(max_length=50, verbose_name="أيقونة الوحدة")
-    url = models.CharField(max_length=255, verbose_name="رابط الوحدة")
-    description = models.CharField(max_length=255, blank=True, verbose_name="وصف الوحدة")
-    is_active = models.BooleanField(default=True, verbose_name="نشط")
-    order = models.IntegerField(default=0, verbose_name="الترتيب")
-    bg_color = models.CharField(max_length=20, default="#3498db", verbose_name="لون الخلفية")
-    require_admin = models.BooleanField(default=False, verbose_name="يتطلب صلاحيات المدير")
-    groups = models.ManyToManyField(Group, blank=True, related_name='allowed_modules', verbose_name="المجموعات المسموح لها")
-
-    def __str__(self):
-        return f"{self.department.name} - {self.name}"
-
-    class Meta:
-        verbose_name = "الوحدة"
-        verbose_name_plural = "الوحدات"
-        ordering = ['department__order', 'order']
-
-
-
-
-
-
-
-
-
-
-# Custom permission signal handlers removed as per user request to use only Django's basic permissions
+        return f"{self.system_name} ({self.company_name})"

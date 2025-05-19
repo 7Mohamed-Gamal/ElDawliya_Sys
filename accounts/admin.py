@@ -7,10 +7,10 @@ from ElDawliya_sys.admin_site import admin_site
 # Removed @admin.register decorator to avoid double registration
 class CustomUserAdmin(UserAdmin):
     list_display = ['username', 'email', 'first_name', 'last_name', 'IsActive', 'Role']
-    list_filter = ['Role', 'IsActive', 'is_staff', 'is_superuser']
+    list_filter = ['Role', 'is_active', 'is_staff', 'is_superuser']
     fieldsets = (
         (None, {'fields': ('username', 'password')}),
-        ('الوظيفة والصلاحيات', {'fields': ('Role', 'IsActive', 'is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
+        ('الوظيفة والصلاحيات', {'fields': ('Role', 'is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
         ('البيانات الشخصية', {'fields': ('first_name', 'last_name', 'email')}),
     )
     search_fields = ['username', 'email', 'first_name', 'last_name']

@@ -4,76 +4,21 @@ This replaces the custom permission system with Django's built-in permissions.
 """
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import Q
 import logging
 
 logger = logging.getLogger(__name__)
 
-def is_admin(user):
-    """
-    Check if user is an admin.
-    
-    Args:
-        user: User object
-        
-    Returns:
-        bool: True if user is an admin, False otherwise
-    """
-    if not user or not user.is_authenticated:
-        return False
-    
-    return user.is_superuser or getattr(user, 'Role', '') == 'admin'
-
-def get_user_permissions(user):
-    """
-    Get all permissions for a user using Django's built-in permission system.
-    
-    Args:
-        user: User object
-        
-    Returns:
-        dict: Dictionary with user's permissions
-    """
-    if not user or not user.is_authenticated:
-        return {
-            'has_all_permissions': False,
-            'permissions': [],
-            'groups': []
-        }
-    
-    # Superusers have all permissions
-    if user.is_superuser or getattr(user, 'Role', '') == 'admin':
-        return {
-            'has_all_permissions': True,
-            'permissions': Permission.objects.all(),
-            'groups': Group.objects.all()
-        }
-    
-    # Get user's permissions
-    permissions = Permission.objects.filter(
-        Q(user=user) | Q(group__user=user)
-    ).distinct()
-    
-    # Get user's groups
-    groups = user.groups.all()
-    
-    return {
-        'has_all_permissions': False,
-        'permissions': permissions,
-        'groups': groups
-    }
-
 def get_permission_name(app_label, model_name, action):
     """
-    Get the permission name in Django's format.
+    Get the full permission name in Django's format: app_label.action_modelname
     
     Args:
         app_label: Application label (e.g., 'auth')
         model_name: Model name (e.g., 'user')
-        action: Action (e.g., 'view', 'add', 'change', 'delete')
+        action: Action name (e.g., 'view', 'add', 'change', 'delete')
         
     Returns:
-        str: Permission name in format 'app_label.action_model_name'
+        str: Full permission name
     """
     return f"{app_label}.{action}_{model_name}"
 

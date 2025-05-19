@@ -1,6 +1,7 @@
 {% extends 'base_updated.html' %}
 {% load static %}
-{% load permissions %}
+{% load i18n %}
+
 {% block title %}الصفحة الرئيسية - نظام إدارة الشركة الدولية إنترناشونال{% endblock %}
 
 {% block extra_css %}
@@ -496,45 +497,67 @@
             <h3><i class="fas fa-th-large me-2"></i> الأقسام</h3>
         </div>
         <ul class="department-list">
-            {% if is_admin %}
-                {% for dept in all_departments %}
-                    <li class="department-item" data-dept="{{ dept.url_name }}">
-                        <i class="{{ dept.icon }}"></i>
-                        <span>{{ dept.name }}</span>
-                    </li>
-                {% endfor %}
-                {% if request.user.is_superuser %}
-                    <li class="department-item" data-dept="sysadmin">
-                        <i class="fas fa-cogs"></i>
-                        <span>مدير النظام</span>
-                    </li>
-                {% endif %}
+            {% if perms.Hr.view_employee or perms.Hr.add_employee or perms.Hr.change_employee or perms.Hr.delete_employee %}
+                <li class="department-item" data-dept="hr">
+                    <i class="fas fa-users"></i>
+                    <span>الموارد البشرية</span>
+                </li>
+            {% endif %}
+
+            {% if perms.inventory.view_product or perms.inventory.add_product or perms.inventory.change_product or perms.inventory.delete_product %}
+                <li class="department-item" data-dept="warehouse">
+                    <i class="fas fa-warehouse"></i>
+                    <span>المخزن</span>
+                </li>
+            {% endif %}
+
+            {% if perms.meetings.view_meeting or perms.meetings.add_meeting or perms.meetings.change_meeting or perms.meetings.delete_meeting %}
+                <li class="department-item" data-dept="meetings">
+                    <i class="fas fa-calendar"></i>
+                    <span>الاجتماعات</span>
+                </li>
+            {% endif %}
+
+            {% if perms.tasks.view_task or perms.tasks.add_task or perms.tasks.change_task or perms.tasks.delete_task %}
+                <li class="department-item" data-dept="tasks">
+                    <i class="fas fa-tasks"></i>
+                    <span>المهام</span>
+                </li>
+            {% endif %}
+
+            {% if perms.Purchase_orders.view_purchaseorder or perms.Purchase_orders.add_purchaseorder or perms.Purchase_orders.change_purchaseorder or perms.Purchase_orders.delete_purchaseorder %}
+                <li class="department-item" data-dept="purchase">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>طلبات الشراء</span>
+                </li>
+            {% endif %}
+
+            {% if user.is_superuser %}
+                <li class="department-item" data-dept="sysadmin">
+                    <i class="fas fa-cogs"></i>
+                    <span>مدير النظام</span>
+                </li>
+            {% endif %}
+
+            {% if perms.cars.view_car or perms.cars.add_car or perms.cars.change_car or perms.cars.delete_car %}
                 <li class="department-item" data-dept="cars">
                     <i class="fas fa-car"></i>
                     <span>السيارات</span>
                 </li>
+            {% endif %}
+
+            {% if perms.notifications.view_notification %}
                 <li class="department-item" data-dept="notifications">
                     <i class="fas fa-bell"></i>
                     <span>التنبيهات</span>
                 </li>
-            {% else %}
-                {% for dept in user_departments %}
-                    <li class="department-item" data-dept="{{ dept.url_name }}">
-                        <i class="{{ dept.icon }}"></i>
-                        <span>{{ dept.name }}</span>
-                    </li>
-                {% empty %}
-                    <li class="no-departments">
-                        <i class="fas fa-exclamation-circle text-warning"></i>
-                        <span>لا توجد أقسام مسموح بها</span>
-                    </li>
-                {% endfor %}
-                {% if request.user.is_superuser %}
-                    <li class="department-item" data-dept="sysadmin">
-                        <i class="fas fa-cogs"></i>
-                        <span>مدير النظام</span>
-                    </li>
-                {% endif %}
+            {% endif %}
+
+            {% if perms.employee_tasks.view_employeetask or perms.employee_tasks.add_employeetask or perms.employee_tasks.change_employeetask or perms.employee_tasks.delete_employeetask %}
+                <li class="department-item" data-dept="employee_tasks">
+                    <i class="fas fa-user-check"></i>
+                    <span>مهام الموظفين</span>
+                </li>
             {% endif %}
         </ul>
     </nav>
@@ -1059,7 +1082,7 @@
                         <h5 class="mt-4 mb-3 border-bottom pb-2">إدارة الصلاحيات</h5>
                         <div class="row">
                             <div class="col-md-6 col-lg-4 mb-4">
-                                <a href="{% url 'administrator:permission_dashboard' %}" class="text-decoration-none">
+                                {# <a href="{% url 'administrator:permission_dashboard' %}" class="text-decoration-none"> #}
                                     <div class="card sysadmin-card">
                                         <div class="card-info">
                                             <i class="fas fa-user-shield card-icon"></i>
@@ -1070,45 +1093,14 @@
                                 </a>
                             </div>
 
-                            <div class="col-md-6 col-lg-4 mb-4">
-                                <a href="{% url 'administrator:permissions_help' %}" class="text-decoration-none">
-                                    <div class="card sysadmin-card">
-                                        <div class="card-info">
-                                            <i class="fas fa-question-circle card-icon"></i>
-                                            <p class="title">دليل الصلاحيات</p>
-                                            <p class="card-subtitle">شرح مفصل لنظام الصلاحيات</p>
-                                        </div>
-                                    </div>
-                                </a>
-                            </div>
+
                         </div>
 
                         <!-- User Management Section -->
                         <h5 class="mt-4 mb-3 border-bottom pb-2">إدارة المستخدمين</h5>
-                        <div class="row">
-                            <div class="col-md-6 col-lg-4 mb-4">
-                                <a href="{% url 'administrator:user_permission_list' %}" class="text-decoration-none">
-                                    <div class="card sysadmin-card">
-                                        <div class="card-info">
-                                            <i class="fas fa-users-cog card-icon"></i>
-                                            <p class="title">صلاحيات المستخدمين</p>
-                                            <p class="card-subtitle">إدارة صلاحيات المستخدمين</p>
-                                        </div>
-                                    </div>
-                                </a>
-                            </div>
-                            <div class="col-md-6 col-lg-4 mb-4">
-                                <a href="{% url 'administrator:group_permission_list' %}" class="text-decoration-none">
-                                    <div class="card sysadmin-card">
-                                        <div class="card-info">
-                                            <i class="fas fa-layer-group card-icon"></i>
-                                            <p class="title">صلاحيات المجموعات</p>
-                                            <p class="card-subtitle">إدارة صلاحيات مجموعات المستخدمين</p>
-                                        </div>
-                                    </div>
-                                </a>
-                            </div>
-                            <div class="col-md-6 col-lg-4 mb-4">
+                        <!-- <div class="row"> -->
+                            
+                           {% comment %} <div class="col-md-6 col-lg-4 mb-4">
                                 <a href="{% url 'administrator:user_create' %}" class="text-decoration-none">
                                     <div class="card sysadmin-card">
                                         <div class="card-info">
@@ -1118,12 +1110,13 @@
                                         </div>
                                     </div>
                                 </a>
-                            </div>
-                        </div>
+                            </div> {% endcomment %}
+                        <!-- </div> -->
 
                         <!-- Advanced Tools Section -->
                         <h5 class="mt-4 mb-3 border-bottom pb-2">أدوات متقدمة</h5>
                         <div class="row">
+                            {% comment %}
                             <div class="col-md-6 col-lg-4 mb-4">
                                 <a href="{% url 'administrator:auto_create_permissions' %}" class="text-decoration-none">
                                     <div class="card sysadmin-card">
@@ -1135,6 +1128,7 @@
                                     </div>
                                 </a>
                             </div>
+                            {% endcomment %}
                             <div class="col-md-6 col-lg-4 mb-4">
                                 <a href="{% url 'administrator:template_permission_list' %}" class="text-decoration-none">
                                     <div class="card sysadmin-card">

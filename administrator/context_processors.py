@@ -31,47 +31,15 @@ class DefaultSystemSettings:
 
 def system_settings(request):
     """
-    Context processor to make system settings available to all templates.
-    Handles the case when the database table doesn't exist yet.
+    Makes system settings available to all templates.
     """
-    # Default settings to use if anything goes wrong
-    default_settings = DefaultSystemSettings()
-
-    # Try to get settings from database, with multiple fallbacks
     try:
-        if not MODELS_IMPORTED:
-            logger.info("Models not imported, using default settings")
-            settings = default_settings
-        else:
-            try:
-                settings = SystemSettings.get_settings()
-                logger.info("Successfully retrieved system settings from database")
-            except Exception as e:
-                logger.warning(f"Error getting system settings: {str(e)}")
-                settings = default_settings
-    except Exception as e:
-        logger.error(f"Unexpected error in system_settings context processor: {str(e)}")
-        settings = default_settings
-
-    # Safely get attributes with defaults
-    try:
+        settings = SystemSettings.objects.first()
         return {
-            'system_settings': settings,
-            'current_language': getattr(settings, 'language', 'ar'),
-            'current_font': getattr(settings, 'font_family', 'cairo'),
-            'text_direction': getattr(settings, 'text_direction', 'rtl'),
-            'is_rtl': getattr(settings, 'text_direction', 'rtl') == 'rtl',
+            'system_settings': settings
         }
-    except Exception as e:
-        logger.error(f"Error creating context dictionary: {str(e)}")
-        # Ultimate fallback - hardcoded values
-        return {
-            'system_settings': default_settings,
-            'current_language': 'ar',
-            'current_font': 'cairo',
-            'text_direction': 'rtl',
-            'is_rtl': True,
-        }
+    except:
+        return {}
 
 def user_permissions(request):
     """

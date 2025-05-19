@@ -1,13 +1,7 @@
 from django.contrib import admin
-from ElDawliya_sys.admin_site import admin_site
-from .models import (
-    SystemSettings,
-    Department,
-    Module,
-    GroupProfile
-)
+from .models import SystemSettings
 
-# Register with custom admin site instead of default admin site
+@admin.register(SystemSettings)
 class SystemSettingsAdmin(admin.ModelAdmin):
     fieldsets = (
         ('قاعدة البيانات', {
@@ -26,29 +20,8 @@ class SystemSettingsAdmin(admin.ModelAdmin):
     readonly_fields = ['last_modified']
     list_display = ['company_name', 'system_name', 'last_modified']
 
-class DepartmentAdmin(admin.ModelAdmin):
-    list_display = ['name', 'url_name', 'is_active', 'require_admin', 'order']
-    list_filter = ['is_active', 'require_admin']
-    search_fields = ['name', 'url_name', 'description']
-    list_editable = ['is_active', 'order']
-    filter_horizontal = ['groups']
+    def has_add_permission(self, request):
+        return not SystemSettings.objects.exists() and super().has_add_permission(request)
 
-class ModuleAdmin(admin.ModelAdmin):
-    list_display = ['name', 'department', 'url', 'is_active', 'require_admin', 'order']
-    list_filter = ['department', 'is_active', 'require_admin']
-    search_fields = ['name', 'url', 'description']
-    list_editable = ['is_active', 'order']
-    filter_horizontal = ['groups']
-
-# إضافة إعدادات الإدارة للنموذج GroupProfile
-class GroupProfileAdmin(admin.ModelAdmin):
-    list_display = ['group', 'description']
-    search_fields = ['group__name', 'description']
-    list_filter = ['group']
-
-
-# تسجيل النماذج في موقع الإدارة المخصص
-admin_site.register(SystemSettings, SystemSettingsAdmin)
-admin_site.register(Department, DepartmentAdmin)
-admin_site.register(Module, ModuleAdmin)
-admin_site.register(GroupProfile, GroupProfileAdmin)
+    def has_delete_permission(self, request, obj=None):
+        return False # Prevent deletion of settings
