@@ -46,10 +46,17 @@ class CustomUserCreationForm(UserCreationForm):
         widget=forms.Select(attrs={'class': 'form-select'})
     )
     
-    IsActive = forms.BooleanField(
+    is_active = forms.BooleanField(
         label='نشط',
         required=False,
         initial=True,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+    )
+    
+    is_staff = forms.BooleanField(
+        label='موظف إداري',
+        required=False,
+        initial=False,
         widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
     )
     
@@ -65,22 +72,18 @@ class CustomUserCreationForm(UserCreationForm):
     
     class Meta:
         model = Users_Login_New
-        fields = ('username', 'first_name', 'last_name', 'email', 'IsActive', 'Role', 'password1', 'password2')
+        fields = ('username', 'first_name', 'last_name', 'email', 'is_active', 'is_staff', 'Role', 'password1', 'password2')
+        
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        # تعيين صلاحيات المستخدم بناءً على الدور
+        if self.cleaned_data.get('Role') == 'admin':
+            user.is_staff = True
+            user.is_superuser = True
+        
+        if commit:
+            user.save()
+        return user
 
 
-class UserPermissionsForm(forms.ModelForm):
-    Role = forms.ChoiceField(
-        label='الدور',
-        choices=[('admin', 'مدير'), ('employee', 'موظف')],
-        widget=forms.Select(attrs={'class': 'form-select'})
-    )
-    
-    IsActive = forms.BooleanField(
-        label='نشط',
-        required=False,
-        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
-    )
-    
-    class Meta:
-        model = Users_Login_New
-        fields = ['Role', 'IsActive']
+

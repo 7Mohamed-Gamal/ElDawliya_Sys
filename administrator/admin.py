@@ -4,8 +4,8 @@ from .models import (
     SystemSettings,
     Department,
     Module,
-    Permission,
-    TemplatePermission,
+    # Permission removed as per user request,
+    # TemplatePermission removed as per user request,
     UserGroup,
     UserDepartmentPermission,
     UserModulePermission,
@@ -20,6 +20,22 @@ from .models_new import (
     UserOperationPermission,
     UserPagePermission
 )
+
+# Import permission group models
+try:
+    from .models_permission_groups import PermissionGroup
+
+    # Register PermissionGroup with admin site
+    @admin.register(PermissionGroup)
+    class PermissionGroupAdmin(admin.ModelAdmin):
+        list_display = ['name', 'category', 'is_system', 'created_at', 'updated_at']
+        list_filter = ['category', 'is_system']
+        search_fields = ['name', 'description']
+        filter_horizontal = ['permissions']
+        readonly_fields = ['created_at', 'updated_at']
+
+except ImportError:
+    PermissionGroup = None
 
 # Register with custom admin site instead of default admin site
 class SystemSettingsAdmin(admin.ModelAdmin):
@@ -171,8 +187,9 @@ class UserPagePermissionAdmin(admin.ModelAdmin):
 admin_site.register(SystemSettings, SystemSettingsAdmin)
 admin_site.register(Department, DepartmentAdmin)
 admin_site.register(Module, ModuleAdmin)
-admin_site.register(Permission, PermissionAdmin)
-admin_site.register(TemplatePermission, TemplatePermissionAdmin)
+# Permission and TemplatePermission removed as per user request
+# admin_site.register(Permission, PermissionAdmin)
+# admin_site.register(TemplatePermission, TemplatePermissionAdmin)
 admin_site.register(UserGroup, UserGroupAdmin)
 admin_site.register(UserDepartmentPermission, UserDepartmentPermissionAdmin)
 admin_site.register(UserModulePermission, UserModulePermissionAdmin)

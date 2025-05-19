@@ -1,19 +1,18 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse
+from django.http import JsonResponse  # مستخدم في بعض الوظائف
 from .models import Meeting, Attendee
 from .forms import MeetingForm
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 from datetime import datetime, timedelta
-
-from meetings.decorators import meetings_module_permission_required
+from django.db.models import Count, Avg, Q  # مستخدم في وظيفة reports
 
 User = get_user_model()  # Get the custom user model
 
 @login_required
-# @meetings_module_permission_required('meetings', 'view')
+@permission_required('meetings.view_meeting', raise_exception=True)
 def dashboard(request):
     """عرض لوحة تحكم الاجتماعات"""
     # إحصائيات الاجتماعات
@@ -49,7 +48,7 @@ def dashboard(request):
     return render(request, 'meetings/dashboard.html', context)
 
 @login_required
-# @meetings_module_permission_required('meetings', 'view')
+@permission_required('meetings.view_meeting', raise_exception=True)
 def meeting_list(request):
     meetings = Meeting.objects.all()
 
@@ -77,7 +76,7 @@ def meeting_list(request):
     return render(request, 'meetings/meeting_list.html', {'meetings': meetings})
 
 @login_required
-# @meetings_module_permission_required('meetings', 'view')
+@permission_required('meetings.view_meeting', raise_exception=True)
 def meeting_detail(request, pk):
     meeting = get_object_or_404(Meeting, pk=pk)
 
@@ -110,11 +109,11 @@ def meeting_detail(request, pk):
         completed_percent = (completed_tasks / total_tasks) * 100
         in_progress_percent = (in_progress_tasks / total_tasks) * 100
         pending_percent = (pending_tasks / total_tasks) * 100
-    
+
     # Get task count for each attendee
     # Import Task model
     from tasks.models import Task
-    
+
     # Get all attendees with their task counts
     attendee_task_counts = []
     for attendee in meeting.attendees.all():
@@ -136,7 +135,7 @@ def meeting_detail(request, pk):
     return render(request, 'meetings/meeting_detail.html', context)
 
 @login_required
-@meetings_module_permission_required('meetings', 'add')
+@permission_required('meetings.add_meeting', raise_exception=True)
 def meeting_create(request):
     if request.method == 'POST':
         # Debug: Print POST data
@@ -278,7 +277,7 @@ def meeting_create(request):
     })
 
 @login_required
-@meetings_module_permission_required('meetings', 'edit')
+@permission_required('meetings.change_meeting', raise_exception=True)
 def meeting_edit(request, pk):
     meeting = get_object_or_404(Meeting, pk=pk)
     print(f"Editing meeting with ID: {meeting.id}, Title: {meeting.title}")
@@ -430,7 +429,7 @@ def meeting_edit(request, pk):
     })
 
 @login_required
-@meetings_module_permission_required('meetings', 'delete')
+@require_permission('delete_meetings')
 def meeting_delete(request, pk):
     meeting = get_object_or_404(Meeting, pk=pk)
     if request.method == 'POST':
@@ -440,7 +439,7 @@ def meeting_delete(request, pk):
     return redirect('meetings:detail', pk=meeting.pk)
 
 @login_required
-@meetings_module_permission_required('attendees', 'add')
+@require_permission('add_attendees')
 def add_attendee(request, pk):
     meeting = get_object_or_404(Meeting, pk=pk)
     if request.method == 'POST':
@@ -452,7 +451,7 @@ def add_attendee(request, pk):
     return redirect('meetings:detail', pk=meeting.pk)
 
 @login_required
-@meetings_module_permission_required('attendees', 'delete')
+@require_permission('delete_attendees')
 def remove_attendee(request, pk):
     meeting = get_object_or_404(Meeting, pk=pk)
     attendee_id = request.GET.get('attendee_id')
@@ -467,52 +466,52 @@ def remove_attendee(request, pk):
     return redirect('meetings:detail', pk=meeting.pk)
 
 @login_required
-@meetings_module_permission_required('meetings', 'view')
+@require_permission('view_meetings')
 def calendar_view(request):
     """عرض تقويم الاجتماعات"""
     meetings = Meeting.objects.all()
     return render(request, 'meetings/calendar.html', {'meetings': meetings})
 
 @login_required
-@meetings_module_permission_required('reports', 'view')
+@require_permission('view_reports')
 def reports(request):
     """عرض تقارير الاجتماعات"""
     # Apply filters from request parameters
     base_meetings = Meeting.objects.all()
-    
+
     # Filter by date range if provided
     date_from = request.GET.get('date_from', '')
     date_to = request.GET.get('date_to', '')
     status = request.GET.get('status', '')
     creator_id = request.GET.get('creator', '')
-    
+
     if date_from:
         base_meetings = base_meetings.filter(date__date__gte=date_from)
-    
+
     if date_to:
         base_meetings = base_meetings.filter(date__date__lte=date_to)
-    
+
     if status:
         base_meetings = base_meetings.filter(status=status)
-    
+
     if creator_id:
         base_meetings = base_meetings.filter(created_by_id=creator_id)
-    
+
     # Get status counts
     pending_count = base_meetings.filter(status='pending').count()
     completed_count = base_meetings.filter(status='completed').count()
     cancelled_count = base_meetings.filter(status='cancelled').count()
-    
+
     # Calculate monthly distribution
     from django.db.models import Count
     from django.db.models.functions import TruncMonth
-    
+
     monthly_meetings = base_meetings.annotate(
         month=TruncMonth('date')
     ).values('month').annotate(
         count=Count('id')
     ).order_by('month')
-    
+
     # Format monthly data for chart
     monthly_data = []
     for item in monthly_meetings:
@@ -522,7 +521,7 @@ def reports(request):
                 'month_name': month_name,
                 'count': item['count']
             })
-    
+
     # If no monthly data is found, add some sample data
     if not monthly_data:
         import datetime
@@ -534,36 +533,36 @@ def reports(request):
                 'count': 0
             })
         monthly_data.reverse()
-    
+
     # Calculate averages
     from django.db.models import Avg, Count
-    
+
     # Count tasks per meeting
     from tasks.models import Task
-    
+
     # Get meetings with related tasks and add completed task counts
-    from django.db.models import Count, Q
-    
+    # استخدام Q الذي تم استيراده في بداية الملف
+
     # Add counts to each meeting
     for meeting in base_meetings:
         meeting.completed_tasks_count = Task.objects.filter(
-            meeting=meeting, 
+            meeting=meeting,
             status='completed'
         ).count()
-    
+
     meetings_with_tasks = base_meetings.annotate(task_count=Count('tasks'))
     avg_tasks = meetings_with_tasks.aggregate(avg=Avg('task_count'))['avg'] or 0
-    
+
     # Get meetings with attendees
     meetings_with_attendees = base_meetings.annotate(attendee_count=Count('attendees'))
     avg_attendees = meetings_with_attendees.aggregate(avg=Avg('attendee_count'))['avg'] or 0
-    
+
     # Get all users for the creator filter
     users = User.objects.all()
-    
+
     # Get current date for report header
     now = timezone.now()
-    
+
     context = {
         'meetings': base_meetings.order_by('-date'),
         'pending_count': pending_count,
@@ -575,5 +574,5 @@ def reports(request):
         'users': users,
         'now': now,
     }
-    
+
     return render(request, 'meetings/reports.html', context)

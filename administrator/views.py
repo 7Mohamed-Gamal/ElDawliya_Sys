@@ -17,12 +17,16 @@ from django.urls import reverse
 from django.db.models import Q
 
 from .models import (
-    SystemSettings, Department, Module, Permission,
-    TemplatePermission, UserGroup
+    SystemSettings, Department, Module,
+    # Permission removed as per user request,
+    # TemplatePermission removed as per user request,
+    UserGroup
 )
 from .forms import (
     SystemSettingsForm, DepartmentForm, ModuleForm, DatabaseConfigForm,
-    PermissionForm, TemplatePermissionForm, UserGroupForm, GroupForm,
+    # PermissionForm removed as per user request,
+    # TemplatePermissionForm removed as per user request,
+    GroupForm, UserGroupForm,
     UserPermissionForm, GroupPermissionForm
 )
 

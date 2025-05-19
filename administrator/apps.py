@@ -15,3 +15,9 @@ class AdministratorConfig(AppConfig):
             import administrator.models_audit
         except ImportError:
             pass
+
+        # Import permission group models
+        try:
+            import administrator.models_permission_groups
+        except ImportError:
+            pass

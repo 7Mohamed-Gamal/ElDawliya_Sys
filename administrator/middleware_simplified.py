@@ -1,7 +1,6 @@
 from django.shortcuts import redirect
 from django.contrib import messages
-from django.urls import resolve, Resolver404
-from django.conf import settings
+from django.urls import Resolver404
 from .models import Department, Module, UserDepartmentPermission, UserModulePermission
 
 class SimplifiedPermissionMiddleware:
@@ -77,7 +76,17 @@ class SimplifiedPermissionMiddleware:
                     has_access = True
 
             if not has_access:
-                messages.error(request, f'ليس لديك صلاحية الوصول إلى قسم {app_name}')
+                # Get department name for a more user-friendly message
+                try:
+                    department_name = department.name
+                except (NameError, AttributeError):
+                    department_name = app_name.upper()
+
+                messages.error(
+                    request,
+                    f'ليس لديك صلاحية الوصول إلى قسم {department_name}. '
+                    f'يرجى التواصل مع مسؤول النظام إذا كنت تعتقد أنه يجب أن يكون لديك وصول.'
+                )
                 return redirect('accounts:home')
 
             # If user has access to the department, check if they have access to the specific module
@@ -114,7 +123,11 @@ class SimplifiedPermissionMiddleware:
                                 module_access = True
 
                             if not module_access:
-                                messages.error(request, f'ليس لديك صلاحية الوصول إلى هذه الصفحة')
+                                messages.error(
+                                    request,
+                                    f'ليس لديك صلاحية الوصول إلى وحدة {module.name} في قسم {department.name}. '
+                                    f'يرجى التواصل مع مسؤول النظام إذا كنت تعتقد أنه يجب أن يكون لديك وصول.'
+                                )
                                 return redirect('accounts:home')
 
                             # If we found a matching module and user has access, no need to check other modules

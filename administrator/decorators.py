@@ -1,115 +1,106 @@
+from functools import wraps
 from django.shortcuts import redirect
 from django.contrib import messages
 from django.http import HttpResponseForbidden
-from django.urls import reverse
-from accounts.models import Users_Login_New
-from functools import wraps
-from .utils import has_template_permission, check_permission
-from .models import Department, Module, Permission
+from django.utils.translation import gettext as _
 
-def admin_required(view_func):
-    """Decorator to require admin role for a view"""
-    @wraps(view_func)
-    def wrapper(request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            return redirect('accounts:login')
-
-        # Check if user has admin role
-        if request.user.Role != 'admin':
-            messages.error(request, 'هذه الصفحة متاحة فقط للإدارة.')
-            return redirect('accounts:home')
-
-        return view_func(request, *args, **kwargs)
-    return wrapper
-
-def action_permission_required(action_type):
-    """
-    Decorator that checks if user has permission for a specific action type.
-    Action types: add, change, delete, print
-
-    Only admin users can perform these actions
-    """
-    def decorator(view_func):
-        @wraps(view_func)
-        def wrapper(request, *args, **kwargs):
-            if not request.user.is_authenticated:
-                return redirect('accounts:login')
-
-            # Allow view access for all authenticated users
-            if action_type == 'view':
-                return view_func(request, *args, **kwargs)
-
-            # For other actions, only admin can perform them
-            if request.user.Role != 'admin':
-                if request.is_ajax():
-                    return HttpResponseForbidden('ليس لديك صلاحية للقيام بهذا الإجراء')
-
-                messages.error(request, 'ليس لديك صلاحية للقيام بهذا الإجراء')
-                # Redirect to previous page or homepage
-                referer = request.META.get('HTTP_REFERER')
-                if referer:
-                    return redirect(referer)
-                return redirect('accounts:home')
-
-            return view_func(request, *args, **kwargs)
-        return wrapper
-    return decorator
-
+from .utils import check_permission
 
 def module_permission_required(department_name, module_name, permission_type='view'):
     """
-    Decorator to check if user has permission to access a module.
+    ديكوريتور للتحقق من صلاحيات الوصول لوحدة معينة في قسم معين
 
-    Args:
-        department_name: Name of the department
-        module_name: Name of the module
-        permission_type: Type of permission (view, add, edit, delete, print)
+    المعلمات:
+    - department_name: اسم القسم (مثل 'الموارد البشرية')
+    - module_name: اسم الوحدة (مثل 'إدارة الموظفين')
+    - permission_type: نوع الصلاحية ('view', 'add', 'change', 'delete', 'print')
+
+    الاستخدام:
+    @module_permission_required('الموارد البشرية', 'إدارة الموظفين', 'view')
+    def employee_list(request):
+        ...
     """
     def decorator(view_func):
         @wraps(view_func)
         def _wrapped_view(request, *args, **kwargs):
-            # المشرفون لديهم جميع الصلاحيات
+            # التحقق من تسجيل دخول المستخدم
+            if not request.user.is_authenticated:
+                messages.error(request, _('الرجاء تسجيل الدخول للوصول لهذه الصفحة.'))
+                return redirect('accounts:login')
+                
+            # المستخدمون المتميزون لديهم جميع الصلاحيات
             if request.user.is_superuser or getattr(request.user, 'Role', '') == 'admin':
                 return view_func(request, *args, **kwargs)
 
-            # التحقق من صلاحية المستخدم
-            has_permission = check_permission(
+            # التحقق من صلاحية المستخدم باستخدام دالة check_permission
+            has_perm = check_permission(
                 user=request.user,
                 department_name=department_name,
                 module_name=module_name,
                 permission_type=permission_type
             )
 
-            if has_permission:
+            if has_perm:
                 return view_func(request, *args, **kwargs)
             else:
-                messages.error(request, f'ليس لديك صلاحية {permission_type} في {module_name}')
-                return redirect('accounts:home')
-
+                messages.error(request, _(
+                    'لا تملك الصلاحية للوصول لهذه الصفحة. '
+                    'الرجاء التواصل مع مدير النظام للحصول على الصلاحيات المناسبة.'
+                ))
+                # العودة للصفحة الرئيسية أو صفحة رفض الوصول
+                if 'access_denied' in request.path:
+                    # لتجنب التكرار إذا كنا بالفعل في صفحة رفض الوصول
+                    return HttpResponseForbidden("Access Denied")
+                return redirect('accounts:access_denied')
+                
         return _wrapped_view
-
     return decorator
 
 
-def has_module_permission(request, department_name, module_name, permission_type='view'):
+def template_permission_required(template_path):
     """
-    Function to check if user has permission to access a module.
-    Can be used in templates or views.
+    ديكوريتور للتحقق من صلاحيات الوصول لقالب معين
 
-    Args:
-        request: The request object
-        department_name: Name of the department
-        module_name: Name of the module
-        permission_type: Type of permission (view, add, edit, delete, print)
+    المعلمات:
+    - template_path: مسار القالب (مثل 'Hr/reports/monthly_salary_report.html')
+
+    الاستخدام:
+    @template_permission_required('Hr/reports/monthly_salary_report.html')
+    def monthly_salary_report(request):
+        ...
     """
-    # المشرفون لديهم جميع الصلاحيات
-    if request.user.is_superuser or getattr(request.user, 'Role', '') == 'admin':
-        return True
+    def decorator(view_func):
+        @wraps(view_func)
+        def _wrapped_view(request, *args, **kwargs):
+            from .utils import has_template_permission
+            
+            # التحقق من تسجيل دخول المستخدم
+            if not request.user.is_authenticated:
+                messages.error(request, _('الرجاء تسجيل الدخول للوصول لهذه الصفحة.'))
+                return redirect('accounts:login')
+                
+            # المستخدمون المتميزون لديهم جميع الصلاحيات
+            if request.user.is_superuser or getattr(request.user, 'Role', '') == 'admin':
+                return view_func(request, *args, **kwargs)
 
-    # التحقق من صلاحية المستخدم
-    return check_permission(
-        user=request.user,
-        department_name=department_name,
-        module_name=module_name,
-        permission_type=permission_type
-    )
+            # التحقق من صلاحية المستخدم باستخدام دالة has_template_permission
+            has_perm = has_template_permission(
+                user=request.user,
+                template_path=template_path
+            )
+
+            if has_perm:
+                return view_func(request, *args, **kwargs)
+            else:
+                messages.error(request, _(
+                    'لا تملك الصلاحية للوصول لهذا القالب. '
+                    'الرجاء التواصل مع مدير النظام للحصول على الصلاحيات المناسبة.'
+                ))
+                # العودة للصفحة الرئيسية أو صفحة رفض الوصول
+                if 'access_denied' in request.path:
+                    # لتجنب التكرار إذا كنا بالفعل في صفحة رفض الوصول
+                    return HttpResponseForbidden("Access Denied")
+                return redirect('accounts:access_denied')
+                
+        return _wrapped_view
+    return decorator

@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, get_user_model
-from .forms import CustomUserCreationForm, CustomUserLoginForm, UserPermissionsForm
+from .forms import CustomUserCreationForm, CustomUserLoginForm
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from meetings.models import Meeting
@@ -178,13 +178,19 @@ def create_user_view(request):
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
-            form.save()
+            user = form.save()
+            
+            # إضافة المستخدم إلى المجموعات المحددة (إذا تم تحديدها)
+            if 'groups' in request.POST:
+                groups = request.POST.getlist('groups')
+                user.groups.set(groups)
+                
             messages.success(request, 'تم إنشاء المستخدم بنجاح!')
             return redirect('accounts:dashboard')
     else:
         form = CustomUserCreationForm()
 
-    # Use the administrator template instead of the accounts template
+    # استخدام نظام المجموعات الخاص بـ Django
     from django.contrib.auth.models import Group
     groups = Group.objects.all()
 
@@ -196,20 +202,4 @@ def create_user_view(request):
 
     return render(request, 'administrator/user_create.html', context)
 
-@login_required
-def edit_user_permissions_view(request, user_id):
-    user_to_edit = get_object_or_404(User, id=user_id)
-    if request.method == 'POST':
-        form = UserPermissionsForm(request.POST, instance=user_to_edit)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'تم تعديل صلاحيات المستخدم بنجاح!')
-            return redirect('accounts:dashboard')
-    else:
-        form = UserPermissionsForm(instance=user_to_edit)
 
-    return render(request, 'accounts/edit_permissions.html', {
-        'form': form,
-        'user_to_edit': user_to_edit,
-        'user_activities': []  # Add user activity logic if available
-    })

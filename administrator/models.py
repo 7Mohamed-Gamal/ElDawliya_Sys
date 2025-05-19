@@ -3,17 +3,78 @@ from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import Group
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.db.models.signals import post_save, post_delete, m2m_changed
+from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
 
 User = get_user_model()
 
-# محاولة استيراد نماذج التدقيق
-try:
-    from .models_audit import PermissionAuditLog
-    HAS_AUDIT = True
-except ImportError:
-    HAS_AUDIT = False
+# Non-permission related models added back
+class UserGroup(models.Model):
+    """
+    عضوية المستخدمين في المجموعات مع معلومات إضافية مثل تاريخ الانضمام والملاحظات.
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='group_memberships', verbose_name="المستخدم")
+    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='user_memberships', verbose_name="المجموعة")
+    date_joined = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ الانضمام")
+    notes = models.TextField(blank=True, verbose_name="ملاحظات")
+
+    def __str__(self):
+        return f"{self.user.username} - {self.group.name}"
+
+    class Meta:
+        verbose_name = "عضوية مجموعة"
+        verbose_name_plural = "عضويات المجموعات"
+        unique_together = ['user', 'group']
+
+class UserDepartmentPermission(models.Model):
+    """
+    صلاحيات المستخدمين على الأقسام.
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='department_permissions', verbose_name="المستخدم")
+    department = models.ForeignKey('Department', on_delete=models.CASCADE, verbose_name="القسم")
+    can_view = models.BooleanField(default=True, verbose_name="عرض")
+
+    def __str__(self):
+        return f"{self.user.username} - {self.department.name}"
+
+    class Meta:
+        verbose_name = "صلاحية قسم"
+        verbose_name_plural = "صلاحيات الأقسام"
+        unique_together = ['user', 'department']
+
+class UserModulePermission(models.Model):
+    """
+    صلاحيات المستخدمين على الوحدات (الميزات).
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='module_permissions', verbose_name="المستخدم")
+    module = models.ForeignKey('Module', on_delete=models.CASCADE, verbose_name="الوحدة")
+    can_view = models.BooleanField(default=True, verbose_name="عرض")
+    can_add = models.BooleanField(default=False, verbose_name="إضافة")
+    can_edit = models.BooleanField(default=False, verbose_name="تعديل")
+    can_delete = models.BooleanField(default=False, verbose_name="حذف")
+    can_print = models.BooleanField(default=False, verbose_name="طباعة")
+
+    def __str__(self):
+        return f"{self.user.username} - {self.module.name}"
+
+    class Meta:
+        verbose_name = "صلاحية وحدة"
+        verbose_name_plural = "صلاحيات الوحدات"
+        unique_together = ['user', 'module']
+
+class GroupProfile(models.Model):
+    """
+    معلومات إضافية للمجموعات.
+    """
+    group = models.OneToOneField(Group, on_delete=models.CASCADE, related_name='profile', verbose_name="المجموعة")
+    description = models.TextField(blank=True, verbose_name="وصف المجموعة")
+
+    def __str__(self):
+        return self.group.name
+
+    class Meta:
+        verbose_name = "ملف المجموعة"
+        verbose_name_plural = "ملفات المجموعات"
 
 class SystemSettings(models.Model):
     """
@@ -151,262 +212,12 @@ class Module(models.Model):
         ordering = ['department__order', 'order']
 
 
-class Permission(models.Model):
-    """
-    صلاحيات الإنشاء والقراءة والتحديث والحذف للوحدات في النظام
-    """
-    PERMISSION_TYPES = [
-        ('view', 'عرض'),
-        ('add', 'إضافة'),
-        ('change', 'تعديل'),
-        ('delete', 'حذف'),
-        ('print', 'طباعة'),
-    ]
-
-    module = models.ForeignKey(Module, on_delete=models.CASCADE,
-                              related_name='permissions', verbose_name="الوحدة")
-    permission_type = models.CharField(max_length=10, choices=PERMISSION_TYPES, verbose_name="نوع الصلاحية")
-    is_active = models.BooleanField(default=True, verbose_name="نشط")
-    groups = models.ManyToManyField(Group, blank=True, related_name='custom_permissions', verbose_name="المجموعات المسموح لها")
-    users = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True,
-                                  related_name='custom_permissions', verbose_name="المستخدمين المسموح لهم")
-
-    def __str__(self):
-        return f"{self.module.name} - {self.get_permission_type_display()}"
-
-    class Meta:
-        verbose_name = "الصلاحية"
-        verbose_name_plural = "الصلاحيات"
-        unique_together = ['module', 'permission_type']
 
 
-class TemplatePermission(models.Model):
-    """
-    صلاحيات الوصول إلى قوالب/عروض محددة في النظام
-    """
-    name = models.CharField(max_length=100, verbose_name="اسم القالب")
-    app_name = models.CharField(max_length=50, verbose_name="اسم التطبيق")
-    template_path = models.CharField(max_length=255, verbose_name="مسار القالب")
-    url_pattern = models.CharField(max_length=255, verbose_name="نمط URL", blank=True)
-    description = models.TextField(blank=True, verbose_name="وصف")
-    is_active = models.BooleanField(default=True, verbose_name="نشط")
-    groups = models.ManyToManyField(Group, blank=True,
-                                  related_name='template_permissions', verbose_name="المجموعات المسموح لها")
-    users = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True,
-                                 related_name='template_permissions', verbose_name="المستخدمين المسموح لهم")
-
-    def __str__(self):
-        return f"{self.app_name} - {self.name}"
-
-    class Meta:
-        verbose_name = "صلاحية قالب"
-        verbose_name_plural = "صلاحيات القوالب"
-        ordering = ['app_name', 'name']
 
 
-class GroupProfile(models.Model):
-    """
-    نموذج امتداد لنموذج المجموعة لإضافة حقول إضافية
-    """
-    group = models.OneToOneField(Group, on_delete=models.CASCADE, related_name='profile', verbose_name="المجموعة")
-    description = models.TextField(blank=True, verbose_name="وصف المجموعة")
-
-    def __str__(self):
-        return f"Profile for {self.group.name}"
-
-    class Meta:
-        verbose_name = "ملف المجموعة"
-        verbose_name_plural = "ملفات المجموعات"
 
 
-class UserGroup(models.Model):
-    """
-    نموذج وسيط لتخزين معلومات حول عضوية المستخدم في مجموعة
-    مع بيانات وصفية إضافية
-    """
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE,
-                           related_name='group_memberships', verbose_name="المستخدم")
-    group = models.ForeignKey(Group, on_delete=models.CASCADE,
-                            related_name='user_memberships', verbose_name="المجموعة")
-    date_joined = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ الانضمام")
-    notes = models.TextField(blank=True, verbose_name="ملاحظات")
-
-    def __str__(self):
-        return f"{self.user.username} - {self.group.name}"
-
-    class Meta:
-        verbose_name = "عضوية مجموعة"
-        verbose_name_plural = "عضويات المجموعات"
-        unique_together = ['user', 'group']
 
 
-class UserDepartmentPermission(models.Model):
-    """صلاحيات المستخدمين للأقسام"""
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="department_permissions", verbose_name="المستخدم")
-    department = models.ForeignKey(Department, on_delete=models.CASCADE, verbose_name="القسم")
-    can_view = models.BooleanField(default=True, verbose_name="عرض")
-
-    def __str__(self):
-        return f"{self.user.username} - {self.department.name}"
-
-    class Meta:
-        verbose_name = "صلاحية قسم"
-        verbose_name_plural = "صلاحيات الأقسام"
-        unique_together = ('user', 'department')
-
-
-class UserModulePermission(models.Model):
-    """صلاحيات المستخدمين للوحدات"""
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="module_permissions", verbose_name="المستخدم")
-    module = models.ForeignKey(Module, on_delete=models.CASCADE, verbose_name="الوحدة")
-    can_view = models.BooleanField(default=True, verbose_name="عرض")
-    can_add = models.BooleanField(default=False, verbose_name="إضافة")
-    can_edit = models.BooleanField(default=False, verbose_name="تعديل")
-    can_delete = models.BooleanField(default=False, verbose_name="حذف")
-    can_print = models.BooleanField(default=False, verbose_name="طباعة")
-
-    def __str__(self):
-        return f"{self.user.username} - {self.module.name}"
-
-    class Meta:
-        verbose_name = "صلاحية وحدة"
-        verbose_name_plural = "صلاحيات الوحدات"
-        unique_together = ('user', 'module')
-
-
-# معالجات الإشارات لتسجيل التدقيق
-if HAS_AUDIT:
-    @receiver(post_save, sender=Permission)
-    def log_permission_save(sender, instance, created, **kwargs):
-        """تسجيل عندما يتم إنشاء أو تحديث صلاحية"""
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
-
-        # الحصول على المستخدم الحالي من التخزين المحلي للخيط إذا كان متاحًا
-        try:
-            from threading import local
-            _thread_locals = local()
-            user = getattr(_thread_locals, 'user', None)
-        except (ImportError, AttributeError):
-            user = None
-
-        # إذا لم نتمكن من الحصول على المستخدم، استخدم مستخدم النظام
-        if not user:
-            user, _ = User.objects.get_or_create(username='system')
-
-        action = 'add' if created else 'modify'
-        description = f"{'إنشاء' if created else 'تعديل'} صلاحية {instance.get_permission_type_display()} لوحدة {instance.module.name}"
-
-        PermissionAuditLog.log_permission_change(
-            user=user,
-            action=action,
-            obj=instance,
-            description=description
-        )
-
-    @receiver(post_delete, sender=Permission)
-    def log_permission_delete(sender, instance, **kwargs):
-        """تسجيل عندما يتم حذف صلاحية"""
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
-
-        # الحصول على المستخدم الحالي من التخزين المحلي للخيط إذا كان متاحًا
-        try:
-            from threading import local
-            _thread_locals = local()
-            user = getattr(_thread_locals, 'user', None)
-        except (ImportError, AttributeError):
-            user = None
-
-        # إذا لم نتمكن من الحصول على المستخدم، استخدم مستخدم النظام
-        if not user:
-            user, _ = User.objects.get_or_create(username='system')
-
-        description = f"حذف صلاحية {instance.get_permission_type_display()} لوحدة {instance.module.name}"
-
-        PermissionAuditLog.log_permission_change(
-            user=user,
-            action='remove',
-            obj=instance,
-            description=description
-        )
-
-    @receiver(m2m_changed, sender=Permission.users.through)
-    def log_permission_users_change(sender, instance, action, pk_set, **kwargs):
-        """تسجيل عندما تتم إضافة المستخدمين أو إزالتهم من صلاحية"""
-        if action not in ['post_add', 'post_remove']:
-            return
-
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
-
-        # الحصول على المستخدم الحالي من التخزين المحلي للخيط إذا كان متاحًا
-        try:
-            from threading import local
-            _thread_locals = local()
-            user = getattr(_thread_locals, 'user', None)
-        except (ImportError, AttributeError):
-            user = None
-
-        # إذا لم نتمكن من الحصول على المستخدم، استخدم مستخدم النظام
-        if not user:
-            user, _ = User.objects.get_or_create(username='system')
-
-        # الحصول على المستخدمين المتأثرين
-        affected_users = User.objects.filter(pk__in=pk_set)
-        usernames = ', '.join([u.username for u in affected_users])
-
-        if action == 'post_add':
-            description = f"إضافة مستخدمين ({usernames}) إلى صلاحية {instance.get_permission_type_display()} لوحدة {instance.module.name}"
-            audit_action = 'add'
-        else:  # post_remove
-            description = f"إزالة مستخدمين ({usernames}) من صلاحية {instance.get_permission_type_display()} لوحدة {instance.module.name}"
-            audit_action = 'remove'
-
-        PermissionAuditLog.log_permission_change(
-            user=user,
-            action=audit_action,
-            obj=instance,
-            description=description,
-            data={'users': list(pk_set)}
-        )
-
-    @receiver(m2m_changed, sender=Permission.groups.through)
-    def log_permission_groups_change(sender, instance, action, pk_set, **kwargs):
-        """Log when groups are added to or removed from a permission"""
-        if action not in ['post_add', 'post_remove']:
-            return
-
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
-
-        # Get the current user from the thread local storage if available
-        try:
-            from threading import local
-            _thread_locals = local()
-            user = getattr(_thread_locals, 'user', None)
-        except (ImportError, AttributeError):
-            user = None
-
-        # If we couldn't get the user, use a system user
-        if not user:
-            user, _ = User.objects.get_or_create(username='system')
-
-        # Get the affected groups
-        affected_groups = Group.objects.filter(pk__in=pk_set)
-        group_names = ', '.join([g.name for g in affected_groups])
-
-        if action == 'post_add':
-            description = f"إضافة مجموعات ({group_names}) إلى صلاحية {instance.get_permission_type_display()} لوحدة {instance.module.name}"
-            audit_action = 'add'
-        else:  # post_remove
-            description = f"إزالة مجموعات ({group_names}) من صلاحية {instance.get_permission_type_display()} لوحدة {instance.module.name}"
-            audit_action = 'remove'
-
-        PermissionAuditLog.log_permission_change(
-            user=user,
-            action=audit_action,
-            obj=instance,
-            description=description,
-            data={'groups': list(pk_set)}
-        )
+# Custom permission signal handlers removed as per user request to use only Django's basic permissions

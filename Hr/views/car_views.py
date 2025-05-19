@@ -1,13 +1,13 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 
 from Hr.models.car_models import Car
 from Hr.forms.employee_forms import CarForm
-from Hr.decorators import hr_module_permission_required
+from administrator.decorators import django_permission_required
 
 @login_required
-@hr_module_permission_required('cars', 'view')
+@django_permission_required('hr.view_car')
 def car_list(request):
     """عرض قائمة السيارات"""
     cars = Car.objects.all()
@@ -20,7 +20,7 @@ def car_list(request):
     return render(request, 'Hr/cars/car_list.html', context)
 
 @login_required
-@hr_module_permission_required('cars', 'add')
+@django_permission_required('hr.add_car')
 def car_create(request):
     """إنشاء سيارة جديدة"""
     if request.method == 'POST':
@@ -40,7 +40,7 @@ def car_create(request):
     return render(request, 'Hr/cars/create.html', context)
 
 @login_required
-@hr_module_permission_required('cars', 'view')
+@django_permission_required('hr.view_car')
 def car_detail(request, car_id):
     """عرض تفاصيل سيارة"""
     car = get_object_or_404(Car, car_id=car_id)

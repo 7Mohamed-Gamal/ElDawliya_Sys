@@ -1,7 +1,8 @@
 from django import forms
 from django.contrib.auth.models import Group
 from django.contrib.auth import get_user_model
-from .models import SystemSettings, Department, Module, Permission, TemplatePermission, UserGroup
+from .models import SystemSettings, Department, Module, UserGroup
+# Permission and TemplatePermission imports removed as per user request
 
 User = get_user_model()
 
@@ -123,49 +124,7 @@ class DatabaseConfigForm(forms.Form):
     )
 
 
-class PermissionForm(forms.ModelForm):
-    """Form for managing module permissions."""
-    class Meta:
-        model = Permission
-        fields = ['module', 'permission_type', 'is_active', 'groups', 'users']
-        widgets = {
-            'groups': forms.SelectMultiple(attrs={'class': 'form-select', 'size': 10}),
-            'users': forms.SelectMultiple(attrs={'class': 'form-select', 'size': 10}),
-        }
 
-
-class TemplatePermissionForm(forms.ModelForm):
-    """Form for managing template/view permissions."""
-    class Meta:
-        model = TemplatePermission
-        fields = ['name', 'app_name', 'template_path', 'url_pattern', 'description', 'is_active', 'groups', 'users']
-        widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control'}),
-            'app_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'template_path': forms.TextInput(attrs={'class': 'form-control'}),
-            'url_pattern': forms.TextInput(attrs={'class': 'form-control'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
-            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'groups': forms.SelectMultiple(attrs={'class': 'form-select', 'size': 10}),
-            'users': forms.SelectMultiple(attrs={'class': 'form-select', 'size': 10}),
-        }
-
-
-class UserGroupForm(forms.ModelForm):
-    """Form for managing user group membership."""
-    class Meta:
-        model = UserGroup
-        fields = ['user', 'group', 'notes']
-        widgets = {
-            'user': forms.Select(attrs={'class': 'form-select'}),
-            'group': forms.Select(attrs={'class': 'form-select'}),
-            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-        }
-        labels = {
-            'user': 'المستخدم',
-            'group': 'المجموعة',
-            'notes': 'ملاحظات',
-        }
 
 
 class GroupForm(forms.ModelForm):
@@ -242,8 +201,9 @@ class GroupForm(forms.ModelForm):
         return group
 
 
+# Permission-related form classes removed as per user request to use only Django's built-in permissions
 class UserPermissionForm(forms.Form):
-    """Custom form for managing user permissions."""
+    """Simplified form for managing user permissions."""
     user = forms.ModelChoiceField(
         queryset=User.objects.filter(is_active=True),
         label="المستخدم",
@@ -256,52 +216,12 @@ class UserPermissionForm(forms.Form):
         required=False,
         widget=forms.SelectMultiple(attrs={'class': 'form-select'})
     )
-
-    view_permissions = forms.ModelMultipleChoiceField(
-        queryset=Permission.objects.filter(permission_type='view'),
-        label="صلاحيات العرض",
-        required=False,
-        widget=forms.SelectMultiple(attrs={'class': 'form-select'})
-    )
-
-    add_permissions = forms.ModelMultipleChoiceField(
-        queryset=Permission.objects.filter(permission_type='add'),
-        label="صلاحيات الإضافة",
-        required=False,
-        widget=forms.SelectMultiple(attrs={'class': 'form-select'})
-    )
-
-    change_permissions = forms.ModelMultipleChoiceField(
-        queryset=Permission.objects.filter(permission_type='change'),
-        label="صلاحيات التعديل",
-        required=False,
-        widget=forms.SelectMultiple(attrs={'class': 'form-select'})
-    )
-
-    delete_permissions = forms.ModelMultipleChoiceField(
-        queryset=Permission.objects.filter(permission_type='delete'),
-        label="صلاحيات الحذف",
-        required=False,
-        widget=forms.SelectMultiple(attrs={'class': 'form-select'})
-    )
-
-    print_permissions = forms.ModelMultipleChoiceField(
-        queryset=Permission.objects.filter(permission_type='print'),
-        label="صلاحيات الطباعة",
-        required=False,
-        widget=forms.SelectMultiple(attrs={'class': 'form-select'})
-    )
-
-    templates = forms.ModelMultipleChoiceField(
-        queryset=TemplatePermission.objects.all(),
-        label="القوالب المسموح بها",
-        required=False,
-        widget=forms.SelectMultiple(attrs={'class': 'form-select'})
-    )
+    
+    # Custom permission fields removed as per request
 
 
 class GroupPermissionForm(forms.Form):
-    """Custom form for managing group permissions."""
+    """Simplified form for managing group permissions using Django's built-in permissions."""
     group = forms.ModelChoiceField(
         queryset=Group.objects.all(),
         label="المجموعة",
@@ -322,81 +242,21 @@ class GroupPermissionForm(forms.Form):
         widget=forms.SelectMultiple(attrs={'class': 'form-select'})
     )
 
-    view_permissions = forms.ModelMultipleChoiceField(
-        queryset=Permission.objects.filter(permission_type='view'),
-        label="صلاحيات العرض",
+    # Custom permission fields removed as per request
+
+
+class UserGroupForm(forms.ModelForm):
+    """Form for user-group membership."""
+    notes = forms.CharField(
+        widget=forms.Textarea(attrs={'rows': 3}),
         required=False,
-        widget=forms.SelectMultiple(attrs={'class': 'form-select'})
+        label="ملاحظات"
     )
-
-    add_permissions = forms.ModelMultipleChoiceField(
-        queryset=Permission.objects.filter(permission_type='add'),
-        label="صلاحيات الإضافة",
-        required=False,
-        widget=forms.SelectMultiple(attrs={'class': 'form-select'})
-    )
-
-    change_permissions = forms.ModelMultipleChoiceField(
-        queryset=Permission.objects.filter(permission_type='change'),
-        label="صلاحيات التعديل",
-        required=False,
-        widget=forms.SelectMultiple(attrs={'class': 'form-select'})
-    )
-
-    delete_permissions = forms.ModelMultipleChoiceField(
-        queryset=Permission.objects.filter(permission_type='delete'),
-        label="صلاحيات الحذف",
-        required=False,
-        widget=forms.SelectMultiple(attrs={'class': 'form-select'})
-    )
-
-    print_permissions = forms.ModelMultipleChoiceField(
-        queryset=Permission.objects.filter(permission_type='print'),
-        label="صلاحيات الطباعة",
-        required=False,
-        widget=forms.SelectMultiple(attrs={'class': 'form-select'})
-    )
-
-    templates = forms.ModelMultipleChoiceField(
-        queryset=TemplatePermission.objects.all(),
-        label="القوالب المسموح بها",
-        required=False,
-        widget=forms.SelectMultiple(attrs={'class': 'form-select'})
-    )
-
-
-class UnifiedPermissionForm(forms.Form):
-    """Unified form for managing permissions in a single screen."""
-    user = forms.ModelChoiceField(
-        queryset=User.objects.filter(is_active=True),
-        label="المستخدم",
-        required=False,
-        widget=forms.Select(attrs={'class': 'form-select'})
-    )
-
-    group = forms.ModelChoiceField(
-        queryset=Group.objects.all(),
-        label="المجموعة",
-        required=False,
-        widget=forms.Select(attrs={'class': 'form-select'})
-    )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['permissions'] = forms.MultipleChoiceField(
-            choices=self._get_permission_choices(),
-            label="الصلاحيات",
-            required=False,
-            widget=forms.CheckboxSelectMultiple()
-        )
-
-    def _get_permission_choices(self):
-        """Get all possible permission choices for modules."""
-        choices = []
-        for dept in Department.objects.all():
-            for module in dept.modules.all():
-                for perm in Permission.PERMISSION_TYPES:
-                    perm_id = f"{module.id}_{perm[0]}"
-                    perm_label = f"{dept.name} - {module.name} - {dict(Permission.PERMISSION_TYPES)[perm[0]]}"
-                    choices.append((perm_id, perm_label))
-        return choices
+    
+    class Meta:
+        model = UserGroup
+        fields = ['user', 'group', 'notes']
+        widgets = {
+            'user': forms.Select(attrs={'class': 'form-select'}),
+            'group': forms.Select(attrs={'class': 'form-select'}),
+        }

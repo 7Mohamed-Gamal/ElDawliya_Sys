@@ -1,10 +1,12 @@
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, Permission as DjangoPermission
 from django.db.models import Q, Prefetch
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.db.models.signals import post_save, post_delete, m2m_changed
 from django.dispatch import receiver
-from .models import Department, Module, Permission, TemplatePermission
+from .models import Department, Module
+# Remove import of Permission and TemplatePermission models
+# Use Django's built-in Permission model instead
 
 User = get_user_model()
 
@@ -57,7 +59,6 @@ def check_permission(user, department_name, module_name, permission_type):
         user_groups = Group.objects.filter(user=user)
         
         # التحقق من صلاحيات المجموعات للقسم
-        # Si el departamento no requiere permisos específicos o el usuario tiene permisos a través de sus grupos
         if not department.require_admin or department.groups.filter(id__in=user_groups.values_list('id', flat=True)).exists():
             # البحث عن الوحدة
             try:
@@ -69,42 +70,53 @@ def check_permission(user, department_name, module_name, permission_type):
                     return False
                 
                 # التحقق من صلاحيات المجموعات للوحدة
-                # Si el módulo no requiere permisos específicos o el usuario tiene permisos a través de sus grupos
                 if not module.require_admin or module.groups.filter(id__in=user_groups.values_list('id', flat=True)).exists():
-                    # البحث عن الصلاحية
-                    try:
-                        permission = Permission.objects.get(module=module, permission_type=permission_type)
-                        
-                        # التحقق من صلاحيات المستخدم المباشرة
-                        if permission.users.filter(id=user.id).exists():
-                            cache.set(cache_key, True, CACHE_TIMEOUT)
-                            return True
-                        
-                        # التحقق من صلاحيات المجموعات
-                        if permission.groups.filter(id__in=user_groups.values_list('id', flat=True)).exists():
-                            cache.set(cache_key, True, CACHE_TIMEOUT)
-                            return True
-                    except Permission.DoesNotExist:
-                        # Si el permiso no existe, verificamos si el usuario es administrador del sistema
-                        if user.is_staff or user.is_superuser or getattr(user, 'Role', '') == 'admin':
-                            cache.set(cache_key, True, CACHE_TIMEOUT)
-                            return True
+                    # استخدام صلاحيات Django المدمجة بدلاً من نموذج Permission المخصص
+                    # إنشاء اسم صلاحية بناءً على معيار Django: app_label.permission_type_model
+                    
+                    # الحصول على اسم التطبيق من القسم
+                    app_label = department.url_name.lower() if department.url_name else department.name.lower()
+                    # تبسيط اسم الوحدة (إزالة المسافات والأحرف الخاصة)
+                    model_name = module.name.lower().replace(' ', '_')
+                    
+                    # بناء اسم الصلاحية: app_label.permission_type_modelname
+                    permission_codename = f"{permission_type}_{model_name}"
+                    django_permission = f"{app_label}.{permission_codename}"
+                    
+                    # التحقق من صلاحية المستخدم
+                    has_perm = user.has_perm(django_permission)
+                    
+                    # التحقق من صلاحيات المجموعات
+                    if not has_perm:
+                        for group in user_groups:
+                            perms = DjangoPermission.objects.filter(
+                                content_type__app_label=app_label,
+                                codename=permission_codename,
+                                group=group
+                            ).exists()
+                            if perms:
+                                has_perm = True
+                                break
+                    
+                    cache.set(cache_key, has_perm, CACHE_TIMEOUT)
+                    return has_perm
+                    
             except Module.DoesNotExist:
-                # Si el módulo no existe, verificamos si el usuario es administrador del sistema
+                # إذا لم يتم العثور على الوحدة، نتحقق من كون المستخدم مدير للنظام
                 if user.is_staff or user.is_superuser or getattr(user, 'Role', '') == 'admin':
                     cache.set(cache_key, True, CACHE_TIMEOUT)
                     return True
         
-        # Si llegamos aquí, el usuario no tiene permisos
+        # إذا وصلنا إلى هنا، فليس لدى المستخدم الصلاحية المطلوبة
         cache.set(cache_key, False, CACHE_TIMEOUT)
         return False
     except Exception as e:
-        # Registrar el error para depuración
+        # تسجيل الخطأ للتصحيح
         import logging
         logger = logging.getLogger(__name__)
-        logger.error(f"Error al verificar permisos: {str(e)}")
+        logger.error(f"Error checking permissions: {str(e)}")
         
-        # En caso de error, devolvemos False por seguridad
+        # في حالة الخطأ، نُرجع False للأمان
         cache.set(cache_key, False, CACHE_TIMEOUT)
         return False
 

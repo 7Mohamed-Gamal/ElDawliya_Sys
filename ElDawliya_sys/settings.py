@@ -73,7 +73,6 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'inventory.context_processors.inventory_stats',
                 'administrator.context_processors.system_settings',
-                'administrator.context_processors.user_permissions',
                 'notifications.context_processors.notifications_processor',
             ],
         },
@@ -179,3 +178,6 @@ CSRF_COOKIE_HTTPONLY = False
 SESSION_COOKIE_SECURE = False
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Default Auto Field
+# This is required for Django models
