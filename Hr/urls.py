@@ -220,6 +220,7 @@ urlpatterns = [
             path('', views.report_list, name='list'),
             path('monthly_salary/', views.monthly_salary_report, name='monthly_salary_report'),
             path('monthly_salary/print/', views.monthly_salary_report, name='monthly_salary_print'),
+            path('employees/', views.employee_report, name='employee_report'),
             path('<str:report_type>/', views.report_detail, name='report_detail'),
         ], 'reports'
     ))),

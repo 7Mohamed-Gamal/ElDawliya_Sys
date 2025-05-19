@@ -25,14 +25,7 @@
 <div class="row g-3">
     {% for report in reports %}
     <div class="col-md-6 col-lg-4">
-        {% if report.id == 'employees' and perms.Hr.view_employee or
-              report.id == 'leaves' and perms.Hr.view_leave or
-              report.id == 'attendance' and perms.Hr.view_attendance or
-              report.id == 'tasks' and perms.Hr.view_task or
-              report.id == 'hr_tasks' and perms.Hr.view_hrtask or
-              report.id == 'payroll' and perms.Hr.view_payroll or
-              report.id == 'insurance' and perms.Hr.view_insurance or
-              user|is_admin %}
+        {% if user|is_admin or report.id == 'employees' and perms.Hr.view_employee or report.id == 'leaves' and perms.Hr.view_leave or report.id == 'attendance' and perms.Hr.view_attendance or report.id == 'tasks' and perms.Hr.view_task or report.id == 'hr_tasks' and perms.Hr.view_hrtask or report.id == 'payroll' and perms.Hr.view_payroll or report.id == 'insurance' and perms.Hr.view_insurance %}
         <div class="card h-100 shadow-sm">
             <div class="card-body">
                 <div class="d-flex align-items-center mb-3">

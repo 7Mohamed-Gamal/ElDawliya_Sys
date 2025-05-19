@@ -21,48 +21,185 @@ from Hr.models import (
     EmployeeEvaluation
 )
 
-# تسجيل النماذج الأساسية
-admin.site.register(Department)
-admin.site.register(Job)
-admin.site.register(JobInsurance)
-admin.site.register(Car)
+# النماذج الأساسية
+@admin.register(Department)
+class DepartmentAdmin(admin.ModelAdmin):
+    list_display = ['dept_code', 'dept_name']
+    search_fields = ['dept_name']
+    ordering = ['dept_code']
 
-# تسجيل نماذج الموظفين
-admin.site.register(Employee)
+@admin.register(Job)
+class JobAdmin(admin.ModelAdmin):
+    list_display = ['jop_code', 'jop_name']
+    search_fields = ['jop_name']
+    ordering = ['jop_code']
 
-# تسجيل نماذج الرواتب
-admin.site.register(SalaryItem)
-admin.site.register(EmployeeSalaryItem)
-admin.site.register(PayrollPeriod)
-admin.site.register(PayrollEntry)
-admin.site.register(PayrollItemDetail)
+@admin.register(JobInsurance)
+class JobInsuranceAdmin(admin.ModelAdmin):
+    list_display = ['job_code_insurance', 'job_name_insurance']
+    search_fields = ['job_name_insurance']
+    ordering = ['job_code_insurance']
 
-# تسجيل نماذج الحضور
-admin.site.register(AttendanceRule)
-admin.site.register(EmployeeAttendanceRule)
-admin.site.register(OfficialHoliday)
-admin.site.register(AttendanceMachine)
-admin.site.register(AttendanceRecord)
-admin.site.register(AttendanceSummary)
+@admin.register(Car)
+class CarAdmin(admin.ModelAdmin):
+    list_display = ['car_id', 'car_name', 'car_type', 'supplier', 'is_active']
+    list_filter = ['car_type', 'is_active']
+    search_fields = ['car_name', 'car_id']
+    ordering = ['car_id']
 
-# تسجيل نماذج نقاط الالتقاط
-admin.site.register(PickupPoint)
+# نماذج الموظفين
+@admin.register(Employee)
+class EmployeeAdmin(admin.ModelAdmin):
+    list_display = ['emp_id', 'emp_full_name', 'department', 'jop_name', 'working_condition', 'emp_date_hiring']
+    list_filter = ['working_condition', 'department', 'insurance_status', 'emp_type']
+    search_fields = ['emp_id', 'emp_full_name', 'emp_phone1', 'national_id']
+    date_hierarchy = 'emp_date_hiring'
+    fieldsets = (
+        (_('البيانات الأساسية'), {
+            'fields': ('emp_id', 'emp_first_name', 'emp_second_name', 'emp_full_name', 'emp_name_english', 'emp_type')
+        }),
+        (_('بيانات الاتصال'), {
+            'fields': ('emp_phone1', 'emp_phone2', 'emp_address', 'governorate')
+        }),
+        (_('البيانات الشخصية'), {
+            'fields': ('emp_marital_status', 'emp_nationality', 'people_with_special_needs', 'national_id', 'date_birth', 'place_birth', 'emp_image')
+        }),
+        (_('بيانات العمل'), {
+            'fields': ('working_condition', 'department', 'jop_code', 'jop_name', 'emp_date_hiring', 'shift_type')
+        }),
+        (_('بيانات التأمين'), {
+            'fields': ('insurance_status', 'job_insurance', 'number_insurance')
+        }),
+    )
 
-# تسجيل نماذج المهام
-admin.site.register(EmployeeTask)
+# نماذج الرواتب
+@admin.register(SalaryItem)
+class SalaryItemAdmin(admin.ModelAdmin):
+    list_display = ['name', 'item_type', 'calculation_method']
+    list_filter = ['item_type']
+    search_fields = ['name']
 
-# تسجيل نماذج الملاحظات
-admin.site.register(EmployeeNote)
+@admin.register(EmployeeSalaryItem)
+class EmployeeSalaryItemAdmin(admin.ModelAdmin):
+    list_display = ['employee', 'salary_item', 'value', 'effective_date']
+    list_filter = ['salary_item']
+    search_fields = ['employee__emp_full_name']
+    date_hierarchy = 'effective_date'
 
-# تسجيل نماذج الملفات
-admin.site.register(EmployeeFile)
+@admin.register(PayrollPeriod)
+class PayrollPeriodAdmin(admin.ModelAdmin):
+    list_display = ['start_date', 'end_date']
+    list_filter = ['start_date', 'end_date']
+    search_fields = ['start_date', 'end_date']
+    date_hierarchy = 'start_date'
 
-# تسجيل نماذج مهام الموارد البشرية
-admin.site.register(HrTask)
+@admin.register(PayrollEntry)
+class PayrollEntryAdmin(admin.ModelAdmin):
+    list_display = ['employee', 'payroll_period', 'total_salary']
+    list_filter = ['payroll_period']
+    search_fields = ['employee__emp_full_name']
 
-# تسجيل نماذج الإجازات
-admin.site.register(LeaveType)
-admin.site.register(EmployeeLeave)
+@admin.register(PayrollItemDetail)
+class PayrollItemDetailAdmin(admin.ModelAdmin):
+    list_display = ['payroll_entry', 'salary_item', 'amount']
+    list_filter = ['salary_item']
+    search_fields = ['payroll_entry__employee__emp_full_name']
 
-# تسجيل نماذج التقييمات
-admin.site.register(EmployeeEvaluation)
+# نماذج الحضور
+@admin.register(AttendanceRule)
+class AttendanceRuleAdmin(admin.ModelAdmin):
+    list_display = ['name', 'description', 'is_active']
+    list_filter = ['is_active']
+    search_fields = ['name', 'description']
+
+@admin.register(EmployeeAttendanceRule)
+class EmployeeAttendanceRuleAdmin(admin.ModelAdmin):
+    list_display = ['employee', 'attendance_rule', 'effective_date', 'is_active']
+    list_filter = ['is_active']
+    search_fields = ['employee__emp_full_name']
+    date_hierarchy = 'effective_date'
+
+@admin.register(OfficialHoliday)
+class OfficialHolidayAdmin(admin.ModelAdmin):
+    list_display = ['name', 'date', 'description']
+    list_filter = ['date']
+    search_fields = ['name', 'description']
+    date_hierarchy = 'date'
+
+@admin.register(AttendanceMachine)
+class AttendanceMachineAdmin(admin.ModelAdmin):
+    list_display = ['id', 'name', 'location', 'is_active']
+    list_filter = ['is_active']
+    search_fields = ['name', 'location']
+
+@admin.register(AttendanceRecord)
+class AttendanceRecordAdmin(admin.ModelAdmin):
+    list_display = ['employee', 'machine']
+    list_filter = ['machine']
+    search_fields = ['employee__emp_full_name']
+
+@admin.register(AttendanceSummary)
+class AttendanceSummaryAdmin(admin.ModelAdmin):
+    list_display = ['employee', 'date', 'status']
+    list_filter = ['status', 'date']
+    search_fields = ['employee__emp_full_name']
+    date_hierarchy = 'date'
+
+# نماذج نقاط الالتقاط
+@admin.register(PickupPoint)
+class PickupPointAdmin(admin.ModelAdmin):
+    list_display = ['car']
+    search_fields = ['car__car_name']
+
+# نماذج المهام
+@admin.register(EmployeeTask)
+class EmployeeTaskAdmin(admin.ModelAdmin):
+    list_display = ['title', 'employee', 'assigned_by', 'due_date', 'status']
+    list_filter = ['status', 'priority']
+    search_fields = ['title', 'employee__emp_full_name']
+    date_hierarchy = 'due_date'
+
+# نماذج الملاحظات
+@admin.register(EmployeeNote)
+class EmployeeNoteAdmin(admin.ModelAdmin):
+    list_display = ['employee', 'title', 'created_by', 'created_at']
+    list_filter = ['created_at']
+    search_fields = ['title', 'employee__emp_full_name']
+    date_hierarchy = 'created_at'
+
+# نماذج الملفات
+@admin.register(EmployeeFile)
+class EmployeeFileAdmin(admin.ModelAdmin):
+    list_display = ['employee', 'title', 'file_type', 'uploaded_by', 'created_at']
+    list_filter = ['file_type', 'created_at']
+    search_fields = ['title', 'employee__emp_full_name']
+    date_hierarchy = 'created_at'
+
+# نماذج مهام الموارد البشرية
+@admin.register(HrTask)
+class HrTaskAdmin(admin.ModelAdmin):
+    list_display = ['title', 'assigned_to', 'due_date', 'status']
+    list_filter = ['status', 'priority']
+    search_fields = ['title', 'assigned_to__username']
+    date_hierarchy = 'due_date'
+
+# نماذج الإجازات
+@admin.register(LeaveType)
+class LeaveTypeAdmin(admin.ModelAdmin):
+    list_display = ['name', 'description']
+    search_fields = ['name', 'description']
+
+@admin.register(EmployeeLeave)
+class EmployeeLeaveAdmin(admin.ModelAdmin):
+    list_display = ['employee', 'leave_type', 'start_date', 'end_date', 'status']
+    list_filter = ['leave_type', 'status']
+    search_fields = ['employee__emp_full_name', 'reason']
+    date_hierarchy = 'start_date'
+
+# نماذج التقييمات
+@admin.register(EmployeeEvaluation)
+class EmployeeEvaluationAdmin(admin.ModelAdmin):
+    list_display = ['employee', 'evaluation_date', 'evaluator', 'overall_rating']
+    list_filter = ['evaluation_date']
+    search_fields = ['employee__emp_full_name', 'evaluator__username']
+    date_hierarchy = 'evaluation_date'

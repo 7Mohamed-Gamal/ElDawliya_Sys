@@ -83,7 +83,7 @@ from Hr.views.evaluation_views import (
 
 # استيراد وظائف عرض التقارير
 from Hr.views.report_views import (
-    report_list, report_detail, monthly_salary_report
+    report_list, report_detail, monthly_salary_report, employee_report
 )
 
 # استيراد وظائف عرض التنبيهات

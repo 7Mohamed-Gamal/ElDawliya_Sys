@@ -1,29 +1,64 @@
 from django.contrib import admin
+from django.utils.translation import gettext_lazy as _
 from .models import Meeting, Attendee
+
+class AttendeeInline(admin.TabularInline):
+    model = Attendee
+    extra = 1
+    fields = ['user']
 
 @admin.register(Meeting)
 class MeetingAdmin(admin.ModelAdmin):
-    list_display = ['title', 'date', 'created_by', 'get_attendees_count']
-    list_filter = ['date', 'created_by']
+    list_display = ['title', 'date', 'created_by', 'get_attendees_count', 'status']
+    list_filter = ['date', 'created_by', 'status']
     search_fields = ['title', 'topic']
     date_hierarchy = 'date'
+    inlines = [AttendeeInline]
+    fieldsets = (
+        (_('معلومات الاجتماع'), {
+            'fields': ('title', 'topic')
+        }),
+        (_('الزمان والمكان'), {
+            'fields': ('date',)
+        }),
+        (_('الحالة'), {
+            'fields': ('status', 'created_by')
+        }),
+    )
+    readonly_fields = ['created_by']
 
     def get_attendees_count(self, obj):
         return obj.attendees.count()
     get_attendees_count.short_description = 'عدد الحضور'
 
+    def save_model(self, request, obj, form, change):
+        if not change:  # إذا كان إنشاء جديد
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)
+
+    def has_add_permission(self, request):
+        """
+        السماح بإضافة اجتماع فقط للأدمن أو المستخدمين المحددين
+        """
+        return request.user.is_superuser or request.user.Role == 'admin' or request.user.has_perm('meetings.add_meeting')
+
+    def has_change_permission(self, request, obj=None):
+        # السماح للمستخدم بتعديل الاجتماعات التي أنشأها
+        if obj is not None and (obj.created_by == request.user or request.user.is_superuser or request.user.Role == 'admin'):
+            return True
+        return super().has_change_permission(request, obj)
+
 @admin.register(Attendee)
 class AttendeeAdmin(admin.ModelAdmin):
     list_display = ['user', 'meeting']
     list_filter = ['meeting']
+    search_fields = ['user__username', 'meeting__title']
 
-
-
-def has_add_permission(self, request):
-        """
-        السماح بإضافة اجتماع فقط للأدمن أو المستخدمين المحددين
-        """
-        return request.user.Role == 'admin'  # أو أي شرط آخر
+    def has_change_permission(self, request, obj=None):
+        # السماح للمستخدم بتعديل حضور الاجتماعات التي أنشأها
+        if obj is not None and (obj.meeting.created_by == request.user or request.user.is_superuser or request.user.Role == 'admin'):
+            return True
+        return super().has_change_permission(request, obj)
 
 def has_change_permission(self, request, obj=None):
         """
