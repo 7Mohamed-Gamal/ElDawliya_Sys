@@ -47,6 +47,15 @@ class Product(models.Model):
     class Meta:
         verbose_name = _("صنف")
         verbose_name_plural = _("الأصناف")
+        permissions = [
+            ("view_dashboard", "Can view inventory dashboard"),
+            ("view_stockreport", "Can view stock reports"),
+            ("export_stockreport", "Can export stock reports"),
+            ("view_settings", "Can view inventory settings"),
+            ("view_department", "Can view inventory departments"),
+            ("view_purchaserequest", "Can view purchase requests"),
+            ("view_voucher", "Can view vouchers"),
+        ]
 
 class Supplier(models.Model):
     name = models.CharField(max_length=100, verbose_name=_("اسم المورد"))

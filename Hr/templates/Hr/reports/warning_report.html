@@ -1,0 +1,167 @@
+{% extends 'Hr/base_hr.html' %}
+{% load static %}
+{% load django_permissions %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">تقارير التحذيرات</h1>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">معايير البحث</h6>
+        </div>
+        <div class="card-body">
+            <form method="get" action="{% url 'Hr:reports:warning_report' %}">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="warning_type" class="form-label">نوع التحذير</label>
+                        <select class="form-select" id="warning_type" name="warning_type">
+                            <option value="">جميع الأنواع</option>
+                            {% for type in warning_types %}
+                            <option value="{{ type.id }}" {% if request.GET.warning_type == type.id|string %}selected{% endif %}>
+                                {{ type.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="date_from" class="form-label">من تاريخ</label>
+                        <input type="date" class="form-control" id="date_from" name="date_from" value="{{ request.GET.date_from }}">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="date_to" class="form-label">إلى تاريخ</label>
+                        <input type="date" class="form-control" id="date_to" name="date_to" value="{{ request.GET.date_to }}">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="employee" class="form-label">الموظف</label>
+                        <select class="form-select" id="employee" name="employee">
+                            <option value="">جميع الموظفين</option>
+                            {% for emp in employees %}
+                            <option value="{{ emp.id }}" {% if request.GET.employee == emp.id|string %}selected{% endif %}>
+                                {{ emp.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="department" class="form-label">القسم</label>
+                        <select class="form-select" id="department" name="department">
+                            <option value="">جميع الأقسام</option>
+                            {% for dept in departments %}
+                            <option value="{{ dept.id }}" {% if request.GET.department == dept.id|string %}selected{% endif %}>
+                                {{ dept.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="status" class="form-label">الحالة</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="">جميع الحالات</option>
+                            <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>نشط</option>
+                            <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>غير نشط</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12 text-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search me-1"></i>
+                            بحث
+                        </button>
+                        <a href="{% url 'Hr:reports:report_detail' 'warnings' %}" class="btn btn-secondary">
+                            <i class="fas fa-redo me-1"></i>
+                            إعادة تعيين
+                        </a>
+                        {% if perms.Hr.export_warning_data or user|is_admin %}
+                        <div class="btn-group ms-2">
+                            <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-download me-1"></i>
+                                تصدير
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="?{{ request.GET.urlencode }}&export=excel">
+                                        <i class="fas fa-file-excel me-1 text-success"></i>
+                                        Excel
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="?{{ request.GET.urlencode }}&export=csv">
+                                        <i class="fas fa-file-csv me-1 text-info"></i>
+                                        CSV
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">نتائج البحث</h6>
+        </div>
+        <div class="card-body">
+            {% if warnings and warnings|length > 0 %}
+            <div class="table-responsive">
+                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th class="text-center">#</th>
+                            <th class="text-center">نوع التحذير</th>
+                            <th class="text-center">الموظف</th>
+                            <th class="text-center">تاريخ التحذير</th>
+                            <th class="text-center">الحالة</th>
+                            <th class="text-center">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for warning in warnings %}
+                        <tr>
+                            <td class="text-center">{{ forloop.counter }}</td>
+                            <td class="text-center">{{ warning.type.name }}</td>
+                            <td class="text-center">{{ warning.employee.name }}</td>
+                            <td class="text-center">{{ warning.date|date:"Y-m-d" }}</td>
+                            <td class="text-center">
+                                {% if warning.is_active %}
+                                <span class="badge bg-success">نشط</span>
+                                {% else %}
+                                <span class="badge bg-danger">غير نشط</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                {% if perms.Hr.view_warning_detail or user|is_admin %}
+                                <a href="{% url 'Hr:warnings:detail' warning.id %}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% endif %}
+                                {% if perms.Hr.print_warning or user|is_admin %}
+                                <a href="{% url 'Hr:warnings:print' warning.id %}" class="btn btn-sm btn-info">
+                                    <i class="fas fa-print"></i>
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center">لا توجد بيانات لعرضها</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info" role="alert">
+                لا توجد تحذيرات مطابقة للمعايير المحددة.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

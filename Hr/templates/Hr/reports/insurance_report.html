@@ -1,0 +1,153 @@
+{% extends 'Hr/base_hr.html' %}
+{% load static %}
+{% load django_permissions %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">تقرير التأمين</h1>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">معايير البحث</h6>
+        </div>
+        <div class="card-body">
+            <form method="get" action="{% url 'Hr:reports:insurance_report' %}">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="employee_id">رقم الموظف</label>
+                            <input type="text" class="form-control" id="employee_id" name="employee_id" value="{{ request.GET.employee_id }}">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="employee_name">اسم الموظف</label>
+                            <input type="text" class="form-control" id="employee_name" name="employee_name" value="{{ request.GET.employee_name }}">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="insurance_type">نوع التأمين</label>
+                            <select class="form-control" id="insurance_type" name="insurance_type">
+                                <option value="">جميع الأنواع</option>
+                                {% for type in insurance_types %}
+                                <option value="{{ type.id }}" {% if request.GET.insurance_type == type.id|string %}selected{% endif %}>{{ type.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="start_date">تاريخ البدء</label>
+                            <input type="date" class="form-control" id="start_date" name="start_date" value="{{ request.GET.start_date }}">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="end_date">تاريخ الانتهاء</label>
+                            <input type="date" class="form-control" id="end_date" name="end_date" value="{{ request.GET.end_date }}">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="status">الحالة</label>
+                            <select class="form-control" id="status" name="status">
+                                <option value="">جميع الحالات</option>
+                                <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>نشط</option>
+                                <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>غير نشط</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="actions text-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i>
+                        بحث
+                    </button>
+                    <a href="{% url 'Hr:reports:report_detail' 'insurance' %}" class="btn btn-secondary">
+                        <i class="fas fa-redo me-1"></i>
+                        إعادة تعيين
+                    </a>
+                    {% if perms.Hr.export_insurance_data or user|is_admin %}
+                    <div class="btn-group ms-2">
+                        <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-download me-1"></i>
+                            تصدير
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" href="?{{ request.GET.urlencode }}&export=excel">
+                                    <i class="fas fa-file-excel me-1 text-success"></i>
+                                    Excel
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="?{{ request.GET.urlencode }}&export=csv">
+                                    <i class="fas fa-file-csv me-1 text-info"></i>
+                                    CSV
+                                </a>
+                            </li>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">نتائج البحث</h6>
+        </div>
+        <div class="card-body">
+            {% if insurance_reports and insurance_reports|length > 0 %}
+            <div class="table-responsive">
+                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th>رقم الموظف</th>
+                            <th>اسم الموظف</th>
+                            <th>نوع التأمين</th>
+                            <th>تاريخ البدء</th>
+                            <th>تاريخ الانتهاء</th>
+                            <th>الحالة</th>
+                            <th class="text-center">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for employee in insurance_reports %}
+                        <tr>
+                            <td>{{ employee.emp_id }}</td>
+                            <td>{{ employee.full_name }}</td>
+                            <td>{{ employee.insurance_type }}</td>
+                            <td>{{ employee.start_date }}</td>
+                            <td>{{ employee.end_date }}</td>
+                            <td>{{ employee.status }}</td>
+                            <td class="text-center">
+                                {% if perms.Hr.view_insurance_detail or user|is_admin %}
+                                <a href="{% url 'Hr:employees:detail' employee.emp_id %}#insurance" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% endif %}
+                                {% if perms.Hr.print_insurance or user|is_admin %}
+                                <a href="{% url 'Hr:reports:insurance_print' employee.emp_id %}" class="btn btn-sm btn-info">
+                                    <i class="fas fa-print"></i>
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="alert alert-info" role="alert">
+                لا توجد نتائج تطابق معايير البحث الخاصة بك.
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

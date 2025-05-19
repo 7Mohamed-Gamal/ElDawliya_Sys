@@ -1,6 +1,5 @@
 from django.urls import path
 from . import views
-from . import views_updated
 
 app_name = 'administrator'
 
@@ -21,7 +20,7 @@ urlpatterns = [
     path('departments/<int:pk>/delete/', views.DepartmentDeleteView.as_view(), name='department_delete'),
 
     # Modules
-    path('modules/', views_updated.ModuleListView.as_view(), name='module_list'),
+    path('modules/', views.ModuleListView.as_view(), name='module_list'),
     path('modules/add/', views.ModuleCreateView.as_view(), name='module_add'),
     path('modules/<int:pk>/edit/', views.ModuleUpdateView.as_view(), name='module_edit'),
     path('modules/<int:pk>/delete/', views.ModuleDeleteView.as_view(), name='module_delete'),

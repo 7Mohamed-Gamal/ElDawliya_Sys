@@ -1,8 +1,20 @@
 from functools import wraps
 from django.shortcuts import redirect
 from django.contrib import messages
+from django.contrib.auth.decorators import permission_required
 from django.utils.decorators import method_decorator
-from django.contrib.auth.decorators import permission_required as django_permission_required
+
+def can_manage_inventory(view_func):
+    """
+    مزخرف للتحقق من صلاحية إدارة المخزون
+    """
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if request.user.is_superuser or request.user.has_perm('inventory.change_product'):
+            return view_func(request, *args, **kwargs)
+        messages.error(request, 'ليس لديك صلاحية الوصول إلى هذه الصفحة')
+        return redirect('accounts:access_denied')
+    return _wrapped_view
 
 # اسم القسم الرئيسي للمخزن
 DEPARTMENT_NAME = "مخزن قطع الغيار"
@@ -58,12 +70,12 @@ def admin_or_permission_required(perm):
             # المشرفون لديهم جميع الصلاحيات
             if request.user.is_superuser or getattr(request.user, 'Role', '') == 'admin':
                 return view_func(request, *args, **kwargs)
-                
+
             # التحقق من صلاحية المستخدم
             if not request.user.has_perm(perm):
                 messages.error(request, 'ليس لديك صلاحية الوصول إلى هذه الصفحة')
                 return redirect('accounts:access_denied')
-                
+
             return view_func(request, *args, **kwargs)
         return _wrapped_view
     return decorator
@@ -81,13 +93,13 @@ def inventory_module_permission_required(module_key, permission_type='view'):
 
     # تحويل مفتاح الوحدة إلى اسم موديل Django
     model_name = MODEL_MAP.get(module_key, module_key)
-    
+
     # تحويل نوع الصلاحية إلى صيغة Django
     django_perm_type = PERMISSION_TYPE_MAP.get(permission_type, permission_type)
-    
+
     # تكوين اسم الصلاحية بصيغة Django
     permission_name = f'inventory.{django_perm_type}_{model_name}'
-    
+
     return admin_or_permission_required(permission_name)
 
 def inventory_class_permission_required(module_key, permission_type='view'):
@@ -104,13 +116,13 @@ def inventory_class_permission_required(module_key, permission_type='view'):
 
     # تحويل مفتاح الوحدة إلى اسم موديل Django
     model_name = MODEL_MAP.get(module_key, module_key)
-    
+
     # تحويل نوع الصلاحية إلى صيغة Django
     django_perm_type = PERMISSION_TYPE_MAP.get(permission_type, permission_type)
-    
+
     # تكوين اسم الصلاحية بصيغة Django
     permission_name = f'inventory.{django_perm_type}_{model_name}'
-    
+
     return method_decorator(admin_or_permission_required(permission_name), name='dispatch')
 
 def has_inventory_permission(request, module_key, permission_type='view'):
@@ -131,12 +143,12 @@ def has_inventory_permission(request, module_key, permission_type='view'):
 
     # تحويل مفتاح الوحدة إلى اسم موديل Django
     model_name = MODEL_MAP.get(module_key, module_key)
-    
+
     # تحويل نوع الصلاحية إلى صيغة Django
     django_perm_type = PERMISSION_TYPE_MAP.get(permission_type, permission_type)
-    
+
     # تكوين اسم الصلاحية بصيغة Django
     permission_name = f'inventory.{django_perm_type}_{model_name}'
-    
+
     # التحقق من صلاحية المستخدم
     return request.user.has_perm(permission_name)

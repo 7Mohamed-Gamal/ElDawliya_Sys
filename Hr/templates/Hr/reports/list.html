@@ -1,6 +1,6 @@
 {% extends 'Hr/base_hr.html' %}
 {% load static %}
-{% load hr_permission_tags %}
+{% load django_permissions %}
 
 {% block title %}التقارير - نظام الدولية{% endblock %}
 
@@ -25,6 +25,14 @@
 <div class="row g-3">
     {% for report in reports %}
     <div class="col-md-6 col-lg-4">
+        {% if report.id == 'employees' and perms.Hr.view_employee or
+              report.id == 'leaves' and perms.Hr.view_leave or
+              report.id == 'attendance' and perms.Hr.view_attendance or
+              report.id == 'tasks' and perms.Hr.view_task or
+              report.id == 'hr_tasks' and perms.Hr.view_hrtask or
+              report.id == 'payroll' and perms.Hr.view_payroll or
+              report.id == 'insurance' and perms.Hr.view_insurance or
+              user|is_admin %}
         <div class="card h-100 shadow-sm">
             <div class="card-body">
                 <div class="d-flex align-items-center mb-3">
@@ -40,6 +48,7 @@
                 </a>
             </div>
         </div>
+        {% endif %}
     </div>
     {% empty %}
     <div class="col-12">
@@ -61,6 +70,7 @@
                 </h5>
             </div>
             <div class="card-body p-4">
+                {% if perms.Hr.export_employee_data or user|is_admin %}
                 <p class="mb-3">يمكنك تصدير بيانات الموظفين والإجازات والحضور والرواتب بصيغ مختلفة.</p>
                 <div class="row g-3">
                     <div class="col-md-6">
@@ -79,6 +89,7 @@
                             </div>
                         </div>
                     </div>
+                    {% if perms.Hr.export_attendance_data or user|is_admin %}
                     <div class="col-md-6">
                         <div class="card h-100">
                             <div class="card-body">
@@ -95,7 +106,9 @@
                             </div>
                         </div>
                     </div>
+                    {% endif %}
                 </div>
+                {% endif %}
             </div>
         </div>
     </div>

@@ -23,17 +23,7 @@ from administrator.models import (
     UserGroup, UserDepartmentPermission, UserModulePermission, GroupProfile
 )
 
-from administrator.models_new import (
-    AppModule, OperationPermission, PagePermission, UserOperationPermission, UserPagePermission
-)
-
-from admin_permissions.admin import (
-    PermissionAuditLogAdmin, DepartmentPermissionCacheAdmin, ModulePermissionCacheAdmin
-)
-
-from admin_permissions.models import (
-    PermissionAuditLog, DepartmentPermissionCache, ModulePermissionCache
-)
+from django.contrib.auth.models import Permission
 
 # تسجيل النماذج في موقع الإدارة المخصص
 admin_site.register(SystemSettings, SystemSettingsAdmin)
@@ -45,18 +35,6 @@ admin_site.register(UserGroup, UserGroupAdmin)
 admin_site.register(UserDepartmentPermission, UserDepartmentPermissionAdmin)
 admin_site.register(UserModulePermission, UserModulePermissionAdmin)
 admin_site.register(GroupProfile, GroupProfileAdmin)
-
-# تسجيل نماذج RBAC الجديدة
-admin_site.register(AppModule, AppModuleAdmin)
-admin_site.register(OperationPermission, OperationPermissionAdmin)
-admin_site.register(PagePermission, PagePermissionAdmin)
-admin_site.register(UserOperationPermission, UserOperationPermissionAdmin)
-admin_site.register(UserPagePermission, UserPagePermissionAdmin)
-
-# تسجيل نماذج من تطبيق admin_permissions
-admin_site.register(PermissionAuditLog, PermissionAuditLogAdmin)
-admin_site.register(DepartmentPermissionCache, DepartmentPermissionCacheAdmin)
-admin_site.register(ModulePermissionCache, ModulePermissionCacheAdmin)
 
 # تسجيل نماذج نظام الصلاحيات الأساسية
 admin_site.register(Group)

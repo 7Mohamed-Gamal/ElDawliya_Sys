@@ -73,6 +73,7 @@ TEMPLATES = [
                 'inventory.context_processors.inventory_stats',
                 'administrator.context_processors.system_settings',
                 'notifications.context_processors.notifications_processor',
+                'ElDawliya_sys.context_processors.rtl_context_processor',
             ],
         },
     },
@@ -149,6 +150,11 @@ LOCALE_PATHS = [
     BASE_DIR / 'locale',
     BASE_DIR / 'inventory/locale',
 ]
+
+# Text direction settings
+TEXT_DIRECTION = 'rtl'  # Default text direction
+CURRENT_LANGUAGE = 'ar'  # Default language
+CURRENT_FONT = 'Cairo'  # Default font
 
 TIME_ZONE = 'UTC'
 USE_I18N = True

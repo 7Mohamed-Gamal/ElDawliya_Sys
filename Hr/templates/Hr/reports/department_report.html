@@ -1,0 +1,104 @@
+{% extends 'Hr/base_hr.html' %}
+{% load static %}
+{% load django_permissions %}
+
+{% block content %}
+<div class="container">
+    <h1 class="my-4">تقرير الأقسام</h1>
+
+    <form method="get" class="mb-4">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="department_name" class="form-label">اسم القسم</label>
+                    <input type="text" class="form-control" id="department_name" name="department_name" value="{{ request.GET.department_name }}">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="manager_name" class="form-label">اسم المدير</label>
+                    <input type="text" class="form-control" id="manager_name" name="manager_name" value="{{ request.GET.manager_name }}">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="location" class="form-label">الموقع</label>
+                    <input type="text" class="form-control" id="location" name="location" value="{{ request.GET.location }}">
+                </div>
+            </div>
+        </div>
+        <div class="actions text-end">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-search me-1"></i>
+                بحث
+            </button>
+            <a href="{% url 'Hr:reports:report_detail' 'departments' %}" class="btn btn-secondary">
+                <i class="fas fa-redo me-1"></i>
+                إعادة تعيين
+            </a>
+            {% if perms.Hr.export_department_data or user|is_admin %}
+            <div class="btn-group ms-2">
+                <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-download me-1"></i>
+                    تصدير
+                </button>
+                <ul class="dropdown-menu">
+                    <li>
+                        <a class="dropdown-item" href="?{{ request.GET.urlencode }}&export=excel">
+                            <i class="fas fa-file-excel me-1 text-success"></i>
+                            Excel
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="?{{ request.GET.urlencode }}&export=csv">
+                            <i class="fas fa-file-csv me-1 text-info"></i>
+                            CSV
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>اسم القسم</th>
+                    <th>اسم المدير</th>
+                    <th>الموقع</th>
+                    <th class="text-center">الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for department in departments %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ department.name }}</td>
+                    <td>{{ department.manager }}</td>
+                    <td>{{ department.location }}</td>
+                    <td class="text-center">
+                        {% if perms.Hr.view_department_detail or user|is_admin %}
+                        <a href="{% url 'Hr:departments:detail' department.dept_code %}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        {% endif %}
+                        {% if perms.Hr.print_department_report or user|is_admin %}
+                        <a href="{% url 'Hr:reports:department_print' department.dept_code %}" class="btn btn-sm btn-info">
+                            <i class="fas fa-print"></i>
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center">لا توجد بيانات لعرضها</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

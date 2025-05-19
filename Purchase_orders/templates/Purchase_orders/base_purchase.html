@@ -1,6 +1,6 @@
 {% load static %}
 {% load i18n %}
-{% load purchase_permission_tags %}
+{% load django_permissions %}
 <!DOCTYPE html>
 <html lang="{{ current_language }}" dir="{{ text_direction }}">
 <head>
@@ -35,27 +35,26 @@
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
-                    {% has_purchase_module_permission "dashboard" "view" as can_view_dashboard %}
-                    {% if can_view_dashboard %}
+                    {% if perms.Purchase_orders.view_dashboard or user|is_admin %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'Purchase_orders:dashboard' %}">
-                            <i class="fas fa-tachometer-alt me-1"></i>{% trans "لوحة التحكم" %}
+                            <i class="fas fa-tachometer-alt"></i> لوحة التحكم
                         </a>
                     </li>
                     {% endif %}
-                    {% has_purchase_module_permission "purchase_requests" "view" as can_view_requests %}
-                    {% if can_view_requests %}
+
+                    {% if perms.Purchase_orders.view_purchaserequest or user|is_admin %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'Purchase_orders:purchase_request_list' %}">
-                            <i class="fas fa-list me-1"></i>{% trans "طلبات الشراء" %}
+                            <i class="fas fa-list"></i> قائمة الطلبات
                         </a>
                     </li>
                     {% endif %}
-                    {% has_purchase_module_permission "purchase_requests" "add" as can_add_request %}
-                    {% if can_add_request %}
+
+                    {% if perms.Purchase_orders.add_purchaserequest or user|is_admin %}
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'Purchase_orders:create_purchase_request' %}">
-                            <i class="fas fa-plus me-1"></i>{% trans "طلب شراء جديد" %}
+                            <i class="fas fa-plus"></i> طلب شراء جديد
                         </a>
                     </li>
                     {% endif %}

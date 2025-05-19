@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.auth.models import Group, Permission
 from .models import SystemSettings, Department, Module
 
 class SystemSettingsForm(forms.ModelForm):
@@ -53,7 +54,7 @@ class DatabaseConfigForm(forms.Form):
         label="نوع قاعدة البيانات",
         widget=forms.Select(attrs={'class': 'form-select'})
     )
-    
+
     db_connection_type = forms.ChoiceField(
         choices=[
             ('default', 'الاتصال الافتراضي (Default)'),
@@ -115,4 +116,41 @@ class DatabaseConfigForm(forms.Form):
         label="كلمة المرور",
         required=False,
         widget=forms.PasswordInput(render_value=True)
+    )
+
+
+class GroupForm(forms.ModelForm):
+    """Form for managing user groups."""
+    permissions = forms.ModelMultipleChoiceField(
+        queryset=Permission.objects.all(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        label="الصلاحيات"
+    )
+
+    class Meta:
+        model = Group
+        fields = ['name', 'permissions']
+        labels = {
+            'name': 'اسم المجموعة',
+        }
+
+
+class UserPermissionForm(forms.Form):
+    """Form for managing user permissions."""
+    permissions = forms.ModelMultipleChoiceField(
+        queryset=Permission.objects.all(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        label="الصلاحيات"
+    )
+
+
+class GroupPermissionForm(forms.Form):
+    """Form for managing group permissions."""
+    permissions = forms.ModelMultipleChoiceField(
+        queryset=Permission.objects.all(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        label="الصلاحيات"
     )

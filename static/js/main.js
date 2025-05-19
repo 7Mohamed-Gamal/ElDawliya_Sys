@@ -2,6 +2,7 @@
 
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize components
+    initRTLSupport();
     initScrollToTop();
     initDropdowns();
     initFormValidation();
@@ -10,10 +11,40 @@ document.addEventListener('DOMContentLoaded', function() {
     initTooltips();
 });
 
+// RTL Support
+function initRTLSupport() {
+    // Ensure RTL direction is applied to all elements that need it
+    document.querySelectorAll('.dropdown-menu, .popover, .tooltip').forEach(element => {
+        element.style.textAlign = 'right';
+    });
+
+    // Fix any third-party plugins that might not respect RTL
+    if (typeof $.fn.DataTable !== 'undefined') {
+        $.extend(true, $.fn.DataTable.defaults, {
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Arabic.json'
+            }
+        });
+    }
+
+    // Fix FullCalendar if it's being used
+    if (typeof FullCalendar !== 'undefined') {
+        document.querySelectorAll('.fc').forEach(calendar => {
+            calendar.style.direction = 'rtl';
+        });
+    }
+
+    // Fix any charts if they're being used
+    if (typeof Chart !== 'undefined') {
+        Chart.defaults.font.family = "'Cairo', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif";
+        Chart.defaults.font.size = 14;
+    }
+}
+
 // 1. Scroll to top button functionality
 function initScrollToTop() {
     const scrollToTopBtn = document.getElementById('scrollToTop');
-    
+
     if (scrollToTopBtn) {
         // Show/hide the button based on scroll position
         window.addEventListener('scroll', function() {
@@ -23,7 +54,7 @@ function initScrollToTop() {
                 scrollToTopBtn.classList.remove('visible');
             }
         });
-        
+
         // Smooth scroll to top when clicked
         scrollToTopBtn.addEventListener('click', function() {
             window.scrollTo({
@@ -53,7 +84,7 @@ function initDropdowns() {
                 }
             });
         });
-        
+
         // Close dropdowns when clicking outside
         document.addEventListener('click', function(e) {
             if (!e.target.matches('.dropdown-toggle') && !e.target.closest('.dropdown-menu')) {
@@ -68,14 +99,14 @@ function initDropdowns() {
 // 3. Form validation
 function initFormValidation() {
     const forms = document.querySelectorAll('.needs-validation');
-    
+
     if (forms.length > 0) {
         forms.forEach(form => {
             form.addEventListener('submit', function(event) {
                 if (!form.checkValidity()) {
                     event.preventDefault();
                     event.stopPropagation();
-                    
+
                     // Show custom validation messages
                     form.querySelectorAll('input, select, textarea').forEach(input => {
                         if (!input.validity.valid) {
@@ -91,11 +122,11 @@ function initFormValidation() {
                             }
                         }
                     });
-                    
+
                     // Show toast with error message
                     showToast('يرجى تصحيح الأخطاء في النموذج', '#dc3545');
                 }
-                
+
                 form.classList.add('was-validated');
             }, false);
         });
@@ -105,26 +136,26 @@ function initFormValidation() {
 // 4. Task Status Update (enhanced existing functionality)
 function initStatusUpdaters() {
     const statusButtons = document.querySelectorAll('.change-status');
-    
+
     if (statusButtons.length > 0) {
         statusButtons.forEach(button => {
             button.addEventListener('click', function() {
                 const taskId = this.dataset.taskId;
                 const newStatus = this.dataset.newStatus;
-                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ||
                                  document.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
-                
+
                 if (!csrfToken) {
                     console.error('CSRF token not found');
                     showToast('خطأ في العملية: الرمز المميز غير موجود', '#dc3545');
                     return;
                 }
-                
+
                 // Show loading state
                 button.disabled = true;
                 const originalText = button.innerHTML;
                 button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحديث...';
-                
+
                 // Send status update request
                 fetch(`/tasks/${taskId}/update_status/`, {
                     method: 'POST',
@@ -154,9 +185,9 @@ function initStatusUpdaters() {
                                 'deferred': 'مؤجلة',
                                 'failed': 'فشلت'
                             };
-                            
+
                             statusElement.textContent = statusMap[newStatus] || newStatus;
-                            
+
                             // Update task card status class if it exists
                             const taskCard = statusElement.closest('.task-card');
                             if (taskCard) {
@@ -166,7 +197,7 @@ function initStatusUpdaters() {
                                 taskCard.classList.add(newStatus.replace('_', '-'));
                             }
                         }
-                        
+
                         // Show success message
                         showToast('تم تحديث حالة المهمة بنجاح!', '#198754');
                     } else {
@@ -206,21 +237,21 @@ function updateDashboardStats() {
 // 5. Delete confirmations
 function initDeleteConfirmations() {
     const deleteButtons = document.querySelectorAll('.confirm-delete');
-    
+
     if (deleteButtons.length > 0) {
         deleteButtons.forEach(button => {
             button.addEventListener('click', function(e) {
                 e.preventDefault();
-                
+
                 const itemType = this.dataset.type || 'العنصر';
                 const itemId = this.dataset.id;
                 const deleteUrl = this.href || this.dataset.url;
-                
+
                 if (!deleteUrl) {
                     console.error('Delete URL not specified');
                     return;
                 }
-                
+
                 if (confirm(`هل أنت متأكد من حذف هذا ${itemType}؟`)) {
                     window.location.href = deleteUrl;
                 }
@@ -259,20 +290,20 @@ function showToast(message, bgColor = '#198754', duration = 3000) {
         toast.className = 'toast-notification';
         toast.style.backgroundColor = bgColor;
         toast.textContent = message;
-        
+
         document.body.appendChild(toast);
-        
+
         // Animate in
         setTimeout(() => {
             toast.style.opacity = '1';
             toast.style.transform = 'translateY(0)';
         }, 10);
-        
+
         // Remove after duration
         setTimeout(() => {
             toast.style.opacity = '0';
             toast.style.transform = 'translateY(-20px)';
-            
+
             // Remove from DOM after animation
             setTimeout(() => {
                 document.body.removeChild(toast);
@@ -286,7 +317,7 @@ function confirmDelete(id, type = 'الاجتماع', url = null) {
     if (!url && type === 'الاجتماع') {
         url = `/meetings/delete/${id}/`;
     }
-    
+
     if (confirm(`هل أنت متأكد من حذف هذا ${type}؟`)) {
         window.location.href = url;
     }
@@ -294,52 +325,52 @@ function confirmDelete(id, type = 'الاجتماع', url = null) {
 
 // 9. Date and time formatting utility
 function formatDate(dateString) {
-    const options = { 
-        year: 'numeric', 
-        month: 'long', 
+    const options = {
+        year: 'numeric',
+        month: 'long',
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
     };
-    
+
     return new Date(dateString).toLocaleDateString('ar-SA', options);
 }
 
 // 10. Add dynamic table sorting
 function initTableSorting() {
     const sortableTables = document.querySelectorAll('.table-sortable');
-    
+
     if (sortableTables.length > 0) {
         sortableTables.forEach(table => {
             const headers = table.querySelectorAll('th[data-sort]');
-            
+
             headers.forEach(header => {
                 header.addEventListener('click', function() {
                     const sortKey = this.dataset.sort;
                     const sortDirection = this.classList.contains('sort-asc') ? 'desc' : 'asc';
-                    
+
                     // Remove sort classes from all headers
                     headers.forEach(h => h.classList.remove('sort-asc', 'sort-desc'));
-                    
+
                     // Add sort class to current header
                     this.classList.add(`sort-${sortDirection}`);
-                    
+
                     // Get all rows except header row
                     const tbody = table.querySelector('tbody');
                     const rows = Array.from(tbody.querySelectorAll('tr'));
-                    
+
                     // Sort rows
                     rows.sort((a, b) => {
                         const aValue = a.querySelector(`td[data-sort="${sortKey}"]`).textContent.trim();
                         const bValue = b.querySelector(`td[data-sort="${sortKey}"]`).textContent.trim();
-                        
+
                         if (sortDirection === 'asc') {
                             return aValue.localeCompare(bValue, 'ar');
                         } else {
                             return bValue.localeCompare(aValue, 'ar');
                         }
                     });
-                    
+
                     // Append sorted rows
                     rows.forEach(row => tbody.appendChild(row));
                 });

@@ -1,5 +1,6 @@
 {% extends 'Hr/base_hr.html' %}
 {% load static %}
+{% load django_permissions %}
 
 {% block title %}{{ employee.emp_full_name }} - تفاصيل الموظف{% endblock %}
 
@@ -16,21 +17,24 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h4 class="mb-0">{{ employee.emp_full_name }}</h4>
-        <span class="text-muted">{{ employee.job.job_name|default:"" }} {{ employee.department.dept_name|default:"" }}</span>
+        <p class="text-muted mb-0">{{ employee.job.jop_name|default:"No Job Assigned" }}</p>
     </div>
-    <div class="actions">
-        <a href="{% url 'Hr:employees:edit' employee.emp_id %}" class="btn btn-primary">
-            <i class="fas fa-edit me-1"></i>
-            تعديل
-        </a>
-        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
-            <i class="fas fa-trash-alt me-1"></i>
-            حذف
-        </button>
-        <a href="{% url 'Hr:employees:list' %}" class="btn btn-outline-secondary">
-            <i class="fas fa-arrow-right me-1"></i>
-            العودة للقائمة
-        </a>
+    <div class="btn-group">
+        {% if perms.Hr.change_employee or user|is_admin %}
+            <a href="{% url 'Hr:employees:edit' emp_id=employee.emp_id %}" class="btn btn-primary">
+                <i class="fas fa-edit me-1"></i> تعديل
+            </a>
+        {% endif %}
+        {% if perms.Hr.view_employee or user|is_admin %}
+            <a href="{% url 'Hr:employees:print' emp_id=employee.emp_id %}" class="btn btn-info" target="_blank">
+                <i class="fas fa-print me-1"></i> طباعة
+            </a>
+        {% endif %}
+        {% if perms.Hr.delete_employee or user|is_admin %}
+            <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteEmployeeModal">
+                <i class="fas fa-trash me-1"></i> حذف
+            </button>
+        {% endif %}
     </div>
 </div>
 
@@ -291,11 +295,11 @@
 </div>
 
 <!-- نموذج الحذف -->
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+<div class="modal fade" id="deleteEmployeeModal" tabindex="-1" aria-labelledby="deleteEmployeeModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="deleteModalLabel">تأكيد الحذف</h5>
+                <h5 class="modal-title" id="deleteEmployeeModalLabel">تأكيد الحذف</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">

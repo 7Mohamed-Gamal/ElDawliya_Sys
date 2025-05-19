@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="report-list">
+    <h2>HR Reports</h2>
+    
+    {% if perms.hr.view_salary_report %}
+    <div class="report-item">
+        <h3>Salary Report</h3>
+        <a href="{% url 'hr:salary_report' %}" class="btn btn-primary">View Report</a>
+        {% if perms.hr.export_salary_report %}
+        <a href="{% url 'hr:export_salary_report' %}" class="btn btn-secondary">Export</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if perms.hr.view_attendance_report %}
+    <div class="report-item">
+        <h3>Attendance Report</h3>
+        <a href="{% url 'hr:attendance_report' %}" class="btn btn-primary">View Report</a>
+        {% if perms.hr.export_attendance_report %}
+        <a href="{% url 'hr:export_attendance_report' %}" class="btn btn-secondary">Export</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if perms.hr.view_leave_report %}
+    <div class="report-item">
+        <h3>Leave Report</h3>
+        <a href="{% url 'hr:leave_report' %}" class="btn btn-primary">View Report</a>
+        {% if perms.hr.export_leave_report %}
+        <a href="{% url 'hr:export_leave_report' %}" class="btn btn-secondary">Export</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if perms.hr.view_task_report %}
+    <div class="report-item">
+        <h3>Task Report</h3>
+        <a href="{% url 'hr:task_report' %}" class="btn btn-primary">View Report</a>
+        {% if perms.hr.export_task_report %}
+        <a href="{% url 'hr:export_task_report' %}" class="btn btn-secondary">Export</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% if not perms.hr.view_salary_report and not perms.hr.view_attendance_report and not perms.hr.view_leave_report and not perms.hr.view_task_report %}
+    <p class="no-reports">You don't have permission to view any reports.</p>
+    {% endif %}
+</div>
+{% endblock %}

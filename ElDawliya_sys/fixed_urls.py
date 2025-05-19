@@ -23,17 +23,7 @@ from administrator.models import (
     UserGroup, UserDepartmentPermission, UserModulePermission, GroupProfile
 )
 
-from administrator.models_new import (
-    AppModule, OperationPermission, PagePermission, UserOperationPermission, UserPagePermission
-)
-
-from admin_permissions.admin import (
-    PermissionAuditLogAdmin, DepartmentPermissionCacheAdmin, ModulePermissionCacheAdmin
-)
-
-from admin_permissions.models import (
-    PermissionAuditLog, DepartmentPermissionCache, ModulePermissionCache
-)
+from django.contrib.auth.models import Permission
 
 # Helper function to safely register models without causing AlreadyRegistered exceptions
 def safe_register(admin_site, model, admin_class=None):
@@ -52,18 +42,6 @@ safe_register(admin_site, UserGroup, UserGroupAdmin)
 safe_register(admin_site, UserDepartmentPermission, UserDepartmentPermissionAdmin)
 safe_register(admin_site, UserModulePermission, UserModulePermissionAdmin)
 safe_register(admin_site, GroupProfile, GroupProfileAdmin)
-
-# تسجيل نماذج RBAC الجديدة
-safe_register(admin_site, AppModule, AppModuleAdmin)
-safe_register(admin_site, OperationPermission, OperationPermissionAdmin)
-safe_register(admin_site, PagePermission, PagePermissionAdmin)
-safe_register(admin_site, UserOperationPermission, UserOperationPermissionAdmin)
-safe_register(admin_site, UserPagePermission, UserPagePermissionAdmin)
-
-# تسجيل نماذج من تطبيق admin_permissions
-safe_register(admin_site, PermissionAuditLog, PermissionAuditLogAdmin)
-safe_register(admin_site, DepartmentPermissionCache, DepartmentPermissionCacheAdmin)
-safe_register(admin_site, ModulePermissionCache, ModulePermissionCacheAdmin)
 
 # تسجيل نماذج نظام الصلاحيات الأساسية
 safe_register(admin_site, Group)

@@ -21,6 +21,14 @@ class Meeting(models.Model):
     class Meta:
         verbose_name = "اجتماع"
         verbose_name_plural = "الاجتماعات"
+        permissions = [
+            ("view_meetingtask", "Can view meeting tasks"),
+            ("add_meetingtask", "Can add meeting tasks"),
+            ("change_meetingtask", "Can change meeting tasks"),
+            ("delete_meetingtask", "Can delete meeting tasks"),
+            ("view_meetingreport", "Can view meeting reports"),
+            ("export_meetingreport", "Can export meeting reports"),
+        ]
 
     def __str__(self):
         return self.title

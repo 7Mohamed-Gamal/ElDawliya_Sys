@@ -221,6 +221,20 @@ def employee_delete(request, emp_id):
 
 # Move employee_search view to this file from Hr/views.py
 @login_required
+def employee_print(request, emp_id):
+    """طباعة بيانات موظف"""
+    employee = get_object_or_404(Employee, emp_id=emp_id)
+
+    context = {
+        'employee': employee,
+        'title': f'طباعة بيانات الموظف: {employee.emp_full_name}',
+        'print_mode': True,
+    }
+
+    return render(request, 'Hr/employees/employee_print.html', context)
+
+
+@login_required
 def employee_search(request):
     """صفحة البحث عن الموظف وعرض بياناته وتحليلاته"""
     form = EmployeeSearchForm(request.GET or None)

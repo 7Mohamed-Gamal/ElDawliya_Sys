@@ -1,0 +1,155 @@
+{% extends 'Hr/base_hr.html' %}
+{% load static %}
+{% load django_permissions %}
+
+{% block title %}تقرير المهام{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="page-title mb-4">تقرير المهام</h2>
+        </div>
+    </div>
+
+    <!-- فلاتر البحث -->
+    <form method="get" class="mb-4">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="mb-3">
+                    <label for="employee" class="form-label">الموظف</label>
+                    <select name="employee" id="employee" class="form-select">
+                        <option value="">-- جميع الموظفين --</option>
+                        {% for emp in employees %}
+                        <option value="{{ emp.id }}" {% if selected_employee == emp.id|stringformat:"s" %}selected{% endif %}>
+                            {{ emp.emp_full_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-3">
+                    <label for="status" class="form-label">الحالة</label>
+                    <select name="status" id="status" class="form-select">
+                        <option value="">-- جميع الحالات --</option>
+                        {% for status_code, status_name in statuses %}
+                        <option value="{{ status_code }}" {% if selected_status == status_code %}selected{% endif %}>
+                            {{ status_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-3">
+                    <label for="priority" class="form-label">الأولوية</label>
+                    <select name="priority" id="priority" class="form-select">
+                        <option value="">-- جميع الأولويات --</option>
+                        {% for priority_code, priority_name in priorities %}
+                        <option value="{{ priority_code }}" {% if selected_priority == priority_code %}selected{% endif %}>
+                            {{ priority_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-3">
+                    <label for="date_from" class="form-label">من تاريخ</label>
+                    <input type="date" class="form-control" id="date_from" name="date_from" value="{{ selected_date_from|date:'Y-m-d' }}">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-3">
+                    <label for="date_to" class="form-label">إلى تاريخ</label>
+                    <input type="date" class="form-control" id="date_to" name="date_to" value="{{ selected_date_to|date:'Y-m-d' }}">
+                </div>
+            </div>
+            <div class="col-12 text-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search me-1"></i>
+                    بحث
+                </button>
+                <a href="{% url 'Hr:reports:task_report' %}" class="btn btn-secondary">
+                    <i class="fas fa-redo me-1"></i>
+                    إعادة تعيين
+                </a>
+                {% if perms.Hr.export_task_data or user|is_admin %}
+                <div class="btn-group ms-2">
+                    <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="fas fa-download me-1"></i>
+                        تصدير
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="?{{ request.GET.urlencode }}&export=excel">
+                                <i class="fas fa-file-excel me-1 text-success"></i>
+                                Excel
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="?{{ request.GET.urlencode }}&export=csv">
+                                <i class="fas fa-file-csv me-1 text-info"></i>
+                                CSV
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </form>
+
+    <!-- جدول البيانات -->
+    {% if tasks %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>العنوان</th>
+                    <th>الموظف</th>
+                    <th>الحالة</th>
+                    <th>الأولوية</th>
+                    <th>تاريخ البداية</th>
+                    <th>تاريخ الاستحقاق</th>
+                    <th>نسبة الإنجاز</th>
+                    {% if perms.Hr.view_employeetask_details or user|is_admin %}
+                    <th class="text-center">الإجراءات</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for task in tasks %}
+                <tr>
+                    <td>{{ task.title }}</td>
+                    <td>{{ task.employee.emp_full_name }}</td>
+                    <td>{{ task.get_status_display }}</td>
+                    <td>{{ task.get_priority_display }}</td>
+                    <td>{{ task.start_date|date:"Y-m-d" }}</td>
+                    <td>{{ task.due_date|date:"Y-m-d" }}</td>
+                    <td>{{ task.progress }}%</td>
+                    {% if perms.Hr.view_employeetask_details or user|is_admin %}
+                    <td class="text-center">
+                        <a href="{% url 'Hr:tasks:detail' task.id %}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        {% if perms.Hr.print_employeetask or user|is_admin %}
+                        <a href="{% url 'Hr:tasks:print' task.id %}" class="btn btn-sm btn-info">
+                            <i class="fas fa-print"></i>
+                        </a>
+                        {% endif %}
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <p>لا توجد بيانات للعرض</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

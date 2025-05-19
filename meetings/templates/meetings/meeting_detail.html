@@ -1,5 +1,7 @@
 {% extends "meetings/base_meetings.html" %}
 {% load static %}
+{% load i18n %}
+{% load django_permissions %}
 
 {% block title %}تفاصيل الاجتماع - {{ meeting.title }}{% endblock %}
 
@@ -157,16 +159,20 @@
                 </div>
             </div>
             <div class="action-buttons">
-                {% if user == meeting.created_by or user.is_superuser %}
+                {% if perms.meetings.change_meeting or user|is_admin %}
                 <a href="{% url 'meetings:edit' pk=meeting.pk %}" class="btn btn-primary btn-action">
                     <i class="fas fa-edit"></i>
                     <span>تحرير</span>
                 </a>
+                {% endif %}
+                
+                {% if perms.meetings.delete_meeting or user|is_admin %}
                 <button type="button" class="btn btn-danger btn-action" data-bs-toggle="modal" data-bs-target="#deleteModal">
                     <i class="fas fa-trash-alt"></i>
                     <span>حذف</span>
                 </button>
                 {% endif %}
+                
                 <a href="{% url 'meetings:list' %}" class="btn btn-outline-secondary btn-action">
                     <i class="fas fa-arrow-right"></i>
                     <span>العودة للقائمة</span>
@@ -307,7 +313,7 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="card-title mb-0"><i class="fas fa-users me-2 text-primary"></i> قائمة الحضور</h5>
-                    {% if user == meeting.created_by or user.is_superuser %}
+                    {% if user == meeting.created_by or user|is_admin %}
                     <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addAttendeeForm">
                         <i class="fas fa-plus me-1"></i> إضافة حضور
                     </button>
@@ -377,7 +383,7 @@
                     <div class="text-center py-4">
                         <i class="fas fa-users fa-3x text-muted mb-3"></i>
                         <p>لا يوجد حضور مسجلين في هذا الاجتماع</p>
-                        {% if user == meeting.created_by or user.is_superuser %}
+                        {% if user == meeting.created_by or user|is_admin %}
                         <button type="button" class="btn btn-primary mt-2" data-bs-toggle="collapse" data-bs-target="#addAttendeeForm">
                             <i class="fas fa-plus me-1"></i> إضافة حضور
                         </button>

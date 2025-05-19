@@ -78,6 +78,14 @@ class EmployeeTask(models.Model):
         verbose_name = _('مهمة الموظف')
         verbose_name_plural = _('مهام الموظفين')
         ordering = ['-created_at', 'priority']
+        permissions = [
+            ("view_dashboard", "Can view employee tasks dashboard"),
+            ("view_mytask", "Can view my employee tasks"),
+            ("view_calendar", "Can view employee tasks calendar"),
+            ("view_analytics", "Can view employee tasks analytics"),
+            ("view_notification", "Can view employee tasks notifications"),
+            ("export_report", "Can export employee tasks reports"),
+        ]
 
 
 class TaskStep(models.Model):

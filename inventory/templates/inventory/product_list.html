@@ -1,6 +1,6 @@
 {% extends 'inventory/base_inventory.html' %}
 {% load static %}
-{% load inventory_permission_tags %}
+{% load django_permissions %}
 
 {% block title %}قائمة أصناف المخزن - نظام إدارة المخزن{% endblock %}
 
@@ -138,20 +138,20 @@
         if (stockStatusFilter) {
             stockStatusFilter.addEventListener('change', function(event) {
                 const selectedValue = this.value;
-                
+
                 // نتعامل مع الفلتر "مساوى الحد الادنى" بشكل خاص فقط، ونترك باقي الفلاتر للخادم
                 if (selectedValue === 'equal') {
                     // منع الإرسال التلقائي للنموذج
                     event.preventDefault();
-                    
+
                     // عرض جميع المنتجات ثم فلترة بالجافاسكريبت
                     // إعادة توجيه للصفحة بدون معامل الفلترة
                     const currentUrl = new URL(window.location.href);
                     currentUrl.searchParams.delete('stock_status');
-                    
+
                     // إضافة علامة خاصة للفلتر المساوي
                     currentUrl.searchParams.set('eq_filter', 'true');
-                    
+
                     // الانتقال للصفحة
                     window.location.href = currentUrl.toString();
                 } else {
@@ -161,28 +161,28 @@
                 }
             });
         }
-        
+
         // التحقق مما إذا تم اختيار الفلتر مساوى الحد الادنى من القائمة المنسدلة
         const urlParams = new URLSearchParams(window.location.search);
         const equalFilter = urlParams.get('eq_filter');
-        
+
         // الفلترة المساوية بالجافاسكريبت
         function filterEqualProducts() {
             // تحديد حالة الفلتر في القائمة المنسدلة
             if (stockStatusFilter) {
                 stockStatusFilter.value = 'equal';
             }
-            
+
             // فلترة المنتجات بالجافاسكريبت للبحث عن المنتجات المساوية للحد الأدنى
             const productRows = document.querySelectorAll('.table-products tbody tr');
             let equalCount = 0;
-            
+
             // حساب المنتجات المساوية للحد الأدنى وإخفاء الباقي
             productRows.forEach(row => {
                 // البحث عن النص "مساوى الحد الادنى" في صف المنتج
                 const statusCell = row.querySelector('td:nth-child(9)');
                 const isEqualToMinimum = statusCell && statusCell.textContent.includes('مساوى الحد الادنى');
-                
+
                 // إخفاء أو إظهار الصف حسب الفلتر
                 if (isEqualToMinimum) {
                     row.style.display = '';
@@ -191,13 +191,13 @@
                     row.style.display = 'none';
                 }
             });
-            
+
             // تحديث عداد المنتجات المساوية للحد الأدنى
             const equalCountElement = document.querySelector('.badge-equal + span');
             if (equalCountElement) {
                 equalCountElement.textContent = equalCount + ' مساوى الحد الادنى';
             }
-            
+
             // إضافة عنصر خاص في الجدول إذا لم يتم العثور على عناصر
             if (equalCount === 0) {
                 const tableBody = document.querySelector('.table-products tbody');
@@ -210,24 +210,24 @@
                     emptyCell.style.textAlign = 'center';
                     emptyCell.style.padding = '20px';
                     emptyRow.appendChild(emptyCell);
-                    
+
                     // إضافة الصف للجدول
                     tableBody.appendChild(emptyRow);
                 }
             }
-            
+
             // تحديث عنوان الصفحة ليعكس الفلترة
             const titleElement = document.querySelector('.page-title');
             if (titleElement) {
                 titleElement.textContent = 'قائمة أصناف المخزن - مساوى الحد الأدنى';
             }
         }
-        
+
         // تنفيذ الفلترة المساوية للحد الأدنى فقط إذا كانت موجودة
         if (equalFilter === 'true') {
             filterEqualProducts();
         }
-        
+
         // ملاحظة: كل الفلاتر الأخرى (المتوفر، تحت الحد الأدنى، نفذت الكمية)
         // يتم معالجتها على الخادم عند تقديم النموذج
 
@@ -300,18 +300,10 @@
                 قائمة أصناف المخزن
             </h4>
 
-            {% has_inventory_module_permission "products" "add" as can_add_product %}
-            {% if can_add_product %}
-            <div class="d-flex gap-2">
-                <!-- <a href="{% url 'inventory:basic_product_add' %}" class="btn btn-success">
-                    <i class="fas fa-plus-circle ms-1"></i>
-                    إضافة صنف (نموذج بسيط)
-                </a> -->
-                <a href="{% url 'inventory:product_add' %}" class="btn btn-primary">
-                    <i class="fas fa-plus-circle ms-1"></i>
-                    إضافة صنف جديد
+            {% if perms.inventory.add_product or user|is_admin %}
+                <a href="{% url 'inventory:product_add' %}" class="btn btn-primary mb-3">
+                    <i class="fas fa-plus-circle me-1"></i> إضافة صنف جديد
                 </a>
-            </div>
             {% endif %}
         </div>
 
@@ -389,7 +381,7 @@
                         </span>
                         <span>{{ normal_stock_count }} متوفر</span>
                     </div>
-                    
+
                     <div class="d-flex align-items-center">
                         <span class="badge-stock badge-equal me-2">
                             <i class="fas fa-exclamation-circle"></i>
@@ -470,25 +462,24 @@
                                     {% endif %}
                                 </td>
                                 <td class="product-actions">
-                                    {% has_inventory_module_permission "products" "edit" as can_edit_product %}
-                                    {% if can_edit_product %}
-                                    <a href="{% url 'inventory:product_edit' product.product_id %}" class="btn btn-sm btn-outline-primary" title="تعديل">
-                                        <i class="fas fa-edit"></i>
-                                    </a>
+                                    {% if perms.inventory.change_product or user|is_admin %}
+                                        <a href="{% url 'inventory:product_edit' product.product_id %}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
                                     {% endif %}
 
-                                    {% has_inventory_module_permission "products" "delete" as can_delete_product %}
-                                    {% if can_delete_product %}
-                                    <a href="{% url 'inventory:product_delete' product.product_id %}" class="btn btn-sm btn-outline-danger" title="حذف">
-                                        <i class="fas fa-trash"></i>
-                                    </a>
+                                    {% if perms.inventory.delete_product or user|is_admin %}
+                                        <button type="button" class="btn btn-sm btn-danger delete-product"
+                                                data-product-id="{{ product.id }}"
+                                                data-product-name="{{ product.name }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
                                     {% endif %}
 
-                                    {% has_inventory_module_permission "invoices" "add" as can_add_invoice %}
-                                    {% if can_add_invoice %}
-                                    <a href="{% url 'inventory:invoice_add' %}?product={{ product.product_id }}" class="btn btn-sm btn-outline-success" title="إضافة فاتورة">
-                                        <i class="fas fa-file-invoice"></i>
-                                    </a>
+                                    {% if perms.inventory.add_invoice or user|is_admin %}
+                                        <a href="{% url 'inventory:voucher_add' %}?product={{ product.product_id }}" class="btn btn-sm btn-success">
+                                            <i class="fas fa-plus"></i> إنشاء إذن
+                                        </a>
                                     {% endif %}
                                 </td>
                             </tr>

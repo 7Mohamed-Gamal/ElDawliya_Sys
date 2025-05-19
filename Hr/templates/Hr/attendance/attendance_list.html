@@ -1,0 +1,96 @@
+{% extends 'Hr/base_hr.html' %}
+{% load static %}
+{% load django_permissions %}
+
+{% block content %}
+    <div class="container">
+        <h1 class="my-4">قائمة الحضور</h1>
+
+        <div class="actions text-end mb-3">
+            {% if perms.Hr.add_attendance or user|is_admin %}
+                <a href="{% url 'Hr:attendance:create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i> تسجيل حضور جديد
+                </a>
+            {% endif %}
+            {% if perms.Hr.import_attendance or user|is_admin %}
+                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#importModal">
+                    <i class="fas fa-file-import me-1"></i> استيراد من إكسل
+                </button>
+            {% endif %}
+        </div>
+
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>اسم الموظف</th>
+                    <th>تاريخ الحضور</th>
+                    <th>وقت الدخول</th>
+                    <th>وقت الخروج</th>
+                    <th class="text-center">الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in attendance_records %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ record.employee.emp_full_name }}</td>
+                        <td>{{ record.date|date:"Y-m-d" }}</td>
+                        <td>{{ record.check_in|time:"H:i" }}</td>
+                        <td>{{ record.check_out|time:"H:i" }}</td>
+                        <td class="text-center">
+                            <div class="btn-group">
+                                {% if perms.Hr.change_attendance or user|is_admin %}
+                                    <a href="{% url 'Hr:attendance:edit' record.id %}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-edit"></i> تعديل
+                                    </a>
+                                {% endif %}
+                                {% if perms.Hr.delete_attendance or user|is_admin %}
+                                    <button type="button" class="btn btn-sm btn-danger delete-record" 
+                                            data-record-id="{{ record.id }}"
+                                            data-employee-name="{{ record.employee.emp_full_name }}"
+                                            data-date="{{ record.date|date:'Y-m-d' }}">
+                                        <i class="fas fa-trash"></i> حذف
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center">لا توجد سجلات حضور</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Import Modal -->
+    <div class="modal fade" id="importModal" tabindex="-1" aria-labelledby="importModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="importModalLabel">استيراد الحضور من إكسل</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="importForm" method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="excelFile" class="form-label">اختر ملف إكسل</label>
+                            <input class="form-control" type="file" id="excelFile" name="excelFile" accept=".xls,.xlsx" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="date" class="form-label">تاريخ السجلات</label>
+                            <input class="form-control" type="date" id="date" name="date" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-file-import"></i> استيراد
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}

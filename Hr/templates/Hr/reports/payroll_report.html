@@ -1,0 +1,145 @@
+{% extends 'Hr/base_hr.html' %}
+{% load static %}
+{% load django_permissions %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4 text-gray-800">
+                <i class="fas fa-file-invoice-dollar me-1"></i>
+                تقرير الرواتب
+            </h1>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-search-dollar me-1"></i>
+                بحث في تقرير الرواتب
+            </h6>
+        </div>
+        <div class="card-body">
+            <form method="get" action="{% url 'Hr:reports:payroll_report' %}">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label for="employee" class="form-label">الموظف</label>
+                        <select name="employee" id="employee" class="form-select">
+                            <option value="">جميع الموظفين</option>
+                            {% for employee in employees %}
+                            <option value="{{ employee.id }}" {% if request.GET.employee == employee.id|string %}selected{% endif %}>
+                                {{ employee.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="department" class="form-label">القسم</label>
+                        <select name="department" id="department" class="form-select">
+                            <option value="">جميع الأقسام</option>
+                            {% for department in departments %}
+                            <option value="{{ department.id }}" {% if request.GET.department == department.id|string %}selected{% endif %}>
+                                {{ department.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="date_range" class="form-label">تاريخ الرواتب</label>
+                        <input type="text" name="date_range" id="date_range" class="form-control" placeholder="من - إلى" value="{{ request.GET.date_range }}">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="actions text-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-1"></i>
+                                بحث
+                            </button>
+                            <a href="{% url 'Hr:reports:report_detail' 'payroll' %}" class="btn btn-secondary">
+                                <i class="fas fa-redo me-1"></i>
+                                إعادة تعيين
+                            </a>
+                            {% if perms.Hr.export_payroll_data or user|is_admin %}
+                            <div class="btn-group ms-2">
+                                <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-download me-1"></i>
+                                    تصدير
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" href="?{{ request.GET.urlencode }}&export=excel">
+                                            <i class="fas fa-file-excel me-1 text-success"></i>
+                                            Excel
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="?{{ request.GET.urlencode }}&export=csv">
+                                            <i class="fas fa-file-csv me-1 text-info"></i>
+                                            CSV
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">
+                <i class="fas fa-list-alt me-1"></i>
+                تفاصيل تقرير الرواتب
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="dataTable" width="100%" cellspacing="0">
+                    <thead>
+                        <tr>
+                            <th class="text-center">#</th>
+                            <th class="text-center">الموظف</th>
+                            <th class="text-center">القسم</th>
+                            <th class="text-center">تاريخ الراتب</th>
+                            <th class="text-center">المبلغ</th>
+                            <th class="text-center">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in payroll_entries %}
+                        <tr>
+                            <td class="text-center">{{ forloop.counter }}</td>
+                            <td class="text-center">{{ entry.employee.name }}</td>
+                            <td class="text-center">{{ entry.department.name }}</td>
+                            <td class="text-center">{{ entry.salary_date|date:"Y-m-d" }}</td>
+                            <td class="text-center">{{ entry.amount }}</td>
+                            <td class="text-center">
+                                {% if perms.Hr.view_payroll_detail or user|is_admin %}
+                                <a href="{% url 'Hr:payroll:detail' entry.id %}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% endif %}
+                                {% if perms.Hr.print_payroll or user|is_admin %}
+                                <a href="{% url 'Hr:payroll:print' entry.id %}" class="btn btn-sm btn-info">
+                                    <i class="fas fa-print"></i>
+                                </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center">لا توجد بيانات لعرضها</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,213 +1,130 @@
 {% extends 'Hr/base_hr.html' %}
 {% load static %}
-{% load hr_permission_tags %}
+{% load django_permissions %}
 
-{% block title %}تقرير الموظفين - نظام الدولية{% endblock %}
-
-{% block page_title %}{{ title }}{% endblock %}
-
-{% block breadcrumb %}
-<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
-<li class="breadcrumb-item"><a href="{% url 'Hr:dashboard' %}">الموارد البشرية</a></li>
-<li class="breadcrumb-item"><a href="{% url 'Hr:reports:list' %}">التقارير</a></li>
-<li class="breadcrumb-item active">{{ title }}</li>
-{% endblock %}
+{% block title %}تقرير الموظفين{% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="alert alert-info">
-            <i class="fas fa-info-circle me-2"></i>
-            هذا التقرير يعرض بيانات الموظفين مع إمكانية التصفية حسب القسم وحالة العمل.
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2 class="page-title mb-4">تقرير الموظفين</h2>
         </div>
     </div>
-</div>
 
-<!-- فلاتر البحث -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card shadow-sm">
-            <div class="card-header bg-light py-3">
-                <h5 class="mb-0 fw-semibold">
-                    <i class="fas fa-filter text-primary me-2"></i>
-                    فلاتر البحث
-                </h5>
-            </div>
-            <div class="card-body p-4">
-                <form method="get" class="row g-3">
-                    <div class="col-md-6">
-                        <label for="department" class="form-label">القسم</label>
-                        <select name="department" id="department" class="form-select">
-                            <option value="">-- جميع الأقسام --</option>
-                            {% for dept in departments %}
-                            <option value="{{ dept.dept_code }}" {% if selected_department == dept.dept_code|stringformat:"s" %}selected{% endif %}>
-                                {{ dept.dept_name }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="working_condition" class="form-label">حالة العمل</label>
-                        <select name="working_condition" id="working_condition" class="form-select">
-                            <option value="">-- جميع الحالات --</option>
-                            {% for value, label in employee.WORKING_CONDITION_CHOICES %}
-                            <option value="{{ value }}" {% if selected_working_condition == value %}selected{% endif %}>
-                                {{ label }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="col-12 text-end">
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-search me-1"></i>
-                            بحث
-                        </button>
-                        <a href="{% url 'Hr:reports:report_detail' 'employees' %}" class="btn btn-secondary">
-                            <i class="fas fa-redo me-1"></i>
-                            إعادة تعيين
-                        </a>
-                        <div class="btn-group ms-2">
-                            <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fas fa-download me-1"></i>
-                                تصدير
-                            </button>
-                            <ul class="dropdown-menu">
-                                <li>
-                                    <a class="dropdown-item" href="?{{ request.GET.urlencode }}&export=excel">
-                                        <i class="fas fa-file-excel me-1 text-success"></i>
-                                        Excel
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="?{{ request.GET.urlencode }}&export=csv">
-                                        <i class="fas fa-file-csv me-1 text-primary"></i>
-                                        CSV
-                                    </a>
-                                </li>
-                            </ul>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- جدول الموظفين -->
-<div class="row">
-    <div class="col-12">
-        <div class="card shadow-sm">
-            <div class="card-header bg-light py-3 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 fw-semibold">
-                    <i class="fas fa-users text-primary me-2"></i>
-                    قائمة الموظفين
-                </h5>
-                <span class="badge bg-primary">{{ employees.count }} موظف</span>
-            </div>
-            <div class="card-body p-0">
-                {% if employees %}
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th class="py-3 px-3">الرقم</th>
-                                <th class="py-3 px-3">الاسم</th>
-                                <th class="py-3 px-3">القسم</th>
-                                <th class="py-3 px-3">الوظيفة</th>
-                                <th class="py-3 px-3">تاريخ التعيين</th>
-                                <th class="py-3 px-3">حالة العمل</th>
-                                <th class="py-3 px-3">حالة التأمين</th>
-                                <th class="py-3 px-3 text-center">الإجراءات</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for employee in employees %}
-                            <tr>
-                                <td class="px-3">{{ employee.emp_id }}</td>
-                                <td class="px-3">
-                                    <div class="d-flex align-items-center py-2">
-                                        {% if employee.emp_image %}
-                                        <img src="{{ employee.emp_image.url }}" alt="{{ employee.emp_full_name }}" class="rounded-circle me-2 object-fit-cover" width="40" height="40">
-                                        {% else %}
-                                        <div class="avatar bg-secondary text-white me-2 flex-shrink-0">
-                                            {{ employee.emp_first_name|slice:":1"|upper }}
-                                        </div>
-                                        {% endif %}
-                                        <div>
-                                            <a href="{% url 'Hr:employees:detail' employee.emp_id %}" class="fw-medium d-block text-decoration-none text-dark">{{ employee.emp_full_name|default:employee.emp_first_name }}</a>
-                                            <small class="text-muted">{{ employee.national_id|default:'' }}</small>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-3">{{ employee.department.dept_name|default:"-" }}</td>
-                                <td class="px-3">{{ employee.jop_name|default:"-" }}</td>
-                                <td class="px-3">{{ employee.emp_date_hiring|date:"Y-m-d"|default:"-" }}</td>
-                                <td class="px-3">
-                                    {% if employee.working_condition == 'سارى' %}
-                                    <span class="badge bg-success">سارى</span>
-                                    {% elif employee.working_condition == 'إجازة' %}
-                                    <span class="badge bg-info">إجازة</span>
-                                    {% elif employee.working_condition == 'استقالة' %}
-                                    <span class="badge bg-danger">استقالة</span>
-                                    {% elif employee.working_condition == 'انقطاع عن العمل' %}
-                                    <span class="badge bg-warning">انقطاع عن العمل</span>
-                                    {% else %}
-                                    <span class="badge bg-secondary">{{ employee.working_condition|default:"-" }}</span>
-                                    {% endif %}
-                                </td>
-                                <td class="px-3">
-                                    {% if employee.insurance_status == 'مؤمن عليه' %}
-                                    <span class="badge bg-success">مؤمن عليه</span>
-                                    {% elif employee.insurance_status == 'غير مؤمن عليه' %}
-                                    <span class="badge bg-danger">غير مؤمن عليه</span>
-                                    {% else %}
-                                    <span class="badge bg-secondary">{{ employee.insurance_status|default:"-" }}</span>
-                                    {% endif %}
-                                </td>
-                                <td class="px-3 text-center">
-                                    <a href="{% url 'Hr:employees:detail' employee.emp_id %}" class="btn btn-sm btn-primary">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+    <!-- فلاتر البحث -->
+    <form method="get" class="mb-4">
+        <div class="row">
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="department" class="form-label">القسم</label>
+                    <select name="department" id="department" class="form-select">
+                        <option value="">-- جميع الأقسام --</option>
+                        {% for dept in departments %}
+                        <option value="{{ dept.id }}" {% if selected_department == dept.id|stringformat:"s" %}selected{% endif %}>
+                            {{ dept.dept_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
                 </div>
-                {% else %}
-                <div class="text-center py-5">
-                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
-                    <h5>لا توجد نتائج</h5>
-                    <p class="text-muted">لم يتم العثور على موظفين مطابقين لمعايير البحث.</p>
+            </div>
+            <div class="col-md-6">
+                <div class="mb-3">
+                    <label for="working_condition" class="form-label">حالة العمل</label>
+                    <select name="working_condition" id="working_condition" class="form-select">
+                        <option value="">-- جميع الحالات --</option>
+                        {% for condition_code, condition_name in employee.WORKING_CONDITION_CHOICES %}
+                        <option value="{{ condition_code }}" {% if selected_working_condition == condition_code %}selected{% endif %}>
+                            {{ condition_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-12 text-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search me-1"></i>
+                    بحث
+                </button>
+                <a href="{% url 'Hr:reports:employee_report' %}" class="btn btn-secondary">
+                    <i class="fas fa-redo me-1"></i>
+                    إعادة تعيين
+                </a>
+                {% if perms.Hr.export_employee_data or user|is_admin %}
+                <div class="btn-group ms-2">
+                    <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="fas fa-download me-1"></i>
+                        تصدير
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item" href="?{{ request.GET.urlencode }}&export=excel">
+                                <i class="fas fa-file-excel me-1 text-success"></i>
+                                Excel
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="?{{ request.GET.urlencode }}&export=csv">
+                                <i class="fas fa-file-csv me-1 text-info"></i>
+                                CSV
+                            </a>
+                        </li>
+                    </ul>
                 </div>
                 {% endif %}
             </div>
         </div>
+    </form>
+
+    <!-- جدول البيانات -->
+    {% if employees %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>رقم الموظف</th>
+                    <th>الاسم</th>
+                    <th>القسم</th>
+                    <th>الوظيفة</th>
+                    <th>حالة العمل</th>
+                    <th>تاريخ التعيين</th>
+                    <th>حالة التأمين</th>
+                    {% if perms.Hr.view_employee_details or user|is_admin %}
+                    <th class="text-center">الإجراءات</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for emp in employees %}
+                <tr>
+                    <td>{{ emp.emp_id }}</td>
+                    <td>{{ emp.emp_full_name }}</td>
+                    <td>{{ emp.department.dept_name|default:emp.dept_name }}</td>
+                    <td>{{ emp.jop_name }}</td>
+                    <td>{{ emp.working_condition }}</td>
+                    <td>{{ emp.emp_date_hiring|date:"Y-m-d" }}</td>
+                    <td>{{ emp.insurance_status }}</td>
+                    {% if perms.Hr.view_employee_details or user|is_admin %}
+                    <td class="text-center">
+                        <a href="{% url 'Hr:employees:detail' emp.id %}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        {% if perms.Hr.print_employee or user|is_admin %}
+                        <a href="{% url 'Hr:employees:print' emp.id %}" class="btn btn-sm btn-info">
+                            <i class="fas fa-print"></i>
+                        </a>
+                        {% endif %}
+                    </td>
+                    {% endif %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
+    {% else %}
+    <div class="text-center py-5">
+        <p>لا توجد بيانات للعرض</p>
+    </div>
+    {% endif %}
 </div>
-{% endblock %}
-
-{% block extra_css %}
-<style>
-    .avatar {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-    }
-</style>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-    $(document).ready(function() {
-        // تحديث قائمة الموظفين عند تغيير القسم
-        $('#department').change(function() {
-            // يمكن إضافة كود AJAX هنا لتحديث الموظفين حسب القسم المختار
-        });
-    });
-</script>
 {% endblock %}

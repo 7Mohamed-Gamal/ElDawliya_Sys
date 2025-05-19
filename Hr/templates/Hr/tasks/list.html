@@ -1,6 +1,6 @@
 {% extends 'Hr/base_hr.html' %}
 {% load static %}
-{% load hr_permission_tags %}
+{% load django_permissions %}
 
 {% block title %}مهام الموظفين - نظام الدولية{% endblock %}
 
@@ -71,14 +71,14 @@
 
 <div class="card shadow-sm">
     <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-        <h5 class="mb-0">
-            <i class="fas fa-tasks me-2 text-primary"></i>
-            قائمة مهام الموظفين
-        </h5>
-        <a href="{% url 'Hr:tasks:create' %}" class="btn btn-primary">
-            <i class="fas fa-plus-circle me-1"></i>
-            إضافة مهمة جديدة
-        </a>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4 class="mb-0">{{ title }}</h4>
+            {% if perms.Hr.add_task or user|is_admin %}
+                <a href="{% url 'Hr:tasks:create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i> إضافة مهمة جديدة
+                </a>
+            {% endif %}
+        </div>
     </div>
     <div class="card-body">
         <!-- فلاتر البحث -->
@@ -191,16 +191,19 @@
                             <small class="text-muted">{{ task.progress }}%</small>
                         </td>
                         <td class="text-center">
-                            <div class="btn-group btn-group-sm">
-                                <a href="{% url 'Hr:tasks:detail' task.pk %}" class="btn btn-outline-primary" title="عرض التفاصيل">
-                                    <i class="fas fa-eye"></i>
-                                </a>
-                                <a href="{% url 'Hr:tasks:edit' task.pk %}" class="btn btn-outline-secondary" title="تعديل">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <a href="{% url 'Hr:tasks:delete' task.pk %}" class="btn btn-outline-danger" title="حذف">
-                                    <i class="fas fa-trash-alt"></i>
-                                </a>
+                            <div class="btn-group">
+                                {% if perms.Hr.change_task or user|is_admin %}
+                                    <a href="{% url 'Hr:tasks:edit' task.id %}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-edit"></i> تعديل
+                                    </a>
+                                {% endif %}
+                                {% if perms.Hr.delete_task or user|is_admin %}
+                                    <button type="button" class="btn btn-sm btn-danger delete-task" 
+                                            data-task-id="{{ task.id }}"
+                                            data-task-name="{{ task.title }}">
+                                        <i class="fas fa-trash"></i> حذف
+                                    </button>
+                                {% endif %}
                             </div>
                         </td>
                     </tr>

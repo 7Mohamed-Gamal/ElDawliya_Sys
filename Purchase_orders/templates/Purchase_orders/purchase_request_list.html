@@ -1,6 +1,6 @@
 {% extends 'Purchase_orders/base_purchase_orders.html' %}
 {% load static %}
-{% load purchase_permission_tags %}
+{% load django_permissions %}
 
 {% block title %}قائمة طلبات الشراء - نظام الدولية{% endblock %}
 
@@ -19,11 +19,12 @@
         <h5 class="card-title mb-0">
             <i class="fas fa-clipboard-list me-2 text-primary"></i>قائمة طلبات الشراء
         </h5>
-        {% has_purchase_module_permission "purchase_requests" "add" as can_add_request %}
-        {% if can_add_request %}
-        <a href="{% url 'Purchase_orders:create_purchase_request' %}" class="btn btn-primary">
-            <i class="fas fa-plus-circle me-2"></i> إنشاء طلب شراء جديد
-        </a>
+        {% if perms.Purchase_orders.add_purchaserequest or user|is_admin %}
+            <div class="mb-3">
+                <a href="{% url 'Purchase_orders:create_purchase_request' %}" class="btn btn-primary">
+                    <i class="fas fa-plus-circle me-1"></i>إنشاء طلب شراء جديد
+                </a>
+            </div>
         {% endif %}
     </div>
     <div class="card-body">
@@ -99,11 +100,10 @@
                                     <i class="fas fa-eye me-1"></i> عرض
                                 </a>
 
-                                {% has_purchase_module_permission "approvals" "edit" as can_approve_request %}
-                                {% if request.status == 'pending' and user.is_staff and can_approve_request %}
-                                <a href="{% url 'Purchase_orders:approve_purchase_request' pk=request.pk %}" class="btn btn-sm btn-outline-success" title="مراجعة الطلب">
-                                    <i class="fas fa-check me-1"></i> مراجعة
-                                </a>
+                                {% if perms.Purchase_orders.change_approval or user|is_admin %}
+                                    <a href="{% url 'Purchase_orders:approve_request' request.pk %}" class="btn btn-success btn-sm">
+                                        <i class="fas fa-check"></i> الموافقة
+                                    </a>
                                 {% endif %}
 
                                 <a href="#" class="btn btn-sm btn-outline-danger delete-btn" title="حذف الطلب"

@@ -1,6 +1,7 @@
 {% extends 'Hr/base_hr.html' %}
 {% load static %}
 {% load form_utils %}
+{% load django_permissions %}
 
 {% block title %}{{ title }} - نظام الدولية{% endblock %}
 
@@ -91,6 +92,13 @@
                 </button>
             </div>
         </form>
+    </div>
+    <div class="actions text-end">
+        {% if perms.Hr.delete_employee or user|is_admin %}
+        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteEmployeeModal">
+            <i class="fas fa-trash me-1"></i> حذف
+        </button>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

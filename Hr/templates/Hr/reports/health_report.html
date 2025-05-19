@@ -1,0 +1,111 @@
+{% extends 'Hr/base_hr.html' %}
+{% load static %}
+{% load django_permissions %}
+
+{% block content %}
+<div class="container">
+    <h1 class="my-4">تقرير الصحة</h1>
+
+    <form method="get" class="mb-4">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="employee" class="form-label">الموظف</label>
+                    <select id="employee" name="employee" class="form-select">
+                        <option value="">جميع الموظفين</option>
+                        {% for employee in employees %}
+                        <option value="{{ employee.id }}" {% if request.GET.employee == employee.id|stringformat:"d" %}selected{% endif %}>
+                            {{ employee.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="date_from" class="form-label">من تاريخ</label>
+                    <input type="date" id="date_from" name="date_from" class="form-control" value="{{ request.GET.date_from }}">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="mb-3">
+                    <label for="date_to" class="form-label">إلى تاريخ</label>
+                    <input type="date" id="date_to" name="date_to" class="form-control" value="{{ request.GET.date_to }}">
+                </div>
+            </div>
+        </div>
+        <div class="actions text-end">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-search me-1"></i>
+                بحث
+            </button>
+            <a href="{% url 'Hr:reports:report_detail' 'health' %}" class="btn btn-secondary">
+                <i class="fas fa-redo me-1"></i>
+                إعادة تعيين
+            </a>
+            {% if perms.Hr.export_health_data or user|is_admin %}
+            <div class="btn-group ms-2">
+                <button type="button" class="btn btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-download me-1"></i>
+                    تصدير
+                </button>
+                <ul class="dropdown-menu">
+                    <li>
+                        <a class="dropdown-item" href="?{{ request.GET.urlencode }}&export=excel">
+                            <i class="fas fa-file-excel me-1 text-success"></i>
+                            Excel
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="?{{ request.GET.urlencode }}&export=csv">
+                            <i class="fas fa-file-csv me-1 text-info"></i>
+                            CSV
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            {% endif %}
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-bordered table-hover">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>الموظف</th>
+                    <th>تاريخ الفحص</th>
+                    <th>نتيجة الفحص</th>
+                    <th class="text-center">الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for record in health_records %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ record.employee.name }}</td>
+                    <td>{{ record.exam_date }}</td>
+                    <td>{{ record.result }}</td>
+                    <td class="text-center">
+                        {% if perms.Hr.view_health_detail or user|is_admin %}
+                        <a href="{% url 'Hr:health:detail' record.id %}" class="btn btn-sm btn-primary">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        {% endif %}
+                        {% if perms.Hr.print_health_record or user|is_admin %}
+                        <a href="{% url 'Hr:health:print' record.id %}" class="btn btn-sm btn-info">
+                            <i class="fas fa-print"></i>
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center">لا توجد سجلات</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

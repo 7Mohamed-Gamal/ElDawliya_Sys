@@ -12,6 +12,7 @@ employee_patterns = [
     path('<int:emp_id>/', views.employee_detail, name='detail'),
     path('<int:emp_id>/edit/', views.employee_edit, name='edit'),
     path('<int:emp_id>/delete/', views.employee_delete, name='delete'),
+    path('<int:emp_id>/print/', views.employee_print, name='print'),
     path('search/', views.employee_search, name='employee_search'),
 ]
 

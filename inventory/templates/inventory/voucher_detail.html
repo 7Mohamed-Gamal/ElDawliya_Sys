@@ -1,7 +1,7 @@
 {% extends 'inventory/base_inventory.html' %}
 {% load static %}
 {% load i18n %}
-{% load inventory_permission_tags %}
+{% load django_permissions %}
 
 {% block title %}
 {% if voucher.voucher_type == 'إذن اضافة' %}
@@ -191,18 +191,16 @@
                     <i class="fas fa-print"></i> {% trans "طباعة" %}
                 </button>
 
-                {% has_inventory_module_permission "vouchers" "edit" as can_edit_voucher %}
-                {% if can_edit_voucher %}
-                <a href="{% url 'inventory:voucher_edit' voucher.voucher_number %}" class="btn btn-outline-primary">
-                    <i class="fas fa-edit"></i> {% trans "تعديل" %}
-                </a>
+                {% if perms.inventory.change_voucher or user|is_admin %}
+                    <a href="{% url 'inventory:edit_voucher' voucher.id %}" class="btn btn-primary">
+                        <i class="fas fa-edit me-1"></i> تعديل
+                    </a>
                 {% endif %}
 
-                {% has_inventory_module_permission "vouchers" "delete" as can_delete_voucher %}
-                {% if can_delete_voucher %}
-                <a href="{% url 'inventory:voucher_delete' voucher.voucher_number %}" class="btn btn-outline-danger">
-                    <i class="fas fa-trash"></i> {% trans "حذف" %}
-                </a>
+                {% if perms.inventory.delete_voucher or user|is_admin %}
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteVoucherModal">
+                        <i class="fas fa-trash me-1"></i> حذف
+                    </button>
                 {% endif %}
             </div>
         </div>

@@ -80,3 +80,43 @@ class SystemSettings(models.Model):
 
     def __str__(self):
         return f"{self.system_name} ({self.company_name})"
+
+class Department(models.Model):
+    """System navigation department model"""
+    name = models.CharField(max_length=100, verbose_name=_('اسم القسم'))
+    icon = models.CharField(max_length=50, verbose_name=_('أيقونة القسم'), help_text=_('اسم الأيقونة من Font Awesome مثال: fa-user'))
+    url_name = models.CharField(max_length=100, verbose_name=_('اسم الرابط'), help_text=_('الاسم المستخدم في الروابط'))
+    description = models.CharField(max_length=255, blank=True, verbose_name=_('وصف القسم'))
+    is_active = models.BooleanField(default=True, verbose_name=_('نشط'))
+    order = models.IntegerField(default=0, verbose_name=_('الترتيب'))
+    require_admin = models.BooleanField(default=False, verbose_name=_('يتطلب صلاحيات المدير'))
+    groups = models.ManyToManyField(Group, blank=True, related_name='allowed_departments', verbose_name=_('المجموعات المسموح لها'))
+
+    class Meta:
+        verbose_name = _('القسم')
+        verbose_name_plural = _('الأقسام')
+        ordering = ['order']
+
+    def __str__(self):
+        return self.name
+
+class Module(models.Model):
+    """System navigation module model"""
+    department = models.ForeignKey(Department, on_delete=models.CASCADE, related_name='modules', verbose_name=_('القسم'))
+    name = models.CharField(max_length=100, verbose_name=_('اسم الوحدة'))
+    icon = models.CharField(max_length=50, verbose_name=_('أيقونة الوحدة'))
+    url = models.CharField(max_length=200, verbose_name=_('رابط الوحدة'))
+    description = models.CharField(max_length=255, blank=True, verbose_name=_('وصف الوحدة'))
+    is_active = models.BooleanField(default=True, verbose_name=_('نشط'))
+    order = models.IntegerField(default=0, verbose_name=_('الترتيب'))
+    bg_color = models.CharField(max_length=20, default='#3498db', verbose_name=_('لون الخلفية'))
+    require_admin = models.BooleanField(default=False, verbose_name=_('يتطلب صلاحيات المدير'))
+    groups = models.ManyToManyField(Group, blank=True, related_name='allowed_modules', verbose_name=_('المجموعات المسموح لها'))
+
+    class Meta:
+        verbose_name = _('الوحدة')  
+        verbose_name_plural = _('الوحدات')
+        ordering = ['department__order', 'order']
+
+    def __str__(self):
+        return f"{self.department.name} - {self.name}"

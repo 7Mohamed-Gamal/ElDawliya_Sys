@@ -1,20 +1,24 @@
 from functools import wraps
 from django.shortcuts import redirect
 from django.contrib import messages
+from django.contrib.auth.decorators import permission_required
 from django.utils.decorators import method_decorator
-
-from administrator.decorators import module_permission_required
-from administrator.utils import check_permission
-
-# اسم القسم الرئيسي للمهام
-DEPARTMENT_NAME = "المهام"
 
 # تعريف الوحدات (الموديولات) في تطبيق المهام
 MODULES = {
-    "dashboard": "لوحة التحكم",
-    "tasks": "إدارة المهام",
-    "my_tasks": "مهامي",
-    "reports": "التقارير",
+    "dashboard": "dashboard",
+    "tasks": "task",
+    "my_tasks": "mytask",
+    "reports": "report",
+}
+
+# تحويل أنواع الصلاحيات إلى صيغة Django
+PERMISSION_TYPE_MAP = {
+    'view': 'view',
+    'add': 'add',
+    'edit': 'change',
+    'delete': 'delete',
+    'print': 'view',  # نستخدم view للطباعة لأنها عملية قراءة
 }
 
 def has_tasks_permission(request, module_key, permission_type='view'):
@@ -29,8 +33,21 @@ def has_tasks_permission(request, module_key, permission_type='view'):
     if module_key not in MODULES:
         return False
 
-    module_name = MODULES[module_key]
-    return check_permission(request.user, DEPARTMENT_NAME, module_name, permission_type)
+    # المشرفون لديهم جميع الصلاحيات
+    if request.user.is_superuser or getattr(request.user, 'Role', '') == 'admin':
+        return True
+
+    # تحويل مفتاح الوحدة إلى اسم موديل Django
+    model_name = MODULES.get(module_key, module_key)
+
+    # تحويل نوع الصلاحية إلى صيغة Django
+    django_perm_type = PERMISSION_TYPE_MAP.get(permission_type, permission_type)
+
+    # تكوين اسم الصلاحية بصيغة Django
+    permission_name = f'tasks.{django_perm_type}_{model_name}'
+
+    # التحقق من صلاحية المستخدم
+    return request.user.has_perm(permission_name)
 
 def tasks_module_permission_required(module_key, permission_type='view'):
     """
@@ -43,18 +60,16 @@ def tasks_module_permission_required(module_key, permission_type='view'):
     if module_key not in MODULES:
         raise ValueError(f"Module key '{module_key}' not found in tasks modules")
 
-    module_name = MODULES[module_key]
+    # تحويل مفتاح الوحدة إلى اسم موديل Django
+    model_name = MODULES.get(module_key, module_key)
 
-    def decorator(view_func):
-        @wraps(view_func)
-        def _wrapped_view(request, *args, **kwargs):
-            if check_permission(request.user, DEPARTMENT_NAME, module_name, permission_type):
-                return view_func(request, *args, **kwargs)
-            else:
-                messages.error(request, f"ليس لديك صلاحية {permission_type} في {module_name}")
-                return redirect('accounts:home')
-        return _wrapped_view
-    return decorator
+    # تحويل نوع الصلاحية إلى صيغة Django
+    django_perm_type = PERMISSION_TYPE_MAP.get(permission_type, permission_type)
+
+    # تكوين اسم الصلاحية بصيغة Django
+    permission_name = f'tasks.{django_perm_type}_{model_name}'
+
+    return permission_required(permission_name, login_url='accounts:access_denied')
 
 def tasks_class_permission_required(module_key, permission_type='view'):
     """
@@ -68,13 +83,47 @@ def tasks_class_permission_required(module_key, permission_type='view'):
     if module_key not in MODULES:
         raise ValueError(f"Module key '{module_key}' not found in tasks modules")
 
-    module_name = MODULES[module_key]
+    # تحويل مفتاح الوحدة إلى اسم موديل Django
+    model_name = MODULES.get(module_key, module_key)
+
+    # تحويل نوع الصلاحية إلى صيغة Django
+    django_perm_type = PERMISSION_TYPE_MAP.get(permission_type, permission_type)
+
+    # تكوين اسم الصلاحية بصيغة Django
+    permission_name = f'tasks.{django_perm_type}_{model_name}'
 
     return method_decorator(
-        module_permission_required(
-            department_name=DEPARTMENT_NAME,
-            module_name=module_name,
-            permission_type=permission_type
-        ),
+        permission_required(permission_name, login_url='accounts:access_denied'),
         name='dispatch'
     )
+
+def can_manage_task(view_func):
+    """
+    مزخرف للتحقق من صلاحية إدارة المهام
+    """
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        if request.user.is_superuser or request.user.has_perm('tasks.change_task'):
+            return view_func(request, *args, **kwargs)
+        messages.error(request, 'ليس لديك صلاحية الوصول إلى هذه الصفحة')
+        return redirect('accounts:access_denied')
+    return _wrapped_view
+
+def can_access_task(view_func):
+    """
+    مزخرف للتحقق من إمكانية الوصول إلى المهمة
+    يسمح فقط للمستخدم الذي أنشأ المهمة أو المسند إليه المهمة أو المشرف بالوصول إليها
+    """
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        from .models import Task
+        task_id = kwargs.get('pk')
+        try:
+            task = Task.objects.get(pk=task_id)
+            if request.user.is_superuser or request.user == task.created_by or request.user == task.assigned_to:
+                return view_func(request, *args, **kwargs)
+        except Task.DoesNotExist:
+            pass
+        messages.error(request, 'ليس لديك صلاحية الوصول إلى هذه المهمة')
+        return redirect('tasks:list')
+    return _wrapped_view

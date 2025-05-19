@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 
 from .models import TaskCategory, EmployeeTask, TaskStep, TaskReminder
 from .forms import TaskCategoryForm, EmployeeTaskForm, TaskStepForm, TaskReminderForm, TaskFilterForm
+from .decorators import can_access_task, employee_tasks_module_permission_required
 
 # Dashboard Views
 @login_required
