@@ -1,8 +1,8 @@
 from django import forms
 from django.contrib.auth.models import Group
 from django.contrib.auth import get_user_model
-from .models import SystemSettings, Department, Module, UserGroup
-# Permission and TemplatePermission imports removed as per user request
+from .models import SystemSettings, Department, Module
+# Permission, TemplatePermission, and UserGroup imports removed as per user request
 
 User = get_user_model()
 
@@ -124,9 +124,6 @@ class DatabaseConfigForm(forms.Form):
     )
 
 
-
-
-
 class GroupForm(forms.ModelForm):
     """Form for creating and editing groups."""
     description = forms.CharField(
@@ -201,7 +198,7 @@ class GroupForm(forms.ModelForm):
         return group
 
 
-# Permission-related form classes removed as per user request to use only Django's built-in permissions
+# Permission-related form classes simplified to use only Django's built-in permissions
 class UserPermissionForm(forms.Form):
     """Simplified form for managing user permissions."""
     user = forms.ModelChoiceField(
@@ -243,20 +240,3 @@ class GroupPermissionForm(forms.Form):
     )
 
     # Custom permission fields removed as per request
-
-
-class UserGroupForm(forms.ModelForm):
-    """Form for user-group membership."""
-    notes = forms.CharField(
-        widget=forms.Textarea(attrs={'rows': 3}),
-        required=False,
-        label="ملاحظات"
-    )
-    
-    class Meta:
-        model = UserGroup
-        fields = ['user', 'group', 'notes']
-        widgets = {
-            'user': forms.Select(attrs={'class': 'form-select'}),
-            'group': forms.Select(attrs={'class': 'form-select'}),
-        }

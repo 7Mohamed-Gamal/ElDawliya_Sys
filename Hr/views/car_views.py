@@ -5,6 +5,7 @@ from django.contrib import messages
 from Hr.models.car_models import Car
 from Hr.forms.employee_forms import CarForm
 from administrator.decorators import django_permission_required
+from Hr.decorators import hr_module_permission_required
 
 @login_required
 @django_permission_required('hr.view_car')

@@ -1,5 +1,4 @@
 from django import template
-from administrator.rbac_permissions import has_permission
 
 register = template.Library()
 
@@ -9,6 +8,23 @@ MODULES = {
     "attendees": "إدارة الحضور",
     "meeting_tasks": "مهام الاجتماعات",
     "reports": "تقارير الاجتماعات",
+}
+
+# تحويل مفاتيح الوحدات إلى أسماء موديلات Django
+MODEL_MAP = {
+    'meetings': 'meeting',
+    'attendees': 'attendee',
+    'meeting_tasks': 'meetingtask',
+    'reports': 'report',
+}
+
+# تحويل أنواع الصلاحيات إلى صيغة Django
+PERMISSION_TYPE_MAP = {
+    'view': 'view',
+    'add': 'add',
+    'edit': 'change',
+    'delete': 'delete',
+    'print': 'view',  # نستخدم view للطباعة لأنها عملية قراءة
 }
 
 @register.simple_tag(takes_context=True)
@@ -30,10 +46,16 @@ def has_meetings_module_permission(context, module_key, permission_type='view'):
     if user.is_superuser or getattr(user, 'Role', '') == 'admin':
         return True
 
-    # تحويل مفتاح الوحدة ونوع الصلاحية إلى صيغة RBAC
-    permission_name = f"{permission_type}_{module_key}"
-
-    return has_permission(user, permission_name)
+    # تحويل مفتاح الوحدة إلى اسم موديل Django
+    model_name = MODEL_MAP.get(module_key, module_key)
+    
+    # تحويل نوع الصلاحية إلى صيغة Django
+    django_perm_type = PERMISSION_TYPE_MAP.get(permission_type, permission_type)
+    
+    # تكوين اسم الصلاحية بصيغة Django
+    permission_name = f'meetings.{django_perm_type}_{model_name}'
+    
+    return user.has_perm(permission_name)
 
 @register.filter
 def can_view_meetings_module(user, module_key):
@@ -50,10 +72,13 @@ def can_view_meetings_module(user, module_key):
     if user.is_superuser or getattr(user, 'Role', '') == 'admin':
         return True
 
-    # تحويل مفتاح الوحدة إلى صيغة RBAC
-    permission_name = f"view_{module_key}"
-
-    return has_permission(user, permission_name)
+    # تحويل مفتاح الوحدة إلى اسم موديل Django
+    model_name = MODEL_MAP.get(module_key, module_key)
+    
+    # تكوين اسم الصلاحية بصيغة Django
+    permission_name = f'meetings.view_{model_name}'
+    
+    return user.has_perm(permission_name)
 
 @register.simple_tag
 def get_meetings_module_name(module_key):
@@ -82,15 +107,18 @@ def meetings_action_buttons(context, module_key, edit_url=None, delete_url=None,
     # المشرفون لديهم جميع الصلاحيات
     is_admin = user.is_superuser or getattr(user, 'Role', '') == 'admin'
 
-    # تحويل مفتاح الوحدة ونوع الصلاحية إلى صيغة RBAC
-    edit_permission = f"edit_{module_key}"
-    delete_permission = f"delete_{module_key}"
-    view_permission = f"view_{module_key}"  # للطباعة نستخدم صلاحية العرض
+    # تحويل مفتاح الوحدة إلى اسم موديل Django
+    model_name = MODEL_MAP.get(module_key, module_key)
+    
+    # تكوين أسماء الصلاحيات بصيغة Django
+    edit_permission = f'meetings.change_{model_name}'
+    delete_permission = f'meetings.delete_{model_name}'
+    view_permission = f'meetings.view_{model_name}'  # للطباعة نستخدم صلاحية العرض
 
     return {
-        'can_edit': is_admin or has_permission(user, edit_permission),
-        'can_delete': is_admin or has_permission(user, delete_permission),
-        'can_print': is_admin or has_permission(user, view_permission),
+        'can_edit': is_admin or user.has_perm(edit_permission),
+        'can_delete': is_admin or user.has_perm(delete_permission),
+        'can_print': is_admin or user.has_perm(view_permission),
         'edit_url': edit_url,
         'delete_url': delete_url,
         'print_url': print_url,

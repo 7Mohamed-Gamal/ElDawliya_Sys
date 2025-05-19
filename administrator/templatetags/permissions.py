@@ -6,21 +6,9 @@
 from django import template
 from django.utils.safestring import mark_safe
 from django.contrib.auth import get_user_model
-from administrator.utils import has_template_permission as utils_has_template_permission
-from administrator.utils import check_permission
 
-# Import RBAC permissions system
-from administrator.rbac_permissions import has_permission as rbac_has_permission, has_any_permission
-try:
-    from administrator.permission_decorators import has_operation_permission, has_page_permission
-except ImportError:
-    # Provide dummy functions if the module is not available
-    def has_operation_permission(*args, **kwargs):
-        """Dummy function when permission_decorators module is not available"""
-        return False
-    def has_page_permission(*args, **kwargs):
-        """Dummy function when permission_decorators module is not available"""
-        return False
+# Simplified permission system using Django's built-in permissions
+from administrator.utils import check_permission, has_permission as utils_has_permission
 
 User = get_user_model()
 register = template.Library()
@@ -244,26 +232,22 @@ def has_permission(context, action_type):
     {% if can_add %}
         <a href="{% url 'create' %}" class="btn btn-success">إضافة جديد</a>
     {% endif %}
-
-    Note: This is a simplified permission check. For more granular control,
-    use has_module_permission or has_rbac_permission.
     """
     request = context['request']
     if not request.user.is_authenticated:
         return False
 
     # Superusers and admins have all permissions
-    if request.user.is_superuser or request.user.Role == 'admin':
+    if request.user.is_superuser or getattr(request.user, 'Role', '') == 'admin':
         return True
 
     # Allow view access for all authenticated users by default
     if action_type == 'view':
         return True
 
-    # For other actions (add, change, delete, print), check RBAC permissions
-    # This provides a fallback to the RBAC system for more granular control
-    permission_name = f"generic_{action_type}"
-    return rbac_has_permission(request.user, permission_name)
+    # Using Django's permission system for other actions
+    generic_perm = f"admin.{action_type}_generic"
+    return request.user.has_perm(generic_perm)
 
 @register.filter
 def hide_if_not_admin(user):
@@ -280,17 +264,6 @@ def hide_if_not_admin(user):
 
     return user.Role == 'admin' or user.is_superuser
 
-
-@register.filter
-def get_item(dictionary, key):
-    """
-    Get an item from a dictionary using a key
-
-    Usage:
-    {{ my_dict|get_item:key_variable }}
-    """
-    return dictionary.get(key, key)
-
 @register.simple_tag(takes_context=True)
 def render_if_admin(context, content):
     """
@@ -303,19 +276,6 @@ def render_if_admin(context, content):
     if request.user.Role == 'admin':
         return mark_safe(content)
     return ''
-
-@register.filter
-def has_template_permission(user, template_path):
-    """
-    تحقق مما إذا كان المستخدم لديه صلاحية الوصول إلى قالب معين
-
-    الاستخدام في القوالب:
-    {% load permission_tags %}
-    {% if user|has_template_permission:"Hr/reports/monthly_salary_report.html" %}
-        <a href="{% url 'hr:monthly_salary_report' %}" class="btn btn-primary">عرض تقرير الرواتب الشهري</a>
-    {% endif %}
-    """
-    return utils_has_template_permission(user, template_path)
 
 @register.simple_tag(takes_context=True)
 def has_module_permission(context, department_name, module_name, permission_type='view'):
@@ -361,108 +321,15 @@ def action_buttons(context, edit_url=None, delete_url=None, print_url=None, back
         'back_url': back_url,
     }
 
-# ----- RBAC Permission System Tags ----- #
-
-@register.filter
-def has_rbac_permission(user, permission_name):
-    """
-    Template filter to check if a user has a specific RBAC permission.
-
-    Usage:
-    {% if user|has_rbac_permission:"edit_articles" %}
-        <a href="{% url 'edit_article' article.id %}">Edit</a>
-    {% endif %}
-    """
-    if not user or not user.is_authenticated:
-        return False
-
-    # Superusers always have all permissions
-    if user.is_superuser:
-        return True
-
-    return rbac_has_permission(user, permission_name)
-
-# ----- Operation and Page Permission Tags (from permission_tags_new.py) ----- #
-
-@register.simple_tag(takes_context=True)
-def has_op_perm(context, app_module_code, operation_code, permission_type):
-    """
-    Check if the current user has permission to perform a specific operation
-
-    Usage:
-    {% has_op_perm 'hr' 'employee' 'view' as can_view_employee %}
-    {% if can_view_employee %}
-        <!-- Show content -->
-    {% endif %}
-    """
-    user = context['request'].user
-    return has_operation_permission(user, app_module_code, operation_code, permission_type)
-
-@register.simple_tag(takes_context=True)
-def has_pg_perm(context, app_module_code, url_pattern):
-    """
-    Check if the current user has permission to access a specific page
-
-    Usage:
-    {% has_pg_perm 'hr' 'employee_list' as can_view_employee_list %}
-    {% if can_view_employee_list %}
-        <!-- Show link -->
-    {% endif %}
-    """
-    user = context['request'].user
-    return has_page_permission(user, app_module_code, url_pattern)
-
-@register.filter
-def show_if_has_op_perm(element, perm_args):
-    """
-    Show an HTML element if the user has permission to perform a specific operation
-
-    Usage:
-    {{ my_element|show_if_has_op_perm:'hr,employee,view' }}
-    """
-    if not perm_args or ',' not in perm_args:
-        return ''
-
-    args = perm_args.split(',')
-    if len(args) != 3:
-        return ''
-
-    app_module_code, operation_code, permission_type = args
-
-    if has_operation_permission(element.user, app_module_code, operation_code, permission_type):
-        return mark_safe(element)
-    return ''
-
-@register.filter
-def show_if_has_pg_perm(element, perm_args):
-    """
-    Show an HTML element if the user has permission to access a specific page
-
-    Usage:
-    {{ my_element|show_if_has_pg_perm:'hr,employee_list' }}
-    """
-    if not perm_args or ',' not in perm_args:
-        return ''
-
-    args = perm_args.split(',')
-    if len(args) != 2:
-        return ''
-
-    app_module_code, url_pattern = args
-
-    if has_page_permission(element.user, app_module_code, url_pattern):
-        return mark_safe(element)
-    return ''
-
 @register.simple_tag
-def check_rbac_permission(user, permission_name):
+def check_permission(user, permission_name):
     """
-    Template tag to check if a user has a specific RBAC permission.
+    Template tag to check if a user has a specific Django permission.
 
     Usage:
-    {% check_rbac_permission user "edit_articles" as can_edit %}
-    {% if can_edit %}
-        <a href="{% url 'edit_article' article.id %}">Edit</a>
+    {% check_permission user "app_label.permission_name" as can_do_something %}
+    {% if can_do_something %}
+        <a href="{% url 'do_something' %}">Do Something</a>
     {% endif %}
     """
     if not user or not user.is_authenticated:
@@ -472,20 +339,16 @@ def check_rbac_permission(user, permission_name):
     if user.is_superuser:
         return True
 
-    return rbac_has_permission(user, permission_name)
+    return user.has_perm(permission_name)
 
-
-@register.simple_tag
-def check_any_rbac_permission(user, permission_names):
+@register.filter
+def has_perm(user, permission_name):
     """
-    Template tag to check if a user has any of the specified RBAC permissions.
+    Template filter to check if a user has a specific Django permission.
 
     Usage:
-    {% check_any_rbac_permission user "edit_articles,delete_articles,publish_articles" as can_manage %}
-    {% if can_manage %}
-        <div class="article-management-panel">
-            <!-- Management controls -->
-        </div>
+    {% if user|has_perm:"app_label.permission_name" %}
+        <a href="{% url 'do_something' %}">Do Something</a>
     {% endif %}
     """
     if not user or not user.is_authenticated:
@@ -495,7 +358,4 @@ def check_any_rbac_permission(user, permission_names):
     if user.is_superuser:
         return True
 
-    # Split the comma-separated permission names
-    perm_list = [p.strip() for p in permission_names.split(',')]
-
-    return has_any_permission(user, perm_list)
+    return user.has_perm(permission_name)

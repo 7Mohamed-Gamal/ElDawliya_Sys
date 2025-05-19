@@ -2,65 +2,8 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import Group
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from django.db.models.signals import m2m_changed
 from django.dispatch import receiver
-
-User = get_user_model()
-
-# Non-permission related models added back
-class UserGroup(models.Model):
-    """
-    عضوية المستخدمين في المجموعات مع معلومات إضافية مثل تاريخ الانضمام والملاحظات.
-    """
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='group_memberships', verbose_name="المستخدم")
-    group = models.ForeignKey(Group, on_delete=models.CASCADE, related_name='user_memberships', verbose_name="المجموعة")
-    date_joined = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ الانضمام")
-    notes = models.TextField(blank=True, verbose_name="ملاحظات")
-
-    def __str__(self):
-        return f"{self.user.username} - {self.group.name}"
-
-    class Meta:
-        verbose_name = "عضوية مجموعة"
-        verbose_name_plural = "عضويات المجموعات"
-        unique_together = ['user', 'group']
-
-class UserDepartmentPermission(models.Model):
-    """
-    صلاحيات المستخدمين على الأقسام.
-    """
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='department_permissions', verbose_name="المستخدم")
-    department = models.ForeignKey('Department', on_delete=models.CASCADE, verbose_name="القسم")
-    can_view = models.BooleanField(default=True, verbose_name="عرض")
-
-    def __str__(self):
-        return f"{self.user.username} - {self.department.name}"
-
-    class Meta:
-        verbose_name = "صلاحية قسم"
-        verbose_name_plural = "صلاحيات الأقسام"
-        unique_together = ['user', 'department']
-
-class UserModulePermission(models.Model):
-    """
-    صلاحيات المستخدمين على الوحدات (الميزات).
-    """
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='module_permissions', verbose_name="المستخدم")
-    module = models.ForeignKey('Module', on_delete=models.CASCADE, verbose_name="الوحدة")
-    can_view = models.BooleanField(default=True, verbose_name="عرض")
-    can_add = models.BooleanField(default=False, verbose_name="إضافة")
-    can_edit = models.BooleanField(default=False, verbose_name="تعديل")
-    can_delete = models.BooleanField(default=False, verbose_name="حذف")
-    can_print = models.BooleanField(default=False, verbose_name="طباعة")
-
-    def __str__(self):
-        return f"{self.user.username} - {self.module.name}"
-
-    class Meta:
-        verbose_name = "صلاحية وحدة"
-        verbose_name_plural = "صلاحيات الوحدات"
-        unique_together = ['user', 'module']
 
 class GroupProfile(models.Model):
     """

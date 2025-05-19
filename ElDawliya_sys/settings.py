@@ -37,7 +37,6 @@ INSTALLED_APPS = [
     'Hr',
     'inventory',
     'administrator',
-    'admin_permissions',
     'Purchase_orders',
     'notifications',
     'audit.apps.AuditConfig',
