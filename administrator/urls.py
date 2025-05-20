@@ -12,6 +12,9 @@ urlpatterns = [
     path('settings/database/', views.database_settings, name='database_settings'),
     path('database-setup/', views.database_setup, name='database_setup'),
     path('test-connection/', views.test_connection, name='test_connection'),
+    path('create-database-backup/', views.create_database_backup, name='create_database_backup'),
+    path('list-database-backups/', views.list_database_backups, name='list_database_backups'),
+    path('restore-database-backup/', views.restore_database_backup, name='restore_database_backup'),
 
     # Departments
     path('departments/', views.DepartmentListView.as_view(), name='department_list'),

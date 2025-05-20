@@ -677,6 +677,7 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.append('password', passwordInput.value);
 
         try {
+            // Make the API call to test the connection
             const response = await fetch('{% url "administrator:test_connection" %}', {
                 method: 'POST',
                 body: formData,
@@ -823,14 +824,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         try {
-            // Instead of directly using the backup endpoint, we use the form's action to post to the current page
-            const response = await fetch(window.location.href, {
+            // Use the dedicated backup endpoint
+            const response = await fetch('{% url "administrator:create_database_backup" %}', {
                 method: 'POST',
                 body: formData,
                 headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                    // Add a custom header to indicate this is a backup request
-                    'X-Request-Type': 'backup_create'
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
                 }
             });
             
@@ -916,13 +915,12 @@ document.addEventListener('DOMContentLoaded', function() {
         formData.append('db_engine', dbEngineSelect.value);
         
         try {
-            // Post to the current page with a special header to indicate this is a restore request
-            const response = await fetch(window.location.href, {
+            // Use the dedicated restore backup endpoint
+            const response = await fetch('{% url "administrator:restore_database_backup" %}', {
                 method: 'POST',
                 body: formData,
                 headers: {
-                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
-                    'X-Request-Type': 'backup_restore'
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
                 }
             });
             
@@ -1007,12 +1005,8 @@ document.addEventListener('DOMContentLoaded', function() {
         loadingOption.disabled = true;
         existingBackupSelect.appendChild(loadingOption);
         
-        // Fetch available backups - use a special URL parameter to avoid caching
-        fetch(`${window.location.href}?list_backups=1&_=${Date.now()}`, {
-            headers: {
-                'X-Request-Type': 'list_backups'
-            }
-        })
+        // Fetch available backups - use dedicated endpoint
+        fetch(`{% url "administrator:list_database_backups" %}?_=${Date.now()}`)
             .then(response => {
                 // Check if response is JSON
                 const contentType = response.headers.get('content-type');

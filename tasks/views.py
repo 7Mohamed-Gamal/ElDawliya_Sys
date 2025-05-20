@@ -37,7 +37,7 @@ def dashboard(request):
     # مهامي
     my_tasks = Task.objects.filter(
         assigned_to=request.user
-    ).order_by('-created_at')[:5]
+    ).order_by('-start_date')[:5]
 
     # المهام المتأخرة (للعرض)
     overdue_tasks_list = Task.objects.filter(

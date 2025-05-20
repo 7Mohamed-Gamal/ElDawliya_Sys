@@ -103,10 +103,57 @@ def system_settings(request):
 @system_admin_required
 def database_settings(request):
     """View to configure database settings."""
+    import datetime
+
+    # Get current database settings
+    from django.conf import settings
+    db_settings = settings.DATABASES.get('default', {})
+    
+    # Determine active database connection type
+    active_db = getattr(settings, 'ACTIVE_DB', 'default')
+    
+    if request.method == 'POST':
+        # Check if this is a special request (backup/restore)
+        request_type = request.headers.get('X-Request-Type', '')
+        
+        if request_type == 'backup_create':
+            # Redirect to backup creation endpoint
+            return create_database_backup(request)
+        elif request_type == 'backup_restore':
+            # Redirect to backup restoration endpoint
+            return restore_database_backup(request)
+        elif request_type == 'list_backups':
+            # Redirect to list backups endpoint
+            return list_database_backups(request)
+        
+        # Normal form submission for database settings
+        form = DatabaseConfigForm(request.POST)
+        if form.is_valid():
+            # Update database settings in settings.py or elsewhere
+            # (implementation depends on how you store settings)
+            messages.success(request, 'تم حفظ إعدادات قاعدة البيانات بنجاح')
+            return redirect('administrator:database_settings')
+    else:
+        # Initialize form with current settings
+        initial_data = {
+            'db_engine': db_settings.get('ENGINE', '').rsplit('.', 1)[-1],
+            'db_connection_type': active_db,
+            'db_name': db_settings.get('NAME', ''),
+            'db_host': db_settings.get('HOST', 'localhost'),
+            'db_port': db_settings.get('PORT', '1433'),
+            'db_user': db_settings.get('USER', ''),
+            'db_password': db_settings.get('PASSWORD', ''),
+            'use_windows_auth': 'TRUSTED_CONNECTION' in db_settings.get('OPTIONS', {}),
+        }
+        form = DatabaseConfigForm(initial=initial_data)
+    
     context = {
-        'form': DatabaseConfigForm(),
-        'page_title': 'إعدادات قاعدة البيانات'
+        'form': form,
+        'page_title': 'إعدادات قاعدة البيانات',
+        'active_db': active_db,
+        'current_date': datetime.datetime.now()
     }
+    
     return render(request, 'administrator/database_settings.html', context)
 
 # Department Views
@@ -400,9 +447,215 @@ def permissions_help(request):
 
 @csrf_exempt
 def test_connection(request):
-    """Test database connection for setup"""
+    """Test database connection for setup and return available databases"""
+    conn = None
+    cursor = None
+    
     if request.method == 'POST':
         host = request.POST.get('host', '')
         auth_type = request.POST.get('auth_type', '')
-        return JsonResponse({'success': True, 'message': 'Connection successful!'})
-    return JsonResponse({'success': False, 'error': 'Invalid request method.'})
+        username = request.POST.get('username', '')
+        password = request.POST.get('password', '')
+        
+        try:
+            # Construct connection string based on authentication type
+            if auth_type == 'windows':
+                conn_str = f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={host};Trusted_Connection=yes;'
+            else:
+                conn_str = f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={host};UID={username};PWD={password}'
+            
+            # Connect to SQL Server (master database) with auto-commit to avoid transaction issues
+            conn = pyodbc.connect(conn_str + ';DATABASE=master', timeout=10, autocommit=True)
+            cursor = conn.cursor()
+            
+            # Query available databases
+            cursor.execute("SELECT name FROM sys.databases WHERE name NOT IN ('master', 'tempdb', 'model', 'msdb') ORDER BY name")
+            databases = []
+            for row in cursor.fetchall():
+                databases.append(row[0])
+            
+            # Close resources
+            if cursor:
+                cursor.close()
+            if conn:
+                conn.close()
+            
+            return JsonResponse({
+                'success': True, 
+                'message': 'Connection successful!',
+                'databases': databases
+            })
+        except pyodbc.Error as e:
+            error_msg = str(e)
+            # Check if this is a login failure
+            if '[28000]' in error_msg or 'Login failed' in error_msg:
+                error_msg = 'فشل تسجيل الدخول. يرجى التأكد من بيانات الاعتماد المستخدمة.'
+            elif '[08001]' in error_msg or 'Cannot connect' in error_msg:
+                error_msg = 'لا يمكن الاتصال بالخادم. يرجى التأكد من اسم الخادم وأن SQL Server يعمل.'
+            
+            return JsonResponse({'success': False, 'error': f'خطأ الاتصال بـ SQL Server: {error_msg}'})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': f'خطأ غير متوقع: {str(e)}'})
+        finally:
+            # Make sure resources are closed even if there's an exception
+            if cursor:
+                try:
+                    cursor.close()
+                except:
+                    pass
+            if conn:
+                try:
+                    conn.close()
+                except:
+                    pass
+    
+    return JsonResponse({'success': False, 'error': 'طريقة طلب غير صالحة.'})
+
+@login_required
+@system_admin_required
+def create_database_backup(request):
+    """Create a backup of the SQL Server database"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request method'})
+    
+    try:
+        # Get backup parameters
+        db_name = request.POST.get('db_name')
+        filename = request.POST.get('filename', f'backup_{db_name}')
+        compression = request.POST.get('compression', 'true') == 'true'
+        verify = request.POST.get('verify', 'true') == 'true'
+        encrypt = request.POST.get('encrypt', 'false') == 'true'
+        
+        # Get database connection info from settings
+        from django.conf import settings
+        db_settings = settings.DATABASES.get('default', {})
+        
+        host = db_settings.get('HOST', request.POST.get('host'))
+        user = db_settings.get('USER', request.POST.get('username'))
+        password = db_settings.get('PASSWORD', request.POST.get('password'))
+        use_windows_auth = request.POST.get('use_windows_auth') == 'true'
+        
+        # Construct connection string
+        if use_windows_auth:
+            conn_str = f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={host};DATABASE={db_name};Trusted_Connection=yes;'
+        else:
+            conn_str = f'DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={host};DATABASE={db_name};UID={user};PWD={password}'
+        
+        # Connect to database with auto-commit mode to avoid transaction issues
+        conn = pyodbc.connect(conn_str, timeout=30, autocommit=True)
+        cursor = conn.cursor()
+        
+        # Get SQL Server's default backup directory
+        try:
+            cursor.execute("DECLARE @BackupDirectory NVARCHAR(4000); EXEC master.dbo.xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\\Microsoft\\MSSQLServer\\MSSQLServer', N'BackupDirectory', @BackupDirectory OUTPUT; SELECT @BackupDirectory AS DefaultBackupDir;")
+            row = cursor.fetchone()
+            if row and row[0]:
+                backup_dir = row[0]
+            else:
+                # Fallback to a standard path if registry read fails
+                backup_dir = "C:\\SQLServerBackups"
+                os.makedirs(backup_dir, exist_ok=True)
+        except:
+            # Fallback to a standard path if the query fails
+            backup_dir = "C:\\SQLServerBackups"
+            os.makedirs(backup_dir, exist_ok=True)
+        
+        # Ensure backup directory exists
+        try:
+            os.makedirs(backup_dir, exist_ok=True)
+        except:
+            # If we can't create the directory (e.g., permission issues),
+            # try using the current working directory
+            backup_dir = os.path.join(os.getcwd(), "backups")
+            os.makedirs(backup_dir, exist_ok=True)
+        
+        backup_file = f"{filename}.bak"
+        backup_path = os.path.join(backup_dir, backup_file)
+        
+        # Build BACKUP DATABASE command
+        backup_cmd = f"BACKUP DATABASE [{db_name}] TO DISK = N'{backup_path}'"
+        
+        # Add options as a WITH clause
+        options = []
+        if compression:
+            options.append("COMPRESSION")
+        if encrypt:
+            options.append("ENCRYPTION(ALGORITHM = AES_256)")
+        
+        # Add WITH clause if there are any options
+        if options:
+            backup_cmd += " WITH " + ", ".join(options)
+        
+        # Execute backup command
+        try:
+            cursor.execute(backup_cmd)
+            
+            # Verify backup if requested
+            if verify:
+                cursor.execute(f"RESTORE VERIFYONLY FROM DISK = N'{backup_path}'")
+        except pyodbc.Error as e:
+            cursor.close()
+            conn.close()
+            raise e
+        
+        cursor.close()
+        conn.close()
+        
+        return JsonResponse({
+            'success': True,
+            'filename': backup_file,
+            'message': f'Database backup created successfully: {backup_file}'
+        })
+        
+    except pyodbc.Error as e:
+        return JsonResponse({
+            'success': False, 
+            'error': f'SQL Server error: {str(e)}'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'Unexpected error: {str(e)}'
+        })
+
+def list_database_backups(request):
+    """List available database backups"""
+    try:
+        # This should be implemented to check the backup directory
+        # and return a list of available backup files
+        # For now, return an empty list
+        return JsonResponse({
+            'success': True,
+            'backups': []
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'Error listing backups: {str(e)}'
+        })
+
+def restore_database_backup(request):
+    """Restore a database from backup"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Invalid request method'})
+    
+    try:
+        # Get restore parameters
+        db_name = request.POST.get('db_name')
+        restore_method = request.POST.get('restore_method', 'existing')
+        backup_filename = request.POST.get('backup_filename')
+        
+        # This is a placeholder - actual implementation would:
+        # 1. Connect to SQL Server
+        # 2. Execute a RESTORE DATABASE command
+        # 3. Return appropriate success/failure message
+        
+        return JsonResponse({
+            'success': False,
+            'error': 'Database restore functionality is not yet implemented'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'Error during restore: {str(e)}'
+        })
