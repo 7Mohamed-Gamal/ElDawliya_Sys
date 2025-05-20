@@ -25,5 +25,24 @@ urlpatterns = [
     path('modules/<int:pk>/edit/', views.ModuleUpdateView.as_view(), name='module_edit'),
     path('modules/<int:pk>/delete/', views.ModuleDeleteView.as_view(), name='module_delete'),
 
-    # Helpers
+    # Groups
+    path('groups/', views.GroupListView.as_view(), name='group_list'),
+    path('groups/add/', views.GroupCreateView.as_view(), name='group_add'),
+    path('groups/<int:pk>/', views.group_detail, name='group_detail'),
+    path('groups/<int:pk>/edit/', views.GroupUpdateView.as_view(), name='group_edit'),
+    path('groups/<int:pk>/delete/', views.GroupDeleteView.as_view(), name='group_delete'),
+    path('groups/<int:pk>/permissions/', views.group_permissions, name='group_permissions'),
+
+    # Users
+    path('users/', views.UserListView.as_view(), name='user_list'),
+    path('users/add/', views.UserCreateView.as_view(), name='user_add'),
+    path('users/<int:pk>/', views.UserDetailView.as_view(), name='user_detail'),
+    path('users/<int:pk>/edit/', views.UserUpdateView.as_view(), name='user_edit'),
+    path('users/<int:pk>/delete/', views.UserDeleteView.as_view(), name='user_delete'),
+    path('users/<int:pk>/groups/', views.UserGroupsUpdateView.as_view(), name='user_groups'),
+    path('users/<int:pk>/permissions/', views.user_permissions, name='user_permissions'),
+
+    # Permissions
+    path('permissions/', views.permission_dashboard, name='permission_dashboard'),
+    path('permissions/help/', views.permissions_help, name='permissions_help'),
 ]

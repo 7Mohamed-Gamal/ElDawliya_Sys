@@ -1,0 +1,186 @@
+{% extends 'administrator/base_admin.html' %}
+{% load static %}
+
+{% block title %}إدارة صلاحيات المجموعة - لوحة تحكم مدير النظام{% endblock %}
+
+{% block page_icon %}shield-alt{% endblock %}
+{% block page_header %}إدارة صلاحيات المجموعة {{ group.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .permissions-container {
+        max-height: 600px;
+        overflow-y: auto;
+    }
+    
+    .permission-group {
+        margin-bottom: 1.5rem;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 0.5rem;
+    }
+    
+    .permission-group-header {
+        background-color: rgba(0, 0, 0, 0.03);
+        padding: 0.7rem 1rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+    
+    .permission-group-content {
+        padding: 1rem;
+    }
+    
+    .permission-checkbox {
+        margin-bottom: 0.5rem;
+    }
+    
+    .search-box {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background-color: white;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-shield-alt me-2"></i>
+                    إدارة صلاحيات المجموعة
+                </h5>
+                <a href="{% url 'administrator:group_list' %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-arrow-right me-2"></i>
+                    العودة إلى قائمة المجموعات
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">معلومات المجموعة</h6>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>اسم المجموعة:</strong> {{ group.name }}</p>
+                                <p><strong>عدد المستخدمين في المجموعة:</strong> {{ group.user_set.count }}</p>
+                                <p><strong>المستخدمين:</strong> 
+                                    {% for user in group.user_set.all %}
+                                    <span class="badge bg-primary">{{ user.username }}</span>
+                                    {% empty %}
+                                    <span class="text-muted">لا يوجد مستخدمين في هذه المجموعة</span>
+                                    {% endfor %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="alert alert-info">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-info-circle me-2"></i>
+                                معلومات هامة حول صلاحيات المجموعة
+                            </h6>
+                            <ul class="mb-0">
+                                <li>الصلاحيات المختارة ستتم إضافتها لجميع المستخدمين في هذه المجموعة.</li>
+                                <li>أي تغييرات تجريها على صلاحيات المجموعة ستؤثر فورًا على جميع المستخدمين المنتمين إليها.</li>
+                                <li>يمكنك أيضًا إضافة <a href="{% url 'administrator:user_list' %}">صلاحيات مباشرة للمستخدمين</a> بشكل منفصل عن المجموعات.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="row mb-3">
+                        <div class="col-12 permissions-container">
+                            <div class="search-box">
+                                <input type="text" id="permissionSearch" class="form-control" placeholder="ابحث عن صلاحية...">
+                                <div class="form-text text-muted">اكتب للبحث في الصلاحيات المتاحة</div>
+                            </div>
+                            
+                            {{ form.permissions.errors }}
+                            
+                            <div class="permissions-list">
+                                {% regroup form.permissions|dictsort:"choice_label" by choice_label.instance.content_type.app_label as app_list %}
+                                
+                                {% for app, perm_list in app_list %}
+                                <div class="permission-group">
+                                    <div class="permission-group-header d-flex justify-content-between align-items-center">
+                                        <h6 class="mb-0">{{ app }}</h6>
+                                        <div>
+                                            <a href="#" class="select-all btn btn-sm btn-outline-primary" data-group="perm-{{ app|slugify }}">تحديد الكل</a>
+                                            <a href="#" class="deselect-all btn btn-sm btn-outline-secondary" data-group="perm-{{ app|slugify }}">إلغاء الكل</a>
+                                        </div>
+                                    </div>
+                                    <div class="permission-group-content">
+                                        {% for checkbox in perm_list %}
+                                        <div class="permission-checkbox">
+                                            <div class="form-check">
+                                                {{ checkbox.tag }}
+                                                <label class="form-check-label" for="{{ checkbox.id_for_label }}">
+                                                    {{ checkbox.choice_label }}
+                                                </label>
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a href="{% url 'administrator:group_list' %}" class="btn btn-outline-secondary">
+                            إلغاء
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>
+                            حفظ صلاحيات المجموعة
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Search functionality for permissions
+        $('#permissionSearch').on('keyup', function() {
+            var value = $(this).val().toLowerCase();
+            $('.permission-checkbox').filter(function() {
+                var matches = $(this).text().toLowerCase().indexOf(value) > -1;
+                $(this).toggle(matches);
+                
+                // Show the parent group if at least one permission is visible
+                var parent = $(this).closest('.permission-group');
+                var hasVisibleChildren = parent.find('.permission-checkbox:visible').length > 0;
+                parent.toggle(hasVisibleChildren);
+            });
+        });
+        
+        // Quick select/deselect all
+        $('.select-all').click(function() {
+            var group = $(this).data('group');
+            $('.' + group).prop('checked', true);
+            return false;
+        });
+        
+        $('.deselect-all').click(function() {
+            var group = $(this).data('group');
+            $('.' + group).prop('checked', false);
+            return false;
+        });
+    });
+</script>
+{% endblock %}

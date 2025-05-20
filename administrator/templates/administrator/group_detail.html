@@ -18,7 +18,7 @@
                         <i class="fas fa-edit ml-1"></i>
                         تعديل المجموعة
                     </a>
-                    <a href="{% url 'administrator:edit_group_permissions' group.id %}" class="btn btn-warning">
+                    <a href="{% url 'administrator:group_permissions' group.id %}" class="btn btn-warning">
                         <i class="fas fa-user-shield ml-1"></i>
                         إدارة الصلاحيات
                     </a>
@@ -68,7 +68,7 @@
                     </div>
 
                     <div class="d-grid gap-2 mt-4">
-                        <a href="{% url 'administrator:edit_group_permissions' group.id %}" class="btn btn-warning">
+                        <a href="{% url 'administrator:group_permissions' group.id %}" class="btn btn-warning">
                             <i class="fas fa-user-shield me-1"></i> إدارة صلاحيات المجموعة
                         </a>
                     </div>
@@ -128,10 +128,10 @@
                                     </td>
                                     <td>
                                         <div class="btn-group" role="group">
-                                            <a href="{% url 'administrator:edit_user_permissions' user_id=user.id %}" class="btn btn-sm btn-warning">
+                                            <a href="{% url 'administrator:user_permissions' pk=user.id %}" class="btn btn-sm btn-warning">
                                                 <i class="fas fa-user-shield"></i>
                                             </a>
-                                            <a href="{% url 'administrator:user_detail' pk=user.id %}" class="btn btn-sm btn-primary">
+                                            <a href="{% url 'administrator:user_permissions' pk=user.id %}" class="btn btn-sm btn-primary">
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                         </div>

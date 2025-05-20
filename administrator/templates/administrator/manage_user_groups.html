@@ -8,7 +8,7 @@
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
 <li class="breadcrumb-item"><a href="{% url 'administrator:admin_dashboard' %}">لوحة تحكم المدير</a></li>
-<li class="breadcrumb-item"><a href="{% url 'administrator:simplified_permissions_dashboard' %}">إدارة الصلاحيات المبسطة</a></li>
+<li class="breadcrumb-item"><a href="{% url 'administrator:permission_dashboard' %}">إدارة الصلاحيات</a></li>
 <li class="breadcrumb-item active">إدارة مجموعات المستخدم: {{ user_obj.username }}</li>
 {% endblock %}
 
@@ -18,9 +18,9 @@
         <div class="card shadow-sm">
             <div class="card-header bg-light d-flex justify-content-between align-items-center py-3 border-bottom">
                 <h5 class="mb-0 fw-semibold">إدارة مجموعات المستخدم: {{ user_obj.get_full_name|default:user_obj.username }}</h5>
-                <a href="{% url 'administrator:user_detail' pk=user_obj.id %}" class="btn btn-outline-secondary btn-sm">
+                <a href="{% url 'administrator:user_permissions' pk=user_obj.id %}" class="btn btn-outline-secondary btn-sm">
                     <i class="fas fa-arrow-right me-1"></i>
-                    العودة إلى تفاصيل المستخدم
+                    العودة إلى صلاحيات المستخدم
                 </a>
             </div>
             <div class="card-body">
@@ -91,7 +91,7 @@
                     </div>
                     
                     <div class="d-flex justify-content-end mt-4">
-                        <a href="{% url 'administrator:user_detail' pk=user_obj.id %}" class="btn btn-outline-secondary me-2">
+                        <a href="{% url 'administrator:user_permissions' pk=user_obj.id %}" class="btn btn-outline-secondary me-2">
                             <i class="fas fa-times me-1"></i>
                             إلغاء
                         </a>
