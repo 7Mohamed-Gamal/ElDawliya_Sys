@@ -491,15 +491,42 @@
 
                     <!-- Manual Backup Options -->
                     <div id="manualBackupOptions">
-                        <div class="form-group">
-                            <label for="backupFilename" class="form-label">اسم ملف النسخ الاحتياطي</label>
-                            <div class="input-group">
-                                <span class="input-group-text"><i class="fas fa-file-archive"></i></span>
-                                <input type="text" class="form-control" id="backupFilename" name="backup_filename" 
-                                    value="backup_{{ current_date|date:'Ymd_Hi' }}">
-                                <span class="input-group-text">.bak</span>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="backupFilename" class="form-label">اسم ملف النسخ الاحتياطي</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-file-archive"></i></span>
+                                        <input type="text" class="form-control" id="backupFilename" name="backup_filename" 
+                                            value="backup_{{ current_date|date:'Ymd_Hi' }}">
+                                        <span class="input-group-text">.bak</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="form-text">سيتم حفظ النسخة الاحتياطية في مجلد النسخ الاحتياطي للنظام</div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="backupLocation" class="form-label">مكان حفظ النسخة الاحتياطية</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-folder"></i></span>
+                                        <select class="form-select" id="backupLocation" name="backup_location">
+                                            <option value="default" selected>المجلد الافتراضي لـ SQL Server</option>
+                                            <option value="app_data">مجلد التطبيق</option>
+                                            <option value="temp">مجلد المؤقتات (C:\Temp)</option>
+                                            <option value="custom">تحديد مسار مخصص</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group" id="customLocationGroup" style="display: none;">
+                            <label for="customBackupPath" class="form-label">المسار المخصص</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-folder-open"></i></span>
+                                <input type="text" class="form-control" id="customBackupPath" name="custom_backup_path" 
+                                    placeholder="مثال: C:\Backups\SQLServer">
+                            </div>
+                            <div class="form-text">يرجى التأكد من أن لدى خدمة SQL Server صلاحيات كتابة في المجلد المحدد</div>
                         </div>
                         
                         <div class="form-group">
@@ -773,6 +800,18 @@ document.addEventListener('DOMContentLoaded', function() {
         return true;
     });
 
+    // Backup Location Change Handler
+    const backupLocation = document.getElementById('backupLocation');
+    const customLocationGroup = document.getElementById('customLocationGroup');
+    
+    backupLocation.addEventListener('change', function() {
+        if (this.value === 'custom') {
+            customLocationGroup.style.display = 'block';
+        } else {
+            customLocationGroup.style.display = 'none';
+        }
+    });
+    
     // Backup Type Change Handlers
     backupTypeScheduled.addEventListener('change', function() {
         if (this.checked) {
@@ -810,12 +849,29 @@ document.addEventListener('DOMContentLoaded', function() {
         const verify = document.getElementById('backupVerify').checked;
         const encrypt = document.getElementById('backupEncrypt').checked;
         
+        // Get backup location and custom path if selected
+        const backupLocation = document.getElementById('backupLocation').value;
+        let customBackupPath = '';
+        if (backupLocation === 'custom') {
+            customBackupPath = document.getElementById('customBackupPath').value;
+            if (!customBackupPath.trim()) {
+                showStatus('error', 'يرجى إدخال المسار المخصص لحفظ النسخة الاحتياطية');
+                createBackupNowBtn.disabled = false;
+                backupLoader.style.display = 'none';
+                return;
+            }
+        }
+        
         const formData = new FormData();
         formData.append('filename', backupFilename);
         formData.append('compression', compression);
         formData.append('verify', verify);
         formData.append('encrypt', encrypt);
         formData.append('db_engine', dbEngineSelect.value);
+        formData.append('backup_location', backupLocation);
+        if (customBackupPath) {
+            formData.append('custom_backup_path', customBackupPath);
+        }
         
         if (dbEngineSelect.value === 'mssql') {
             formData.append('db_name', databaseInput.value);
@@ -843,7 +899,19 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Refresh existing backups list if available
                     refreshExistingBackupsList();
                 } else {
-                    showStatus('error', 'فشل إنشاء النسخة الاحتياطية: ' + data.error);
+                    // Handle specific error messages
+                    if (data.error && data.error.includes('Cannot open backup device')) {
+                        showStatus('error', 'فشل إنشاء النسخة الاحتياطية: لا يمكن إنشاء ملف النسخة الاحتياطية. تأكد من أن لدى خدمة SQL Server صلاحيات كتابة في الدليل المحدد.');
+                    } else if (data.error && data.error.includes('Cannot perform a backup or restore operation within a transaction')) {
+                        showStatus('error', 'فشل إنشاء النسخة الاحتياطية: لا يمكن تنفيذ عملية النسخ الاحتياطي داخل معاملة قاعدة البيانات. جاري المحاولة مرة أخرى...');
+                        
+                        // Try one more time with a different approach
+                        setTimeout(() => {
+                            createBackupWithFallback();
+                        }, 1000);
+                    } else {
+                        showStatus('error', 'فشل إنشاء النسخة الاحتياطية: ' + data.error);
+                    }
                 }
             } else {
                 // Handle non-JSON response (usually HTML error page)
@@ -1117,6 +1185,54 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Scroll to status message
         connectionStatus.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    // Fallback function for backup creation - used when the initial attempt fails
+    function createBackupWithFallback() {
+        // Show loading state again
+        createBackupNowBtn.disabled = true;
+        backupLoader.style.display = 'inline-block';
+        
+        // Get backup parameters again (the same parameters)
+        const backupFilename = document.getElementById('backupFilename').value;
+        
+        // Create form data with only the essential parameters
+        const formData = new FormData();
+        formData.append('filename', backupFilename);
+        formData.append('db_name', databaseInput.value);
+        
+        // Add auth parameters
+        formData.append('host', hostInput.value);
+        formData.append('auth_type', useWindowsAuthCheckbox.checked ? 'windows' : 'sql');
+        formData.append('username', usernameInput.value);
+        formData.append('password', passwordInput.value);
+        formData.append('use_windows_auth', useWindowsAuthCheckbox.checked);
+        
+        // Try the backup again with minimal parameters
+        fetch('{% url "administrator:create_database_backup" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'X-Request-Type': 'backup_create_simple'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showStatus('success', `تم إنشاء النسخة الاحتياطية بنجاح. تم حفظ الملف: ${data.filename}`);
+            } else {
+                showStatus('error', 'فشل إنشاء النسخة الاحتياطية: ' + data.error);
+            }
+        })
+        .catch(error => {
+            showStatus('error', 'خطأ: ' + error.message);
+        })
+        .finally(() => {
+            // Reset loading state
+            createBackupNowBtn.disabled = false;
+            backupLoader.style.display = 'none';
+        });
     }
 
     function validateForm() {

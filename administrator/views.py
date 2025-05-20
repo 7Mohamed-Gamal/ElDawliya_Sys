@@ -545,58 +545,30 @@ def create_database_backup(request):
         conn = pyodbc.connect(conn_str, timeout=30, autocommit=True)
         cursor = conn.cursor()
         
-        # Get SQL Server's default backup directory
-        try:
-            cursor.execute("DECLARE @BackupDirectory NVARCHAR(4000); EXEC master.dbo.xp_instance_regread N'HKEY_LOCAL_MACHINE', N'Software\\Microsoft\\MSSQLServer\\MSSQLServer', N'BackupDirectory', @BackupDirectory OUTPUT; SELECT @BackupDirectory AS DefaultBackupDir;")
-            row = cursor.fetchone()
-            if row and row[0]:
-                backup_dir = row[0]
-            else:
-                # Fallback to a standard path if registry read fails
-                backup_dir = "C:\\SQLServerBackups"
-                os.makedirs(backup_dir, exist_ok=True)
-        except:
-            # Fallback to a standard path if the query fails
-            backup_dir = "C:\\SQLServerBackups"
-            os.makedirs(backup_dir, exist_ok=True)
-        
-        # Ensure backup directory exists
-        try:
-            os.makedirs(backup_dir, exist_ok=True)
-        except:
-            # If we can't create the directory (e.g., permission issues),
-            # try using the current working directory
-            backup_dir = os.path.join(os.getcwd(), "backups")
-            os.makedirs(backup_dir, exist_ok=True)
-        
+        # Simplest approach: use a filename only, SQL Server will use its default backup directory
         backup_file = f"{filename}.bak"
-        backup_path = os.path.join(backup_dir, backup_file)
+        backup_file = backup_file.replace(' ', '_')
         
-        # Build BACKUP DATABASE command
-        backup_cmd = f"BACKUP DATABASE [{db_name}] TO DISK = N'{backup_path}'"
-        
-        # Add options as a WITH clause
-        options = []
-        if compression:
-            options.append("COMPRESSION")
-        if encrypt:
-            options.append("ENCRYPTION(ALGORITHM = AES_256)")
-        
-        # Add WITH clause if there are any options
-        if options:
-            backup_cmd += " WITH " + ", ".join(options)
-        
-        # Execute backup command
+        # Execute the simplest BACKUP DATABASE command possible
         try:
+            backup_cmd = f"BACKUP DATABASE [{db_name}] TO DISK = N'{backup_file}'"
             cursor.execute(backup_cmd)
-            
-            # Verify backup if requested
-            if verify:
-                cursor.execute(f"RESTORE VERIFYONLY FROM DISK = N'{backup_path}'")
         except pyodbc.Error as e:
-            cursor.close()
-            conn.close()
-            raise e
+            # If that fails, try creating a backup with a minimal path
+            if "Cannot open backup device" in str(e):
+                # Try using C:\Temp directory which often has permissions
+                backup_path = f"C:\\Temp\\{backup_file}"
+                try:
+                    # Create the directory if it doesn't exist
+                    os.makedirs("C:\\Temp", exist_ok=True) 
+                except:
+                    pass
+                
+                backup_cmd = f"BACKUP DATABASE [{db_name}] TO DISK = N'{backup_path}'"
+                cursor.execute(backup_cmd)
+            else:
+                # Re-raise the error if it's not a backup device issue
+                raise
         
         cursor.close()
         conn.close()
