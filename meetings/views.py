@@ -12,7 +12,7 @@ from django.db.models import Count, Avg, Q
 User = get_user_model()
 
 @login_required
-@permission_required('meetings.view_meeting', raise_exception=True)
+@permission_required('meetings.view_meeting', login_url='accounts:access_denied')
 def dashboard(request):
     """عرض لوحة تحكم الاجتماعات"""
     # إحصائيات الاجتماعات
@@ -28,19 +28,19 @@ def dashboard(request):
     return render(request, 'meetings/dashboard.html', context)
 
 @login_required
-@permission_required('meetings.view_meeting', raise_exception=True)
+@permission_required('meetings.view_meeting', login_url='accounts:access_denied')
 def meeting_list(request):
     meetings = Meeting.objects.all().order_by('-date')
     return render(request, 'meetings/meeting_list.html', {'meetings': meetings})
 
 @login_required
-@permission_required('meetings.view_meeting', raise_exception=True)
+@permission_required('meetings.view_meeting', login_url='accounts:access_denied')
 def meeting_detail(request, pk):
     meeting = get_object_or_404(Meeting, pk=pk)
     return render(request, 'meetings/meeting_detail.html', {'meeting': meeting})
 
 @login_required
-@permission_required('meetings.add_meeting', raise_exception=True)
+@permission_required('meetings.add_meeting', login_url='accounts:access_denied')
 def meeting_create(request):
     if request.method == 'POST':
         form = MeetingForm(request.POST)
@@ -56,7 +56,7 @@ def meeting_create(request):
     return render(request, 'meetings/meeting_form.html', {'form': form, 'edit': False})
 
 @login_required
-@permission_required('meetings.change_meeting', raise_exception=True)
+@permission_required('meetings.change_meeting', login_url='accounts:access_denied')
 def meeting_edit(request, pk):
     meeting = get_object_or_404(Meeting, pk=pk)
     if request.method == 'POST':
@@ -70,7 +70,7 @@ def meeting_edit(request, pk):
     return render(request, 'meetings/meeting_form.html', {'form': form, 'edit': True, 'meeting': meeting})
 
 @login_required
-@permission_required('meetings.delete_meeting', raise_exception=True)
+@permission_required('meetings.delete_meeting', login_url='accounts:access_denied')
 def meeting_delete(request, pk):
     meeting = get_object_or_404(Meeting, pk=pk)
     if request.method == 'POST':
@@ -80,7 +80,7 @@ def meeting_delete(request, pk):
     return redirect('meetings:detail', pk=meeting.pk)
 
 @login_required
-@permission_required('meetings.add_attendee', raise_exception=True)
+@permission_required('meetings.add_attendee', login_url='accounts:access_denied')
 def add_attendee(request, pk):
     meeting = get_object_or_404(Meeting, pk=pk)
     if request.method == 'POST':
@@ -92,7 +92,7 @@ def add_attendee(request, pk):
     return redirect('meetings:detail', pk=meeting.pk)
 
 @login_required
-@permission_required('meetings.delete_attendee', raise_exception=True)
+@permission_required('meetings.delete_attendee', login_url='accounts:access_denied')
 def remove_attendee(request, pk):
     meeting = get_object_or_404(Meeting, pk=pk)
     attendee_id = request.GET.get('attendee_id')
@@ -107,14 +107,14 @@ def remove_attendee(request, pk):
     return redirect('meetings:detail', pk=meeting.pk)
 
 @login_required
-@permission_required('meetings.view_meeting', raise_exception=True)
+@permission_required('meetings.view_meeting', login_url='accounts:access_denied')
 def calendar_view(request):
     """عرض تقويم الاجتماعات"""
     meetings = Meeting.objects.all()
     return render(request, 'meetings/calendar.html', {'meetings': meetings})
 
 @login_required
-@permission_required('meetings.view_report', raise_exception=True)
+@permission_required('meetings.view_report', login_url='accounts:access_denied')
 def reports(request):
     """عرض تقارير الاجتماعات"""
     meetings = Meeting.objects.all()

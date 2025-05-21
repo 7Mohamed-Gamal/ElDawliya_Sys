@@ -11,18 +11,25 @@
     .permissions-container {
         max-height: 600px;
         overflow-y: auto;
+        border-radius: 0.5rem;
+        border: 1px solid #dee2e6;
     }
     
     .permission-group {
         margin-bottom: 1.5rem;
         border: 1px solid rgba(0, 0, 0, 0.1);
         border-radius: 0.5rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
     
     .permission-group-header {
-        background-color: rgba(0, 0, 0, 0.03);
+        background-color: #f8f9fa;
         padding: 0.7rem 1rem;
         border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        cursor: pointer;
     }
     
     .permission-group-content {
@@ -31,6 +38,12 @@
     
     .permission-checkbox {
         margin-bottom: 0.5rem;
+        padding: 0.25rem;
+        border-radius: 0.25rem;
+    }
+    
+    .permission-checkbox:hover {
+        background-color: rgba(0, 0, 0, 0.03);
     }
     
     .search-box {
@@ -41,6 +54,26 @@
         padding: 1rem;
         margin-bottom: 1rem;
         border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .type-view { border-right: 3px solid #28a745; }
+    .type-add { border-right: 3px solid #007bff; }
+    .type-change { border-right: 3px solid #fd7e14; }
+    .type-delete { border-right: 3px solid #dc3545; }
+    
+    .permission-section {
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px dashed #e9ecef;
+    }
+    
+    .action-btn {
+        transition: all 0.2s;
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-1px);
     }
 </style>
 {% endblock %}
@@ -54,55 +87,93 @@
                     <i class="fas fa-key me-2"></i>
                     إدارة صلاحيات المستخدم المباشرة
                 </h5>
-                <a href="{% url 'administrator:user_list' %}" class="btn btn-outline-secondary btn-sm">
-                    <i class="fas fa-arrow-right me-2"></i>
-                    العودة إلى قائمة المستخدمين
-                </a>
+                <div class="btn-group">
+                    <a href="{% url 'administrator:user_groups' user_obj.id %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-users me-1"></i>
+                        إدارة المجموعات
+                    </a>
+                    <a href="{% url 'administrator:user_list' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-arrow-right me-1"></i>
+                        العودة
+                    </a>
+                </div>
             </div>
             <div class="card-body">
                 <div class="row mb-4">
-                    <div class="col-md-6">
-                        <div class="card shadow-sm">
+                    <!-- User info card -->
+                    <div class="col-md-6 mb-3 mb-md-0">
+                        <div class="card shadow-sm h-100">
                             <div class="card-header bg-light">
-                                <h6 class="mb-0">معلومات المستخدم</h6>
+                                <h6 class="mb-0"><i class="fas fa-user me-2"></i>معلومات المستخدم</h6>
                             </div>
                             <div class="card-body">
-                                <p><strong>اسم المستخدم:</strong> {{ user_obj.username }}</p>
-                                <p><strong>الاسم الكامل:</strong> 
-                                    {% if user_obj.first_name or user_obj.last_name %}
-                                    {{ user_obj.first_name }} {{ user_obj.last_name }}
-                                    {% else %}
-                                    <span class="text-muted">-</span>
-                                    {% endif %}
-                                </p>
-                                <p><strong>البريد الإلكتروني:</strong> 
-                                    {% if user_obj.email %}
-                                    {{ user_obj.email }}
-                                    {% else %}
-                                    <span class="text-muted">-</span>
-                                    {% endif %}
-                                </p>
-                                <p><strong>مجموعات المستخدم:</strong> 
-                                    {% for group in user_obj.groups.all %}
-                                    <span class="badge bg-primary">{{ group.name }}</span>
-                                    {% empty %}
-                                    <span class="text-muted">لا ينتمي إلى أي مجموعة</span>
-                                    {% endfor %}
-                                </p>
+                                <div class="row mb-2">
+                                    <div class="col-md-4 text-muted">اسم المستخدم:</div>
+                                    <div class="col-md-8 fw-bold">{{ user_obj.username }}</div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-md-4 text-muted">الاسم الكامل:</div>
+                                    <div class="col-md-8">
+                                        {% if user_obj.first_name or user_obj.last_name %}
+                                        {{ user_obj.first_name }} {{ user_obj.last_name }}
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col-md-4 text-muted">البريد الإلكتروني:</div>
+                                    <div class="col-md-8">
+                                        {% if user_obj.email %}
+                                        {{ user_obj.email }}
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4 text-muted">المجموعات:</div>
+                                    <div class="col-md-8">
+                                        {% for group in user_obj.groups.all %}
+                                        <span class="badge bg-primary me-1">{{ group.name }}</span>
+                                        {% empty %}
+                                        <span class="text-muted">لا ينتمي إلى أي مجموعة</span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
+                    
+                    <!-- Permission tools -->
                     <div class="col-md-6">
-                        <div class="alert alert-info">
-                            <h6 class="alert-heading">
-                                <i class="fas fa-info-circle me-2"></i>
-                                معلومات هامة حول الصلاحيات
-                            </h6>
-                            <ul class="mb-0">
-                                <li>هذه الصلاحيات هي صلاحيات مباشرة للمستخدم وتطبق بشكل منفصل عن صلاحيات المجموعات.</li>
-                                <li>سيحصل المستخدم على مجموع الصلاحيات المباشرة وصلاحيات المجموعات التي ينتمي إليها.</li>
-                                <li>يمكنك <a href="{% url 'administrator:user_groups' user_obj.id %}">إدارة مجموعات المستخدم</a> لتطبيق صلاحيات المجموعة عليه.</li>
-                            </ul>
+                        <div class="card shadow-sm h-100">
+                            <div class="card-header bg-primary text-white">
+                                <h6 class="mb-0"><i class="fas fa-tools me-2"></i>أدوات الصلاحيات</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info mb-3">
+                                    <h6 class="alert-heading mb-2"><i class="fas fa-info-circle me-2"></i>معلومات هامة</h6>
+                                    <ul class="mb-0">
+                                        <li>الصلاحيات المباشرة تطبق بشكل منفصل عن صلاحيات المجموعات.</li>
+                                        <li>المستخدم يحصل على مجموع الصلاحيات المباشرة وصلاحيات المجموعات.</li>
+                                        <li>استخدم المجموعات لإعطاء صلاحيات للعديد من المستخدمين.</li>
+                                    </ul>
+                                </div>
+                                
+                                <div class="bg-light p-3 rounded">
+                                    <h6 class="mb-2">قوالب الصلاحيات الجاهزة:</h6>
+                                    <div class="btn-group mb-2 w-100">
+                                        <button type="button" class="btn btn-sm btn-outline-primary template-btn" data-template="admin">مدير</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary template-btn" data-template="hr">موارد بشرية</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary template-btn" data-template="inventory">مخازن</button>
+                                        <button type="button" class="btn btn-sm btn-outline-primary template-btn" data-template="reports">تقارير</button>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-danger clear-all-btn w-100">
+                                        <i class="fas fa-trash-alt me-1"></i> إزالة جميع الصلاحيات
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -111,42 +182,92 @@
                     {% csrf_token %}
                     
                     <div class="row mb-3">
-                        <div class="col-12 permissions-container">
-                            <div class="search-box">
-                                <input type="text" id="permissionSearch" class="form-control" placeholder="ابحث عن صلاحية...">
-                                <div class="form-text text-muted">اكتب للبحث في الصلاحيات المتاحة</div>
-                            </div>
-                            
-                            {{ form.permissions.errors }}
-                            
-                            <div class="permissions-list">
-                                {% regroup form.permissions|dictsort:"choice_label" by choice_label.instance.content_type.app_label as app_list %}
-                                
-                                {% for app, perm_list in app_list %}
-                                <div class="permission-group">
-                                    <div class="permission-group-header">
-                                        <h6 class="mb-0">{{ app }}</h6>
+                        <div class="col-12">
+                            <div class="permissions-container">
+                                <!-- Enhanced Search Box -->
+                                <div class="search-box">
+                                    <div class="input-group">
+                                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                        <input type="text" id="permissionSearch" class="form-control" placeholder="ابحث عن صلاحية...">
+                                        <button class="btn btn-outline-secondary" type="button" id="clearSearchBtn">
+                                            <i class="fas fa-times"></i>
+                                        </button>
                                     </div>
-                                    <div class="permission-group-content">
-                                        {% for checkbox in perm_list %}
-                                        <div class="permission-checkbox">
-                                            <div class="form-check">
-                                                {{ checkbox.tag }}
-                                                <label class="form-check-label" for="{{ checkbox.id_for_label }}">
-                                                    {{ checkbox.choice_label }}
-                                                </label>
-                                            </div>
-                                        </div>
-                                        {% endfor %}
+                                    <div class="form-text text-muted mt-1">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        اكتب للبحث في الصلاحيات المتاحة
                                     </div>
                                 </div>
-                                {% endfor %}
+                                
+                                {{ form.permissions.errors }}
+                                
+                                <!-- Grouped permissions by app -->
+                                <div class="permissions-list px-3 py-2">
+                                    {% regroup form.permissions|dictsort:"choice_label" by choice_label.instance.content_type.app_label as app_list %}
+                                    
+                                    {% for app, perm_list in app_list %}
+                                    <div class="permission-group">
+                                        <div class="permission-group-header" data-bs-toggle="collapse" data-bs-target="#group-{{ app }}">
+                                            <h6 class="mb-0 d-flex align-items-center">
+                                                <i class="fas fa-angle-down me-2"></i>
+                                                {{ app }}
+                                                <span class="badge bg-secondary ms-2">{{ perm_list|length }}</span>
+                                            </h6>
+                                            <div class="d-flex gap-2">
+                                                <button type="button" class="btn btn-sm btn-outline-primary select-all" data-group="{{ app }}">
+                                                    <i class="fas fa-check-square"></i> الكل
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary deselect-all" data-group="{{ app }}">
+                                                    <i class="fas fa-square"></i> لا شيء
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="permission-group-content collapse show" id="group-{{ app }}">
+                                            <!-- Group by permission type -->
+                                            {% regroup perm_list by choice_label.instance.codename|slice:":4" as perm_type_list %}
+                                            
+                                            {% for perm_type, checkboxes in perm_type_list %}
+                                            <div class="permission-section">
+                                                <div class="permission-section-title">
+                                                    {% if "view" in perm_type %}
+                                                    <span class="badge bg-success"><i class="fas fa-eye me-1"></i> عرض</span>
+                                                    {% elif "add_" in perm_type %}
+                                                    <span class="badge bg-primary"><i class="fas fa-plus me-1"></i> إضافة</span>
+                                                    {% elif "chan" in perm_type %}
+                                                    <span class="badge bg-warning"><i class="fas fa-edit me-1"></i> تعديل</span>
+                                                    {% elif "dele" in perm_type %}
+                                                    <span class="badge bg-danger"><i class="fas fa-trash-alt me-1"></i> حذف</span>
+                                                    {% else %}
+                                                    <span class="badge bg-secondary">{{ perm_type }}</span>
+                                                    {% endif %}
+                                                </div>
+                                                
+                                                <div class="permission-items">
+                                                    {% for checkbox in checkboxes %}
+                                                    <div class="permission-checkbox {% if 'view' in checkbox.choice_label.instance.codename %}type-view{% elif 'add_' in checkbox.choice_label.instance.codename %}type-add{% elif 'chan' in checkbox.choice_label.instance.codename %}type-change{% elif 'dele' in checkbox.choice_label.instance.codename %}type-delete{% endif %}">
+                                                        <div class="form-check">
+                                                            {{ checkbox.tag }}
+                                                            <label class="form-check-label" for="{{ checkbox.id_for_label }}">
+                                                                <span>{{ checkbox.choice_label }}</span>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
                             </div>
                         </div>
                     </div>
                     
+                    <!-- Submit Buttons -->
                     <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
                         <a href="{% url 'administrator:user_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>
                             إلغاء
                         </a>
                         <button type="submit" class="btn btn-primary">
@@ -164,31 +285,161 @@
 {% block extra_js %}
 <script>
     $(document).ready(function() {
-        // Search functionality for permissions
+        // Keep track of selected count
+        function updateSelectedCount() {
+            const totalCount = $('input[name="permissions"]:checked').length;
+            const totalPermissions = $('input[name="permissions"]').length;
+            $('.total-selected').text(totalCount);
+            $('.total-permissions').text(totalPermissions);
+            
+            // Update counts by app
+            $('.permission-group').each(function() {
+                const app = $(this).find('.permission-group-header h6 span.app-name').text().trim();
+                const checkedCount = $(this).find('input[name="permissions"]:checked').length;
+                const totalCount = $(this).find('input[name="permissions"]').length;
+                $(this).find('.permission-counter').text(checkedCount + '/' + totalCount);
+            });
+        }
+        
+        // Initialize counts
+        updateSelectedCount();
+        
+        // Search functionality with highlighting
         $('#permissionSearch').on('keyup', function() {
-            var value = $(this).val().toLowerCase();
-            $('.permission-checkbox').filter(function() {
-                var matches = $(this).text().toLowerCase().indexOf(value) > -1;
-                $(this).toggle(matches);
-                
-                // Show the parent group if at least one permission is visible
-                var parent = $(this).closest('.permission-group');
-                var hasVisibleChildren = parent.find('.permission-checkbox:visible').length > 0;
-                parent.toggle(hasVisibleChildren);
+            const value = $(this).val().toLowerCase();
+            
+            // If search is empty, show all
+            if (value === '') {
+                $('.permission-checkbox').show();
+                $('.permission-group').show();
+                $('.permission-section').show();
+                $('.permission-checkbox span').each(function() {
+                    $(this).html($(this).text());
+                });
+                return;
+            }
+            
+            // Hide all by default
+            $('.permission-checkbox').hide();
+            
+            // Search and highlight
+            $('.permission-checkbox').each(function() {
+                const text = $(this).text().toLowerCase();
+                if (text.indexOf(value) > -1) {
+                    $(this).show();
+                    
+                    // Highlight matching text
+                    const checkboxLabel = $(this).find('label span:first');
+                    const labelText = checkboxLabel.text();
+                    const searchRegex = new RegExp('(' + value + ')', 'gi');
+                    checkboxLabel.html(labelText.replace(searchRegex, '<span class="bg-warning">$1</span>'));
+                }
+            });
+            
+            // Show sections and groups that have visible checkboxes
+            $('.permission-section').each(function() {
+                $(this).toggle($(this).find('.permission-checkbox:visible').length > 0);
+            });
+            
+            $('.permission-group').each(function() {
+                $(this).toggle($(this).find('.permission-checkbox:visible').length > 0);
             });
         });
         
-        // Quick select/deselect all
+        // Clear search button
+        $('#clearSearchBtn').click(function() {
+            $('#permissionSearch').val('').trigger('keyup');
+        });
+        
+        // Select/Deselect all by group
         $('.select-all').click(function() {
-            var group = $(this).data('group');
-            $('.' + group).prop('checked', true);
+            const group = $(this).data('group');
+            $('#group-' + group + ' input[name="permissions"]').prop('checked', true);
+            updateSelectedCount();
             return false;
         });
         
         $('.deselect-all').click(function() {
-            var group = $(this).data('group');
-            $('.' + group).prop('checked', false);
+            const group = $(this).data('group');
+            $('#group-' + group + ' input[name="permissions"]').prop('checked', false);
+            updateSelectedCount();
             return false;
+        });
+        
+        // Update counts when checkbox changes
+        $('input[name="permissions"]').change(function() {
+            updateSelectedCount();
+        });
+        
+        // Toggle collapse for permission groups
+        $('.permission-group-header').click(function() {
+            const content = $(this).next('.permission-group-content');
+            content.collapse('toggle');
+            const icon = $(this).find('i.fa-angle-down');
+            icon.toggleClass('fa-rotate-180');
+        });
+        
+        // Template buttons
+        $('.template-btn').click(function() {
+            const template = $(this).data('template');
+            
+            // First clear all
+            $('input[name="permissions"]').prop('checked', false);
+            
+            // Apply template based on type
+            if (template === 'admin') {
+                // Select all permissions
+                $('input[name="permissions"]').prop('checked', true);
+            } else if (template === 'hr') {
+                // Select HR related permissions
+                $('input[name="permissions"]').each(function() {
+                    const label = $(this).parent().text().toLowerCase();
+                    if (label.includes('hr') || 
+                        label.includes('employee') || 
+                        label.includes('موظف') || 
+                        label.includes('إجازة') || 
+                        label.includes('حضور') || 
+                        label.includes('تقرير') ||
+                        label.includes('مهمة')) {
+                        $(this).prop('checked', true);
+                    }
+                });
+            } else if (template === 'inventory') {
+                // Select inventory related permissions
+                $('input[name="permissions"]').each(function() {
+                    const label = $(this).parent().text().toLowerCase();
+                    if (label.includes('inventory') || 
+                        label.includes('مخزن') || 
+                        label.includes('منتج') || 
+                        label.includes('product') || 
+                        label.includes('stock') ||
+                        label.includes('مخزون')) {
+                        $(this).prop('checked', true);
+                    }
+                });
+            } else if (template === 'reports') {
+                // Select reporting permissions only
+                $('input[name="permissions"]').each(function() {
+                    const label = $(this).parent().text().toLowerCase();
+                    if (label.includes('report') || 
+                        label.includes('تقرير') || 
+                        label.includes('view') || 
+                        label.includes('عرض')) {
+                        $(this).prop('checked', true);
+                    }
+                });
+            }
+            
+            // Update counts
+            updateSelectedCount();
+        });
+        
+        // Clear all button
+        $('.clear-all-btn').click(function() {
+            if (confirm('هل أنت متأكد من إزالة جميع الصلاحيات؟')) {
+                $('input[name="permissions"]').prop('checked', false);
+                updateSelectedCount();
+            }
         });
     });
 </script>

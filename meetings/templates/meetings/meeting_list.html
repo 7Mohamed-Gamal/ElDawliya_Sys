@@ -338,11 +338,9 @@
     <div class="mb-3 d-flex justify-content-between align-items-center">
         <h5 class="mb-0">عدد النتائج: <span class="badge bg-primary">{{ meetings|length }}</span></h5>
         <div class="btn-group" role="group">
-            {% if perms.meetings.add_meeting or user|is_admin %}
                 <a href="{% url 'meetings:create' %}" class="btn btn-primary">
                     <i class="fas fa-plus-circle me-1"></i> إنشاء اجتماع جديد
                 </a>
-            {% endif %}
             <a href="{% url 'meetings:calendar' %}" class="btn btn-outline-primary">
                 <i class="fas fa-calendar me-1"></i> عرض التقويم
             </a>

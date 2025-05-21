@@ -12,7 +12,7 @@ from .decorators import can_access_task, employee_tasks_module_permission_requir
 
 # Dashboard Views
 @login_required
-@permission_required('employee_tasks.view_employeetask', raise_exception=True)
+@permission_required('employee_tasks.view_employeetask', login_url='accounts:access_denied')
 def dashboard(request):
     """
     عرض لوحة تحكم مهام الموظفين
@@ -105,7 +105,7 @@ def dashboard(request):
 
 # Task List Views
 @login_required
-@permission_required('employee_tasks.view_employeetask', raise_exception=True)
+@permission_required('employee_tasks.view_employeetask', login_url='accounts:access_denied')
 def task_list(request):
     """
     عرض قائمة المهام
@@ -165,7 +165,7 @@ def task_list(request):
     return render(request, 'employee_tasks/task_list.html', context)
 
 @login_required
-@permission_required('employee_tasks.view_employeetask', raise_exception=True)
+@permission_required('employee_tasks.view_employeetask', login_url='accounts:access_denied')
 def my_tasks(request):
     """
     عرض مهام المستخدم الحالي
@@ -220,7 +220,7 @@ def my_tasks(request):
     return render(request, 'employee_tasks/task_list.html', context)
 
 @login_required
-@permission_required('employee_tasks.view_employeetask', raise_exception=True)
+@permission_required('employee_tasks.view_employeetask', login_url='accounts:access_denied')
 def assigned_tasks(request):
     """
     عرض المهام المسندة إلى المستخدم الحالي
@@ -323,7 +323,7 @@ def task_detail(request, pk):
 
 # Task Create/Edit Views
 @login_required
-@permission_required('employee_tasks.add_employeetask', raise_exception=True)
+@permission_required('employee_tasks.add_employeetask', login_url='accounts:access_denied')
 def task_create(request):
     """
     إنشاء مهمة جديدة
@@ -584,7 +584,7 @@ def category_delete(request, pk):
 
 # Calendar View
 @login_required
-@permission_required('employee_tasks.view_employeetask', raise_exception=True)
+@permission_required('employee_tasks.view_employeetask', login_url='accounts:access_denied')
 def calendar(request):
     """
     عرض تقويم المهام
@@ -608,7 +608,7 @@ def calendar(request):
 
 # Analytics View
 @login_required
-@permission_required('employee_tasks.view_employeetask', raise_exception=True)
+@permission_required('employee_tasks.view_employeetask', login_url='accounts:access_denied')
 def analytics(request):
     """
     عرض تحليلات المهام

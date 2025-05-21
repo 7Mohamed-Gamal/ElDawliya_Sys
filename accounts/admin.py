@@ -2,7 +2,6 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.utils.translation import gettext_lazy as _
 from .models import Users_Login_New
-from ElDawliya_sys.admin_site import admin_site
 from django.contrib.auth.models import Permission
 
 # Register custom user model with the custom admin site
@@ -49,6 +48,6 @@ class PermissionAdmin(admin.ModelAdmin):
         # Don't allow deleting permissions - they should be managed by Django
         return False
 
-# Register with the custom admin site
-admin_site.register(Users_Login_New, CustomUserAdmin)
-admin_site.register(Permission, PermissionAdmin)
+# Register with the default admin site
+admin.site.register(Users_Login_New, CustomUserAdmin)
+admin.site.register(Permission, PermissionAdmin)

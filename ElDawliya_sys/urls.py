@@ -2,7 +2,7 @@ from django.shortcuts import redirect
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from .admin_site import admin_site
+from django.contrib import admin  # Import Django's default admin
 from .views import test_view
 
 # Import the database setup view directly to avoid database dependency
@@ -27,7 +27,7 @@ special_urlpatterns = [
 # Regular URL patterns that require database access
 urlpatterns = [
     path('test/', test_view, name='test'),  # مسار اختبار بسيط
-    path('admin/', admin_site.urls),  # لوحة الإدارة المخصصة
+    path('admin/', admin.site.urls),  # لوحة الإدارة الافتراضية
     path('accounts/', include('accounts.urls')),  # مسارات تطبيق الحسابات
     path('meetings/', include('meetings.urls')),  # مسارات تطبيق الاجتماعات
     path('tasks/', include('tasks.urls')),  # مسارات تطبيق المهام

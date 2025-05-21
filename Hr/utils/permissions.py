@@ -1,5 +1,5 @@
 from functools import wraps
-from django.core.exceptions import PermissionDenied
+from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required
 
 def has_report_permission(user, report_type):
@@ -22,7 +22,7 @@ def requires_report_permission(report_type):
         def wrapper(request, *args, **kwargs):
             if has_report_permission(request.user, report_type):
                 return view_func(request, *args, **kwargs)
-            raise PermissionDenied
+            return redirect('accounts:access_denied')
         return wrapper
     return decorator
 
@@ -34,7 +34,7 @@ def requires_export_permission(report_type):
         def wrapper(request, *args, **kwargs):
             if has_export_permission(request.user, report_type):
                 return view_func(request, *args, **kwargs)
-            raise PermissionDenied
+            return redirect('accounts:access_denied')
         return wrapper
     return decorator
 

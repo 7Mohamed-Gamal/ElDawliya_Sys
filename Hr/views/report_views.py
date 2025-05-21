@@ -306,38 +306,31 @@ def report_detail(request, report_type):
     # Check permissions before redirecting to specific reports
     if report_type == 'employees':
         if not request.user.has_perm('Hr.view_employee') and not request.user.is_superuser:
-            from django.core.exceptions import PermissionDenied
-            raise PermissionDenied
+            return redirect('accounts:access_denied')
         return employee_report(request)
     elif report_type == 'leaves':
         if not request.user.has_perm('Hr.view_employeeleave') and not request.user.is_superuser:
-            from django.core.exceptions import PermissionDenied
-            raise PermissionDenied
+            return redirect('accounts:access_denied')
         return leave_report(request)
     elif report_type == 'attendance':
         if not request.user.has_perm('Hr.view_attendance') and not request.user.is_superuser:
-            from django.core.exceptions import PermissionDenied
-            raise PermissionDenied
+            return redirect('accounts:access_denied')
         return attendance_report(request)
     elif report_type == 'tasks':
         if not request.user.has_perm('Hr.view_employeetask') and not request.user.is_superuser:
-            from django.core.exceptions import PermissionDenied
-            raise PermissionDenied
+            return redirect('accounts:access_denied')
         return task_report(request)
     elif report_type == 'hr_tasks':
         if not request.user.has_perm('Hr.view_hrtask') and not request.user.is_superuser:
-            from django.core.exceptions import PermissionDenied
-            raise PermissionDenied
+            return redirect('accounts:access_denied')
         return hr_task_report(request)
     elif report_type == 'payroll':
         if not request.user.has_perm('Hr.view_payroll') and not request.user.is_superuser:
-            from django.core.exceptions import PermissionDenied
-            raise PermissionDenied
+            return redirect('accounts:access_denied')
         return payroll_report(request)
     elif report_type == 'insurance':
         if not request.user.has_perm('Hr.view_insurance') and not request.user.is_superuser:
-            from django.core.exceptions import PermissionDenied
-            raise PermissionDenied
+            return redirect('accounts:access_denied')
         return insurance_report(request)
     else:
         return redirect('Hr:reports:list')
@@ -378,7 +371,7 @@ def employee_report(request):
     return render(request, 'Hr/reports/employee_report.html', context)
 
 @login_required
-@permission_required('Hr.view_employeeleave', raise_exception=True)
+@permission_required('Hr.view_employeeleave', login_url='accounts:access_denied')
 def leave_report(request):
     """تقرير الإجازات"""
     # Filter parameters
@@ -493,7 +486,7 @@ def attendance_report(request):
     return render(request, 'Hr/reports/attendance_report.html', context)
 
 @login_required
-@permission_required('Hr.view_employeetask', raise_exception=True)
+@permission_required('Hr.view_employeetask', login_url='accounts:access_denied')
 def task_report(request):
     """تقرير المهام"""
     # Filter parameters
@@ -555,7 +548,7 @@ def task_report(request):
     return render(request, 'Hr/reports/task_report.html', context)
 
 @login_required
-@permission_required('Hr.view_hrtask', raise_exception=True)
+@permission_required('Hr.view_hrtask', login_url='accounts:access_denied')
 def hr_task_report(request):
     """تقرير مهام الموارد البشرية"""
     # Filter parameters
@@ -679,7 +672,7 @@ def payroll_report(request):
     return render(request, 'Hr/reports/payroll_report.html', context)
 
 @login_required
-@permission_required('Hr.view_insurance', raise_exception=True)
+@permission_required('Hr.view_insurance', login_url='accounts:access_denied')
 def insurance_report(request):
     """تقرير التأمينات"""
     # Filter parameters
@@ -749,12 +742,11 @@ def insurance_report(request):
     return render(request, 'Hr/reports/insurance_report.html', context)
 
 @login_required
-@permission_required('Hr.view_payroll', raise_exception=True)
+@permission_required('Hr.view_payroll', login_url='accounts:access_denied')
 def monthly_salary_report(request):
     """تقرير الرواتب الشهري"""
     if not request.user.has_perm('Hr.view_payroll') and not request.user.is_superuser:
-        from django.core.exceptions import PermissionDenied
-        raise PermissionDenied
+        return redirect('accounts:access_denied')
 
     # Process export requests
     if request.GET.get('export') and (request.user.has_perm('Hr.export_payroll_data') or request.user.is_superuser):
@@ -798,7 +790,7 @@ def monthly_salary_report(request):
     return render(request, 'Hr/reports/monthly_salary_report.html', context)
 
 @login_required
-@permission_required('Hr.view_payroll_reports')
+@permission_required('Hr.view_payroll_reports', login_url='accounts:access_denied')
 def export_salary_report_excel(request):
     """Export salary report to Excel"""
     wb = xlwt.Workbook(encoding='utf-8')
@@ -851,7 +843,7 @@ def export_salary_report_excel(request):
     return response
 
 @login_required
-@permission_required('Hr.view_payroll_reports')
+@permission_required('Hr.view_payroll_reports', login_url='accounts:access_denied')
 def export_salary_report_csv(request):
     """Export salary report to CSV"""
     response = HttpResponse(content_type='text/csv')
@@ -920,7 +912,7 @@ def has_export_permission(user, report_type):
 @login_required
 def attendance_report_view(request):
     if not check_report_permissions(request.user, 'attendance'):
-        raise PermissionDenied
+        return redirect('accounts:access_denied')
         
     # Filter parameters
     employee_id = request.GET.get('employee')
@@ -973,7 +965,7 @@ def attendance_report_view(request):
 @login_required
 def leave_report_view(request):
     if not check_report_permissions(request.user, 'leave'):
-        raise PermissionDenied
+        return redirect('accounts:access_denied')
         
     # Filter parameters
     employee_id = request.GET.get('employee')
@@ -1038,7 +1030,7 @@ def leave_report_view(request):
 @login_required
 def employee_report_view(request):
     if not check_report_permissions(request.user, 'employee'):
-        raise PermissionDenied
+        return redirect('accounts:access_denied')
         
     # Filter parameters
     department_id = request.GET.get('department')
@@ -1078,7 +1070,7 @@ def employee_report_view(request):
 @login_required
 def task_report_view(request):
     if not check_report_permissions(request.user, 'task'):
-        raise PermissionDenied
+        return redirect('accounts:access_denied')
         
     # Filter parameters
     employee_id = request.GET.get('employee')
@@ -1143,7 +1135,7 @@ def task_report_view(request):
 @login_required
 def export_report(request, report_type):
     if not has_export_permission(request.user, report_type):
-        raise PermissionDenied
+        return redirect('accounts:access_denied')
         
     if report_type == 'salary':
         return export_salary_report(request)

@@ -1,5 +1,6 @@
 {% load static %}
 {% load i18n %}
+{% load django_permissions %}
 <!DOCTYPE html>
 <html lang="{{ current_language }}" dir="{{ text_direction }}">
 <head>
@@ -274,17 +275,21 @@
                         </a>
                     </li>
                     <li class="sidebar-menu-item">
+                        {% if perms.meetings.add_meeting or user|is_admin %}
                         <a href="{% url 'meetings:create' %}">
                             <i class="fas fa-plus"></i>
                             <span>إنشاء اجتماع جديد</span>
                         </a>
+                        {% endif %}
                     </li>
                     <li class="sidebar-menu-item">
+                         {% if perms.meetings.view_meeting or user|is_admin %}
                         <a href="{% url 'meetings:calendar' %}">
                             <i class="fas fa-calendar"></i>
                             <span>التقويم</span>
                         </a>
                     </li>
+                    {% endif %}
                     <li class="sidebar-menu-item">
                         <a href="{% url 'meetings:reports' %}">
                             <i class="fas fa-chart-bar"></i>
