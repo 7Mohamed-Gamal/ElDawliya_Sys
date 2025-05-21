@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth.models import Group, Permission
+from django.contrib.auth import get_user_model
 from .models import SystemSettings, Department, Module
 
 class SystemSettingsForm(forms.ModelForm):
@@ -121,11 +122,25 @@ class DatabaseConfigForm(forms.Form):
 
 class GroupForm(forms.ModelForm):
     """Form for managing user groups."""
+    description = forms.CharField(
+        max_length=200, 
+        required=False,
+        widget=forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+        label="وصف المجموعة"
+    )
+    
     permissions = forms.ModelMultipleChoiceField(
         queryset=Permission.objects.all(),
         required=False,
         widget=forms.CheckboxSelectMultiple,
         label="الصلاحيات"
+    )
+    
+    users = forms.ModelMultipleChoiceField(
+        queryset=get_user_model().objects.all(),
+        required=False,
+        widget=forms.SelectMultiple(attrs={'class': 'form-control'}),
+        label="المستخدمون"
     )
 
     class Meta:
@@ -134,6 +149,32 @@ class GroupForm(forms.ModelForm):
         labels = {
             'name': 'اسم المجموعة',
         }
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'})
+        }
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # If editing an existing group, pre-select its users
+        if self.instance.pk:
+            self.initial['users'] = self.instance.user_set.all()
+            
+    def save(self, commit=True):
+        group = super().save(commit)
+        if commit:
+            # Update group users
+            current_users = set(group.user_set.all())
+            selected_users = set(self.cleaned_data.get('users', []))
+            
+            # Remove users no longer in the group
+            for user in current_users - selected_users:
+                user.groups.remove(group)
+                
+            # Add new users to the group
+            for user in selected_users - current_users:
+                user.groups.add(group)
+                
+        return group
 
 
 class UserPermissionForm(forms.Form):

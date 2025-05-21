@@ -347,7 +347,7 @@ def settings_edit(request):
         if form.is_valid():
             form.save()
             messages.success(request, 'Settings updated successfully!')
-            return redirect('settings_edit')
+            return redirect('cars:settings_edit')
     else:
         form = SettingsForm(instance=settings)
     
