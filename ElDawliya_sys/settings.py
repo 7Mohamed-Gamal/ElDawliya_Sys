@@ -86,7 +86,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'mssql',
         'NAME': 'ElDawliya_Sys',
-        'HOST': '192.168.1.48',
+        'HOST': 'DESKTOP-H361157',
         'PORT': '1433',
         'USER': 'admin',
         'PASSWORD': 'hgslduhgfwdv',
@@ -98,7 +98,7 @@ DATABASES = {
     'primary': {
         'ENGINE': 'mssql',
         'NAME': 'ElDawliya_Sys',
-        'HOST': '192.168.1.48',
+        'HOST': 'DESKTOP-H361157',
         'PORT': '1433',
         'USER': 'admin',
         'PASSWORD': 'hgslduhgfwdv',
