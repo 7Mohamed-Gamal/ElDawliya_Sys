@@ -3,27 +3,7 @@ import base64
 
 register = template.Library()
 
-@register.filter
-def binary_to_img(binary_data):
-    """
-    Converts binary image data to a base64 data URL that can be used in an img tag.
-    
-    Usage: {{ employee.emp_image|binary_to_img }}
-    """
-    if not binary_data:
-        return None
-    
-    try:
-        # Convert binary data to base64 string
-        encoded_data = base64.b64encode(binary_data).decode('utf-8')
-        
-        # Determine image type (default to jpeg if unknown)
-        # This is a simplification - in a production environment you'd want 
-        # to determine the actual MIME type based on the binary data
-        return f"data:image/jpeg;base64,{encoded_data}"
-    except Exception as e:
-        # In case of an error, return None
-        return None
+# Moved to image_utils.py for centralized implementation
 
 @register.filter
 def getattribute(obj, attr):
