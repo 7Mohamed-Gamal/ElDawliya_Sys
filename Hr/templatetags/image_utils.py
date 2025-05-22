@@ -13,6 +13,7 @@ logger.debug('Loading binary_to_img template filter')
 def binary_to_img(value):
     """Convert binary image data to a base64 encoded image source."""
     if not value:
+        logger.debug('binary_to_img called with empty value')
         return ''
     
     try:
@@ -20,22 +21,30 @@ def binary_to_img(value):
         
         # Handle Django FileField/ImageField
         if hasattr(value, 'url'):
+            logger.debug('Value has url attribute, returning FileField/ImageField URL')
             return value.url
             
-        # If the value is already in bytes format
+        # Get the binary image data
         if isinstance(value, bytes):
+            logger.debug('Value is bytes, using directly')
             image_data = value
-        # If the value is stored as a string of binary data
         elif isinstance(value, str):
-            image_data = value.encode()
-        # If it's a file-like object
+            logger.debug('Value is string, encoding to bytes')
+            try:
+                image_data = value.encode()
+            except UnicodeEncodeError:
+                # The string might already be base64
+                logger.debug('String appears to be base64 encoded, using as is')
+                return f'data:image/jpeg;base64,{value}'
         elif hasattr(value, 'read'):
+            logger.debug('Value is file-like object, reading')
             image_data = value.read()
         else:
             logger.warning(f'Unsupported image data type: {type(value)}')
             return ''
 
         # Convert binary data to base64
+        logger.debug('Converting binary data to base64')
         encoded_data = base64.b64encode(image_data).decode('utf-8')
         
         # Return the complete img src with data URI scheme
