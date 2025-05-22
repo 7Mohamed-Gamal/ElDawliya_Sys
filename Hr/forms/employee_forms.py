@@ -1,12 +1,50 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 from Hr.models import Employee, Department, Job, Car
+import io
+
+class BinaryImageField(forms.ImageField):
+    """
+    Custom form field for handling image uploads to BinaryField
+    """
+    def to_python(self, data):
+        """
+        Convert the uploaded file to binary data
+        """
+        # If data is None or already a bytes instance, return it as is
+        if data is None or isinstance(data, bytes):
+            return data
+            
+        # Get the file object from the parent class
+        file = super().to_python(data)
+        
+        # If no file was uploaded, return None
+        if file is None:
+            return None
+            
+        # Read the file content as binary
+        binary_data = file.read()
+        return binary_data
 
 
 class EmployeeForm(forms.ModelForm):
     """
     Form for creating and editing employees
     """
+    emp_image = BinaryImageField(
+        required=False,
+        label=_("صورة الموظف"),
+        help_text=_("اختر صورة للموظف (اختياري)"),
+        widget=forms.ClearableFileInput(attrs={'class': 'form-control'})
+    )
+    
+    def clean_emp_image(self):
+        """
+        Handle the binary image field correctly
+        """
+        data = self.cleaned_data.get('emp_image')
+        return data
+        
     class Meta:
         model = Employee
         fields = [
@@ -15,7 +53,7 @@ class EmployeeForm(forms.ModelForm):
             'military_service_certificate', 'people_with_special_needs', 'emp_phone1', 'emp_phone2',
             'emp_address', 'governorate', 'emp_type', 'working_condition', 'department',
             'jop_code', 'jop_name', 'emp_date_hiring', 'emp_car', 'insurance_status',
-            'insurance_salary', 'health_card', 'shift_type'
+            'insurance_salary', 'health_card', 'shift_type','age','emp_image'
         ]
         widgets = {
             'emp_id': forms.NumberInput(attrs={'class': 'form-control'}),
@@ -39,13 +77,14 @@ class EmployeeForm(forms.ModelForm):
             'working_condition': forms.Select(attrs={'class': 'form-select'}),
             'department': forms.Select(attrs={'class': 'form-select'}),
             'jop_code': forms.NumberInput(attrs={'class': 'form-control'}),
-            'jop_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'jop_name': forms.Select(attrs={'class': 'form-control'}),
             'emp_date_hiring': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'emp_car': forms.TextInput(attrs={'class': 'form-control'}),
             'insurance_status': forms.Select(attrs={'class': 'form-select'}),
             'insurance_salary': forms.NumberInput(attrs={'class': 'form-control'}),
             'health_card': forms.Select(attrs={'class': 'form-select'}),
             'shift_type': forms.Select(attrs={'class': 'form-select'}),
+            'age': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -81,21 +120,24 @@ class EmployeeForm(forms.ModelForm):
             ]),
             (_('معلومات الهوية'), [
                 'national_id', 'date_birth', 'place_birth',
-                'emp_nationality', 'emp_marital_status', 'military_service_certificate',
-                'people_with_special_needs'
+                'emp_nationality', 'emp_marital_status','emp_type','people_with_special_needs',
+                'emp_address', 'governorate'
             ]),
             (_('بيانات الاتصال'), [
-                'emp_phone1', 'emp_phone2', 'emp_address', 'governorate'
+                'emp_phone1', 'emp_phone2'
             ]),
             (_('معلومات العمل'), [
-                'emp_type', 'working_condition', 'department',
+                'working_condition', 'department',
                 'jop_code', 'jop_name', 'emp_date_hiring'
             ]),
             (_('معلومات السيارة'), [
-                'emp_car'
+                'emp_car','shift_type'
             ]),
             (_('معلومات التأمين'), [
-                'insurance_status', 'insurance_salary', 'health_card', 'shift_type'
+                'insurance_status', 'insurance_salary', 'health_card'
+            ]),
+            (_('مصوغات التعيين'), [
+                'military_service_certificate', 'emp_image'
             ]),
         ]
 

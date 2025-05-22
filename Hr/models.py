@@ -23,7 +23,8 @@ class TblEmployee(models.Model):
     national_id = models.CharField(db_column='National_ID', max_length=14, db_collation='Arabic_CI_AS', blank=True, null=True)  # Field name made lowercase.
     date_birth = models.DateField(db_column='Date_Birth', blank=True, null=True)  # Field name made lowercase.
     place_birth = models.CharField(db_column='Place_Birth', max_length=50, db_collation='Arabic_CI_AS', blank=True, null=True)  # Field name made lowercase.
-    emp_image = models.BinaryField(db_column='Emp_Image', blank=True, null=True)  # Field name made lowercase.
+    emp_image = models.BinaryField(db_column='Emp_Image', blank=True, null=True, editable=True)  # Field name made lowercase.
+    # emp_image = models.ImageField(upload_to='images/', blank=True, null=True)
     emp_type = models.CharField(db_column='Emp_Type', max_length=50, db_collation='Arabic_CI_AS', blank=True, null=True)  # Field name made lowercase.
     working_condition = models.CharField(db_column='Working_Condition', max_length=50, db_collation='Arabic_CI_AS', blank=True, null=True)  # Field name made lowercase.
     dept_code = models.IntegerField(db_column='Dept_Code', blank=True, null=True)  # Field name made lowercase.

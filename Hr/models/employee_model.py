@@ -70,7 +70,7 @@ class Employee(models.Model):
     date_birth = models.DateField(db_column='Date_Birth', null=True, blank=True, verbose_name=_("تاريخ الميلاد"))
     age = models.CharField(db_column='Age', max_length=100, null=True, blank=True, verbose_name=_("العمر"))
     place_birth = models.CharField(db_column='Place_Birth', max_length=50, null=True, blank=True, verbose_name=_("محل الميلاد"))
-    emp_image = models.BinaryField(db_column='Emp_Image', null=True, blank=True, verbose_name=_("صورة الموظف"))
+    emp_image = models.BinaryField(db_column='Emp_Image', null=True, blank=True, editable=True, verbose_name=_("صورة الموظف"))
     personal_id_expiry_date = models.DateField(db_column='Personal_ID_Expiry_Date', null=True, blank=True, verbose_name=_("تاريخ انتهاء البطاقة الشخصية"))
     military_service_certificate = models.CharField(db_column='Military_Service_Certificate', max_length=50, null=True, blank=True, choices=MILITARY_SERVICE_CHOICES, verbose_name=_("شهادة الخدمة العسكرية"))
     

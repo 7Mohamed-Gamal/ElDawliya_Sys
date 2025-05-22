@@ -332,9 +332,12 @@
                                                         </label>
                                                         <select name="shift_type" class="form-select form-select-sm">
                                                             <option value="">-- اختر نوع الوردية --</option>
-                                                            <option value="صباحي" {% if request.GET.shift_type == 'صباحي' %}selected{% endif %}>صباحي</option>
-                                                            <option value="مسائي" {% if request.GET.shift_type == 'مسائي' %}selected{% endif %}>مسائي</option>
-                                                            <option value="ليلي" {% if request.GET.shift_type == 'ليلي' %}selected{% endif %}>ليلي</option>
+                                                            <option value="وردية أولى" {% if request.GET.shift_type == 'وردية أولى' %}selected{% endif %}>وردية أولى</option>
+                                                            <option value="وردية ثانية" {% if request.GET.shift_type == 'وردية ثانية' %}selected{% endif %}>وردية ثانية</option>
+                                                            <option value="وردية ثالثة" {% if request.GET.shift_type == 'وردية ثالثة' %}selected{% endif %}>وردية ثالثة</option>
+                                                            <option value="أولى 12 صباحي" {% if request.GET.shift_type == 'أولى 12 صباحي' %}selected{% endif %}>أولى 12 صباحي</option>
+                                                            <option value="ثانية 12 مسائي" {% if request.GET.shift_type == 'ثانية 12 مسائي' %}selected{% endif %}>ثانية 12 مسائي</option>
+                                                            <option value="وردية الإدارة" {% if request.GET.shift_type == 'وردية الإدارة' %}selected{% endif %}>وردية الإدارة</option>
                                                         </select>
                                                     </div>
 
@@ -533,9 +536,9 @@
                                 <td class="px-3">
                                     <div class="d-flex align-items-center py-2">
                                         {% if employee.emp_image %}
-                                        <img src="{{ employee.emp_image.url }}" alt="{{ employee.emp_full_name }}" class="rounded-circle me-2 object-fit-cover" width="40" height="40">
+                                        <img src="{{ employee.emp_image|binary_to_img }}" alt="{{ employee.emp_full_name }}" class="rounded-circle me-3 object-fit-cover employee-table-img" width="50" height="50">
                                         {% else %}
-                                        <div class="avatar bg-primary text-white me-2 flex-shrink-0">
+                                        <div class="avatar bg-primary text-white me-3 flex-shrink-0" style="width: 50px; height: 50px;">
                                             {{ employee.emp_first_name|slice:":1"|upper }}
                                         </div>
                                         {% endif %}
@@ -568,9 +571,9 @@
                                     <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
                                         <i class="fas fa-check-circle me-1"></i>نشط
                                     </span>
-                                    {% elif employee.working_condition == 'إجازة' %}
+                                    {% elif employee.working_condition == 'منقطع عن العمل' %}
                                     <span class="badge bg-info-subtle text-info border border-info-subtle px-2 py-1">
-                                        <i class="fas fa-pause-circle me-1"></i>إجازة
+                                        <i class="fas fa-pause-circle me-1"></i>منقطع عن العمل
                                     </span>
                                     {% elif employee.working_condition == 'استقالة' %}
                                     <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">
@@ -583,23 +586,23 @@
                                     {% endif %}
                                 </td>
                                 <td class="px-3 text-center">
-                                    <div class="btn-group btn-group-sm">
-                                        <a href="{% url 'Hr:employees:detail' employee.emp_id %}" class="btn btn-outline-primary" title="عرض التفاصيل">
+                                    <div class="btn-group btn-group-sm action-buttons">
+                                        <a href="{% url 'Hr:employees:detail' employee.emp_id %}" class="btn btn-outline-primary btn-sm action-btn" title="عرض التفاصيل">
                                             <i class="fas fa-eye"></i>
                                         </a>
                                         {% if perms.Hr.change_employee or user|is_admin %}
-                                            <a href="{% url 'Hr:employees:edit' employee.emp_id %}" class="btn btn-primary btn-sm me-1">
-                                                <i class="fas fa-edit"></i> تعديل
+                                            <a href="{% url 'Hr:employees:edit' employee.emp_id %}" class="btn btn-primary btn-sm action-btn">
+                                                <i class="fas fa-edit"></i>
                                             </a>
                                         {% endif %}
                                         {% if perms.Hr.delete_employee or user|is_admin %}
-                                            <button type="button" class="btn btn-danger btn-sm delete-employee"
+                                            <button type="button" class="btn btn-danger btn-sm action-btn delete-employee"
                                                     data-employee-id="{{ employee.emp_id }}"
                                                     data-employee-name="{{ employee.emp_full_name }}">
-                                                <i class="fas fa-trash"></i> حذف
+                                                <i class="fas fa-trash"></i>
                                             </button>
                                         {% endif %}
-                                        <button type="button" class="btn btn-outline-info dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <button type="button" class="btn btn-outline-info btn-sm dropdown-toggle dropdown-toggle-split action-btn" data-bs-toggle="dropdown" aria-expanded="false">
                                             <span class="visually-hidden">المزيد</span>
                                         </button>
                                         <ul class="dropdown-menu dropdown-menu-end">
@@ -1010,6 +1013,33 @@
         z-index: 1020;
         background-color: #fff;
         box-shadow: 0 1px 2px rgba(0,0,0,.05);
+    }
+    
+    /* تنسيق الصورة في الجدول */
+    .employee-table-img {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 50%;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        border: 2px solid #fff;
+    }
+    
+    /* تنسيق أزرار العمليات */
+    .action-buttons {
+        display: inline-flex;
+    }
+    
+    .action-btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        line-height: 1.5;
+        border-radius: 0.2rem;
+        margin-right: 1px;
+    }
+    
+    .action-btn i {
+        font-size: 0.8rem;
     }
 </style>
 {% endblock %}

@@ -1,6 +1,7 @@
 {% extends 'Hr/base_hr.html' %}
 {% load static %}
 {% load django_permissions %}
+{% load form_utils %}
 
 {% block title %}{{ employee.emp_full_name }} - طباعة بيانات الموظف{% endblock %}
 
@@ -47,7 +48,7 @@
             <div class="card-body text-center pt-4">
                 {% if employee.emp_image %}
                 <div class="employee-avatar mx-auto position-relative mb-3">
-                    <img src="{{ employee.emp_image.url }}" alt="{{ employee.emp_full_name }}" class="rounded-circle user-image">
+                    <img src="{{ employee.emp_image|binary_to_img }}" alt="{{ employee.emp_full_name }}" class="rounded-circle user-image">
                     {% if employee.working_condition == 'سارى' %}
                     <span class="status-badge bg-success"><i class="fas fa-check"></i></span>
                     {% elif employee.working_condition == 'استقالة' %}
@@ -202,11 +203,15 @@
 
 {% block extra_css %}
 <style>
+    /* صورة الموظف وبيانات البطاقة الشخصية */
     .employee-avatar {
-        width: 120px;
-        height: 120px;
+        width: 150px;
+        height: 150px;
         border-radius: 50%;
         overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        border: 4px solid #fff;
+        margin-bottom: 1.5rem;
     }
 
     .employee-avatar img {
@@ -216,32 +221,119 @@
     }
 
     .employee-avatar-placeholder {
-        width: 120px;
-        height: 120px;
+        width: 150px;
+        height: 150px;
+        margin-bottom: 1.5rem;
     }
 
     .avatar-placeholder {
-        width: 120px;
-        height: 120px;
+        width: 150px;
+        height: 150px;
         border-radius: 50%;
-        background-color: #6c757d;
+        background: linear-gradient(45deg, #0062cc, #0096ff);
         color: white;
         display: flex;
         align-items: center;
         justify-content: center;
+        font-size: 3.5rem;
+        font-weight: 300;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        border: 4px solid #fff;
     }
 
     .status-badge {
         position: absolute;
-        bottom: 0;
-        right: 0;
-        width: 30px;
-        height: 30px;
+        bottom: 5px;
+        right: 5px;
+        width: 35px;
+        height: 35px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        border: 2px solid white;
+        border: 3px solid white;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+    
+    /* تنسيقات البطاقات */
+    .card {
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        margin-bottom: 1.5rem;
+    }
+    
+    .card-header {
+        border-top-left-radius: 10px !important;
+        border-top-right-radius: 10px !important;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    /* تحسين مظهر العناوين والنصوص */
+    h5.mb-0 {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    
+    h6.text-muted {
+        font-size: 0.85rem;
+        color: #6c757d !important;
+        font-weight: 500;
+    }
+    
+    p {
+        color: #343a40;
+        margin-bottom: 0.75rem;
+    }
+    
+    /* تنسيق أزرار الإجراءات */
+    .btn-group .btn {
+        padding: 0.5rem 1rem;
+        border-radius: 5px;
+        font-weight: 500;
+        letter-spacing: 0.3px;
+        margin-right: 0.25rem;
+    }
+    
+    /* رأسية صفحة الطباعة */
+    .print-header {
+        padding: 20px;
+        text-align: center;
+        border-bottom: 2px solid #e9ecef;
+        margin-bottom: 30px;
+    }
+    
+    .print-header h2 {
+        font-size: 1.75rem;
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: #212529;
+    }
+    
+    .print-header h3 {
+        font-size: 1.3rem;
+        margin-bottom: 10px;
+        color: #495057;
+    }
+    
+    .print-header p {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    /* تحسينات أخرى */
+    .text-muted {
+        color: #6c757d !important;
+    }
+    
+    hr {
+        margin: 1.5rem 0;
+        background-color: rgba(0, 0, 0, 0.1);
+        opacity: 0.5;
+    }
+    
+    i.fas {
+        color: #0d6efd;
     }
     
     /* Print styles */
@@ -250,9 +342,15 @@
             display: none !important;
         }
         
+        .print-header {
+            display: block !important;
+        }
+        
         .card {
             border: 1px solid #ddd !important;
             break-inside: avoid;
+            box-shadow: none !important;
+            margin-bottom: 20px;
         }
         
         .container-fluid {
@@ -262,6 +360,48 @@
         
         body {
             background-color: white !important;
+            font-size: 12pt;
+            color: #000;
+        }
+        
+        h5 {
+            font-size: 14pt;
+            font-weight: 600;
+        }
+        
+        h6 {
+            font-size: 12pt;
+            font-weight: 500;
+        }
+        
+        p {
+            font-size: 10pt;
+        }
+        
+        .card-header {
+            background-color: #f1f1f1 !important;
+            padding: 0.75rem 1rem !important;
+        }
+        
+        .status-badge {
+            border: 2px solid #fff !important;
+            box-shadow: none !important;
+        }
+        
+        .employee-avatar {
+            box-shadow: none !important;
+            border: 3px solid #ddd !important;
+        }
+        
+        /* تحسين تنسيق الصفحة المطبوعة */
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
+        
+        /* منع تقسيم العناصر بين الصفحات */
+        .card, .row, .col-lg-4, .col-lg-8 {
+            page-break-inside: avoid;
         }
     }
 </style>
