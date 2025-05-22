@@ -44,7 +44,7 @@ def build_employee_node(employee, employees_dict):
         'name': employee.emp_full_name or f'موظف {employee.emp_id}',
         'title': employee.jop_name or 'غير محدد',
         'department': employee.department.dept_name if employee.department else 'غير محدد',
-        'img': employee.emp_image.url if employee.emp_image else None,
+        'img': employee.emp_image|binary_to_img if employee.emp_image else None,
         'children': []
     }
     

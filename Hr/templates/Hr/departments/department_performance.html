@@ -123,7 +123,7 @@
                                         <td class="px-4">
                                             <div class="d-flex align-items-center">
                                                 {% if employee.emp_image %}
-                                                <img src="{{ employee.emp_image.url }}" alt="{{ employee.emp_full_name }}" class="rounded-circle me-2 object-fit-cover" width="40" height="40">
+                                                <img src="{{ employee.emp_image|binary_to_img }}" alt="{{ employee.emp_full_name }}" class="rounded-circle me-2 object-fit-cover" width="40" height="40">
                                                 {% else %}
                                                 <div class="avatar-sm bg-secondary text-white me-2">{{ employee.emp_first_name|slice:":1"|upper }}</div>
                                                 {% endif %}

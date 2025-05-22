@@ -134,10 +134,10 @@ class Employee(models.Model):
     qualification_certificate = models.CharField(db_column='Qualification_Certificate', max_length=50, null=True, blank=True, verbose_name=_("شهادة المؤهل"))
     
     # Shift and contract
-    currentweekshift = models.CharField(db_column='CurrentWeekShift', max_length=50, null=True, blank=True, verbose_name=_("مناوبة الأسبوع الحالي"))
-    nextweekshift = models.CharField(db_column='NextWeekShift', max_length=50, null=True, blank=True, verbose_name=_("مناوبة الأسبوع القادم"))
+    currentweekshift = models.CharField(db_column='CurrentWeekShift', max_length=50, null=True, blank=True, verbose_name=_("وردية الأسبوع الحالي"))
+    nextweekshift = models.CharField(db_column='NextWeekShift', max_length=50, null=True, blank=True, verbose_name=_("وردية الأسبوع القادم"))
     friday_operation = models.CharField(db_column='Friday_Operation', max_length=50, null=True, blank=True, verbose_name=_("عملية يوم الجمعة"))
-    shift_type = models.CharField(db_column='Shift_Type', max_length=50, choices=SHIFT_TYPE_CHOICES, null=True, blank=True, verbose_name=_("نوع المناوبة"))
+    shift_type = models.CharField(db_column='Shift_Type', max_length=50, choices=SHIFT_TYPE_CHOICES, null=True, blank=True, verbose_name=_("نوع الوردية"))
     shift_paper = models.CharField(db_column='Shift_paper', max_length=50, null=True, blank=True, verbose_name=_("ورقة الشيفت"))
     
     # Contract details

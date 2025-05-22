@@ -20,7 +20,7 @@ class Car(models.Model):
     driver_phone = models.CharField(max_length=50, null=True, blank=True, verbose_name=_("رقم هاتف السائق"))
     driver_license_expiration_date = models.DateTimeField(null=True, blank=True, verbose_name=_("تاريخ انتهاء رخصة السائق"))
     is_active = models.BooleanField(default=True, verbose_name=_("نشط"))
-    shift_type = models.CharField(max_length=50, choices=SHIFT_TYPE_CHOICES, null=True, blank=True, verbose_name=_("نوع المناوبة"))
+    shift_type = models.CharField(max_length=50, choices=SHIFT_TYPE_CHOICES, null=True, blank=True, verbose_name=_("نوع الوردية"))
     contract_type_farada = models.CharField(max_length=50, null=True, blank=True, verbose_name=_("نوع العقد (فردة)"))
 
     def __str__(self):

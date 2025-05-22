@@ -1,5 +1,6 @@
 {% extends 'Hr/base_hr.html' %}
 {% load static %}
+{% load image_utils %}
 {% load form_utils %}
 {% load django_permissions %}
 
@@ -555,7 +556,14 @@
                                     <span class="text-muted">-</span>
                                     {% endif %}
                                 </td>
-                                <td class="px-3">{{ employee.job.job_name|default:"-" }}</td>
+                                  <td class="px-3">
+                                    {% if employee.job %}
+                                    <span class="job-name">{{ employee.job_name }}</span>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <!-- <td class="px-3">{{ employee.job.job_name|default:"-" }}</td> -->
                                 <td class="px-3">
                                     {% if employee.emp_phone1 %}
                                     <a href="tel:{{ employee.emp_phone1 }}" class="text-decoration-none text-dark">
@@ -1055,9 +1063,28 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.querySelector('.search-autocomplete');
     const searchResultsDropdown = document.querySelector('.search-results-dropdown');
     const employeeFilterForm = document.getElementById('employeeFilterForm');
-    const toggleAdvancedSearchBtn = document.getElementById('toggleAdvancedSearch');
-    const advancedSearchCollapse = document.getElementById('collapseAdvanced');
-    const employeesTable = document.getElementById('employeesTable');
+
+    // Handle form submission
+    if (employeeFilterForm) {
+        employeeFilterForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const searchValue = searchInput.value.trim();
+            
+            // Update form search field value
+            let searchField = employeeFilterForm.querySelector('input[name="search"]');
+            if (!searchField) {
+                searchField = document.createElement('input');
+                searchField.type = 'hidden';
+                searchField.name = 'search';
+                employeeFilterForm.appendChild(searchField);
+            }
+            searchField.value = searchValue;
+            
+            // Submit the form
+            this.submit();
+        });
+    }
 
     // ===== وظائف البحث والتصفية المحسنة =====
 

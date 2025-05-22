@@ -3,29 +3,58 @@ from django.utils.translation import gettext_lazy as _
 from Hr.models import Employee, Department, Job, Car
 import io
 
-class BinaryImageField(forms.ImageField):
+class BinaryImageField(forms.FileField):  # Changed from ImageField to FileField
     """
     Custom form field for handling image uploads to BinaryField
     """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.validators = []  # Remove default validators that check for file attributes
+        
     def to_python(self, data):
         """
         Convert the uploaded file to binary data
         """
-        # If data is None or already a bytes instance, return it as is
-        if data is None or isinstance(data, bytes):
-            return data
-            
-        # Get the file object from the parent class
-        file = super().to_python(data)
-        
-        # If no file was uploaded, return None
-        if file is None:
+        # Return None if no data
+        if data is None:
             return None
             
-        # Read the file content as binary
-        binary_data = file.read()
-        return binary_data
+        # If already bytes, return as is
+        if isinstance(data, bytes):
+            return data
+            
+        # If clearing the field (checkbox checked)
+        if data is False:
+            return None
+            
+        # If it's a file object
+        if hasattr(data, 'read'):
+            # Read the file content
+            return data.read()
+            
+        return None
 
+    def bound_data(self, data, initial):
+        if data in [False, None]:
+            return None
+        return data
+
+    def clean(self, data, initial=None):
+        # Handle clearing the field
+        if data is False:
+            return None
+        # If no new file is uploaded, return initial value
+        if not data and initial:
+            return initial
+        # Convert file to binary
+        value = super().clean(data, initial)
+        if value is None:
+            return None
+        # If it's a file, read it
+        if hasattr(value, 'read'):
+            return value.read()
+        return value
+        
 
 class EmployeeForm(forms.ModelForm):
     """
@@ -38,6 +67,14 @@ class EmployeeForm(forms.ModelForm):
         widget=forms.ClearableFileInput(attrs={'class': 'form-control'})
     )
     
+    # Add ModelChoiceField for jobs
+    jop_name = forms.ModelChoiceField(
+        queryset=Job.objects.all(),
+        label=_('الوظيفة'),
+        widget=forms.Select(attrs={'class': 'form-select'}),
+        to_field_name='jop_name'  # Use job name as the value field
+    )
+
     def clean_emp_image(self):
         """
         Handle the binary image field correctly
@@ -52,7 +89,7 @@ class EmployeeForm(forms.ModelForm):
             'national_id', 'date_birth', 'place_birth', 'emp_nationality', 'emp_marital_status',
             'military_service_certificate', 'people_with_special_needs', 'emp_phone1', 'emp_phone2',
             'emp_address', 'governorate', 'emp_type', 'working_condition', 'department',
-            'jop_code', 'jop_name', 'emp_date_hiring', 'emp_car', 'insurance_status',
+            'jop_name', 'emp_date_hiring', 'emp_car', 'insurance_status',  # Removed jop_code
             'insurance_salary', 'health_card', 'shift_type','age','emp_image'
         ]
         widgets = {
@@ -76,8 +113,6 @@ class EmployeeForm(forms.ModelForm):
             'emp_type': forms.Select(attrs={'class': 'form-select'}),
             'working_condition': forms.Select(attrs={'class': 'form-select'}),
             'department': forms.Select(attrs={'class': 'form-select'}),
-            'jop_code': forms.NumberInput(attrs={'class': 'form-control'}),
-            'jop_name': forms.Select(attrs={'class': 'form-control'}),
             'emp_date_hiring': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'emp_car': forms.TextInput(attrs={'class': 'form-control'}),
             'insurance_status': forms.Select(attrs={'class': 'form-select'}),
@@ -88,31 +123,25 @@ class EmployeeForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        # استدعاء super() method أولاً
         super().__init__(*args, **kwargs)
-
-        # الحصول على instance إذا كان موجوداً
+        
+        # Get instance if it exists
         instance = kwargs.get('instance', None)
+        
+        # Set up job choices from Job model
+        jobs = Job.objects.all().order_by('jop_name')
+        self.fields['jop_name'].queryset = jobs
+        self.fields['jop_name'].label = _('الوظيفة')
+        
+        # If editing existing employee, set initial job value
+        if instance and instance.jop_name:
+            try:
+                job = Job.objects.get(jop_name=instance.jop_name)
+                self.fields['jop_name'].initial = job
+            except Job.DoesNotExist:
+                pass
 
-        # التأكد من أن جميع الحقول موجودة في النموذج
-        for field_name in self.Meta.fields:
-            if field_name not in self.fields:
-                print(f"Warning: Field {field_name} is missing from the form")
-
-        # طباعة القيم لتشخيص المشكلة
-        if instance:
-            print(f"Loading instance with ID: {instance.emp_id}")
-            for field_name in self.fields:
-                if hasattr(instance, field_name):
-                    field_value = getattr(instance, field_name)
-                    print(f"{field_name}: {field_value}")
-                    # التأكد من أن القيمة الأولية للحقل تم تعيينها بشكل صحيح
-                    if field_name in self.initial:
-                        print(f"  Initial value: {self.initial[field_name]}")
-                    else:
-                        print(f"  No initial value set")
-
-        # تقسيم الحقول إلى مجموعات للعرض في الواجهة
+        # Split fields into fieldsets for display
         self.fieldsets = [
             (_('المعلومات الأساسية'), [
                 'emp_id', 'emp_first_name', 'emp_second_name', 'emp_full_name',
@@ -128,7 +157,7 @@ class EmployeeForm(forms.ModelForm):
             ]),
             (_('معلومات العمل'), [
                 'working_condition', 'department',
-                'jop_code', 'jop_name', 'emp_date_hiring'
+                'jop_name', 'emp_date_hiring'  # Removed jop_code
             ]),
             (_('معلومات السيارة'), [
                 'emp_car','shift_type'
@@ -141,7 +170,7 @@ class EmployeeForm(forms.ModelForm):
             ]),
         ]
 
-        # تعيين قيم افتراضية للحقول المهمة للإنشاء الجديد فقط
+        # Set default values for new instances
         if not instance:
             self.fields['working_condition'].initial = 'سارى'
             self.fields['emp_type'].initial = 'ذكر'
@@ -149,6 +178,18 @@ class EmployeeForm(forms.ModelForm):
             self.fields['insurance_status'].initial = 'غير مؤمن عليه'
             self.fields['health_card'].initial = 'غير موجوده'
             self.fields['shift_type'].initial = 'صباحي'
+
+    def clean(self):
+        cleaned_data = super().clean()
+        
+        # Get the selected job
+        job = cleaned_data.get('jop_name')
+        if job:
+            # Update the cleaned data with both job name and code
+            cleaned_data['jop_name'] = job.jop_name
+            cleaned_data['jop_code'] = job.jop_code
+            
+        return cleaned_data
 
 
 class EmployeeFilterForm(forms.Form):

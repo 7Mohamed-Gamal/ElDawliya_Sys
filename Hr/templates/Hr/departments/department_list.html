@@ -1,6 +1,7 @@
 {% extends 'Hr/base_hr.html' %}
 {% load static %}
 {% load django_permissions %}
+{% load image_utils %}
 
 {% block title %}قائمة الأقسام - نظام الدولية{% endblock %}
 
@@ -81,7 +82,7 @@
                     {% if department.manager %}
                     <div class="department-manager d-flex align-items-center mb-3 pb-3 border-bottom">
                         {% if department.manager.emp_image %}
-                        <img src="{{ department.manager.emp_image.url }}" alt="{{ department.manager.emp_full_name }}" class="rounded-circle me-2 object-fit-cover" width="48" height="48">
+                        <img src="{{ department.manager.emp_image|binary_to_img }}" alt="{{ department.manager.emp_full_name }}" class="rounded-circle me-2 object-fit-cover" width="48" height="48">
                         {% else %}
                         <div class="avatar bg-primary text-white me-2">
                             {% if department.manager.emp_first_name %}
