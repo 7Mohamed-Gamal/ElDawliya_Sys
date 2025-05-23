@@ -1,0 +1,194 @@
+{% extends "attendance/base_attendance.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "Attendance Records" %} | {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4">{% trans "Attendance Records" %}</h1>
+
+    <!-- Filters -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">{% trans "Filter Records" %}</h6>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row">
+                <div class="col-md-3 mb-3">
+                    <label for="date_from">{% trans "Date From" %}</label>
+                    <input type="date" class="form-control" id="date_from" name="date_from"
+                           value="{{ request.GET.date_from }}">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="date_to">{% trans "Date To" %}</label>
+                    <input type="date" class="form-control" id="date_to" name="date_to"
+                           value="{{ request.GET.date_to }}">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="employee">{% trans "Employee" %}</label>
+                    <select class="form-control" id="employee" name="employee">
+                        <option value="">{% trans "All Employees" %}</option>
+                        {% for emp in employees %}
+                        <option value="{{ emp.id }}" {% if request.GET.employee == emp.id|stringformat:"s" %}selected{% endif %}>
+                            {{ emp.emp_full_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="record_type">{% trans "Record Type" %}</label>
+                    <select class="form-control" id="record_type" name="record_type">
+                        <option value="">{% trans "All Types" %}</option>
+                        {% for value, label in record_types %}
+                        <option value="{{ value }}" {% if request.GET.record_type == value %}selected{% endif %}>
+                            {{ label }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter"></i> {% trans "Apply Filters" %}
+                    </button>
+                    <a href="{% url 'attendance:record_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-undo"></i> {% trans "Reset Filters" %}
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Records Table -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">{% trans "Attendance Records" %}</h6>
+            <div class="btn-group">
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="exportToExcel()">
+                    <i class="fas fa-file-excel"></i> {% trans "Export to Excel" %}
+                </button>
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="printRecords()">
+                    <i class="fas fa-print"></i> {% trans "Print" %}
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="attendanceTable">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Date" %}</th>
+                            <th>{% trans "Employee" %}</th>
+                            <th>{% trans "Type" %}</th>
+                            <th>{% trans "Check In" %}</th>
+                            <th>{% trans "Check Out" %}</th>
+                            <th>{% trans "Late" %}</th>
+                            <th>{% trans "Early Leave" %}</th>
+                            <th>{% trans "Overtime" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in records %}
+                        <tr>
+                            <td>{{ record.date|date:"Y-m-d" }}</td>
+                            <td>{{ record.employee.emp_full_name }}</td>
+                            <td>
+                                <span class="badge badge-{% if record.record_type == 'present' %}success
+                                                       {% elif record.record_type == 'absent' %}danger
+                                                       {% elif record.record_type == 'leave' %}info
+                                                       {% else %}secondary{% endif %}">
+                                    {{ record.get_record_type_display }}
+                                </span>
+                            </td>
+                            <td>{{ record.check_in|time|default:"-" }}</td>
+                            <td>{{ record.check_out|time|default:"-" }}</td>
+                            <td>{% if record.late_minutes %}{{ record.late_minutes }} min{% else %}-{% endif %}</td>
+                            <td>{% if record.early_leave_minutes %}{{ record.early_leave_minutes }} min{% else %}-{% endif %}</td>
+                            <td>{% if record.overtime_minutes %}{{ record.overtime_minutes }} min{% else %}-{% endif %}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center">{% trans "No records found" %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <nav aria-label="{% trans 'Page navigation' %}">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    <li class="page-item active">
+                        <span class="page-link">
+                            {{ page_obj.number }} {% trans "of" %} {{ page_obj.paginator.num_pages }}
+                        </span>
+                    </li>
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.urlencode %}&{{ request.GET.urlencode }}{% endif %}">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    function exportToExcel() {
+        // Create a temporary link
+        var $temp = $("<a>");
+        var currentUrl = new URL(window.location.href);
+        currentUrl.searchParams.append('export', 'excel');
+        $temp.attr("href", currentUrl.toString());
+        $("body").append($temp);
+        $temp[0].click();
+        $temp.remove();
+    }
+
+    function printRecords() {
+        window.print();
+    }
+
+    // Initialize date range pickers
+    $(document).ready(function() {
+        $('#date_from, #date_to').on('change', function() {
+            var fromDate = $('#date_from').val();
+            var toDate = $('#date_to').val();
+            
+            if (fromDate && toDate) {
+                if (fromDate > toDate) {
+                    alert("{% trans 'From date cannot be later than To date' %}");
+                    $(this).val('');
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

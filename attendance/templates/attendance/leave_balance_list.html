@@ -1,0 +1,114 @@
+{% extends "attendance/base_attendance.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{% trans "Leave Balances" %} | {{ block.super }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1 class="h3 mb-4">{% trans "Leave Balances" %}</h1>
+
+    <!-- Filters -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">{% trans "Filter Leave Balances" %}</h6>
+        </div>
+        <div class="card-body">
+            <form method="get" class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="employee">{% trans "Employee" %}</label>
+                    <select class="form-control" id="employee" name="employee">
+                        <option value="">{% trans "All Employees" %}</option>
+                        {% for emp in employees %}
+                        <option value="{{ emp.id }}" {% if request.GET.employee == emp.id|stringformat:"s" %}selected{% endif %}>
+                            {{ emp.emp_full_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="year">{% trans "Year" %}</label>
+                    <select class="form-control" id="year" name="year">
+                        {% with current_year=current_year|add:"0" %}
+                            {% for year in current_year|add:"-2"|rjust:3|make_list %}
+                                <option value="{{ year }}" {% if request.GET.year == year %}selected{% endif %}>
+                                    {{ year }}
+                                </option>
+                            {% endfor %}
+                        {% endwith %}
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter"></i> {% trans "Apply Filters" %}
+                    </button>
+                    <a href="{% url 'attendance:leave_balance_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-undo"></i> {% trans "Reset Filters" %}
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Leave Balances Table -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">{% trans "Leave Balances" %}</h6>
+            <div class="btn-group">
+                <button type="button" class="btn btn-sm btn-outline-primary" onclick="printBalances()">
+                    <i class="fas fa-print"></i> {% trans "Print" %}
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered" id="leaveBalanceTable">
+                    <thead>
+                        <tr>
+                            <th>{% trans "Employee" %}</th>
+                            <th>{% trans "Leave Type" %}</th>
+                            <th>{% trans "Allocated Days" %}</th>
+                            <th>{% trans "Used Days" %}</th>
+                            <th>{% trans "Remaining Days" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for balance in balances %}
+                        <tr>
+                            <td>{{ balance.employee.emp_full_name }}</td>
+                            <td>{{ balance.leave_type.name }}</td>
+                            <td>{{ balance.allocated_days }}</td>
+                            <td>{{ balance.used_days }}</td>
+                            <td>
+                                <span class="badge badge-{% if balance.remaining_days > 5 %}success
+                                                       {% elif balance.remaining_days > 0 %}warning
+                                                       {% else %}danger{% endif %}">
+                                    {{ balance.remaining_days }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">{% trans "No leave balances found" %}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    function printBalances() {
+        window.print();
+    }
+
+    $(document).ready(function() {
+        // Initialize any JS components here
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends "core/base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'attendance/css/attendance.css' %}">
+{% endblock %}
+
+{% block sidebar %}
+<div class="sidebar-nav">
+    <ul class="nav flex-column">
+        <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" 
+               href="{% url 'attendance:dashboard' %}">
+                <i class="fas fa-tachometer-alt"></i> {% trans "Dashboard" %}
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'mark_attendance' %}active{% endif %}" 
+               href="{% url 'attendance:mark_attendance' %}">
+                <i class="fas fa-clock"></i> {% trans "Mark Attendance" %}
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'record_list' %}active{% endif %}" 
+               href="{% url 'attendance:record_list' %}">
+                <i class="fas fa-list"></i> {% trans "Attendance Records" %}
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'leave_balance_list' %}active{% endif %}" 
+               href="{% url 'attendance:leave_balance_list' %}">
+                <i class="fas fa-calendar-alt"></i> {% trans "Leave Balances" %}
+            </a>
+        </li>
+    </ul>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'attendance/js/attendance.js' %}"></script>
+{% endblock %}

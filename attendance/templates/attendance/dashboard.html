@@ -1,0 +1,207 @@
+{% extends "Hr/base_hr.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}نظام الحضور والانصراف - نظام الدولية{% endblock %}
+
+{% block page_title %}لوحة تحكم الحضور والانصراف{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Hr:list' %}">الموارد البشرية</a></li>
+<li class="breadcrumb-item active">نظام الحضور والانصراف</li>
+{% endblock %}
+
+{% block content %}
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-md-6 col-lg-3">
+        <div class="card bg-primary text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0">الحاضرون اليوم</h6>
+                        <h2 class="mt-2 mb-0">{{ today_stats.present|default:0 }}</h2>
+                    </div>
+                    <div class="icon-circle bg-white text-primary">
+                        <i class="fas fa-user-check fa-2x"></i>
+                    </div>
+                </div>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-check fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                {% trans "Today's Absent" %}
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ today_stats.absent|default:0 }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-times fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                {% trans "Today's Late" %}
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ today_stats.late|default:0 }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                {% trans "On Leave" %}
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                {{ today_stats.leave|default:0 }}
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar-alt fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3">
+        <div class="card bg-danger text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0">الغائبون اليوم</h6>
+                        <h2 class="mt-2 mb-0">{{ today_stats.absent|default:0 }}</h2>
+                    </div>
+                    <div class="icon-circle bg-white text-danger">
+                        <i class="fas fa-user-times fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="card bg-warning text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0">متأخرون اليوم</h6>
+                        <h2 class="mt-2 mb-0">{{ today_stats.late|default:0 }}</h2>
+                    </div>
+                    <div class="icon-circle bg-white text-warning">
+                        <i class="fas fa-clock fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="card bg-info text-white h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0">في إجازة اليوم</h6>
+                        <h2 class="mt-2 mb-0">{{ today_stats.leave|default:0 }}</h2>
+                    </div>
+                    <div class="icon-circle bg-white text-info">
+                        <i class="fas fa-calendar-alt fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- User's Today's Attendance -->
+{% if request.user.employee %}
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+        <h5 class="mb-0">
+            <i class="fas fa-user-clock me-2"></i>
+            حالة حضورك اليوم
+        </h5>
+        <a href="{% url 'attendance:mark_attendance' %}" class="btn btn-primary">
+            <i class="fas fa-fingerprint me-2"></i>
+            تسجيل حضور/انصراف
+        </a>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                {% if user_attendance %}
+                <div class="h5 mb-3">
+                    <span class="text-muted">آخر تسجيل:</span>
+                    {% if user_attendance.record_type == 'check_in' %}
+                    <span class="badge bg-success">تسجيل حضور</span>
+                    {% elif user_attendance.record_type == 'check_out' %}
+                    <span class="badge bg-info">تسجيل انصراف</span>
+                    {% endif %}
+                    <span class="text-primary">{{ user_attendance.time|time:"h:i a" }}</span>
+                </div>
+                {% if user_attendance.late_minutes > 0 %}
+                <div class="text-warning">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    تأخير {{ user_attendance.late_minutes }} دقيقة
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="text-muted">
+                    <i class="fas fa-info-circle me-1"></i>
+                    لم يتم تسجيل حضور اليوم
+                </div>
+                {% endif %}
+            </div>
+            
+            {% if work_schedule %}
+            <div class="col-md-6">
+                <h6 class="text-muted mb-3">جدول العمل الخاص بك:</h6>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>وقت الحضور:</span>
+                    <strong>{{ work_schedule.start_time|time:"h:i a" }}</strong>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span>وقت الانصراف:</span>
+                    <strong>{{ work_schedule.end_time|time:"h:i a" }}</strong>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -30,6 +30,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'widget_tweaks',
+    'crispy_forms',
+    'crispy_bootstrap5',
     'core.apps.CoreConfig',
     'accounts',
     'meetings',
@@ -42,6 +44,7 @@ INSTALLED_APPS = [
     'audit.apps.AuditConfig',
     'employee_tasks',
     'cars',
+    'attendance.apps.AttendanceConfig',  # New attendance management app
 ]
 
 MIDDLEWARE = [
@@ -184,5 +187,6 @@ SESSION_COOKIE_SECURE = False
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Default Auto Field
-# This is required for Django models
+# Crispy Forms Configuration
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
+CRISPY_TEMPLATE_PACK = "bootstrap5"

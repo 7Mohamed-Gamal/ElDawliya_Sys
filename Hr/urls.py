@@ -1,6 +1,7 @@
 from django.urls import path, include
 from . import views
 from .views.department_views_updated import department_list, department_create, department_edit, department_delete, department_performance, department_detail
+from .views.leave_views import leave_analytics
 from .views.employee_views import dashboard as employee_dashboard_simple
 
 app_name = 'Hr'
@@ -112,29 +113,15 @@ hr_task_patterns = [
 leave_type_patterns = [
     path('', views.leave_type_list, name='list'),
     path('create/', views.leave_type_create, name='create'),
-    path('<int:pk>/', views.leave_type_detail, name='detail'),
     path('<int:pk>/edit/', views.leave_type_edit, name='edit'),
-    path('<int:pk>/delete/', views.leave_type_delete, name='delete'),
 ]
 
-# أنماط عناوين URL لإجازات الموظفين
-leave_patterns = [
+employee_leave_patterns = [
     path('', views.employee_leave_list, name='list'),
     path('create/', views.employee_leave_create, name='create'),
     path('<int:pk>/', views.employee_leave_detail, name='detail'),
     path('<int:pk>/edit/', views.employee_leave_edit, name='edit'),
-    path('<int:pk>/delete/', views.employee_leave_delete, name='delete'),
     path('<int:pk>/approve/', views.employee_leave_approve, name='approve'),
-    path('<int:pk>/reject/', views.employee_leave_reject, name='reject'),
-]
-
-# أنماط عناوين URL لتقييمات الموظفين
-evaluation_patterns = [
-    path('', views.employee_evaluation_list, name='list'),
-    path('create/', views.employee_evaluation_create, name='create'),
-    path('<int:pk>/', views.employee_evaluation_detail, name='detail'),
-    path('<int:pk>/edit/', views.employee_evaluation_edit, name='edit'),
-    path('<int:pk>/delete/', views.employee_evaluation_delete, name='delete'),
 ]
 
 urlpatterns = [
@@ -153,8 +140,11 @@ urlpatterns = [
     path('files/', include((file_patterns, 'files'))),
     path('hr_tasks/', include((hr_task_patterns, 'hr_tasks'))),
     path('leave_types/', include((leave_type_patterns, 'leave_types'))),
-    path('leaves/', include((leave_patterns, 'leaves'))),
-    path('evaluations/', include((evaluation_patterns, 'evaluations'))),
+    path('leaves/', include((employee_leave_patterns, 'leaves'))),
+    path('leaves/analytics/', leave_analytics, name='leave_analytics'),
+    # TODO: Implement leave_balance_list and leave_balance_create functions
+    # path('leaves/balance/', views.leave_balance_list, name='leave_balance_list'),
+    # path('leaves/balance/create/', views.leave_balance_create, name='leave_balance_create'),
 
     # بنود الرواتب
     path('salary_items/', views.salary_item_list, name='salary_item_list'),

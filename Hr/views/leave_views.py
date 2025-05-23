@@ -3,9 +3,12 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from datetime import timedelta
+from django.db.models import Count, Sum, Q
+from django.db.models.functions import TruncMonth
 
 from Hr.models.leave_models import LeaveType, EmployeeLeave
 from Hr.forms.leave_forms import LeaveTypeForm, EmployeeLeaveForm
+from Hr.forms.filter_forms import LeaveFilterForm
 
 # Leave Type Views
 @login_required
@@ -18,7 +21,7 @@ def leave_type_list(request):
         'title': 'أنواع الإجازات'
     }
     
-    return render(request, 'Hr/leave_types/list.html', context)
+    return render(request, 'Hr/leaves/leave_type_list.html', context)
 
 @login_required
 def leave_type_create(request):
@@ -37,7 +40,7 @@ def leave_type_create(request):
         'title': 'إنشاء نوع إجازة جديد'
     }
     
-    return render(request, 'Hr/leave_types/create.html', context)
+    return render(request, 'Hr/leaves/leave_type_form.html', context)
 
 @login_required
 def leave_type_detail(request, pk):
@@ -75,7 +78,7 @@ def leave_type_edit(request, pk):
         'title': f'تعديل نوع الإجازة: {leave_type.name}'
     }
     
-    return render(request, 'Hr/leave_types/edit.html', context)
+    return render(request, 'Hr/leaves/leave_type_form.html', context)
 
 @login_required
 def leave_type_delete(request, pk):
@@ -103,21 +106,24 @@ def leave_type_delete(request, pk):
 @login_required
 def employee_leave_list(request):
     """عرض قائمة إجازات الموظفين"""
-    # Filter leaves based on query parameters
-    employee_id = request.GET.get('employee')
-    leave_type_id = request.GET.get('leave_type')
-    status = request.GET.get('status')
-    
+    form = LeaveFilterForm(request.GET)
     leaves = EmployeeLeave.objects.all()
     
-    if employee_id:
-        leaves = leaves.filter(employee_id=employee_id)
-    
-    if leave_type_id:
-        leaves = leaves.filter(leave_type_id=leave_type_id)
-    
-    if status:
-        leaves = leaves.filter(status=status)
+    if form.is_valid():
+        if form.cleaned_data.get('employee'):
+            leaves = leaves.filter(employee=form.cleaned_data['employee'])
+        
+        if form.cleaned_data.get('leave_type'):
+            leaves = leaves.filter(leave_type=form.cleaned_data['leave_type'])
+        
+        if form.cleaned_data.get('status'):
+            leaves = leaves.filter(status=form.cleaned_data['status'])
+        
+        if form.cleaned_data.get('date_from'):
+            leaves = leaves.filter(start_date__gte=form.cleaned_data['date_from'])
+        
+        if form.cleaned_data.get('date_to'):
+            leaves = leaves.filter(end_date__lte=form.cleaned_data['date_to'])
     
     # Default ordering
     leaves = leaves.order_by('-start_date')
@@ -127,18 +133,16 @@ def employee_leave_list(request):
     approved_leaves = EmployeeLeave.objects.filter(status='approved').count()
     rejected_leaves = EmployeeLeave.objects.filter(status='rejected').count()
 
-    leave_types = LeaveType.objects.all().order_by('name')
-    
     context = {
+        'form': form,
         'leaves': leaves,
         'pending_leaves': pending_leaves,
         'approved_leaves': approved_leaves,
         'rejected_leaves': rejected_leaves,
-        'leave_types': leave_types,
         'title': 'إجازات الموظفين'
     }
     
-    return render(request, 'Hr/leaves/list.html', context)
+    return render(request, 'Hr/leaves/employee_leave_list.html', context)
 
 @login_required
 def employee_leave_create(request):
@@ -170,7 +174,7 @@ def employee_leave_create(request):
         'title': 'إنشاء إجازة جديدة'
     }
     
-    return render(request, 'Hr/leaves/create.html', context)
+    return render(request, 'Hr/leaves/employee_leave_form.html', context)
 
 @login_required
 def employee_leave_detail(request, pk):
@@ -182,7 +186,7 @@ def employee_leave_detail(request, pk):
         'title': f'تفاصيل الإجازة: {leave.employee} - {leave.leave_type}'
     }
     
-    return render(request, 'Hr/leaves/detail.html', context)
+    return render(request, 'Hr/leaves/employee_leave_detail.html', context)
 
 @login_required
 def employee_leave_edit(request, pk):
@@ -210,7 +214,7 @@ def employee_leave_edit(request, pk):
         'title': f'تعديل الإجازة: {leave.employee} - {leave.leave_type}'
     }
     
-    return render(request, 'Hr/leaves/edit.html', context)
+    return render(request, 'Hr/leaves/employee_leave_form.html', context)
 
 @login_required
 def employee_leave_delete(request, pk):
@@ -273,3 +277,72 @@ def employee_leave_reject(request, pk):
     }
     
     return render(request, 'Hr/leaves/reject.html', context)
+
+@login_required
+def leave_analytics(request):
+    """تحليلات الإجازات"""
+    today = timezone.now().date()
+    current_year = today.year
+    last_6_months = today - timedelta(days=180)
+    
+    # إحصائيات الإجازات حسب النوع للسنة الحالية
+    leave_by_type = EmployeeLeave.objects.filter(
+        start_date__year=current_year
+    ).values('leave_type__name').annotate(
+        count=Count('id'),
+        total_days=Sum('days_count')
+    ).order_by('-total_days')
+    
+    # توزيع الإجازات في الأشهر الأخيرة
+    leaves_by_month = EmployeeLeave.objects.filter(
+        start_date__gte=last_6_months
+    ).annotate(
+        month=TruncMonth('start_date')
+    ).values('month').annotate(
+        count=Count('id')
+    ).order_by('month')
+    
+    # إحصائيات حالة الإجازات
+    pending_count = EmployeeLeave.objects.filter(status='pending').count()
+    approved_count = EmployeeLeave.objects.filter(status='approved').count()
+    rejected_count = EmployeeLeave.objects.filter(status='rejected').count()
+    cancelled_count = EmployeeLeave.objects.filter(status='cancelled').count()
+    total_count = EmployeeLeave.objects.count()
+    
+    # حساب النسب المئوية
+    status_percentages = {
+        'pending': (pending_count / total_count * 100) if total_count > 0 else 0,
+        'approved': (approved_count / total_count * 100) if total_count > 0 else 0,
+        'rejected': (rejected_count / total_count * 100) if total_count > 0 else 0,
+        'cancelled': (cancelled_count / total_count * 100) if total_count > 0 else 0,
+    }
+    
+    # تحضير البيانات للرسوم البيانية
+    leave_by_type_data = {
+        'labels': [leave['leave_type__name'] or 'غير محدد' for leave in leave_by_type],
+        'counts': [leave['count'] for leave in leave_by_type],
+        'days': [float(leave['total_days']) for leave in leave_by_type]
+    }
+    
+    leaves_by_month_data = {
+        'labels': [entry['month'].strftime('%Y-%m') for entry in leaves_by_month],
+        'counts': [entry['count'] for entry in leaves_by_month]
+    }
+    
+    context = {
+        'leave_by_type': leave_by_type,
+        'leaves_by_month': leaves_by_month,
+        'status_counts': {
+            'pending': pending_count,
+            'approved': approved_count,
+            'rejected': rejected_count,
+            'cancelled': cancelled_count,
+            'total': total_count
+        },
+        'status_percentages': status_percentages,
+        'leave_by_type_data': leave_by_type_data,
+        'leaves_by_month_data': leaves_by_month_data,
+        'title': 'تحليلات الإجازات'
+    }
+    
+    return render(request, 'Hr/leaves/leave_analytics.html', context)

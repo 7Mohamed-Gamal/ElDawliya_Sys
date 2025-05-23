@@ -1,0 +1,129 @@
+{% extends 'Hr/base_hr.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }} - نظام الدولية{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'Hr/css/leaves.css' %}">
+<link rel="stylesheet" href="{% static 'admin/css/vendor/select2/select2.css' %}">
+<link rel="stylesheet" href="{% static 'admin/css/vendor/select2/select2.min.css' %}">
+{% endblock %}
+
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Hr:employees:list' %}">الموظفين</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Hr:leaves:list' %}">إجازات الموظفين</a></li>
+<li class="breadcrumb-item active">{{ title }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+        <h5 class="mb-0">
+            <i class="fas fa-calendar-plus me-2"></i>
+            {{ title }}
+        </h5>
+        <a href="{% url 'Hr:leaves:list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-right me-1"></i>
+            العودة للقائمة
+        </a>
+    </div>
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+            <div class="alert alert-danger" role="alert">
+                {% for error in form.non_field_errors %}
+                <p class="mb-0">{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.employee|as_crispy_field }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    {{ form.leave_type|as_crispy_field }}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form.start_date|as_crispy_field }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    {{ form.end_date|as_crispy_field }}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    {{ form.reason|as_crispy_field }}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12 mb-3">
+                    {{ form.documents|as_crispy_field }}
+                </div>
+            </div>
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="{% url 'Hr:leaves:list' %}" class="btn btn-light me-md-2">إلغاء</a>
+                <button type="submit" class="btn btn-primary px-4">
+                    <i class="fas fa-save me-1"></i>
+                    حفظ
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'admin/js/vendor/select2/select2.full.min.js' %}"></script>
+<script src="{% static 'admin/js/vendor/select2/i18n/ar.js' %}"></script>
+<script>
+    $(document).ready(function() {
+        // تهيئة Select2
+        $('.select2').select2({
+            language: "ar",
+            dir: "rtl"
+        });
+
+        // التحقق من تواريخ الإجازة
+        $('#id_start_date, #id_end_date').change(function() {
+            var startDate = new Date($('#id_start_date').val());
+            var endDate = new Date($('#id_end_date').val());
+            
+            if (startDate && endDate) {
+                if (endDate < startDate) {
+                    alert('تاريخ النهاية يجب أن يكون بعد تاريخ البداية');
+                    $('#id_end_date').val('');
+                }
+            }
+        });
+
+        // تحقق من صحة النماذج
+        (function () {
+            'use strict'
+            var forms = document.querySelectorAll('.needs-validation')
+            Array.prototype.slice.call(forms)
+                .forEach(function (form) {
+                    form.addEventListener('submit', function (event) {
+                        if (!form.checkValidity()) {
+                            event.preventDefault()
+                            event.stopPropagation()
+                        }
+                        form.classList.add('was-validated')
+                    }, false)
+                })
+        })()
+    });
+</script>
+{% endblock %}

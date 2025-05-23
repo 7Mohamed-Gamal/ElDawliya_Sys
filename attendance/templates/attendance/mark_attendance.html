@@ -1,0 +1,111 @@
+{% extends "Hr/base_hr.html" %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}تسجيل الحضور والانصراف - نظام الدولية{% endblock %}
+
+{% block page_title %}تسجيل الحضور والانصراف{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Hr:list' %}">الموارد البشرية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'attendance:dashboard' %}">نظام الحضور والانصراف</a></li>
+<li class="breadcrumb-item active">تسجيل الحضور</li>
+{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+        <h5 class="mb-0">
+            <i class="fas fa-clock me-2"></i>
+            تسجيل الحضور والانصراف
+        </h5>
+    </div>
+    
+    <div class="card-body">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <form method="post" class="mark-attendance-form">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4 text-center">
+                        <div class="display-6 text-primary mb-2" id="current-time">
+                            {{ now|time:"h:i:s A" }}
+                        </div>
+                        <div class="h5 text-muted">
+                            {{ now|date:"l، j F Y" }}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="d-grid gap-3">
+                            <button type="submit" name="record_type" value="check_in" class="btn btn-primary btn-lg py-3">
+                                <i class="fas fa-sign-in-alt me-2"></i>
+                                تسجيل الحضور
+                            </button>
+                            <button type="submit" name="record_type" value="check_out" class="btn btn-info btn-lg py-3">
+                                <i class="fas fa-sign-out-alt me-2"></i>
+                                تسجيل الانصراف
+                            </button>
+                        </div>
+                    </div>
+                            </div>
+                        </div>
+
+                        <div class="btn-group" role="group">
+                            <button type="submit" name="action" value="check_in" class="btn btn-success">
+                                <i class="fas fa-sign-in-alt"></i> {% trans "Check In" %}
+                            </button>
+                            <button type="submit" name="action" value="check_out" class="btn btn-danger">
+                                <i class="fas fa-sign-out-alt"></i> {% trans "Check Out" %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">{% trans "Quick Tips" %}</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled">
+                        <li class="mb-2">
+                            <i class="fas fa-info-circle text-info"></i>
+                            {% trans "Select an employee from the dropdown list" %}
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-info-circle text-info"></i>
+                            {% trans "Click Check In when employee arrives" %}
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-info-circle text-info"></i>
+                            {% trans "Click Check Out when employee leaves" %}
+                        </li>
+                        <li>
+                            <i class="fas fa-exclamation-triangle text-warning"></i>
+                            {% trans "Late arrival and early departure will be automatically calculated" %}
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    // Refresh current time every second
+    function updateCurrentTime() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString();
+        document.querySelector('.form-control-static').textContent = timeString;
+    }
+
+    setInterval(updateCurrentTime, 1000);
+</script>
+{% endblock %}
