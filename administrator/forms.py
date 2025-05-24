@@ -8,7 +8,6 @@ class SystemSettingsForm(forms.ModelForm):
     class Meta:
         model = SystemSettings
         fields = [
-            'db_host', 'db_name', 'db_user', 'db_password', 'db_port',
             'company_name', 'company_address', 'company_phone', 'company_email',
             'company_website', 'company_logo',
             'system_name', 'enable_debugging', 'maintenance_mode',
@@ -16,12 +15,75 @@ class SystemSettingsForm(forms.ModelForm):
             'language', 'font_family', 'text_direction',
         ]
         widgets = {
-            'db_password': forms.PasswordInput(render_value=True),
-            'company_address': forms.Textarea(attrs={'rows': 3}),
+            'company_name': forms.TextInput(attrs={'class': 'form-control', 'required': True}),
+            'company_address': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+            'company_phone': forms.TextInput(attrs={'class': 'form-control'}),
+            'company_email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'company_website': forms.URLInput(attrs={'class': 'form-control'}),
+            'company_logo': forms.FileInput(attrs={'class': 'form-control'}),
+            'system_name': forms.TextInput(attrs={'class': 'form-control', 'required': True}),
+            'enable_debugging': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'maintenance_mode': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'timezone': forms.Select(attrs={'class': 'form-select', 'required': True}),
+            'date_format': forms.Select(attrs={'class': 'form-select', 'required': True}),
             'language': forms.Select(attrs={'class': 'form-select'}),
             'font_family': forms.Select(attrs={'class': 'form-select'}),
             'text_direction': forms.Select(attrs={'class': 'form-select'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # إضافة خيارات للمنطقة الزمنية
+        timezone_choices = [
+            ('Asia/Riyadh', 'الرياض (Asia/Riyadh)'),
+            ('Asia/Dubai', 'دبي (Asia/Dubai)'),
+            ('Asia/Kuwait', 'الكويت (Asia/Kuwait)'),
+            ('Asia/Qatar', 'قطر (Asia/Qatar)'),
+            ('Asia/Bahrain', 'البحرين (Asia/Bahrain)'),
+            ('Africa/Cairo', 'القاهرة (Africa/Cairo)'),
+            ('UTC', 'التوقيت العالمي (UTC)'),
+        ]
+        self.fields['timezone'].widget = forms.Select(
+            choices=timezone_choices,
+            attrs={'class': 'form-select', 'required': True}
+        )
+
+        # إضافة خيارات لتنسيق التاريخ
+        date_format_choices = [
+            ('Y-m-d', 'YYYY-MM-DD (2024-01-15)'),
+            ('d/m/Y', 'DD/MM/YYYY (15/01/2024)'),
+            ('m/d/Y', 'MM/DD/YYYY (01/15/2024)'),
+            ('d-m-Y', 'DD-MM-YYYY (15-01-2024)'),
+        ]
+        self.fields['date_format'].widget = forms.Select(
+            choices=date_format_choices,
+            attrs={'class': 'form-select', 'required': True}
+        )
+
+        # تعيين القيم الحالية للحقول المطلوبة
+        if self.instance and self.instance.pk:
+            self.fields['timezone'].initial = self.instance.timezone
+            self.fields['date_format'].initial = self.instance.date_format
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        # التحقق من الحقول المطلوبة
+        company_name = cleaned_data.get('company_name')
+        system_name = cleaned_data.get('system_name')
+        timezone = cleaned_data.get('timezone')
+        date_format = cleaned_data.get('date_format')
+
+        if not company_name:
+            self.add_error('company_name', 'اسم الشركة مطلوب')
+        if not system_name:
+            self.add_error('system_name', 'اسم النظام مطلوب')
+        if not timezone:
+            self.add_error('timezone', 'المنطقة الزمنية مطلوبة')
+        if not date_format:
+            self.add_error('date_format', 'تنسيق التاريخ مطلوب')
+
+        return cleaned_data
 
 
 class DepartmentForm(forms.ModelForm):
@@ -123,19 +185,19 @@ class DatabaseConfigForm(forms.Form):
 class GroupForm(forms.ModelForm):
     """Form for managing user groups."""
     description = forms.CharField(
-        max_length=200, 
+        max_length=200,
         required=False,
         widget=forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
         label="وصف المجموعة"
     )
-    
+
     permissions = forms.ModelMultipleChoiceField(
         queryset=Permission.objects.all(),
         required=False,
         widget=forms.CheckboxSelectMultiple,
         label="الصلاحيات"
     )
-    
+
     users = forms.ModelMultipleChoiceField(
         queryset=get_user_model().objects.all(),
         required=False,
@@ -152,28 +214,28 @@ class GroupForm(forms.ModelForm):
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'})
         }
-        
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # If editing an existing group, pre-select its users
         if self.instance.pk:
             self.initial['users'] = self.instance.user_set.all()
-            
+
     def save(self, commit=True):
         group = super().save(commit)
         if commit:
             # Update group users
             current_users = set(group.user_set.all())
             selected_users = set(self.cleaned_data.get('users', []))
-            
+
             # Remove users no longer in the group
             for user in current_users - selected_users:
                 user.groups.remove(group)
-                
+
             # Add new users to the group
             for user in selected_users - current_users:
                 user.groups.add(group)
-                
+
         return group
 
 

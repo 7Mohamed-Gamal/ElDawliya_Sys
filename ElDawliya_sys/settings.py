@@ -89,7 +89,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'mssql',
         'NAME': 'ElDawliya_Sys',
-        'HOST': 'DESKTOP-H361157',
+        'HOST': 'DESKTOP-H36115',
         'PORT': '1433',
         'USER': 'admin',
         'PASSWORD': 'hgslduhgfwdv',
@@ -101,13 +101,13 @@ DATABASES = {
     'primary': {
         'ENGINE': 'mssql',
         'NAME': 'ElDawliya_Sys',
-        'HOST': 'DESKTOP-H361157',
+        'HOST': 'ELDAWLIYA-SYSTE',
         'PORT': '1433',
         'USER': 'admin',
         'PASSWORD': 'hgslduhgfwdv',
         'OPTIONS': {
             'driver': 'ODBC Driver 17 for SQL Server',
-            'Trusted_Connection': 'no',
+            'Trusted_Connection': 'yes',
         },
     }
 }
@@ -190,3 +190,57 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Crispy Forms Configuration
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
 CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+# Database fallback mechanism
+# Store original configurations
+DEFAULT_DB_CONFIG = DATABASES['default'].copy()
+PRIMARY_DB_CONFIG = DATABASES['primary'].copy()
+
+# Make sure primary database uses the same configuration as default except for HOST
+PRIMARY_DB_CONFIG['ENGINE'] = DEFAULT_DB_CONFIG['ENGINE']
+PRIMARY_DB_CONFIG['NAME'] = DEFAULT_DB_CONFIG['NAME']
+PRIMARY_DB_CONFIG['PORT'] = DEFAULT_DB_CONFIG['PORT']
+PRIMARY_DB_CONFIG['USER'] = DEFAULT_DB_CONFIG['USER']
+PRIMARY_DB_CONFIG['PASSWORD'] = DEFAULT_DB_CONFIG['PASSWORD']
+PRIMARY_DB_CONFIG['OPTIONS'] = DEFAULT_DB_CONFIG['OPTIONS'].copy()
+DATABASES['primary'] = PRIMARY_DB_CONFIG
+
+# Define a simple function to check if a host is reachable
+def is_host_reachable(host, port, timeout=1):
+    import socket
+    try:
+        socket.setdefaulttimeout(timeout)
+        socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((host, int(port)))
+        return True
+    except Exception:
+        return False
+
+# Try to reach the default database host
+default_host = DATABASES['default']['HOST']
+default_port = DATABASES['default']['PORT']
+primary_host = DATABASES['primary']['HOST']
+primary_port = DATABASES['primary']['PORT']
+
+try:
+    # Check if default host is reachable
+    if not is_host_reachable(default_host, default_port):
+        print(f"WARNING: Default database host {default_host} is not reachable.")
+        
+        # Check if primary host is reachable before switching
+        if is_host_reachable(primary_host, primary_port):
+            print(f"Primary database host {primary_host} is reachable. Switching to primary database.")
+            DATABASES['default'] = DATABASES['primary'].copy()
+            ACTIVE_DB = 'primary'
+        else:
+            print(f"WARNING: Primary database host {primary_host} is also not reachable. Keeping default configuration.")
+    else:
+        print(f"Default database host {default_host} is reachable.")
+except Exception as e:
+    print(f"Error in database fallback mechanism: {e}")
+    print("Continuing with original database configuration.")
+
+# Force try primary if requested
+if os.environ.get('FORCE_PRIMARY_DB', 'False') == 'True':
+    print("NOTICE: Forced use of primary database by environment variable.")
+    DATABASES['default'] = DATABASES['primary'].copy()
+    ACTIVE_DB = 'primary'
