@@ -81,7 +81,7 @@ def dashboard_view(request):
     admin_users = users.filter(Role='admin').count()
     manager_users = users.filter(Role='Manager').count()
     employee_users = users.filter(Role='employee').count()
-    active_users = users.filter(IsActive=True).count()
+    active_users = users.filter(is_active=True).count()
 
     context = {
         'users': users,
@@ -179,12 +179,12 @@ def create_user_view(request):
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
-            
+
             # إضافة المستخدم إلى المجموعات المحددة (إذا تم تحديدها)
             if 'groups' in request.POST:
                 groups = request.POST.getlist('groups')
                 user.groups.set(groups)
-                
+
             messages.success(request, 'تم إنشاء المستخدم بنجاح!')
             return redirect('accounts:dashboard')
     else:
@@ -201,5 +201,41 @@ def create_user_view(request):
     }
 
     return render(request, 'administrator/user_create.html', context)
+
+@login_required
+def edit_permissions_view(request, user_id):
+    """عرض وتحرير صلاحيات المستخدم"""
+    user = get_object_or_404(User, id=user_id)
+
+    if request.method == 'POST':
+        # تحديث بيانات المستخدم
+        user.first_name = request.POST.get('first_name', user.first_name)
+        user.last_name = request.POST.get('last_name', user.last_name)
+        user.email = request.POST.get('email', user.email)
+        user.Role = request.POST.get('Role', user.Role)
+        user.is_active = request.POST.get('is_active') == 'on'
+        user.is_staff = request.POST.get('is_staff') == 'on'
+        user.is_superuser = request.POST.get('is_superuser') == 'on'
+
+        # تحديث المجموعات
+        if 'groups' in request.POST:
+            groups = request.POST.getlist('groups')
+            user.groups.set(groups)
+
+        user.save()
+        messages.success(request, 'تم تحديث بيانات المستخدم بنجاح!')
+        return redirect('accounts:dashboard')
+
+    # استخدام نظام المجموعات الخاص بـ Django
+    from django.contrib.auth.models import Group
+    groups = Group.objects.all()
+
+    context = {
+        'user_to_edit': user,
+        'groups': groups,
+        'system_settings': {'system_name': 'نظام الدولية'}
+    }
+
+    return render(request, 'accounts/edit_permissions.html', context)
 
 

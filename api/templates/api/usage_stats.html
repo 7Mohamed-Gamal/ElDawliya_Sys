@@ -1,0 +1,350 @@
+{% extends 'base_updated.html' %}
+{% load static %}
+
+{% block title %}إحصائيات API - نظام الدولية{% endblock %}
+
+{% block page_title %}إحصائيات استخدام API{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'api:dashboard' %}">API</a></li>
+<li class="breadcrumb-item active">إحصائيات الاستخدام</li>
+{% endblock %}
+
+{% block content %}
+<!-- Statistics Overview -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="icon-circle bg-primary bg-opacity-10 mb-3 mx-auto" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
+                    <i class="fas fa-exchange-alt fa-2x text-primary"></i>
+                </div>
+                <h3 class="text-primary">{{ stats.total_requests }}</h3>
+                <p class="text-muted mb-0">إجمالي الطلبات</p>
+                <small class="text-muted">آخر 30 يوم</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="icon-circle bg-success bg-opacity-10 mb-3 mx-auto" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
+                    <i class="fas fa-clock fa-2x text-success"></i>
+                </div>
+                <h3 class="text-success">{{ stats.avg_response_time|floatformat:3 }}s</h3>
+                <p class="text-muted mb-0">متوسط وقت الاستجابة</p>
+                <small class="text-muted">بالثواني</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="icon-circle bg-warning bg-opacity-10 mb-3 mx-auto" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
+                    <i class="fas fa-exclamation-triangle fa-2x text-warning"></i>
+                </div>
+                <h3 class="text-warning">{{ stats.error_rate|floatformat:1 }}%</h3>
+                <p class="text-muted mb-0">معدل الأخطاء</p>
+                <small class="text-muted">نسبة مئوية</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="icon-circle bg-info bg-opacity-10 mb-3 mx-auto" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
+                    <i class="fas fa-chart-line fa-2x text-info"></i>
+                </div>
+                <h3 class="text-info">{{ stats.requests_by_endpoint|length }}</h3>
+                <p class="text-muted mb-0">نقاط النهاية المستخدمة</p>
+                <small class="text-muted">endpoints مختلفة</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Most Used Endpoints -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>نقاط النهاية الأكثر استخداماً
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if stats.requests_by_endpoint %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>نقطة النهاية</th>
+                                    <th class="text-end">عدد الطلبات</th>
+                                    <th class="text-end">النسبة</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for endpoint in stats.requests_by_endpoint %}
+                                <tr>
+                                    <td>
+                                        <code class="text-primary">{{ endpoint.endpoint }}</code>
+                                    </td>
+                                    <td class="text-end">
+                                        <span class="badge bg-primary">{{ endpoint.count }}</span>
+                                    </td>
+                                    <td class="text-end">
+                                        {% widthratio endpoint.count stats.total_requests 100 as percentage %}
+                                        <div class="progress" style="height: 20px; width: 60px;">
+                                            <div class="progress-bar" role="progressbar" 
+                                                 style="width: {{ percentage }}%"
+                                                 aria-valuenow="{{ percentage }}" 
+                                                 aria-valuemin="0" 
+                                                 aria-valuemax="100">
+                                                {{ percentage }}%
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">لا توجد بيانات استخدام</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent API Calls -->
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-history me-2"></i>آخر استدعاءات API
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if user_logs %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>الوقت</th>
+                                    <th>نقطة النهاية</th>
+                                    <th>الطريقة</th>
+                                    <th>الحالة</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in user_logs %}
+                                <tr>
+                                    <td>
+                                        <small>{{ log.timestamp|date:"H:i" }}</small>
+                                    </td>
+                                    <td>
+                                        <code class="small">{{ log.endpoint|truncatechars:20 }}</code>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary">{{ log.method }}</span>
+                                    </td>
+                                    <td>
+                                        {% if log.status_code < 400 %}
+                                            <span class="badge bg-success">{{ log.status_code }}</span>
+                                        {% elif log.status_code < 500 %}
+                                            <span class="badge bg-warning">{{ log.status_code }}</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">{{ log.status_code }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">لا توجد سجلات حديثة</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Metrics -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-tachometer-alt me-2"></i>مقاييس الأداء
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="text-center p-3">
+                            <h5 class="text-success">
+                                {% if stats.total_requests > 0 %}
+                                    {{ stats.total_requests|add:"-"|add:stats.error_rate|mul:stats.total_requests|div:100|floatformat:0 }}
+                                {% else %}
+                                    0
+                                {% endif %}
+                            </h5>
+                            <p class="text-muted mb-0">طلبات ناجحة</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center p-3">
+                            <h5 class="text-warning">
+                                {% if stats.total_requests > 0 %}
+                                    {% widthratio stats.error_rate 100 stats.total_requests as error_count %}
+                                    {{ error_count|floatformat:0 }}
+                                {% else %}
+                                    0
+                                {% endif %}
+                            </h5>
+                            <p class="text-muted mb-0">طلبات فاشلة</p>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center p-3">
+                            <h5 class="text-info">
+                                {% if stats.total_requests > 0 %}
+                                    {% widthratio stats.total_requests 30 1 as daily_avg %}
+                                    {{ daily_avg|floatformat:0 }}
+                                {% else %}
+                                    0
+                                {% endif %}
+                            </h5>
+                            <p class="text-muted mb-0">متوسط يومي</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- API Health Status -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-heartbeat me-2"></i>حالة API
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="mb-2">
+                                {% if stats.avg_response_time < 1 %}
+                                    <i class="fas fa-check-circle fa-2x text-success"></i>
+                                {% elif stats.avg_response_time < 3 %}
+                                    <i class="fas fa-exclamation-circle fa-2x text-warning"></i>
+                                {% else %}
+                                    <i class="fas fa-times-circle fa-2x text-danger"></i>
+                                {% endif %}
+                            </div>
+                            <h6>سرعة الاستجابة</h6>
+                            <p class="text-muted small">
+                                {% if stats.avg_response_time < 1 %}
+                                    ممتازة
+                                {% elif stats.avg_response_time < 3 %}
+                                    جيدة
+                                {% else %}
+                                    بطيئة
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="mb-2">
+                                {% if stats.error_rate < 5 %}
+                                    <i class="fas fa-check-circle fa-2x text-success"></i>
+                                {% elif stats.error_rate < 15 %}
+                                    <i class="fas fa-exclamation-circle fa-2x text-warning"></i>
+                                {% else %}
+                                    <i class="fas fa-times-circle fa-2x text-danger"></i>
+                                {% endif %}
+                            </div>
+                            <h6>معدل الأخطاء</h6>
+                            <p class="text-muted small">
+                                {% if stats.error_rate < 5 %}
+                                    منخفض
+                                {% elif stats.error_rate < 15 %}
+                                    متوسط
+                                {% else %}
+                                    عالي
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="mb-2">
+                                {% if stats.total_requests > 100 %}
+                                    <i class="fas fa-check-circle fa-2x text-success"></i>
+                                {% elif stats.total_requests > 10 %}
+                                    <i class="fas fa-exclamation-circle fa-2x text-warning"></i>
+                                {% else %}
+                                    <i class="fas fa-info-circle fa-2x text-info"></i>
+                                {% endif %}
+                            </div>
+                            <h6>مستوى الاستخدام</h6>
+                            <p class="text-muted small">
+                                {% if stats.total_requests > 100 %}
+                                    نشط
+                                {% elif stats.total_requests > 10 %}
+                                    متوسط
+                                {% else %}
+                                    منخفض
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="mb-2">
+                                <i class="fas fa-check-circle fa-2x text-success"></i>
+                            </div>
+                            <h6>حالة الخدمة</h6>
+                            <p class="text-muted small">متاحة</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto refresh every 30 seconds
+setInterval(function() {
+    location.reload();
+}, 30000);
+
+// Add tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}

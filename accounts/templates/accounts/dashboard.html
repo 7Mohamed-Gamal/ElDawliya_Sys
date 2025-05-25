@@ -15,7 +15,7 @@
         <div class="card shadow-sm h-100">
             <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
                 <h5 class="mb-0">قائمة المستخدمين</h5>
-                <a href="{% url 'create_user' %}" class="btn btn-primary">
+                <a href="{% url 'accounts:create_user' %}" class="btn btn-primary">
                     <i class="fas fa-plus me-1"></i> إضافة مستخدم جديد
                 </a>
             </div>
@@ -54,12 +54,12 @@
                                         {% endif %}
                                     </td>
                                     <td>
-                                        <a href="{% url 'edit_permissions' user.id %}" class="btn btn-sm btn-primary">
+                                        <a href="{% url 'accounts:edit_permissions' user.id %}" class="btn btn-sm btn-primary">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <button class="btn btn-sm btn-danger ms-1" 
-                                                data-bs-toggle="modal" 
-                                                data-bs-target="#deleteUserModal" 
+                                        <button class="btn btn-sm btn-danger ms-1"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#deleteUserModal"
                                                 data-user-id="{{ user.id }}"
                                                 data-user-name="{{ user.username }}">
                                             <i class="fas fa-trash"></i>
@@ -183,7 +183,7 @@
                 var button = event.relatedTarget;
                 var userId = button.getAttribute('data-user-id');
                 var userName = button.getAttribute('data-user-name');
-                
+
                 document.getElementById('userName').textContent = userName;
                 document.getElementById('userId').value = userId;
             });

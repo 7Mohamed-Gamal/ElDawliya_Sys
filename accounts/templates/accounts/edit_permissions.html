@@ -6,7 +6,7 @@
 {% block page_title %}تعديل صلاحيات المستخدم{% endblock %}
 
 {% block breadcrumb %}
-<li class="breadcrumb-item"><a href="{% url 'dashboard' %}">إدارة المستخدمين</a></li>
+<li class="breadcrumb-item"><a href="{% url 'accounts:dashboard' %}">إدارة المستخدمين</a></li>
 <li class="breadcrumb-item active">تعديل صلاحيات المستخدم</li>
 {% endblock %}
 
@@ -48,37 +48,88 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <form method="post" class="needs-validation" novalidate>
                     {% csrf_token %}
-                    
+
                     <div class="row g-3">
+                        <!-- First Name -->
+                        <div class="col-md-6 mb-3">
+                            <label for="first_name" class="form-label">الاسم الأول</label>
+                            <input type="text" class="form-control" id="first_name" name="first_name" value="{{ user_to_edit.first_name }}">
+                        </div>
+
+                        <!-- Last Name -->
+                        <div class="col-md-6 mb-3">
+                            <label for="last_name" class="form-label">الاسم الأخير</label>
+                            <input type="text" class="form-control" id="last_name" name="last_name" value="{{ user_to_edit.last_name }}">
+                        </div>
+
+                        <!-- Email -->
+                        <div class="col-12 mb-3">
+                            <label for="email" class="form-label">البريد الإلكتروني</label>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ user_to_edit.email }}">
+                        </div>
+
                         <!-- Role -->
                         <div class="col-12 mb-3">
-                            <label for="{{ form.Role.id_for_label }}" class="form-label required-field">الدور</label>
-                            {{ form.Role }}
-                            {% if form.Role.errors %}
-                            <div class="invalid-feedback d-block">{{ form.Role.errors.0 }}</div>
-                            {% endif %}
+                            <label for="Role" class="form-label">الدور</label>
+                            <select class="form-select" id="Role" name="Role">
+                                <option value="admin" {% if user_to_edit.Role == 'admin' %}selected{% endif %}>مشرف</option>
+                                <option value="manager" {% if user_to_edit.Role == 'manager' %}selected{% endif %}>مدير</option>
+                                <option value="employee" {% if user_to_edit.Role == 'employee' %}selected{% endif %}>موظف</option>
+                            </select>
                         </div>
-                        
+
                         <!-- Active Status -->
                         <div class="col-12 mb-3">
-                            <label class="form-label">الحالة</label>
                             <div class="form-check">
-                                {{ form.IsActive }}
-                                <label class="form-check-label" for="{{ form.IsActive.id_for_label }}">
+                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active" {% if user_to_edit.is_active %}checked{% endif %}>
+                                <label class="form-check-label" for="is_active">
                                     نشط
                                 </label>
                             </div>
-                            {% if form.IsActive.errors %}
-                            <div class="invalid-feedback d-block">{{ form.IsActive.errors.0 }}</div>
-                            {% endif %}
                         </div>
+
+                        <!-- Staff Status -->
+                        <div class="col-12 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="is_staff" name="is_staff" {% if user_to_edit.is_staff %}checked{% endif %}>
+                                <label class="form-check-label" for="is_staff">
+                                    موظف إداري
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Superuser Status -->
+                        <div class="col-12 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="is_superuser" name="is_superuser" {% if user_to_edit.is_superuser %}checked{% endif %}>
+                                <label class="form-check-label" for="is_superuser">
+                                    مشرف عام
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Groups -->
+                        {% if groups %}
+                        <div class="col-12 mb-3">
+                            <label class="form-label">المجموعات</label>
+                            {% for group in groups %}
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="group_{{ group.id }}" name="groups" value="{{ group.id }}"
+                                       {% if group in user_to_edit.groups.all %}checked{% endif %}>
+                                <label class="form-check-label" for="group_{{ group.id }}">
+                                    {{ group.name }}
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
                     </div>
-                    
+
                     <div class="d-flex justify-content-between mt-4">
-                        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+                        <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline-secondary">
                             <i class="fas fa-arrow-right me-1"></i> الرجوع
                         </a>
                         <button type="submit" class="btn btn-primary">
@@ -88,7 +139,7 @@
                 </form>
             </div>
         </div>
-        
+
         <!-- User Activity -->
         <div class="card shadow-sm mt-4">
             <div class="card-header bg-white py-3">
@@ -132,13 +183,13 @@
     document.addEventListener('DOMContentLoaded', function() {
         // Form validation
         const form = document.querySelector('form.needs-validation');
-        
+
         form.addEventListener('submit', function(event) {
             if (!form.checkValidity()) {
                 event.preventDefault();
                 event.stopPropagation();
             }
-            
+
             form.classList.add('was-validated');
         });
     });

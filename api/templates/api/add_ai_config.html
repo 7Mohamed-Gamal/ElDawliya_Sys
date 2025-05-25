@@ -1,0 +1,332 @@
+{% extends 'base_updated.html' %}
+{% load static %}
+
+{% block title %}إضافة إعداد ذكاء اصطناعي - نظام الدولية{% endblock %}
+
+{% block page_title %}إضافة إعداد ذكاء اصطناعي جديد{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'api:dashboard' %}">API</a></li>
+<li class="breadcrumb-item"><a href="{% url 'api:ai_settings' %}">إعدادات AI</a></li>
+<li class="breadcrumb-item active">إضافة إعداد</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-robot me-2"></i>إعداد مقدم خدمة ذكاء اصطناعي
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" id="aiConfigForm">
+                    {% csrf_token %}
+                    
+                    <!-- Provider Selection -->
+                    <div class="mb-4">
+                        <label for="provider" class="form-label">مقدم الخدمة *</label>
+                        <select class="form-select" id="provider" name="provider" required onchange="updateProviderInfo()">
+                            <option value="">اختر مقدم الخدمة</option>
+                            {% for provider in providers %}
+                            <option value="{{ provider.id }}" 
+                                    data-name="{{ provider.name }}"
+                                    data-description="{{ provider.description }}"
+                                    data-requires-key="{{ provider.requires_api_key|yesno:'true,false' }}">
+                                {{ provider.display_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text" id="providerDescription"></div>
+                    </div>
+                    
+                    <!-- API Key -->
+                    <div class="mb-4" id="apiKeySection">
+                        <label for="api_key" class="form-label">مفتاح API *</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="api_key" name="api_key" 
+                                   placeholder="أدخل مفتاح API الخاص بك" required>
+                            <button class="btn btn-outline-secondary" type="button" onclick="toggleApiKeyVisibility()">
+                                <i class="fas fa-eye" id="toggleIcon"></i>
+                            </button>
+                        </div>
+                        <div class="form-text">
+                            <i class="fas fa-shield-alt me-1"></i>
+                            سيتم حفظ المفتاح بشكل آمن ومشفر
+                        </div>
+                    </div>
+                    
+                    <!-- Model Name -->
+                    <div class="mb-4">
+                        <label for="model_name" class="form-label">اسم النموذج</label>
+                        <input type="text" class="form-control" id="model_name" name="model_name" 
+                               value="gemini-1.5-flash" placeholder="مثال: gemini-1.5-flash">
+                        <div class="form-text" id="modelHelp">
+                            اتركه فارغاً لاستخدام النموذج الافتراضي
+                        </div>
+                    </div>
+                    
+                    <!-- Advanced Settings -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <button class="btn btn-link p-0 text-decoration-none" type="button" 
+                                        data-bs-toggle="collapse" data-bs-target="#advancedSettings">
+                                    <i class="fas fa-cog me-2"></i>إعدادات متقدمة
+                                    <i class="fas fa-chevron-down ms-2"></i>
+                                </button>
+                            </h6>
+                        </div>
+                        <div class="collapse" id="advancedSettings">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label for="max_tokens" class="form-label">الحد الأقصى للرموز</label>
+                                        <input type="number" class="form-control" id="max_tokens" name="max_tokens" 
+                                               value="1000" min="1" max="8000">
+                                        <div class="form-text">عدد الرموز القصوى في الرد (1-8000)</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="temperature" class="form-label">درجة الإبداع</label>
+                                        <input type="number" class="form-control" id="temperature" name="temperature" 
+                                               value="0.7" min="0" max="1" step="0.1">
+                                        <div class="form-text">مستوى الإبداع (0 = محافظ، 1 = مبدع)</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Default Setting -->
+                    <div class="mb-4">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="is_default" name="is_default">
+                            <label class="form-check-label" for="is_default">
+                                جعل هذا الإعداد افتراضياً
+                            </label>
+                            <div class="form-text">سيتم استخدام هذا الإعداد كافتراضي في جميع محادثات AI</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'api:ai_settings' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>إلغاء
+                        </a>
+                        <div>
+                            <button type="button" class="btn btn-outline-primary me-2" onclick="testConnection()">
+                                <i class="fas fa-vial me-2"></i>اختبار الاتصال
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>حفظ الإعداد
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                
+                <!-- Test Result -->
+                <div id="testResult" class="mt-3" style="display: none;"></div>
+            </div>
+        </div>
+        
+        <!-- Provider Information Cards -->
+        <div class="row mt-4" id="providerCards" style="display: none;">
+            <!-- Gemini Card -->
+            <div class="col-md-6 provider-card" data-provider="gemini">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h6 class="mb-0"><i class="fab fa-google me-2"></i>Google Gemini</h6>
+                    </div>
+                    <div class="card-body">
+                        <h6>النماذج المتاحة:</h6>
+                        <ul class="list-unstyled small">
+                            <li><code>gemini-1.5-flash</code> - سريع ومتوازن</li>
+                            <li><code>gemini-1.5-pro</code> - أداء عالي</li>
+                            <li><code>gemini-pro</code> - النموذج الكلاسيكي</li>
+                        </ul>
+                        <h6>الحصول على المفتاح:</h6>
+                        <p class="small">
+                            <a href="https://makersuite.google.com/app/apikey" target="_blank" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-external-link-alt me-1"></i>Google AI Studio
+                            </a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- OpenAI Card -->
+            <div class="col-md-6 provider-card" data-provider="openai">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h6 class="mb-0"><i class="fas fa-brain me-2"></i>OpenAI GPT</h6>
+                    </div>
+                    <div class="card-body">
+                        <h6>النماذج المتاحة:</h6>
+                        <ul class="list-unstyled small">
+                            <li><code>gpt-3.5-turbo</code> - سريع واقتصادي</li>
+                            <li><code>gpt-4</code> - أداء متقدم</li>
+                            <li><code>gpt-4-turbo</code> - الأحدث والأسرع</li>
+                        </ul>
+                        <h6>الحصول على المفتاح:</h6>
+                        <p class="small">
+                            <a href="https://platform.openai.com/api-keys" target="_blank" class="btn btn-sm btn-outline-success">
+                                <i class="fas fa-external-link-alt me-1"></i>OpenAI Platform
+                            </a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateProviderInfo() {
+    const select = document.getElementById('provider');
+    const selectedOption = select.options[select.selectedIndex];
+    const description = document.getElementById('providerDescription');
+    const modelHelp = document.getElementById('modelHelp');
+    const modelInput = document.getElementById('model_name');
+    const providerCards = document.getElementById('providerCards');
+    const apiKeySection = document.getElementById('apiKeySection');
+    
+    if (selectedOption.value) {
+        const providerName = selectedOption.dataset.name;
+        const requiresKey = selectedOption.dataset.requiresKey === 'true';
+        
+        description.innerHTML = `<i class="fas fa-info-circle me-1"></i>${selectedOption.dataset.description}`;
+        
+        // Show/hide API key section
+        if (requiresKey) {
+            apiKeySection.style.display = 'block';
+            document.getElementById('api_key').required = true;
+        } else {
+            apiKeySection.style.display = 'none';
+            document.getElementById('api_key').required = false;
+        }
+        
+        // Update model suggestions
+        if (providerName === 'gemini') {
+            modelInput.value = 'gemini-1.5-flash';
+            modelHelp.innerHTML = 'النماذج المقترحة: gemini-1.5-flash, gemini-1.5-pro, gemini-pro';
+        } else if (providerName === 'openai') {
+            modelInput.value = 'gpt-3.5-turbo';
+            modelHelp.innerHTML = 'النماذج المقترحة: gpt-3.5-turbo, gpt-4, gpt-4-turbo';
+        } else if (providerName === 'claude') {
+            modelInput.value = 'claude-3-sonnet';
+            modelHelp.innerHTML = 'النماذج المقترحة: claude-3-sonnet, claude-3-opus, claude-3-haiku';
+        } else {
+            modelInput.value = '';
+            modelHelp.innerHTML = 'أدخل اسم النموذج المطلوب';
+        }
+        
+        // Show provider cards
+        providerCards.style.display = 'block';
+        document.querySelectorAll('.provider-card').forEach(card => {
+            card.style.display = card.dataset.provider === providerName ? 'block' : 'none';
+        });
+    } else {
+        description.innerHTML = '';
+        providerCards.style.display = 'none';
+        apiKeySection.style.display = 'block';
+        document.getElementById('api_key').required = true;
+    }
+}
+
+function toggleApiKeyVisibility() {
+    const input = document.getElementById('api_key');
+    const icon = document.getElementById('toggleIcon');
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fas fa-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'fas fa-eye';
+    }
+}
+
+function testConnection() {
+    const form = document.getElementById('aiConfigForm');
+    const formData = new FormData(form);
+    const resultDiv = document.getElementById('testResult');
+    
+    // Validate required fields
+    if (!formData.get('provider') || !formData.get('api_key')) {
+        showTestResult(false, 'يرجى ملء جميع الحقول المطلوبة');
+        return;
+    }
+    
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = `
+        <div class="alert alert-info">
+            <div class="d-flex align-items-center">
+                <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                جاري اختبار الاتصال...
+            </div>
+        </div>
+    `;
+    
+    // Create temporary config for testing
+    fetch('{% url "api:test_ai_config" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            provider: formData.get('provider'),
+            api_key: formData.get('api_key'),
+            model_name: formData.get('model_name'),
+            max_tokens: parseInt(formData.get('max_tokens')),
+            temperature: parseFloat(formData.get('temperature')),
+            message: 'مرحبا، هذا اختبار للاتصال'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showTestResult(true, `نجح الاختبار! الرد: ${data.response.substring(0, 100)}...`);
+        } else {
+            showTestResult(false, data.error);
+        }
+    })
+    .catch(error => {
+        showTestResult(false, 'خطأ في الاتصال بالخادم');
+    });
+}
+
+function showTestResult(success, message) {
+    const resultDiv = document.getElementById('testResult');
+    const alertClass = success ? 'alert-success' : 'alert-danger';
+    const icon = success ? 'fa-check-circle' : 'fa-times-circle';
+    
+    resultDiv.innerHTML = `
+        <div class="alert ${alertClass}">
+            <div class="d-flex align-items-start">
+                <i class="fas ${icon} me-2 mt-1"></i>
+                <div>
+                    <strong>${success ? 'نجح الاختبار!' : 'فشل الاختبار'}</strong>
+                    <br><small>${message}</small>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if provider is pre-selected from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const providerId = urlParams.get('provider');
+    if (providerId) {
+        document.getElementById('provider').value = providerId;
+        updateProviderInfo();
+    }
+});
+</script>
+{% endblock %}

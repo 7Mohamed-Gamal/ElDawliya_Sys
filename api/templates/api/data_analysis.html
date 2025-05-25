@@ -1,0 +1,358 @@
+{% extends 'base_updated.html' %}
+{% load static %}
+
+{% block title %}تحليل البيانات - نظام الدولية{% endblock %}
+
+{% block page_title %}تحليل البيانات بالذكاء الاصطناعي{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'api:dashboard' %}">API</a></li>
+<li class="breadcrumb-item active">تحليل البيانات</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Analysis Options -->
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-sliders-h me-2"></i>خيارات التحليل
+                </h6>
+            </div>
+            <div class="card-body">
+                <form id="analysis-form">
+                    <div class="mb-3">
+                        <label for="data-type" class="form-label">نوع البيانات</label>
+                        <select class="form-select" id="data-type" required>
+                            <option value="">اختر نوع البيانات</option>
+                            <option value="employees">الموظفين</option>
+                            <option value="inventory">المخزون</option>
+                            <option value="tasks">المهام</option>
+                            <option value="meetings">الاجتماعات</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="analysis-type" class="form-label">نوع التحليل</label>
+                        <select class="form-select" id="analysis-type" required>
+                            <option value="summary">ملخص عام</option>
+                            <option value="trends">تحليل الاتجاهات</option>
+                            <option value="insights">استخراج الرؤى</option>
+                            <option value="recommendations">التوصيات</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3" id="filters-section" style="display: none;">
+                        <label class="form-label">فلاتر إضافية</label>
+                        <div id="filters-container">
+                            <!-- Dynamic filters will be added here -->
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-chart-line me-2"></i>بدء التحليل
+                    </button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Quick Analysis Templates -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>تحليل سريع
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary btn-sm" onclick="quickAnalysis('employees', 'summary')">
+                        <i class="fas fa-users me-2"></i>ملخص الموظفين
+                    </button>
+                    <button class="btn btn-outline-success btn-sm" onclick="quickAnalysis('inventory', 'summary')">
+                        <i class="fas fa-boxes me-2"></i>حالة المخزون
+                    </button>
+                    <button class="btn btn-outline-info btn-sm" onclick="quickAnalysis('tasks', 'trends')">
+                        <i class="fas fa-tasks me-2"></i>اتجاهات المهام
+                    </button>
+                    <button class="btn btn-outline-warning btn-sm" onclick="quickAnalysis('meetings', 'insights')">
+                        <i class="fas fa-calendar me-2"></i>رؤى الاجتماعات
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Analysis Results -->
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>نتائج التحليل
+                    </h6>
+                    <div id="analysis-status" class="badge bg-secondary">جاهز للتحليل</div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="analysis-results">
+                    <div class="text-center py-5">
+                        <i class="fas fa-chart-line fa-4x text-muted mb-3"></i>
+                        <h5>مرحباً بك في تحليل البيانات</h5>
+                        <p class="text-muted">اختر نوع البيانات ونوع التحليل للبدء</p>
+                        <div class="row mt-4">
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-brain fa-2x text-primary mb-2"></i>
+                                        <h6>تحليل ذكي</h6>
+                                        <small class="text-muted">باستخدام Gemini AI</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <i class="fas fa-lightbulb fa-2x text-warning mb-2"></i>
+                                        <h6>رؤى قيمة</h6>
+                                        <small class="text-muted">توصيات عملية</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Loading Indicator -->
+                <div id="loading-indicator" style="display: none;">
+                    <div class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">جاري التحليل...</span>
+                        </div>
+                        <p class="mt-3">جاري تحليل البيانات باستخدام الذكاء الاصطناعي...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('data-type').addEventListener('change', function() {
+    const dataType = this.value;
+    const filtersSection = document.getElementById('filters-section');
+    const filtersContainer = document.getElementById('filters-container');
+    
+    if (dataType) {
+        filtersSection.style.display = 'block';
+        filtersContainer.innerHTML = getFiltersForDataType(dataType);
+    } else {
+        filtersSection.style.display = 'none';
+    }
+});
+
+function getFiltersForDataType(dataType) {
+    switch(dataType) {
+        case 'employees':
+            return `
+                <div class="mb-2">
+                    <input type="text" class="form-control form-control-sm" placeholder="اسم القسم" name="department">
+                </div>
+                <div class="mb-2">
+                    <select class="form-select form-select-sm" name="status">
+                        <option value="">جميع الحالات</option>
+                        <option value="active">نشط</option>
+                        <option value="inactive">غير نشط</option>
+                    </select>
+                </div>
+            `;
+        case 'inventory':
+            return `
+                <div class="mb-2">
+                    <input type="text" class="form-control form-control-sm" placeholder="اسم الفئة" name="category">
+                </div>
+                <div class="mb-2">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="low_stock" id="low_stock">
+                        <label class="form-check-label" for="low_stock">
+                            المنتجات منخفضة المخزون فقط
+                        </label>
+                    </div>
+                </div>
+            `;
+        case 'tasks':
+            return `
+                <div class="mb-2">
+                    <select class="form-select form-select-sm" name="status">
+                        <option value="">جميع الحالات</option>
+                        <option value="pending">معلقة</option>
+                        <option value="in_progress">قيد التنفيذ</option>
+                        <option value="completed">مكتملة</option>
+                    </select>
+                </div>
+                <div class="mb-2">
+                    <select class="form-select form-select-sm" name="priority">
+                        <option value="">جميع الأولويات</option>
+                        <option value="high">عالية</option>
+                        <option value="medium">متوسطة</option>
+                        <option value="low">منخفضة</option>
+                    </select>
+                </div>
+            `;
+        default:
+            return '';
+    }
+}
+
+document.getElementById('analysis-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const dataType = document.getElementById('data-type').value;
+    const analysisType = document.getElementById('analysis-type').value;
+    
+    if (!dataType || !analysisType) {
+        alert('يرجى اختيار نوع البيانات ونوع التحليل');
+        return;
+    }
+    
+    // Collect filters
+    const filters = {};
+    const filterInputs = document.querySelectorAll('#filters-container input, #filters-container select');
+    filterInputs.forEach(input => {
+        if (input.value && input.name) {
+            if (input.type === 'checkbox') {
+                filters[input.name] = input.checked;
+            } else {
+                filters[input.name] = input.value;
+            }
+        }
+    });
+    
+    performAnalysis(dataType, analysisType, filters);
+});
+
+function quickAnalysis(dataType, analysisType) {
+    document.getElementById('data-type').value = dataType;
+    document.getElementById('analysis-type').value = analysisType;
+    
+    // Trigger change event to show filters
+    document.getElementById('data-type').dispatchEvent(new Event('change'));
+    
+    performAnalysis(dataType, analysisType, {});
+}
+
+function performAnalysis(dataType, analysisType, filters) {
+    const resultsContainer = document.getElementById('analysis-results');
+    const loadingIndicator = document.getElementById('loading-indicator');
+    const statusBadge = document.getElementById('analysis-status');
+    
+    // Show loading
+    resultsContainer.style.display = 'none';
+    loadingIndicator.style.display = 'block';
+    statusBadge.textContent = 'جاري التحليل...';
+    statusBadge.className = 'badge bg-warning';
+    
+    // Send request
+    fetch('{% url "api:data_analysis_api" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            data_type: dataType,
+            analysis_type: analysisType,
+            filters: filters
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        loadingIndicator.style.display = 'none';
+        resultsContainer.style.display = 'block';
+        
+        if (data.error) {
+            statusBadge.textContent = 'خطأ في التحليل';
+            statusBadge.className = 'badge bg-danger';
+            resultsContainer.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    ${data.error}
+                </div>
+            `;
+        } else {
+            statusBadge.textContent = 'تم التحليل بنجاح';
+            statusBadge.className = 'badge bg-success';
+            
+            resultsContainer.innerHTML = `
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="fas fa-chart-line me-2"></i>نتيجة التحليل</h6>
+                            </div>
+                            <div class="card-body">
+                                <p class="mb-0">${data.analysis}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="fas fa-lightbulb me-2"></i>الرؤى المستخرجة</h6>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-unstyled mb-0">
+                                    ${data.insights.map(insight => `<li><i class="fas fa-arrow-left me-2 text-primary"></i>${insight}</li>`).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="fas fa-recommendations me-2"></i>التوصيات</h6>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-unstyled mb-0">
+                                    ${data.recommendations.map(rec => `<li><i class="fas fa-check me-2 text-success"></i>${rec}</li>`).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0"><i class="fas fa-database me-2"></i>ملخص البيانات</h6>
+                            </div>
+                            <div class="card-body">
+                                <pre class="bg-light p-3 rounded">${JSON.stringify(data.data_summary, null, 2)}</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    })
+    .catch(error => {
+        loadingIndicator.style.display = 'none';
+        resultsContainer.style.display = 'block';
+        statusBadge.textContent = 'خطأ في الاتصال';
+        statusBadge.className = 'badge bg-danger';
+        
+        resultsContainer.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                حدث خطأ في الاتصال. يرجى المحاولة مرة أخرى.
+            </div>
+        `;
+        console.error('Error:', error);
+    });
+}
+</script>
+{% endblock %}

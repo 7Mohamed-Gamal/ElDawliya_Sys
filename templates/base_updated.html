@@ -188,7 +188,7 @@
                             {% endif %}
                         </a>
                     </div>
-                    
+
                     <!-- User Dropdown -->
                     <div class="dropdown">
                         <a class="nav-link dropdown-toggle text-light" href="#" role="button" data-bs-toggle="dropdown">
@@ -224,7 +224,60 @@
                             <span>الرئيسية</span>
                         </a>
                     </li>
-                    <!-- Add more menu items here based on user permissions -->
+
+                    <!-- API & AI Section -->
+                    <li class="sidebar-menu-item">
+                        <a href="{% url 'api:dashboard' %}">
+                            <i class="fas fa-robot"></i>
+                            <span>API والذكاء الاصطناعي</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="{% url 'api:ai_chat' %}">
+                            <i class="fas fa-comments"></i>
+                            <span>محادثة AI</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="/api/v1/docs/" target="_blank">
+                            <i class="fas fa-book"></i>
+                            <span>وثائق API</span>
+                        </a>
+                    </li>
+
+                    <!-- HR Section -->
+                    <li class="sidebar-menu-item">
+                        <a href="{% url 'Hr:dashboard' %}">
+                            <i class="fas fa-users"></i>
+                            <span>الموارد البشرية</span>
+                        </a>
+                    </li>
+
+                    <!-- Inventory Section -->
+                    <li class="sidebar-menu-item">
+                        <a href="{% url 'inventory:dashboard' %}">
+                            <i class="fas fa-boxes"></i>
+                            <span>المخزون</span>
+                        </a>
+                    </li>
+
+                    <!-- Tasks Section -->
+                    <li class="sidebar-menu-item">
+                        <a href="{% url 'tasks:list' %}">
+                            <i class="fas fa-tasks"></i>
+                            <span>المهام</span>
+                        </a>
+                    </li>
+
+                    <!-- Meetings Section -->
+                    <li class="sidebar-menu-item">
+                        <a href="{% url 'meetings:list' %}">
+                            <i class="fas fa-calendar-alt"></i>
+                            <span>الاجتماعات</span>
+                        </a>
+                    </li>
+
+                    <!-- Admin Section -->
                     {% if user.is_staff %}
                     <li class="sidebar-menu-item">
                         <a href="{% url 'admin:index' %}">

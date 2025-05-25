@@ -1,0 +1,302 @@
+{% extends 'base_updated.html' %}
+{% load static %}
+
+{% block title %}تعديل إعداد {{ config.provider.display_name }} - نظام الدولية{% endblock %}
+
+{% block page_title %}تعديل إعداد {{ config.provider.display_name }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'api:dashboard' %}">API</a></li>
+<li class="breadcrumb-item"><a href="{% url 'api:ai_settings' %}">إعدادات AI</a></li>
+<li class="breadcrumb-item active">تعديل {{ config.provider.display_name }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex align-items-center">
+                    {% if config.provider.name == 'gemini' %}
+                        <i class="fab fa-google fa-2x text-primary me-3"></i>
+                    {% elif config.provider.name == 'openai' %}
+                        <i class="fas fa-brain fa-2x text-success me-3"></i>
+                    {% elif config.provider.name == 'claude' %}
+                        <i class="fas fa-robot fa-2x text-info me-3"></i>
+                    {% else %}
+                        <i class="fas fa-cog fa-2x text-secondary me-3"></i>
+                    {% endif %}
+                    <div>
+                        <h5 class="mb-0">تعديل إعداد {{ config.provider.display_name }}</h5>
+                        <small class="text-muted">تم الإنشاء: {{ config.created_at|date:"Y-m-d H:i" }}</small>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <form method="post" id="editConfigForm">
+                    {% csrf_token %}
+                    
+                    <!-- Provider Info (Read-only) -->
+                    <div class="mb-4">
+                        <label class="form-label">مقدم الخدمة</label>
+                        <div class="form-control-plaintext bg-light p-3 rounded">
+                            <strong>{{ config.provider.display_name }}</strong>
+                            {% if config.provider.description %}
+                                <br><small class="text-muted">{{ config.provider.description }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- API Key -->
+                    <div class="mb-4">
+                        <label for="api_key" class="form-label">مفتاح API *</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="api_key" name="api_key" 
+                                   value="{{ config.api_key }}" required>
+                            <button class="btn btn-outline-secondary" type="button" onclick="toggleApiKeyVisibility()">
+                                <i class="fas fa-eye" id="toggleIcon"></i>
+                            </button>
+                        </div>
+                        <div class="form-text">
+                            <i class="fas fa-shield-alt me-1"></i>
+                            المفتاح محفوظ بشكل آمن ومشفر
+                        </div>
+                    </div>
+                    
+                    <!-- Model Name -->
+                    <div class="mb-4">
+                        <label for="model_name" class="form-label">اسم النموذج</label>
+                        <input type="text" class="form-control" id="model_name" name="model_name" 
+                               value="{{ config.model_name }}" placeholder="مثال: gemini-1.5-flash">
+                        <div class="form-text" id="modelHelp">
+                            {% if config.provider.name == 'gemini' %}
+                                النماذج المتاحة: gemini-1.5-flash, gemini-1.5-pro, gemini-pro
+                            {% elif config.provider.name == 'openai' %}
+                                النماذج المتاحة: gpt-3.5-turbo, gpt-4, gpt-4-turbo
+                            {% elif config.provider.name == 'claude' %}
+                                النماذج المتاحة: claude-3-sonnet, claude-3-opus, claude-3-haiku
+                            {% else %}
+                                أدخل اسم النموذج المطلوب
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Advanced Settings -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="fas fa-cog me-2"></i>إعدادات متقدمة
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="max_tokens" class="form-label">الحد الأقصى للرموز</label>
+                                    <input type="number" class="form-control" id="max_tokens" name="max_tokens" 
+                                           value="{{ config.max_tokens }}" min="1" max="8000">
+                                    <div class="form-text">عدد الرموز القصوى في الرد (1-8000)</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="temperature" class="form-label">درجة الإبداع</label>
+                                    <input type="number" class="form-control" id="temperature" name="temperature" 
+                                           value="{{ config.temperature }}" min="0" max="1" step="0.1">
+                                    <div class="form-text">مستوى الإبداع (0 = محافظ، 1 = مبدع)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Status Settings -->
+                    <div class="mb-4">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="is_default" name="is_default" 
+                                           {% if config.is_default %}checked{% endif %}>
+                                    <label class="form-check-label" for="is_default">
+                                        الإعداد الافتراضي
+                                    </label>
+                                    <div class="form-text">سيتم استخدامه كافتراضي في محادثات AI</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
+                                           {% if config.is_active %}checked{% endif %}>
+                                    <label class="form-check-label" for="is_active">
+                                        نشط
+                                    </label>
+                                    <div class="form-text">تفعيل/إلغاء تفعيل هذا الإعداد</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Statistics -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="fas fa-chart-line me-2"></i>إحصائيات الاستخدام
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row text-center">
+                                <div class="col-md-4">
+                                    <div class="border-end">
+                                        <h4 class="text-primary">{{ config.gemini_conversations.count }}</h4>
+                                        <small class="text-muted">المحادثات</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="border-end">
+                                        <h4 class="text-success">
+                                            {% with total_messages=config.gemini_conversations.all|length %}
+                                                {{ total_messages|default:0 }}
+                                            {% endwith %}
+                                        </h4>
+                                        <small class="text-muted">الرسائل</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <h4 class="text-info">{{ config.updated_at|date:"M d" }}</h4>
+                                    <small class="text-muted">آخر تحديث</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'api:ai_settings' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>إلغاء
+                        </a>
+                        <div>
+                            <button type="button" class="btn btn-outline-primary me-2" onclick="testConnection()">
+                                <i class="fas fa-vial me-2"></i>اختبار الاتصال
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-2"></i>حفظ التغييرات
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                
+                <!-- Test Result -->
+                <div id="testResult" class="mt-3" style="display: none;"></div>
+            </div>
+        </div>
+        
+        <!-- Usage History -->
+        {% if config.gemini_conversations.exists %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-history me-2"></i>آخر المحادثات
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="list-group list-group-flush">
+                    {% for conversation in config.gemini_conversations.all|slice:":5" %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">{{ conversation.title }}</h6>
+                            <small class="text-muted">{{ conversation.messages.count }} رسالة</small>
+                        </div>
+                        <div class="text-end">
+                            <small class="text-muted">{{ conversation.updated_at|date:"Y-m-d H:i" }}</small>
+                            <br>
+                            <a href="{% url 'api:ai_chat' %}?conversation={{ conversation.id }}" 
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye"></i> عرض
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                {% if config.gemini_conversations.count > 5 %}
+                <div class="text-center mt-3">
+                    <a href="{% url 'api:ai_chat' %}" class="btn btn-outline-secondary">
+                        عرض جميع المحادثات ({{ config.gemini_conversations.count }})
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function toggleApiKeyVisibility() {
+    const input = document.getElementById('api_key');
+    const icon = document.getElementById('toggleIcon');
+    
+    if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fas fa-eye-slash';
+    } else {
+        input.type = 'password';
+        icon.className = 'fas fa-eye';
+    }
+}
+
+function testConnection() {
+    const resultDiv = document.getElementById('testResult');
+    
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = `
+        <div class="alert alert-info">
+            <div class="d-flex align-items-center">
+                <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+                جاري اختبار الاتصال مع {{ config.provider.display_name }}...
+            </div>
+        </div>
+    `;
+    
+    fetch('{% url "api:test_ai_config" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            config_id: {{ config.id }},
+            message: 'مرحبا، هذا اختبار للاتصال'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showTestResult(true, `نجح الاختبار! النموذج: ${data.model}<br>الرد: ${data.response.substring(0, 150)}...`);
+        } else {
+            showTestResult(false, data.error);
+        }
+    })
+    .catch(error => {
+        showTestResult(false, 'خطأ في الاتصال بالخادم');
+    });
+}
+
+function showTestResult(success, message) {
+    const resultDiv = document.getElementById('testResult');
+    const alertClass = success ? 'alert-success' : 'alert-danger';
+    const icon = success ? 'fa-check-circle' : 'fa-times-circle';
+    
+    resultDiv.innerHTML = `
+        <div class="alert ${alertClass}">
+            <div class="d-flex align-items-start">
+                <i class="fas ${icon} me-2 mt-1"></i>
+                <div>
+                    <strong>${success ? 'نجح الاختبار!' : 'فشل الاختبار'}</strong>
+                    <br><small>${message}</small>
+                </div>
+            </div>
+        </div>
+    `;
+}
+</script>
+{% endblock %}

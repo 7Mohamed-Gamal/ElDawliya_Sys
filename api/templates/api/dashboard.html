@@ -1,0 +1,334 @@
+{% extends 'base_updated.html' %}
+{% load static %}
+
+{% block title %}لوحة تحكم API - نظام الدولية{% endblock %}
+
+{% block page_title %}لوحة تحكم API والذكاء الاصطناعي{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item active">API</li>
+{% endblock %}
+
+{% block content %}
+<style>
+    .api-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+        height: 100%;
+    }
+
+    .api-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .api-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+    }
+
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .status-active {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-inactive {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .code-block {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1rem;
+        font-family: 'Courier New', monospace;
+        font-size: 0.875rem;
+        overflow-x: auto;
+    }
+</style>
+
+<!-- API Status Overview -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="api-card text-center">
+            <div class="api-icon bg-primary bg-opacity-10">
+                <i class="fas fa-key fa-2x text-primary"></i>
+            </div>
+            <h5>مفاتيح API</h5>
+            <h3 class="text-primary">{{ api_keys.count }}</h3>
+            <p class="text-muted mb-0">مفتاح نشط</p>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="api-card text-center">
+            <div class="api-icon bg-success bg-opacity-10">
+                <i class="fas fa-comments fa-2x text-success"></i>
+            </div>
+            <h5>المحادثات</h5>
+            <h3 class="text-success">{{ conversations.count }}</h3>
+            <p class="text-muted mb-0">محادثة AI</p>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="api-card text-center">
+            <div class="api-icon bg-info bg-opacity-10">
+                <i class="fas fa-chart-line fa-2x text-info"></i>
+            </div>
+            <h5>الطلبات</h5>
+            <h3 class="text-info">{{ total_requests }}</h3>
+            <p class="text-muted mb-0">طلب API</p>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="api-card text-center">
+            <div class="api-icon bg-warning bg-opacity-10">
+                <i class="fas fa-robot fa-2x text-warning"></i>
+            </div>
+            <h5>Gemini AI</h5>
+            {% if gemini_available %}
+                <span class="status-badge status-active">متاح</span>
+            {% else %}
+                <span class="status-badge status-inactive">غير متاح</span>
+            {% endif %}
+            <p class="text-muted mb-0 mt-2">حالة الخدمة</p>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-4">
+        <div class="api-card">
+            <div class="text-center mb-3">
+                <i class="fas fa-key fa-3x text-primary mb-3"></i>
+                <h4>إدارة مفاتيح API</h4>
+                <p class="text-muted">إنشاء وإدارة مفاتيح API للوصول للنظام</p>
+            </div>
+            <div class="d-grid gap-2">
+                <a href="{% url 'api:create_key' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>إنشاء مفتاح جديد
+                </a>
+                <a href="#api-keys-section" class="btn btn-outline-primary">
+                    <i class="fas fa-list me-2"></i>عرض المفاتيح
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="api-card">
+            <div class="text-center mb-3">
+                <i class="fas fa-robot fa-3x text-success mb-3"></i>
+                <h4>الذكاء الاصطناعي</h4>
+                <p class="text-muted">محادثة مع Gemini AI وتحليل البيانات</p>
+            </div>
+            <div class="d-grid gap-2">
+                <a href="{% url 'api:ai_chat' %}" class="btn btn-success">
+                    <i class="fas fa-comments me-2"></i>محادثة AI
+                </a>
+                <a href="{% url 'api:data_analysis' %}" class="btn btn-outline-success">
+                    <i class="fas fa-chart-bar me-2"></i>تحليل البيانات
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="api-card">
+            <div class="text-center mb-3">
+                <i class="fas fa-cog fa-3x text-warning mb-3"></i>
+                <h4>إعدادات الذكاء الاصطناعي</h4>
+                <p class="text-muted">إدارة مفاتيح API لمختلف مقدمي الخدمات</p>
+            </div>
+            <div class="d-grid gap-2">
+                <a href="{% url 'api:ai_settings' %}" class="btn btn-warning">
+                    <i class="fas fa-robot me-2"></i>إعدادات AI
+                </a>
+                <a href="{% url 'api:add_ai_config' %}" class="btn btn-outline-warning">
+                    <i class="fas fa-plus me-2"></i>إضافة مقدم خدمة
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="api-card">
+            <div class="text-center mb-3">
+                <i class="fas fa-book fa-3x text-info mb-3"></i>
+                <h4>الوثائق والإحصائيات</h4>
+                <p class="text-muted">وثائق API وإحصائيات الاستخدام</p>
+            </div>
+            <div class="d-grid gap-2">
+                <a href="/api/v1/docs/" target="_blank" class="btn btn-info">
+                    <i class="fas fa-external-link-alt me-2"></i>وثائق API
+                </a>
+                <a href="{% url 'api:usage_stats' %}" class="btn btn-outline-info">
+                    <i class="fas fa-chart-line me-2"></i>إحصائيات الاستخدام
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- API Keys Section -->
+<div id="api-keys-section" class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-key me-2"></i>مفاتيح API الخاصة بك
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if api_keys %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>الاسم</th>
+                            <th>المفتاح</th>
+                            <th>تاريخ الإنشاء</th>
+                            <th>آخر استخدام</th>
+                            <th>الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for key in api_keys %}
+                        <tr>
+                            <td>{{ key.name }}</td>
+                            <td>
+                                <code class="text-muted">{{ key.key|slice:":8" }}...{{ key.key|slice:"-8:" }}</code>
+                                <button class="btn btn-sm btn-outline-secondary ms-2" onclick="copyToClipboard('{{ key.key }}')">
+                                    <i class="fas fa-copy"></i>
+                                </button>
+                            </td>
+                            <td>{{ key.created_at|date:"Y-m-d H:i" }}</td>
+                            <td>
+                                {% if key.last_used %}
+                                    {{ key.last_used|date:"Y-m-d H:i" }}
+                                {% else %}
+                                    <span class="text-muted">لم يستخدم بعد</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if key.is_active %}
+                                    <span class="status-badge status-active">نشط</span>
+                                {% else %}
+                                    <span class="status-badge status-inactive">غير نشط</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-key fa-3x text-muted mb-3"></i>
+                <h5>لا توجد مفاتيح API</h5>
+                <p class="text-muted">قم بإنشاء مفتاح API للبدء في استخدام الخدمات</p>
+                <a href="{% url 'api:create_key' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>إنشاء مفتاح API
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Recent Conversations -->
+{% if conversations %}
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-comments me-2"></i>المحادثات الحديثة مع AI
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="list-group list-group-flush">
+            {% for conversation in conversations %}
+            <div class="list-group-item">
+                <div class="d-flex w-100 justify-content-between">
+                    <h6 class="mb-1">{{ conversation.title }}</h6>
+                    <small>{{ conversation.updated_at|date:"Y-m-d H:i" }}</small>
+                </div>
+                <p class="mb-1 text-muted">{{ conversation.messages.count }} رسالة</p>
+                <a href="{% url 'api:ai_chat' %}?conversation={{ conversation.id }}" class="btn btn-sm btn-outline-primary">
+                    <i class="fas fa-eye me-1"></i>عرض
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- API Usage Example -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-code me-2"></i>مثال على استخدام API
+        </h5>
+    </div>
+    <div class="card-body">
+        <p>استخدم مفتاح API الخاص بك للوصول إلى البيانات:</p>
+        <div class="code-block">
+curl -H "Authorization: ApiKey YOUR_API_KEY" \
+     http://{{ request.get_host }}/api/v1/employees/
+        </div>
+
+        <p class="mt-3">أو للمحادثة مع الذكاء الاصطناعي:</p>
+        <div class="code-block">
+curl -X POST http://{{ request.get_host }}/api/v1/ai/chat/ \
+     -H "Authorization: ApiKey YOUR_API_KEY" \
+     -H "Content-Type: application/json" \
+     -d '{"message": "مرحبا"}'
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(function() {
+        // Show success message
+        const toast = document.createElement('div');
+        toast.className = 'toast align-items-center text-white bg-success border-0 position-fixed top-0 end-0 m-3';
+        toast.style.zIndex = '9999';
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">
+                    تم نسخ المفتاح بنجاح!
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        `;
+        document.body.appendChild(toast);
+        const bsToast = new bootstrap.Toast(toast);
+        bsToast.show();
+
+        setTimeout(() => {
+            document.body.removeChild(toast);
+        }, 3000);
+    });
+}
+</script>
+{% endblock %}

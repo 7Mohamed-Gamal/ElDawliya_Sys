@@ -40,6 +40,7 @@ urlpatterns = [
     path('audit/', include('audit.urls')),  # مسارات تطبيق تسجيل الأحداث
     path('employee-tasks/', include('employee_tasks.urls')),  # مسارات تطبيق مهام الموظفين
     path('cars/', include('cars.urls')),  # مسارات تطبيق السيارات
+    path('api/v1/', include('api.urls')),  # مسارات API
     path('', lambda request: redirect('accounts:login'), name='home'),  # إعادة توجيه الصفحة الرئيسية إلى صفحة الحسابات
 ]
 

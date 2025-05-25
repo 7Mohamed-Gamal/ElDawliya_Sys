@@ -7,7 +7,7 @@ from django.contrib.auth.models import Permission
 # Register custom user model with the custom admin site
 # Removed @admin.register decorator to avoid double registration
 class CustomUserAdmin(UserAdmin):
-    list_display = ['username', 'email', 'first_name', 'last_name', 'IsActive', 'Role']
+    list_display = ['username', 'email', 'first_name', 'last_name', 'is_active', 'Role']
     list_filter = ['Role', 'is_active', 'is_staff', 'is_superuser', 'groups']
     fieldsets = (
         (None, {'fields': ('username', 'password')}),

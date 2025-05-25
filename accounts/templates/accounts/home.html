@@ -18,19 +18,19 @@
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         margin-bottom: 2rem;
     }
-    
+
     .welcome-title {
         color: #2c3e50;
         font-weight: 700;
         font-size: 2.2rem;
         margin-bottom: 1rem;
     }
-    
+
     .welcome-subtitle {
         color: #6c757d;
         font-size: 1.1rem;
     }
-    
+
     .stats-card {
         background: white;
         border-radius: 12px;
@@ -40,51 +40,51 @@
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         height: 100%;
     }
-    
+
     .stats-card:hover {
         transform: translateY(-5px);
         box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
     }
-    
+
     .stats-icon {
         font-size: 2rem;
         margin-bottom: 1rem;
     }
-    
+
     .stats-number {
         font-size: 2rem;
         font-weight: 700;
         margin-bottom: 0.5rem;
     }
-    
+
     .stats-title {
         color: #6c757d;
         margin-bottom: 0;
     }
-    
+
     .primary { color: #4e73df; }
     .secondary { color: #6f42c1; }
     .success { color: #1cc88a; }
     .info { color: #36b9cc; }
-    
+
     .section-title {
         color: #2c3e50;
         font-weight: 600;
         padding-bottom: 0.5rem;
         border-bottom: 2px solid #e9ecef;
     }
-    
+
     .card {
         border: none;
         border-radius: 12px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         transition: transform 0.3s ease;
     }
-    
+
     .card:hover {
         transform: translateY(-5px);
     }
-    
+
     .card-icon {
         width: 80px;
         height: 80px;
@@ -95,17 +95,17 @@
         border-radius: 50%;
         background: rgba(78, 115, 223, 0.1);
     }
-    
+
     .timeline {
         position: relative;
     }
-    
+
     .timeline-item {
         position: relative;
         padding-left: 2rem;
         margin-bottom: 1.5rem;
     }
-    
+
     .timeline-badge {
         position: absolute;
         left: 0;
@@ -115,7 +115,7 @@
         border-radius: 50%;
         background: #4e73df;
     }
-    
+
     .timeline-item::before {
         content: '';
         position: absolute;
@@ -125,33 +125,33 @@
         width: 2px;
         background: #e9ecef;
     }
-    
+
     .table {
         margin-bottom: 0;
     }
-    
+
     .table th {
         border-top: none;
         background: #f8f9fa;
         font-weight: 600;
     }
-    
+
     .btn {
         border-radius: 8px;
         padding: 0.5rem 1rem;
         font-weight: 500;
         transition: all 0.3s ease;
     }
-    
+
     .btn:hover {
         transform: translateY(-2px);
     }
-    
+
     @media (max-width: 768px) {
         .welcome-title {
             font-size: 1.8rem;
         }
-        
+
         .stats-card {
             margin-bottom: 1rem;
         }
@@ -227,7 +227,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="col-lg-4 col-md-6">
         <div class="card h-100">
             <div class="card-body text-center">
@@ -244,7 +244,7 @@
             </div>
         </div>
     </div>
-    
+
     <div class="col-lg-4 col-md-6">
         <div class="card h-100">
             <div class="card-body text-center">
@@ -257,12 +257,12 @@
             <div class="card-footer bg-transparent border-0 pb-4">
                 <div class="row g-3">
                     <div class="col-6">
-                        <a href="{% url 'employees:list' %}" class="btn btn-outline-info w-100">
+                        <a href="{% url 'Hr:employees:list' %}" class="btn btn-outline-info w-100">
                             <i class="fas fa-list me-1"></i> قائمة
                         </a>
                     </div>
                     <div class="col-6">
-                        <a href="{% url 'employees:dashboard' %}" class="btn btn-info w-100">
+                        <a href="{% url 'Hr:dashboard' %}" class="btn btn-info w-100">
                             <i class="fas fa-tachometer-alt me-1"></i> لوحة التحكم
                         </a>
                     </div>
@@ -270,7 +270,7 @@
             </div>
         </div>
     </div>
-    
+
     {% if request.user.Role == 'admin' %}
     <div class="col-lg-4 col-md-6">
         <div class="card h-100">
@@ -298,6 +298,111 @@
         </div>
     </div>
     {% endif %}
+
+    <!-- API & AI Section -->
+    <div class="col-lg-4 col-md-6">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="card-icon mb-3">
+                    <i class="fas fa-robot fa-3x text-primary"></i>
+                </div>
+                <h4 class="card-title">API والذكاء الاصطناعي</h4>
+                <p class="card-text text-muted">إدارة API ومحادثة مع الذكاء الاصطناعي</p>
+            </div>
+            <div class="card-footer bg-transparent border-0 pb-4">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <a href="{% url 'api:dashboard' %}" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-tachometer-alt me-1"></i> لوحة التحكم
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{% url 'api:ai_chat' %}" class="btn btn-primary w-100">
+                            <i class="fas fa-comments me-1"></i> محادثة AI
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="card-icon mb-3">
+                    <i class="fas fa-book fa-3x text-success"></i>
+                </div>
+                <h4 class="card-title">وثائق API</h4>
+                <p class="card-text text-muted">استكشف وثائق API التفاعلية والمطورين</p>
+            </div>
+            <div class="card-footer bg-transparent border-0 pb-4">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <a href="/api/v1/docs/" target="_blank" class="btn btn-outline-success w-100">
+                            <i class="fas fa-external-link-alt me-1"></i> Swagger
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="/api/v1/status/" target="_blank" class="btn btn-success w-100">
+                            <i class="fas fa-heartbeat me-1"></i> حالة API
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="card-icon mb-3">
+                    <i class="fas fa-chart-bar fa-3x text-warning"></i>
+                </div>
+                <h4 class="card-title">تحليل البيانات</h4>
+                <p class="card-text text-muted">تحليل ذكي للبيانات باستخدام الذكاء الاصطناعي</p>
+            </div>
+            <div class="card-footer bg-transparent border-0 pb-4">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <a href="{% url 'api:data_analysis' %}" class="btn btn-outline-warning w-100">
+                            <i class="fas fa-chart-line me-1"></i> تحليل
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{% url 'api:usage_stats' %}" class="btn btn-warning w-100">
+                            <i class="fas fa-chart-pie me-1"></i> إحصائيات
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="card-icon mb-3">
+                    <i class="fas fa-cog fa-3x text-info"></i>
+                </div>
+                <h4 class="card-title">إعدادات الذكاء الاصطناعي</h4>
+                <p class="card-text text-muted">إدارة مفاتيح API لمختلف مقدمي خدمات AI</p>
+            </div>
+            <div class="card-footer bg-transparent border-0 pb-4">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <a href="{% url 'api:ai_settings' %}" class="btn btn-outline-info w-100">
+                            <i class="fas fa-robot me-1"></i> إعدادات
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{% url 'api:add_ai_config' %}" class="btn btn-info w-100">
+                            <i class="fas fa-plus me-1"></i> إضافة
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 <!-- Recent Activities -->

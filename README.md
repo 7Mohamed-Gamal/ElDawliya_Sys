@@ -36,6 +36,15 @@
 - إدارة الموافقات والمراجعات
 - ربط الطلبات بالمخزون
 
+### 6. نظام API والذكاء الاصطناعي (API & AI)
+- **REST API شامل** لجميع وظائف النظام
+- **دمج Google Gemini AI** للمحادثات الذكية وتحليل البيانات
+- **مصادقة متعددة**: API Keys, JWT Tokens, Session Auth
+- **وثائق تفاعلية** مع Swagger UI و ReDoc
+- **تحليل البيانات بالذكاء الاصطناعي** واستخراج الرؤى
+- **نظام صلاحيات متقدم** حسب المجموعات
+- **مراقبة الاستخدام** وإحصائيات الأداء
+
 ## الأنظمة المساندة
 
 ### 1. نظام الأذونات (Permissions)
@@ -81,10 +90,105 @@ python manage.py migrate
 python manage.py createsuperuser
 ```
 
-5. تشغيل الخادم المحلي:
+5. إعداد API والذكاء الاصطناعي (تلقائي):
 ```
-python manage.py runserver
+python setup_api.py
 ```
+
+6. تشغيل الخادم مع API:
+```
+python run_api_server.py
+```
+
+## استخدام API
+
+### الوصول للوثائق التفاعلية
+- **Swagger UI**: http://localhost:8000/api/v1/docs/
+- **ReDoc**: http://localhost:8000/api/v1/redoc/
+- **حالة API**: http://localhost:8000/api/v1/status/
+
+### المصادقة
+```bash
+# باستخدام API Key
+curl -H "Authorization: ApiKey YOUR_API_KEY" http://localhost:8000/api/v1/employees/
+
+# باستخدام JWT Token
+curl -H "Authorization: Bearer YOUR_JWT_TOKEN" http://localhost:8000/api/v1/products/
+```
+
+### أمثلة الاستخدام
+
+#### محادثة مع الذكاء الاصطناعي
+```bash
+curl -X POST http://localhost:8000/api/v1/ai/chat/ \
+  -H "Authorization: ApiKey YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"message": "ما هو عدد الموظفين في النظام؟"}'
+```
+
+#### تحليل بيانات الموظفين
+```bash
+curl -X POST http://localhost:8000/api/v1/ai/analyze/ \
+  -H "Authorization: ApiKey YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"data_type": "employees", "analysis_type": "summary"}'
+```
+
+#### البحث في المنتجات
+```bash
+curl "http://localhost:8000/api/v1/products/?search=كمبيوتر&low_stock=true" \
+  -H "Authorization: ApiKey YOUR_API_KEY"
+```
+
+### إدارة API
+
+#### إنشاء مفتاح API
+```bash
+python manage.py create_api_key username --name "My API Key" --expires-days 30
+```
+
+#### إعداد مجموعات المستخدمين
+```bash
+python manage.py setup_api_groups
+```
+
+#### تشغيل اختبارات API
+```bash
+python manage.py test api
+```
+
+### أمثلة متقدمة
+```bash
+# تشغيل أمثلة شاملة للـ API
+python api_examples.py
+```
+
+## الوثائق والمراجع
+
+### 📚 دلائل مفصلة
+- **[دليل API الكامل](api/README.md)** - شرح شامل لجميع endpoints والميزات
+- **[إعداد قاعدة البيانات](README_DB_SETUP.md)** - دليل إعداد قاعدة البيانات
+- **[الأمان والحماية](SECURITY.md)** - إرشادات الأمان
+
+### 🔧 أدوات التطوير
+- **[أمثلة API](api_examples.py)** - أمثلة عملية لاستخدام API
+- **[إعداد تلقائي](setup_api.py)** - سكريبت إعداد API تلقائياً
+- **[تشغيل الخادم](run_api_server.py)** - تشغيل خادم محسن للـ API
+
+### 🤖 ميزات الذكاء الاصطناعي
+- **محادثات ذكية**: استخدام Gemini AI للإجابة على الاستفسارات
+- **تحليل البيانات**: تحليل ذكي لبيانات النظام واستخراج الرؤى
+- **التوصيات**: توصيات ذكية لتحسين الأداء
+- **المساعد الافتراضي**: مساعد ذكي لإدارة النظام
+
+### 📊 نقاط النهاية الرئيسية
+- `GET /api/v1/status/` - حالة النظام
+- `GET /api/v1/employees/` - بيانات الموظفين
+- `GET /api/v1/products/` - بيانات المنتجات
+- `GET /api/v1/tasks/` - المهام
+- `GET /api/v1/meetings/` - الاجتماعات
+- `POST /api/v1/ai/chat/` - محادثة مع AI
+- `POST /api/v1/ai/analyze/` - تحليل البيانات
 
 ## المساهمة في التطوير
 - استخدم Git للتحكم في الإصدارات
