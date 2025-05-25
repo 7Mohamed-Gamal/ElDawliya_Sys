@@ -18,6 +18,13 @@
         position: relative;
         overflow: hidden;
         min-height: 120px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
     }
     
     .stat-card .stat-icon {
@@ -62,6 +69,36 @@
     .stat-card.secondary {
         background-color: var(--secondary-color);
     }
+    
+    /* Task Modal Styles */
+    .tasks-modal-title {
+        font-weight: bold;
+    }
+    
+    .modal-header.primary {
+        background-color: var(--primary-color);
+        color: white;
+    }
+    
+    .modal-header.info {
+        background-color: var(--info-color);
+        color: white;
+    }
+    
+    .modal-header.success {
+        background-color: var(--success-color);
+        color: white;
+    }
+    
+    .modal-header.danger {
+        background-color: var(--danger-color);
+        color: white;
+    }
+    
+    .modal-header.warning {
+        background-color: var(--warning-color);
+        color: white;
+    }
 </style>
 {% endblock %}
 
@@ -77,7 +114,7 @@
     <!-- Stats Cards -->
     <div class="row mb-4">
         <div class="col-md-4 col-sm-6">
-            <div class="stat-card primary">
+            <div class="stat-card primary" data-status="pending" data-title="مهام قيد الانتظار">
                 <div class="stat-number">{{ status_stats.pending }}</div>
                 <div class="stat-title">مهام قيد الانتظار</div>
                 <div class="stat-icon">
@@ -86,7 +123,7 @@
             </div>
         </div>
         <div class="col-md-4 col-sm-6">
-            <div class="stat-card info">
+            <div class="stat-card info" data-status="in_progress" data-title="مهام قيد التنفيذ">
                 <div class="stat-number">{{ status_stats.in_progress }}</div>
                 <div class="stat-title">مهام قيد التنفيذ</div>
                 <div class="stat-icon">
@@ -95,7 +132,7 @@
             </div>
         </div>
         <div class="col-md-4 col-sm-6">
-            <div class="stat-card success">
+            <div class="stat-card success" data-status="completed" data-title="مهام مكتملة">
                 <div class="stat-number">{{ status_stats.completed }}</div>
                 <div class="stat-title">مهام مكتملة</div>
                 <div class="stat-icon">
@@ -202,7 +239,7 @@
                             <div class="card bg-light">
                                 <div class="card-body text-center">
                                     <h6 class="card-title">المهام المتأخرة</h6>
-                                    <h2 class="mb-0" id="overdueTasks">0</h2>
+                                    <h2 class="mb-0 stat-card-clickable" id="overdueTasks" data-status="overdue" data-title="المهام المتأخرة">{{ overdue_tasks|default:0 }}</h2>
                                     <small class="text-muted">المهام التي تجاوزت تاريخ الاستحقاق</small>
                                 </div>
                             </div>
@@ -211,12 +248,57 @@
                             <div class="card bg-light">
                                 <div class="card-body text-center">
                                     <h6 class="card-title">المهام الحرجة</h6>
-                                    <h2 class="mb-0">{{ priority_stats.urgent }}</h2>
+                                    <h2 class="mb-0 stat-card-clickable" data-priority="urgent" data-title="المهام الحرجة">{{ priority_stats.urgent }}</h2>
                                     <small class="text-muted">المهام ذات الأولوية العاجلة</small>
                                 </div>
                             </div>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Tasks Modal -->
+    <div class="modal fade" id="tasksModal" tabindex="-1" aria-labelledby="tasksModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title tasks-modal-title" id="tasksModalLabel">قائمة المهام</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="tasks-loading" class="text-center py-4">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">جاري التحميل...</span>
+                        </div>
+                        <p class="mt-2">جاري تحميل المهام...</p>
+                    </div>
+                    <div id="tasks-container" class="d-none">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>العنوان</th>
+                                        <th>التصنيف</th>
+                                        <th>الحالة</th>
+                                        <th>الأولوية</th>
+                                        <th>تاريخ الاستحقاق</th>
+                                        <th>التقدم</th>
+                                        <th>الإجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tasks-table-body">
+                                    <!-- سيتم ملء هذا الجزء ديناميكيًا -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="no-tasks-message" class="alert alert-info d-none">
+                            لا توجد مهام للعرض
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
                 </div>
             </div>
         </div>
@@ -227,6 +309,142 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    // إعداد نافذة المهام
+    const tasksModal = new bootstrap.Modal(document.getElementById('tasksModal'));
+    let currentStatus = null;
+    let currentPriority = null;
+    let modalTitle = document.getElementById('tasksModalLabel');
+    let modalHeader = document.querySelector('.modal-header');
+    const taskContainer = document.getElementById('tasks-container');
+    const tasksLoading = document.getElementById('tasks-loading');
+    const tasksTableBody = document.getElementById('tasks-table-body');
+    const noTasksMessage = document.getElementById('no-tasks-message');
+    
+    // إضافة معالجات الأحداث لبطاقات الإحصاءات
+    document.querySelectorAll('.stat-card').forEach(card => {
+        card.addEventListener('click', function() {
+            const status = this.getAttribute('data-status');
+            const title = this.getAttribute('data-title');
+            
+            // تعيين العنوان وفئة الرأس للنافذة المنبثقة
+            modalTitle.textContent = title;
+            modalHeader.className = 'modal-header ' + this.classList[1]; // نفس لون البطاقة
+            
+            // إعادة تعيين المتغيرات
+            currentStatus = status;
+            currentPriority = null;
+            
+            // عرض النافذة المنبثقة وتحميل المهام
+            tasksModal.show();
+            loadTasks();
+        });
+    });
+    
+    // إضافة معالجات الأحداث لبطاقات المهام الخاصة
+    document.querySelectorAll('.stat-card-clickable').forEach(card => {
+        card.addEventListener('click', function() {
+            const status = this.getAttribute('data-status');
+            const priority = this.getAttribute('data-priority');
+            const title = this.getAttribute('data-title');
+            
+            // تعيين العنوان وفئة الرأس للنافذة المنبثقة
+            modalTitle.textContent = title;
+            
+            // تحديد لون الرأس
+            if (status === 'overdue') {
+                modalHeader.className = 'modal-header danger';
+            } else if (priority === 'urgent') {
+                modalHeader.className = 'modal-header warning';
+            }
+            
+            // إعادة تعيين المتغيرات
+            currentStatus = status;
+            currentPriority = priority;
+            
+            // عرض النافذة المنبثقة وتحميل المهام
+            tasksModal.show();
+            loadTasks();
+        });
+    });
+    
+    // وظيفة لتحميل المهام بناءً على المعايير المحددة
+    function loadTasks() {
+        // إظهار شاشة التحميل
+        tasksLoading.classList.remove('d-none');
+        taskContainer.classList.add('d-none');
+        tasksTableBody.innerHTML = '';
+        
+        // تحضير معلمات URL
+        let url = '{% url "employee_tasks:task_list" %}?';
+        let params = [];
+        
+        // إضافة معلمات البحث
+        if (currentStatus === 'pending') {
+            params.push('status=pending');
+        } else if (currentStatus === 'in_progress') {
+            params.push('status=in_progress');
+        } else if (currentStatus === 'completed') {
+            params.push('status=completed');
+        } else if (currentStatus === 'overdue') {
+            // المهام المتأخرة (تاريخ الاستحقاق في الماضي والمهام غير مكتملة)
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            const formattedDate = `${year}-${month}-${day}`;
+            
+            params.push('end_date=' + formattedDate);
+            params.push('status=pending');
+            params.push('status=in_progress');
+        }
+        
+        // إضافة معلمات الأولوية
+        if (currentPriority === 'urgent') {
+            params.push('priority=urgent');
+        }
+        
+        // إنشاء URL النهائي
+        if (params.length > 0) {
+            url += params.join('&');
+        }
+        
+        // تحميل المهام باستخدام fetch
+        fetch(url)
+            .then(response => response.text())
+            .then(html => {
+                // إخفاء شاشة التحميل
+                tasksLoading.classList.add('d-none');
+                taskContainer.classList.remove('d-none');
+                
+                // تحليل HTML المستجاب
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                // البحث عن جدول المهام في الاستجابة
+                const taskRows = doc.querySelectorAll('table tbody tr');
+                
+                if (taskRows.length > 0) {
+                    // إضافة صفوف المهام إلى الجدول
+                    taskRows.forEach(row => {
+                        tasksTableBody.appendChild(row.cloneNode(true));
+                    });
+                    
+                    // إظهار الجدول وإخفاء رسالة "لا توجد مهام"
+                    noTasksMessage.classList.add('d-none');
+                } else {
+                    // إظهار رسالة "لا توجد مهام"
+                    noTasksMessage.classList.remove('d-none');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading tasks:', error);
+                tasksLoading.classList.add('d-none');
+                taskContainer.classList.remove('d-none');
+                noTasksMessage.textContent = 'حدث خطأ أثناء تحميل المهام. يرجى المحاولة مرة أخرى.';
+                noTasksMessage.classList.remove('d-none');
+            });
+    }
+    
     document.addEventListener('DOMContentLoaded', function() {
         // Status Chart
         const statusCtx = document.getElementById('statusChart').getContext('2d');
@@ -407,7 +625,6 @@
         document.getElementById('averageProgress').textContent = averageProgress + '%';
         
         // Set overdue tasks
-        // This is a placeholder - in a real implementation, you would get this from the backend
         document.getElementById('overdueTasks').textContent = '{{ overdue_tasks|default:0 }}';
     });
 </script>
