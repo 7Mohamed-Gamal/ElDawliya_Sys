@@ -192,7 +192,7 @@
                 </button>
 
                 {% if perms.inventory.change_voucher or user|is_admin %}
-                    <a href="{% url 'inventory:edit_voucher' voucher.id %}" class="btn btn-primary">
+                    <a href="{% url 'inventory:voucher_edit' voucher.voucher_number %}" class="btn btn-primary">
                         <i class="fas fa-edit me-1"></i> تعديل
                     </a>
                 {% endif %}
@@ -422,6 +422,55 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Delete Confirmation -->
+<div class="modal fade" id="deleteVoucherModal" tabindex="-1" aria-labelledby="deleteVoucherModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteVoucherModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    {% trans "تأكيد الحذف" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <p class="mb-0">
+                        {% trans "هل أنت متأكد من حذف إذن" %} #{{ voucher.voucher_number }}؟
+                    </p>
+                    <p class="mb-0 mt-2">
+                        {% trans "سيتم تعديل أرصدة الأصناف المرتبطة بهذا الإذن والتراجع عن تأثير هذا الإذن على المخزون." %}
+                    </p>
+                </div>
+                <div class="border p-3 rounded mb-3">
+                    <div class="mb-2">
+                        <strong>{% trans "رقم الإذن" %}:</strong> {{ voucher.voucher_number }}
+                    </div>
+                    <div class="mb-2">
+                        <strong>{% trans "نوع الإذن" %}:</strong> {{ voucher.get_voucher_type_display }}
+                    </div>
+                    <div>
+                        <strong>{% trans "عدد الأصناف" %}:</strong> {{ voucher_items.count }}
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>
+                    {% trans "إلغاء" %}
+                </button>
+                <form method="post" action="{% url 'inventory:voucher_delete' voucher.voucher_number %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash-alt me-1"></i>
+                        {% trans "تأكيد الحذف" %}
+                    </button>
+                </form>
             </div>
         </div>
     </div>

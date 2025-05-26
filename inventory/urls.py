@@ -15,7 +15,8 @@ from .views import (
     api_views,
     settings_views,
     utility_views,
-    api_functions
+    api_functions,
+    product_movement_views
 )
 
 app_name = 'inventory'
@@ -84,6 +85,10 @@ urlpatterns = [
     path('reports/stock/', report_views.stock_report, name='stock_report'),
     path('reports/movement/', report_views.movement_report, name='movement_report'),
     path('reports/vouchers/', report_views.voucher_report, name='voucher_report'),
+
+    # حركات الأصناف (Product Movements)
+    path('product-movements/', product_movement_views.ProductMovementListView.as_view(), name='product_movement_list'),
+    path('product-movements/<str:product_id>/', product_movement_views.ProductMovementView.as_view(), name='product_movements'),
 
     # واجهة برمجة التطبيقات (API)
     path('api/search-products-get/', api_views.search_products, name='search_products'),  # GET endpoint for search

@@ -14,7 +14,7 @@
                     قائمة الموردين
                 </h4>
                 {% if perms.inventory.add_supplier or user.is_superuser %}
-                    <a href="{% url 'inventory:add_supplier' %}" class="btn btn-primary">
+                    <a href="{% url 'inventory:supplier_add' %}" class="btn btn-primary">
                         <i class="fas fa-plus-circle me-1"></i> إضافة مورد جديد
                     </a>
                 {% endif %}
@@ -41,7 +41,7 @@
                                 <td>
                                     <div class="btn-group" role="group">
                                         {% if perms.inventory.change_supplier or user.is_superuser %}
-                                        <a href="{% url 'inventory:edit_supplier' supplier.id %}" class="btn btn-sm btn-primary">
+                                        <a href="{% url 'inventory:supplier_edit' supplier.id %}" class="btn btn-sm btn-primary">
                                             <i class="fas fa-edit"></i>
                                         </a>
                                         {% endif %}
@@ -71,4 +71,24 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle delete supplier buttons
+        const deleteButtons = document.querySelectorAll('.delete-supplier');
+        
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const supplierId = this.getAttribute('data-supplier-id');
+                const supplierName = this.getAttribute('data-supplier-name');
+                
+                if (confirm(`هل أنت متأكد من حذف المورد "${supplierName}"؟`)) {
+                    window.location.href = "{% url 'inventory:supplier_delete' 0 %}".replace('0', supplierId);
+                }
+            });
+        });
+    });
+</script>
 {% endblock %}
