@@ -210,7 +210,7 @@
                     <li>
                         <i class="fas fa-tasks"></i>
                         <span class="info-label">المهام:</span>
-                        <span>{{ meeting.tasks.count }} مهمة ({{ completed_count }} مكتملة)</span>
+                        <span>{{ meeting.meeting_tasks.count }} مهمة ({{ completed_count }} مكتملة)</span>
                     </li>
                     {% if meeting.status == 'completed' %}
                     <li>
@@ -240,7 +240,7 @@
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="tasks-tab" data-bs-toggle="tab" data-bs-target="#tasks" type="button" role="tab" aria-controls="tasks" aria-selected="false">
                 <i class="fas fa-tasks me-1"></i> المهام
-                <span class="badge bg-primary ms-1">{{ meeting.tasks.count }}</span>
+                <span class="badge bg-primary ms-1">{{ meeting.meeting_tasks.count }}</span>
             </button>
         </li>
     </ul>
@@ -258,7 +258,7 @@
             </div>
             
             <!-- Task Progress -->
-            {% if meeting.tasks.exists %}
+            {% if meeting.meeting_tasks.exists %}
             <div class="card mt-4">
                 <div class="card-header">
                     <h5 class="card-title mb-0"><i class="fas fa-chart-pie me-2 text-primary"></i> تقدم المهام</h5>
@@ -296,7 +296,7 @@
                                         <span>قيد الانتظار</span>
                                     </div>
                                     <div class="d-flex align-items-center">
-                                        <span class="h4 mb-0">{{ meeting.tasks.count|add:"-"|add:completed_count|add:"-"|add:in_progress_count }}</span>
+                                        <span class="h4 mb-0">{{ meeting.meeting_tasks.count|add:"-"|add:completed_count|add:"-"|add:in_progress_count }}</span>
                                         <span class="text-muted ms-2">({{ pending_percent|floatformat:0 }}%)</span>
                                     </div>
                                 </div>
@@ -406,9 +406,9 @@
                     {% endif %}
                 </div>
                 <div class="card-body">
-                    {% if meeting.tasks.exists %}
+                    {% if meeting.meeting_tasks.exists %}
                     <div class="row">
-                        {% for task in meeting.tasks.all %}
+                        {% for task in meeting.meeting_tasks.all %}
                         <div class="col-md-6">
                             <div class="card task-card">
                                 <div class="card-body">
@@ -495,7 +495,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        {% if meeting.tasks.exists %}
+        {% if meeting.meeting_tasks.exists %}
         // Task Status Chart
         const statusCtx = document.getElementById('taskStatusChart').getContext('2d');
         

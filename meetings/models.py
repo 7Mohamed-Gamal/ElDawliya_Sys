@@ -1,6 +1,32 @@
 from django.db import models
 from accounts.models import Users_Login_New
 
+class MeetingTask(models.Model):
+    """
+    نموذج مهام الاجتماع
+    يستخدم لتخزين المهام المرتبطة بالاجتماعات
+    """
+    STATUS_CHOICES = [
+        ('pending', 'قيد الانتظار'),
+        ('in_progress', 'قيد التنفيذ'),
+        ('completed', 'مكتملة'),
+    ]
+    
+    meeting = models.ForeignKey('Meeting', on_delete=models.CASCADE, related_name='meeting_tasks', verbose_name="الاجتماع")
+    description = models.TextField(verbose_name="وصف المهمة")
+    assigned_to = models.ForeignKey(Users_Login_New, on_delete=models.SET_NULL, null=True, blank=True, 
+                                    related_name='meeting_tasks', verbose_name="تم تعيينها لـ")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="الحالة")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ الإنشاء")
+    end_date = models.DateField(null=True, blank=True, verbose_name="تاريخ الانتهاء المتوقع")
+
+    class Meta:
+        verbose_name = "مهمة اجتماع"
+        verbose_name_plural = "مهام الاجتماعات"
+
+    def __str__(self):
+        return f"{self.description[:50]}..." if len(self.description) > 50 else self.description
+
 class Meeting(models.Model):
     """
     نموذج الاجتماعات

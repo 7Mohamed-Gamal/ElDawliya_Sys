@@ -17,9 +17,9 @@ DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'False'
 
 # Allowed hosts
 if DEBUG:
-    ALLOWED_HOSTS = [SERVER_IP, '127.0.0.1', 'localhost']
+    ALLOWED_HOSTS = [SERVER_IP, '127.0.0.1', 'localhost', '197.44.104.245']
 else:
-    ALLOWED_HOSTS = [SERVER_IP, '127.0.0.1', 'localhost']
+    ALLOWED_HOSTS = [SERVER_IP, '197.44.104.245', 'localhost']
 
 # Application definition
 INSTALLED_APPS = [

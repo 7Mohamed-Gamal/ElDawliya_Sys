@@ -75,9 +75,240 @@
     .action-btn:hover {
         transform: translateY(-1px);
     }
+    
+    /* Category Cards Styling */
+    .category-cards {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .category-card {
+        flex: 1 1 300px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        margin-bottom: 1rem;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .category-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .category-header {
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        color: white;
+        font-weight: 600;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .category-body {
+        padding: 1rem;
+        max-height: 350px;
+        overflow-y: auto;
+    }
+    
+    .category-search-box {
+        padding: 0.5rem;
+        background-color: rgba(0, 0, 0, 0.03);
+        border-radius: 0.25rem;
+        margin-bottom: 1rem;
+    }
+    
+    .loading-spinner {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.7);
+        z-index: 1000;
+    }
+    
+    .permission-badge {
+        margin-right: 0.25rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    /* View toggle buttons */
+    .view-toggle-buttons {
+        margin-bottom: 1rem;
+    }
+    
+    .cards-view {
+        display: none;
+    }
+    
+    .cards-view.active {
+        display: block;
+    }
+    
+    .standard-view.active {
+        display: block;
+    }
+    
+    .standard-view {
+        display: none;
+    }
 </style>
 {% endblock %}
 
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Toggle between standard view and cards view
+        $("#standardViewBtn").click(function() {
+            $(".standard-view").addClass("active");
+            $(".cards-view").removeClass("active");
+            $(this).addClass("active");
+            $("#cardsViewBtn").removeClass("active");
+        });
+
+        $("#cardsViewBtn").click(function() {
+            $(".cards-view").addClass("active");
+            $(".standard-view").removeClass("active");
+            $(this).addClass("active");
+            $("#standardViewBtn").removeClass("active");
+        });
+
+        // Refresh permissions button functionality
+        $(".refresh-permissions-btn").click(function() {
+            // Show loading spinner
+            $(".loading-spinner").removeClass("d-none");
+            
+            // Reload the page to refresh the permissions list
+            location.reload();
+        });
+
+        // Permission search functionality
+        $("#permissionSearch").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            $(".permission-checkbox").each(function() {
+                var text = $(this).text().toLowerCase();
+                $(this).toggle(text.indexOf(value) > -1);
+            });
+        });
+
+        // Clear search button
+        $("#clearSearchBtn").click(function() {
+            $("#permissionSearch").val("");
+            $(".permission-checkbox").show();
+        });
+
+        // Category-specific search
+        $(".category-search").on("keyup", function() {
+            var value = $(this).val().toLowerCase();
+            var container = $(this).closest(".category-body").find(".card-checkbox");
+            
+            container.each(function() {
+                var text = $(this).text().toLowerCase();
+                $(this).toggle(text.indexOf(value) > -1);
+            });
+        });
+
+        // Select all permissions in a group
+        $(".select-all").click(function() {
+            var group = $(this).data("group");
+            $("#group-" + group).find("input[type='checkbox']").prop("checked", true);
+        });
+
+        // Deselect all permissions in a group
+        $(".deselect-all").click(function() {
+            var group = $(this).data("group");
+            $("#group-" + group).find("input[type='checkbox']").prop("checked", false);
+        });
+
+        // Select all permissions in a card
+        $(".select-card-all").click(function() {
+            var app = $(this).data("app");
+            $(this).closest(".category-card").find("input[type='checkbox']").prop("checked", true);
+        });
+
+        // Deselect all permissions in a card
+        $(".deselect-card-all").click(function() {
+            var app = $(this).data("app");
+            $(this).closest(".category-card").find("input[type='checkbox']").prop("checked", false);
+        });
+
+        // Permission templates
+        $(".template-btn").click(function() {
+            var template = $(this).data("template");
+            $(".loading-spinner").removeClass("d-none");
+            
+            // Uncheck all checkboxes first
+            $("input[type='checkbox']").prop("checked", false);
+            
+            // Apply template based on selection
+            switch(template) {
+                case "admin":
+                    // Check all permissions
+                    $("input[type='checkbox']").prop("checked", true);
+                    break;
+                case "hr":
+                    // Check HR-related permissions
+                    $("input[type='checkbox']").each(function() {
+                        var label = $(this).parent().text().toLowerCase();
+                        if (label.includes("employee") || 
+                            label.includes("user") || 
+                            label.includes("hr") || 
+                            label.includes("attendance")) {
+                            $(this).prop("checked", true);
+                        }
+                    });
+                    break;
+                case "inventory":
+                    // Check inventory-related permissions
+                    $("input[type='checkbox']").each(function() {
+                        var label = $(this).parent().text().toLowerCase();
+                        if (label.includes("product") || 
+                            label.includes("inventory") || 
+                            label.includes("stock") || 
+                            label.includes("supplier")) {
+                            $(this).prop("checked", true);
+                        }
+                    });
+                    break;
+                case "reports":
+                    // Check report-related permissions
+                    $("input[type='checkbox']").each(function() {
+                        var label = $(this).parent().text().toLowerCase();
+                        if (label.includes("report") || 
+                            label.includes("view") || 
+                            label.includes("export")) {
+                            $(this).prop("checked", true);
+                        }
+                    });
+                    break;
+            }
+            
+            // Hide spinner after template applied
+            setTimeout(function() {
+                $(".loading-spinner").addClass("d-none");
+            }, 500);
+        });
+
+        // Clear all permissions
+        $(".clear-all-btn").click(function() {
+            $(".loading-spinner").removeClass("d-none");
+            $("input[type='checkbox']").prop("checked", false);
+            
+            // Hide spinner after clearing
+            setTimeout(function() {
+                $(".loading-spinner").addClass("d-none");
+            }, 300);
+        });
+    });
+</script>
+{% endblock %}
 {% block content %}
 <div class="row">
     <div class="col-12 mb-4">
@@ -169,6 +400,11 @@
                                         <button type="button" class="btn btn-sm btn-outline-primary template-btn" data-template="inventory">مخازن</button>
                                         <button type="button" class="btn btn-sm btn-outline-primary template-btn" data-template="reports">تقارير</button>
                                     </div>
+                                    <div class="d-flex gap-2 mb-2">
+                                        <button type="button" class="btn btn-sm btn-outline-success refresh-permissions-btn w-100">
+                                            <i class="fas fa-sync-alt me-1"></i> تحديث قائمة الصلاحيات
+                                        </button>
+                                    </div>
                                     <button type="button" class="btn btn-sm btn-outline-danger clear-all-btn w-100">
                                         <i class="fas fa-trash-alt me-1"></i> إزالة جميع الصلاحيات
                                     </button>
@@ -183,7 +419,14 @@
                     
                     <div class="row mb-3">
                         <div class="col-12">
-                            <div class="permissions-container">
+                            <div class="permissions-container position-relative">
+                                <!-- Loading Spinner (initially hidden) -->
+                                <div class="loading-spinner d-none">
+                                    <div class="spinner-border text-primary" role="status">
+                                        <span class="visually-hidden">جاري التحميل...</span>
+                                    </div>
+                                </div>
+                                
                                 <!-- Enhanced Search Box -->
                                 <div class="search-box">
                                     <div class="input-group">
@@ -199,248 +442,146 @@
                                     </div>
                                 </div>
                                 
+                                <!-- View Toggle Buttons -->
+                                <div class="view-toggle-buttons d-flex justify-content-center mb-3">
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-outline-primary active" id="standardViewBtn">
+                                            <i class="fas fa-list me-1"></i> عرض قياسي
+                                        </button>
+                                        <button type="button" class="btn btn-outline-primary" id="cardsViewBtn">
+                                            <i class="fas fa-th-large me-1"></i> عرض البطاقات
+                                        </button>
+                                    </div>
+                                </div>
+                                
                                 {{ form.permissions.errors }}
                                 
-                                <!-- Grouped permissions by app -->
-                                <div class="permissions-list px-3 py-2">
-                                    {% regroup form.permissions|dictsort:"choice_label" by choice_label.instance.content_type.app_label as app_list %}
-                                    
-                                    {% for app, perm_list in app_list %}
-                                    <div class="permission-group">
-                                        <div class="permission-group-header" data-bs-toggle="collapse" data-bs-target="#group-{{ app }}">
-                                            <h6 class="mb-0 d-flex align-items-center">
-                                                <i class="fas fa-angle-down me-2"></i>
-                                                {{ app }}
-                                                <span class="badge bg-secondary ms-2">{{ perm_list|length }}</span>
-                                            </h6>
-                                            <div class="d-flex gap-2">
-                                                <button type="button" class="btn btn-sm btn-outline-primary select-all" data-group="{{ app }}">
-                                                    <i class="fas fa-check-square"></i> الكل
-                                                </button>
-                                                <button type="button" class="btn btn-sm btn-outline-secondary deselect-all" data-group="{{ app }}">
-                                                    <i class="fas fa-square"></i> لا شيء
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div class="permission-group-content collapse show" id="group-{{ app }}">
-                                            <!-- Group by permission type -->
-                                            {% regroup perm_list by choice_label.instance.codename|slice:":4" as perm_type_list %}
-                                            
-                                            {% for perm_type, checkboxes in perm_type_list %}
-                                            <div class="permission-section">
-                                                <div class="permission-section-title">
-                                                    {% if "view" in perm_type %}
-                                                    <span class="badge bg-success"><i class="fas fa-eye me-1"></i> عرض</span>
-                                                    {% elif "add_" in perm_type %}
-                                                    <span class="badge bg-primary"><i class="fas fa-plus me-1"></i> إضافة</span>
-                                                    {% elif "chan" in perm_type %}
-                                                    <span class="badge bg-warning"><i class="fas fa-edit me-1"></i> تعديل</span>
-                                                    {% elif "dele" in perm_type %}
-                                                    <span class="badge bg-danger"><i class="fas fa-trash-alt me-1"></i> حذف</span>
-                                                    {% else %}
-                                                    <span class="badge bg-secondary">{{ perm_type }}</span>
-                                                    {% endif %}
+                                <!-- Standard View (Default) -->
+                                <div class="standard-view active">
+                                    <div class="permissions-list px-3 py-2">
+                                        {% regroup form.permissions|dictsort:"choice_label" by choice_label.instance.content_type.app_label as app_list %}
+                                        
+                                        {% for app, perm_list in app_list %}
+                                        <div class="permission-group">
+                                            <div class="permission-group-header" data-bs-toggle="collapse" data-bs-target="#group-{{ app }}">
+                                                <h6 class="mb-0 d-flex align-items-center">
+                                                    <i class="fas fa-angle-down me-2"></i>
+                                                    {{ app }}
+                                                    <span class="badge bg-secondary ms-2">{{ perm_list|length }}</span>
+                                                </h6>
+                                                <div class="d-flex gap-2">
+                                                    <button type="button" class="btn btn-sm btn-outline-primary select-all" data-group="{{ app }}">
+                                                        <i class="fas fa-check-square"></i> الكل
+                                                    </button>
+                                                    <button type="button" class="btn btn-sm btn-outline-secondary deselect-all" data-group="{{ app }}">
+                                                        <i class="fas fa-square"></i> لا شيء
+                                                    </button>
                                                 </div>
+                                            </div>
+                                            <div class="permission-group-content collapse show" id="group-{{ app }}">
+                                                <!-- Group by permission type -->
+                                                {% regroup perm_list by choice_label.instance.codename|slice:":4" as perm_type_list %}
                                                 
-                                                <div class="permission-items">
-                                                    {% for checkbox in checkboxes %}
-                                                    <div class="permission-checkbox {% if 'view' in checkbox.choice_label.instance.codename %}type-view{% elif 'add_' in checkbox.choice_label.instance.codename %}type-add{% elif 'chan' in checkbox.choice_label.instance.codename %}type-change{% elif 'dele' in checkbox.choice_label.instance.codename %}type-delete{% endif %}">
-                                                        <div class="form-check">
-                                                            {{ checkbox.tag }}
-                                                            <label class="form-check-label" for="{{ checkbox.id_for_label }}">
-                                                                <span>{{ checkbox.choice_label }}</span>
-                                                            </label>
-                                                        </div>
+                                                {% for perm_type, checkboxes in perm_type_list %}
+                                                <div class="permission-section">
+                                                    <div class="permission-section-title">
+                                                        {% if "view" in perm_type %}
+                                                        <span class="badge bg-success"><i class="fas fa-eye me-1"></i> عرض</span>
+                                                        {% elif "add_" in perm_type %}
+                                                        <span class="badge bg-primary"><i class="fas fa-plus me-1"></i> إضافة</span>
+                                                        {% elif "chan" in perm_type %}
+                                                        <span class="badge bg-warning"><i class="fas fa-edit me-1"></i> تعديل</span>
+                                                        {% elif "dele" in perm_type %}
+                                                        <span class="badge bg-danger"><i class="fas fa-trash-alt me-1"></i> حذف</span>
+                                                        {% else %}
+                                                        <span class="badge bg-secondary">{{ perm_type }}</span>
+                                                        {% endif %}
                                                     </div>
-                                                    {% endfor %}
-                                                </div>
-                                            </div>
-                                            {% endfor %}
-                                        </div>
+                                                    
+                                    <div class="permission-items">
+                                        {% for checkbox in checkboxes %}
+<div class="permission-checkbox {% if 'view' in checkbox.choice_label.instance.codename %}type-view{% elif 'add_' in checkbox.choice_label.instance.codename %}type-add{% elif 'change' in checkbox.choice_label.instance.codename %}type-change{% elif 'delete' in checkbox.choice_label.instance.codename %}type-delete{% endif %}">
+    {{ checkbox }}
+    <label for="{{ checkbox.id_for_label }}" class="ms-2">
+        {{ checkbox.choice_label.instance.name|title }}
+    </label>
+</div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Cards View -->
+                <div class="cards-view">
+                    <div class="category-cards">
+                        {% regroup form.permissions|dictsort:"choice_label" by choice_label.instance.content_type.app_label as app_list %}
+                        
+                        {% for app, perm_list in app_list %}
+                        <div class="category-card">
+                            <div class="category-header bg-primary">
+                                <span>{{ app }}</span>
+                                <span class="badge bg-light text-dark">{{ perm_list|length }}</span>
+                            </div>
+                            <div class="category-body">
+                                <div class="category-search-box mb-3">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                        <input type="text" class="form-control category-search" placeholder="بحث...">
+                                    </div>
+                                </div>
+                                
+                                <div class="d-flex mb-2">
+                                    <button type="button" class="btn btn-sm btn-outline-primary me-2 select-card-all" data-app="{{ app }}">
+                                        <i class="fas fa-check-square"></i> الكل
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary deselect-card-all" data-app="{{ app }}">
+                                        <i class="fas fa-square"></i> لا شيء
+                                    </button>
+                                </div>
+                                
+                                <div class="card-checkbox-container">
+                                    {% for checkbox in perm_list %}
+                                    <div class="permission-checkbox card-checkbox {% if 'view' in checkbox.choice_label.instance.codename %}type-view{% elif 'add_' in checkbox.choice_label.instance.codename %}type-add{% elif 'change' in checkbox.choice_label.instance.codename %}type-change{% elif 'delete' in checkbox.choice_label.instance.codename %}type-delete{% endif %}">
+                                        {{ checkbox }}
+                                        <label for="{{ checkbox.id_for_label }}" class="ms-2">
+                                            {{ checkbox.choice_label.instance.name|title }}
+                                        </label>
                                     </div>
                                     {% endfor %}
                                 </div>
                             </div>
                         </div>
+                        {% endfor %}
                     </div>
-                    
-                    <!-- Submit Buttons -->
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                        <a href="{% url 'administrator:user_list' %}" class="btn btn-outline-secondary">
-                            <i class="fas fa-times me-1"></i>
-                            إلغاء
-                        </a>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save me-1"></i>
-                            حفظ الصلاحيات
-                        </button>
-                    </div>
-                </form>
+                </div>
             </div>
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
-<script>
-    $(document).ready(function() {
-        // Keep track of selected count
-        function updateSelectedCount() {
-            const totalCount = $('input[name="permissions"]:checked').length;
-            const totalPermissions = $('input[name="permissions"]').length;
-            $('.total-selected').text(totalCount);
-            $('.total-permissions').text(totalPermissions);
-            
-            // Update counts by app
-            $('.permission-group').each(function() {
-                const app = $(this).find('.permission-group-header h6 span.app-name').text().trim();
-                const checkedCount = $(this).find('input[name="permissions"]:checked').length;
-                const totalCount = $(this).find('input[name="permissions"]').length;
-                $(this).find('.permission-counter').text(checkedCount + '/' + totalCount);
-            });
-        }
-        
-        // Initialize counts
-        updateSelectedCount();
-        
-        // Search functionality with highlighting
-        $('#permissionSearch').on('keyup', function() {
-            const value = $(this).val().toLowerCase();
-            
-            // If search is empty, show all
-            if (value === '') {
-                $('.permission-checkbox').show();
-                $('.permission-group').show();
-                $('.permission-section').show();
-                $('.permission-checkbox span').each(function() {
-                    $(this).html($(this).text());
-                });
-                return;
-            }
-            
-            // Hide all by default
-            $('.permission-checkbox').hide();
-            
-            // Search and highlight
-            $('.permission-checkbox').each(function() {
-                const text = $(this).text().toLowerCase();
-                if (text.indexOf(value) > -1) {
-                    $(this).show();
-                    
-                    // Highlight matching text
-                    const checkboxLabel = $(this).find('label span:first');
-                    const labelText = checkboxLabel.text();
-                    const searchRegex = new RegExp('(' + value + ')', 'gi');
-                    checkboxLabel.html(labelText.replace(searchRegex, '<span class="bg-warning">$1</span>'));
-                }
-            });
-            
-            // Show sections and groups that have visible checkboxes
-            $('.permission-section').each(function() {
-                $(this).toggle($(this).find('.permission-checkbox:visible').length > 0);
-            });
-            
-            $('.permission-group').each(function() {
-                $(this).toggle($(this).find('.permission-checkbox:visible').length > 0);
-            });
-        });
-        
-        // Clear search button
-        $('#clearSearchBtn').click(function() {
-            $('#permissionSearch').val('').trigger('keyup');
-        });
-        
-        // Select/Deselect all by group
-        $('.select-all').click(function() {
-            const group = $(this).data('group');
-            $('#group-' + group + ' input[name="permissions"]').prop('checked', true);
-            updateSelectedCount();
-            return false;
-        });
-        
-        $('.deselect-all').click(function() {
-            const group = $(this).data('group');
-            $('#group-' + group + ' input[name="permissions"]').prop('checked', false);
-            updateSelectedCount();
-            return false;
-        });
-        
-        // Update counts when checkbox changes
-        $('input[name="permissions"]').change(function() {
-            updateSelectedCount();
-        });
-        
-        // Toggle collapse for permission groups
-        $('.permission-group-header').click(function() {
-            const content = $(this).next('.permission-group-content');
-            content.collapse('toggle');
-            const icon = $(this).find('i.fa-angle-down');
-            icon.toggleClass('fa-rotate-180');
-        });
-        
-        // Template buttons
-        $('.template-btn').click(function() {
-            const template = $(this).data('template');
-            
-            // First clear all
-            $('input[name="permissions"]').prop('checked', false);
-            
-            // Apply template based on type
-            if (template === 'admin') {
-                // Select all permissions
-                $('input[name="permissions"]').prop('checked', true);
-            } else if (template === 'hr') {
-                // Select HR related permissions
-                $('input[name="permissions"]').each(function() {
-                    const label = $(this).parent().text().toLowerCase();
-                    if (label.includes('hr') || 
-                        label.includes('employee') || 
-                        label.includes('موظف') || 
-                        label.includes('إجازة') || 
-                        label.includes('حضور') || 
-                        label.includes('تقرير') ||
-                        label.includes('مهمة')) {
-                        $(this).prop('checked', true);
-                    }
-                });
-            } else if (template === 'inventory') {
-                // Select inventory related permissions
-                $('input[name="permissions"]').each(function() {
-                    const label = $(this).parent().text().toLowerCase();
-                    if (label.includes('inventory') || 
-                        label.includes('مخزن') || 
-                        label.includes('منتج') || 
-                        label.includes('product') || 
-                        label.includes('stock') ||
-                        label.includes('مخزون')) {
-                        $(this).prop('checked', true);
-                    }
-                });
-            } else if (template === 'reports') {
-                // Select reporting permissions only
-                $('input[name="permissions"]').each(function() {
-                    const label = $(this).parent().text().toLowerCase();
-                    if (label.includes('report') || 
-                        label.includes('تقرير') || 
-                        label.includes('view') || 
-                        label.includes('عرض')) {
-                        $(this).prop('checked', true);
-                    }
-                });
-            }
-            
-            // Update counts
-            updateSelectedCount();
-        });
-        
-        // Clear all button
-        $('.clear-all-btn').click(function() {
-            if (confirm('هل أنت متأكد من إزالة جميع الصلاحيات؟')) {
-                $('input[name="permissions"]').prop('checked', false);
-                updateSelectedCount();
-            }
-        });
-    });
-</script>
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'administrator:user_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-right me-1"></i>
+                        العودة للقائمة
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>
+                        حفظ الصلاحيات
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</form>
+
 {% endblock %}

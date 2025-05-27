@@ -1,6 +1,11 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
-from .models import Meeting, Attendee
+from .models import Meeting, Attendee, MeetingTask
+
+class MeetingTaskInline(admin.TabularInline):
+    model = MeetingTask
+    extra = 1
+    fields = ['description', 'assigned_to']
 
 class AttendeeInline(admin.TabularInline):
     model = Attendee
@@ -13,7 +18,7 @@ class MeetingAdmin(admin.ModelAdmin):
     list_filter = ['date', 'created_by', 'status']
     search_fields = ['title', 'topic']
     date_hierarchy = 'date'
-    inlines = [AttendeeInline]
+    inlines = [AttendeeInline, MeetingTaskInline]
     fieldsets = (
         (_('معلومات الاجتماع'), {
             'fields': ('title', 'topic')
@@ -75,3 +80,16 @@ def has_delete_permission(self, request, obj=None):
         if obj is None:
             return request.user.Role == 'admin'
         return request.user.Role == 'admin' or obj.created_by == request.user
+
+@admin.register(MeetingTask)
+class MeetingTaskAdmin(admin.ModelAdmin):
+    list_display = ['description', 'meeting', 'assigned_to', 'created_at']
+    list_filter = ['meeting', 'assigned_to']
+    search_fields = ['description', 'meeting__title', 'assigned_to__username']
+
+    def has_change_permission(self, request, obj=None):
+        # السماح بتعديل مهام الاجتماع فقط للأدمن أو منشئ الاجتماع
+        if obj is None:
+            return True
+        return (request.user.is_superuser or request.user.Role == 'admin' or 
+                obj.meeting.created_by == request.user)

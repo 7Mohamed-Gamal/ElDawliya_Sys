@@ -55,11 +55,17 @@
         margin-bottom: 1rem;
         padding-bottom: 0.75rem;
         border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        flex-wrap: wrap;
+    }
+    
+    .filters-header h5 {
+        margin-bottom: 0.5rem;
     }
     
     .chart-container {
         position: relative;
         height: 300px;
+        width: 100%;
     }
     
     .status-item {
@@ -119,6 +125,81 @@
         display: none;
     }
     
+    .stats-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+    
+    .stat-item {
+        flex: 1;
+        min-width: 120px;
+        margin: 0.5rem;
+        text-align: center;
+    }
+    
+    .stat-item h6 {
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-item h3 {
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+    
+    @media (max-width: 767.98px) {
+        .filters-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .filters-header .btn-group {
+            margin-top: 0.5rem;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .filters-header .btn {
+            flex: 1;
+            margin: 0 0.25rem;
+        }
+        
+        .chart-container {
+            height: 250px;
+        }
+        
+        .stat-item {
+            min-width: 100px;
+            flex-basis: 45%;
+            margin: 0.25rem;
+        }
+        
+        .stat-item h6 {
+            font-size: 0.8rem;
+        }
+        
+        .stat-item h3 {
+            font-size: 1.2rem;
+        }
+        
+        .table td, .table th {
+            padding: 0.5rem;
+            font-size: 0.875rem;
+        }
+    }
+    
+    @media (max-width: 575.98px) {
+        .chart-container {
+            height: 200px;
+        }
+        
+        .stat-item {
+            flex-basis: 100%;
+        }
+    }
+    
     @media print {
         .print-section {
             display: block;
@@ -146,6 +227,15 @@
         
         .no-print {
             display: none !important;
+        }
+        
+        .card {
+            border: none !important;
+            box-shadow: none !important;
+        }
+        
+        .chart-container {
+            page-break-inside: avoid;
         }
     }
     
@@ -273,16 +363,16 @@
                         <canvas id="monthlyChart"></canvas>
                     </div>
                     <div class="text-center mt-4">
-                        <div class="d-flex justify-content-between">
-                            <div>
+                        <div class="stats-container">
+                            <div class="stat-item">
                                 <h6>إجمالي الاجتماعات</h6>
-                                <h3 id="total-count">{{ meetings.count }}</h3>
+                                <h3 id="total-count">{{ meetings|length }}</h3>
                             </div>
-                            <div>
+                            <div class="stat-item">
                                 <h6>متوسط المهام لكل اجتماع</h6>
                                 <h3 id="avg-tasks">{{ avg_tasks|floatformat:1 }}</h3>
                             </div>
-                            <div>
+                            <div class="stat-item">
                                 <h6>متوسط الحضور</h6>
                                 <h3 id="avg-attendees">{{ avg_attendees|floatformat:1 }}</h3>
                             </div>
@@ -324,7 +414,7 @@
                             <td>{{ meeting.date|date:"h:i A" }}</td>
                             <td>{{ meeting.created_by.get_full_name|default:meeting.created_by.username }}</td>
                             <td>{{ meeting.attendees.count }}</td>
-                            <td>{{ meeting.tasks.count }}</td>
+                            <td>{{ meeting.meeting_tasks.count }}</td>
                             <td>{{ meeting.completed_tasks_count }}</td>
                             <td>
                                 <span class="badge bg-{{ meeting.status|cut:'pending'|cut:'completed'|cut:'cancelled'|yesno:'warning,success,danger' }} badge-status">

@@ -38,7 +38,8 @@ def has_purchase_module_permission(context, module_key, permission_type='view'):
     if not user or not hasattr(user, 'has_perm'):
         return False
         
-    if user.is_superuser or getattr(user, 'Role', '') == 'admin':
+    # Allow superusers, admins, and the Ragab user for purchase functionality
+    if user.is_superuser or getattr(user, 'Role', '') == 'admin' or user.username == 'Ragab':
         return True
         
     if module_key not in MODULES:

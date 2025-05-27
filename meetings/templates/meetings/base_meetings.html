@@ -83,11 +83,12 @@
             background-color: var(--secondary-color);
             color: white;
             padding-top: 20px;
-            transition: all 0.3s;
-            position: fixed;
+            transition: all 0.3s ease;
             height: 100%;
             z-index: 100;
             overflow-y: auto;
+            position: fixed;
+            right: 0;
         }
 
         .sidebar-header {
@@ -142,7 +143,8 @@
             flex: 1;
             padding: 20px;
             margin-right: 250px;
-            transition: all 0.3s;
+            transition: margin-right 0.3s ease;
+            width: calc(100% - 250px);
         }
 
         .sidebar-collapsed .sidebar {
@@ -156,6 +158,7 @@
 
         .sidebar-collapsed .main-content {
             margin-right: 70px;
+            width: calc(100% - 70px);
         }
 
         .card {
@@ -195,22 +198,24 @@
         /* Responsive Adjustments */
         @media (max-width: 768px) {
             .sidebar {
-                width: 0;
-                padding: 0;
-                transform: translateX(100%);
                 right: -250px;
-                z-index: 1050;
+                transition: right 0.3s ease;
             }
 
             .main-content {
                 margin-right: 0;
+                width: 100%;
+                transition: margin-right 0.3s ease, width 0.3s ease;
             }
 
             .sidebar.show {
-                width: 250px;
-                padding-top: 20px;
-                transform: translateX(0);
                 right: 0;
+                width: 250px;
+            }
+
+            .main-content.sidebar-pushed {
+                margin-right: 250px;
+                width: calc(100% - 250px);
             }
 
             /* Overlay for mobile sidebar */
@@ -222,11 +227,14 @@
                 right: 0;
                 bottom: 0;
                 background-color: rgba(0, 0, 0, 0.5);
-                z-index: 1040;
+                z-index: 99;
+                transition: opacity 0.3s ease;
+                opacity: 0;
             }
 
             .sidebar-overlay.show {
                 display: block;
+                opacity: 1;
             }
         }
     </style>
@@ -352,6 +360,7 @@
             const sidebarToggle = document.getElementById('sidebarToggle');
             const pageWrapper = document.querySelector('.page-wrapper');
             const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
 
             // Create overlay element for mobile
             const overlay = document.createElement('div');
@@ -360,11 +369,14 @@
 
             if (sidebarToggle) {
                 sidebarToggle.addEventListener('click', function() {
-                    pageWrapper.classList.toggle('sidebar-collapsed');
-
+                    // For desktop
+                    if (window.innerWidth > 768) {
+                        pageWrapper.classList.toggle('sidebar-collapsed');
+                    } 
                     // For mobile devices
-                    if (window.innerWidth <= 768) {
+                    else {
                         sidebar.classList.toggle('show');
+                        mainContent.classList.toggle('sidebar-pushed');
                         overlay.classList.toggle('show');
                     }
                 });
@@ -373,14 +385,32 @@
             // Close sidebar when clicking on overlay
             overlay.addEventListener('click', function() {
                 sidebar.classList.remove('show');
+                mainContent.classList.remove('sidebar-pushed');
                 overlay.classList.remove('show');
-                pageWrapper.classList.remove('sidebar-collapsed');
+                if (window.innerWidth > 768) {
+                    pageWrapper.classList.remove('sidebar-collapsed');
+                }
             });
 
             // Handle window resize
             window.addEventListener('resize', function() {
                 if (window.innerWidth > 768) {
+                    // Reset mobile sidebar
                     overlay.classList.remove('show');
+                    sidebar.classList.remove('show');
+                    mainContent.classList.remove('sidebar-pushed');
+                    
+                    // Restore desktop sidebar if it was collapsed
+                    if (!pageWrapper.classList.contains('sidebar-collapsed')) {
+                        mainContent.style.marginRight = '250px';
+                        mainContent.style.width = 'calc(100% - 250px)';
+                    }
+                } else {
+                    // Reset desktop sidebar
+                    if (!sidebar.classList.contains('show')) {
+                        mainContent.style.marginRight = '0';
+                        mainContent.style.width = '100%';
+                    }
                 }
             });
 

