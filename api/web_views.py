@@ -91,9 +91,19 @@ def ai_chat_interface(request):
     # Check Gemini availability with the user's API key
     gemini_service = GeminiService(user=request.user)
     
+    # Debug info
+    is_configured = gemini_service.is_configured
+    api_key_exists = bool(gemini_service.api_key)
+    config_source = gemini_service.config_source
+    
     context = {
         'conversations': conversations,
-        'gemini_available': gemini_service.is_available()
+        'gemini_available': gemini_service.is_available(),
+        'debug_info': {
+            'is_configured': is_configured,
+            'api_key_exists': api_key_exists,
+            'config_source': config_source,
+        }
     }
 
     return render(request, 'api/ai_chat.html', context)

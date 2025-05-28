@@ -214,9 +214,76 @@ class GeminiService:
 - إدارة المهام والاجتماعات
 - نظام المشتريات والطلبات
 
+أنت متكامل مع قاعدة بيانات النظام ويمكنك الوصول إلى المعلومات الفعلية وتقديم تحليلات وتقارير.
+
 يرجى تقديم إجابات مفيدة ودقيقة باللغة العربية.
 """
-
+            
+            # First, detect if this is a system data analysis request
+            try:
+                # Check for inventory analysis queries
+                if any(keyword in message.lower() for keyword in [
+                    'المخزون', 'الاصناف', 'المنتجات', 'البضاعة', 'الرصيد', 'الأصناف', 
+                    'ناقص', 'الكميات', 'منتهية الصلاحية', 'منخفضة', 'المستودع', 'حد أدنى', 'قائمة'
+                ]):
+                    # Initialize data service just once for better performance
+                    data_service = DataAnalysisService(user=user)
+                    
+                    # First check for low stock items since it's the most specific
+                    if any(keyword in message.lower() for keyword in [
+                        'منخفض', 'أقل من', 'قليل', 'ناقص', 'الحد الأدنى', 'نواقص', 'نفذت', 
+                        'الكميات القليلة', 'تحت الحد', 'الأصناف الناقصة'
+                    ]):
+                        # Add info about low stock items to the system context
+                        system_context += "\n\n--- معلومات المخزون ---\n"
+                        system_context += "قمت بالبحث عن الأصناف منخفضة المخزون في قاعدة البيانات. "
+                        
+                        # Try to get low stock items
+                        try:
+                            low_stock_data = data_service.get_low_stock_items()
+                            if low_stock_data['success'] and low_stock_data['low_stock_count'] > 0:
+                                system_context += f"وجدت {low_stock_data['low_stock_count']} من الأصناف منخفضة المخزون. "
+                                system_context += "تفاصيل الأصناف:\n"
+                                
+                                # Add information about each item
+                                for item in low_stock_data['items'][:5]:  # Limit to first 5 for brevity
+                                    system_context += f"- {item['اسم الصنف']}: الرصيد الحالي {item['الرصيد الحالي']} "
+                                    system_context += f"(الحد الأدنى {item['الحد الأدنى']})\n"
+                                
+                                if len(low_stock_data['items']) > 5:
+                                    system_context += f"... وهناك {len(low_stock_data['items']) - 5} أصناف أخرى منخفضة المخزون.\n"
+                            else:
+                                system_context += "لم أجد أي أصناف منخفضة المخزون في النظام."
+                        except Exception as e:
+                            logger.error(f"Error fetching low stock items: {str(e)}")
+                            system_context += "واجهت مشكلة في استعلام البيانات من النظام."
+                    
+                    # General inventory analysis as a fallback
+                    else:
+                        # Add general inventory info to the system context
+                        system_context += "\n\n--- معلومات عامة عن المخزون ---\n"
+                        try:
+                            inventory_data = data_service.analyze_inventory()
+                            if inventory_data['success']:
+                                summary = inventory_data['data_summary']
+                                system_context += f"إجمالي المنتجات في المخزون: {summary['total_products']}\n"
+                                system_context += f"عدد الأصناف منخفضة المخزون: {summary['low_stock_items']}\n"
+                                
+                                # Add category distribution if available
+                                if 'categories' in summary and len(summary['categories']) > 0:
+                                    system_context += "توزيع الفئات:\n"
+                                    for cat in summary['categories'][:3]:  # Show top 3 categories
+                                        if isinstance(cat, dict) and 'name' in cat and 'product_count' in cat:
+                                            system_context += f"- {cat['name']}: {cat['product_count']} صنف\n"
+                            else:
+                                system_context += "لم أتمكن من تحليل بيانات المخزون."
+                        except Exception as e:
+                            logger.error(f"Error analyzing inventory: {str(e)}")
+                            system_context += "واجهت مشكلة في تحليل بيانات المخزون."
+            except Exception as e:
+                logger.error(f"Error in data analysis integration: {str(e)}")
+                # Continue without integrated data if there's an error
+            
             # Combine context with current message
             full_prompt = f"{system_context}\n{context}المستخدم: {message}\nالمساعد:"
 
@@ -267,6 +334,7 @@ class DataAnalysisService:
 
     def __init__(self, user=None):
         self.gemini_service = GeminiService(user=user)
+        self.user = user
 
     def analyze_employees(self, filters: Optional[Dict] = None) -> Dict[str, Any]:
         """Analyze employee data"""
@@ -321,20 +389,39 @@ class DataAnalysisService:
     def analyze_inventory(self, filters: Optional[Dict] = None) -> Dict[str, Any]:
         """Analyze inventory data"""
         try:
-            # Get inventory data
-            products = TblProducts.objects.all()
-            if filters:
-                if 'category' in filters:
-                    products = products.filter(cat_name__icontains=filters['category'])
-                if 'low_stock' in filters and filters['low_stock']:
-                    from django.db import models as django_models
-                    products = products.filter(qte_in_stock__lte=django_models.F('minimum_threshold'))
+            # First try with the local models (preferred)
+            try:
+                from inventory.models_local import Product, Category
+                
+                products = Product.objects.all()
+                if filters:
+                    if 'category' in filters:
+                        products = products.filter(category__name__icontains=filters['category'])
+                    if 'low_stock' in filters and filters['low_stock']:
+                        from django.db import models as django_models
+                        products = products.filter(quantity__lte=django_models.F('minimum_threshold'))
 
-            # Prepare data summary
-            total_products = products.count()
-            categories = products.values('cat_name').annotate(count=Count('product_id'))
-            from django.db import models as django_models
-            low_stock_items = products.filter(qte_in_stock__lte=django_models.F('minimum_threshold')).count()
+                # Prepare data summary
+                total_products = products.count()
+                categories = Category.objects.annotate(product_count=Count('products')).values('name', 'product_count')
+                from django.db import models as django_models
+                low_stock_items = products.filter(quantity__lte=django_models.F('minimum_threshold')).count()
+
+            except (ImportError, ModuleNotFoundError):
+                # Fallback to the original models if local models aren't available
+                products = TblProducts.objects.all()
+                if filters:
+                    if 'category' in filters:
+                        products = products.filter(cat_name__icontains=filters['category'])
+                    if 'low_stock' in filters and filters['low_stock']:
+                        from django.db import models as django_models
+                        products = products.filter(qte_in_stock__lte=django_models.F('minimum_threshold'))
+
+                # Prepare data summary
+                total_products = products.count()
+                categories = products.values('cat_name').annotate(count=Count('product_id'))
+                from django.db import models as django_models
+                low_stock_items = products.filter(qte_in_stock__lte=django_models.F('minimum_threshold')).count()
 
             # Create analysis prompt
             prompt = f"""
@@ -369,6 +456,103 @@ class DataAnalysisService:
         except Exception as e:
             logger.error(f"Error analyzing inventory: {str(e)}")
             return {'success': False, 'error': str(e)}
+            
+    def get_low_stock_items(self) -> Dict[str, Any]:
+        """
+        Get items with stock below minimum threshold and generate a report
+        """
+        try:
+            # Try with local models first
+            try:
+                from inventory.models_local import Product
+                
+                from django.db import models as django_models
+                
+                low_stock_items = Product.objects.filter(
+                    quantity__lt=django_models.F('minimum_threshold'),
+                    minimum_threshold__gt=0
+                ).values('product_id', 'name', 'quantity', 'minimum_threshold', 'category__name', 'unit__name')
+                
+                # Format output for display
+                formatted_items = []
+                for item in low_stock_items:
+                    formatted_items.append({
+                        'رقم الصنف': item['product_id'],
+                        'اسم الصنف': item['name'],
+                        'الرصيد الحالي': float(item['quantity']),
+                        'الحد الأدنى': float(item['minimum_threshold']),
+                        'التصنيف': item['category__name'] or 'غير محدد',
+                        'وحدة القياس': item['unit__name'] or 'غير محدد',
+                        'النقص': float(item['minimum_threshold']) - float(item['quantity'])
+                    })
+                    
+            except (ImportError, ModuleNotFoundError):
+                # Fallback to original models
+                from inventory.models import TblProducts
+                
+                from django.db import models as django_models
+                
+                low_stock_items = TblProducts.objects.filter(
+                    qte_in_stock__lt=django_models.F('minimum_threshold'),
+                    minimum_threshold__gt=0
+                ).values('product_id', 'product_name', 'qte_in_stock', 'minimum_threshold', 'cat_name', 'unit_name')
+                
+                # Format output for display
+                formatted_items = []
+                for item in low_stock_items:
+                    formatted_items.append({
+                        'رقم الصنف': item['product_id'],
+                        'اسم الصنف': item['product_name'],
+                        'الرصيد الحالي': float(item['qte_in_stock']) if item['qte_in_stock'] else 0,
+                        'الحد الأدنى': float(item['minimum_threshold']) if item['minimum_threshold'] else 0,
+                        'التصنيف': item['cat_name'] or 'غير محدد',
+                        'وحدة القياس': item['unit_name'] or 'غير محدد',
+                        'النقص': (float(item['minimum_threshold']) if item['minimum_threshold'] else 0) - 
+                                 (float(item['qte_in_stock']) if item['qte_in_stock'] else 0)
+                    })
+            
+            # Generate report with Gemini
+            if formatted_items:
+                items_json = json.dumps(formatted_items, ensure_ascii=False, indent=2)
+                
+                prompt = f"""
+أحتاج تقرير مفصل وتحليل للأصناف منخفضة المخزون في المستودع. إليك البيانات:
+
+{items_json}
+
+يرجى إنشاء تقرير مفصل يتضمن:
+1. ملخص عام لحالة المخزون (عدد الأصناف منخفضة المخزون، إجمالي النقص)
+2. تصنيف الأصناف حسب أولوية التوريد
+3. توصيات للإدارة حول الخطوات التالية
+
+ملاحظة: قدم التقرير بتنسيق واضح ومنظم مع عناوين وجداول واضحة.
+"""
+                
+                result = self.gemini_service.generate_response(prompt, temperature=0.2)
+                
+                if result['success']:
+                    return {
+                        'success': True,
+                        'report': result['response'],
+                        'low_stock_count': len(formatted_items),
+                        'items': formatted_items
+                    }
+                else:
+                    return result
+            else:
+                return {
+                    'success': True,
+                    'report': "لا توجد أصناف منخفضة المخزون في المستودع حاليًا.",
+                    'low_stock_count': 0,
+                    'items': []
+                }
+                
+        except Exception as e:
+            logger.error(f"Error generating low stock report: {str(e)}")
+            return {
+                'success': False,
+                'error': str(e)
+            }
 
     def _extract_insights(self, text: str) -> List[str]:
         """Extract insights from analysis text"""
