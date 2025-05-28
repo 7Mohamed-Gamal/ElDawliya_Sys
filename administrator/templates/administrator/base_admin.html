@@ -12,10 +12,23 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 
-    <!-- Google Fonts - Cairo -->
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    {% if system_settings.font_family == 'cairo' %}
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    {% elif system_settings.font_family == 'tajawal' %}
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    {% elif system_settings.font_family == 'almarai' %}
+    <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap" rel="stylesheet">
+    {% elif system_settings.font_family == 'ibm-plex-sans-arabic' %}
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    {% elif system_settings.font_family == 'noto-sans-arabic' %}
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    {% else %}
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    {% endif %}
 
     <style>
         :root {
@@ -23,10 +36,17 @@
             --secondary-color: #303f9f;
             --primary-light: #c5cae9;
             --accent-color: #ff5722;
+            --font-family: 
+                {% if system_settings.font_family == 'cairo' %}'Cairo'
+                {% elif system_settings.font_family == 'tajawal' %}'Tajawal'
+                {% elif system_settings.font_family == 'almarai' %}'Almarai'
+                {% elif system_settings.font_family == 'ibm-plex-sans-arabic' %}'IBM Plex Sans Arabic'
+                {% elif system_settings.font_family == 'noto-sans-arabic' %}'Noto Sans Arabic'
+                {% else %}'Cairo'{% endif %}, sans-serif;
         }
 
         body {
-            font-family: 'Cairo', sans-serif;
+            font-family: var(--font-family);
             background-color: #f8f9fa;
         }
 

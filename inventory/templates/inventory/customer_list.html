@@ -1,76 +1,127 @@
-<!-- templates/inventory/customer_list.html -->
+<!-- templates/inventory/customer_list.html - Simplified -->
 {% extends 'inventory/base_inventory.html' %}
-{% load inventory_permission_tags %}
 
 {% block title %}قائمة العملاء - نظام إدارة المخزن{% endblock %}
 
 {% block content %}
-<div class="row ps-4">
-    <div class="col-12 mb-4">
-        <div class="card shadow">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <h4 class="mb-0">
-                    <i class="fas fa-users me-2"></i>
-                    قائمة العملاء
-                </h4>
-                {% has_inventory_module_permission "customers" "add" as can_add_customer %}
-                {% if can_add_customer %}
-                <a href="{% url 'inventory:customer_add' %}" class="btn btn-light btn-sm">
-                    <i class="fas fa-plus-circle me-1"></i>
-                    إضافة عميل جديد
+<div class="container-fluid">
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h3>قائمة العملاء</h3>
+                {% if perms.inventory.add_customer or user.is_superuser %}
+                <a href="{% url 'inventory:customer_add' %}" class="btn btn-success">
+                    <i class="fas fa-plus-circle me-1"></i> إضافة عميل جديد
                 </a>
                 {% endif %}
             </div>
-            <div class="card-body p-4">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>كود العميل</th>
-                                <th>اسم العميل</th>
-                                <th>رقم الهاتف</th>
-                                <th>البريد الإلكتروني</th>
-                                <th>الإجراءات</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for customer in customers %}
-                            <tr>
-                                <td>{{ customer.id }}</td>
-                                <td>{{ customer.name }}</td>
-                                <td>{{ customer.phone|default:"-" }}</td>
-                                <td>{{ customer.email|default:"-" }}</td>
-                                <td>
-                                    <div class="btn-group" role="group">
-                                        {% has_inventory_module_permission "customers" "edit" as can_edit_customer %}
-                                        {% if can_edit_customer %}
-                                        <a href="{% url 'inventory:customer_edit' customer.id %}" class="btn btn-sm btn-outline-primary" title="تعديل">
-                                            <i class="fas fa-edit"></i>
+        </div>
+    </div>
+    
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <div class="input-group">
+                <input type="text" id="searchInput" class="form-control" placeholder="ابحث عن عميل...">
+                <div class="input-group-append">
+                    <span class="input-group-text"><i class="fas fa-search"></i></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-white">
+                    <h5 class="card-title mb-0">جميع العملاء</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>اسم العميل</th>
+                                    <th>رقم الهاتف</th>
+                                    <th>البريد الإلكتروني</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for customer in customers %}
+                                <tr>
+                                    <td>{{ customer.id }}</td>
+                                    <td>{{ customer.name }}</td>
+                                    <td>{{ customer.phone|default:"-" }}</td>
+                                    <td>{{ customer.email|default:"-" }}</td>
+                                    <td>
+                                        {% if perms.inventory.change_customer or user.is_superuser %}
+                                        <a href="{% url 'inventory:customer_edit' customer.id %}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-edit"></i> تعديل
                                         </a>
                                         {% endif %}
-
-                                        {% has_inventory_module_permission "customers" "delete" as can_delete_customer %}
-                                        {% if can_delete_customer %}
-                                        <a href="{% url 'inventory:customer_delete' customer.id %}" class="btn btn-sm btn-outline-danger" title="حذف">
-                                            <i class="fas fa-trash-alt"></i>
+                                        
+                                        {% if perms.inventory.delete_customer or user.is_superuser %}
+                                        <a href="{% url 'inventory:customer_delete' customer.id %}" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash"></i> حذف
                                         </a>
                                         {% endif %}
-                                    </div>
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="5" class="text-center py-4">
-                                    <i class="fas fa-exclamation-circle text-muted mb-2" style="font-size: 2rem;"></i>
-                                    <p class="mb-0 text-muted">لا يوجد عملاء مسجلين حالياً</p>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center">
+                                        <p>لا يوجد عملاء حالياً</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    {% if perms.inventory.add_customer or user.is_superuser %}
+                    <a href="{% url 'inventory:customer_add' %}" class="btn btn-success">
+                        <i class="fas fa-plus-circle"></i> إضافة عميل جديد
+                    </a>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const searchText = this.value.toLowerCase();
+                const tableRows = document.querySelectorAll('tbody tr');
+                
+                tableRows.forEach(function(row) {
+                    const nameCell = row.querySelector('td:nth-child(2)');
+                    const phoneCell = row.querySelector('td:nth-child(3)');
+                    const emailCell = row.querySelector('td:nth-child(4)');
+                    
+                    if (!nameCell) return; // Skip if not a data row
+                    
+                    const name = nameCell.textContent.toLowerCase();
+                    const phone = phoneCell.textContent.toLowerCase();
+                    const email = emailCell.textContent.toLowerCase();
+                    
+                    if (name.includes(searchText) || 
+                        phone.includes(searchText) || 
+                        email.includes(searchText)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        }
+    });
+</script>
 {% endblock %}

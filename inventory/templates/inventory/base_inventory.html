@@ -18,15 +18,31 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <!-- Google Fonts -->
+    {% if system_settings.font_family == 'cairo' or current_font == 'Cairo' %}
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    {% elif system_settings.font_family == 'tajawal' or current_font == 'Tajawal' %}
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    {% elif system_settings.font_family == 'almarai' or current_font == 'Almarai' %}
     <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@400;700&display=swap" rel="stylesheet">
+    {% elif system_settings.font_family == 'ibm-plex-sans-arabic' or current_font == 'IBM Plex Sans Arabic' %}
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
+    {% elif system_settings.font_family == 'noto-sans-arabic' or current_font == 'Noto Sans Arabic' %}
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    {% else %}
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    {% endif %}
 
     <style>
         :root {
-            --font-family: {{ current_font|default:'Cairo' }}, sans-serif;
+            --font-family: {% if system_settings.font_family %}
+                {% if system_settings.font_family == 'cairo' %}'Cairo'
+                {% elif system_settings.font_family == 'tajawal' %}'Tajawal'
+                {% elif system_settings.font_family == 'almarai' %}'Almarai'
+                {% elif system_settings.font_family == 'ibm-plex-sans-arabic' %}'IBM Plex Sans Arabic'
+                {% elif system_settings.font_family == 'noto-sans-arabic' %}'Noto Sans Arabic'
+                {% else %}'Cairo'
+                {% endif %}
+                {% else %}{{ current_font|default:'Cairo' }}{% endif %}, sans-serif;
             --primary-color: #3f51b5;
             --secondary-color: #ff4081;
             --success-color: #4caf50;
@@ -644,6 +660,18 @@
                     <a href="{% url 'inventory:unit_list' %}" class="nav-link {% if 'unit' in request.resolver_match.url_name %}active{% endif %}">
                         <i class="fas fa-ruler"></i>
                         <span>وحدات القياس</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'inventory:supplier_list' %}" class="nav-link {% if 'supplier' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-truck"></i>
+                        <span>الموردين</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'inventory:customer_list' %}" class="nav-link {% if 'customer' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-users"></i>
+                        <span>العملاء</span>
                     </a>
                 </li>
                 <li class="nav-item">

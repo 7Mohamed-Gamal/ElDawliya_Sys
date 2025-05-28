@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="{{ current_language|default:'ar' }}" dir="{{ text_direction|default:'rtl' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,6 +10,21 @@
 
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts -->
+    {% if system_settings.font_family == 'cairo' or current_font == 'Cairo' %}
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    {% elif system_settings.font_family == 'tajawal' or current_font == 'Tajawal' %}
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    {% elif system_settings.font_family == 'almarai' or current_font == 'Almarai' %}
+    <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap" rel="stylesheet">
+    {% elif system_settings.font_family == 'ibm-plex-sans-arabic' or current_font == 'IBM Plex Sans Arabic' %}
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    {% elif system_settings.font_family == 'noto-sans-arabic' or current_font == 'Noto Sans Arabic' %}
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    {% else %}
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    {% endif %}
 
     <!-- Custom CSS -->
     <style>
@@ -22,10 +37,19 @@
             --info-color: #3498db;
             --light-color: #ecf0f1;
             --dark-color: #2c3e50;
+            --font-family: {% if system_settings.font_family %}
+                {% if system_settings.font_family == 'cairo' %}'Cairo'
+                {% elif system_settings.font_family == 'tajawal' %}'Tajawal'
+                {% elif system_settings.font_family == 'almarai' %}'Almarai'
+                {% elif system_settings.font_family == 'ibm-plex-sans-arabic' %}'IBM Plex Sans Arabic'
+                {% elif system_settings.font_family == 'noto-sans-arabic' %}'Noto Sans Arabic'
+                {% else %}'Tajawal'
+                {% endif %}
+                {% else %}{{ current_font|default:'Tajawal' }}{% endif %}, sans-serif;
         }
 
         body {
-            font-family: 'Tajawal', sans-serif;
+            font-family: var(--font-family);
             background-color: #f8f9fa;
         }
 

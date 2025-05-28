@@ -421,28 +421,7 @@ class ProductDeleteView(DeleteView):
     template_name = 'inventory/product_confirm_delete.html'
     success_url = reverse_lazy('inventory:product_list')
 
-# إدارة العملاء (Customers)
-class CustomerListView(ListView):
-    model = Customer
-    template_name = 'inventory/customer_list.html'
-    context_object_name = 'customers'
-
-class CustomerCreateView(CreateView):
-    model = Customer
-    form_class = CustomerForm
-    template_name = 'inventory/customer_form.html'
-    success_url = reverse_lazy('inventory:customer_list')
-
-class CustomerUpdateView(UpdateView):
-    model = Customer
-    form_class = CustomerForm
-    template_name = 'inventory/customer_form.html'
-    success_url = reverse_lazy('inventory:customer_list')
-
-class CustomerDeleteView(DeleteView):
-    model = Customer
-    template_name = 'inventory/customer_confirm_delete.html'
-    success_url = reverse_lazy('inventory:customer_list')
+# إدارة العملاء (Customers) - using the ones defined in customer_views.py
 
 # إدارة التصنيفات (Categories)
 @method_decorator(login_required, name='dispatch')

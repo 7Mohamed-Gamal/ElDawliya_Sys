@@ -32,14 +32,30 @@ class DefaultSystemSettings:
 def system_settings(request):
     """
     Makes system settings available to all templates.
+    This is a crucial context processor that provides font settings and other
+    system-wide configurations to all templates.
     """
     try:
         settings = SystemSettings.objects.first()
+        if not settings:
+            # Create default settings if none exist
+            settings = SystemSettings()
+            try:
+                settings.save()
+                logger.info("Created default system settings")
+            except Exception as e:
+                logger.error(f"Could not create default system settings: {str(e)}")
+                settings = DefaultSystemSettings()
+        
         return {
             'system_settings': settings
         }
-    except:
-        return {}
+    except Exception as e:
+        logger.error(f"Error in system_settings context processor: {str(e)}")
+        # Return default settings object if there's an error
+        return {
+            'system_settings': DefaultSystemSettings()
+        }
 
 def user_permissions(request):
     """
