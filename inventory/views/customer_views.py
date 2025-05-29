@@ -25,13 +25,20 @@ class CustomerListView(ListView):
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'قائمة العملاء'
         # Add low stock count for sidebar
-        from django.db.models import F
-        from inventory.models_local import Product
-        low_stock_count = Product.objects.filter(
-            quantity__lt=F('minimum_threshold'),
-            minimum_threshold__gt=0
-        ).count()
-        context['low_stock_count'] = low_stock_count
+        try:
+            from django.db.models import F
+            from inventory.models_local import Product
+            low_stock_count = Product.objects.filter(
+                quantity__lt=F('minimum_threshold'),
+                minimum_threshold__gt=0
+            ).count()
+            context['low_stock_count'] = low_stock_count
+        except Exception as e:
+            # Log the error but don't break the view
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error calculating low stock count: {str(e)}")
+            context['low_stock_count'] = 0
         return context
 
 @method_decorator(login_required, name='dispatch')

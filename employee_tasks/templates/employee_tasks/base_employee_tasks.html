@@ -13,17 +13,17 @@
 
     <!-- Google Fonts -->
     {% if system_settings.font_family == 'cairo' or current_font == 'Cairo' %}
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     {% elif system_settings.font_family == 'tajawal' or current_font == 'Tajawal' %}
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
     {% elif system_settings.font_family == 'almarai' or current_font == 'Almarai' %}
-    <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@400;700&display=swap" rel="stylesheet">
     {% elif system_settings.font_family == 'ibm-plex-sans-arabic' or current_font == 'IBM Plex Sans Arabic' %}
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
     {% elif system_settings.font_family == 'noto-sans-arabic' or current_font == 'Noto Sans Arabic' %}
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     {% else %}
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     {% endif %}
 
     <!-- Custom CSS -->
@@ -43,9 +43,9 @@
                 {% elif system_settings.font_family == 'almarai' %}'Almarai'
                 {% elif system_settings.font_family == 'ibm-plex-sans-arabic' %}'IBM Plex Sans Arabic'
                 {% elif system_settings.font_family == 'noto-sans-arabic' %}'Noto Sans Arabic'
-                {% else %}'Tajawal'
+                {% else %}'Cairo'
                 {% endif %}
-                {% else %}{{ current_font|default:'Tajawal' }}{% endif %}, sans-serif;
+                {% else %}{{ current_font|default:'Cairo' }}{% endif %}, sans-serif;
         }
 
         body {

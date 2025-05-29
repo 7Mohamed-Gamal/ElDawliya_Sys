@@ -14,48 +14,78 @@
 {% endblock %}
 
 {% block content %}
-<div class="row mb-2 g-2">
-    <!-- <div class="alert alert-info">هذه الصفحة للاستعلام عن الموظفين</div> -->
+<div class="row mb-4 g-3">
     <div class="col-xl-3 col-md-6">
-        <div class="card shadow-sm stats-card primary h-50">
-            <div class="card-body d-flex align-items-center">
-                <i class="fas fa-users stats-icon fa-2x me-2 text-primary opacity-75"></i>
+        <div class="card stats-card bg-gradient-primary border-0 h-100 hover-shadow">
+            <div class="card-body d-flex align-items-center p-4">
+                <div class="stats-icon-circle bg-white bg-opacity-25 me-3">
+                    <i class="fas fa-users fa-lg text-white"></i>
+                </div>
                 <div>
-                    <div class="stats-number fs-2 fw-bold">{{ total_employees }}</div>
-                    <p class="stats-title text-muted mb-0">إجمالي الموظفين</p>
+                    <h3 class="stats-number text-white mb-1">{{ total_employees }}</h3>
+                    <p class="stats-title text-white text-opacity-75 mb-0">إجمالي الموظفين</p>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-0 py-3">
+                <div class="progress bg-white bg-opacity-25" style="height: 4px;">
+                    <div class="progress-bar bg-white" style="width: 100%" role="progressbar"></div>
                 </div>
             </div>
         </div>
     </div>
+
     <div class="col-xl-3 col-md-6">
-        <div class="card shadow-sm stats-card success h-50">
-            <div class="card-body d-flex align-items-center">
-                <i class="fas fa-user-check stats-icon fa-2x me-2 text-success opacity-75"></i>
+        <div class="card stats-card bg-gradient-success border-0 h-100 hover-shadow">
+            <div class="card-body d-flex align-items-center p-4">
+                <div class="stats-icon-circle bg-white bg-opacity-25 me-3">
+                    <i class="fas fa-user-check fa-lg text-white"></i>
+                </div>
                 <div>
-                    <div class="stats-number fs-2 fw-bold">{{ active_employees }}</div>
-                    <p class="stats-title text-muted mb-0">المؤمن عليهم</p>
+                    <h3 class="stats-number text-white mb-1">{{ active_employees }}</h3>
+                    <p class="stats-title text-white text-opacity-75 mb-0">المؤمن عليهم</p>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-0 py-3">
+                <div class="progress bg-white bg-opacity-25" style="height: 4px;">
+                    <div class="progress-bar bg-white" style="width: {% widthratio active_employees total_employees 100 %}%" role="progressbar"></div>
                 </div>
             </div>
         </div>
     </div>
+
     <div class="col-xl-3 col-md-6">
-        <div class="card shadow-sm stats-card info h-50">
-             <div class="card-body d-flex align-items-center">
-                <i class="fas fa-pause-circle stats-icon fa-2x me-2 text-info opacity-75"></i>
+        <div class="card stats-card bg-gradient-info border-0 h-100 hover-shadow">
+            <div class="card-body d-flex align-items-center p-4">
+                <div class="stats-icon-circle bg-white bg-opacity-25 me-3">
+                    <i class="fas fa-pause-circle fa-lg text-white"></i>
+                </div>
                 <div>
-                    <div class="stats-number fs-2 fw-bold">{{ on_leave_employees }}</div>
-                    <p class="stats-title text-muted mb-0">الإجازات</p>
+                    <h3 class="stats-number text-white mb-1">{{ on_leave_employees }}</h3>
+                    <p class="stats-title text-white text-opacity-75 mb-0">الإجازات</p>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-0 py-3">
+                <div class="progress bg-white bg-opacity-25" style="height: 4px;">
+                    <div class="progress-bar bg-white" style="width: {% widthratio on_leave_employees total_employees 100 %}%" role="progressbar"></div>
                 </div>
             </div>
         </div>
     </div>
+
     <div class="col-xl-3 col-md-6">
-        <div class="card shadow-sm stats-card danger h-50">
-             <div class="card-body d-flex align-items-center">
-                <i class="fas fa-user-times stats-icon fa-2x me-3 text-danger opacity-75"></i>
+        <div class="card stats-card bg-gradient-danger border-0 h-100 hover-shadow">
+            <div class="card-body d-flex align-items-center p-4">
+                <div class="stats-icon-circle bg-white bg-opacity-25 me-3">
+                    <i class="fas fa-user-times fa-lg text-white"></i>
+                </div>
                 <div>
-                    <div class="stats-number fs-2 fw-bold">{{ resigned_employees }}</div>
-                    <p class="stats-title text-muted mb-0">المستقيلين</p>
+                    <h3 class="stats-number text-white mb-1">{{ resigned_employees }}</h3>
+                    <p class="stats-title text-white text-opacity-75 mb-0">المستقيلين</p>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-0 py-3">
+                <div class="progress bg-white bg-opacity-25" style="height: 4px;">
+                    <div class="progress-bar bg-white" style="width: {% widthratio resigned_employees total_employees 100 %}%" role="progressbar"></div>
                 </div>
             </div>
         </div>
@@ -76,8 +106,8 @@
 
 
 <div class="row g-4">
-    <div class="col-lg-3 col-md-4">
-        <div class="card shadow-sm h-100">
+    <div class="col-12 mb-4">
+        <div class="card shadow-sm">
             <div class="card-header bg-light py-3 border-bottom">
                 <h5 class="mb-0 fw-semibold">
                     <i class="fas fa-filter me-2 text-primary"></i>
@@ -448,7 +478,7 @@
         </div>
     </div>
 
-    <div class="col-lg-9 col-md-8">
+    <div class="col-lg-7 col-md-7">
         <div class="card shadow-sm">
             <div class="card-header bg-light d-flex justify-content-between align-items-center py-3 border-bottom">
                 <div>

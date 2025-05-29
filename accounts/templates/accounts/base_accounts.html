@@ -5,7 +5,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}نظام إدارة طلبات الشراء{% endblock %}</title>
+    <title>{% block title %}نظام إدارة الحسابات{% endblock %}</title>
 
     <!-- Bootstrap RTL/LTR -->
     {% if text_direction == 'rtl' %}
@@ -32,9 +32,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     {% endif %}
 
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="{% static 'css/style_updated.css' %}">
-
     <style>
         :root {
             --font-family: {% if system_settings.font_family %}
@@ -46,16 +43,16 @@
                 {% else %}'Cairo'
                 {% endif %}
                 {% else %}{{ current_font|default:'Cairo' }}{% endif %}, sans-serif;
-            --primary-color: #9b59b6;
-            --secondary-color: #8e44ad;
-            --success-color: #4caf50;
-            --info-color: #00bcd4;
-            --warning-color: #ff9800;
-            --danger-color: #f44336;
-            --light-color: #f5f5f5;
-            --dark-color: #212121;
-            --body-bg: #f5f7fa;
-            --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            --primary-color: #4a6da7;
+            --secondary-color: #2c3e50;
+            --success-color: #2ecc71;
+            --info-color: #3498db;
+            --warning-color: #f39c12;
+            --danger-color: #e74c3c;
+            --light-color: #ecf0f1;
+            --dark-color: #2c3e50;
+            --body-bg: #f8f9fa;
+            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
         body {
@@ -72,7 +69,7 @@
             font-weight: bold;
             color: white !important;
         }
-
+        
         .navbar-light .navbar-nav .nav-link {
             color: rgba(255, 255, 255, 0.85);
         }
@@ -197,20 +194,6 @@
             color: var(--secondary-color);
         }
 
-        .card-body {
-            padding: 20px;
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-
-        .btn-primary:hover {
-            background-color: var(--secondary-color);
-            border-color: var(--secondary-color);
-        }
-
         /* Responsive Adjustments */
         @media (max-width: 768px) {
             .sidebar {
@@ -260,9 +243,9 @@
                     <button id="sidebarToggle" class="btn btn-light me-2">
                         <i class="fas fa-bars"></i>
                     </button>
-                    <a class="navbar-brand" href="{% url 'Purchase_orders:dashboard' %}">
-                        <i class="fas fa-shopping-cart me-2"></i>
-                        <span>نظام إدارة طلبات الشراء</span>
+                    <a class="navbar-brand" href="{% url 'accounts:home' %}">
+                        <i class="fas fa-user-shield me-2"></i>
+                        <span>نظام الحسابات</span>
                     </a>
                 </div>
                 <div class="d-flex align-items-center">
@@ -281,61 +264,33 @@
             <!-- Sidebar -->
             <aside class="sidebar">
                 <div class="sidebar-header">
-                    <h3><i class="fas fa-shopping-cart me-2"></i> طلبات الشراء</h3>
+                    <h3><i class="fas fa-user-shield me-2"></i> الحسابات</h3>
                 </div>
                 <ul class="sidebar-menu">
-                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-                        <a href="{% url 'Purchase_orders:dashboard' %}">
-                            <i class="fas fa-tachometer-alt"></i>
-                            <span>لوحة التحكم</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'purchase_request_list' %}active{% endif %}">
-                        <a href="{% url 'Purchase_orders:purchase_request_list' %}">
-                            <i class="fas fa-list"></i>
-                            <span>قائمة طلبات الشراء</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'create_purchase_request' %}active{% endif %}">
-                        <a href="{% url 'Purchase_orders:create_purchase_request' %}">
-                            <i class="fas fa-plus"></i>
-                            <span>إنشاء طلب شراء جديد</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'pending_approval' %}active{% endif %}">
-                        <a href="{% url 'Purchase_orders:pending_approval' %}">
-                            <i class="fas fa-clock"></i>
-                            <span>طلبات قيد الموافقة</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'approved_requests' %}active{% endif %}">
-                        <a href="{% url 'Purchase_orders:approved_requests' %}">
-                            <i class="fas fa-check-circle"></i>
-                            <span>الطلبات المعتمدة</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'rejected_requests' %}active{% endif %}">
-                        <a href="{% url 'Purchase_orders:rejected_requests' %}">
-                            <i class="fas fa-times-circle"></i>
-                            <span>الطلبات المرفوضة</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'vendors' %}active{% endif %}">
-                        <a href="{% url 'Purchase_orders:vendors' %}">
-                            <i class="fas fa-building"></i>
-                            <span>الموردين</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'reports' %}active{% endif %}">
-                        <a href="{% url 'Purchase_orders:reports' %}">
-                            <i class="fas fa-chart-bar"></i>
-                            <span>التقارير</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-menu-item">
+                    <li class="sidebar-menu-item {% if request.path == '/accounts/' %}active{% endif %}">
                         <a href="{% url 'accounts:home' %}">
                             <i class="fas fa-home"></i>
-                            <span>الصفحة الرئيسية</span>
+                            <span>الرئيسية</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item {% if '/profile/' in request.path %}active{% endif %}">
+                        <a href="{% url 'accounts:profile' %}">
+                            <i class="fas fa-user"></i>
+                            <span>الملف الشخصي</span>
+                        </a>
+                    </li>
+                    {% if perms.auth.change_permission or user.is_superuser %}
+                    <li class="sidebar-menu-item {% if '/permissions/' in request.path %}active{% endif %}">
+                        <a href="{% url 'administrator:permission_dashboard' %}">
+                            <i class="fas fa-key"></i>
+                            <span>إدارة الصلاحيات</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li class="sidebar-menu-item {% if '/settings/' in request.path %}active{% endif %}">
+                        <a href="{% url 'accounts:settings' %}">
+                            <i class="fas fa-cog"></i>
+                            <span>الإعدادات</span>
                         </a>
                     </li>
                 </ul>
@@ -356,12 +311,12 @@
 
                 <!-- Page Header -->
                 <div class="page-header mb-4">
-                    <h2 class="mb-0">{% block page_title %}طلبات الشراء{% endblock %}</h2>
+                    <h2 class="mb-0">{% block page_title %}الحسابات{% endblock %}</h2>
                     <nav aria-label="breadcrumb">
                         <ol class="breadcrumb mb-0">
                             {% block breadcrumb %}
                             <li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
-                            <li class="breadcrumb-item active">طلبات الشراء</li>
+                            <li class="breadcrumb-item active">الحسابات</li>
                             {% endblock %}
                         </ol>
                     </nav>

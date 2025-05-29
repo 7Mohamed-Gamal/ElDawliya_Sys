@@ -320,28 +320,7 @@
 {% endblock %}
 
 {% block extra_css %}
-<style>    /* Variables */
-    :root {
-        --primary-gradient-start: #FF6B6B;
-        --primary-gradient-end: #FF8E53;
-        --secondary-gradient-start: #4E54C8;
-        --secondary-gradient-end: #8F94FB;
-        --success-gradient-start: #11998e;
-        --success-gradient-end: #38ef7d;
-        --info-gradient-start: #21D4FD;
-        --info-gradient-end: #2152FF;
-        --warning-gradient-start: #FFA07A;
-        --warning-gradient-end: #FFD700;
-        --danger-gradient-start: #FF416C;
-        --danger-gradient-end: #FF4B2B;
-        --text-primary: #2c3e50;
-        --text-secondary: #546e7a;
-        --text-muted: #78909c;
-        --border-radius: 12px;
-        --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        --transition: all 0.3s ease;
-    }
-
+<style>
     /* صورة الموظف وبيانات البطاقة الشخصية */
     .employee-avatar {
         width: 160px;
@@ -350,7 +329,7 @@
         overflow: hidden;
         box-shadow: 0 8px 25px rgba(0,0,0,0.1);
         border: 5px solid #fff;
-        transition: var(--transition);
+        transition: all 0.3s ease;
         margin-bottom: 1.5rem;
         position: relative;
     }
@@ -369,13 +348,14 @@
         width: 150px;
         height: 150px;
         margin-bottom: 1.5rem;
+        position: relative;
     }
 
     .avatar-placeholder {
         width: 150px;
         height: 150px;
         border-radius: 50%;
-        background: linear-gradient(45deg, #0062cc, #0096ff);
+        background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
         color: white;
         display: flex;
         align-items: center;
@@ -399,191 +379,24 @@
         border: 3px solid white;
         box-shadow: 0 2px 5px rgba(0,0,0,0.2);
     }
-      /* تنسيقات البطاقات */
-    .card {
-        border: none;
-        border-radius: var(--border-radius);
-        box-shadow: var(--card-shadow);
-        transition: var(--transition);
-        background: #fff;
-        overflow: hidden;
-    }
     
-    .card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-    }    .card-header {
-        background: #fff;
-        padding: 1.25rem;
-        border: none;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .card-header h5 {
-        color: var(--text-primary) !important;
-        font-weight: 600;
-        margin: 0;
-        display: flex;
-        align-items: center;
-    }
-
-    /* استايل خاص لأيقونات البطاقات فقط */
-    .card .card-header i.fas {
-        background: linear-gradient(135deg, var(--primary-gradient-start), var(--primary-gradient-end));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        width: 40px;
-        height: 40px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 10px;
-        margin-left: 12px;
-        font-size: 1.2em;
-        position: relative;
-    }
-
-    /* تنسيقات مختلفة لكل بطاقة */
-    .card:nth-of-type(1) .card-header i.fas {
-        background: linear-gradient(135deg, var(--info-gradient-start), var(--info-gradient-end));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-
-    .card:nth-of-type(2) .card-header i.fas {
-        background: linear-gradient(135deg, var(--success-gradient-start), var(--success-gradient-end));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-
-    .card:nth-of-type(3) .card-header i.fas {
-        background: linear-gradient(135deg, var(--warning-gradient-start), var(--warning-gradient-end));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-
-    /* إضافة تأثير خلفية خفيف للأيقونات */
-    .card .card-header i.fas::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: currentColor;
-        opacity: 0.1;
-        border-radius: 10px;
-        z-index: -1;
-    }
-
-    .card-body {
-        padding: 1.5rem;
-    }
-    
-    .card-header {
-        border-top-left-radius: 10px !important;
-        border-top-right-radius: 10px !important;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-    }
-      /* تحسين مظهر العناوين والنصوص */
-    h5.mb-0 {
-        font-weight: 700;
-        color: var(--text-primary);
-        font-size: 1.25rem;
-    }
-    
+    /* تحسين مظهر العناوين والنصوص */
     h6.text-muted {
         font-size: 0.9rem;
-        color: var(--text-secondary) !important;
         font-weight: 600;
         margin-bottom: 0.5rem;
         text-transform: uppercase;
         letter-spacing: 0.5px;
     }
     
-    p {
-        color: var(--text-primary);
-        margin-bottom: 0.75rem;
-        font-size: 1rem;
-        line-height: 1.6;
-    }
-
-    /* تحسينات للبيانات */
-    .info-group {
-        background: #f8f9fa;
-        padding: 1rem;
-        border-radius: 8px;
-        margin-bottom: 1rem;
-        transition: var(--transition);
-    }
-
-    .info-group:hover {
-        background: #fff;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }    /* الأيقونات */
-    .card i.fas {
-        width: 40px;
-        height: 40px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 10px;
-        margin-left: 12px;
-        font-size: 1.2em;
-        position: relative;
-        background: linear-gradient(135deg, var(--primary-gradient-start), var(--primary-gradient-end));
-        background-clip: text;
-        -webkit-background-clip: text;
-        color: transparent;
-        -webkit-text-fill-color: transparent;
-    }
-
-    /* تنسيقات خاصة لكل نوع من الأيقونات */
-    .card i.fa-briefcase {
-        background: linear-gradient(135deg, var(--info-gradient-start), var(--info-gradient-end));
-        background-clip: text;
-        -webkit-background-clip: text;
-    }
-
-    .card i.fa-shield-alt {
-        background: linear-gradient(135deg, var(--success-gradient-start), var(--success-gradient-end));
-        background-clip: text;
-        -webkit-background-clip: text;
-    }
-
-    .card i.fa-user {
-        background: linear-gradient(135deg, var(--warning-gradient-start), var(--warning-gradient-end));
-        background-clip: text;
-        -webkit-background-clip: text;
-    }
-
-    /* إضافة خلفية خفيفة للأيقونات */
-    .card i.fas::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: currentColor;
-        opacity: 0.08;
-        border-radius: 10px;
-        z-index: -1;
-    }
-      /* تنسيق أزرار الإجراءات */
+    /* تنسيق أزرار الإجراءات */
     .btn-group .btn {
         padding: 0.6rem 1.2rem;
-        border-radius: 8px;
         font-weight: 600;
         letter-spacing: 0.5px;
         margin-right: 0.5rem;
-        transition: var(--transition);
         position: relative;
         overflow: hidden;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
     }
 
     .btn-group .btn i {
@@ -591,6 +404,7 @@
         font-size: 0.9em;
     }
 
+    /* تأثير خاص للأزرار عند التحويم */
     .btn-group .btn::after {
         content: '';
         position: absolute;
@@ -609,68 +423,43 @@
         height: 200%;
     }
     
-    .btn-primary {
-        background-color: #0d6efd;
-        border-color: #0d6efd;
-    }
-    
-    .btn-primary:hover {
-        background-color: #0b5ed7;
-        border-color: #0a58ca;
-    }
-    
-    .btn-info {
-        background-color: #0dcaf0;
-        border-color: #0dcaf0;
-        color: #fff;
-    }
-    
-    .btn-info:hover {
-        background-color: #31d2f2;
-        border-color: #25cff2;
-        color: #fff;
-    }
-    
-    .btn-danger {
-        background-color: #dc3545;
-        border-color: #dc3545;
-    }
-    
-    .btn-danger:hover {
-        background-color: #bb2d3b;
-        border-color: #b02a37;
-    }
-    
-    /* تحسينات أخرى */
-    .text-muted {
-        color: #6c757d !important;
-    }
-    
-    hr {
-        margin: 1.5rem 0;
-        background-color: rgba(0, 0, 0, 0.1);
-        opacity: 0.5;
-    }
-    
-    i.fas {
-        color: #0d6efd;
-    }
-    
-    .modal-content {
-        border: none;
+    /* تأثيرات خاصة للأيقونات داخل البطاقات */
+    .card .card-header i.fas {
+        width: 40px;
+        height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         border-radius: 10px;
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        margin-left: 12px;
+        position: relative;
     }
     
-    .modal-header {
-        border-top-left-radius: 10px;
-        border-top-right-radius: 10px;
-        background-color: #f8f9fa;
+    /* إضافة تأثير خلفية خفيف للأيقونات */
+    .card .card-header i.fas::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: currentColor;
+        opacity: 0.1;
+        border-radius: 10px;
+        z-index: -1;
     }
     
-    .modal-footer {
-        border-bottom-left-radius: 10px;
-        border-bottom-right-radius: 10px;
+    /* تنسيق خاص لشاشة التفاصيل */
+    .card:nth-of-type(1) .card-header i.fas {
+        color: var(--primary-color);
+    }
+
+    .card:nth-of-type(2) .card-header i.fas {
+        color: var(--success-color);
+    }
+
+    .card:nth-of-type(3) .card-header i.fas {
+        color: var(--warning-color);
     }
 </style>
 {% endblock %}
