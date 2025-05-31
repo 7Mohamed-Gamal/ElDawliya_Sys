@@ -69,7 +69,7 @@ def dashboard(request):
     context['departments_count'] = departments_count
     context['jobs_count'] = jobs_count
 
-    return render(request, 'Hr/dashboard_simple.html', context)
+    return render(request, 'Hr/dashboard.html', context)
 
 
 @login_required

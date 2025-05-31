@@ -568,7 +568,7 @@
                         </a>
                     </li>
                     <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'employee_detail_view' %}active{% endif %}">
-                        <a href="{% url 'Hr:employees:detail_view' %}">
+                        <a href="{% url 'Hr:detail_view' %}">
                             <i class="fas fa-id-card"></i>
                             <span>بيانات الموظف تفصيلي</span>
                         </a>
@@ -607,6 +607,12 @@
                         <a href="{% url 'attendance:mark_attendance' %}">
                             <i class="fas fa-fingerprint"></i>
                             <span>تسجيل الحضور</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'list' and 'alerts' in request.path %}active{% endif %}">
+                        <a href="{% url 'Hr:alerts:list' %}">
+                            <i class="fas fa-bell"></i>
+                            <span>التنبيهات</span>
                         </a>
                     </li>
                     <li class="sidebar-menu-item">
