@@ -24,7 +24,11 @@ def dashboard(request):
 
     departments = []
     for dept in dept_queryset:
-        percentage = (dept.employee_count / total_employees * 100) if total_employees > 0 else 0
+        try:
+            percentage = (dept.employee_count / total_employees * 100) if total_employees > 0 else 0
+        except (ZeroDivisionError, TypeError):
+            percentage = 0
+            
         departments.append({
             'dept_code': dept.dept_code,
             'dept_name': dept.dept_name,
@@ -59,7 +63,7 @@ def dashboard(request):
         'upcoming_contract_renewals': upcoming_contract_renewals,
     }
 
-    # Agregar conteo de departamentos y trabajos para la plantilla temporal
+    # Add department and job counts for template
     departments_count = Department.objects.count()
     jobs_count = Job.objects.count()
     context['departments_count'] = departments_count
@@ -280,3 +284,23 @@ def employee_search(request):
         'title': 'بحث الموظفين',
     }
     return render(request, 'Hr/employees/employee_search.html', context)
+
+
+@login_required
+def employee_detail_view(request):
+    """عرض معلومات الموظف بشكل تفصيلي"""
+    employee = None
+    emp_id = request.GET.get('emp_id')
+    national_id = request.GET.get('national_id')
+
+    if emp_id:
+        employee = Employee.objects.filter(emp_id=emp_id).first()
+    elif national_id:
+        employee = Employee.objects.filter(national_id=national_id).first()
+
+    context = {
+        'employee': employee,
+        'title': 'بيانات الموظف تفصيلي'
+    }
+
+    return render(request, 'Hr/employees/employee_detail_view.html', context)

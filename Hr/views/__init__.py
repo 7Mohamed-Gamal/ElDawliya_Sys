@@ -4,7 +4,8 @@ from django.contrib.auth.decorators import login_required
 # استيراد وظائف عرض الموظفين
 from Hr.views.employee_views import (
     dashboard, employee_list, employee_create, employee_detail,
-    employee_edit, employee_delete, employee_search, employee_print
+    employee_edit, employee_delete, employee_search, employee_print,
+    employee_detail_view  # Added new view import
 )
 
 from Hr.views.department_views import department_list, department_detail

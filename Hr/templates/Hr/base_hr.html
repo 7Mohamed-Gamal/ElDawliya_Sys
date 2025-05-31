@@ -563,8 +563,14 @@
                     </li>
                     <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'list' and 'employees' in request.path %}active{% endif %}">
                         <a href="{% url 'Hr:employees:list' %}">
-                            <i class="fas fa-user"></i>
-                            <span>الموظفين</span>
+                            <i class="fas fa-users"></i>
+                            <span>قائمة الموظفين</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'employee_detail_view' %}active{% endif %}">
+                        <a href="{% url 'Hr:employees:detail_view' %}">
+                            <i class="fas fa-id-card"></i>
+                            <span>بيانات الموظف تفصيلي</span>
                         </a>
                     </li>
                     <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'list' and 'departments' in request.path %}active{% endif %}">

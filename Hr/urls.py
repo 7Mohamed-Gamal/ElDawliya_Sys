@@ -2,7 +2,7 @@ from django.urls import path, include
 from . import views
 from .views.department_views_updated import department_list, department_create, department_edit, department_delete, department_performance, department_detail
 from .views.leave_views import leave_analytics
-from .views.employee_views import dashboard as employee_dashboard_simple
+from .views.employee_views import dashboard as employee_dashboard_simple, employee_detail_view  # Added import
 
 app_name = 'Hr'
 
@@ -130,6 +130,7 @@ urlpatterns = [
     path('dashboard_simple/', employee_dashboard_simple, name='dashboard_simple'),
     # تضمين أنماط URL لكل قسم
     path('employees/', include((employee_patterns, 'employees'))),
+    path('employees/detail_view/', employee_detail_view, name='detail_view'),  # Moved outside employee_patterns
     path('departments/', include((department_patterns, 'departments'))),
     path('jobs/', include((job_patterns, 'jobs'))),
     path('cars/', include((car_patterns, 'cars'))),
