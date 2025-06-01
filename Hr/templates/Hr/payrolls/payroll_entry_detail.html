@@ -33,6 +33,20 @@
                     <label class="form-label fw-bold">الفترة</label>
                     <p>{{ payroll_entry.payroll_period.start_date|date:"Y-m-d" }} إلى {{ payroll_entry.payroll_period.end_date|date:"Y-m-d" }}</p>
                 </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">الحالة</label>
+                    <p>
+                        {% if payroll_entry.status == 'pending' %}
+                        <span class="badge bg-warning">قيد المراجعة</span>
+                        {% elif payroll_entry.status == 'approved' %}
+                        <span class="badge bg-success">معتمد</span>
+                        {% elif payroll_entry.status == 'rejected' %}
+                        <span class="badge bg-danger">مرفوض</span>
+                        {% elif payroll_entry.status == 'paid' %}
+                        <span class="badge bg-primary">مدفوع</span>
+                        {% endif %}
+                    </p>
+                </div>
                 <div class="d-grid gap-2">
                     <a href="{% url 'Hr:payroll_entry_list' %}" class="btn btn-secondary">
                         <i class="fas fa-arrow-right me-1"></i> العودة لسجلات الرواتب
@@ -40,6 +54,18 @@
                     <button type="button" class="btn btn-primary" onclick="printPayslip()">
                         <i class="fas fa-print me-1"></i> طباعة قسيمة الراتب
                     </button>
+                    
+                    {% if payroll_entry.status == 'pending' %}
+                    <form method="post" action="{% url 'Hr:payroll_entry_approve' payroll_entry.id %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="fas fa-check-circle me-1"></i> اعتماد الراتب
+                        </button>
+                    </form>
+                    <a href="{% url 'Hr:payroll_entry_reject' payroll_entry.id %}" class="btn btn-danger">
+                        <i class="fas fa-times-circle me-1"></i> رفض الراتب
+                    </a>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -133,6 +159,31 @@
                         </table>
                     </div>
                 </div>
+
+                {% if payroll_entry.status == 'rejected' and payroll_entry.rejection_reason %}
+                <div class="alert alert-danger mt-4">
+                    <h6 class="alert-heading">سبب الرفض:</h6>
+                    <p class="mb-0">{{ payroll_entry.rejection_reason }}</p>
+                </div>
+                {% endif %}
+
+                {% if payroll_entry.status != 'pending' %}
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h6 class="mb-3">معلومات المراجعة</h6>
+                        <table class="table table-bordered">
+                            <tr>
+                                <th style="width: 25%">تمت المراجعة بواسطة</th>
+                                <td>{{ payroll_entry.approved_by.get_full_name }}</td>
+                            </tr>
+                            <tr>
+                                <th>تاريخ المراجعة</th>
+                                <td>{{ payroll_entry.approval_date|date:"Y-m-d H:i" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -142,8 +193,7 @@
 {% block extra_js %}
 <script>
     function printPayslip() {
-        // Simulate printing a payslip
-        alert('جاري طباعة قسيمة الراتب للموظف {{ payroll_entry.employee.emp_full_name }}');
+        window.location.href = "{% url 'Hr:payroll_entry_print' payroll_entry.id %}";
     }
 </script>
 {% endblock %}

@@ -1,0 +1,87 @@
+{% extends 'Hr/base_hr.html' %}
+{% load static %}
+{% load django_permissions %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ title }} - نظام الدولية{% endblock %}
+
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Hr:dashboard' %}">الموارد البشرية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Hr:salary_item_list' %}">بنود الرواتب</a></li>
+<li class="breadcrumb-item active">{{ title }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-header bg-light py-3">
+        <h3 class="card-title mb-0">
+            <i class="fas fa-edit me-2"></i>
+            {{ title }}
+        </h3>
+    </div>
+    <div class="card-body">
+        <form method="post" novalidate>
+            {% csrf_token %}
+            <div class="row">
+                <div class="col-md-6">
+                    {{ form.item_code|as_crispy_field }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.name|as_crispy_field }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    {{ form.type|as_crispy_field }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.default_value|as_crispy_field }}
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    {{ form.is_auto_applied|as_crispy_field }}
+                </div>
+                <div class="col-md-6">
+                    {{ form.is_active|as_crispy_field }}
+                </div>
+            </div>
+            <div class="form-group">
+                {{ form.description|as_crispy_field }}
+            </div>
+            
+            <div class="mt-4">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i>
+                    حفظ
+                </button>
+                <a href="{% url 'Hr:salary_item_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-times me-1"></i>
+                    إلغاء
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Initialize select2 for enhanced dropdowns if needed
+    $('select').select2({
+        theme: 'bootstrap4',
+        width: '100%'
+    });
+    
+    // Auto-format numbers
+    $('.money-input').on('input', function() {
+        var value = $(this).val().replace(/[^\d.-]/g, '');
+        $(this).val(parseFloat(value).toFixed(2));
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,113 @@
+{% extends 'Hr/base_hr.html' %}
+{% load static %}
+{% load django_permissions %}
+
+{% block title %}بنود الرواتب - نظام الدولية{% endblock %}
+
+{% block page_title %}بنود الرواتب{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Hr:dashboard' %}">الموارد البشرية</a></li>
+<li class="breadcrumb-item active">بنود الرواتب</li>
+{% endblock %}
+
+{% block page_actions %}
+{% if perms.Hr.add_salaryitem %}
+<a href="{% url 'Hr:salary_item_create' %}" class="btn btn-primary">
+    <i class="fas fa-plus me-1"></i>
+    إضافة بند راتب
+</a>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-header bg-light py-3 d-flex justify-content-between align-items-center">
+        <h3 class="card-title mb-0">
+            <i class="fas fa-list me-2"></i>
+            قائمة بنود الرواتب
+        </h3>
+        <div class="card-tools">
+            <div class="input-group">
+                <input type="text" class="form-control" placeholder="بحث..." id="searchInput">
+                <button class="btn btn-outline-secondary" type="button">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if salary_items %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>كود البند</th>
+                        <th>اسم البند</th>
+                        <th>النوع</th>
+                        <th>القيمة الافتراضية</th>
+                        <th>التطبيق التلقائي</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in salary_items %}
+                    <tr>
+                        <td>{{ item.item_code }}</td>
+                        <td>{{ item.name }}</td>
+                        <td>
+                            {% if item.type == 'addition' %}
+                            <span class="badge bg-success">إضافة</span>
+                            {% else %}
+                            <span class="badge bg-danger">خصم</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ item.default_value }}</td>
+                        <td>
+                            {% if item.is_auto_applied %}
+                            <i class="fas fa-check text-success"></i>
+                            {% else %}
+                            <i class="fas fa-times text-danger"></i>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if perms.Hr.change_salaryitem %}
+                            <a href="{% url 'Hr:salary_item_edit' item.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            {% endif %}
+                            {% if perms.Hr.delete_salaryitem %}
+                            <a href="{% url 'Hr:salary_item_delete' item.pk %}" class="btn btn-sm btn-outline-danger">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle me-2"></i>
+            لا توجد بنود رواتب مضافة حتى الآن.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Search functionality
+    $("#searchInput").on("keyup", function() {
+        var value = $(this).val().toLowerCase();
+        $("table tbody tr").filter(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1)
+        });
+    });
+});
+</script>
+{% endblock %}

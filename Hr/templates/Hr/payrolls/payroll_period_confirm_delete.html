@@ -1,0 +1,39 @@
+{% extends 'Hr/base_hr.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - نظام الدولية{% endblock %}
+
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Hr:dashboard' %}">الموظفين</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Hr:payroll_period_list' %}">فترات الرواتب</a></li>
+<li class="breadcrumb-item active">{{ title }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">تأكيد الحذف</h5>
+    </div>
+    <div class="card-body">
+        <p class="lead">هل أنت متأكد من حذف فترة الراتب "{{ period.period|date:'Y-m' }}"؟</p>
+        
+        <div class="alert alert-warning">
+            <i class="fas fa-exclamation-triangle me-1"></i>
+            تحذير: سيؤدي هذا الإجراء إلى حذف جميع سجلات الرواتب المرتبطة بهذه الفترة.
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">
+                <i class="fas fa-trash me-1"></i> حذف
+            </button>
+            <a href="{% url 'Hr:payroll_period_list' %}" class="btn btn-secondary">
+                <i class="fas fa-times me-1"></i> إلغاء
+            </a>
+        </form>
+    </div>
+</div>
+{% endblock %}

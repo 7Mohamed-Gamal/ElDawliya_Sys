@@ -9,7 +9,7 @@
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
 <li class="breadcrumb-item"><a href="{% url 'Hr:dashboard' %}">الموظفين</a></li>
-<li class="breadcrumb-item"><a href="{% url 'Hr:attendance:attendance_rule_list' %}">قواعد الحضور</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Hr:attendance:official_holiday_list' %}">الإجازات الرسمية</a></li>
 <li class="breadcrumb-item active">{{ page_title }}</li>
 {% endblock %}
 
@@ -21,32 +21,29 @@
     <div class="card-body">
         <div class="alert alert-danger">
             <i class="fas fa-exclamation-triangle"></i>
-            هل أنت متأكد من حذف قاعدة الحضور "{{ rule.name }}"؟
+            هل أنت متأكد من حذف الإجازة الرسمية "{{ holiday.name }}"؟
             <br>
             <small class="text-muted">هذا الإجراء لا يمكن التراجع عنه.</small>
         </div>
 
         <div class="mb-4">
-            <h6>تفاصيل القاعدة:</h6>
+            <h6>تفاصيل الإجازة:</h6>
             <dl class="row">
                 <dt class="col-sm-3">الاسم:</dt>
-                <dd class="col-sm-9">{{ rule.name }}</dd>
+                <dd class="col-sm-9">{{ holiday.name }}</dd>
+
+                <dt class="col-sm-3">التاريخ:</dt>
+                <dd class="col-sm-9">{{ holiday.date }}</dd>
 
                 <dt class="col-sm-3">الوصف:</dt>
-                <dd class="col-sm-9">{{ rule.description|default:"-" }}</dd>
+                <dd class="col-sm-9">{{ holiday.description|default:"-" }}</dd>
 
-                <dt class="col-sm-3">فترة السماح للتأخير:</dt>
-                <dd class="col-sm-9">{{ rule.late_grace_minutes }} دقيقة</dd>
-
-                <dt class="col-sm-3">فترة السماح للمغادرة:</dt>
-                <dd class="col-sm-9">{{ rule.early_leave_grace_minutes }} دقيقة</dd>
-
-                <dt class="col-sm-3">الحالة:</dt>
+                <dt class="col-sm-3">متكررة سنوياً:</dt>
                 <dd class="col-sm-9">
-                    {% if rule.is_active %}
-                    <span class="badge bg-success">نشط</span>
+                    {% if holiday.is_recurring %}
+                    <span class="badge bg-info">نعم</span>
                     {% else %}
-                    <span class="badge bg-danger">غير نشط</span>
+                    <span class="badge bg-secondary">لا</span>
                     {% endif %}
                 </dd>
             </dl>
@@ -58,7 +55,7 @@
                 <button type="submit" class="btn btn-danger">
                     <i class="fas fa-trash"></i> تأكيد الحذف
                 </button>
-                <a href="{% url 'Hr:attendance:attendance_rule_list' %}" class="btn btn-secondary">
+                <a href="{% url 'Hr:attendance:official_holiday_list' %}" class="btn btn-secondary">
                     <i class="fas fa-times"></i> إلغاء
                 </a>
             </div>

@@ -1,5 +1,11 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.shortcuts import redirect
+
+# Import models
+from Hr.models.attendance_models import EmployeeAttendanceRule
+from Hr.forms.attendance_forms import EmployeeAttendanceRuleBulkForm, EmployeeAttendanceRuleForm
 
 # Import employee views
 from Hr.views.employee_views import (
@@ -126,8 +132,25 @@ def employee_salary_item_edit(request, pk):
 def employee_salary_item_delete(request, pk):
     return render(request, 'Hr/under_construction.html', {'title': 'حذف بند راتب موظف'})
 
+@login_required
 def payroll_period_list(request):
-    return render(request, 'Hr/under_construction.html', {'title': 'قائمة فترات الرواتب'})
+    """عرض قائمة فترات الرواتب"""
+    from Hr.models.salary_models import PayrollPeriod
+    
+    # Get all periods ordered by most recent first
+    periods = PayrollPeriod.objects.all().order_by('-period')
+    
+    # Filter by status if provided
+    status = request.GET.get('status')
+    if status:
+        periods = periods.filter(status=status)
+        
+    context = {
+        'payroll_periods': periods,
+        'page_title': 'فترات الرواتب'
+    }
+    
+    return render(request, 'Hr/payrolls/payroll_period_list.html', context)
 
 def payroll_period_create(request):
     return render(request, 'Hr/under_construction.html', {'title': 'إنشاء فترة راتب'})
@@ -160,20 +183,75 @@ def attendance_rule_edit(request, pk):
 def attendance_rule_delete(request, pk):
     return render(request, 'Hr/under_construction.html', {'title': 'حذف قاعدة حضور'})
 
+@login_required
 def employee_attendance_rule_list(request):
-    return render(request, 'Hr/under_construction.html', {'title': 'قائمة قواعد حضور الموظفين'})
+    """عرض قائمة قواعد حضور الموظفين"""
+    employee_attendance_rules = EmployeeAttendanceRule.objects.select_related('employee', 'attendance_rule').all()
+    
+    context = {
+        'employee_attendance_rules': employee_attendance_rules,
+        'page_title': 'قواعد حضور الموظفين'
+    }
+    
+    return render(request, 'Hr/attendance/employee_attendance_rule_list.html', context)
 
+@login_required
 def employee_attendance_rule_create(request):
-    return render(request, 'Hr/under_construction.html', {'title': 'إنشاء قاعدة حضور موظف'})
+    """إنشاء قاعدة حضور موظف"""
+    if request.method == 'POST':
+        form = EmployeeAttendanceRuleForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'تم إنشاء قاعدة الحضور للموظف بنجاح')
+            return redirect('Hr:employee_attendance_rule_list')
+    else:
+        form = EmployeeAttendanceRuleForm()
+    
+    context = {
+        'form': form,
+        'page_title': 'إنشاء قاعدة حضور موظف'
+    }
+    
+    return render(request, 'Hr/attendance/employee_attendance_rule_form.html', context)
 
-def employee_attendance_rule_bulk_create(request):
-    return render(request, 'Hr/under_construction.html', {'title': 'إنشاء قواعد حضور للموظفين بالجملة'})
-
+@login_required
 def employee_attendance_rule_edit(request, pk):
-    return render(request, 'Hr/under_construction.html', {'title': 'تعديل قاعدة حضور موظف'})
+    """تعديل قاعدة حضور موظف"""
+    rule = get_object_or_404(EmployeeAttendanceRule, pk=pk)
+    
+    if request.method == 'POST':
+        form = EmployeeAttendanceRuleForm(request.POST, instance=rule)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'تم تحديث قاعدة الحضور للموظف بنجاح')
+            return redirect('Hr:employee_attendance_rule_list')
+    else:
+        form = EmployeeAttendanceRuleForm(instance=rule)
+    
+    context = {
+        'form': form,
+        'rule': rule,
+        'page_title': 'تعديل قاعدة حضور موظف'
+    }
+    
+    return render(request, 'Hr/attendance/employee_attendance_rule_form.html', context)
 
+@login_required
 def employee_attendance_rule_delete(request, pk):
-    return render(request, 'Hr/under_construction.html', {'title': 'حذف قاعدة حضور موظف'})
+    """حذف قاعدة حضور موظف"""
+    rule = get_object_or_404(EmployeeAttendanceRule, pk=pk)
+    
+    if request.method == 'POST':
+        rule.delete()
+        messages.success(request, 'تم حذف قاعدة الحضور للموظف بنجاح')
+        return redirect('Hr:employee_attendance_rule_list')
+    
+    context = {
+        'rule': rule,
+        'page_title': 'حذف قاعدة حضور موظف'
+    }
+    
+    return render(request, 'Hr/attendance/employee_attendance_rule_confirm_delete.html', context)
 
 def official_holiday_list(request):
     return render(request, 'Hr/under_construction.html', {'title': 'قائمة الإجازات الرسمية'})

@@ -1,0 +1,245 @@
+{% extends 'Hr/base_hr.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{{ page_title }} - نظام الدولية{% endblock %}
+
+{% block page_title %}{{ page_title }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Hr:dashboard' %}">الموظفين</a></li>
+<li class="breadcrumb-item active">{{ page_title }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">تصدير بيانات الحضور والانصراف</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" novalidate>
+            {% csrf_token %}
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <!-- Date Range -->
+                    <div class="mb-3">
+                        <label for="date_range" class="form-label">نطاق التاريخ</label>
+                        <select name="date_range" id="date_range" class="form-select">
+                            <option value="custom">تخصيص</option>
+                            <option value="this_month">الشهر الحالي</option>
+                            <option value="last_month">الشهر الماضي</option>
+                            <option value="this_year">السنة الحالية</option>
+                            <option value="last_year">السنة الماضية</option>
+                        </select>
+                    </div>
+
+                    <div id="custom_dates" class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="start_date" class="form-label">من تاريخ</label>
+                                <input type="date" class="form-control" id="start_date" name="start_date" 
+                                    value="{{ form.start_date.value|default:'' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="end_date" class="form-label">إلى تاريخ</label>
+                                <input type="date" class="form-control" id="end_date" name="end_date" 
+                                    value="{{ form.end_date.value|default:'' }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Department Selection -->
+                    <div class="mb-3">
+                        <label for="department" class="form-label">القسم</label>
+                        <select name="department" id="department" class="form-select">
+                            <option value="">-- جميع الأقسام --</option>
+                            {% for dept in departments %}
+                            <option value="{{ dept.id }}">{{ dept.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Employee Selection -->
+                    <div class="mb-3">
+                        <label for="employees" class="form-label">الموظفين</label>
+                        <select name="employees" id="employees" class="form-select" multiple>
+                            {% for emp in employees %}
+                            <option value="{{ emp.id }}">{{ emp.emp_full_name }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="form-text text-muted">يمكنك اختيار أكثر من موظف</small>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <!-- Export Options -->
+                    <h6 class="mb-3">خيارات التصدير</h6>
+                    
+                    <!-- File Format -->
+                    <div class="mb-3">
+                        <label class="form-label">صيغة الملف</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="file_format" id="excel" value="excel" checked>
+                            <label class="form-check-label" for="excel">
+                                Excel (.xlsx)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="file_format" id="csv" value="csv">
+                            <label class="form-check-label" for="csv">
+                                CSV (.csv)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="file_format" id="pdf" value="pdf">
+                            <label class="form-check-label" for="pdf">
+                                PDF (.pdf)
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Data Fields -->
+                    <div class="mb-3">
+                        <label class="form-label">البيانات المطلوبة</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="fields" value="basic_info" id="basic_info" checked>
+                            <label class="form-check-label" for="basic_info">
+                                البيانات الأساسية (الاسم، القسم، الرقم الوظيفي)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="fields" value="attendance_times" id="attendance_times" checked>
+                            <label class="form-check-label" for="attendance_times">
+                                أوقات الحضور والانصراف
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="fields" value="attendance_status" id="attendance_status" checked>
+                            <label class="form-check-label" for="attendance_status">
+                                حالات الحضور (متأخر، مبكر، غائب)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="fields" value="work_hours" id="work_hours" checked>
+                            <label class="form-check-label" for="work_hours">
+                                ساعات العمل
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="fields" value="overtime" id="overtime">
+                            <label class="form-check-label" for="overtime">
+                                العمل الإضافي
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="fields" value="leaves" id="leaves">
+                            <label class="form-check-label" for="leaves">
+                                الإجازات والأذونات
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="fields" value="holidays" id="holidays">
+                            <label class="form-check-label" for="holidays">
+                                العطل الرسمية
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Options -->
+                    <div class="mb-3">
+                        <label class="form-label">خيارات متقدمة</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="options" value="include_summary" id="include_summary" checked>
+                            <label class="form-check-label" for="include_summary">
+                                تضمين ملخص إحصائي
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="options" value="include_charts" id="include_charts">
+                            <label class="form-check-label" for="include_charts">
+                                تضمين الرسوم البيانية (PDF فقط)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="options" value="separate_sheets" id="separate_sheets">
+                            <label class="form-check-label" for="separate_sheets">
+                                فصل البيانات في صفحات (Excel فقط)
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-3">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-download"></i> تصدير
+                </button>
+                <a href="{% url 'Hr:attendance:attendance_record_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i> إلغاء
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Initialize select2 for dropdowns
+    $('#department, #employees').select2({
+        theme: 'bootstrap-5',
+        language: "ar",
+        dir: "rtl"
+    });
+
+    // Handle date range selection
+    $('#date_range').change(function() {
+        if ($(this).val() === 'custom') {
+            $('#custom_dates').show();
+        } else {
+            $('#custom_dates').hide();
+        }
+    });
+
+    // Handle file format selection
+    $('input[name="file_format"]').change(function() {
+        const format = $(this).val();
+        if (format === 'pdf') {
+            $('#include_charts').prop('disabled', false);
+            $('#separate_sheets').prop('disabled', true);
+        } else if (format === 'excel') {
+            $('#include_charts').prop('disabled', true);
+            $('#separate_sheets').prop('disabled', false);
+        } else {
+            $('#include_charts, #separate_sheets').prop('disabled', true);
+        }
+    });
+
+    // Form validation
+    $('form').submit(function(e) {
+        const dateRange = $('#date_range').val();
+        if (dateRange === 'custom') {
+            const startDate = $('#start_date').val();
+            const endDate = $('#end_date').val();
+            if (!startDate || !endDate) {
+                e.preventDefault();
+                alert('الرجاء تحديد تاريخ البداية والنهاية');
+                return false;
+            }
+        }
+        
+        const fields = $('input[name="fields"]:checked').length;
+        if (fields === 0) {
+            e.preventDefault();
+            alert('الرجاء اختيار حقل واحد على الأقل للتصدير');
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}

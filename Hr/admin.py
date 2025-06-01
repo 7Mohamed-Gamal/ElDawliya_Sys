@@ -6,19 +6,13 @@ admin.site.site_header = _('نظام الدولية للموارد البشري�
 admin.site.site_title = _('إدارة الموارد البشرية')
 admin.site.index_title = _('لوحة تحكم الموارد البشرية')
 
-# استيراد النماذج من Hr.models
+# استيراد النماذج
 from Hr.models import (
-    Department, Job, JobInsurance, Car,
-    Employee,
+    Department, Job, JobInsurance, Car, Employee,
     SalaryItem, EmployeeSalaryItem, PayrollPeriod, PayrollEntry, PayrollItemDetail,
-    AttendanceRule, EmployeeAttendanceRule, OfficialHoliday, AttendanceMachine, AttendanceRecord, AttendanceSummary,
-    PickupPoint,
-    EmployeeTask,
-    EmployeeNote,
-    EmployeeFile,
-    HrTask,
-    LeaveType, EmployeeLeave,
-    EmployeeEvaluation
+    AttendanceRule, EmployeeAttendanceRule, OfficialHoliday, AttendanceMachine,
+    AttendanceRecord, AttendanceSummary, PickupPoint, EmployeeTask, EmployeeNote,
+    EmployeeFile, HrTask, LeaveType, EmployeeLeave, EmployeeEvaluation
 )
 
 # النماذج الأساسية
@@ -75,35 +69,46 @@ class EmployeeAdmin(admin.ModelAdmin):
 # نماذج الرواتب
 @admin.register(SalaryItem)
 class SalaryItemAdmin(admin.ModelAdmin):
-    list_display = ['name', 'item_type', 'calculation_method']
-    list_filter = ['item_type']
-    search_fields = ['name']
+    list_display = ['item_code', 'name', 'type', 'default_value', 'is_auto_applied', 'is_active']
+    list_filter = ['type', 'is_auto_applied', 'is_active']
+    search_fields = ['item_code', 'name']
+    ordering = ['item_code']
 
 @admin.register(EmployeeSalaryItem)
 class EmployeeSalaryItemAdmin(admin.ModelAdmin):
-    list_display = ['employee', 'salary_item', 'value', 'effective_date']
-    list_filter = ['salary_item']
-    search_fields = ['employee__emp_full_name']
-    date_hierarchy = 'effective_date'
+    list_display = ['employee', 'salary_item', 'amount', 'start_date', 'end_date', 'is_active']
+    list_filter = ['is_active', 'salary_item__type']
+    search_fields = ['employee__emp_full_name', 'salary_item__name']
+    autocomplete_fields = ['employee', 'salary_item']
+    date_hierarchy = 'start_date'
 
 @admin.register(PayrollPeriod)
 class PayrollPeriodAdmin(admin.ModelAdmin):
-    list_display = ['start_date', 'end_date']
-    list_filter = ['start_date', 'end_date']
-    search_fields = ['start_date', 'end_date']
-    date_hierarchy = 'start_date'
+    list_display = ['period', 'status', 'total_amount', 'created_by', 'approved_by']
+    list_filter = ['status']
+    search_fields = ['period']
+    date_hierarchy = 'period'
+    readonly_fields = ['created_by', 'approved_by', 'created_at', 'updated_at']
+
+    def save_model(self, request, obj, form, change):
+        if not change:  # Only set created_by on creation
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)
 
 @admin.register(PayrollEntry)
 class PayrollEntryAdmin(admin.ModelAdmin):
-    list_display = ['employee', 'payroll_period', 'total_salary']
-    list_filter = ['payroll_period']
+    list_display = ['period', 'employee', 'total_amount', 'status']
+    list_filter = ['status', 'period']
     search_fields = ['employee__emp_full_name']
+    autocomplete_fields = ['employee']
+    date_hierarchy = 'created_at'
 
 @admin.register(PayrollItemDetail)
 class PayrollItemDetailAdmin(admin.ModelAdmin):
     list_display = ['payroll_entry', 'salary_item', 'amount']
-    list_filter = ['salary_item']
-    search_fields = ['payroll_entry__employee__emp_full_name']
+    list_filter = ['salary_item__type']
+    search_fields = ['payroll_entry__employee__emp_full_name', 'salary_item__name']
+    autocomplete_fields = ['payroll_entry', 'salary_item']
 
 # نماذج الحضور
 @admin.register(AttendanceRule)

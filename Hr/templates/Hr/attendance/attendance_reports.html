@@ -1,0 +1,350 @@
+{% extends 'Hr/base_hr.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{{ page_title }} - نظام الدولية{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'vendors/charts/apexcharts.css' %}">
+{% endblock %}
+
+{% block page_title %}{{ page_title }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Hr:dashboard' %}">الموظفين</a></li>
+<li class="breadcrumb-item active">{{ page_title }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Filters Card -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">فلترة التقارير</h5>
+            </div>
+            <div class="card-body">
+                <form method="get" id="report-filters" class="row">
+                    <!-- Report Type -->
+                    <div class="col-md-3 mb-3">
+                        <label for="report_type" class="form-label">نوع التقرير</label>
+                        <select name="report_type" id="report_type" class="form-select">
+                            <option value="daily" {% if report_type == 'daily' %}selected{% endif %}>يومي</option>
+                            <option value="weekly" {% if report_type == 'weekly' %}selected{% endif %}>أسبوعي</option>
+                            <option value="monthly" {% if report_type == 'monthly' %}selected{% endif %}>شهري</option>
+                            <option value="custom" {% if report_type == 'custom' %}selected{% endif %}>مخصص</option>
+                        </select>
+                    </div>
+
+                    <!-- Date Range -->
+                    <div class="col-md-6 mb-3" id="date-range-container">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="start_date" class="form-label">من تاريخ</label>
+                                <input type="date" class="form-control" id="start_date" name="start_date" 
+                                    value="{{ start_date|date:'Y-m-d' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="end_date" class="form-label">إلى تاريخ</label>
+                                <input type="date" class="form-control" id="end_date" name="end_date" 
+                                    value="{{ end_date|date:'Y-m-d' }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Department Filter -->
+                    <div class="col-md-3 mb-3">
+                        <label for="department" class="form-label">القسم</label>
+                        <select name="department" id="department" class="form-select">
+                            <option value="">جميع الأقسام</option>
+                            {% for dept in departments %}
+                            <option value="{{ dept.id }}" {% if department == dept.id %}selected{% endif %}>
+                                {{ dept.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Report Metrics -->
+                    <div class="col-12 mb-3">
+                        <label class="form-label">مقاييس التقرير</label>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="metrics" value="attendance_rate" 
+                                        id="attendance_rate" {% if 'attendance_rate' in metrics %}checked{% endif %}>
+                                    <label class="form-check-label" for="attendance_rate">
+                                        معدل الحضور
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="metrics" value="tardiness" 
+                                        id="tardiness" {% if 'tardiness' in metrics %}checked{% endif %}>
+                                    <label class="form-check-label" for="tardiness">
+                                        التأخير
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="metrics" value="overtime" 
+                                        id="overtime" {% if 'overtime' in metrics %}checked{% endif %}>
+                                    <label class="form-check-label" for="overtime">
+                                        العمل الإضافي
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="metrics" value="leaves" 
+                                        id="leaves" {% if 'leaves' in metrics %}checked{% endif %}>
+                                    <label class="form-check-label" for="leaves">
+                                        الإجازات
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-filter"></i> تطبيق الفلتر
+                        </button>
+                        <a href="?" class="btn btn-secondary">
+                            <i class="fas fa-undo"></i> إعادة تعيين
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="col-12 mb-4">
+        <div class="row">
+            <!-- Attendance Rate -->
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-title">معدل الحضور</h6>
+                        <div class="d-flex align-items-center">
+                            <div class="display-4">{{ attendance_rate }}%</div>
+                            {% if attendance_rate_change > 0 %}
+                            <span class="text-success ms-2">
+                                <i class="fas fa-arrow-up"></i> {{ attendance_rate_change }}%
+                            </span>
+                            {% elif attendance_rate_change < 0 %}
+                            <span class="text-danger ms-2">
+                                <i class="fas fa-arrow-down"></i> {{ attendance_rate_change|abs }}%
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Average Tardiness -->
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-title">متوسط التأخير</h6>
+                        <div class="d-flex align-items-center">
+                            <div class="display-4">{{ avg_tardiness }}</div>
+                            <span class="ms-2">دقيقة</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Overtime -->
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-title">إجمالي العمل الإضافي</h6>
+                        <div class="d-flex align-items-center">
+                            <div class="display-4">{{ total_overtime }}</div>
+                            <span class="ms-2">ساعة</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Leave Usage -->
+            <div class="col-md-3">
+                <div class="card">
+                    <div class="card-body">
+                        <h6 class="card-title">استخدام الإجازات</h6>
+                        <div class="d-flex align-items-center">
+                            <div class="display-4">{{ leave_usage }}%</div>
+                            <span class="ms-2">من المخصص</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Attendance Trends Chart -->
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">اتجاهات الحضور</h5>
+                <div class="btn-group">
+                    <button type="button" class="btn btn-outline-secondary btn-sm active" data-view="daily">يومي</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-view="weekly">أسبوعي</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" data-view="monthly">شهري</button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="attendance-trends-chart"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Department-wise Statistics -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">إحصائيات حسب القسم</h5>
+            </div>
+            <div class="card-body">
+                <div id="department-stats-chart"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Time Distribution -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">توزيع الوقت</h5>
+            </div>
+            <div class="card-body">
+                <div id="time-distribution-chart"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Statistics Table -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">إحصائيات تفصيلية</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>القسم</th>
+                                <th>عدد الموظفين</th>
+                                <th>معدل الحضور</th>
+                                <th>متوسط التأخير</th>
+                                <th>العمل الإضافي</th>
+                                <th>الإجازات المستخدمة</th>
+                                <th>الغياب</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for stat in detailed_stats %}
+                            <tr>
+                                <td>{{ stat.department }}</td>
+                                <td>{{ stat.employee_count }}</td>
+                                <td>{{ stat.attendance_rate }}%</td>
+                                <td>{{ stat.avg_tardiness }} دقيقة</td>
+                                <td>{{ stat.overtime }} ساعة</td>
+                                <td>{{ stat.leaves_used }} يوم</td>
+                                <td>{{ stat.absences }} يوم</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'vendors/charts/apexcharts.min.js' %}"></script>
+<script>
+$(document).ready(function() {
+    // Initialize select2
+    $('#department').select2({
+        theme: 'bootstrap-5',
+        language: "ar",
+        dir: "rtl"
+    });
+
+    // Handle report type changes
+    $('#report_type').change(function() {
+        const type = $(this).val();
+        if (type === 'custom') {
+            $('#date-range-container').show();
+        } else {
+            $('#date-range-container').hide();
+        }
+    });
+
+    // Initialize charts
+    const attendanceTrendsChart = new ApexCharts(
+        document.querySelector("#attendance-trends-chart"), 
+        {
+            chart: {
+                type: 'line',
+                height: 350,
+                fontFamily: 'Cairo, sans-serif',
+            },
+            series: {{ attendance_trends_data|safe }},
+            xaxis: {
+                categories: {{ attendance_trends_labels|safe }},
+            },
+            // ... additional chart configuration
+        }
+    );
+    attendanceTrendsChart.render();
+
+    const departmentStatsChart = new ApexCharts(
+        document.querySelector("#department-stats-chart"), 
+        {
+            chart: {
+                type: 'bar',
+                height: 350,
+                fontFamily: 'Cairo, sans-serif',
+            },
+            series: {{ department_stats_data|safe }},
+            // ... additional chart configuration
+        }
+    );
+    departmentStatsChart.render();
+
+    const timeDistributionChart = new ApexCharts(
+        document.querySelector("#time-distribution-chart"), 
+        {
+            chart: {
+                type: 'donut',
+                height: 350,
+                fontFamily: 'Cairo, sans-serif',
+            },
+            series: {{ time_distribution_data|safe }},
+            labels: {{ time_distribution_labels|safe }},
+            // ... additional chart configuration
+        }
+    );
+    timeDistributionChart.render();
+
+    // Handle chart view changes
+    $('.btn-group button').click(function() {
+        $('.btn-group button').removeClass('active');
+        $(this).addClass('active');
+        const view = $(this).data('view');
+        // Update chart data based on view
+        // ... implementation
+    });
+});
+</script>
+{% endblock %}

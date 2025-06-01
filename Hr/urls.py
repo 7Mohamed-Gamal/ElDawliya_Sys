@@ -1,8 +1,18 @@
 from django.urls import path, include
 from . import views
-from .views.department_views_updated import department_list, department_create, department_edit, department_delete, department_performance, department_detail
-from .views.leave_views import leave_analytics
-from .views.employee_views import dashboard as employee_dashboard_simple, employee_detail_view  # Added import
+from .views.department_views_updated import (
+    department_list, department_create, department_edit, 
+    department_delete, department_performance, department_detail
+)
+from .views.attendance_views import (
+    attendance_rule_list, attendance_rule_create, attendance_rule_edit, attendance_rule_delete,
+    employee_attendance_rule_list, employee_attendance_rule_create, employee_attendance_rule_edit,
+    employee_attendance_rule_delete, employee_attendance_rule_bulk_create,
+    official_holiday_list, official_holiday_create, official_holiday_edit, official_holiday_delete,
+    attendance_machine_list, attendance_machine_create, attendance_machine_edit, attendance_machine_delete,
+    attendance_record_list, attendance_record_create, attendance_record_edit, attendance_record_delete,
+    fetch_attendance_data, attendance_summary_list, attendance_summary_detail
+)
 
 app_name = 'Hr'
 
@@ -63,11 +73,11 @@ pickup_point_patterns = [
 
 # أنماط عناوين URL لوظائف التأمين
 insurance_job_patterns = [
-    path('', views.insurance_job_list, name='list'),
-    path('create/', views.insurance_job_create, name='create'),
-    path('<int:job_code_insurance>/', views.insurance_job_detail, name='detail'),
-    path('<int:job_code_insurance>/edit/', views.insurance_job_edit, name='edit'),
-    path('<int:job_code_insurance>/delete/', views.insurance_job_delete, name='delete'),
+    path('', insurance_job_list, name='list'),
+    path('create/', insurance_job_create, name='create'),
+    path('<int:job_code_insurance>/', insurance_job_detail, name='detail'),
+    path('<int:job_code_insurance>/edit/', insurance_job_edit, name='edit'),
+    path('<int:job_code_insurance>/delete/', insurance_job_delete, name='delete'),
 ]
 
 # أنماط عناوين URL لمهام الموظفين
@@ -124,6 +134,64 @@ employee_leave_patterns = [
     path('<int:pk>/approve/', views.employee_leave_approve, name='approve'),
 ]
 
+# أنماط عناوين URL للرواتب
+salary_patterns = [
+    path('items/', views.salary_item_list, name='salary_item_list'),
+    path('items/create/', views.salary_item_create, name='salary_item_create'),
+    path('items/<int:pk>/edit/', views.salary_item_edit, name='salary_item_edit'),
+    path('items/<int:pk>/delete/', views.salary_item_delete, name='salary_item_delete'),
+
+    path('employee-items/', views.employee_salary_item_list, name='employee_salary_item_list'),
+    path('employee-items/create/', views.employee_salary_item_create, name='employee_salary_item_create'),
+    path('employee-items/bulk-create/', views.employee_salary_item_bulk_create, name='employee_salary_item_bulk_create'),
+    path('employee-items/<int:pk>/edit/', views.employee_salary_item_edit, name='employee_salary_item_edit'),
+    path('employee-items/<int:pk>/delete/', views.employee_salary_item_delete, name='employee_salary_item_delete'),
+
+    path('calculate/', views.payroll_calculate, name='payroll_calculate'),
+    path('periods/', views.payroll_period_list, name='payroll_period_list'),
+    path('periods/create/', views.payroll_period_create, name='payroll_period_create'),
+    path('periods/<int:pk>/edit/', views.payroll_period_edit, name='payroll_period_edit'),
+    path('periods/<int:pk>/delete/', views.payroll_period_delete, name='payroll_period_delete'),
+
+    path('entries/', views.payroll_entry_list, name='payroll_entry_list'),
+    path('entries/<int:pk>/', views.payroll_entry_detail, name='payroll_entry_detail'),
+    path('entries/<int:pk>/approve/', views.payroll_entry_approve, name='payroll_entry_approve'),
+    path('entries/<int:pk>/reject/', views.payroll_entry_reject, name='payroll_entry_reject'),
+]
+
+# Attendance URL patterns
+attendance_patterns = [
+    path('rules/', attendance_rule_list, name='attendance_rule_list'),
+    path('rules/create/', attendance_rule_create, name='attendance_rule_create'),
+    path('rules/<int:pk>/edit/', attendance_rule_edit, name='attendance_rule_edit'),
+    path('rules/<int:pk>/delete/', attendance_rule_delete, name='attendance_rule_delete'),
+
+    path('employee-rules/', employee_attendance_rule_list, name='employee_attendance_rule_list'),
+    path('employee-rules/create/', employee_attendance_rule_create, name='employee_attendance_rule_create'),
+    path('employee-rules/<int:pk>/edit/', employee_attendance_rule_edit, name='employee_attendance_rule_edit'),
+    path('employee-rules/<int:pk>/delete/', employee_attendance_rule_delete, name='employee_attendance_rule_delete'),
+    path('employee-rules/bulk-create/', employee_attendance_rule_bulk_create, name='employee_attendance_rule_bulk_create'),
+
+    path('holidays/', official_holiday_list, name='official_holiday_list'),
+    path('holidays/create/', official_holiday_create, name='official_holiday_create'),
+    path('holidays/<int:pk>/edit/', official_holiday_edit, name='official_holiday_edit'),
+    path('holidays/<int:pk>/delete/', official_holiday_delete, name='official_holiday_delete'),
+
+    path('machines/', attendance_machine_list, name='attendance_machine_list'),
+    path('machines/create/', attendance_machine_create, name='attendance_machine_create'),
+    path('machines/<int:pk>/edit/', attendance_machine_edit, name='attendance_machine_edit'),
+    path('machines/<int:pk>/delete/', attendance_machine_delete, name='attendance_machine_delete'),
+
+    path('records/', attendance_record_list, name='attendance_record_list'),
+    path('records/create/', attendance_record_create, name='attendance_record_create'),
+    path('records/<int:pk>/edit/', attendance_record_edit, name='attendance_record_edit'),
+    path('records/<int:pk>/delete/', attendance_record_delete, name='attendance_record_delete'),
+    path('records/fetch/', fetch_attendance_data, name='fetch_attendance_data'),
+
+    path('summary/', attendance_summary_list, name='attendance_summary_list'),
+    path('summary/<int:pk>/', attendance_summary_detail, name='attendance_summary_detail'),
+]
+
 urlpatterns = [
     # لوحة التحكم
     path('dashboard/', views.dashboard, name='dashboard'),
@@ -133,19 +201,8 @@ urlpatterns = [
     path('employees/detail_view/', employee_detail_view, name='detail_view'),  # Moved outside employee_patterns
     path('departments/', include((department_patterns, 'departments'))),
     path('jobs/', include((job_patterns, 'jobs'))),
-    path('cars/', include((car_patterns, 'cars'))),
-    path('pickup_points/', include((pickup_point_patterns, 'pickup_points'))),
     path('insurance_jobs/', include((insurance_job_patterns, 'insurance_jobs'))),
-    path('tasks/', include((task_patterns, 'tasks'))),
-    path('notes/', include((note_patterns, 'notes'))),
-    path('files/', include((file_patterns, 'files'))),
-    path('hr_tasks/', include((hr_task_patterns, 'hr_tasks'))),
-    path('leave_types/', include((leave_type_patterns, 'leave_types'))),
-    path('leaves/', include((employee_leave_patterns, 'leaves'))),
-    path('leaves/analytics/', leave_analytics, name='leave_analytics'),
-    # TODO: Implement leave_balance_list and leave_balance_create functions
-    # path('leaves/balance/', views.leave_balance_list, name='leave_balance_list'),
-    # path('leaves/balance/create/', views.leave_balance_create, name='leave_balance_create'),
+    path('salaries/', include((salary_patterns, 'salaries'))),
 
     # بنود الرواتب
     path('salary_items/', views.salary_item_list, name='salary_item_list'),
@@ -180,9 +237,9 @@ urlpatterns = [
     # قواعد حضور الموظفين
     path('employee_attendance_rules/', views.employee_attendance_rule_list, name='employee_attendance_rule_list'),
     path('employee_attendance_rules/create/', views.employee_attendance_rule_create, name='employee_attendance_rule_create'),
-    path('employee_attendance_rules/bulk_create/', views.employee_attendance_rule_bulk_create, name='employee_attendance_rule_bulk_create'),
     path('employee_attendance_rules/<int:pk>/edit/', views.employee_attendance_rule_edit, name='employee_attendance_rule_edit'),
     path('employee_attendance_rules/<int:pk>/delete/', views.employee_attendance_rule_delete, name='employee_attendance_rule_delete'),
+    path('employee_attendance_rules/bulk_create/', views.employee_attendance_rule_bulk_create, name='employee_attendance_rule_bulk_create'),
 
     # الإجازات الرسمية
     path('attendance/holidays/', views.official_holiday_list, name='official_holiday_list'),

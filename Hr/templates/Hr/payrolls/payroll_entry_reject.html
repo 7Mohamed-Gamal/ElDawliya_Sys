@@ -1,0 +1,67 @@
+{% extends 'Hr/base_hr.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - نظام الدولية{% endblock %}
+
+{% block page_title %}{{ page_title }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Hr:dashboard' %}">الموارد البشرية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Hr:payroll_entry_list' %}">سجلات الرواتب</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Hr:payroll_entry_detail' payroll_entry.id %}">تفاصيل الراتب</a></li>
+<li class="breadcrumb-item active">{{ page_title }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+        <h5 class="mb-0">
+            <i class="fas fa-times-circle me-2 text-danger"></i>
+            {{ page_title }}
+        </h5>
+        <a href="{% url 'Hr:payroll_entry_detail' payroll_entry.id %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-right me-1"></i>
+            العودة للتفاصيل
+        </a>
+    </div>
+    <div class="card-body">
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h6 class="mb-3">معلومات الموظف</h6>
+                <table class="table table-bordered">
+                    <tr>
+                        <th style="width: 40%">اسم الموظف</th>
+                        <td>{{ payroll_entry.employee.emp_full_name }}</td>
+                    </tr>
+                    <tr>
+                        <th>فترة الراتب</th>
+                        <td>{{ payroll_entry.period.period|date:"Y-m" }}</td>
+                    </tr>
+                    <tr>
+                        <th>إجمالي الراتب</th>
+                        <td>{{ payroll_entry.total_amount|floatformat:2 }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label for="rejection_reason" class="form-label required">سبب الرفض</label>
+                <textarea name="rejection_reason" id="rejection_reason" class="form-control" rows="4" required></textarea>
+                <div class="form-text">يرجى توضيح سبب رفض راتب الموظف</div>
+            </div>
+
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="{% url 'Hr:payroll_entry_detail' payroll_entry.id %}" class="btn btn-light me-md-2">إلغاء</a>
+                <button type="submit" class="btn btn-danger px-4">
+                    <i class="fas fa-times-circle me-1"></i>
+                    تأكيد الرفض
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
