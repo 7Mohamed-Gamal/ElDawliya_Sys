@@ -260,3 +260,67 @@ def payroll_calculate(request):
     }
     
     return render(request, 'Hr/salary/calculate.html', context)
+
+@login_required
+@hr_module_permission_required('payroll', 'view')
+def payroll_period_list(request):
+    """Displays a list of payroll periods."""
+    payroll_periods = PayrollPeriod.objects.all().order_by('-start_date')
+    context = {
+        'payroll_periods': payroll_periods,
+        'title': 'فترات الرواتب'
+    }
+    return render(request, 'Hr/salary/payroll_period_list.html', context)
+
+@login_required
+@hr_module_permission_required('payroll', 'add')
+def payroll_period_create(request):
+    """Handles the creation of new payroll periods."""
+    if request.method == 'POST':
+        form = PayrollPeriodForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'تم إنشاء فترة الراتب بنجاح')
+            return redirect('Hr:payroll_period_list')
+    else:
+        form = PayrollPeriodForm()
+    context = {
+        'form': form,
+        'title': 'إنشاء فترة راتب'
+    }
+    return render(request, 'Hr/salary/payroll_period_form.html', context)
+
+@login_required
+@hr_module_permission_required('payroll', 'edit')
+def payroll_period_edit(request, pk):
+    """Handles editing existing payroll periods."""
+    payroll_period = get_object_or_404(PayrollPeriod, pk=pk)
+    if request.method == 'POST':
+        form = PayrollPeriodForm(request.POST, instance=payroll_period)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'تم تحديث فترة الراتب بنجاح')
+            return redirect('Hr:payroll_period_list')
+    else:
+        form = PayrollPeriodForm(instance=payroll_period)
+    context = {
+        'form': form,
+        'payroll_period': payroll_period,
+        'title': f'تعديل فترة الراتب: {payroll_period}'
+    }
+    return render(request, 'Hr/salary/payroll_period_form.html', context)
+
+@login_required
+@hr_module_permission_required('payroll', 'delete')
+def payroll_period_delete(request, pk):
+    """Handles deleting payroll periods."""
+    payroll_period = get_object_or_404(PayrollPeriod, pk=pk)
+    if request.method == 'POST':
+        payroll_period.delete()
+        messages.success(request, 'تم حذف فترة الراتب بنجاح')
+        return redirect('Hr:payroll_period_list')
+    context = {
+        'payroll_period': payroll_period,
+        'title': f'حذف فترة الراتب: {payroll_period}'
+    }
+    return render(request, 'Hr/salary/payroll_period_confirm_delete.html', context)
