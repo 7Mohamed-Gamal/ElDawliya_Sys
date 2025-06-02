@@ -165,3 +165,9 @@ def department_performance(request, dept_code):
     }
     
     return render(request, 'Hr/departments/department_performance.html', context)
+
+
+def update_data(request):
+    return render(request, 'Hr/update_data.html', {
+        'page_title': 'تحديث البيانات',
+    })

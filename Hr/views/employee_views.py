@@ -304,3 +304,20 @@ def employee_detail_view(request):
     }
 
     return render(request, 'Hr/employees/employee_detail_view.html', context)
+
+
+@login_required
+def employee_dashboard_simple(request):
+    """عرض لوحة معلومات مبسطة للموظفين"""
+    # إحصائيات أساسية للموظفين
+    total_employees = Employee.objects.count()
+    active_employees = Employee.objects.filter(working_condition='سارى').count()
+    departments_count = Department.objects.count()
+    
+    context = {
+        'total_employees': total_employees,
+        'active_employees': active_employees,
+        'departments_count': departments_count,
+    }
+    
+    return render(request, 'Hr/dashboard_simple.html', context)

@@ -83,6 +83,7 @@ class OfficialHoliday(models.Model):
     name = models.CharField(max_length=100, verbose_name=_('اسم الإجازة'))
     date = models.DateField(verbose_name=_('تاريخ الإجازة'))
     description = models.TextField(blank=True, null=True, verbose_name=_('وصف'))
+    is_recurring = models.BooleanField(default=False, verbose_name=_('إجازة متكررة'))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('تاريخ الإنشاء'))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_('تاريخ التحديث'))
     
