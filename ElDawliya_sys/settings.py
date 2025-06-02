@@ -16,7 +16,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-#9^46q1m(@yts%
 DEBUG = True
 
 # Allowed hosts
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '192.168.1.48', '197.44.104.245']
+ALLOWED_HOSTS = ['127.0.0.1', '127.0.0.1:8000', 'localhost', '192.168.1.48', '197.44.104.245']
 
 print(f"DEBUG: {DEBUG}")
 print(f"ALLOWED_HOSTS: {ALLOWED_HOSTS}")
