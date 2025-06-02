@@ -13,13 +13,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-#9^46q1m(@yts%4xkw&%uy&_$$t!drx$-ke^z_*ircyuhk1acs')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'False'
+DEBUG = True
 
 # Allowed hosts
-if DEBUG:
-    ALLOWED_HOSTS = [SERVER_IP, '127.0.0.1', 'localhost', '197.44.104.245']
-else:
-    ALLOWED_HOSTS = [SERVER_IP, '197.44.104.245', 'localhost']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', '192.168.1.48', '197.44.104.245']
+
+print(f"DEBUG: {DEBUG}")
+print(f"ALLOWED_HOSTS: {ALLOWED_HOSTS}")
 
 # Application definition
 INSTALLED_APPS = [
