@@ -1,0 +1,20 @@
+{% extends "Hr/base_hr.html" %}
+
+{% block title %}{{ title }}{% endblock title %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ title }}</h2>
+
+    <div class="alert alert-warning" role="alert">
+        Are you sure you want to delete the payroll period: <strong>{{ payroll_period.name }} ({{ payroll_period.start_date|date:"Y-m-d" }} - {{ payroll_period.end_date|date:"Y-m-d" }})</strong>?
+        <p>This action cannot be undone.</p>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Confirm Delete</button>
+        <a href="{% url 'Hr:payroll_period_list' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock content %}

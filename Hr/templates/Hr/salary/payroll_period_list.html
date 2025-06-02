@@ -1,0 +1,44 @@
+{% extends "Hr/base_hr.html" %}
+
+{% block title %}{{ title }}{% endblock title %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ title }}</h2>
+    <a href="{% url 'Hr:payroll_period_create' %}" class="btn btn-primary mb-3">Add New Payroll Period</a>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <table class="table table-striped table-bordered">
+        <thead class="thead-dark">
+            <tr>
+                <th>Period</th>
+                <th>Status</th>
+                <th>Total Amount</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for period in payroll_periods %}
+            <tr>
+                <td>{{ period.name }} ({{ period.start_date|date:"Y-m-d" }} - {{ period.end_date|date:"Y-m-d" }})</td>
+                <td>{{ period.get_status_display }}</td>
+                <td>{{ period.total_amount|default_if_none:"N/A" }}</td>
+                <td>
+                    <a href="{% url 'Hr:payroll_period_edit' period.pk %}" class="btn btn-sm btn-info">Edit</a>
+                    <a href="{% url 'Hr:payroll_period_delete' period.pk %}" class="btn btn-sm btn-danger">Delete</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="text-center">No payroll periods found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock content %}
