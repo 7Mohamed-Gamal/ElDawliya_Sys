@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
 import json
 
 from Hr.models.employee_model import Employee
@@ -44,7 +45,7 @@ def build_employee_node(employee, employees_dict):
         'name': employee.emp_full_name or f'موظف {employee.emp_id}',
         'title': employee.jop_name or 'غير محدد',
         'department': employee.department.dept_name if employee.department else 'غير محدد',
-        'img': employee.emp_image|binary_to_img if employee.emp_image else None,
+        'img': None,  # Placeholder for employee image processing
         'children': []
     }
     
@@ -56,3 +57,46 @@ def build_employee_node(employee, employees_dict):
         node['children'].append(build_employee_node(sub, employees_dict))
     
     return node
+
+@login_required
+def org_chart_data(request):
+    """إرجاع بيانات الهيكل التنظيمي بتنسيق JSON"""
+    employees = Employee.objects.filter(working_condition='سارى').select_related('department')
+    org_data = build_org_chart(employees)
+    return JsonResponse(org_data, safe=False)
+
+@login_required
+def department_org_chart(request, department_id):
+    """عرض الهيكل التنظيمي لقسم معين"""
+    employees = Employee.objects.filter(department_id=department_id, working_condition='سارى').select_related('department')
+    org_data = build_org_chart(employees)
+
+    context = {
+        'org_data': json.dumps(org_data),
+        'title': f'الهيكل التنظيمي للقسم: {employees[0].department.dept_name if employees else "غير محدد"}'
+    }
+
+    return render(request, 'Hr/org_chart/department_chart.html', context)
+
+@login_required
+def employee_hierarchy(request, employee_id):
+    """عرض التسلسل الهرمي لموظف معين"""
+    employee = Employee.objects.filter(emp_id=employee_id, working_condition='سارى').select_related('department').first()
+
+    if not employee:
+        return render(request, 'Hr/org_chart/employee_hierarchy.html', {
+            'title': 'التسلسل الهرمي للموظف',
+            'error': 'الموظف غير موجود أو غير نشط'
+        })
+
+    employees = Employee.objects.filter(working_condition='سارى').select_related('department')
+    employees_dict = {emp.emp_id: emp for emp in employees}
+
+    hierarchy = build_employee_node(employee, employees_dict)
+
+    context = {
+        'hierarchy': json.dumps(hierarchy),
+        'title': f'التسلسل الهرمي للموظف: {employee.emp_full_name}'
+    }
+
+    return render(request, 'Hr/org_chart/employee_hierarchy.html', context)

@@ -352,3 +352,41 @@ def payroll_entry_detail(request, pk):
     }
 
     return render(request, 'Hr/salary/payroll_entry_detail.html', context)
+
+@login_required
+@hr_module_permission_required('payroll', 'approve')
+def payroll_entry_approve(request, pk):
+    """الموافقة على إدخال الرواتب"""
+    payroll_entry = get_object_or_404(PayrollEntry, pk=pk)
+
+    if request.method == 'POST':
+        payroll_entry.status = 'approved'
+        payroll_entry.save()
+        messages.success(request, f'تمت الموافقة على إدخال الرواتب للموظف {payroll_entry.employee}')
+        return redirect('Hr:payroll_entry_list')
+
+    context = {
+        'payroll_entry': payroll_entry,
+        'title': f'الموافقة على إدخال الرواتب: {payroll_entry.employee}'
+    }
+
+    return render(request, 'Hr/salary/payroll_entry_approve.html', context)
+
+@login_required
+@hr_module_permission_required('payroll', 'reject')
+def payroll_entry_reject(request, pk):
+    """رفض إدخال الرواتب"""
+    payroll_entry = get_object_or_404(PayrollEntry, pk=pk)
+
+    if request.method == 'POST':
+        payroll_entry.status = 'rejected'
+        payroll_entry.save()
+        messages.success(request, f'تم رفض إدخال الرواتب للموظف {payroll_entry.employee}')
+        return redirect('Hr:payroll_entry_list')
+
+    context = {
+        'payroll_entry': payroll_entry,
+        'title': f'رفض إدخال الرواتب: {payroll_entry.employee}'
+    }
+
+    return render(request, 'Hr/salary/payroll_entry_reject.html', context)

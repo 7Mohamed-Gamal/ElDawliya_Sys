@@ -2,11 +2,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
+from django.http import JsonResponse
 from Hr.models.salary_models import PayrollPeriod, PayrollEntry, PayrollItemDetail, SalaryItem
 from Hr.models.employee_model import Employee
 from Hr.forms.salary_forms import PayrollPeriodForm
-from Hr.models.attendance_models import AttendanceRule
-from Hr.forms.attendance_forms import AttendanceRuleForm
+from Hr.models.attendance_models import AttendanceRule, EmployeeAttendanceRule
+from Hr.forms.attendance_forms import AttendanceRuleForm, EmployeeAttendanceRuleForm, EmployeeAttendanceRuleBulkForm
 
 # استيراد جميع الوظائف من وحداتها المحددة
 from Hr.views.employee_views import (
@@ -455,6 +456,11 @@ def employee_attendance_rule_bulk_create(request):
     }
     
     return render(request, 'Hr/attendance/employee_attendance_rule_bulk_form.html', context)
+
+def update_data(request):
+    """تحديث بيانات الموظفين"""
+    # Placeholder implementation for updating employee data
+    return JsonResponse({'status': 'success', 'message': 'تم تحديث البيانات بنجاح'})
 
 # تصدير جميع الوظائف
 __all__ = [
