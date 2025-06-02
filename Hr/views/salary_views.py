@@ -324,3 +324,31 @@ def payroll_period_delete(request, pk):
         'title': f'حذف فترة الراتب: {payroll_period}'
     }
     return render(request, 'Hr/salary/payroll_period_confirm_delete.html', context)
+
+@login_required
+@hr_module_permission_required('payroll', 'view')
+def payroll_entry_list(request):
+    """عرض قائمة إدخالات الرواتب"""
+    payroll_entries = PayrollEntry.objects.select_related('employee', 'period').all()
+
+    context = {
+        'payroll_entries': payroll_entries,
+        'title': 'إدخالات الرواتب'
+    }
+
+    return render(request, 'Hr/salary/payroll_entry_list.html', context)
+
+@login_required
+@hr_module_permission_required('payroll', 'view')
+def payroll_entry_detail(request, pk):
+    """عرض تفاصيل إدخال الرواتب"""
+    payroll_entry = get_object_or_404(PayrollEntry, pk=pk)
+    payroll_item_details = PayrollItemDetail.objects.filter(payroll_entry=payroll_entry).select_related('salary_item')
+
+    context = {
+        'payroll_entry': payroll_entry,
+        'payroll_item_details': payroll_item_details,
+        'title': f'تفاصيل إدخال الرواتب: {payroll_entry.employee}'
+    }
+
+    return render(request, 'Hr/salary/payroll_entry_detail.html', context)
