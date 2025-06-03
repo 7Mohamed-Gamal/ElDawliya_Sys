@@ -47,7 +47,7 @@
             </div>
             <div class="card-footer bg-transparent border-0 py-3">
                 <div class="progress bg-white bg-opacity-25" style="height: 4px;">
-                    <div class="progress-bar bg-white" style="width: {% widthratio active_employees total_employees 100 %}%" role="progressbar"></div>
+                    <div class="progress-bar bg-white" style="width: {{ active_employees|divisibleby:total_employees|floatformat:2 }}%" role="progressbar"></div>
                 </div>
             </div>
         </div>
@@ -877,6 +877,7 @@
     </div>
 </div>
 
+{% endblock content %}
 {% block extra_css %}
 <style>
     /* تحسينات عامة */
@@ -1504,7 +1505,7 @@
     .sort-asc::after{content:'↑';opacity:1}
     .sort-desc::after{content:'↓';opacity:1}
 </style>
-{% endblock %}
+{% endblock extra_css %}
 
 {% block extra_js %}
 <script>
@@ -1642,6 +1643,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // إظهار القائمة عند التركيز على حقل البحث
         searchInput.addEventListener('focus', function() {
             if (this.value.trim().length >= 2) {
+
+
+
                 searchResultsDropdown.classList.remove('d-none');
             }
         });
@@ -2000,12 +2004,12 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // تحسين أداء البحث
-    const searchInput = document.querySelector('.search-autocomplete');
-    if (searchInput) {
+    const searchInputPerf = document.querySelector('.search-autocomplete');
+    if (searchInputPerf) {
         let searchTimeout;
         const searchCache = new Map();
         
-        searchInput.addEventListener('input', (e) => {
+        searchInputPerf.addEventListener('input', (e) => {
             clearTimeout(searchTimeout);
             const query = e.target.value.trim().toLowerCase();
             
@@ -2251,10 +2255,10 @@ async function exportToExcel() {
 
 // تحسين تجربة البحث
 let searchDebounceTimer;
-const searchInput = document.querySelector('.search-autocomplete');
+const searchInputExp = document.querySelector('.search-autocomplete');
 
-if (searchInput) {
-    searchInput.addEventListener('input', (e) => {
+if (searchInputExp) {
+    searchInputExp.addEventListener('input', (e) => {
         clearTimeout(searchDebounceTimer);
         
         const query = e.target.value.trim();
@@ -2264,7 +2268,7 @@ if (searchInput) {
         
         searchDebounceTimer = setTimeout(async () => {
             try {
-                const response = await fetch(`{% url "Hr:employees:search" %}?q=${encodeURIComponent(query)}`);
+                const response = await fetch(`{% url "Hr:employees:employee_search" %}?q=${encodeURIComponent(query)}`);
                 const results = await response.json();
                 
                 updateSearchResults(results);
@@ -2567,4 +2571,4 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 </script>
-{% endblock %}
+{% endblock extra_js %}

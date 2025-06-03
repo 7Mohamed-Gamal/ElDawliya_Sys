@@ -6,6 +6,7 @@
 #   * إزالة أسطر `managed = True` إذا كنت ترغب في السماح لـ Django بإنشاء وتعديل وحذف الجدول
 # يمكنك إعادة تسمية النماذج، ولكن لا تقم بإعادة تسمية قيم db_table أو أسماء الحقول.
 from django.db import models
+from django.utils import timezone
 
 
 class TblEmployee(models.Model):
@@ -308,7 +309,7 @@ class TblEvaluation(models.Model):
 class TblEvaluationcriteria(models.Model):
     criteria_id = models.AutoField(db_column='Criteria_ID', primary_key=True)  # Field name made lowercase.
     criteria_name = models.CharField(db_column='Criteria_Name', max_length=100, db_collation='Arabic_CI_AS')  # Field name made lowercase.
-    description = models.TextField(db_column='Description', db_collation='Arabic_CI_AS', blank=True, null=True)  # Field name made lowercase.
+    description = models.TextField(db_collation='Arabic_CI_AS', blank=True, null=True)  # Field name made lowercase.
 
     class Meta:
         managed = True
@@ -329,7 +330,7 @@ class TblEvaluationscores(models.Model):
 class TblHrtask(models.Model):
     task_id = models.AutoField(db_column='Task_ID', primary_key=True)  # Field name made lowercase.
     task_name = models.CharField(db_column='Task_Name', max_length=100, db_collation='Arabic_CI_AS')  # Field name made lowercase.
-    task_description = models.TextField(db_column='Task_Description', db_collation='Arabic_CI_AS', blank=True, null=True)  # Field name made lowercase.
+    task_description = models.TextField(db_collation='Arabic_CI_AS', blank=True, null=True)  # Field name made lowercase.
     start_date = models.DateField(db_column='Start_Date')  # Field name made lowercase.
     end_date = models.DateField(db_column='End_Date')  # Field name made lowercase.
     department = models.CharField(db_column='Department', max_length=50, db_collation='Arabic_CI_AS', blank=True, null=True)  # Field name made lowercase.
@@ -371,7 +372,7 @@ class TblLeave(models.Model):
     leave_status = models.CharField(db_column='Leave_Status', max_length=50, db_collation='Arabic_CI_AS')  # Field name made lowercase.
     request_date = models.DateTimeField(db_column='Request_Date')  # Field name made lowercase.
     approval_date = models.DateTimeField(db_column='Approval_Date', blank=True, null=True)  # Field name made lowercase.
-    comments = models.TextField(db_column='Comments', db_collation='Arabic_CI_AS', blank=True, null=True)  # Field name made lowercase.
+    comments = models.TextField(db_collation='Arabic_CI_AS', blank=True, null=True)  # Field name made lowercase.
 
     class Meta:
         managed = True
@@ -381,7 +382,7 @@ class TblLeave(models.Model):
 class TblLeavetype(models.Model):
     leave_type_id = models.AutoField(db_column='Leave_Type_ID', primary_key=True)  # Field name made lowercase.
     leave_type_name = models.CharField(db_column='Leave_Type_Name', max_length=50, db_collation='Arabic_CI_AS')  # Field name made lowercase.
-    description = models.TextField(db_column='Description', db_collation='Arabic_CI_AS', blank=True, null=True)  # Field name made lowercase.
+    description = models.TextField(db_collation='Arabic_CI_AS', blank=True, null=True)  # Field name made lowercase.
 
     class Meta:
         managed = True
@@ -438,7 +439,7 @@ class TblPayrollentry(models.Model):
     created_at = models.DateTimeField()
     updated_at = models.DateTimeField()
     employee = models.ForeignKey(TblEmployee, models.DO_NOTHING)
-    payroll_period = models.ForeignKey('TblPayrollperiod', models.DO_NOTHING)
+    payroll_period = models.ForeignKey('TblPayrollperiod', models.DO_NOTHING, default=timezone.now)
 
     class Meta:
         managed = True
@@ -454,20 +455,6 @@ class TblPayrollitemdetail(models.Model):
     class Meta:
         managed = True
         db_table = 'Tbl_PayrollItemDetail'
-
-
-class TblPayrollitemmaster(models.Model):
-    payrollitemid = models.AutoField(db_column='PayrollItemID', primary_key=True)  # Field name made lowercase.
-    itemname = models.CharField(db_column='ItemName', max_length=100, db_collation='Arabic_CI_AS')  # Field name made lowercase.
-    itemtype = models.CharField(db_column='ItemType', max_length=50, db_collation='Arabic_CI_AS')  # Field name made lowercase.
-    calculationmethod = models.CharField(db_column='CalculationMethod', max_length=50, db_collation='Arabic_CI_AS')  # Field name made lowercase.
-    valueparameter = models.DecimalField(db_column='ValueParameter', max_digits=18, decimal_places=2)  # Field name made lowercase.
-    sortorder = models.IntegerField(db_column='SortOrder', blank=True, null=True)  # Field name made lowercase.
-    isactive = models.BooleanField(db_column='IsActive', blank=True, null=True)  # Field name made lowercase.
-
-    class Meta:
-        managed = True
-        db_table = 'Tbl_PayrollItemMaster'
 
 
 class TblPayrollitemmaster(models.Model):
@@ -576,3 +563,14 @@ class EmployeeLeave(models.Model):
 
     def __str__(self):
         return f"{self.employee} - {self.leave_type} ({self.start_date} to {self.end_date})"
+
+
+class TblPayrollperiod(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    description = models.TextField(db_collation='Arabic_CI_AS', blank=True, null=True)
+
+    class Meta:
+        managed = True
+        db_table = 'Tbl_PayrollPeriod'
