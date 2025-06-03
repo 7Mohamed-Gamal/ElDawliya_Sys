@@ -1,0 +1,624 @@
+/* تحسينات عامة */
+body {
+    background-color: #f8f9fa; /* خلفية أفتح قليلاً */
+}
+.card {
+    border: none; /* إزالة الحدود الافتراضية للبطاقات */
+    transition: box-shadow 0.3s ease-in-out;
+}
+.card:hover {
+    box-shadow: 0 .5rem 1rem rgba(0,0,0,.1)!important; /* ظل أكبر عند المرور */
+}
+.card-header {
+    background-color: #f1f1f1; /* لون أفتح لرأس البطاقة */
+}
+.table th {
+    font-weight: 600; /* خط أثقل لرأس الجدول */
+    white-space: nowrap; /* منع التفاف النص في رأس الجدول */
+}
+.badge {
+    font-size: 0.8em;
+    padding: 0.4em 0.7em;
+}
+
+/* تنسيق بطاقات الإحصائيات */
+.stats-card .card-body {
+    padding: 1.5rem; /* زيادة الحشو الداخلي */
+}
+.stats-icon {
+    font-size: 1.8rem;
+    opacity: 0.8;
+}
+.stats-number {
+    font-size: 2rem;
+    font-weight: 700;
+}
+.stats-title {
+    font-size: 0.9rem; /* حجم عنوان الإحصائية */
+}
+
+/* تنسيق صورة الموظف الافتراضية */
+.avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem; /* حجم الخط داخل الأفاتار */
+    font-weight: bold;
+}
+.avatar-sm {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+.object-fit-cover {
+    object-fit: cover; /* ضمان ملء الصورة للمساحة المخصصة */
+}
+
+/* تنسيق زر التبديل */
+.toggle-border {
+    border: 2px solid #e9ecef; /* لون حدود أفتح */
+    border-radius: 30px; /* جعل الحواف أكثر دائرية */
+    padding: 2px;
+    background: #fff; /* خلفية بيضاء */
+    box-shadow: inset 0 1px 3px rgba(0,0,0,.1); /* ظل داخلي خفيف */
+    cursor: pointer;
+    display: inline-flex; /* ليتناسب مع النص المجاور */
+    vertical-align: middle; /* محاذاة رأسية مع النص */
+}
+
+.toggle-border input[type="checkbox"] {
+    display: none;
+}
+
+.toggle-border label {
+    position: relative;
+    display: inline-block;
+    width: 55px; /* تصغير العرض قليلاً */
+    height: 24px; /* تصغير الارتفاع قليلاً */
+    background-color: #dc3545; /* لون أحمر افتراضي (غير نشط) */
+    border-radius: 30px;
+    cursor: pointer;
+    box-shadow: inset 0 0 8px rgba(0,0,0,.2);
+    transition: background-color .4s ease; /* انتقال سلس للون الخلفية */
+}
+
+.toggle-border input[type="checkbox"]:checked + label {
+    background-color: #198754; /* لون أخضر عند التحديد (نشط) */
+}
+
+.handle {
+    position: absolute;
+    top: 2px; /* ضبط الموضع الرأسي */
+    left: 2px; /* ضبط الموضع الأفقي */
+    width: 20px; /* تصغير حجم المقبض */
+    height: 20px; /* تصغير حجم المقبض */
+    background: white;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,.2); /* ظل خفيف للمقبض */
+    transition: left .3s ease; /* انتقال سلس للمقبض */
+}
+
+.toggle-border input[type="checkbox"]:checked + label > .handle {
+    left: calc(100% - 20px - 2px); /* حساب الموضع عند التحديد */
+}
+
+/* تنسيق بطاقات الروابط السريعة */
+.action-card {
+    border: 1px solid #e9ecef;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+.action-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 .25rem .75rem rgba(0,0,0,.08)!important;
+}
+.action-icon {
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+.shadow-hover:hover {
+     box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+/* تطبيق التنسيقات على عناصر النموذج */
+.form-control, .form-select {
+    font-size: 0.9rem; /* تصغير حجم خط حقول الإدخال */
+    border-radius: 0.3rem; /* حواف دائرية قليلاً */
+}
+.form-label {
+    margin-bottom: 0.3rem; /* تقليل الهامش السفلي للعناوين */
+    font-weight: 500;
+}
+
+/* تنسيقات البحث المحسنة */
+.search-main {
+    box-shadow: 0 2px 5px rgba(0,0,0,.05);
+}
+.search-main .form-control {
+    border-color: #e9ecef;
+    padding-right: 2.5rem;
+    height: calc(2.5rem + 2px);
+    transition: all 0.3s ease;
+}
+.search-main .form-control:focus {
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.15);
+    border-color: #86b7fe;
+}
+.search-main .btn-primary {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+/* تنسيق قائمة نتائج البحث */
+.search-results-dropdown {
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+}
+.search-result-item {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+.search-result-item:hover {
+    background-color: #f8f9fa;
+}
+
+/* تنسيق الفلاتر النشطة */
+.active-filters {
+    background-color: #f8f9fa;
+    border-radius: 0.375rem;
+}
+.active-filter-tags .badge {
+    font-weight: normal;
+    padding: 0.4em 0.6em;
+    margin-right: 0.25rem;
+    margin-bottom: 0.25rem;
+}
+.active-filter-tags .badge a {
+    text-decoration: none;
+}
+.active-filter-tags .badge a:hover {
+    opacity: 0.8;
+}
+
+/* تنسيق تبويبات البحث المتقدم */
+.nav-tabs-sm .nav-link {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.85rem;
+}
+
+/* تنسيق جدول الموظفين */
+.table {
+    margin-bottom: 0;
+}
+.table th.sortable {
+    cursor: pointer;
+}
+.table th.sortable:hover {
+    background-color: #e9ecef;
+}
+.employee-row {
+    cursor: pointer;
+    transition: background-color 0.15s ease-in-out;
+}
+.employee-row:hover {
+    background-color: rgba(0, 123, 255, 0.03);
+}
+.employee-name {
+    transition: color 0.15s ease-in-out;
+}
+.employee-row:hover .employee-name {
+    color: #0d6efd !important;
+}
+
+/* تنسيق الشارات والحالات */
+.badge.bg-success-subtle {
+    background-color: rgba(25, 135, 84, 0.1) !important;
+    color: #198754 !important;
+    border-color: rgba(25, 135, 84, 0.2) !important;
+}
+.badge.bg-info-subtle {
+    background-color: rgba(13, 202, 240, 0.1) !important;
+    color: #0dcaf0 !important;
+    border-color: rgba(13, 202, 240, 0.2) !important;
+}
+.badge.bg-danger-subtle {
+    background-color: rgba(220, 53, 69, 0.1) !important;
+    color: #dc3545 !important;
+    border-color: rgba(220, 53, 69, 0.2) !important;
+}
+.badge.bg-secondary-subtle {
+    background-color: rgba(108, 117, 125, 0.1) !important;
+    color: #6c757d !important;
+    border-color: rgba(108, 117, 125, 0.2) !important;
+}
+
+/* تنسيق الرأس الثابت للجدول */
+.table thead.sticky-top {
+    top: 0;
+    z-index: 1020;
+    background-color: #fff;
+    box-shadow: 0 1px 2px rgba(0,0,0,.05);
+}
+
+/* تنسيق الصورة في الجدول */
+.employee-table-img {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 50%;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    border: 2px solid #fff;
+}
+
+/* تحسينات إضافية للبطاقات والأقسام */
+.action-card {
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.action-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg,
+        rgba(var(--bs-primary-rgb), 0.05),
+        rgba(var(--bs-primary-rgb), 0));
+    z-index: -1;
+    transform: translateX(-100%);
+    transition: transform 0.5s ease;
+}
+
+.action-card:hover::before {
+    transform: translateX(0);
+}
+
+/* تأثيرات حركية للبطاقات */
+@keyframes cardFloat {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+    100% { transform: translateY(0); }
+}
+
+.stats-card:hover {
+    animation: cardFloat 1s ease infinite;
+}
+
+/* تحسينات الجدول */
+.table-wrapper {
+    position: relative;
+    overflow: hidden;
+    border-radius: 0.5rem;
+}
+
+.table-hover tbody tr {
+    position: relative;
+}
+
+.table-hover tbody tr::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg,
+        rgba(var(--bs-primary-rgb), 0.05),
+        rgba(var(--bs-primary-rgb), 0));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.table-hover tbody tr:hover::after {
+    opacity: 1;
+}
+
+/* تحسينات أزرار العمليات */
+.action-btn {
+    position: relative;
+    overflow: hidden;
+    transform: translateZ(0);
+}
+
+.action-btn::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 70%);
+    transform: translate(-50%, -50%);
+    transition: width 0.4s ease, height 0.4s ease;
+    border-radius: 50%;
+}
+
+.action-btn:active::after {
+    width: 150px;
+    height: 150px;
+}
+
+/* تحسينات شريط البحث */
+.search-main {
+    position: relative;
+    overflow: hidden;
+    border-radius: 0.5rem;
+    transition: transform 0.3s ease;
+}
+
+.search-main:focus-within {
+    transform: scale(1.01);
+}
+
+.search-main::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg,
+        var(--bs-primary),
+        var(--bs-info));
+    z-index: -1;
+    border-radius: 0.6rem;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.search-main:focus-within::before {
+    opacity: 1;
+}
+
+/* تحسينات المؤشرات والشارات */
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 0.5rem;
+}
+
+.status-indicator.active { background-color: var(--bs-success); }
+.status-indicator.inactive { background-color: var(--bs-danger); }
+.status-indicator.on-leave { background-color: var(--bs-warning); }
+
+/* تحسينات الفلاتر النشطة */
+.filter-tag {
+    position: relative;
+    overflow: hidden;
+}
+
+.filter-tag::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg,
+        rgba(var(--bs-primary-rgb), 0.1),
+        rgba(var(--bs-primary-rgb), 0));
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+}
+
+.filter-tag:hover::before {
+    transform: translateX(0);
+}
+
+/* تحسينات التحميل والانتقالات */
+.content-loading {
+    position: relative;
+}
+
+.content-loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg,
+        var(--bs-primary),
+        var(--bs-info),
+        var(--bs-primary));
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite linear;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* تحسينات الأيقونات */
+.feature-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bs-primary-bg-subtle);
+    color: var(--bs-primary);
+    transition: all 0.3s ease;
+}
+
+.feature-icon:hover {
+    transform: scale(1.1);
+    background: var(--bs-primary);
+    color: white;
+}
+
+/* تحسينات التنقل بين الصفحات */
+.pagination .page-link {
+    position: relative;
+    overflow: hidden;
+}
+
+.pagination .page-link::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg,
+        rgba(var(--bs-primary-rgb), 0.1),
+        rgba(var(--bs-primary-rgb), 0));
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.pagination .page-link:hover::after {
+    opacity: 1;
+}
+
+/* تحسينات الإخطارات والتنبيهات */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1060;
+}
+
+.custom-toast {
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.15);
+    opacity: 0;
+    transform: translateY(-100%);
+    animation: toastSlideIn 0.3s ease forwards;
+}
+
+@keyframes toastSlideIn {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* تحسينات التصفية المتقدمة */
+.filter-section {
+    position: relative;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    background: var(--bs-light);
+    transition: all 0.3s ease;
+}
+
+.filter-section:hover {
+    background: var(--bs-light-rgb);
+    box-shadow: 0 0.25rem 0.5rem rgba(0,0,0,0.05);
+}
+
+/* تحسينات الرسوم البيانية والإحصائيات */
+.stats-progress {
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(var(--bs-primary-rgb), 0.1);
+    overflow: hidden;
+}
+
+.stats-progress-bar {
+    height: 100%;
+    background: var(--bs-primary);
+    transform-origin: left;
+    animation: progressGrow 1s ease;
+}
+
+@keyframes progressGrow {
+    from { transform: scaleX(0); }
+    to { transform: scaleX(1); }
+}
+
+/* تحسينات التفاعل مع الجدول */
+.table-interactive tbody tr {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.table-interactive tbody tr:hover {
+    transform: scale(1.01);
+    box-shadow: 0 0.25rem 0.5rem rgba(0,0,0,0.05);
+    z-index: 1;
+}
+
+/* تحسينات الأداء للأجهزة المحمولة */
+@media (max-width: 768px) {
+    .action-card {
+        margin-bottom: 1rem;
+    }
+
+    .stats-card {
+        margin-bottom: 1rem;
+    }
+
+    .search-main {
+        margin-bottom: 1rem;
+    }
+
+    .table-responsive {
+        margin: 0 -1rem;
+    }
+
+    .filter-section {
+        padding: 0.75rem;
+    }
+}
+
+/* تحسينات الطباعة */
+@media print {
+    .stats-card,
+    .filter-section,
+    .action-buttons,
+    .search-main {
+        display: none !important;
+    }
+
+    .table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+    }
+
+    .table th,
+    .table td {
+        background-color: white !important;
+        border: 1px solid #dee2e6 !important;
+    }
+
+    .page-header {
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .employee-table-img {
+        max-width: 30px !important;
+        height: auto !important;
+    }
+}
+
+/* تحسينات إضافية */
+.filter-btn{transition:.2s;cursor:pointer}
+.filter-btn:hover{transform:translateY(-2px)}
+.filter-btn.active{background:var(--bs-primary-bg-subtle)}
+.sort-header{cursor:pointer}
+.sort-header::after{content:'↕';opacity:.5;margin-right:.5rem}
+.sort-asc::after{content:'↑';opacity:1}
+.sort-desc::after{content:'↓';opacity:1}
