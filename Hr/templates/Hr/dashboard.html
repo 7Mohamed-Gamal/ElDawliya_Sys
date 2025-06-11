@@ -41,8 +41,8 @@
                     <a href="{% url 'Hr:attendance:attendance_record_list' %}" class="btn btn-sm btn-outline-info me-2">
                         <i class="fas fa-clipboard-check me-1"></i> سجل الحضور
                     </a>
-                    <a href="{% url 'Hr:payroll_calculate' %}" class="btn btn-sm btn-outline-success me-2">
-                        <i class="fas fa-calculator me-1"></i> احتساب الرواتب
+                    <a href="{% url 'Hr:employees:employee_search' %}" class="btn btn-sm btn-outline-success me-2">
+                        <i class="fas fa-search me-1"></i> البحث المتقدم
                     </a>
                 </div>
                 <div class="quick-search">
@@ -228,6 +228,89 @@
                         </div>
                     </a>
                 </div>
+            </div>
+        </div>
+
+        <!-- Recent Activities -->
+        <div class="card shadow-sm">
+            <div class="card-header bg-light py-3 border-bottom">
+                <h5 class="mb-0 fw-semibold">
+                    <i class="fas fa-history me-2 text-primary"></i>
+                    النشاطات الأخيرة
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="timeline">
+                    {% if recent_employees %}
+                        {% for employee in recent_employees|slice:":5" %}
+                        <div class="timeline-item d-flex align-items-center mb-3">
+                            <div class="timeline-icon bg-success-subtle text-success rounded-circle me-3 flex-shrink-0">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">تم إضافة موظف جديد</h6>
+                                <p class="text-muted small mb-0">
+                                    {{ employee.emp_full_name }} - {{ employee.department.dept_name|default:"بدون قسم" }}
+                                </p>
+                                <small class="text-muted">{{ employee.emp_date_hiring|timesince }} مضت</small>
+                            </div>
+                            <a href="{% url 'Hr:employees:detail' employee.emp_id %}" class="btn btn-sm btn-outline-primary">
+                                عرض
+                            </a>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-clock fa-2x text-muted mb-2"></i>
+                            <p class="text-muted mb-0">لا توجد أنشطة حديثة</p>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="text-center mt-3">
+                    <a href="{% url 'Hr:employees:list' %}" class="btn btn-outline-primary btn-sm">
+                        عرض جميع الموظفين
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats Row -->
+<div class="row mt-4 g-3">
+    <div class="col-md-3">
+        <div class="card bg-gradient-primary text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-calendar-check fa-2x mb-2"></i>
+                <h4>{{ today_attendance|default:"0" }}</h4>
+                <p class="mb-0">حضور اليوم</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-gradient-success text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-user-shield fa-2x mb-2"></i>
+                <h4>{{ insured_employees|default:"0" }}</h4>
+                <p class="mb-0">مؤمن عليهم</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-gradient-warning text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-calendar-times fa-2x mb-2"></i>
+                <h4>{{ on_leave_today|default:"0" }}</h4>
+                <p class="mb-0">في إجازة اليوم</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-gradient-info text-white">
+            <div class="card-body text-center">
+                <i class="fas fa-birthday-cake fa-2x mb-2"></i>
+                <h4>{{ birthdays_today|default:"0" }}</h4>
+                <p class="mb-0">أعياد ميلاد اليوم</p>
             </div>
         </div>
     </div>

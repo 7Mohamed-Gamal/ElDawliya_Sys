@@ -1,26 +1,50 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q, Count
 
-from Hr.models import Department, Job, Car, Employee
-from Hr.forms import EmployeeForm, EmployeeFilterForm, DepartmentForm, JobForm, CarForm, EmployeeSearchForm
-from administrator.utils import has_permission
+from Hr.models import Department, Job, Employee
+from Hr.forms import EmployeeForm, EmployeeFilterForm, EmployeeSearchForm
 
 
 @login_required
 def dashboard(request):
-    """لوحة معلومات الموظفين"""
-    # إحصائيات الموظفين
+    """لوحة معلومات الموظفين المحسنة"""
+    from datetime import datetime, timedelta
+
+    # إحصائيات الموظفين الأساسية
     total_employees = Employee.objects.count()
     active_employees = Employee.objects.filter(working_condition='سارى').count()
     insured_employees = Employee.objects.filter(insurance_status='مؤمن عليه').count()
     inactive_insured_employees = Employee.objects.filter(insurance_status='غير مؤمن عليه').count()
+    resigned_employees = Employee.objects.filter(working_condition='استقالة').count()
+
+    # إحصائيات إضافية للوحة المحسنة
+    today = datetime.now().date()
+
+    # الموظفين الجدد (آخر 30 يوم)
+    recent_employees = Employee.objects.filter(
+        emp_date_hiring__gte=today - timedelta(days=30)
+    ).select_related('department').order_by('-emp_date_hiring')
+
+    # أعياد الميلاد اليوم (تقدير - يحتاج تاريخ الميلاد)
+    birthdays_today = Employee.objects.filter(
+        date_birth__month=today.month,
+        date_birth__day=today.day
+    ).count() if hasattr(Employee, 'date_birth') else 0
+
+    # الموظفين في إجازة اليوم (تقدير)
+    on_leave_today = Employee.objects.filter(
+        working_condition='إجازة'
+    ).count()
+
+    # حضور اليوم (تقدير - يحتاج نظام حضور)
+    today_attendance = active_employees  # placeholder
 
     # الموظفين حسب القسم
     dept_queryset = Department.objects.annotate(
         employee_count=Count('employees')
-    )
+    ).filter(employee_count__gt=0)
 
     departments = []
     for dept in dept_queryset:
@@ -28,7 +52,7 @@ def dashboard(request):
             percentage = (dept.employee_count / total_employees * 100) if total_employees > 0 else 0
         except (ZeroDivisionError, TypeError):
             percentage = 0
-            
+
         departments.append({
             'dept_code': dept.dept_code,
             'dept_name': dept.dept_name,
@@ -46,21 +70,29 @@ def dashboard(request):
     # البطاقات الصحية التي على وشك الانتهاء
     expiring_health_cards = Employee.objects.filter(
         health_card_renewal_date__isnull=False,
+        health_card_renewal_date__lte=today + timedelta(days=30)
     ).order_by('health_card_renewal_date')[:10]
 
     # تجديد العقود الوشيكة
     upcoming_contract_renewals = Employee.objects.filter(
         contract_renewal_date__isnull=False,
+        contract_renewal_date__lte=today + timedelta(days=30)
     ).order_by('contract_renewal_date')[:10]
 
     context = {
         'total_employees': total_employees,
         'active_employees': active_employees,
         'insured_employees': insured_employees,
+        'resigned_employees': resigned_employees,
         'departments': departments,
         'insurance_distribution': insurance_distribution,
         'expiring_health_cards': expiring_health_cards,
         'upcoming_contract_renewals': upcoming_contract_renewals,
+        # بيانات إضافية للوحة المحسنة
+        'recent_employees': recent_employees,
+        'today_attendance': today_attendance,
+        'on_leave_today': on_leave_today,
+        'birthdays_today': birthdays_today,
     }
 
     # Add department and job counts for template
@@ -75,51 +107,71 @@ def dashboard(request):
 @login_required
 def employee_list(request):
     """عرض قائمة الموظفين مع إمكانية البحث والتصفية"""
+    try:
+        # إعداد عامل التصفية
+        filter_form = EmployeeFilterForm(request.GET or None)
 
-    # إعداد عامل التصفية
-    filter_form = EmployeeFilterForm(request.GET or None)
-    total_employees = Employee.objects.all()
+        # التحقق من حالة التبديل (نشط/غير نشط)
+        status = request.GET.get('status', 'active')
 
-    # التحقق من حالة التبديل (نشط/غير نشط)
-    status = request.GET.get('status', 'active')
+        # تحديد الموظفين بناءً على الحالة مع تحسين الاستعلام
+        if status == 'inactive':
+            # عرض الموظفين غير النشطين (المستقيلين)
+            employees = Employee.objects.select_related('department').filter(
+                working_condition='استقالة'
+            ).order_by('emp_id')
+        else:
+            # عرض الموظفين النشطين (الافتراضي)
+            employees = Employee.objects.select_related('department').filter(
+                working_condition__in=['سارى']
+            ).order_by('emp_id')
 
-    # تحديد الموظفين بناءً على الحالة
-    if status == 'inactive':
-        # عرض الموظفين غير النشطين (المستقيلين)
-        employees = Employee.objects.filter(working_condition='استقالة').order_by('emp_id')
-    else:
-        # عرض الموظفين النشطين (الافتراضي)
-        employees = Employee.objects.filter(working_condition__in=['سارى']).order_by('emp_id')
+        # تطبيق التصفية إذا تم تقديم النموذج
+        if filter_form.is_valid():
+            # تصفية حسب البحث السريع
+            search_query = filter_form.cleaned_data.get('search')
+            if search_query:
+                employees = employees.filter(
+                    Q(emp_full_name__icontains=search_query) |
+                    Q(emp_first_name__icontains=search_query) |
+                    Q(emp_second_name__icontains=search_query) |
+                    Q(emp_id__icontains=search_query) |
+                    Q(national_id__icontains=search_query)
+                )
 
-    # تطبيق التصفية إذا تم تقديم النموذج
-    if filter_form.is_valid():
-        # تصفية حسب الاسم أو الرقم
-        search_query = filter_form.cleaned_data.get('search')
-        if search_query:
-            employees = employees.filter(
-                Q(emp_full_name__icontains=search_query) |
-                Q(emp_id__icontains=search_query)
-            )
+            # تصفية حسب الاسم
+            name = filter_form.cleaned_data.get('name')
+            if name:
+                employees = employees.filter(
+                    Q(emp_full_name__icontains=name) |
+                    Q(emp_first_name__icontains=name) |
+                    Q(emp_second_name__icontains=name)
+                )
 
-        # تصفية حسب القسم
-        department = filter_form.cleaned_data.get('department')
-        if department:
-            employees = employees.filter(department=department)
+            # تصفية حسب القسم
+            department = filter_form.cleaned_data.get('department')
+            if department:
+                employees = employees.filter(department=department)
 
-        # تصفية حسب الوظيفة
-        job = filter_form.cleaned_data.get('job')
-        if job:
-            employees = employees.filter(jop_code=job)
+            # تصفية حسب الوظيفة
+            job = filter_form.cleaned_data.get('job')
+            if job:
+                employees = employees.filter(jop_code=job.jop_code)
 
-        # تصفية حسب حالة العمل
-        working_condition = filter_form.cleaned_data.get('working_condition')
-        if working_condition:
-            employees = employees.filter(working_condition=working_condition)
+            # تصفية حسب حالة العمل
+            working_condition = filter_form.cleaned_data.get('working_condition')
+            if working_condition:
+                employees = employees.filter(working_condition=working_condition)
 
-        # تصفية حسب حالة التأمين
-        insurance_status = filter_form.cleaned_data.get('insurance_status')
-        if insurance_status:
-            employees = employees.filter(insurance_status=insurance_status)
+            # تصفية حسب حالة التأمين
+            insurance_status = filter_form.cleaned_data.get('insurance_status')
+            if insurance_status:
+                employees = employees.filter(insurance_status=insurance_status)
+
+    except Exception as e:
+        messages.error(request, f'حدث خطأ أثناء تحميل قائمة الموظفين: {str(e)}')
+        employees = Employee.objects.none()
+        filter_form = EmployeeFilterForm()
 
     # إحصائيات الموظفين
     total_employees = employees.count()
@@ -323,24 +375,69 @@ def employee_dashboard_simple(request):
     return render(request, 'Hr/dashboard_simple.html', context)
 @login_required
 def employee_export(request):
-    """Placeholder view for exporting employee data."""
+    """Export employee data to CSV format"""
+    import csv
     from django.http import HttpResponse
-    # Actual export logic (e.g., to CSV or Excel) will be implemented here.
-    # For now, return a simple response.
-    # You would typically query Employee data based on filters from request.GET
-    # and then format it for export.
-    
-    # Example: Get filter parameters if any (similar to employee_list)
-    # filter_form = EmployeeFilterForm(request.GET or None)
-    # employees_to_export = Employee.objects.all() # Or filtered queryset
-    # if filter_form.is_valid():
-    #     search_query = filter_form.cleaned_data.get('search')
-    #     if search_query:
-    #         employees_to_export = employees_to_export.filter(
-    #             Q(emp_full_name__icontains=search_query) |
-    #             Q(emp_id__icontains=search_query)
-    #         )
-        # ... add other filters as needed
+    from datetime import datetime
 
-    # This is a placeholder response
-    return HttpResponse("Employee export functionality will be implemented here.", content_type="text/plain")
+    try:
+        # Create the HttpResponse object with CSV header
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = f'attachment; filename="employees_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv"'
+
+        # Add BOM for proper UTF-8 encoding in Excel
+        response.write('\ufeff')
+
+        writer = csv.writer(response)
+
+        # Write CSV header
+        writer.writerow([
+            'رقم الموظف', 'الاسم الكامل', 'الاسم الأول', 'الاسم الثاني',
+            'القسم', 'الوظيفة', 'الهاتف', 'العنوان', 'الرقم القومي',
+            'تاريخ التعيين', 'حالة العمل', 'حالة التأمين'
+        ])
+
+        # Get employees with related data
+        employees = Employee.objects.select_related('department').all()
+
+        # Apply filters if provided
+        filter_form = EmployeeFilterForm(request.GET or None)
+        if filter_form.is_valid():
+            search_query = filter_form.cleaned_data.get('search')
+            if search_query:
+                employees = employees.filter(
+                    Q(emp_full_name__icontains=search_query) |
+                    Q(emp_id__icontains=search_query) |
+                    Q(national_id__icontains=search_query)
+                )
+
+            department = filter_form.cleaned_data.get('department')
+            if department:
+                employees = employees.filter(department=department)
+
+            working_condition = filter_form.cleaned_data.get('working_condition')
+            if working_condition:
+                employees = employees.filter(working_condition=working_condition)
+
+        # Write employee data
+        for employee in employees:
+            writer.writerow([
+                employee.emp_id or '',
+                employee.emp_full_name or '',
+                employee.emp_first_name or '',
+                employee.emp_second_name or '',
+                employee.department.dept_name if employee.department else '',
+                employee.jop_name or '',
+                employee.emp_phone1 or '',
+                employee.emp_address or '',
+                employee.national_id or '',
+                employee.emp_date_hiring.strftime('%Y-%m-%d') if employee.emp_date_hiring else '',
+                employee.working_condition or '',
+                employee.insurance_status or ''
+            ])
+
+        return response
+
+    except Exception as e:
+        messages.error(request, f'حدث خطأ أثناء تصدير البيانات: {str(e)}')
+        return redirect('Hr:employees:list')

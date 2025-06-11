@@ -1,7 +1,6 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 from Hr.models import Employee, Department, Job, Car
-import io
 
 class BinaryImageField(forms.FileField):  # Changed from ImageField to FileField
     """
@@ -35,6 +34,7 @@ class BinaryImageField(forms.FileField):  # Changed from ImageField to FileField
         return None
 
     def bound_data(self, data, initial):
+        """Handle bound data for the binary field"""
         if data in [False, None]:
             return None
         return data
@@ -194,27 +194,49 @@ class EmployeeForm(forms.ModelForm):
 
 class EmployeeFilterForm(forms.Form):
     """
-    Form for filtering employees
+    Form for filtering employees with enhanced search capabilities
     """
+    search = forms.CharField(
+        label=_('البحث السريع'),
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'بحث بالاسم أو الكود أو الرقم القومي'
+        })
+    )
+
     name = forms.CharField(
         label=_('الاسم'),
         required=False,
         widget=forms.TextInput(attrs={'class': 'form-control'})
     )
+
     department = forms.ModelChoiceField(
         queryset=Department.objects.all(),
         label=_('القسم'),
         required=False,
+        empty_label=_('جميع الأقسام'),
         widget=forms.Select(attrs={'class': 'form-select'})
     )
-    jop_name = forms.CharField(
+
+    job = forms.ModelChoiceField(
+        queryset=Job.objects.all(),
         label=_('الوظيفة'),
         required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control'})
+        empty_label=_('جميع الوظائف'),
+        widget=forms.Select(attrs={'class': 'form-select'})
     )
+
     working_condition = forms.ChoiceField(
-        choices=[('', _('الكل'))] + list(Employee.WORKING_CONDITION_CHOICES),
+        choices=[('', _('جميع الحالات'))] + list(Employee.WORKING_CONDITION_CHOICES),
         label=_('حالة العمل'),
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
+    insurance_status = forms.ChoiceField(
+        choices=[('', _('جميع حالات التأمين'))] + list(Employee.INSURANCE_STATUS_CHOICES),
+        label=_('حالة التأمين'),
         required=False,
         widget=forms.Select(attrs={'class': 'form-select'})
     )
