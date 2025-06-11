@@ -27,6 +27,10 @@ class MeetingTask(models.Model):
     def __str__(self):
         return f"{self.description[:50]}..." if len(self.description) > 50 else self.description
 
+    def get_status_display(self):
+        """Get the display text for status"""
+        return dict(self.STATUS_CHOICES).get(self.status, self.status)
+
 class Meeting(models.Model):
     """
     نموذج الاجتماعات
@@ -74,3 +78,37 @@ class Attendee(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.meeting.title}"
+
+
+class MeetingTaskStep(models.Model):
+    """
+    نموذج خطوات مهام الاجتماع
+    يستخدم لتتبع التقدم في المهام المرتبطة بالاجتماعات
+    """
+    meeting_task = models.ForeignKey(MeetingTask, on_delete=models.CASCADE, related_name='steps', verbose_name="مهمة الاجتماع")
+    description = models.TextField(verbose_name="وصف الخطوة")
+    completed = models.BooleanField(default=False, verbose_name="مكتملة")
+    completion_date = models.DateTimeField(null=True, blank=True, verbose_name="تاريخ الإنجاز")
+    created_by = models.ForeignKey(Users_Login_New, on_delete=models.SET_NULL, null=True,
+                                   related_name='created_meeting_task_steps', verbose_name="تم الإنشاء بواسطة")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ الإنشاء")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="تاريخ التحديث")
+    notes = models.TextField(blank=True, null=True, verbose_name="ملاحظات")
+
+    class Meta:
+        verbose_name = "خطوة مهمة اجتماع"
+        verbose_name_plural = "خطوات مهام الاجتماعات"
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"{self.description[:50]}..." if len(self.description) > 50 else self.description
+
+    def save(self, *args, **kwargs):
+        # إذا تم تعيين الخطوة كمكتملة، قم بتعيين تاريخ الإنجاز
+        if self.completed and not self.completion_date:
+            from django.utils import timezone
+            self.completion_date = timezone.now()
+        # إذا تم تغيير الحالة من مكتملة، قم بإزالة تاريخ الإنجاز
+        elif not self.completed:
+            self.completion_date = None
+        super().save(*args, **kwargs)

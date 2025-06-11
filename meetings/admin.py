@@ -1,6 +1,12 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
-from .models import Meeting, Attendee, MeetingTask
+from .models import Meeting, Attendee, MeetingTask, MeetingTaskStep
+
+class MeetingTaskStepInline(admin.TabularInline):
+    model = MeetingTaskStep
+    extra = 0
+    fields = ['description', 'completed', 'notes', 'created_by']
+    readonly_fields = ['created_by']
 
 class MeetingTaskInline(admin.TabularInline):
     model = MeetingTask
@@ -83,13 +89,40 @@ def has_delete_permission(self, request, obj=None):
 
 @admin.register(MeetingTask)
 class MeetingTaskAdmin(admin.ModelAdmin):
-    list_display = ['description', 'meeting', 'assigned_to', 'created_at']
-    list_filter = ['meeting', 'assigned_to']
+    list_display = ['description', 'meeting', 'assigned_to', 'status', 'created_at']
+    list_filter = ['meeting', 'assigned_to', 'status']
     search_fields = ['description', 'meeting__title', 'assigned_to__username']
+    inlines = [MeetingTaskStepInline]
 
     def has_change_permission(self, request, obj=None):
         # السماح بتعديل مهام الاجتماع فقط للأدمن أو منشئ الاجتماع
         if obj is None:
             return True
-        return (request.user.is_superuser or request.user.Role == 'admin' or 
+        return (request.user.is_superuser or request.user.Role == 'admin' or
                 obj.meeting.created_by == request.user)
+
+
+@admin.register(MeetingTaskStep)
+class MeetingTaskStepAdmin(admin.ModelAdmin):
+    list_display = ['description', 'meeting_task', 'completed', 'created_by', 'created_at']
+    list_filter = ['completed', 'created_at', 'meeting_task__meeting']
+    search_fields = ['description', 'meeting_task__description', 'notes']
+    readonly_fields = ['created_by', 'created_at', 'updated_at', 'completion_date']
+
+    fieldsets = [
+        (_('معلومات الخطوة'), {
+            'fields': ['meeting_task', 'description', 'notes', 'completed', 'completion_date']
+        }),
+        (_('معلومات النظام'), {
+            'fields': ['created_by', 'created_at', 'updated_at'],
+            'classes': ['collapse']
+        }),
+    ]
+
+    def has_change_permission(self, request, obj=None):
+        # السماح بتعديل خطوات المهام فقط للأدمن أو المكلف بالمهمة أو منشئ الاجتماع
+        if obj is None:
+            return True
+        return (request.user.is_superuser or request.user.Role == 'admin' or
+                obj.meeting_task.assigned_to == request.user or
+                obj.meeting_task.meeting.created_by == request.user)

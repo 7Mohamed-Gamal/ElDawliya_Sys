@@ -105,6 +105,14 @@
                             <span class="badge {% if task.status == 'pending' %}bg-secondary{% elif task.status == 'in_progress' %}bg-primary{% elif task.status == 'completed' %}bg-success{% elif task.status == 'canceled' %}bg-danger{% elif task.status == 'deferred' %}bg-warning{% else %}bg-info{% endif %} me-2">
                                 {{ task.get_status_display }}
                             </span>
+
+                            {% if task.task_type == 'meeting' %}
+                            <span class="badge bg-info me-2">
+                                <i class="fas fa-users me-1"></i>
+                                مهمة اجتماع
+                            </span>
+                            {% endif %}
+
                             {% if task.meeting %}
                             <a href="{% url 'meetings:detail' task.meeting.id %}" class="text-decoration-none ms-2 small">
                                 <i class="fas fa-link me-1"></i>
@@ -121,16 +129,27 @@
                                 <span class="small text-muted">البدء:</span>
                                 <span class="small">{{ task.start_date|date:"j F Y g:i A" }}</span>
                             </div>
+                            {% if task.end_date %}
                             <div class="me-4 mb-2">
                                 <i class="fas fa-calendar-check text-danger me-1"></i>
                                 <span class="small text-muted">الإنتهاء:</span>
                                 <span class="small">{{ task.end_date|date:"j F Y g:i A" }}</span>
                             </div>
+                            {% endif %}
+                            {% if task.task_type == 'regular' and task.steps %}
                             <div class="mb-2">
                                 <i class="fas fa-tasks text-success me-1"></i>
                                 <span class="small text-muted">الخطوات:</span>
                                 <span class="small">{{ task.steps.count }}</span>
                             </div>
+                            {% endif %}
+                            {% if task.task_type == 'meeting' %}
+                            <div class="mb-2">
+                                <i class="fas fa-calendar-plus text-info me-1"></i>
+                                <span class="small text-muted">تاريخ الإنشاء:</span>
+                                <span class="small">{{ task.start_date|date:"j F Y g:i A" }}</span>
+                            </div>
+                            {% endif %}
                         </div>
 
                         {% if task.status == 'in_progress' %}
@@ -152,10 +171,17 @@
                                 </span>
                             </div>
                             <div class="d-grid gap-2">
+                                {% if task.task_type == 'regular' %}
                                 <a href="{% url 'tasks:detail' task.id %}" class="btn btn-primary btn-sm">
                                     <i class="fas fa-eye me-1"></i>
                                     عرض التفاصيل
                                 </a>
+                                {% else %}
+                                <a href="{% url 'meetings:detail' task.meeting.id %}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-eye me-1"></i>
+                                    عرض الاجتماع
+                                </a>
+                                {% endif %}
                                 {% if task.status != 'completed' %}
                                 <button class="btn btn-outline-success btn-sm change-status" data-task-id="{{ task.id }}" data-new-status="completed">
                                     <i class="fas fa-check me-1"></i>

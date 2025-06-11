@@ -15,16 +15,24 @@
     <div class="col-md-8">
         <div class="card mb-4">
             <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-                <h4 class="card-title mb-0">تفاصيل المهمة</h4>
                 <div>
-                    {% if user.is_superuser or user == task.assigned_to %}
+                    <h4 class="card-title mb-0">تفاصيل المهمة</h4>
+                    {% if is_meeting_task %}
+                    <span class="badge bg-info mt-1">
+                        <i class="fas fa-users me-1"></i>
+                        مهمة اجتماع
+                    </span>
+                    {% endif %}
+                </div>
+                <div>
+                    {% if not is_meeting_task and (user.is_superuser or user == task.assigned_to) %}
                     <a href="{% url 'tasks:edit' task.pk %}" class="btn btn-sm btn-primary">
                         <i class="fas fa-edit me-1"></i>
                         تعديل
                     </a>
                     {% endif %}
 
-                    {% if user.is_superuser %}
+                    {% if not is_meeting_task and user.is_superuser %}
                     <button class="btn btn-sm btn-danger ms-2 confirm-delete"
                             data-type="المهمة"
                             data-id="{{ task.pk }}"
@@ -54,22 +62,38 @@
                                     <i class="fas fa-calendar-day"></i>
                                 </div>
                                 <div>
-                                    <h6 class="fw-bold mb-1">تاريخ البدء</h6>
-                                    <p class="mb-0">{{ task.start_date|date:"j F Y, g:i A" }}</p>
+                                    <h6 class="fw-bold mb-1">
+                                        {% if is_meeting_task %}تاريخ الإنشاء{% else %}تاريخ البدء{% endif %}
+                                    </h6>
+                                    <p class="mb-0">
+                                        {% if is_meeting_task %}
+                                            {{ task.created_at|date:"j F Y, g:i A" }}
+                                        {% else %}
+                                            {{ task.start_date|date:"j F Y, g:i A" }}
+                                        {% endif %}
+                                    </p>
                                 </div>
                             </div>
                         </div>
+                        {% if task.end_date %}
                         <div class="col-md-6 mb-3">
                             <div class="d-flex">
                                 <div class="feature-icon bg-primary bg-opacity-10 text-primary rounded p-3 me-3">
                                     <i class="fas fa-calendar-check"></i>
                                 </div>
                                 <div>
-                                    <h6 class="fw-bold mb-1">تاريخ الانتهاء</h6>
-                                    <p class="mb-0">{{ task.end_date|date:"j F Y, g:i A" }}</p>
+                                    <h6 class="fw-bold mb-1">تاريخ الانتهاء المتوقع</h6>
+                                    <p class="mb-0">
+                                        {% if is_meeting_task %}
+                                            {{ task.end_date|date:"j F Y" }}
+                                        {% else %}
+                                            {{ task.end_date|date:"j F Y, g:i A" }}
+                                        {% endif %}
+                                    </p>
                                 </div>
                             </div>
                         </div>
+                        {% endif %}
                         <div class="col-md-6 mb-3">
                             <div class="d-flex">
                                 <div class="feature-icon bg-primary bg-opacity-10 text-primary rounded p-3 me-3">
@@ -90,44 +114,120 @@
                                     <h6 class="fw-bold mb-1">الحالة</h6>
                                     <p class="mb-0">
                                         <span class="badge {% if task.status == 'pending' %}bg-secondary{% elif task.status == 'in_progress' %}bg-primary{% elif task.status == 'completed' %}bg-success{% elif task.status == 'canceled' %}bg-danger{% elif task.status == 'deferred' %}bg-warning{% else %}bg-info{% endif %}">
-                                            {{ task.get_status_display }}
+                                            {% if is_meeting_task %}
+                                                {{ task.get_status_display }}
+                                            {% else %}
+                                                {{ task.get_status_display }}
+                                            {% endif %}
                                         </span>
                                     </p>
                                 </div>
                             </div>
                         </div>
+                        {% if not is_meeting_task and task.created_by %}
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex">
+                                <div class="feature-icon bg-primary bg-opacity-10 text-primary rounded p-3 me-3">
+                                    <i class="fas fa-user-plus"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">تم الإنشاء بواسطة</h6>
+                                    <p class="mb-0">{{ task.created_by.username }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
 
+                    {% if task.meeting %}
+                    <div class="meeting-info mb-4">
+                        <h5 class="mb-3">
+                            <i class="fas fa-calendar-alt me-2 text-primary"></i>
+                            {% if is_meeting_task %}تفاصيل الاجتماع{% else %}الاجتماع المرتبط{% endif %}
+                        </h5>
+                        <div class="card border">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <h6 class="mb-2">{{ task.meeting.title }}</h6>
+                                        <div class="meeting-details">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <i class="fas fa-calendar-day text-primary me-2"></i>
+                                                <span>{{ task.meeting.date|date:"j F Y, g:i A" }}</span>
+                                            </div>
+                                            {% if task.meeting.topic %}
+                                            <div class="d-flex align-items-start mb-2">
+                                                <i class="fas fa-clipboard-list text-primary me-2 mt-1"></i>
+                                                <div>
+                                                    <strong>موضوع الاجتماع:</strong>
+                                                    <p class="mb-0 text-muted">{{ task.meeting.topic|truncatechars:100 }}</p>
+                                                </div>
+                                            </div>
+                                            {% endif %}
+                                            <div class="d-flex align-items-center mb-2">
+                                                <i class="fas fa-user-tie text-primary me-2"></i>
+                                                <span><strong>منشئ الاجتماع:</strong> {{ task.meeting.created_by.username }}</span>
+                                            </div>
+                                            <div class="d-flex align-items-center">
+                                                <i class="fas fa-info-circle text-primary me-2"></i>
+                                                <span class="badge {% if task.meeting.status == 'pending' %}bg-warning{% elif task.meeting.status == 'completed' %}bg-success{% else %}bg-danger{% endif %}">
+                                                    {{ task.meeting.get_status_display }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 text-end">
+                                        <a href="{% url 'meetings:detail' task.meeting.pk %}" class="btn btn-outline-primary">
+                                            <i class="fas fa-eye me-1"></i>
+                                            عرض الاجتماع الكامل
+                                        </a>
+                                    </div>
+                                </div>
+
+                                {% if is_meeting_task %}
+                                <!-- Meeting Attendees Section -->
+                                <hr class="my-3">
+                                <div class="meeting-attendees">
+                                    <h6 class="mb-2">
+                                        <i class="fas fa-users text-primary me-2"></i>
+                                        حضور الاجتماع
+                                    </h6>
+                                    {% if task.meeting.attendees.all %}
+                                    <div class="row">
+                                        {% for attendee in task.meeting.attendees.all %}
+                                        <div class="col-md-6 mb-2">
+                                            <div class="d-flex align-items-center">
+                                                <div class="avatar-circle bg-primary text-white me-2">
+                                                    {{ attendee.user.username|slice:":1" }}
+                                                </div>
+                                                <span>{{ attendee.user.username }}</span>
+                                                {% if attendee.user == task.assigned_to %}
+                                                <span class="badge bg-info ms-2">مكلف بالمهمة</span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                    {% else %}
+                                    <p class="text-muted mb-0">لم يتم تحديد حضور للاجتماع</p>
+                                    {% endif %}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% elif not is_meeting_task %}
                     <div class="meeting-info mb-4">
                         <h5 class="mb-3">
                             <i class="fas fa-calendar-alt me-2 text-primary"></i>
                             الاجتماع المرتبط
                         </h5>
-                        {% if task.meeting %}
-                        <div class="card border">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <h6 class="mb-1">{{ task.meeting.title }}</h6>
-                                        <p class="text-muted mb-0">
-                                            <i class="fas fa-calendar-day me-1"></i>
-                                            {{ task.meeting.date|date:"j F Y, g:i A" }}
-                                        </p>
-                                    </div>
-                                    <a href="{% url 'meetings:detail' task.meeting.pk %}" class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-eye me-1"></i>
-                                        عرض الاجتماع
-                                    </a>
-                                </div>
-                            </div>
-                        </div>
-                        {% else %}
                         <div class="alert alert-info">
                             <i class="fas fa-info-circle me-2"></i>
                             هذه المهمة غير مرتبطة بأي اجتماع.
                         </div>
-                        {% endif %}
                     </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -135,27 +235,62 @@
         <!-- Task Steps -->
         <div class="card">
             <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-                <h5 class="mb-0">خطوات المهمة</h5>
+                <h5 class="mb-0">
+                    <i class="fas fa-tasks me-2"></i>
+                    خطوات المهمة وسجل التقدم
+                </h5>
+                {% if steps %}
+                <span class="badge bg-primary">{{ steps|length }} خطوة</span>
+                {% endif %}
             </div>
             <div class="card-body">
                 {% if user.is_superuser or user == task.assigned_to %}
                 <form method="post" class="mb-4 needs-validation" novalidate>
                     {% csrf_token %}
+                    {% if is_meeting_task %}
+                    <input type="hidden" name="add_step" value="1">
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label for="{{ step_form.description.id_for_label }}" class="form-label">وصف الخطوة المتخذة</label>
+                            {{ step_form.description }}
+                            {% if step_form.description.errors %}
+                                <div class="invalid-feedback d-block">{{ step_form.description.errors.0 }}</div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="{{ step_form.notes.id_for_label }}" class="form-label">ملاحظات (اختياري)</label>
+                            {{ step_form.notes }}
+                        </div>
+                        <div class="col-12 mb-3">
+                            <div class="form-check">
+                                {{ step_form.completed }}
+                                <label class="form-check-label" for="{{ step_form.completed.id_for_label }}">
+                                    تم إنجاز هذه الخطوة بالكامل
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i>
+                        إضافة خطوة
+                    </button>
+                    {% else %}
                     <div class="mb-3">
-                        <label for="{{ form.description.id_for_label }}" class="form-label">إضافة خطوة جديدة</label>
+                        <label for="{{ step_form.description.id_for_label }}" class="form-label">إضافة خطوة جديدة</label>
                         <div class="input-group">
                             <div class="form-control-wrapper w-100">
-                                {{ form.description }}
+                                {{ step_form.description }}
                             </div>
                             <button type="submit" class="btn btn-primary">
                                 <i class="fas fa-plus me-1"></i>
                                 إضافة
                             </button>
                         </div>
-                        {% if form.description.errors %}
-                            <div class="invalid-feedback d-block">{{ form.description.errors.0 }}</div>
+                        {% if step_form.description.errors %}
+                            <div class="invalid-feedback d-block">{{ step_form.description.errors.0 }}</div>
                         {% endif %}
                     </div>
+                    {% endif %}
                 </form>
                 {% else %}
                 <div class="alert alert-info mb-4">
@@ -165,22 +300,63 @@
                 {% endif %}
 
                 <div class="timeline">
-                    {% if task.steps.all %}
-                        {% for step in task.steps.all %}
+                    {% if steps %}
+                        {% for step in steps %}
                             <div class="timeline-item">
-                                <div class="timeline-badge">
-                                    <i class="fas fa-circle"></i>
+                                <div class="timeline-badge {% if is_meeting_task and step.completed %}bg-success{% else %}bg-primary{% endif %}">
+                                    {% if is_meeting_task and step.completed %}
+                                        <i class="fas fa-check text-white"></i>
+                                    {% else %}
+                                        <i class="fas fa-circle"></i>
+                                    {% endif %}
                                 </div>
                                 <div class="card mb-0">
                                     <div class="card-body py-3">
                                         <div class="d-flex justify-content-between align-items-start">
-                                            <div>
-                                                <p class="mb-1">{{ step.description }}</p>
-                                                <span class="text-muted small">{{ step.date|date:"j F Y, g:i A" }}</span>
+                                            <div class="flex-grow-1">
+                                                <div class="d-flex align-items-center mb-2">
+                                                    <p class="mb-0 me-2">{{ step.description }}</p>
+                                                    {% if is_meeting_task and step.completed %}
+                                                    <span class="badge bg-success">مكتملة</span>
+                                                    {% endif %}
+                                                </div>
+
+                                                {% if is_meeting_task and step.notes %}
+                                                <div class="step-notes bg-light p-2 rounded mb-2">
+                                                    <small class="text-muted">
+                                                        <i class="fas fa-sticky-note me-1"></i>
+                                                        {{ step.notes }}
+                                                    </small>
+                                                </div>
+                                                {% endif %}
+
+                                                <div class="step-meta">
+                                                    {% if is_meeting_task %}
+                                                    <span class="text-muted small">
+                                                        <i class="fas fa-clock me-1"></i>
+                                                        {{ step.created_at|date:"j F Y, g:i A" }}
+                                                    </span>
+                                                    {% if step.created_by %}
+                                                    <span class="text-muted small ms-3">
+                                                        <i class="fas fa-user me-1"></i>
+                                                        {{ step.created_by.username }}
+                                                    </span>
+                                                    {% endif %}
+                                                    {% if step.completed and step.completion_date %}
+                                                    <span class="text-success small ms-3">
+                                                        <i class="fas fa-check-circle me-1"></i>
+                                                        اكتملت في {{ step.completion_date|date:"j F Y, g:i A" }}
+                                                    </span>
+                                                    {% endif %}
+                                                    {% else %}
+                                                    <span class="text-muted small">{{ step.date|date:"j F Y, g:i A" }}</span>
+                                                    {% endif %}
+                                                </div>
                                             </div>
                                             {% if user.is_superuser or user == task.assigned_to %}
                                             <button class="btn btn-sm btn-outline-danger remove-step"
-                                                    data-step-id="{{ step.id }}">
+                                                    data-step-id="{{ step.id }}"
+                                                    data-step-type="{% if is_meeting_task %}meeting{% else %}regular{% endif %}">
                                                 <i class="fas fa-times"></i>
                                             </button>
                                             {% endif %}
@@ -193,6 +369,7 @@
                         <div class="text-center py-4">
                             <i class="fas fa-clipboard-list text-muted fa-2x mb-3"></i>
                             <p class="mb-0 text-muted">لم يتم إضافة أي خطوات للمهمة بعد</p>
+                            <p class="small text-muted">ابدأ بإضافة خطوة لتتبع تقدمك في هذه المهمة</p>
                         </div>
                     {% endif %}
                 </div>
@@ -204,10 +381,44 @@
         <!-- Task Status Update -->
         <div class="card mb-4">
             <div class="card-header bg-white py-3">
-                <h5 class="mb-0">تحديث الحالة</h5>
+                <h5 class="mb-0">
+                    <i class="fas fa-edit me-2"></i>
+                    تحديث الحالة
+                </h5>
             </div>
             <div class="card-body">
                 {% if user.is_superuser or user == task.assigned_to %}
+                {% if is_meeting_task %}
+                <!-- Meeting Task Status Form -->
+                <form method="post" class="mb-3">
+                    {% csrf_token %}
+                    <input type="hidden" name="update_status" value="1">
+                    <div class="mb-3">
+                        <label for="{{ status_form.status.id_for_label }}" class="form-label">حالة المهمة</label>
+                        {{ status_form.status }}
+                    </div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>
+                        حفظ التغييرات
+                    </button>
+                </form>
+                <hr>
+                <div class="status-buttons d-grid gap-2">
+                    <button class="btn {% if task.status == 'pending' %}btn-secondary{% else %}btn-outline-secondary{% endif %} change-status" data-task-id="meeting_{{ task.id }}" data-new-status="pending">
+                        <i class="fas fa-clock me-1"></i>
+                        قيد الانتظار
+                    </button>
+                    <button class="btn {% if task.status == 'in_progress' %}btn-primary{% else %}btn-outline-primary{% endif %} change-status" data-task-id="meeting_{{ task.id }}" data-new-status="in_progress">
+                        <i class="fas fa-hourglass-half me-1"></i>
+                        قيد التنفيذ
+                    </button>
+                    <button class="btn {% if task.status == 'completed' %}btn-success{% else %}btn-outline-success{% endif %} change-status" data-task-id="meeting_{{ task.id }}" data-new-status="completed">
+                        <i class="fas fa-check me-1"></i>
+                        مكتملة
+                    </button>
+                </div>
+                {% else %}
+                <!-- Regular Task Status Buttons -->
                 <div class="d-grid gap-2">
                     <button class="btn {% if task.status == 'pending' %}btn-primary{% else %}btn-outline-primary{% endif %} change-status" data-task-id="{{ task.id }}" data-new-status="pending">
                         <i class="fas fa-clock me-1"></i>
@@ -235,6 +446,7 @@
                         فشلت
                     </button>
                 </div>
+                {% endif %}
                 {% else %}
                 <div class="alert alert-info mb-0">
                     <i class="fas fa-info-circle me-2"></i>
@@ -332,9 +544,10 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                <form method="post" action="{% url 'tasks:delete_step' task.pk %}">
+                <form method="post" action="{% url 'tasks:delete_step' task.id %}">
                     {% csrf_token %}
                     <input type="hidden" id="step_id_input" name="step_id" value="">
+                    <input type="hidden" id="step_type_input" name="step_type" value="{% if is_meeting_task %}meeting{% else %}regular{% endif %}">
                     <button type="submit" class="btn btn-danger">حذف</button>
                 </form>
             </div>
@@ -383,6 +596,51 @@
         display: flex;
         align-items: center;
         justify-content: center;
+    }
+
+    /* Avatar circle */
+    .avatar-circle {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 0.8rem;
+    }
+
+    /* Timeline enhancements */
+    .timeline-badge.bg-success {
+        border: 2px solid #fff;
+        box-shadow: 0 0 0 2px #198754;
+    }
+
+    /* Step notes styling */
+    .step-notes {
+        border-left: 3px solid #0d6efd;
+    }
+
+    /* Meeting details styling */
+    .meeting-details .d-flex {
+        margin-bottom: 0.5rem;
+    }
+
+    .meeting-details i {
+        width: 16px;
+        text-align: center;
+    }
+
+    /* Enhanced card styling for meeting tasks */
+    .card.border {
+        border-color: #dee2e6 !important;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+
+    /* Status form styling */
+    .status-buttons .btn {
+        text-align: left;
+        justify-content: flex-start;
     }
 </style>
 {% endblock %}
@@ -440,12 +698,15 @@
         const removeStepButtons = document.querySelectorAll('.remove-step');
         if (removeStepButtons.length > 0) {
             const stepIdInput = document.getElementById('step_id_input');
+            const stepTypeInput = document.getElementById('step_type_input');
             const deleteStepModal = new bootstrap.Modal(document.getElementById('deleteStepModal'));
 
             removeStepButtons.forEach(button => {
                 button.addEventListener('click', function() {
                     const stepId = this.dataset.stepId;
+                    const stepType = this.dataset.stepType || 'regular';
                     stepIdInput.value = stepId;
+                    stepTypeInput.value = stepType;
                     deleteStepModal.show();
                 });
             });

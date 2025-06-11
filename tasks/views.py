@@ -18,14 +18,22 @@ User = get_user_model()
 @tasks_module_permission_required('dashboard', 'view')
 def dashboard(request):
     """عرض لوحة تحكم المهام"""
-    # إحصائيات المهام
-    total_tasks = Task.objects.count()
+    from meetings.models import MeetingTask
+
+    # إحصائيات المهام (تشمل مهام الاجتماعات)
+    regular_total = Task.objects.count()
+    meeting_total = MeetingTask.objects.count()
+    total_tasks = regular_total + meeting_total
 
     # المهام المكتملة
-    completed_tasks = Task.objects.filter(status='completed').count()
+    regular_completed = Task.objects.filter(status='completed').count()
+    meeting_completed = MeetingTask.objects.filter(status='completed').count()
+    completed_tasks = regular_completed + meeting_completed
 
     # المهام قيد التنفيذ
-    in_progress_tasks = Task.objects.filter(status='in_progress').count()
+    regular_in_progress = Task.objects.filter(status='in_progress').count()
+    meeting_in_progress = MeetingTask.objects.filter(status='in_progress').count()
+    in_progress_tasks = regular_in_progress + meeting_in_progress
 
     # المهام المتأخرة
     today = timezone.now().date()
@@ -33,11 +41,21 @@ def dashboard(request):
         end_date__lt=today,
         status__in=['pending', 'in_progress']
     ).count()
+    # Note: MeetingTask uses end_date as DateField, so we need to handle it differently
+    overdue_meeting_tasks = MeetingTask.objects.filter(
+        end_date__lt=today,
+        status__in=['pending', 'in_progress']
+    ).count()
+    overdue_tasks += overdue_meeting_tasks
 
-    # مهامي
-    my_tasks = Task.objects.filter(
+    # مهامي (تشمل مهام الاجتماعات)
+    my_regular_tasks = Task.objects.filter(
         assigned_to=request.user
-    ).order_by('-start_date')[:5]
+    ).order_by('-start_date')[:3]
+
+    my_meeting_tasks = MeetingTask.objects.filter(
+        assigned_to=request.user
+    ).order_by('-created_at')[:2]
 
     # المهام المتأخرة (للعرض)
     overdue_tasks_list = Task.objects.filter(
@@ -50,7 +68,8 @@ def dashboard(request):
         'completed_tasks': completed_tasks,
         'in_progress_tasks': in_progress_tasks,
         'overdue_tasks': overdue_tasks,
-        'my_tasks': my_tasks,
+        'my_tasks': my_regular_tasks,
+        'my_meeting_tasks': my_meeting_tasks,
         'overdue_tasks_list': overdue_tasks_list,
     }
 
@@ -89,27 +108,89 @@ def task_create(request):
 @login_required
 @tasks_module_permission_required('tasks', 'view')
 def task_list(request):
+    from meetings.models import MeetingTask
+    from datetime import datetime
+
     # Get filter parameters
     status_filter = request.GET.get('status', '')
     search_query = request.GET.get('search', '')
 
-    # Base query
-    tasks = Task.objects.filter(assigned_to=request.user)
+    # Get regular tasks
+    regular_tasks = Task.objects.filter(assigned_to=request.user)
 
-    # Apply filters
+    # Get meeting tasks assigned to the user
+    meeting_tasks = MeetingTask.objects.filter(assigned_to=request.user)
+
+    # Apply filters to regular tasks
     if status_filter:
-        tasks = tasks.filter(status=status_filter)
+        regular_tasks = regular_tasks.filter(status=status_filter)
+        meeting_tasks = meeting_tasks.filter(status=status_filter)
     if search_query:
-        tasks = tasks.filter(description__icontains=search_query)
+        regular_tasks = regular_tasks.filter(description__icontains=search_query)
+        meeting_tasks = meeting_tasks.filter(description__icontains=search_query)
 
-    # Get task counts for statistics
-    total_count = Task.objects.filter(assigned_to=request.user).count()
-    in_progress_count = Task.objects.filter(assigned_to=request.user, status='in_progress').count()
-    completed_count = Task.objects.filter(assigned_to=request.user, status='completed').count()
+    # Create unified task list with additional metadata
+    unified_tasks = []
+
+    # Add regular tasks
+    for task in regular_tasks:
+        unified_tasks.append({
+            'id': task.id,
+            'description': task.description,
+            'status': task.status,
+            'start_date': task.start_date,
+            'end_date': task.end_date,
+            'assigned_to': task.assigned_to,
+            'created_by': task.created_by,
+            'meeting': task.meeting,
+            'steps': task.steps,
+            'task_type': 'regular',  # Identifier for template
+            'get_status_display': task.get_status_display(),
+            'original_task': task  # Keep reference to original object
+        })
+
+    # Add meeting tasks
+    for mtask in meeting_tasks:
+        # Convert end_date to datetime for consistency
+        end_datetime = None
+        if mtask.end_date:
+            end_datetime = datetime.combine(mtask.end_date, datetime.min.time())
+
+        unified_tasks.append({
+            'id': f"meeting_{mtask.id}",  # Prefix to avoid ID conflicts
+            'description': mtask.description,
+            'status': mtask.status,
+            'start_date': mtask.created_at,  # Use creation time as start
+            'end_date': end_datetime,
+            'assigned_to': mtask.assigned_to,
+            'created_by': None,  # Meeting tasks don't have created_by
+            'meeting': mtask.meeting,
+            'steps': None,  # Meeting tasks don't have steps
+            'task_type': 'meeting',  # Identifier for template
+            'get_status_display': dict(MeetingTask.STATUS_CHOICES).get(mtask.status, mtask.status),
+            'original_task': mtask  # Keep reference to original object
+        })
+
+    # Sort unified tasks by end_date (most recent first)
+    unified_tasks.sort(key=lambda x: x['end_date'] or datetime.min, reverse=True)
+
+    # Get task counts for statistics (including both types)
+    regular_total = Task.objects.filter(assigned_to=request.user).count()
+    meeting_total = MeetingTask.objects.filter(assigned_to=request.user).count()
+    total_count = regular_total + meeting_total
+
+    regular_in_progress = Task.objects.filter(assigned_to=request.user, status='in_progress').count()
+    meeting_in_progress = MeetingTask.objects.filter(assigned_to=request.user, status='in_progress').count()
+    in_progress_count = regular_in_progress + meeting_in_progress
+
+    regular_completed = Task.objects.filter(assigned_to=request.user, status='completed').count()
+    meeting_completed = MeetingTask.objects.filter(assigned_to=request.user, status='completed').count()
+    completed_count = regular_completed + meeting_completed
+
     overdue_count = 0  # In a real app, this would check dates
 
     context = {
-        'tasks': tasks,
+        'tasks': unified_tasks,
         'total_count': total_count,
         'in_progress_count': in_progress_count,
         'completed_count': completed_count,
@@ -120,29 +201,95 @@ def task_list(request):
 
 @login_required
 def task_detail(request, pk):
-    task = get_object_or_404(Task, pk=pk)
+    """
+    عرض تفاصيل المهمة - يدعم كل من المهام العادية ومهام الاجتماعات
+    """
+    from meetings.models import MeetingTask, MeetingTaskStep
+    from meetings.forms import MeetingTaskStepForm, MeetingTaskStatusForm
 
-    # Get related tasks (same meeting or assigned by same person)
-    if task.meeting:
-        related_tasks = Task.objects.filter(meeting=task.meeting).exclude(id=task.id)[:5]
-    else:
-        related_tasks = Task.objects.filter(created_by=task.created_by).exclude(id=task.id)[:5]
+    # تحديد نوع المهمة بناءً على المعرف
+    is_meeting_task = False
+    task = None
 
-    if request.method == 'POST':
-        form = TaskStepForm(request.POST)
-        if form.is_valid():
-            step = form.save(commit=False)
-            step.task = task
-            step.save()
-            messages.success(request, "تم إضافة الخطوة بنجاح")
-            return redirect('tasks:detail', pk=pk)
+    # التحقق من كونها مهمة اجتماع (مع البادئة meeting_)
+    if str(pk).startswith('meeting_'):
+        meeting_task_id = str(pk).replace('meeting_', '')
+        try:
+            task = get_object_or_404(MeetingTask, pk=meeting_task_id)
+            is_meeting_task = True
+        except:
+            messages.error(request, "المهمة غير موجودة")
+            return redirect('tasks:list')
     else:
-        form = TaskStepForm()
+        task = get_object_or_404(Task, pk=pk)
+
+    # التحقق من صلاحية الوصول
+    if not (request.user.is_superuser or request.user == task.assigned_to or
+            (hasattr(task, 'created_by') and request.user == task.created_by)):
+        messages.error(request, "ليس لديك صلاحية للوصول إلى هذه المهمة")
+        return redirect('tasks:list')
+
+    # معالجة إضافة خطوة جديدة
+    step_form = None
+    status_form = None
+
+    if is_meeting_task:
+        # للمهام المرتبطة بالاجتماعات
+        if request.method == 'POST' and 'add_step' in request.POST:
+            step_form = MeetingTaskStepForm(request.POST, meeting_task=task, user=request.user)
+            if step_form.is_valid():
+                step_form.save()
+                messages.success(request, "تم إضافة الخطوة بنجاح")
+                return redirect('tasks:detail', pk=pk)
+        else:
+            step_form = MeetingTaskStepForm(meeting_task=task, user=request.user)
+
+        # نموذج تحديث الحالة
+        if request.method == 'POST' and 'update_status' in request.POST:
+            status_form = MeetingTaskStatusForm(request.POST, instance=task)
+            if status_form.is_valid():
+                status_form.save()
+                messages.success(request, "تم تحديث حالة المهمة بنجاح")
+                return redirect('tasks:detail', pk=pk)
+        else:
+            status_form = MeetingTaskStatusForm(instance=task)
+
+        # الحصول على الخطوات
+        steps = task.steps.all().order_by('created_at')
+
+        # المهام ذات الصلة من نفس الاجتماع
+        related_tasks = MeetingTask.objects.filter(meeting=task.meeting).exclude(id=task.id)[:5]
+
+    else:
+        # للمهام العادية
+        if request.method == 'POST':
+            step_form = TaskStepForm(request.POST)
+            if step_form.is_valid():
+                step = step_form.save(commit=False)
+                step.task = task
+                step.save()
+                messages.success(request, "تم إضافة الخطوة بنجاح")
+                return redirect('tasks:detail', pk=pk)
+        else:
+            step_form = TaskStepForm()
+
+        # الحصول على الخطوات
+        steps = task.steps.all().order_by('date')
+
+        # المهام ذات الصلة
+        if task.meeting:
+            related_tasks = Task.objects.filter(meeting=task.meeting).exclude(id=task.id)[:5]
+        else:
+            related_tasks = Task.objects.filter(created_by=task.created_by).exclude(id=task.id)[:5]
 
     context = {
         'task': task,
-        'form': form,
-        'related_tasks': related_tasks
+        'is_meeting_task': is_meeting_task,
+        'step_form': step_form,
+        'status_form': status_form,
+        'steps': steps,
+        'related_tasks': related_tasks,
+        'task_type': 'meeting' if is_meeting_task else 'regular'
     }
 
     return render(request, 'tasks/task_detail.html', context)
@@ -150,7 +297,22 @@ def task_detail(request, pk):
 @login_required
 def update_task_status(request, pk):
     if request.method == 'POST':
-        task = get_object_or_404(Task, pk=pk)
+        from meetings.models import MeetingTask
+
+        # Handle both regular tasks and meeting tasks
+        task = None
+        is_meeting_task = False
+
+        # Check if it's a meeting task (prefixed with "meeting_")
+        if str(pk).startswith('meeting_'):
+            meeting_task_id = str(pk).replace('meeting_', '')
+            try:
+                task = get_object_or_404(MeetingTask, pk=meeting_task_id)
+                is_meeting_task = True
+            except:
+                return JsonResponse({'success': False, 'error': 'مهمة غير موجودة'})
+        else:
+            task = get_object_or_404(Task, pk=pk)
 
         # Check if user is allowed to update this task's status
         # Only superusers or the assigned user can update the task status
@@ -164,6 +326,12 @@ def update_task_status(request, pk):
             data = json.loads(request.body)
             new_status = data.get('status')
             if new_status and hasattr(task, 'status'):
+                # Validate status for meeting tasks
+                if is_meeting_task:
+                    valid_statuses = [choice[0] for choice in MeetingTask.STATUS_CHOICES]
+                    if new_status not in valid_statuses:
+                        return JsonResponse({'success': False, 'error': 'حالة غير صحيحة'})
+
                 task.status = new_status
                 task.save()
                 return JsonResponse({'success': True})
@@ -229,18 +397,40 @@ def task_delete(request, pk):
 
 @login_required
 def delete_step(request, pk):
-    task = get_object_or_404(Task, pk=pk)
+    from meetings.models import MeetingTask, MeetingTaskStep
+
+    # تحديد نوع المهمة بناءً على المعرف
+    is_meeting_task = False
+    task = None
+
+    # التحقق من كونها مهمة اجتماع (مع البادئة meeting_)
+    if str(pk).startswith('meeting_'):
+        meeting_task_id = str(pk).replace('meeting_', '')
+        try:
+            task = get_object_or_404(MeetingTask, pk=meeting_task_id)
+            is_meeting_task = True
+        except:
+            messages.error(request, "المهمة غير موجودة")
+            return redirect('tasks:list')
+    else:
+        task = get_object_or_404(Task, pk=pk)
 
     # Check if user is allowed to delete steps for this task
     # Only superusers or the assigned user can delete steps
     if not (request.user.is_superuser or request.user == task.assigned_to):
         messages.error(request, "ليس لديك صلاحية لحذف خطوات هذه المهمة")
-        return redirect('tasks:detail', pk=task.id)
+        return redirect('tasks:detail', pk=pk)
 
     if request.method == 'POST':
         step_id = request.POST.get('step_id')
+        step_type = request.POST.get('step_type', 'regular')
+
         if step_id:
-            step = get_object_or_404(TaskStep, id=step_id, task=task)
+            if is_meeting_task or step_type == 'meeting':
+                step = get_object_or_404(MeetingTaskStep, id=step_id, meeting_task=task)
+            else:
+                step = get_object_or_404(TaskStep, id=step_id, task=task)
+
             step.delete()
             messages.success(request, "تم حذف الخطوة بنجاح")
 
@@ -281,20 +471,34 @@ def create_from_meeting(request, meeting_id):
 
 @login_required
 def dashboard_stats(request):
+    from meetings.models import MeetingTask
+
     # Get stats for the current user if not a superuser
     if not request.user.is_superuser:
+        regular_task_count = Task.objects.filter(assigned_to=request.user).count()
+        meeting_task_count = MeetingTask.objects.filter(assigned_to=request.user).count()
+
+        regular_completed = Task.objects.filter(assigned_to=request.user, status='completed').count()
+        meeting_completed = MeetingTask.objects.filter(assigned_to=request.user, status='completed').count()
+
         stats = {
             'meeting_count': Meeting.objects.filter(attendees__user=request.user).count(),
-            'task_count': Task.objects.filter(assigned_to=request.user).count(),
-            'completed_task_count': Task.objects.filter(assigned_to=request.user, status='completed').count(),
+            'task_count': regular_task_count + meeting_task_count,
+            'completed_task_count': regular_completed + meeting_completed,
             'user_count': User.objects.count()
         }
     else:
         # Superusers see all stats
+        regular_task_count = Task.objects.count()
+        meeting_task_count = MeetingTask.objects.count()
+
+        regular_completed = Task.objects.filter(status='completed').count()
+        meeting_completed = MeetingTask.objects.filter(status='completed').count()
+
         stats = {
             'meeting_count': Meeting.objects.count(),
-            'task_count': Task.objects.count(),
-            'completed_task_count': Task.objects.filter(status='completed').count(),
+            'task_count': regular_task_count + meeting_task_count,
+            'completed_task_count': regular_completed + meeting_completed,
             'user_count': User.objects.count()
         }
     return JsonResponse(stats)
