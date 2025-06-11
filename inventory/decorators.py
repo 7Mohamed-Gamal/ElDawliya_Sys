@@ -123,7 +123,26 @@ def inventory_class_permission_required(module_key, permission_type='view'):
     # تكوين اسم الصلاحية بصيغة Django
     permission_name = f'inventory.{django_perm_type}_{model_name}'
 
-    return method_decorator(admin_or_permission_required(permission_name), name='dispatch')
+    # دالة مخصصة للتحقق من الصلاحيات
+    def custom_permission_check(view_func):
+        @wraps(view_func)
+        def _wrapped_view(request, *args, **kwargs):
+            # المشرفون لديهم جميع الصلاحيات
+            if request.user.is_superuser or getattr(request.user, 'Role', '') == 'admin':
+                return view_func(request, *args, **kwargs)
+
+            # التحقق من صلاحية المستخدم
+            if not request.user.has_perm(permission_name):
+                messages.error(request, 'ليس لديك صلاحية الوصول إلى هذه الصفحة')
+                return redirect('accounts:access_denied')
+
+            return view_func(request, *args, **kwargs)
+        return _wrapped_view
+
+    return method_decorator(
+        custom_permission_check,
+        name='dispatch'
+    )
 
 def has_inventory_permission(request, module_key, permission_type='view'):
     """

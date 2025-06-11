@@ -1,12 +1,13 @@
 from django import forms
-from .models import PurchaseRequest, PurchaseRequestItem
+from .models import PurchaseRequest, PurchaseRequestItem, Vendor
 
 class PurchaseRequestForm(forms.ModelForm):
     class Meta:
         model = PurchaseRequest
-        fields = ['request_number', 'notes']
+        fields = ['request_number', 'vendor', 'notes']
         widgets = {
             'notes': forms.Textarea(attrs={'rows': 3}),
+            'vendor': forms.Select(attrs={'class': 'form-select'}),
         }
 
 class PurchaseRequestItemForm(forms.ModelForm):

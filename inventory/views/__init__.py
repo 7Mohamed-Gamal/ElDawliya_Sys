@@ -18,3 +18,4 @@ from .api_views import *
 from .settings_views import *
 from .utility_views import *
 from .api_functions import *  # Import the new API functions
+from .product_movement_views import *  # Import product movement views

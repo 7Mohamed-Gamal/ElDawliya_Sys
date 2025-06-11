@@ -31,6 +31,7 @@ urlpatterns = [
     # API endpoints
     path('api/transfer-product/', views.transfer_product_to_purchase_request, name='transfer_product_to_purchase_request'),
     path('api/check-product/<str:product_id>/', views.check_product_in_purchase_request, name='check_product_in_purchase_request'),
+    path('api/products/', views.get_products_api, name='get_products_api'),
 
     # Vendor API endpoints
     path('vendors/<int:vendor_id>/edit/', views.get_vendor_details, name='get_vendor_details'),

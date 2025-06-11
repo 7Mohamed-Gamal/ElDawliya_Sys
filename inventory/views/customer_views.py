@@ -15,7 +15,7 @@ from inventory.models_local import Customer
 from inventory.forms import CustomerForm
 
 @method_decorator(login_required, name='dispatch')
-@method_decorator(inventory_class_permission_required('customers', 'view'), name='dispatch')
+@inventory_class_permission_required('customers', 'view')
 class CustomerListView(ListView):
     model = Customer
     template_name = 'inventory/customer_list.html'
@@ -42,7 +42,7 @@ class CustomerListView(ListView):
         return context
 
 @method_decorator(login_required, name='dispatch')
-@method_decorator(inventory_class_permission_required('customers', 'add'), name='dispatch')
+@inventory_class_permission_required('customers', 'add')
 class CustomerCreateView(CreateView):
     model = Customer
     form_class = CustomerForm
@@ -54,7 +54,7 @@ class CustomerCreateView(CreateView):
         return super().form_valid(form)
 
 @method_decorator(login_required, name='dispatch')
-@method_decorator(inventory_class_permission_required('customers', 'edit'), name='dispatch')
+@inventory_class_permission_required('customers', 'edit')
 class CustomerUpdateView(UpdateView):
     model = Customer
     form_class = CustomerForm
@@ -66,7 +66,7 @@ class CustomerUpdateView(UpdateView):
         return super().form_valid(form)
 
 @method_decorator(login_required, name='dispatch')
-@method_decorator(inventory_class_permission_required('customers', 'delete'), name='dispatch')
+@inventory_class_permission_required('customers', 'delete')
 class CustomerDeleteView(DeleteView):
     model = Customer
     template_name = 'inventory/customer_confirm_delete.html'

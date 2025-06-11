@@ -79,15 +79,84 @@ def create_purchase_request(request):
             purchase_request = form.save(commit=False)
             purchase_request.requested_by = request.user
             purchase_request.save()
-            messages.success(request, 'تم إنشاء طلب الشراء بنجاح')
+
+            # معالجة الأصناف المختارة
+            items_created = 0
+            items_errors = []
+
+            # جلب بيانات الأصناف من النموذج
+            for key, value in request.POST.items():
+                if key.startswith('items[') and key.endswith('][product_id]'):
+                    # استخراج الفهرس من اسم الحقل
+                    index = key.split('[')[1].split(']')[0]
+
+                    product_id = value
+                    quantity_key = f'items[{index}][quantity_requested]'
+                    notes_key = f'items[{index}][notes]'
+
+                    quantity_requested = request.POST.get(quantity_key, 0)
+                    notes = request.POST.get(notes_key, '')
+
+                    try:
+                        # البحث عن المنتج
+                        try:
+                            product = TblProducts.objects.get(product_id=product_id)
+                        except TblProducts.DoesNotExist:
+                            # محاولة جلب من النموذج المحلي
+                            from inventory.models_local import Product
+                            local_product = Product.objects.get(product_id=product_id)
+                            product, created = TblProducts.objects.get_or_create(
+                                product_id=local_product.product_id,
+                                defaults={
+                                    'product_name': local_product.name,
+                                    'qte_in_stock': local_product.quantity,
+                                    'minimum_threshold': local_product.minimum_threshold,
+                                    'maximum_threshold': local_product.maximum_threshold,
+                                    'unit_price': local_product.unit_price
+                                }
+                            )
+
+                        # التحقق من صحة الكمية
+                        quantity_requested = float(quantity_requested)
+                        if quantity_requested <= 0:
+                            items_errors.append(f'كمية غير صحيحة للصنف {product.product_name}')
+                            continue
+
+                        # إنشاء عنصر طلب الشراء
+                        PurchaseRequestItem.objects.create(
+                            purchase_request=purchase_request,
+                            product=product,
+                            quantity_requested=quantity_requested,
+                            notes=notes,
+                            status='pending'
+                        )
+                        items_created += 1
+
+                    except Exception as e:
+                        items_errors.append(f'خطأ في إضافة الصنف {product_id}: {str(e)}')
+
+            # عرض رسائل النتائج
+            if items_created > 0:
+                messages.success(request, f'تم إنشاء طلب الشراء بنجاح مع {items_created} صنف')
+            else:
+                messages.warning(request, 'تم إنشاء طلب الشراء ولكن لم يتم إضافة أي أصناف')
+
+            if items_errors:
+                for error in items_errors:
+                    messages.error(request, error)
+
             return redirect('Purchase_orders:purchase_request_detail', pk=purchase_request.pk)
     else:
         # إنشاء رقم طلب فريد
         request_number = f"PR-{uuid.uuid4().hex[:8].upper()}"
         form = PurchaseRequestForm(initial={'request_number': request_number})
 
+    # إضافة الموردين إلى السياق
+    vendors = Vendor.objects.all()
+
     context = {
         'form': form,
+        'vendors': vendors,
         'title': 'إنشاء طلب شراء جديد'
     }
 
@@ -544,3 +613,80 @@ def reports(request):
     }
 
     return render(request, 'Purchase_orders/reports.html', context)
+
+@login_required
+@purchase_module_permission_required('purchase_requests', 'view')
+def get_products_api(request):
+    """API endpoint لجلب قطع الغيار للاستخدام في نموذج طلب الشراء"""
+    try:
+        # محاولة جلب البيانات من TblProducts أولاً
+        products_data = []
+
+        try:
+            # جلب البيانات من TblProducts
+            products = TblProducts.objects.all().order_by('product_name')
+
+            for product in products:
+                product_data = {
+                    'product_id': product.product_id,
+                    'product_name': product.product_name,
+                    'qte_in_stock': float(product.qte_in_stock or 0),
+                    'minimum_threshold': float(product.minimum_threshold or 0),
+                    'maximum_threshold': float(product.maximum_threshold or 0),
+                    'unit_price': float(product.unit_price or 0),
+                    'cat_name': product.cat_name or '',
+                    'cat_id': product.cat.cat_id if product.cat else None,
+                    'unit_name': product.unit_name or '',
+                    'unit_id': product.unit.unit_id if product.unit else None,
+                    'location': product.location or '',
+                }
+                products_data.append(product_data)
+
+        except Exception as e:
+            print(f"Error fetching from TblProducts: {str(e)}")
+
+            # إذا فشل جلب البيانات من TblProducts، جرب من النموذج المحلي
+            try:
+                from inventory.models_local import Product
+                local_products = Product.objects.all().order_by('name')
+
+                for product in local_products:
+                    product_data = {
+                        'product_id': product.product_id,
+                        'product_name': product.name,
+                        'name': product.name,  # إضافة حقل name للتوافق
+                        'qte_in_stock': float(product.quantity or 0),
+                        'quantity': float(product.quantity or 0),  # إضافة حقل quantity للتوافق
+                        'minimum_threshold': float(product.minimum_threshold or 0),
+                        'maximum_threshold': float(product.maximum_threshold or 0),
+                        'unit_price': float(product.unit_price or 0),
+                        'cat_name': product.category.name if product.category else '',
+                        'category_name': product.category.name if product.category else '',  # للتوافق
+                        'cat_id': product.category.id if product.category else None,
+                        'category_id': product.category.id if product.category else None,  # للتوافق
+                        'unit_name': product.unit.name if product.unit else '',
+                        'unit_id': product.unit.id if product.unit else None,
+                        'location': product.location or '',
+                    }
+                    products_data.append(product_data)
+
+            except Exception as local_e:
+                print(f"Error fetching from local Product model: {str(local_e)}")
+                return JsonResponse({
+                    'success': False,
+                    'message': f'خطأ في جلب بيانات قطع الغيار: {str(local_e)}'
+                }, status=500)
+
+        return JsonResponse({
+            'success': True,
+            'products': products_data,
+            'results': products_data,  # للتوافق مع الكود الموجود
+            'count': len(products_data)
+        })
+
+    except Exception as e:
+        print(f"General error in get_products_api: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'message': f'حدث خطأ عام: {str(e)}'
+        }, status=500)

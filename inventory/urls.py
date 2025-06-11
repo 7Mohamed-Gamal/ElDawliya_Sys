@@ -1,6 +1,5 @@
 from django.urls import path
 from django.views.generic import TemplateView
-from . import views  # Import the main views module for backward compatibility
 from .views import (
     dashboard_views,
     product_views,

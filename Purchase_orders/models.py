@@ -35,6 +35,7 @@ class PurchaseRequest(models.Model):
     request_number = models.CharField(max_length=50, unique=True, verbose_name=_('رقم الطلب'))
     request_date = models.DateTimeField(auto_now_add=True, verbose_name=_('تاريخ الطلب'))
     requested_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name='purchase_requests', verbose_name=_('مقدم الطلب'))
+    vendor = models.ForeignKey(Vendor, on_delete=models.SET_NULL, null=True, blank=True, related_name='purchase_requests', verbose_name=_('المورد'))
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name=_('حالة الطلب'))
     approved_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_purchase_requests', verbose_name=_('تمت الموافقة بواسطة'))
     approval_date = models.DateTimeField(null=True, blank=True, verbose_name=_('تاريخ الموافقة'))
