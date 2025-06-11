@@ -2,7 +2,7 @@
 {% load i18n %}
 {% load image_utils %}
 <!DOCTYPE html>
-<html lang="{{ current_language }}" dir="{{ text_direction }}">
+<html lang="{{ current_language|default:'ar' }}" dir="{{ text_direction|default:'rtl' }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,15 +12,11 @@
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
 
-    <!-- Bootstrap RTL/LTR -->
-    {% if text_direction == 'rtl' %}
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-    {% else %}
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    {% endif %}
+    <!-- Bootstrap RTL CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
 
     <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Google Fonts -->
     {% if system_settings.font_family == 'cairo' or current_font == 'Cairo' %}
@@ -38,13 +34,8 @@
     {% endif %}
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="{% static 'css/style_updated.css' %}">
-    <link rel="stylesheet" href="{% static 'css/responsive.css' %}">
-    <link rel="stylesheet" href="{% static 'css/animations.css' %}">
-
     <style>
         :root {
-            --font-family: {% with default_font='Cairo' %}{{ system_settings.font_family|default:current_font|default:default_font }}{% endwith %}, sans-serif;
             --primary-color: #3498db;
             --secondary-color: #2c3e50;
             --success-color: #2ecc71;
@@ -53,59 +44,49 @@
             --info-color: #3498db;
             --light-color: #ecf0f1;
             --dark-color: #2c3e50;
-            --body-bg: #f8f9fa;
-            --card-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            --border-radius: 12px;
-            --transition-speed: 0.3s;
-            --header-height: 60px;
-            --sidebar-width: 250px;
-            --sidebar-collapsed-width: 70px;
+            --font-family: {% if system_settings.font_family %}
+                {% if system_settings.font_family == 'cairo' %}'Cairo'
+                {% elif system_settings.font_family == 'tajawal' %}'Tajawal'
+                {% elif system_settings.font_family == 'almarai' %}'Almarai'
+                {% elif system_settings.font_family == 'ibm-plex-sans-arabic' %}'IBM Plex Sans Arabic'
+                {% elif system_settings.font_family == 'noto-sans-arabic' %}'Noto Sans Arabic'
+                {% else %}'Cairo'
+                {% endif %}
+                {% else %}{{ current_font|default:'Cairo' }}{% endif %}, sans-serif;
         }
 
         body {
             font-family: var(--font-family);
-            background-color: var(--body-bg);
-            transition: background-color var(--transition-speed);
+            background-color: #f8f9fa;
         }
 
         .navbar {
             background-color: var(--primary-color);
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            height: var(--header-height);
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            z-index: 1030;
         }
 
         .navbar-brand {
             font-weight: bold;
             color: white !important;
-            transition: opacity var(--transition-speed);
         }
 
-
-
-        .navbar-brand:hover {
-            opacity: 0.9;
+        .navbar-light .navbar-nav .nav-link {
+            color: rgba(255, 255, 255, 0.85);
         }
 
-
-
-
+        .navbar-light .navbar-nav .nav-link:hover {
+            color: white;
+        }
 
         .with-sidebar {
-
-
-            padding: 0;
+            padding-left: 0;
+            padding-right: 0;
         }
 
         .page-wrapper {
             display: flex;
             flex-direction: column;
             min-height: 100vh;
-            padding-top: var(--header-height);
         }
 
         .content-wrapper {
@@ -114,108 +95,205 @@
         }
 
         .sidebar {
-
-            width: var(--sidebar-width);
+            width: 250px;
             background-color: var(--secondary-color);
             color: white;
             padding-top: 20px;
-
-            transition: width var(--transition-speed), transform var(--transition-speed);
+            transition: all 0.3s;
             position: fixed;
-
-            height: calc(100vh - var(--header-height));
-            top: var(--header-height);
+            height: 100%;
             z-index: 100;
             overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
         }
 
-
-
-
-
-        .sidebar::-webkit-scrollbar {
-            width: 6px;
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
         }
 
-
-
-
-
-        .sidebar::-webkit-scrollbar-track {
-            background: transparent;
+        .sidebar-header h3 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: white;
         }
 
-
-
-
-
-        .sidebar::-webkit-scrollbar-thumb {
-            background-color: rgba(255, 255, 255, 0.2);
-            border-radius: 3px;
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
         }
 
+        .sidebar-menu-item {
+            margin-bottom: 5px;
+        }
 
+        .sidebar-menu-item a {
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
 
+        .sidebar-menu-item a:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
 
+        .sidebar-menu-item a i {
+            margin-left: 10px;
+            width: 20px;
+            text-align: center;
+        }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        .sidebar-menu-item.active a {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: bold;
+        }
 
         .main-content {
             flex: 1;
             padding: 20px;
-
-
-            margin-right: var(--sidebar-width);
-            transition: margin var(--transition-speed);
+            margin-right: 250px;
+            transition: all 0.3s;
         }
 
+        .sidebar-collapsed .sidebar {
+            width: 70px;
+        }
 
+        .sidebar-collapsed .sidebar-header h3,
+        .sidebar-collapsed .sidebar-menu-item a span {
+            display: none;
+        }
 
+        .sidebar-collapsed .main-content {
+            margin-right: 70px;
+        }
 
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            border: none;
+        }
 
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 10px 10px 0 0 !important;
+            padding: 15px 20px;
+        }
 
+        .card-title {
+            margin-bottom: 0;
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
 
+        .card-body {
+            padding: 20px;
+        }
 
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
 
+        .btn-primary:hover {
+            background-color: #2980b9;
+            border-color: #2980b9;
+        }
 
+        .btn-success {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+        }
 
+        .btn-success:hover {
+            background-color: #27ae60;
+            border-color: #27ae60;
+        }
 
+        .btn-danger {
+            background-color: var(--danger-color);
+            border-color: var(--danger-color);
+        }
 
+        .btn-danger:hover {
+            background-color: #c0392b;
+            border-color: #c0392b;
+        }
 
+        .table th {
+            font-weight: bold;
+            background-color: #f8f9fa;
+        }
 
+        .stat-card {
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            min-height: 120px;
+        }
+
+        .stat-card .stat-icon {
+            position: absolute;
+            bottom: -15px;
+            left: 10px;
+            font-size: 4rem;
+            opacity: 0.3;
+        }
+
+        .stat-card .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-card .stat-title {
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+
+        .stat-card.primary {
+            background-color: var(--primary-color);
+        }
+
+        .stat-card.success {
+            background-color: var(--success-color);
+        }
+
+        .stat-card.warning {
+            background-color: var(--warning-color);
+        }
+
+        .stat-card.danger {
+            background-color: var(--danger-color);
+        }
+
+        .stat-card.info {
+            background-color: var(--info-color);
+        }
+
+        .stat-card.secondary {
+            background-color: var(--secondary-color);
+        }
+
+        /* Responsive Adjustments */
         @media (max-width: 768px) {
             .sidebar {
-
-
+                width: 0;
+                padding: 0;
                 transform: translateX(100%);
-
-
+                right: -250px;
+                z-index: 1050;
             }
 
             .main-content {
@@ -223,375 +301,30 @@
             }
 
             .sidebar.show {
-
-
+                width: 250px;
+                padding-top: 20px;
                 transform: translateX(0);
-
+                right: 0;
             }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        }
-
-
-
-
-        .card {
-            border: none;
-            border-radius: var(--border-radius);
-            box-shadow: var(--card-shadow);
-
-
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        .card:hover {
-            transform: translateY(-5px);
-
-            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
-        }
-
-
-
-
-
-
-
-
-
-        .stats-card {
-
-
-            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-            border-left: 4px solid var(--primary-color);
-        }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        .stats-number {
-            font-size: 2rem;
-            font-weight: 700;
-
-
-
-            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
-            -webkit-background-clip: text;
-            background-clip: text;
-
-
-            -webkit-text-fill-color: transparent;
-
-        }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        .form-control, .form-select {
-
-
-
-
-
-            border-radius: var(--border-radius);
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            padding: 0.5rem 1rem;
-            transition: all var(--transition-speed);
-        }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        .form-control:focus, .form-select:focus {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
-        }
-
-
-
-
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
+            /* Overlay for mobile sidebar */
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0, 0, 0, 0.5);
+                z-index: 1040;
             }
-            to {
-                opacity: 1;
-                transform: translateY(0);
+
+            .sidebar-overlay.show {
+                display: block;
             }
         }
-
-
-
-
-
-
-
-
-
-        .animate-fade-in-up {
-            animation: fadeInUp 0.5s ease-out;
-        }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     </style>
+
     {% block extra_css %}{% endblock %}
 </head>
 <body>
@@ -639,10 +372,16 @@
                             <span>قائمة الموظفين</span>
                         </a>
                     </li>
-                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'employee_detail_view' %}active{% endif %}">
-                        <a href="{% url 'Hr:detail_view' %}">
-                            <i class="fas fa-id-card"></i>
-                            <span>بيانات الموظف تفصيلي</span>
+                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'create' and 'employees' in request.path %}active{% endif %}">
+                        <a href="{% url 'Hr:employees:create' %}">
+                            <i class="fas fa-user-plus"></i>
+                            <span>إضافة موظف جديد</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'employee_search' %}active{% endif %}">
+                        <a href="{% url 'Hr:employees:employee_search' %}">
+                            <i class="fas fa-search"></i>
+                            <span>البحث عن موظف</span>
                         </a>
                     </li>
                     <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'list' and 'departments' in request.path %}active{% endif %}">
@@ -693,38 +432,6 @@
                             <span>الصفحة الرئيسية</span>
                         </a>
                     </li>
-
-                    <!-- Navigation menu items -->
-                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'attendance_rule_list' %}active{% endif %}">
-                        <a href="{% url 'Hr:attendance:attendance_rule_list' %}">
-                            <i class="fas fa-clock"></i>
-                            <span>قواعد الحضور</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'attendance_record_list' %}active{% endif %}">
-                        <a href="{% url 'Hr:attendance:attendance_record_list' %}">
-                            <i class="fas fa-clipboard-check"></i>
-                            <span>سجلات الحضور</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'employee_attendance_rule_list' %}active{% endif %}">
-                        <a href="{% url 'Hr:attendance:employee_attendance_rule_list' %}">
-                            <i class="fas fa-user-clock"></i>
-                            <span>قواعد حضور الموظفين</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'official_holiday_list' %}active{% endif %}">
-                        <a href="{% url 'Hr:attendance:official_holiday_list' %}">
-                            <i class="fas fa-calendar"></i>
-                            <span>الإجازات الرسمية</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'update_data' %}active{% endif %}">
-                        <a href="{% url 'Hr:update_data' %}">
-                            <i class="fas fa-sync-alt"></i>
-                            <span>تحديث البيانات</span>
-                        </a>
-                    </li>
                 </ul>
             </aside>
 
@@ -767,7 +474,7 @@
     </div>
 
     <!-- Bootstrap Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -819,17 +526,6 @@
                     bsAlert.close();
                 });
             }, 5000);
-
-            // Highlight active menu item
-            const currentPath = window.location.pathname;
-            const menuItems = document.querySelectorAll('.sidebar-menu-item');
-
-            menuItems.forEach(item => {
-                const link = item.querySelector('a');
-                if (link && currentPath.includes(link.getAttribute('href'))) {
-                    item.classList.add('active');
-                }
-            });
         });
     </script>
 
