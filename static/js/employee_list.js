@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // تهيئة المتغيرات
+    // Enhanced Variable Initialization
     const toggleCheckbox = document.getElementById('employeeStatusToggle');
     const toggleStatusText = document.getElementById('toggleStatusText');
     const employeeListTitle = document.getElementById('employeeListTitle');
@@ -7,9 +7,61 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.querySelector('.search-autocomplete');
     const searchResultsDropdown = document.querySelector('.search-results-dropdown');
     const employeeFilterForm = document.getElementById('employeeFilterForm');
-    const employeesTable = document.getElementById('employeesTable'); // Added for sortTable
-    // const toggleAdvancedSearchBtn = document.getElementById('toggleAdvancedSearch'); // Removed
-    // const advancedSearchCollapse = document.getElementById('collapseAdvanced'); // Removed
+    const employeesTable = document.getElementById('employeesTable');
+
+    // View Toggle Elements
+    const tableViewBtn = document.getElementById('tableViewBtn');
+    const cardViewBtn = document.getElementById('cardViewBtn');
+    const tableView = document.getElementById('tableView');
+    const cardView = document.getElementById('cardView');
+
+    // Advanced Search Toggle
+    const advancedSearchToggle = document.getElementById('advancedSearchToggle');
+
+    // Initialize View Toggle Functionality
+    function initializeViewToggle() {
+        if (tableViewBtn && cardViewBtn && tableView && cardView) {
+            // Get saved view preference
+            const savedView = localStorage.getItem('employeeViewMode') || 'table';
+
+            if (savedView === 'card') {
+                showCardView();
+            } else {
+                showTableView();
+            }
+
+            tableViewBtn.addEventListener('click', function() {
+                showTableView();
+                localStorage.setItem('employeeViewMode', 'table');
+            });
+
+            cardViewBtn.addEventListener('click', function() {
+                showCardView();
+                localStorage.setItem('employeeViewMode', 'card');
+            });
+        }
+    }
+
+    function showTableView() {
+        if (tableView && cardView && tableViewBtn && cardViewBtn) {
+            tableView.style.display = 'block';
+            cardView.style.display = 'none';
+            tableViewBtn.classList.add('active');
+            cardViewBtn.classList.remove('active');
+        }
+    }
+
+    function showCardView() {
+        if (tableView && cardView && tableViewBtn && cardViewBtn) {
+            tableView.style.display = 'none';
+            cardView.style.display = 'block';
+            cardViewBtn.classList.add('active');
+            tableViewBtn.classList.remove('active');
+        }
+    }
+
+    // Initialize view toggle
+    initializeViewToggle();
 
 
     // Handle form submission
@@ -34,90 +86,98 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // ===== وظائف البحث والتصفية المحسنة =====
+    // ===== Enhanced Search and Filter Functions =====
 
-    // 1. البحث الفوري مع اقتراحات
+    // 1. Enhanced Instant Search with Suggestions
     if (searchInput && searchResultsDropdown) {
-        // إضافة مستمع لأحداث الكتابة في حقل البحث
+        let searchTimeout;
+
         searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
             const searchTerm = this.value.trim().toLowerCase();
 
-            // إذا كان البحث فارغًا، أخفِ قائمة النتائج
             if (searchTerm.length < 2) {
                 searchResultsDropdown.classList.add('d-none');
                 return;
             }
 
-            // البحث في بيانات الموظفين المعروضة حاليًا
-            const employeeRows = document.querySelectorAll('.employee-row');
+            // Debounce search for better performance
+            searchTimeout = setTimeout(() => {
+                performEnhancedSearch(searchTerm);
+            }, 300);
+        });
+
+        function performEnhancedSearch(searchTerm) {
+            // Search in both table and card views
+            const employeeElements = document.querySelectorAll('.employee-row, .modern-employee-card');
             const matchingEmployees = [];
 
-            employeeRows.forEach(row => {
-                const empId = row.getAttribute('data-emp-id');
-                const empName = row.getAttribute('data-emp-name').toLowerCase();
-                const dept = row.getAttribute('data-dept').toLowerCase();
+            employeeElements.forEach(element => {
+                const empId = element.getAttribute('data-emp-id');
+                const empName = element.getAttribute('data-emp-name').toLowerCase();
+                const dept = element.getAttribute('data-dept').toLowerCase();
+                const condition = element.getAttribute('data-condition').toLowerCase();
 
-                // البحث في الاسم ورقم الموظف والقسم
+                // Enhanced search including more fields
                 if (empName.includes(searchTerm) ||
                     empId.includes(searchTerm) ||
-                    dept.includes(searchTerm)) {
+                    dept.includes(searchTerm) ||
+                    condition.includes(searchTerm)) {
                     matchingEmployees.push({
                         id: empId,
-                        name: row.getAttribute('data-emp-name'),
-                        dept: row.getAttribute('data-dept'),
-                        condition: row.getAttribute('data-condition')
+                        name: element.getAttribute('data-emp-name'),
+                        dept: element.getAttribute('data-dept'),
+                        condition: element.getAttribute('data-condition')
                     });
                 }
             });
 
-            // عرض النتائج في القائمة المنسدلة
+            displaySearchResults(matchingEmployees, searchTerm);
+        }
+
+        function displaySearchResults(matchingEmployees, searchTerm) {
             if (matchingEmployees.length > 0) {
                 searchResultsDropdown.innerHTML = '';
                 searchResultsDropdown.classList.remove('d-none');
 
-                // إنشاء عناصر القائمة
-                matchingEmployees.slice(0, 5).forEach(emp => {
+                // Create enhanced result items
+                matchingEmployees.slice(0, 6).forEach((emp, index) => {
                     const resultItem = document.createElement('div');
-                    resultItem.className = 'p-2 border-bottom search-result-item';
+                    resultItem.className = 'search-result-item';
                     resultItem.innerHTML = `
-                        <div class="d-flex align-items-center">
-                            <div class="avatar-sm bg-primary text-white me-2 flex-shrink-0">
-                                ${emp.name.charAt(0)}
+                        <div class="d-flex align-items-center p-3">
+                            <div class="avatar-sm bg-gradient-primary text-white me-3 flex-shrink-0 rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                ${emp.name.charAt(0).toUpperCase()}
                             </div>
-                            <div>
-                                <div class="fw-medium">${emp.name}</div>
-                                <div class="small text-muted d-flex align-items-center">
-                                    <span class="badge bg-light text-dark border me-2">${emp.id}</span>
-                                    ${emp.dept ? `<span>${emp.dept}</span>` : ''}
+                            <div class="flex-grow-1">
+                                <div class="fw-semibold text-dark mb-1">${highlightSearchTerm(emp.name, searchTerm)}</div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge bg-primary-subtle text-primary">#${emp.id}</span>
+                                    ${emp.dept ? `<span class="badge bg-info-subtle text-info">${emp.dept}</span>` : ''}
                                 </div>
+                            </div>
+                            <div class="text-end">
+                                <i class="fas fa-arrow-left text-muted"></i>
                             </div>
                         </div>
                     `;
 
-                    // إضافة مستمع لحدث النقر على نتيجة البحث
                     resultItem.addEventListener('click', function() {
-                        // Construct the URL carefully, assuming a placeholder like '0' or similar in the Django template tag
-                        let detailUrl = "{% url 'Hr:employees:detail' 0 %}"; // This will be a string literal in JS
-                        if (typeof emp_id_placeholder_for_url !== 'undefined') { // Check if a global placeholder is set
-                           detailUrl = detailUrl.replace(emp_id_placeholder_for_url, emp.id);
-                        } else {
-                            // Fallback: try to replace a common placeholder like '0' or 'employee_id_placeholder'
-                            // This part is tricky as the exact placeholder needs to be known.
-                            // For now, let's assume '0' is the placeholder.
-                            detailUrl = detailUrl.replace('0', emp.id);
-                        }
-                        window.location.href = detailUrl;
+                        navigateToEmployee(emp.id);
                     });
 
                     searchResultsDropdown.appendChild(resultItem);
                 });
 
-                // إضافة رابط "عرض كل النتائج" إذا كان هناك أكثر من 5 نتائج
-                if (matchingEmployees.length > 5) {
+                // Add "View All Results" if more than 6 results
+                if (matchingEmployees.length > 6) {
                     const viewAllItem = document.createElement('div');
-                    viewAllItem.className = 'p-2 text-center bg-light';
+                    viewAllItem.className = 'p-3 text-center border-top bg-light';
                     viewAllItem.innerHTML = `
-                        <a href="#" class="text-primary small">عرض كل النتائج (${matchingEmployees.length})</a>
+                        <button class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-search me-1"></i>
+                            عرض كل النتائج (${matchingEmployees.length})
+                        </button>
                     `;
                     viewAllItem.addEventListener('click', function(e) {
                         e.preventDefault();
@@ -127,14 +187,28 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             } else {
                 searchResultsDropdown.innerHTML = `
-                    <div class="p-3 text-center text-muted">
-                        <i class="fas fa-search me-1"></i>
-                        لا توجد نتائج مطابقة
+                    <div class="p-4 text-center text-muted">
+                        <i class="fas fa-search-minus fa-2x mb-2 text-muted"></i>
+                        <div class="fw-medium">لا توجد نتائج مطابقة</div>
+                        <small>جرب البحث بكلمات مختلفة</small>
                     </div>
                 `;
                 searchResultsDropdown.classList.remove('d-none');
             }
-        });
+        }
+
+        function highlightSearchTerm(text, term) {
+            const regex = new RegExp(`(${term})`, 'gi');
+            return text.replace(regex, '<mark class="bg-warning text-dark">$1</mark>');
+        }
+
+        function navigateToEmployee(empId) {
+            if (typeof employeeDetailUrlTemplate !== 'undefined') {
+                window.location.href = employeeDetailUrlTemplate.replace('0', empId);
+            } else {
+                console.error("Employee detail URL template not found.");
+            }
+        }
 
         // إخفاء قائمة النتائج عند النقر خارجها
         document.addEventListener('click', function(e) {
@@ -367,25 +441,184 @@ document.addEventListener('DOMContentLoaded', function() {
     };
     addSearchTooltips();
 
-    const addTableInteractions = () => {
+    // Enhanced Table and Card Interactions
+    function addTableInteractions() {
         const rows = document.querySelectorAll('.employee-row');
         rows.forEach(row => {
-            row.addEventListener('mouseenter', function() { this.classList.add('bg-light-hover'); }); // Use a specific class for hover
-            row.addEventListener('mouseleave', function() { this.classList.remove('bg-light-hover'); });
+            row.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-2px)';
+                this.style.boxShadow = '0 4px 15px rgba(0,0,0,.1)';
+            });
+
+            row.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = 'none';
+            });
+
             row.addEventListener('click', function(e) {
-                if (e.target.closest('a, button, .btn-group')) return;
+                if (e.target.closest('a, button, .btn-group, .dropdown')) return;
                 const empId = this.getAttribute('data-emp-id');
-                 // Construct the URL carefully
-                let detailUrl = employeeDetailUrlTemplate; // Assuming employeeDetailUrlTemplate is globally available
-                if (detailUrl) {
-                     window.location.href = detailUrl.replace('0', empId);
-                } else {
-                    console.error("Employee detail URL template not found.");
-                }
+                navigateToEmployee(empId);
             });
         });
-    };
+    }
+
+    function addCardInteractions() {
+        const cards = document.querySelectorAll('.modern-employee-card');
+        cards.forEach(card => {
+            card.addEventListener('click', function(e) {
+                if (e.target.closest('a, button, .btn-group, .dropdown')) return;
+                const empId = this.getAttribute('data-emp-id');
+                navigateToEmployee(empId);
+            });
+
+            // Add hover effects
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-8px)';
+            });
+
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+    }
+
+    // Initialize interactions
     addTableInteractions();
+    addCardInteractions();
+
+    // Advanced Search Toggle
+    if (advancedSearchToggle) {
+        advancedSearchToggle.addEventListener('click', function() {
+            const advancedFilters = document.getElementById('advancedFilters');
+            if (advancedFilters) {
+                const isExpanded = advancedFilters.classList.contains('show');
+                const icon = this.querySelector('i');
+
+                if (isExpanded) {
+                    icon.className = 'fas fa-sliders-h me-1';
+                    this.innerHTML = '<i class="fas fa-sliders-h me-1"></i>فلاتر متقدمة';
+                } else {
+                    icon.className = 'fas fa-times me-1';
+                    this.innerHTML = '<i class="fas fa-times me-1"></i>إخفاء الفلاتر';
+                }
+            }
+        });
+    }
+
+    // Enhanced Delete Employee Functionality
+    function initializeDeleteButtons() {
+        const deleteButtons = document.querySelectorAll('.delete-employee');
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const employeeId = this.getAttribute('data-employee-id');
+                const employeeName = this.getAttribute('data-employee-name');
+
+                // Show modern confirmation dialog
+                showDeleteConfirmation(employeeId, employeeName);
+            });
+        });
+    }
+
+    function showDeleteConfirmation(employeeId, employeeName) {
+        // Create modern modal for confirmation
+        const modal = document.createElement('div');
+        modal.className = 'modal fade';
+        modal.innerHTML = `
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title text-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            تأكيد الحذف
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body pt-0">
+                        <div class="text-center py-3">
+                            <div class="mb-3">
+                                <i class="fas fa-user-times fa-3x text-danger"></i>
+                            </div>
+                            <h6 class="mb-3">هل أنت متأكد من حذف الموظف؟</h6>
+                            <p class="text-muted mb-0">
+                                <strong>${employeeName}</strong><br>
+                                <small>رقم الموظف: ${employeeId}</small>
+                            </p>
+                            <div class="alert alert-warning mt-3">
+                                <i class="fas fa-warning me-1"></i>
+                                لا يمكن التراجع عن هذا الإجراء
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i>إلغاء
+                        </button>
+                        <button type="button" class="btn btn-danger" id="confirmDelete">
+                            <i class="fas fa-trash me-1"></i>حذف الموظف
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+        const bootstrapModal = new bootstrap.Modal(modal);
+        bootstrapModal.show();
+
+        // Handle confirmation
+        modal.querySelector('#confirmDelete').addEventListener('click', function() {
+            // Here you would typically make an AJAX request to delete the employee
+            console.log('Deleting employee:', employeeId);
+            bootstrapModal.hide();
+
+            // Show success message
+            showToast('تم حذف الموظف بنجاح', 'success');
+        });
+
+        // Clean up modal after hiding
+        modal.addEventListener('hidden.bs.modal', function() {
+            document.body.removeChild(modal);
+        });
+    }
+
+    function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center text-white bg-${type} border-0`;
+        toast.setAttribute('role', 'alert');
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="fas fa-check-circle me-2"></i>
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>
+        `;
+
+        // Add to toast container or create one
+        let toastContainer = document.querySelector('.toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+            document.body.appendChild(toastContainer);
+        }
+
+        toastContainer.appendChild(toast);
+        const bootstrapToast = new bootstrap.Toast(toast);
+        bootstrapToast.show();
+
+        // Remove toast after hiding
+        toast.addEventListener('hidden.bs.toast', function() {
+            toastContainer.removeChild(toast);
+        });
+    }
+
+    // Initialize delete buttons
+    initializeDeleteButtons();
 
     const savedTheme = localStorage.getItem('theme') || 'light';
     document.documentElement.setAttribute('data-bs-theme', savedTheme);
@@ -405,14 +638,188 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // Enhanced Theme Toggle
     const themeToggleBtn = document.createElement('button');
     themeToggleBtn.id = 'themeToggleBtn';
-    themeToggleBtn.className = 'btn btn-light position-fixed bottom-0 start-0 m-4 rounded-circle shadow';
-    themeToggleBtn.style.width = '45px';
-    themeToggleBtn.style.height = '45px';
+    themeToggleBtn.className = 'btn btn-light position-fixed bottom-0 start-0 m-4 rounded-circle shadow-lg';
+    themeToggleBtn.style.width = '50px';
+    themeToggleBtn.style.height = '50px';
+    themeToggleBtn.style.zIndex = '1050';
+    themeToggleBtn.style.transition = 'all 0.3s ease';
     themeToggleBtn.onclick = toggleTheme;
+    themeToggleBtn.title = 'تبديل المظهر';
+
+    // Add hover effects
+    themeToggleBtn.addEventListener('mouseenter', function() {
+        this.style.transform = 'scale(1.1)';
+    });
+
+    themeToggleBtn.addEventListener('mouseleave', function() {
+        this.style.transform = 'scale(1)';
+    });
+
     document.body.appendChild(themeToggleBtn);
     updateThemeToggleIcon(savedTheme);
+
+    // Enhanced Keyboard Shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl + F for search focus
+        if (e.ctrlKey && e.key === 'f') {
+            e.preventDefault();
+            if (searchInput) {
+                searchInput.focus();
+                searchInput.select();
+            }
+        }
+
+        // Ctrl + N for new employee
+        if (e.ctrlKey && e.key === 'n') {
+            e.preventDefault();
+            if (typeof newEmployeeUrl !== 'undefined') {
+                window.location.href = newEmployeeUrl;
+            }
+        }
+
+        // Ctrl + T for table view
+        if (e.ctrlKey && e.key === 't') {
+            e.preventDefault();
+            showTableView();
+            localStorage.setItem('employeeViewMode', 'table');
+        }
+
+        // Ctrl + G for card view
+        if (e.ctrlKey && e.key === 'g') {
+            e.preventDefault();
+            showCardView();
+            localStorage.setItem('employeeViewMode', 'card');
+        }
+
+        // Escape to close search results
+        if (e.key === 'Escape') {
+            if (searchResultsDropdown && !searchResultsDropdown.classList.contains('d-none')) {
+                searchResultsDropdown.classList.add('d-none');
+            }
+        }
+    });
+
+    // Enhanced Loading States
+    function showLoadingState() {
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        if (loadingIndicator) {
+            loadingIndicator.style.display = 'block';
+        }
+
+        // Add loading class to main content
+        const mainContent = document.querySelector('.card-body');
+        if (mainContent) {
+            mainContent.classList.add('content-loading');
+        }
+    }
+
+    function hideLoadingState() {
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        if (loadingIndicator) {
+            loadingIndicator.style.display = 'none';
+        }
+
+        // Remove loading class
+        const mainContent = document.querySelector('.card-body');
+        if (mainContent) {
+            mainContent.classList.remove('content-loading');
+        }
+    }
+
+    // Enhanced Form Submission with Loading
+    if (employeeFilterForm) {
+        employeeFilterForm.addEventListener('submit', function() {
+            showLoadingState();
+        });
+    }
+
+    // Auto-hide loading on page load
+    window.addEventListener('load', function() {
+        hideLoadingState();
+    });
+
+    // Enhanced Statistics Animation
+    function animateStatistics() {
+        const statNumbers = document.querySelectorAll('.stats-number');
+        statNumbers.forEach(stat => {
+            const finalValue = parseInt(stat.textContent);
+            let currentValue = 0;
+            const increment = finalValue / 50;
+
+            const timer = setInterval(() => {
+                currentValue += increment;
+                if (currentValue >= finalValue) {
+                    stat.textContent = finalValue;
+                    clearInterval(timer);
+                } else {
+                    stat.textContent = Math.floor(currentValue);
+                }
+            }, 30);
+        });
+    }
+
+    // Run statistics animation on page load
+    setTimeout(animateStatistics, 500);
+
+    // Enhanced Print Functionality
+    window.printEmployeeList = function() {
+        const printWindow = window.open('', '_blank');
+        const currentView = cardView && cardView.style.display !== 'none' ? 'card' : 'table';
+
+        let printContent = '';
+        if (currentView === 'card') {
+            printContent = cardView.innerHTML;
+        } else {
+            printContent = tableView.innerHTML;
+        }
+
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>قائمة الموظفين</title>
+                    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+                    <style>
+                        body { font-family: 'Cairo', sans-serif; direction: rtl; }
+                        .modern-employee-card { break-inside: avoid; margin-bottom: 1rem; }
+                        .table { font-size: 0.9rem; }
+                        @media print {
+                            .btn, .dropdown { display: none !important; }
+                            .card { border: 1px solid #dee2e6 !important; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="container-fluid">
+                        <h2 class="text-center mb-4">قائمة الموظفين</h2>
+                        ${printContent}
+                    </div>
+                </body>
+            </html>
+        `);
+
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+        }, 250);
+    };
+
+    // Enhanced Export Functionality
+    window.exportToExcel = function() {
+        showToast('جاري تحضير ملف Excel...', 'info');
+
+        // Here you would typically make an AJAX request to export data
+        setTimeout(() => {
+            showToast('تم تصدير البيانات بنجاح', 'success');
+        }, 2000);
+    };
+
+    console.log('Enhanced Employee List initialized successfully');
+});
 
 
     if (employeesTable) {

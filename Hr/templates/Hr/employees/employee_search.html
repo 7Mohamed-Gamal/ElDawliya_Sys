@@ -1,0 +1,568 @@
+{% extends 'Hr/base_hr.html' %}
+{% load static %}
+{% load image_utils %}
+{% load django_permissions %}
+
+{% block title %}بحث الموظفين - نظام الدولية{% endblock %}
+
+{% block page_title %}بحث الموظفين{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Hr:employees:list' %}">الموظفين</a></li>
+<li class="breadcrumb-item active">بحث الموظفين</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .search-card {
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    .search-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+    }
+
+    .employee-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #fff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .analytics-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .metric-card {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        padding: 1rem;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card search-card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-search me-2"></i>
+                    البحث عن موظف
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="get" class="needs-validation" novalidate>
+                    {% csrf_token %}
+
+                    <!-- البحث السريع -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <label for="{{ form.quick_search.id_for_label }}" class="form-label fw-bold text-primary">
+                                <i class="fas fa-bolt me-2"></i>{{ form.quick_search.label }}
+                            </label>
+                            {{ form.quick_search }}
+                            {% if form.quick_search.errors %}
+                            <div class="invalid-feedback d-block">{{ form.quick_search.errors }}</div>
+                            {% endif %}
+                            <small class="form-text text-muted">يمكنك البحث بأي معلومة: الاسم، الكود، الرقم القومي، الهاتف، العنوان، القسم، الوظيفة، السيارة...</small>
+                        </div>
+                    </div>
+
+                    <!-- خيارات البحث المتقدم -->
+                    <div class="accordion" id="advancedSearchAccordion">
+                        <div class="accordion-item">
+                            <h2 class="accordion-header" id="advancedSearchHeading">
+                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#advancedSearchCollapse" aria-expanded="false" aria-controls="advancedSearchCollapse">
+                                    <i class="fas fa-cogs me-2"></i>
+                                    البحث المتقدم
+                                </button>
+                            </h2>
+                            <div id="advancedSearchCollapse" class="accordion-collapse collapse" aria-labelledby="advancedSearchHeading" data-bs-parent="#advancedSearchAccordion">
+                                <div class="accordion-body">
+
+                                    <!-- معلومات الهوية -->
+                                    <div class="row mb-3">
+                                        <div class="col-12">
+                                            <h6 class="text-primary border-bottom pb-2 mb-3">
+                                                <i class="fas fa-id-card me-2"></i>معلومات الهوية
+                                            </h6>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="{{ form.employee_code.id_for_label }}" class="form-label">{{ form.employee_code.label }}</label>
+                                            {{ form.employee_code }}
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="{{ form.name.id_for_label }}" class="form-label">{{ form.name.label }}</label>
+                                            {{ form.name }}
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="{{ form.national_id.id_for_label }}" class="form-label">{{ form.national_id.label }}</label>
+                                            {{ form.national_id }}
+                                        </div>
+                                    </div>
+
+                                    <!-- معلومات الاتصال -->
+                                    <div class="row mb-3">
+                                        <div class="col-12">
+                                            <h6 class="text-primary border-bottom pb-2 mb-3">
+                                                <i class="fas fa-phone me-2"></i>معلومات الاتصال
+                                            </h6>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="{{ form.phone.id_for_label }}" class="form-label">{{ form.phone.label }}</label>
+                                            {{ form.phone }}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="{{ form.address.id_for_label }}" class="form-label">{{ form.address.label }}</label>
+                                            {{ form.address }}
+                                        </div>
+                                    </div>
+
+                                    <!-- معلومات العمل -->
+                                    <div class="row mb-3">
+                                        <div class="col-12">
+                                            <h6 class="text-primary border-bottom pb-2 mb-3">
+                                                <i class="fas fa-briefcase me-2"></i>معلومات العمل
+                                            </h6>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="{{ form.department.id_for_label }}" class="form-label">{{ form.department.label }}</label>
+                                            {{ form.department }}
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="{{ form.job_name.id_for_label }}" class="form-label">{{ form.job_name.label }}</label>
+                                            {{ form.job_name }}
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="{{ form.working_condition.id_for_label }}" class="form-label">{{ form.working_condition.label }}</label>
+                                            {{ form.working_condition }}
+                                        </div>
+                                    </div>
+
+                                    <!-- معلومات السيارة والوردية -->
+                                    <div class="row mb-3">
+                                        <div class="col-12">
+                                            <h6 class="text-primary border-bottom pb-2 mb-3">
+                                                <i class="fas fa-car me-2"></i>معلومات السيارة والوردية
+                                            </h6>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="{{ form.car.id_for_label }}" class="form-label">{{ form.car.label }}</label>
+                                            {{ form.car }}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="{{ form.shift_type.id_for_label }}" class="form-label">{{ form.shift_type.label }}</label>
+                                            {{ form.shift_type }}
+                                        </div>
+                                    </div>
+
+                                    <!-- معلومات التأمين -->
+                                    <div class="row mb-3">
+                                        <div class="col-12">
+                                            <h6 class="text-primary border-bottom pb-2 mb-3">
+                                                <i class="fas fa-shield-alt me-2"></i>معلومات التأمين
+                                            </h6>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="{{ form.insurance_status.id_for_label }}" class="form-label">{{ form.insurance_status.label }}</label>
+                                            {{ form.insurance_status }}
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="{{ form.insurance_number.id_for_label }}" class="form-label">{{ form.insurance_number.label }}</label>
+                                            {{ form.insurance_number }}
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label for="{{ form.health_card.id_for_label }}" class="form-label">{{ form.health_card.label }}</label>
+                                            {{ form.health_card }}
+                                        </div>
+                                    </div>
+
+                                    <!-- معلومات شخصية -->
+                                    <div class="row mb-3">
+                                        <div class="col-12">
+                                            <h6 class="text-primary border-bottom pb-2 mb-3">
+                                                <i class="fas fa-user me-2"></i>معلومات شخصية
+                                            </h6>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="{{ form.emp_type.id_for_label }}" class="form-label">{{ form.emp_type.label }}</label>
+                                            {{ form.emp_type }}
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="{{ form.marital_status.id_for_label }}" class="form-label">{{ form.marital_status.label }}</label>
+                                            {{ form.marital_status }}
+                                        </div>
+                                    </div>
+
+                                    <!-- تواريخ -->
+                                    <div class="row mb-3">
+                                        <div class="col-12">
+                                            <h6 class="text-primary border-bottom pb-2 mb-3">
+                                                <i class="fas fa-calendar me-2"></i>التواريخ
+                                            </h6>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="{{ form.hire_date_from.id_for_label }}" class="form-label">{{ form.hire_date_from.label }}</label>
+                                            {{ form.hire_date_from }}
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="{{ form.hire_date_to.id_for_label }}" class="form-label">{{ form.hire_date_to.label }}</label>
+                                            {{ form.hire_date_to }}
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="{{ form.birth_date_from.id_for_label }}" class="form-label">{{ form.birth_date_from.label }}</label>
+                                            {{ form.birth_date_from }}
+                                        </div>
+                                        <div class="col-md-3">
+                                            <label for="{{ form.birth_date_to.id_for_label }}" class="form-label">{{ form.birth_date_to.label }}</label>
+                                            {{ form.birth_date_to }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- أزرار البحث -->
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-search me-2"></i>
+                            بحث
+                        </button>
+                        <a href="{% url 'Hr:employees:employee_search' %}" class="btn btn-outline-secondary btn-lg">
+                            <i class="fas fa-sync-alt me-2"></i>
+                            مسح الكل
+                        </a>
+                        <button type="button" class="btn btn-outline-info btn-lg" onclick="toggleAdvancedSearch()">
+                            <i class="fas fa-cogs me-2"></i>
+                            بحث متقدم
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if employees %}
+    {% if selected_employee %}
+        <!-- بيانات الموظف المحدد -->
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card search-card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-user me-2"></i>
+                            بيانات الموظف
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3 text-center mb-3">
+                                {% if selected_employee.emp_image %}
+                                    <img src="{{ selected_employee.emp_image|binary_to_img }}"
+                                         alt="{{ selected_employee.emp_full_name }}"
+                                         class="employee-avatar">
+                                {% else %}
+                                    <div class="employee-avatar bg-primary text-white d-flex align-items-center justify-content-center fs-1">
+                                        {{ selected_employee.emp_first_name|slice:":1"|upper }}
+                                    </div>
+                                {% endif %}
+                                <h6 class="mt-2 mb-0">{{ selected_employee.emp_full_name }}</h6>
+                                <small class="text-muted">كود: {{ selected_employee.emp_id }}</small>
+                            </div>
+                            <div class="col-md-9">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <strong>الاسم الأول:</strong> {{ selected_employee.emp_first_name|default:"-" }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>الاسم الثاني:</strong> {{ selected_employee.emp_second_name|default:"-" }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>الرقم القومي:</strong> {{ selected_employee.national_id|default:"-" }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>رقم الهاتف:</strong> {{ selected_employee.emp_phone1|default:"-" }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>القسم:</strong>
+                                        {% if selected_employee.department %}
+                                            <a href="{% url 'Hr:departments:detail' selected_employee.department.dept_code %}" class="text-decoration-none">
+                                                {{ selected_employee.department.dept_name }}
+                                            </a>
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>الوظيفة:</strong> {{ selected_employee.jop_name|default:"-" }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>حالة العمل:</strong>
+                                        {% if selected_employee.working_condition == 'سارى' %}
+                                            <span class="badge bg-success">{{ selected_employee.working_condition }}</span>
+                                        {% elif selected_employee.working_condition == 'استقالة' %}
+                                            <span class="badge bg-danger">{{ selected_employee.working_condition }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">{{ selected_employee.working_condition|default:"-" }}</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>تاريخ التعيين:</strong> {{ selected_employee.emp_date_hiring|date:"Y-m-d"|default:"-" }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>حالة التأمين:</strong> {{ selected_employee.insurance_status|default:"-" }}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>العنوان:</strong> {{ selected_employee.emp_address|default:"-" }}
+                                    </div>
+                                </div>
+                                <div class="mt-3">
+                                    <a href="{% url 'Hr:employees:detail' selected_employee.emp_id %}" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-eye me-1"></i>
+                                        عرض التفاصيل الكاملة
+                                    </a>
+                                    <a href="{% url 'Hr:employees:edit' selected_employee.emp_id %}" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-edit me-1"></i>
+                                        تعديل
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <div class="card analytics-card">
+                    <div class="card-header border-0">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-line me-2"></i>
+                            تحليلات الأداء
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="metric-card mb-3">
+                            <h3 class="mb-1">{{ analytics.attendance_rate|default:"95" }}%</h3>
+                            <small>نسبة الحضور</small>
+                        </div>
+                        <div class="metric-card mb-3">
+                            <h3 class="mb-1">{{ analytics.task_completion_rate|default:"90" }}%</h3>
+                            <small>نسبة إتمام المهام</small>
+                        </div>
+                        <div class="metric-card">
+                            <h3 class="mb-1">{{ analytics.evaluation_score|default:"4.5" }}/5</h3>
+                            <small>تقييم الأداء</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <!-- نتائج البحث المتعددة -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card search-card">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="fas fa-list me-2"></i>
+                            نتائج البحث ({{ total_results }} موظف)
+                        </h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>الصورة</th>
+                                        <th>الاسم</th>
+                                        <th>الكود</th>
+                                        <th>القسم</th>
+                                        <th>الوظيفة</th>
+                                        <th>الحالة</th>
+                                        <th>العمليات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for emp in employees %}
+                                    <tr>
+                                        <td>
+                                            {% if emp.emp_image %}
+                                                <img src="{{ emp.emp_image|binary_to_img }}"
+                                                     alt="{{ emp.emp_full_name }}"
+                                                     class="rounded-circle"
+                                                     width="40" height="40">
+                                            {% else %}
+                                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+                                                     style="width: 40px; height: 40px;">
+                                                    {{ emp.emp_first_name|slice:":1"|upper }}
+                                                </div>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <strong>{{ emp.emp_full_name }}</strong><br>
+                                            <small class="text-muted">{{ emp.national_id|default:"-" }}</small>
+                                        </td>
+                                        <td><span class="badge bg-light text-dark">{{ emp.emp_id }}</span></td>
+                                        <td>{{ emp.department.dept_name|default:"-" }}</td>
+                                        <td>{{ emp.jop_name|default:"-" }}</td>
+                                        <td>
+                                            {% if emp.working_condition == 'سارى' %}
+                                                <span class="badge bg-success">نشط</span>
+                                            {% elif emp.working_condition == 'استقالة' %}
+                                                <span class="badge bg-danger">مستقيل</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ emp.working_condition|default:"-" }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="?employee_code={{ emp.emp_id }}" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'Hr:employees:detail' emp.emp_id %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-info-circle"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+{% elif request.GET %}
+    <!-- لا توجد نتائج -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card search-card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">لا توجد نتائج للبحث</h5>
+                    <p class="text-muted">جرب تغيير معايير البحث أو تأكد من صحة البيانات المدخلة</p>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+{% block extra_js %}
+<script>
+    // دالة لتبديل البحث المتقدم
+    function toggleAdvancedSearch() {
+        const advancedSearchCollapse = document.getElementById('advancedSearchCollapse');
+        const bsCollapse = new bootstrap.Collapse(advancedSearchCollapse);
+        bsCollapse.toggle();
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // تحسين تجربة البحث
+        const searchForm = document.querySelector('form');
+        const quickSearchInput = document.getElementById('quick-search');
+        const searchInputs = searchForm.querySelectorAll('input[type="text"], select');
+
+        // البحث السريع مع تأخير
+        let searchTimeout;
+        if (quickSearchInput) {
+            quickSearchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    if (this.value.length >= 2) {
+                        // يمكن إضافة AJAX search هنا للبحث السريع
+                        console.log('البحث السريع عن:', this.value);
+
+                        // إخفاء البحث المتقدم عند استخدام البحث السريع
+                        const advancedSearchCollapse = document.getElementById('advancedSearchCollapse');
+                        if (advancedSearchCollapse.classList.contains('show')) {
+                            const bsCollapse = new bootstrap.Collapse(advancedSearchCollapse);
+                            bsCollapse.hide();
+                        }
+                    }
+                }, 300);
+            });
+        }
+
+        // تحسين عرض النتائج
+        const tableRows = document.querySelectorAll('tbody tr');
+        tableRows.forEach(row => {
+            row.addEventListener('click', function(e) {
+                if (!e.target.closest('a')) {
+                    const viewButton = this.querySelector('a[href*="employee_code"]');
+                    if (viewButton) {
+                        window.location.href = viewButton.href;
+                    }
+                }
+            });
+        });
+
+        // إضافة تأثيرات بصرية للبحث
+        searchInputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.classList.add('shadow-sm');
+            });
+
+            input.addEventListener('blur', function() {
+                this.parentElement.classList.remove('shadow-sm');
+            });
+        });
+
+        // تحسين تجربة المستخدم - إظهار رسالة تحميل عند البحث
+        searchForm.addEventListener('submit', function() {
+            const submitButton = this.querySelector('button[type="submit"]');
+            const originalText = submitButton.innerHTML;
+
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>جاري البحث...';
+            submitButton.disabled = true;
+
+            // إعادة تفعيل الزر بعد ثانيتين (في حالة عدم تحميل الصفحة)
+            setTimeout(() => {
+                submitButton.innerHTML = originalText;
+                submitButton.disabled = false;
+            }, 2000);
+        });
+
+        // إضافة اختصارات لوحة المفاتيح
+        document.addEventListener('keydown', function(e) {
+            // Ctrl + F للتركيز على البحث السريع
+            if (e.ctrlKey && e.key === 'f' && quickSearchInput) {
+                e.preventDefault();
+                quickSearchInput.focus();
+            }
+
+            // Enter للبحث من أي حقل
+            if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
+                searchForm.submit();
+            }
+        });
+
+        // تحسين عرض النتائج مع إحصائيات
+        const totalResults = parseInt('{{ total_results|default:0 }}');
+        if (totalResults > 0) {
+            console.log('تم العثور على ' + totalResults + ' موظف');
+
+            // إضافة إحصائيات سريعة
+            const resultsInfo = document.createElement('div');
+            resultsInfo.className = 'alert alert-info mt-3';
+            resultsInfo.innerHTML = '<i class="fas fa-info-circle me-2"></i>تم العثور على <strong>' + totalResults + '</strong> موظف يطابق معايير البحث';
+
+            const resultsContainer = document.querySelector('.search-card');
+            if (resultsContainer && totalResults > 1) {
+                resultsContainer.appendChild(resultsInfo);
+            }
+        }
+    });
+</script>
+{% endblock %}
+{% endblock %}

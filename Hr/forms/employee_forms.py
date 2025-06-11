@@ -369,6 +369,19 @@ class CarForm(forms.ModelForm):
         }
 
 class EmployeeSearchForm(forms.Form):
+    # البحث السريع العام
+    quick_search = forms.CharField(
+        label='البحث السريع',
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control form-control-lg',
+            'placeholder': 'بحث سريع بأي معلومة (الاسم، الكود، الرقم القومي، الهاتف، العنوان...)',
+            'id': 'quick-search'
+        })
+    )
+
+    # معلومات الهوية
     employee_code = forms.CharField(
         label='كود الموظف',
         max_length=20,
@@ -384,7 +397,7 @@ class EmployeeSearchForm(forms.Form):
         required=False,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'بحث بالاسم'
+            'placeholder': 'بحث بالاسم الكامل أو جزء منه'
         })
     )
     national_id = forms.CharField(
@@ -396,6 +409,71 @@ class EmployeeSearchForm(forms.Form):
             'placeholder': 'بحث بالرقم القومي'
         })
     )
+
+    # معلومات الاتصال
+    phone = forms.CharField(
+        label='رقم الهاتف',
+        max_length=20,
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'بحث برقم الهاتف'
+        })
+    )
+    address = forms.CharField(
+        label='العنوان',
+        max_length=200,
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'بحث بالعنوان أو المحافظة'
+        })
+    )
+
+    # معلومات العمل
+    department = forms.ModelChoiceField(
+        queryset=Department.objects.all(),
+        label='القسم',
+        required=False,
+        empty_label='جميع الأقسام',
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    job_name = forms.ModelChoiceField(
+        queryset=Job.objects.all(),
+        label='الوظيفة',
+        required=False,
+        empty_label='جميع الوظائف',
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    working_condition = forms.ChoiceField(
+        choices=[('', 'جميع الحالات')] + list(Employee.WORKING_CONDITION_CHOICES),
+        label='حالة العمل',
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
+    # معلومات السيارة
+    car = forms.ModelChoiceField(
+        queryset=Car.objects.all(),
+        label='السيارة',
+        required=False,
+        empty_label='جميع السيارات',
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    shift_type = forms.ChoiceField(
+        choices=[('', 'جميع الورديات')] + list(Employee.SHIFT_TYPE_CHOICES),
+        label='نوع الوردية',
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
+    # معلومات التأمين
+    insurance_status = forms.ChoiceField(
+        choices=[('', 'جميع حالات التأمين')] + list(Employee.INSURANCE_STATUS_CHOICES),
+        label='حالة التأمين',
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
     insurance_number = forms.CharField(
         label='الرقم التأميني',
         max_length=20,
@@ -403,5 +481,59 @@ class EmployeeSearchForm(forms.Form):
         widget=forms.TextInput(attrs={
             'class': 'form-control',
             'placeholder': 'بحث بالرقم التأميني'
+        })
+    )
+    health_card = forms.ChoiceField(
+        choices=[('', 'جميع حالات البطاقة الصحية')] + Employee.health_card_choices,
+        label='البطاقة الصحية',
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
+    # معلومات شخصية
+    emp_type = forms.ChoiceField(
+        choices=[('', 'الجميع')] + list(Employee.EMP_TYPE_CHOICES),
+        label='النوع',
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+    marital_status = forms.ChoiceField(
+        choices=[('', 'جميع الحالات')] + list(Employee.MARITAL_STATUS_CHOICES),
+        label='الحالة الاجتماعية',
+        required=False,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
+    # تواريخ
+    hire_date_from = forms.DateField(
+        label='تاريخ التعيين من',
+        required=False,
+        widget=forms.DateInput(attrs={
+            'class': 'form-control',
+            'type': 'date'
+        })
+    )
+    hire_date_to = forms.DateField(
+        label='تاريخ التعيين إلى',
+        required=False,
+        widget=forms.DateInput(attrs={
+            'class': 'form-control',
+            'type': 'date'
+        })
+    )
+    birth_date_from = forms.DateField(
+        label='تاريخ الميلاد من',
+        required=False,
+        widget=forms.DateInput(attrs={
+            'class': 'form-control',
+            'type': 'date'
+        })
+    )
+    birth_date_to = forms.DateField(
+        label='تاريخ الميلاد إلى',
+        required=False,
+        widget=forms.DateInput(attrs={
+            'class': 'form-control',
+            'type': 'date'
         })
     )

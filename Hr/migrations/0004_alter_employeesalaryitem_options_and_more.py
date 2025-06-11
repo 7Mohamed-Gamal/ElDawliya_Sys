@@ -20,10 +20,6 @@ class Migration(migrations.Migration):
             options={'ordering': ['employee', 'salary_item'], 'verbose_name': 'بند راتب موظف', 'verbose_name_plural': 'بنود رواتب الموظفين'},
         ),
         migrations.AlterModelOptions(
-            name='payrollentry',
-            options={'ordering': ['-period__period', 'employee'], 'verbose_name': 'سجل راتب', 'verbose_name_plural': 'سجلات الرواتب'},
-        ),
-        migrations.AlterModelOptions(
             name='payrollitemdetail',
             options={'ordering': ['payroll_entry', 'salary_item'], 'verbose_name': 'تفاصيل بند راتب', 'verbose_name_plural': 'تفاصيل بنود الرواتب'},
         ),
@@ -43,14 +39,6 @@ class Migration(migrations.Migration):
             model_name='employeesalaryitem',
             name='value',
         ),
-        migrations.AlterUniqueTogether(
-            name='payrollentry',
-            unique_together={('period', 'employee')},
-        ),
-        migrations.AlterUniqueTogether(
-            name='payrollperiod',
-            unique_together={('period',)},
-        ),
         migrations.RemoveField(
             model_name='salaryitem',
             name='affects_total',
@@ -63,6 +51,19 @@ class Migration(migrations.Migration):
             model_name='salaryitem',
             name='item_type',
         ),
+        # Add fields first before setting constraints
+        migrations.AddField(
+            model_name='payrollperiod',
+            name='period',
+            field=models.DateField(default='2025-01-01', verbose_name='الفترة'),
+            preserve_default=False,
+        ),
+        migrations.AddField(
+            model_name='payrollentry',
+            name='period',
+            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.PROTECT, related_name='entries', to='Hr.payrollperiod', verbose_name='فترة الراتب'),
+            preserve_default=False,
+        ),
         migrations.AddField(
             model_name='employeesalaryitem',
             name='amount',
@@ -72,19 +73,13 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='employeesalaryitem',
             name='start_date',
-            field=models.DateField(default=0, verbose_name='تاريخ البدء'),
+            field=models.DateField(default='2025-01-01', verbose_name='تاريخ البدء'),
             preserve_default=False,
         ),
         migrations.AddField(
             model_name='officialholiday',
             name='is_recurring',
             field=models.BooleanField(default=False, verbose_name='إجازة متكررة'),
-        ),
-        migrations.AddField(
-            model_name='payrollentry',
-            name='period',
-            field=models.ForeignKey(default=0, on_delete=django.db.models.deletion.PROTECT, related_name='entries', to='Hr.payrollperiod', verbose_name='فترة الراتب'),
-            preserve_default=False,
         ),
         migrations.AddField(
             model_name='payrollentry',
@@ -99,8 +94,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='payrollitemdetail',
             name='created_at',
-            field=models.DateTimeField(auto_now_add=True, default=0, verbose_name='تاريخ الإنشاء'),
-            preserve_default=False,
+            field=models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء'),
         ),
         migrations.AddField(
             model_name='payrollperiod',
@@ -110,13 +104,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='payrollperiod',
             name='created_by',
-            field=models.ForeignKey(default=0, on_delete=django.db.models.deletion.PROTECT, related_name='created_payroll_periods', to=settings.AUTH_USER_MODEL, verbose_name='تم الإنشاء بواسطة'),
-            preserve_default=False,
-        ),
-        migrations.AddField(
-            model_name='payrollperiod',
-            name='period',
-            field=models.DateField(default=0, verbose_name='الفترة'),
+            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.PROTECT, related_name='created_payroll_periods', to=settings.AUTH_USER_MODEL, verbose_name='تم الإنشاء بواسطة'),
             preserve_default=False,
         ),
         migrations.AddField(
@@ -142,7 +130,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='salaryitem',
             name='item_code',
-            field=models.CharField(default=0, max_length=20, unique=True, verbose_name='كود البند'),
+            field=models.CharField(default='DEFAULT', max_length=20, unique=True, verbose_name='كود البند'),
             preserve_default=False,
         ),
         migrations.AddField(
@@ -248,5 +236,19 @@ class Migration(migrations.Migration):
         migrations.RemoveField(
             model_name='payrollperiod',
             name='start_date',
+        ),
+        # Now add constraints after fields are created
+        migrations.AlterUniqueTogether(
+            name='payrollperiod',
+            unique_together={('period',)},
+        ),
+        migrations.AlterUniqueTogether(
+            name='payrollentry',
+            unique_together={('period', 'employee')},
+        ),
+        # Add model options that reference the new fields
+        migrations.AlterModelOptions(
+            name='payrollentry',
+            options={'ordering': ['-period__period', 'employee'], 'verbose_name': 'سجل راتب', 'verbose_name_plural': 'سجلات الرواتب'},
         ),
     ]

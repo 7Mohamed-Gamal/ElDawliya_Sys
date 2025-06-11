@@ -298,24 +298,109 @@ def employee_search(request):
     selected_employee = None
     analytics = {}
 
-    if form.is_valid():
-        employee_code = form.cleaned_data.get('employee_code')
-        name = form.cleaned_data.get('name')
-        national_id = form.cleaned_data.get('national_id')
-        insurance_number = form.cleaned_data.get('insurance_number')
-
-        # Build query filters
+    if form.is_valid() and any(form.cleaned_data.values()):
+        # Build search filters
         filters = Q()
-        if employee_code:
-            filters &= Q(emp_id__icontains=employee_code)
-        if name:
-            filters &= (Q(emp_first_name__icontains=name) | Q(emp_second_name__icontains=name) | Q(emp_full_name__icontains=name))
-        if national_id:
-            filters &= Q(national_id__icontains=national_id)
-        if insurance_number:
-            filters &= Q(insurance_number__icontains=insurance_number)
 
-        employees = Employee.objects.filter(filters)
+        # البحث السريع العام
+        if form.cleaned_data.get('quick_search'):
+            quick_search = form.cleaned_data['quick_search']
+            quick_filters = (
+                Q(emp_id__icontains=quick_search) |
+                Q(emp_full_name__icontains=quick_search) |
+                Q(emp_first_name__icontains=quick_search) |
+                Q(emp_second_name__icontains=quick_search) |
+                Q(national_id__icontains=quick_search) |
+                Q(emp_phone1__icontains=quick_search) |
+                Q(emp_phone2__icontains=quick_search) |
+                Q(emp_address__icontains=quick_search) |
+                Q(governorate__icontains=quick_search) |
+                Q(jop_name__icontains=quick_search) |
+                Q(department__dept_name__icontains=quick_search) |
+                Q(emp_car__icontains=quick_search)
+            )
+            filters &= quick_filters
+
+        # معلومات الهوية
+        if form.cleaned_data.get('employee_code'):
+            filters &= Q(emp_id__icontains=form.cleaned_data['employee_code'])
+
+        if form.cleaned_data.get('name'):
+            name = form.cleaned_data['name']
+            filters &= (
+                Q(emp_full_name__icontains=name) |
+                Q(emp_first_name__icontains=name) |
+                Q(emp_second_name__icontains=name)
+            )
+
+        if form.cleaned_data.get('national_id'):
+            filters &= Q(national_id__icontains=form.cleaned_data['national_id'])
+
+        # معلومات الاتصال
+        if form.cleaned_data.get('phone'):
+            phone = form.cleaned_data['phone']
+            filters &= (
+                Q(emp_phone1__icontains=phone) |
+                Q(emp_phone2__icontains=phone)
+            )
+
+        if form.cleaned_data.get('address'):
+            address = form.cleaned_data['address']
+            filters &= (
+                Q(emp_address__icontains=address) |
+                Q(governorate__icontains=address)
+            )
+
+        # معلومات العمل
+        if form.cleaned_data.get('department'):
+            filters &= Q(department=form.cleaned_data['department'])
+
+        if form.cleaned_data.get('job_name'):
+            filters &= Q(jop_name=form.cleaned_data['job_name'].jop_name)
+
+        if form.cleaned_data.get('working_condition'):
+            filters &= Q(working_condition=form.cleaned_data['working_condition'])
+
+        # معلومات السيارة
+        if form.cleaned_data.get('car'):
+            filters &= Q(emp_car=form.cleaned_data['car'].car_id)
+
+        if form.cleaned_data.get('shift_type'):
+            filters &= Q(shift_type=form.cleaned_data['shift_type'])
+
+        # معلومات التأمين
+        if form.cleaned_data.get('insurance_status'):
+            filters &= Q(insurance_status=form.cleaned_data['insurance_status'])
+
+        if form.cleaned_data.get('insurance_number'):
+            filters &= Q(insurance_number__icontains=form.cleaned_data['insurance_number'])
+
+        if form.cleaned_data.get('health_card'):
+            filters &= Q(health_card=form.cleaned_data['health_card'])
+
+        # معلومات شخصية
+        if form.cleaned_data.get('emp_type'):
+            filters &= Q(emp_type=form.cleaned_data['emp_type'])
+
+        if form.cleaned_data.get('marital_status'):
+            filters &= Q(emp_marital_status=form.cleaned_data['marital_status'])
+
+        # تواريخ التعيين
+        if form.cleaned_data.get('hire_date_from'):
+            filters &= Q(emp_date_hiring__gte=form.cleaned_data['hire_date_from'])
+
+        if form.cleaned_data.get('hire_date_to'):
+            filters &= Q(emp_date_hiring__lte=form.cleaned_data['hire_date_to'])
+
+        # تواريخ الميلاد
+        if form.cleaned_data.get('birth_date_from'):
+            filters &= Q(date_birth__gte=form.cleaned_data['birth_date_from'])
+
+        if form.cleaned_data.get('birth_date_to'):
+            filters &= Q(date_birth__lte=form.cleaned_data['birth_date_to'])
+
+        # تطبيق الفلاتر والحصول على النتائج
+        employees = Employee.objects.filter(filters).select_related('department').order_by('emp_full_name')
 
         # If exactly one employee found, select for detailed view
         if employees.count() == 1:
@@ -334,6 +419,7 @@ def employee_search(request):
         'selected_employee': selected_employee,
         'analytics': analytics,
         'title': 'بحث الموظفين',
+        'total_results': employees.count() if employees else 0,
     }
     return render(request, 'Hr/employees/employee_search.html', context)
 

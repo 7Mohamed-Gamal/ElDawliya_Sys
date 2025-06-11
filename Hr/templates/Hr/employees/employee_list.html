@@ -14,94 +14,141 @@
 {% endblock %}
 
 {% block content %}
+<!-- Enhanced Statistics Cards -->
 <div class="row mb-4 g-3">
     <div class="col-xl-3 col-md-6">
-        <div class="card stats-card bg-gradient-primary border-0 h-100 hover-shadow">
-            <div class="card-body d-flex align-items-center p-4">
-                <div class="stats-icon-circle bg-white bg-opacity-25 me-3">
-                    <i class="fas fa-users fa-lg text-white"></i>
+        <div class="card stats-card modern-stats-card bg-gradient-primary border-0 h-100 hover-lift">
+            <div class="card-body d-flex align-items-center p-4 position-relative">
+                <div class="stats-icon-wrapper me-3">
+                    <div class="stats-icon-circle bg-white bg-opacity-20">
+                        <i class="fas fa-users fa-lg text-white"></i>
+                    </div>
                 </div>
-                <div>
-                    <h3 class="stats-number text-white mb-1">{{ total_employees }}</h3>
-                    <p class="stats-title text-white text-opacity-75 mb-0">إجمالي الموظفين</p>
+                <div class="stats-content">
+                    <h3 class="stats-number text-white mb-1 fw-bold">{{ total_employees }}</h3>
+                    <p class="stats-title text-white text-opacity-85 mb-0 fw-medium">إجمالي الموظفين</p>
                 </div>
-            </div>
-            <div class="card-footer bg-transparent border-0 py-3">
-                <div class="progress bg-white bg-opacity-25" style="height: 4px;">
-                    <div class="progress-bar bg-white" style="width: 100%" role="progressbar"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-xl-3 col-md-6">
-        <div class="card stats-card bg-gradient-success border-0 h-100 hover-shadow">
-            <div class="card-body d-flex align-items-center p-4">
-                <div class="stats-icon-circle bg-white bg-opacity-25 me-3">
-                    <i class="fas fa-user-check fa-lg text-white"></i>
-                </div>
-                <div>
-                    <h3 class="stats-number text-white mb-1">{{ active_employees }}</h3>
-                    <p class="stats-title text-white text-opacity-75 mb-0">المؤمن عليهم</p>
+                <div class="stats-decoration position-absolute">
+                    <i class="fas fa-users opacity-10"></i>
                 </div>
             </div>
-            <div class="card-footer bg-transparent border-0 py-3">
-                <div class="progress bg-white bg-opacity-25" style="height: 4px;">
-                    <div class="progress-bar bg-white" style="width: {{ active_employees|divisibleby:total_employees|floatformat:2 }}%" role="progressbar"></div>
+            <div class="card-footer bg-transparent border-0 py-2">
+                <div class="progress modern-progress" style="height: 3px;">
+                    <div class="progress-bar bg-white progress-bar-animated" style="width: 100%" role="progressbar"></div>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="col-xl-3 col-md-6">
-        <div class="card stats-card bg-gradient-info border-0 h-100 hover-shadow">
-            <div class="card-body d-flex align-items-center p-4">
-                <div class="stats-icon-circle bg-white bg-opacity-25 me-3">
-                    <i class="fas fa-pause-circle fa-lg text-white"></i>
+        <div class="card stats-card modern-stats-card bg-gradient-success border-0 h-100 hover-lift">
+            <div class="card-body d-flex align-items-center p-4 position-relative">
+                <div class="stats-icon-wrapper me-3">
+                    <div class="stats-icon-circle bg-white bg-opacity-20">
+                        <i class="fas fa-user-check fa-lg text-white"></i>
+                    </div>
                 </div>
-                <div>
-                    <h3 class="stats-number text-white mb-1">{{ on_leave_employees }}</h3>
-                    <p class="stats-title text-white text-opacity-75 mb-0">الإجازات</p>
+                <div class="stats-content">
+                    <h3 class="stats-number text-white mb-1 fw-bold">{{ active_employees }}</h3>
+                    <p class="stats-title text-white text-opacity-85 mb-0 fw-medium">الموظفين النشطين</p>
+                </div>
+                <div class="stats-decoration position-absolute">
+                    <i class="fas fa-user-check opacity-10"></i>
                 </div>
             </div>
-            <div class="card-footer bg-transparent border-0 py-3">
-                <div class="progress bg-white bg-opacity-25" style="height: 4px;">
-                    <div class="progress-bar bg-white" style="width: {% widthratio on_leave_employees total_employees 100 %}%" role="progressbar"></div>
+            <div class="card-footer bg-transparent border-0 py-2">
+                <div class="progress modern-progress" style="height: 3px;">
+                    <div class="progress-bar bg-white progress-bar-animated" style="width: {% widthratio active_employees total_employees 100 %}%" role="progressbar"></div>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="col-xl-3 col-md-6">
-        <div class="card stats-card bg-gradient-danger border-0 h-100 hover-shadow">
-            <div class="card-body d-flex align-items-center p-4">
-                <div class="stats-icon-circle bg-white bg-opacity-25 me-3">
-                    <i class="fas fa-user-times fa-lg text-white"></i>
+        <div class="card stats-card modern-stats-card bg-gradient-warning border-0 h-100 hover-lift">
+            <div class="card-body d-flex align-items-center p-4 position-relative">
+                <div class="stats-icon-wrapper me-3">
+                    <div class="stats-icon-circle bg-white bg-opacity-20">
+                        <i class="fas fa-pause-circle fa-lg text-white"></i>
+                    </div>
                 </div>
-                <div>
-                    <h3 class="stats-number text-white mb-1">{{ resigned_employees }}</h3>
-                    <p class="stats-title text-white text-opacity-75 mb-0">المستقيلين</p>
+                <div class="stats-content">
+                    <h3 class="stats-number text-white mb-1 fw-bold">{{ on_leave_employees }}</h3>
+                    <p class="stats-title text-white text-opacity-85 mb-0 fw-medium">في إجازة</p>
+                </div>
+                <div class="stats-decoration position-absolute">
+                    <i class="fas fa-pause-circle opacity-10"></i>
                 </div>
             </div>
-            <div class="card-footer bg-transparent border-0 py-3">
-                <div class="progress bg-white bg-opacity-25" style="height: 4px;">
-                    <div class="progress-bar bg-white" style="width: {% widthratio resigned_employees total_employees 100 %}%" role="progressbar"></div>
+            <div class="card-footer bg-transparent border-0 py-2">
+                <div class="progress modern-progress" style="height: 3px;">
+                    <div class="progress-bar bg-white progress-bar-animated" style="width: {% widthratio on_leave_employees total_employees 100 %}%" role="progressbar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card stats-card modern-stats-card bg-gradient-danger border-0 h-100 hover-lift">
+            <div class="card-body d-flex align-items-center p-4 position-relative">
+                <div class="stats-icon-wrapper me-3">
+                    <div class="stats-icon-circle bg-white bg-opacity-20">
+                        <i class="fas fa-user-times fa-lg text-white"></i>
+                    </div>
+                </div>
+                <div class="stats-content">
+                    <h3 class="stats-number text-white mb-1 fw-bold">{{ resigned_employees }}</h3>
+                    <p class="stats-title text-white text-opacity-85 mb-0 fw-medium">المستقيلين</p>
+                </div>
+                <div class="stats-decoration position-absolute">
+                    <i class="fas fa-user-times opacity-10"></i>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-0 py-2">
+                <div class="progress modern-progress" style="height: 3px;">
+                    <div class="progress-bar bg-white progress-bar-animated" style="width: {% widthratio resigned_employees total_employees 100 %}%" role="progressbar"></div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<div class="d-flex align-items-center mb-4 p-3 bg-light rounded shadow-sm">
-    <div class="toggle-border me-3">
-        <input id="employeeStatusToggle" type="checkbox" {% if status != 'inactive' %}checked{% endif %}>
-        <label for="employeeStatusToggle">
-            <div class="handle"></div>
-        </label>
+<!-- Enhanced Status Toggle -->
+<div class="modern-toggle-container mb-4">
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center">
+                    <div class="modern-toggle-wrapper me-3">
+                        <input id="employeeStatusToggle" type="checkbox" class="modern-toggle-input" {% if status != 'inactive' %}checked{% endif %}>
+                        <label for="employeeStatusToggle" class="modern-toggle-label">
+                            <span class="modern-toggle-slider">
+                                <span class="modern-toggle-handle"></span>
+                            </span>
+                        </label>
+                    </div>
+                    <div class="toggle-content">
+                        <h6 id="toggleStatusText" class="mb-1 fw-bold {% if status == 'inactive' %}text-danger{% else %}text-success{% endif %}">
+                            {% if status == 'inactive' %}موظفين غير نشطين{% else %}موظفين نشطين{% endif %}
+                        </h6>
+                        <small class="text-muted">انقر للتبديل بين الموظفين النشطين وغير النشطين</small>
+                    </div>
+                </div>
+                <div class="toggle-stats">
+                    <div class="d-flex gap-3">
+                        <div class="text-center">
+                            <div class="fw-bold text-success">{{ active_employees }}</div>
+                            <small class="text-muted">نشط</small>
+                        </div>
+                        <div class="text-center">
+                            <div class="fw-bold text-danger">{{ resigned_employees }}</div>
+                            <small class="text-muted">مستقيل</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-    <span id="toggleStatusText" class="fw-bold {% if status == 'inactive' %}text-danger{% else %}text-success{% endif %}">
-        {% if status == 'inactive' %}موظفين غير نشطين{% else %}موظفين نشطين{% endif %}
-    </span>
 </div>
 
 
@@ -170,58 +217,184 @@
                     </div>
                     {% endif %}
 
+                    <!-- Enhanced Search Section -->
                     <div class="search-section mb-4">
-                        <div class="input-group mb-3 search-main">
-                            <span class="input-group-text bg-light"><i class="fas fa-search text-primary"></i></span>
-                            <input type="text" name="search" class="form-control search-autocomplete" placeholder="بحث سريع بالاسم أو الكود أو الرقم القومي" value="{{ request.GET.search|default:'' }}" autocomplete="off">
-                            <button type="submit" class="btn btn-primary">بحث</button>
-                        </div>
-                        <div class="search-results-container position-relative">
-                            <div class="search-results-dropdown d-none position-absolute w-100 bg-white shadow-sm rounded border z-3" style="max-height: 300px; overflow-y: auto;"></div>
+                        <div class="row g-3">
+                            <!-- Main Search -->
+                            <div class="col-lg-8">
+                                <div class="modern-search-wrapper position-relative">
+                                    <div class="input-group search-main">
+                                        <span class="input-group-text bg-primary text-white border-primary">
+                                            <i class="fas fa-search"></i>
+                                        </span>
+                                        <input type="text" name="search" class="form-control search-autocomplete border-primary"
+                                               placeholder="بحث شامل: الاسم، الكود، الرقم القومي، الهاتف، العنوان..."
+                                               value="{{ request.GET.search|default:'' }}" autocomplete="off">
+                                        <button type="submit" class="btn btn-primary px-4">
+                                            <i class="fas fa-search me-1"></i>بحث
+                                        </button>
+                                    </div>
+                                    <div class="search-results-container position-relative">
+                                        <div class="search-results-dropdown d-none position-absolute w-100 bg-white shadow-lg rounded border z-3" style="max-height: 350px; overflow-y: auto;"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Quick Filters -->
+                            <div class="col-lg-4">
+                                <div class="d-flex gap-2 h-100 align-items-center">
+                                    <button type="button" class="btn btn-outline-secondary flex-fill" id="advancedSearchToggle">
+                                        <i class="fas fa-sliders-h me-1"></i>فلاتر متقدمة
+                                    </button>
+                                    <button type="button" class="btn btn-outline-info" id="viewToggle" title="تبديل العرض">
+                                        <i class="fas fa-th-large"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
+                    <!-- Enhanced Filter Groups -->
                     <div class="filter-groups">
-                        <!-- مجموعة الفلاتر الأساسية -->
-                        <div class="filter-group mb-3">
-                            <h6 class="filter-group-title mb-2 fw-medium text-dark">
-                                <i class="fas fa-filter me-1 text-primary"></i> الفلاتر الأساسية
-                            </h6>
+                        <!-- Basic Filters -->
+                        <div class="filter-group mb-4">
+                            <div class="filter-group-header mb-3">
+                                <h6 class="filter-group-title mb-0 fw-semibold text-dark d-flex align-items-center">
+                                    <i class="fas fa-filter me-2 text-primary"></i>
+                                    الفلاتر الأساسية
+                                </h6>
+                            </div>
 
-                            <div class="row g-2">
-                                <div class="col-md-6 mb-2">
-                                    <label class="form-label small text-muted">
+                            <div class="row g-3">
+                                <div class="col-lg-3 col-md-6">
+                                    <label class="form-label small fw-medium text-dark">
                                         <i class="fas fa-id-badge me-1 text-primary"></i>
-                                        بحث بالكود
+                                        كود الموظف
                                     </label>
-                                    {% if filter_form.search_empID %}
-                                        {{ filter_form.search_empID }}
-                                    {% else %}
-                                        <div class="input-group input-group-sm">
-                                            <span class="input-group-text bg-light"><i class="fas fa-search text-muted small"></i></span>
-                                            <input type="text" name="emp_code" class="form-control form-control-sm" placeholder="أدخل كود الموظف" value="{{ request.GET.emp_code|default:'' }}">
-                                        </div>
-                                    {% endif %}
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light border-end-0">
+                                            <i class="fas fa-hashtag text-muted small"></i>
+                                        </span>
+                                        <input type="text" name="emp_code" class="form-control border-start-0"
+                                               placeholder="أدخل كود الموظف" value="{{ request.GET.emp_code|default:'' }}">
+                                    </div>
                                 </div>
 
-                                <div class="col-md-6 mb-2">
-                                    <label class="form-label small text-muted">{{ filter_form.department.label }}</label>
+                                <div class="col-lg-3 col-md-6">
+                                    <label class="form-label small fw-medium text-dark">
+                                        <i class="fas fa-building me-1 text-primary"></i>
+                                        {{ filter_form.department.label }}
+                                    </label>
                                     {{ filter_form.department }}
                                 </div>
 
-                                <div class="col-md-6 mb-2">
-                                    <label class="form-label small text-muted">{{ filter_form.job.label }}</label>
+                                <div class="col-lg-3 col-md-6">
+                                    <label class="form-label small fw-medium text-dark">
+                                        <i class="fas fa-briefcase me-1 text-primary"></i>
+                                        {{ filter_form.job.label }}
+                                    </label>
                                     {{ filter_form.job }}
                                 </div>
 
-                                <div class="col-md-6 mb-2">
-                                    <label class="form-label small text-muted">{{ filter_form.working_condition.label }}</label>
+                                <div class="col-lg-3 col-md-6">
+                                    <label class="form-label small fw-medium text-dark">
+                                        <i class="fas fa-user-check me-1 text-primary"></i>
+                                        {{ filter_form.working_condition.label }}
+                                    </label>
                                     {{ filter_form.working_condition }}
                                 </div>
+                            </div>
+                        </div>
 
-                                <div class="col-md-6 mb-2">
-                                    <label class="form-label small text-muted">{{ filter_form.insurance_status.label }}</label>
-                                    {{ filter_form.insurance_status }}
+                        <!-- Advanced Filters (Collapsible) -->
+                        <div class="collapse" id="advancedFilters">
+                            <div class="filter-group mb-4">
+                                <div class="filter-group-header mb-3">
+                                    <h6 class="filter-group-title mb-0 fw-semibold text-dark d-flex align-items-center">
+                                        <i class="fas fa-search-plus me-2 text-info"></i>
+                                        فلاتر متقدمة
+                                    </h6>
+                                </div>
+
+                                <div class="row g-3">
+                                    <!-- Contact Information -->
+                                    <div class="col-lg-4 col-md-6">
+                                        <label class="form-label small fw-medium text-dark">
+                                            <i class="fas fa-phone me-1 text-primary"></i>
+                                            رقم الهاتف
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light border-end-0">
+                                                <i class="fas fa-phone text-muted small"></i>
+                                            </span>
+                                            <input type="text" name="phone" class="form-control border-start-0"
+                                                   placeholder="بحث برقم الهاتف" value="{{ request.GET.phone|default:'' }}">
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-4 col-md-6">
+                                        <label class="form-label small fw-medium text-dark">
+                                            <i class="fas fa-id-card me-1 text-primary"></i>
+                                            الرقم القومي
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light border-end-0">
+                                                <i class="fas fa-id-card text-muted small"></i>
+                                            </span>
+                                            <input type="text" name="national_id" class="form-control border-start-0"
+                                                   placeholder="بحث بالرقم القومي" value="{{ request.GET.national_id|default:'' }}">
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-4 col-md-6">
+                                        <label class="form-label small fw-medium text-dark">
+                                            <i class="fas fa-shield-alt me-1 text-primary"></i>
+                                            {{ filter_form.insurance_status.label }}
+                                        </label>
+                                        {{ filter_form.insurance_status }}
+                                    </div>
+
+                                    <!-- Car Information -->
+                                    <div class="col-lg-4 col-md-6">
+                                        <label class="form-label small fw-medium text-dark">
+                                            <i class="fas fa-car me-1 text-primary"></i>
+                                            السيارة
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light border-end-0">
+                                                <i class="fas fa-car text-muted small"></i>
+                                            </span>
+                                            <input type="text" name="car" class="form-control border-start-0"
+                                                   placeholder="بحث بالسيارة" value="{{ request.GET.car|default:'' }}">
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-4 col-md-6">
+                                        <label class="form-label small fw-medium text-dark">
+                                            <i class="fas fa-map-marker-alt me-1 text-primary"></i>
+                                            نقطة التقاط السيارة
+                                        </label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light border-end-0">
+                                                <i class="fas fa-map-marker-alt text-muted small"></i>
+                                            </span>
+                                            <input type="text" name="car_pick_up_point" class="form-control border-start-0"
+                                                   placeholder="نقطة التقاط السيارة" value="{{ request.GET.car_pick_up_point|default:'' }}">
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-4 col-md-6">
+                                        <label class="form-label small fw-medium text-dark">
+                                            <i class="fas fa-clock me-1 text-primary"></i>
+                                            نوع الوردية
+                                        </label>
+                                        <select name="shift_type" class="form-select">
+                                            <option value="">جميع الورديات</option>
+                                            <option value="صباحي" {% if request.GET.shift_type == 'صباحي' %}selected{% endif %}>صباحي</option>
+                                            <option value="مسائي" {% if request.GET.shift_type == 'مسائي' %}selected{% endif %}>مسائي</option>
+                                            <option value="ليلي" {% if request.GET.shift_type == 'ليلي' %}selected{% endif %}>ليلي</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -229,16 +402,29 @@
 
                     {% comment %} Advanced search section removed {% endcomment %}
 
-                    <div class="d-flex flex-wrap gap-2 mt-4">
-                        <button type="submit" class="btn btn-primary flex-grow-1">
-                            <i class="fas fa-search me-1"></i>
-                            بحث
-                        </button>
-                        <a href="{% url 'Hr:employees:list' %}" class="btn btn-outline-secondary flex-grow-1">
-                            <i class="fas fa-sync-alt me-1"></i>
-                            إعادة تعيين
-                        </a>
-                        {% comment %} Toggle advanced search button removed {% endcomment %}
+                    <!-- Enhanced Action Buttons -->
+                    <div class="filter-actions mt-4">
+                        <div class="row g-2">
+                            <div class="col-md-6">
+                                <button type="submit" class="btn btn-primary w-100 btn-lg">
+                                    <i class="fas fa-search me-2"></i>
+                                    تطبيق الفلاتر
+                                </button>
+                            </div>
+                            <div class="col-md-3">
+                                <a href="{% url 'Hr:employees:list' %}" class="btn btn-outline-secondary w-100 btn-lg">
+                                    <i class="fas fa-undo me-2"></i>
+                                    إعادة تعيين
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                <button type="button" class="btn btn-outline-info w-100 btn-lg" data-bs-toggle="collapse"
+                                        data-bs-target="#advancedFilters" aria-expanded="false" aria-controls="advancedFilters">
+                                    <i class="fas fa-sliders-h me-2"></i>
+                                    متقدم
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -247,174 +433,447 @@
 
     <div class="col-12">
         <div class="card shadow-sm">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center py-3 border-bottom">
-                <div>
-                    <h5 id="employeeListTitle" class="mb-0 fw-semibold">
-                        {% if status == 'inactive' %}
-                        قائمة الموظفين غير النشطين
-                        {% else %}
-                        قائمة الموظفين النشطين
-                        {% endif %}
-                    </h5>
-                    {% if employees %}
-                    <small class="text-muted mt-1 d-block">
-                        <i class="fas fa-users me-1"></i> تم العثور على <span class="fw-bold text-primary">{{ employees|length }}</span> موظف
-                        {% if request.GET %}
-                        <span class="text-muted">مطابق لمعايير البحث</span>
-                        {% endif %}
-                    </small>
-                    {% endif %}
-                </div>
-                <div class="d-flex gap-2">
-                    <div class="dropdown">
-                        <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-sort me-1"></i>
-                            ترتيب
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="sortDropdown">
-                            <li><a class="dropdown-item sort-option" href="#" data-sort="emp_id"><i class="fas fa-sort-numeric-down me-2"></i>رقم الموظف</a></li>
-                            <li><a class="dropdown-item sort-option" href="#" data-sort="emp_full_name"><i class="fas fa-sort-alpha-down me-2"></i>الاسم</a></li>
-                            <li><a class="dropdown-item sort-option" href="#" data-sort="department"><i class="fas fa-sort-alpha-down me-2"></i>القسم</a></li>
-                            <li><a class="dropdown-item sort-option" href="#" data-sort="emp_date_hiring"><i class="fas fa-sort-numeric-down me-2"></i>تاريخ التعيين</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item sort-direction" href="#" data-direction="asc"><i class="fas fa-arrow-up me-2"></i>تصاعدي</a></li>
-                            <li><a class="dropdown-item sort-direction" href="#" data-direction="desc"><i class="fas fa-arrow-down me-2"></i>تنازلي</a></li>
-                        </ul>
+            <!-- Enhanced Card Header -->
+            <div class="card-header bg-white border-bottom py-4">
+                <div class="row align-items-center">
+                    <div class="col-lg-6">
+                        <div class="header-content">
+                            <h5 id="employeeListTitle" class="mb-2 fw-bold text-dark">
+                                {% if status == 'inactive' %}
+                                <i class="fas fa-user-times text-danger me-2"></i>
+                                قائمة الموظفين غير النشطين
+                                {% else %}
+                                <i class="fas fa-users text-success me-2"></i>
+                                قائمة الموظفين النشطين
+                                {% endif %}
+                            </h5>
+                            {% if employees %}
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="result-count">
+                                    <span class="badge bg-primary-subtle text-primary px-3 py-2">
+                                        <i class="fas fa-users me-1"></i>
+                                        <span class="fw-bold">{{ employees|length }}</span> موظف
+                                    </span>
+                                </div>
+                                {% if request.GET %}
+                                <small class="text-muted">
+                                    <i class="fas fa-filter me-1"></i>
+                                    مطابق لمعايير البحث
+                                </small>
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
                     </div>
-                    <div class="actions text-end mb-3">
-                        {% if perms.Hr.add_employee or user|is_admin %}
+
+                    <div class="col-lg-6">
+                        <div class="d-flex justify-content-end gap-2">
+                            <!-- View Toggle -->
+                            <div class="btn-group view-toggle" role="group">
+                                <button type="button" class="btn btn-outline-secondary active" id="tableViewBtn" title="عرض جدول">
+                                    <i class="fas fa-table"></i>
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary" id="cardViewBtn" title="عرض بطاقات">
+                                    <i class="fas fa-th-large"></i>
+                                </button>
+                            </div>
+
+                            <!-- Sort Dropdown -->
+                            <div class="dropdown">
+                                <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fas fa-sort me-1"></i>
+                                    ترتيب
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end shadow" aria-labelledby="sortDropdown">
+                                    <li><h6 class="dropdown-header">ترتيب حسب</h6></li>
+                                    <li><a class="dropdown-item sort-option" href="#" data-sort="emp_id">
+                                        <i class="fas fa-hashtag me-2 text-primary"></i>رقم الموظف
+                                    </a></li>
+                                    <li><a class="dropdown-item sort-option" href="#" data-sort="emp_full_name">
+                                        <i class="fas fa-user me-2 text-primary"></i>الاسم
+                                    </a></li>
+                                    <li><a class="dropdown-item sort-option" href="#" data-sort="department">
+                                        <i class="fas fa-building me-2 text-primary"></i>القسم
+                                    </a></li>
+                                    <li><a class="dropdown-item sort-option" href="#" data-sort="emp_date_hiring">
+                                        <i class="fas fa-calendar me-2 text-primary"></i>تاريخ التعيين
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><h6 class="dropdown-header">اتجاه الترتيب</h6></li>
+                                    <li><a class="dropdown-item sort-direction" href="#" data-direction="asc">
+                                        <i class="fas fa-arrow-up me-2 text-success"></i>تصاعدي
+                                    </a></li>
+                                    <li><a class="dropdown-item sort-direction" href="#" data-direction="desc">
+                                        <i class="fas fa-arrow-down me-2 text-danger"></i>تنازلي
+                                    </a></li>
+                                </ul>
+                            </div>
+
+                            <!-- Add Employee Button -->
+                            {% if perms.Hr.add_employee or user|is_admin %}
                             <a href="{% url 'Hr:employees:create' %}" class="btn btn-primary">
-                                <i class="fas fa-user-plus me-1"></i> إضافة موظف جديد
+                                <i class="fas fa-user-plus me-2"></i>
+                                إضافة موظف جديد
                             </a>
-                        {% endif %}
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="card-body p-0">
                 {% if employees %}
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0" id="employeesTable">
-                        <thead class="table-light sticky-top">
+
+                <!-- Modern Card View (Hidden by default) -->
+                <div id="cardView" class="employee-cards-container p-4" style="display: none;">
+                    <div class="row g-4">
+                        {% for employee in employees %}
+                        <div class="col-xl-4 col-lg-6 col-md-6">
+                            <div class="employee-card modern-employee-card h-100" data-emp-id="{{ employee.emp_id }}"
+                                 data-emp-name="{{ employee.emp_full_name|default:employee.emp_first_name }}"
+                                 data-dept="{{ employee.department.dept_name|default:'' }}"
+                                 data-condition="{{ employee.working_condition|default:'' }}">
+                                <div class="card border-0 shadow-sm h-100 hover-lift">
+                                    <div class="card-body p-4">
+                                        <!-- Employee Header -->
+                                        <div class="employee-header d-flex align-items-center mb-3">
+                                            <div class="employee-avatar me-3">
+                                                {% if employee.emp_image %}
+                                                <img src="{{ employee.emp_image|binary_to_img }}" alt="{{ employee.emp_full_name }}"
+                                                     class="rounded-circle employee-card-img" width="60" height="60">
+                                                {% else %}
+                                                <div class="avatar-placeholder bg-primary text-white rounded-circle d-flex align-items-center justify-content-center"
+                                                     style="width: 60px; height: 60px; font-size: 1.5rem; font-weight: bold;">
+                                                    {{ employee.emp_first_name|slice:":1"|upper }}
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                            <div class="employee-info flex-grow-1">
+                                                <h6 class="employee-name mb-1 fw-bold text-dark">
+                                                    {{ employee.emp_full_name|default:employee.emp_first_name }}
+                                                </h6>
+                                                <div class="employee-id">
+                                                    <span class="badge bg-light text-dark border">
+                                                        <i class="fas fa-hashtag me-1"></i>{{ employee.emp_id }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="employee-status">
+                                                {% if employee.working_condition == 'سارى' %}
+                                                <span class="status-indicator bg-success"></span>
+                                                {% elif employee.working_condition == 'منقطع عن العمل' %}
+                                                <span class="status-indicator bg-warning"></span>
+                                                {% elif employee.working_condition == 'استقالة' %}
+                                                <span class="status-indicator bg-danger"></span>
+                                                {% else %}
+                                                <span class="status-indicator bg-secondary"></span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+
+                                        <!-- Employee Details -->
+                                        <div class="employee-details">
+                                            <div class="detail-row d-flex align-items-center mb-2">
+                                                <i class="fas fa-building text-primary me-2" style="width: 16px;"></i>
+                                                <span class="text-muted small">القسم:</span>
+                                                <span class="ms-auto fw-medium">
+                                                    {{ employee.department.dept_name|default:"-" }}
+                                                </span>
+                                            </div>
+                                            <div class="detail-row d-flex align-items-center mb-2">
+                                                <i class="fas fa-briefcase text-primary me-2" style="width: 16px;"></i>
+                                                <span class="text-muted small">الوظيفة:</span>
+                                                <span class="ms-auto fw-medium">
+                                                    {{ employee.jop_name|default:"-" }}
+                                                </span>
+                                            </div>
+                                            {% if employee.emp_phone1 %}
+                                            <div class="detail-row d-flex align-items-center mb-2">
+                                                <i class="fas fa-phone text-primary me-2" style="width: 16px;"></i>
+                                                <span class="text-muted small">الهاتف:</span>
+                                                <a href="tel:{{ employee.emp_phone1 }}" class="ms-auto text-decoration-none fw-medium">
+                                                    {{ employee.emp_phone1 }}
+                                                </a>
+                                            </div>
+                                            {% endif %}
+                                            {% if employee.national_id %}
+                                            <div class="detail-row d-flex align-items-center mb-3">
+                                                <i class="fas fa-id-card text-primary me-2" style="width: 16px;"></i>
+                                                <span class="text-muted small">الرقم القومي:</span>
+                                                <span class="ms-auto fw-medium small">
+                                                    {{ employee.national_id }}
+                                                </span>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+
+                                        <!-- Working Status Badge -->
+                                        <div class="employee-status-badge mb-3">
+                                            {% if employee.working_condition == 'سارى' %}
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-2 w-100">
+                                                <i class="fas fa-check-circle me-1"></i>نشط
+                                            </span>
+                                            {% elif employee.working_condition == 'منقطع عن العمل' %}
+                                            <span class="badge bg-warning-subtle text-warning border border-warning-subtle px-3 py-2 w-100">
+                                                <i class="fas fa-pause-circle me-1"></i>منقطع عن العمل
+                                            </span>
+                                            {% elif employee.working_condition == 'استقالة' %}
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 w-100">
+                                                <i class="fas fa-times-circle me-1"></i>استقالة
+                                            </span>
+                                            {% else %}
+                                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-3 py-2 w-100">
+                                                <i class="fas fa-question-circle me-1"></i>{{ employee.working_condition|default:"-" }}
+                                            </span>
+                                            {% endif %}
+                                        </div>
+
+                                        <!-- Action Buttons -->
+                                        <div class="employee-actions">
+                                            <div class="btn-group w-100" role="group">
+                                                <a href="{% url 'Hr:employees:detail' employee.emp_id %}"
+                                                   class="btn btn-outline-primary btn-sm flex-fill" title="عرض التفاصيل">
+                                                    <i class="fas fa-eye me-1"></i>عرض
+                                                </a>
+                                                {% if perms.Hr.change_employee or user|is_admin %}
+                                                <a href="{% url 'Hr:employees:edit' employee.emp_id %}"
+                                                   class="btn btn-primary btn-sm flex-fill" title="تعديل">
+                                                    <i class="fas fa-edit me-1"></i>تعديل
+                                                </a>
+                                                {% endif %}
+                                                <div class="btn-group" role="group">
+                                                    <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle"
+                                                            data-bs-toggle="dropdown" aria-expanded="false" title="المزيد">
+                                                        <i class="fas fa-ellipsis-v"></i>
+                                                    </button>
+                                                    <ul class="dropdown-menu dropdown-menu-end">
+                                                        <li><a class="dropdown-item" href="{% url 'Hr:employees:detail' employee.emp_id %}">
+                                                            <i class="fas fa-id-card me-2 text-primary"></i>البطاقة الشخصية
+                                                        </a></li>
+                                                        <li><a class="dropdown-item" href="#">
+                                                            <i class="fas fa-print me-2 text-secondary"></i>طباعة البيانات
+                                                        </a></li>
+                                                        {% if perms.Hr.delete_employee or user|is_admin %}
+                                                        <li><hr class="dropdown-divider"></li>
+                                                        <li><button class="dropdown-item text-danger delete-employee"
+                                                                    data-employee-id="{{ employee.emp_id }}"
+                                                                    data-employee-name="{{ employee.emp_full_name }}">
+                                                            <i class="fas fa-trash me-2"></i>حذف
+                                                        </button></li>
+                                                        {% endif %}
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Enhanced Table View -->
+                <div id="tableView" class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 modern-table" id="employeesTable">
+                        <thead class="table-light sticky-top modern-table-header">
                             <tr>
-                                <th class="py-3 px-3 sortable" data-sort="emp_id">
-                                    <div class="d-flex align-items-center">
+                                <th class="py-4 px-4 sortable border-0" data-sort="emp_id">
+                                    <div class="d-flex align-items-center fw-semibold">
+                                        <i class="fas fa-hashtag me-2 text-primary"></i>
                                         الرقم
-                                        <i class="fas fa-sort ms-1 text-muted small"></i>
+                                        <i class="fas fa-sort ms-2 text-muted"></i>
                                     </div>
                                 </th>
-                                <th class="py-3 px-3 sortable" data-sort="emp_full_name">
-                                    <div class="d-flex align-items-center">
-                                        الاسم
-                                        <i class="fas fa-sort ms-1 text-muted small"></i>
+                                <th class="py-4 px-4 sortable border-0" data-sort="emp_full_name">
+                                    <div class="d-flex align-items-center fw-semibold">
+                                        <i class="fas fa-user me-2 text-primary"></i>
+                                        الموظف
+                                        <i class="fas fa-sort ms-2 text-muted"></i>
                                     </div>
                                 </th>
-                                <th class="py-3 px-3 sortable" data-sort="department">
-                                    <div class="d-flex align-items-center">
+                                <th class="py-4 px-4 sortable border-0" data-sort="department">
+                                    <div class="d-flex align-items-center fw-semibold">
+                                        <i class="fas fa-building me-2 text-primary"></i>
                                         القسم
-                                        <i class="fas fa-sort ms-1 text-muted small"></i>
+                                        <i class="fas fa-sort ms-2 text-muted"></i>
                                     </div>
                                 </th>
-                                <th class="py-3 px-3">الوظيفة</th>
-                                <th class="py-3 px-3">الهاتف</th>
-                                <th class="py-3 px-3 sortable" data-sort="working_condition">
-                                    <div class="d-flex align-items-center">
+                                <th class="py-4 px-4 border-0">
+                                    <div class="d-flex align-items-center fw-semibold">
+                                        <i class="fas fa-briefcase me-2 text-primary"></i>
+                                        الوظيفة
+                                    </div>
+                                </th>
+                                <th class="py-4 px-4 border-0">
+                                    <div class="d-flex align-items-center fw-semibold">
+                                        <i class="fas fa-phone me-2 text-primary"></i>
+                                        الهاتف
+                                    </div>
+                                </th>
+                                <th class="py-4 px-4 sortable border-0" data-sort="working_condition">
+                                    <div class="d-flex align-items-center fw-semibold">
+                                        <i class="fas fa-user-check me-2 text-primary"></i>
                                         الحالة
-                                        <i class="fas fa-sort ms-1 text-muted small"></i>
+                                        <i class="fas fa-sort ms-2 text-muted"></i>
                                     </div>
                                 </th>
-                                <th class="py-3 px-3 text-center">العمليات</th>
+                                <th class="py-4 px-4 text-center border-0">
+                                    <div class="d-flex align-items-center justify-content-center fw-semibold">
+                                        <i class="fas fa-cogs me-2 text-primary"></i>
+                                        العمليات
+                                    </div>
+                                </th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody class="modern-table-body">
                             {% for employee in employees %}
-                            <tr class="employee-row" data-emp-id="{{ employee.emp_id }}" data-emp-name="{{ employee.emp_full_name|default:employee.emp_first_name }}" data-dept="{{ employee.department.dept_name|default:'' }}" data-condition="{{ employee.working_condition|default:'' }}">
-                                <td class="px-3">
-                                    <span class="badge bg-light text-dark border">{{ employee.emp_id }}</span>
+                            <tr class="employee-row modern-table-row border-0" data-emp-id="{{ employee.emp_id }}"
+                                data-emp-name="{{ employee.emp_full_name|default:employee.emp_first_name }}"
+                                data-dept="{{ employee.department.dept_name|default:'' }}"
+                                data-condition="{{ employee.working_condition|default:'' }}">
+
+                                <!-- Employee ID -->
+                                <td class="px-4 py-3 border-0">
+                                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-2 fw-bold">
+                                        #{{ employee.emp_id }}
+                                    </span>
                                 </td>
-                                <td class="px-3">
-                                    <div class="d-flex align-items-center py-2">
-                                        {% if employee.emp_image %}
-                                        <img src="{{ employee.emp_image|binary_to_img }}" alt="{{ employee.emp_full_name }}" class="rounded-circle me-3 object-fit-cover employee-table-img" width="50" height="50">
-                                        {% else %}
-                                        <div class="avatar bg-primary text-white me-3 flex-shrink-0" style="width: 50px; height: 50px;">
-                                            {{ employee.emp_first_name|slice:":1"|upper }}
+
+                                <!-- Employee Info -->
+                                <td class="px-4 py-3 border-0">
+                                    <div class="d-flex align-items-center">
+                                        <div class="employee-avatar me-3">
+                                            {% if employee.emp_image %}
+                                            <img src="{{ employee.emp_image|binary_to_img }}" alt="{{ employee.emp_full_name }}"
+                                                 class="rounded-circle object-fit-cover employee-table-img shadow-sm" width="50" height="50">
+                                            {% else %}
+                                            <div class="avatar bg-gradient-primary text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm"
+                                                 style="width: 50px; height: 50px; font-size: 1.2rem; font-weight: bold;">
+                                                {{ employee.emp_first_name|slice:":1"|upper }}
+                                            </div>
+                                            {% endif %}
                                         </div>
-                                        {% endif %}
-                                        <div>
-                                            <a href="{% url 'Hr:employees:detail' employee.emp_id %}" class="fw-medium d-block text-decoration-none text-dark employee-name">{{ employee.emp_full_name|default:employee.emp_first_name }}</a>
-                                            <small class="text-muted">{{ employee.national_id|default:'' }}</small>
+                                        <div class="employee-details">
+                                            <div class="employee-name-wrapper">
+                                                <a href="{% url 'Hr:employees:detail' employee.emp_id %}"
+                                                   class="fw-semibold text-decoration-none text-dark employee-name d-block mb-1 hover-primary">
+                                                    {{ employee.emp_full_name|default:employee.emp_first_name }}
+                                                </a>
+                                            </div>
+                                            {% if employee.national_id %}
+                                            <div class="employee-meta">
+                                                <small class="text-muted d-flex align-items-center">
+                                                    <i class="fas fa-id-card me-1"></i>
+                                                    {{ employee.national_id }}
+                                                </small>
+                                            </div>
+                                            {% endif %}
                                         </div>
                                     </div>
                                 </td>
-                                <td class="px-3">
+
+                                <!-- Department -->
+                                <td class="px-4 py-3 border-0">
                                     {% if employee.department %}
-                                    <span class="department-name">{{ employee.department.dept_name }}</span>
+                                    <div class="department-info">
+                                        <span class="badge bg-info-subtle text-info border border-info-subtle px-2 py-1">
+                                            <i class="fas fa-building me-1"></i>
+                                            {{ employee.department.dept_name }}
+                                        </span>
+                                    </div>
                                     {% else %}
                                     <span class="text-muted">-</span>
                                     {% endif %}
                                 </td>
-                                <td class="px-3">
+
+                                <!-- Job -->
+                                <td class="px-4 py-3 border-0">
                                     {% if employee.jop_name %}
-                                    <span class="job-name">{{ employee.jop_name }}</span>
+                                    <div class="job-info">
+                                        <span class="fw-medium text-dark">{{ employee.jop_name }}</span>
+                                    </div>
                                     {% else %}
                                     <span class="text-muted">-</span>
                                     {% endif %}
                                 </td>
-                                <td class="px-3">
+
+                                <!-- Phone -->
+                                <td class="px-4 py-3 border-0">
                                     {% if employee.emp_phone1 %}
-                                    <a href="tel:{{ employee.emp_phone1 }}" class="text-decoration-none text-dark">
-                                        <i class="fas fa-phone-alt text-primary me-1 small"></i>
-                                        {{ employee.emp_phone1 }}
+                                    <a href="tel:{{ employee.emp_phone1 }}" class="text-decoration-none text-dark phone-link">
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-phone text-success me-2"></i>
+                                            <span class="fw-medium">{{ employee.emp_phone1 }}</span>
+                                        </div>
                                     </a>
                                     {% else %}
                                     <span class="text-muted">-</span>
                                     {% endif %}
                                 </td>
-                                <td class="px-3">
-                                    {% if employee.working_condition == 'سارى' %}
-                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
-                                        <i class="fas fa-check-circle me-1"></i>نشط
-                                    </span>
-                                    {% elif employee.working_condition == 'منقطع عن العمل' %}
-                                    <span class="badge bg-info-subtle text-info border border-info-subtle px-2 py-1">
-                                        <i class="fas fa-pause-circle me-1"></i>منقطع عن العمل
-                                    </span>
-                                    {% elif employee.working_condition == 'استقالة' %}
-                                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-2 py-1">
-                                        <i class="fas fa-times-circle me-1"></i>استقالة
-                                    </span>
-                                    {% else %}
-                                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-1">
-                                        <i class="fas fa-question-circle me-1"></i>{{ employee.working_condition|default:"-" }}
-                                    </span>
-                                    {% endif %}
+                                <!-- Status -->
+                                <td class="px-4 py-3 border-0">
+                                    <div class="status-wrapper">
+                                        {% if employee.working_condition == 'سارى' %}
+                                        <span class="badge bg-success text-white px-3 py-2 rounded-pill">
+                                            <i class="fas fa-check-circle me-1"></i>نشط
+                                        </span>
+                                        {% elif employee.working_condition == 'منقطع عن العمل' %}
+                                        <span class="badge bg-warning text-white px-3 py-2 rounded-pill">
+                                            <i class="fas fa-pause-circle me-1"></i>منقطع
+                                        </span>
+                                        {% elif employee.working_condition == 'استقالة' %}
+                                        <span class="badge bg-danger text-white px-3 py-2 rounded-pill">
+                                            <i class="fas fa-times-circle me-1"></i>استقالة
+                                        </span>
+                                        {% else %}
+                                        <span class="badge bg-secondary text-white px-3 py-2 rounded-pill">
+                                            <i class="fas fa-question-circle me-1"></i>{{ employee.working_condition|default:"غير محدد" }}
+                                        </span>
+                                        {% endif %}
+                                    </div>
                                 </td>
-                                <td class="px-3 text-center">
-                                    <div class="btn-group btn-group-sm action-buttons">
-                                        <a href="{% url 'Hr:employees:detail' employee.emp_id %}" class="btn btn-outline-primary btn-sm action-btn" title="عرض التفاصيل">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        {% if perms.Hr.change_employee or user|is_admin %}
-                                            <a href="{% url 'Hr:employees:edit' employee.emp_id %}" class="btn btn-primary btn-sm action-btn">
+
+                                <!-- Actions -->
+                                <td class="px-4 py-3 text-center border-0">
+                                    <div class="action-buttons-wrapper">
+                                        <div class="btn-group" role="group">
+                                            <a href="{% url 'Hr:employees:detail' employee.emp_id %}"
+                                               class="btn btn-outline-primary btn-sm modern-action-btn" title="عرض التفاصيل">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            {% if perms.Hr.change_employee or user|is_admin %}
+                                            <a href="{% url 'Hr:employees:edit' employee.emp_id %}"
+                                               class="btn btn-primary btn-sm modern-action-btn" title="تعديل">
                                                 <i class="fas fa-edit"></i>
                                             </a>
-                                        {% endif %}
-                                        {% if perms.Hr.delete_employee or user|is_admin %}
-                                            <button type="button" class="btn btn-danger btn-sm action-btn delete-employee"
-                                                    data-employee-id="{{ employee.emp_id }}"
-                                                    data-employee-name="{{ employee.emp_full_name }}">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        {% endif %}
-                                        <button type="button" class="btn btn-outline-info btn-sm dropdown-toggle dropdown-toggle-split action-btn" data-bs-toggle="dropdown" aria-expanded="false">
-                                            <span class="visually-hidden">المزيد</span>
-                                        </button>
-                                        <ul class="dropdown-menu dropdown-menu-end">
-                                            <li><a class="dropdown-item" href="{% url 'Hr:employees:detail' employee.emp_id %}"><i class="fas fa-id-card me-2 text-primary"></i>البطاقة الشخصية</a></li>
-                                            <li><a class="dropdown-item" href="#"><i class="fas fa-print me-2 text-secondary"></i>طباعة البيانات</a></li>
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-user-times me-2"></i>تغيير الحالة</a></li>
-                                        </ul>
+                                            {% endif %}
+                                            <div class="btn-group" role="group">
+                                                <button type="button" class="btn btn-outline-secondary btn-sm dropdown-toggle modern-action-btn"
+                                                        data-bs-toggle="dropdown" aria-expanded="false" title="المزيد">
+                                                    <i class="fas fa-ellipsis-v"></i>
+                                                </button>
+                                                <ul class="dropdown-menu dropdown-menu-end shadow">
+                                                    <li><h6 class="dropdown-header">إجراءات الموظف</h6></li>
+                                                    <li><a class="dropdown-item" href="{% url 'Hr:employees:detail' employee.emp_id %}">
+                                                        <i class="fas fa-id-card me-2 text-primary"></i>البطاقة الشخصية
+                                                    </a></li>
+                                                    <li><a class="dropdown-item" href="#">
+                                                        <i class="fas fa-print me-2 text-info"></i>طباعة البيانات
+                                                    </a></li>
+                                                    <li><a class="dropdown-item" href="#">
+                                                        <i class="fas fa-file-export me-2 text-success"></i>تصدير البيانات
+                                                    </a></li>
+                                                    {% if perms.Hr.delete_employee or user|is_admin %}
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <li><button class="dropdown-item text-danger delete-employee"
+                                                                data-employee-id="{{ employee.emp_id }}"
+                                                                data-employee-name="{{ employee.emp_full_name }}">
+                                                        <i class="fas fa-trash me-2"></i>حذف الموظف
+                                                    </button></li>
+                                                    {% endif %}
+                                                </ul>
+                                            </div>
+                                        </div>
                                     </div>
                                 </td>
                             </tr>
