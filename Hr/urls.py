@@ -57,7 +57,7 @@ from .views.salary_views import (
     payroll_calculate, payroll_period_create,
     payroll_period_edit, payroll_period_delete,
     payroll_entry_list, payroll_entry_detail, payroll_entry_approve, payroll_entry_reject,
-    # payroll_period_list
+    payroll_period_list
 )
 from .views.report_views import (
     report_list, report_detail, monthly_salary_report, employee_report
@@ -206,7 +206,7 @@ salary_patterns = [
     path('employee-items/<int:pk>/delete/', employee_salary_item_delete, name='employee_salary_item_delete'),
 
     path('calculate/', payroll_calculate, name='payroll_calculate'),
-    # path('periods/', payroll_period_list, name='payroll_period_list'),
+    path('periods/', payroll_period_list, name='payroll_period_list'),
     path('periods/create/', payroll_period_create, name='payroll_period_create'),
     path('periods/<int:pk>/edit/', payroll_period_edit, name='payroll_period_edit'),
     path('periods/<int:pk>/delete/', payroll_period_delete, name='payroll_period_delete'),
@@ -276,7 +276,7 @@ urlpatterns = [
     path('employee_salary_items/<int:pk>/delete/', employee_salary_item_delete, name='employee_salary_item_delete'),
 
     # فترات الرواتب
-    # path('payroll_periods/', payroll_period_list, name='payroll_period_list'),
+    path('payroll_periods/', payroll_period_list, name='payroll_period_list'),
     path('payroll_periods/create/', payroll_period_create, name='payroll_period_create'),
     path('payroll_periods/<int:pk>/edit/', payroll_period_edit, name='payroll_period_edit'),
     path('payroll_periods/<int:pk>/delete/', payroll_period_delete, name='payroll_period_delete'),

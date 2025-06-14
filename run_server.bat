@@ -3,7 +3,7 @@ REM ÇäÊŞá Åáì Ïáíá ÇáãÔÑæÚ ÅĞÇ áÒã ÇáÃãÑ
 cd /d %~dp0
 
 REM ÊÔÛíá ÇáÓíÑİÑ Úáì ÌãíÚ ÇáæÇÌåÇÊ ÈÇáãäİĞ 8000
-python manage.py runserver 0.0.0.0:8000
+python manage.py runserver 0.0.0.0:8080
 
 REM ÅÈŞÇÁ ÇáäÇİĞÉ ãİÊæÍÉ ÈÚÏ ÇáÅÛáÇŞ
 pause
