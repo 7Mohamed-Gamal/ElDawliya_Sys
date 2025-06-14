@@ -1587,4 +1587,175 @@ const SmartFilters = {
 
 document.addEventListener('DOMContentLoaded', () => {
     SmartFilters.init();
+
+    // Initialize ultra modern features
+    initializeCounterAnimations();
+    initializeEnhancedInteractions();
 });
+
+// Ultra Modern Counter Animation Function
+function initializeCounterAnimations() {
+    const counters = document.querySelectorAll('.counter-animate');
+
+    const animateCounter = (counter) => {
+        const target = parseInt(counter.getAttribute('data-target'));
+        const duration = 2000; // 2 seconds
+        const increment = target / (duration / 16); // 60fps
+        let current = 0;
+
+        const timer = setInterval(() => {
+            current += increment;
+            if (current >= target) {
+                current = target;
+                clearInterval(timer);
+            }
+            counter.textContent = Math.floor(current);
+        }, 16);
+    };
+
+    // Intersection Observer for triggering animations when visible
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting && !entry.target.classList.contains('animated')) {
+                entry.target.classList.add('animated');
+                animateCounter(entry.target);
+            }
+        });
+    }, { threshold: 0.5 });
+
+    counters.forEach(counter => observer.observe(counter));
+}
+
+// Enhanced Interactions for Ultra Modern UI
+function initializeEnhancedInteractions() {
+    // Enhanced search input with suggestions
+    const searchInput = document.querySelector('.ultra-modern-search-input');
+    if (searchInput) {
+        let searchTimeout;
+
+        searchInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const query = this.value.trim();
+
+            if (query.length >= 2) {
+                searchTimeout = setTimeout(() => {
+                    // Show loading state
+                    this.style.background = 'linear-gradient(90deg, #f8f9fa 25%, #e9ecef 50%, #f8f9fa 75%)';
+                    this.style.backgroundSize = '200% 100%';
+                    this.style.animation = 'loading 1.5s infinite';
+
+                    // Simulate search delay
+                    setTimeout(() => {
+                        this.style.background = '';
+                        this.style.animation = '';
+                    }, 500);
+                }, 300);
+            }
+        });
+    }
+
+    // Enhanced toggle with smooth transitions
+    const statusToggle = document.getElementById('employeeStatusToggle');
+    if (statusToggle) {
+        statusToggle.addEventListener('change', function() {
+            const toggleText = document.getElementById('toggleStatusText');
+
+            if (toggleText) {
+                // Add transition effect
+                toggleText.style.opacity = '0.5';
+                toggleText.style.transform = 'scale(0.95)';
+
+                setTimeout(() => {
+                    if (this.checked) {
+                        toggleText.className = 'mb-1 fw-bold d-flex align-items-center text-success';
+                        toggleText.innerHTML = '<i class="fas fa-user-check me-2"></i>موظفين نشطين';
+                    } else {
+                        toggleText.className = 'mb-1 fw-bold d-flex align-items-center text-danger';
+                        toggleText.innerHTML = '<i class="fas fa-user-times me-2"></i>موظفين غير نشطين';
+                    }
+
+                    toggleText.style.opacity = '1';
+                    toggleText.style.transform = 'scale(1)';
+                }, 150);
+            }
+        });
+    }
+
+    // Enhanced card hover effects
+    const employeeCards = document.querySelectorAll('.ultra-modern-stats-card');
+    employeeCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-8px) scale(1.02)';
+
+            // Add glow effect
+            const glow = this.querySelector('.stats-glow');
+            if (glow) {
+                glow.style.opacity = '1';
+            }
+        });
+
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = '';
+
+            // Remove glow effect
+            const glow = this.querySelector('.stats-glow');
+            if (glow) {
+                glow.style.opacity = '0';
+            }
+        });
+    });
+
+    // Add loading animation keyframes
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in-up {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .ultra-modern-stats-card {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .stats-glow {
+            transition: opacity 0.3s ease;
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+// Reset Filters Function
+function resetFilters() {
+    const form = document.getElementById('employeeFilterForm');
+    if (form) {
+        // Clear all form inputs
+        const inputs = form.querySelectorAll('input, select');
+        inputs.forEach(input => {
+            if (input.type === 'text' || input.type === 'search') {
+                input.value = '';
+            } else if (input.type === 'select-one') {
+                input.selectedIndex = 0;
+            } else if (input.type === 'checkbox' || input.type === 'radio') {
+                input.checked = false;
+            }
+        });
+
+        // Submit form to refresh results
+        form.submit();
+    }
+}

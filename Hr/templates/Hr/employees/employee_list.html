@@ -6,7 +6,25 @@
 
 {% block title %}قائمة الموظفين - نظام الدولية{% endblock %}
 
-{% block page_title %}قائمة الموظفين{% endblock %}
+{% block page_title %}
+<div class="modern-page-header d-flex align-items-center justify-content-between">
+    <div class="page-title-section">
+        <h1 class="page-title mb-1 fw-bold text-dark">
+            <i class="fas fa-users text-primary me-2"></i>
+            إدارة الموظفين
+        </h1>
+        <p class="page-subtitle text-muted mb-0">عرض وإدارة بيانات الموظفين في النظام</p>
+    </div>
+    <div class="page-actions">
+        {% if perms.Hr.add_employee or user|is_admin %}
+        <a href="{% url 'Hr:employees:create' %}" class="btn btn-primary btn-lg modern-btn">
+            <i class="fas fa-user-plus me-2"></i>
+            إضافة موظف جديد
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
 
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
@@ -14,135 +32,155 @@
 {% endblock %}
 
 {% block content %}
-<!-- Enhanced Statistics Cards -->
-<div class="row mb-4 g-3">
-    <div class="col-xl-3 col-md-6">
-        <div class="card stats-card modern-stats-card bg-gradient-primary border-0 h-100 hover-lift">
-            <div class="card-body d-flex align-items-center p-4 position-relative">
-                <div class="stats-icon-wrapper me-3">
-                    <div class="stats-icon-circle bg-white bg-opacity-20">
-                        <i class="fas fa-users fa-lg text-white"></i>
+<!-- Enhanced Statistics Cards with Modern Design -->
+<div class="stats-section mb-5">
+    <div class="row g-4">
+        <div class="col-xl-3 col-md-6">
+            <div class="card stats-card ultra-modern-stats-card bg-gradient-primary border-0 h-100 hover-lift-enhanced">
+                <div class="card-body d-flex align-items-center p-4 position-relative overflow-hidden">
+                    <div class="stats-icon-wrapper me-3 position-relative z-2">
+                        <div class="stats-icon-circle bg-white bg-opacity-20 backdrop-blur">
+                            <i class="fas fa-users fa-lg text-white"></i>
+                        </div>
                     </div>
+                    <div class="stats-content position-relative z-2">
+                        <h3 class="stats-number text-white mb-1 fw-bold counter-animate" data-target="{{ total_employees }}">0</h3>
+                        <p class="stats-title text-white text-opacity-90 mb-0 fw-medium">إجمالي الموظفين</p>
+                        <small class="text-white text-opacity-75">في النظام</small>
+                    </div>
+                    <div class="stats-decoration position-absolute">
+                        <i class="fas fa-users opacity-05"></i>
+                    </div>
+                    <div class="stats-glow position-absolute top-0 start-0 w-100 h-100"></div>
                 </div>
-                <div class="stats-content">
-                    <h3 class="stats-number text-white mb-1 fw-bold">{{ total_employees }}</h3>
-                    <p class="stats-title text-white text-opacity-85 mb-0 fw-medium">إجمالي الموظفين</p>
-                </div>
-                <div class="stats-decoration position-absolute">
-                    <i class="fas fa-users opacity-10"></i>
-                </div>
-            </div>
-            <div class="card-footer bg-transparent border-0 py-2">
-                <div class="progress modern-progress" style="height: 3px;">
-                    <div class="progress-bar bg-white progress-bar-animated" style="width: 100%" role="progressbar"></div>
+                <div class="card-footer bg-transparent border-0 py-2">
+                    <div class="progress ultra-modern-progress" style="height: 4px;">
+                        <div class="progress-bar bg-white progress-bar-animated progress-bar-striped" style="width: 100%" role="progressbar"></div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="col-xl-3 col-md-6">
-        <div class="card stats-card modern-stats-card bg-gradient-success border-0 h-100 hover-lift">
-            <div class="card-body d-flex align-items-center p-4 position-relative">
-                <div class="stats-icon-wrapper me-3">
-                    <div class="stats-icon-circle bg-white bg-opacity-20">
-                        <i class="fas fa-user-check fa-lg text-white"></i>
+        <div class="col-xl-3 col-md-6">
+            <div class="card stats-card ultra-modern-stats-card bg-gradient-success border-0 h-100 hover-lift-enhanced">
+                <div class="card-body d-flex align-items-center p-4 position-relative overflow-hidden">
+                    <div class="stats-icon-wrapper me-3 position-relative z-2">
+                        <div class="stats-icon-circle bg-white bg-opacity-20 backdrop-blur">
+                            <i class="fas fa-user-check fa-lg text-white"></i>
+                        </div>
                     </div>
+                    <div class="stats-content position-relative z-2">
+                        <h3 class="stats-number text-white mb-1 fw-bold counter-animate" data-target="{{ active_employees }}">0</h3>
+                        <p class="stats-title text-white text-opacity-90 mb-0 fw-medium">الموظفين النشطين</p>
+                        <small class="text-white text-opacity-75">{% widthratio active_employees total_employees 100 %}% من الإجمالي</small>
+                    </div>
+                    <div class="stats-decoration position-absolute">
+                        <i class="fas fa-user-check opacity-05"></i>
+                    </div>
+                    <div class="stats-glow position-absolute top-0 start-0 w-100 h-100"></div>
                 </div>
-                <div class="stats-content">
-                    <h3 class="stats-number text-white mb-1 fw-bold">{{ active_employees }}</h3>
-                    <p class="stats-title text-white text-opacity-85 mb-0 fw-medium">الموظفين النشطين</p>
-                </div>
-                <div class="stats-decoration position-absolute">
-                    <i class="fas fa-user-check opacity-10"></i>
-                </div>
-            </div>
-            <div class="card-footer bg-transparent border-0 py-2">
-                <div class="progress modern-progress" style="height: 3px;">
-                    <div class="progress-bar bg-white progress-bar-animated" style="width: {% widthratio active_employees total_employees 100 %}%" role="progressbar"></div>
+                <div class="card-footer bg-transparent border-0 py-2">
+                    <div class="progress ultra-modern-progress" style="height: 4px;">
+                        <div class="progress-bar bg-white progress-bar-animated progress-bar-striped" style="width: {% widthratio active_employees total_employees 100 %}%" role="progressbar"></div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="col-xl-3 col-md-6">
-        <div class="card stats-card modern-stats-card bg-gradient-warning border-0 h-100 hover-lift">
-            <div class="card-body d-flex align-items-center p-4 position-relative">
-                <div class="stats-icon-wrapper me-3">
-                    <div class="stats-icon-circle bg-white bg-opacity-20">
-                        <i class="fas fa-pause-circle fa-lg text-white"></i>
+        <div class="col-xl-3 col-md-6">
+            <div class="card stats-card ultra-modern-stats-card bg-gradient-warning border-0 h-100 hover-lift-enhanced">
+                <div class="card-body d-flex align-items-center p-4 position-relative overflow-hidden">
+                    <div class="stats-icon-wrapper me-3 position-relative z-2">
+                        <div class="stats-icon-circle bg-white bg-opacity-20 backdrop-blur">
+                            <i class="fas fa-pause-circle fa-lg text-white"></i>
+                        </div>
                     </div>
+                    <div class="stats-content position-relative z-2">
+                        <h3 class="stats-number text-white mb-1 fw-bold counter-animate" data-target="{{ on_leave_employees }}">0</h3>
+                        <p class="stats-title text-white text-opacity-90 mb-0 fw-medium">في إجازة</p>
+                        <small class="text-white text-opacity-75">موظفين مؤقتاً</small>
+                    </div>
+                    <div class="stats-decoration position-absolute">
+                        <i class="fas fa-pause-circle opacity-05"></i>
+                    </div>
+                    <div class="stats-glow position-absolute top-0 start-0 w-100 h-100"></div>
                 </div>
-                <div class="stats-content">
-                    <h3 class="stats-number text-white mb-1 fw-bold">{{ on_leave_employees }}</h3>
-                    <p class="stats-title text-white text-opacity-85 mb-0 fw-medium">في إجازة</p>
-                </div>
-                <div class="stats-decoration position-absolute">
-                    <i class="fas fa-pause-circle opacity-10"></i>
-                </div>
-            </div>
-            <div class="card-footer bg-transparent border-0 py-2">
-                <div class="progress modern-progress" style="height: 3px;">
-                    <div class="progress-bar bg-white progress-bar-animated" style="width: {% widthratio on_leave_employees total_employees 100 %}%" role="progressbar"></div>
+                <div class="card-footer bg-transparent border-0 py-2">
+                    <div class="progress ultra-modern-progress" style="height: 4px;">
+                        <div class="progress-bar bg-white progress-bar-animated progress-bar-striped" style="width: {% widthratio on_leave_employees total_employees 100 %}%" role="progressbar"></div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="col-xl-3 col-md-6">
-        <div class="card stats-card modern-stats-card bg-gradient-danger border-0 h-100 hover-lift">
-            <div class="card-body d-flex align-items-center p-4 position-relative">
-                <div class="stats-icon-wrapper me-3">
-                    <div class="stats-icon-circle bg-white bg-opacity-20">
-                        <i class="fas fa-user-times fa-lg text-white"></i>
+        <div class="col-xl-3 col-md-6">
+            <div class="card stats-card ultra-modern-stats-card bg-gradient-danger border-0 h-100 hover-lift-enhanced">
+                <div class="card-body d-flex align-items-center p-4 position-relative overflow-hidden">
+                    <div class="stats-icon-wrapper me-3 position-relative z-2">
+                        <div class="stats-icon-circle bg-white bg-opacity-20 backdrop-blur">
+                            <i class="fas fa-user-times fa-lg text-white"></i>
+                        </div>
                     </div>
+                    <div class="stats-content position-relative z-2">
+                        <h3 class="stats-number text-white mb-1 fw-bold counter-animate" data-target="{{ resigned_employees }}">0</h3>
+                        <p class="stats-title text-white text-opacity-90 mb-0 fw-medium">المستقيلين</p>
+                        <small class="text-white text-opacity-75">موظفين سابقين</small>
+                    </div>
+                    <div class="stats-decoration position-absolute">
+                        <i class="fas fa-user-times opacity-05"></i>
+                    </div>
+                    <div class="stats-glow position-absolute top-0 start-0 w-100 h-100"></div>
                 </div>
-                <div class="stats-content">
-                    <h3 class="stats-number text-white mb-1 fw-bold">{{ resigned_employees }}</h3>
-                    <p class="stats-title text-white text-opacity-85 mb-0 fw-medium">المستقيلين</p>
-                </div>
-                <div class="stats-decoration position-absolute">
-                    <i class="fas fa-user-times opacity-10"></i>
-                </div>
-            </div>
-            <div class="card-footer bg-transparent border-0 py-2">
-                <div class="progress modern-progress" style="height: 3px;">
-                    <div class="progress-bar bg-white progress-bar-animated" style="width: {% widthratio resigned_employees total_employees 100 %}%" role="progressbar"></div>
+                <div class="card-footer bg-transparent border-0 py-2">
+                    <div class="progress ultra-modern-progress" style="height: 4px;">
+                        <div class="progress-bar bg-white progress-bar-animated progress-bar-striped" style="width: {% widthratio resigned_employees total_employees 100 %}%" role="progressbar"></div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Enhanced Status Toggle -->
-<div class="modern-toggle-container mb-4">
-    <div class="card border-0 shadow-sm">
-        <div class="card-body p-3">
-            <div class="d-flex align-items-center justify-content-between">
+<!-- Ultra Modern Status Toggle -->
+<div class="ultra-modern-toggle-container mb-5">
+    <div class="card border-0 shadow-lg ultra-modern-toggle-card">
+        <div class="card-body p-4">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
                 <div class="d-flex align-items-center">
-                    <div class="modern-toggle-wrapper me-3">
-                        <input id="employeeStatusToggle" type="checkbox" class="modern-toggle-input" {% if status != 'inactive' %}checked{% endif %}>
-                        <label for="employeeStatusToggle" class="modern-toggle-label">
-                            <span class="modern-toggle-slider">
-                                <span class="modern-toggle-handle"></span>
+                    <div class="ultra-modern-toggle-wrapper me-4">
+                        <input id="employeeStatusToggle" type="checkbox" class="ultra-modern-toggle-input" {% if status != 'inactive' %}checked{% endif %}>
+                        <label for="employeeStatusToggle" class="ultra-modern-toggle-label">
+                            <span class="ultra-modern-toggle-slider">
+                                <span class="ultra-modern-toggle-handle">
+                                    <i class="fas fa-user-check toggle-icon-active"></i>
+                                    <i class="fas fa-user-times toggle-icon-inactive"></i>
+                                </span>
                             </span>
                         </label>
                     </div>
                     <div class="toggle-content">
-                        <h6 id="toggleStatusText" class="mb-1 fw-bold {% if status == 'inactive' %}text-danger{% else %}text-success{% endif %}">
+                        <h5 id="toggleStatusText" class="mb-1 fw-bold d-flex align-items-center {% if status == 'inactive' %}text-danger{% else %}text-success{% endif %}">
+                            <i class="fas {% if status == 'inactive' %}fa-user-times{% else %}fa-user-check{% endif %} me-2"></i>
                             {% if status == 'inactive' %}موظفين غير نشطين{% else %}موظفين نشطين{% endif %}
-                        </h6>
-                        <small class="text-muted">انقر للتبديل بين الموظفين النشطين وغير النشطين</small>
+                        </h5>
+                        <p class="text-muted mb-0 small">انقر للتبديل بين عرض الموظفين النشطين وغير النشطين</p>
                     </div>
                 </div>
                 <div class="toggle-stats">
-                    <div class="d-flex gap-3">
-                        <div class="text-center">
-                            <div class="fw-bold text-success">{{ active_employees }}</div>
-                            <small class="text-muted">نشط</small>
+                    <div class="d-flex gap-4">
+                        <div class="text-center stats-mini-card active-stats">
+                            <div class="stats-mini-icon bg-success-subtle text-success mb-1">
+                                <i class="fas fa-user-check"></i>
+                            </div>
+                            <div class="fw-bold text-success fs-4">{{ active_employees }}</div>
+                            <small class="text-muted fw-medium">نشط</small>
                         </div>
-                        <div class="text-center">
-                            <div class="fw-bold text-danger">{{ resigned_employees }}</div>
-                            <small class="text-muted">مستقيل</small>
+                        <div class="text-center stats-mini-card inactive-stats">
+                            <div class="stats-mini-icon bg-danger-subtle text-danger mb-1">
+                                <i class="fas fa-user-times"></i>
+                            </div>
+                            <div class="fw-bold text-danger fs-4">{{ resigned_employees }}</div>
+                            <small class="text-muted fw-medium">مستقيل</small>
                         </div>
                     </div>
                 </div>
@@ -154,12 +192,22 @@
 
 <div class="row g-4">
     <div class="col-12 mb-4">
-        <div class="card shadow-sm">
-            <div class="card-header bg-light py-3 border-bottom">
-                <h5 class="mb-0 fw-semibold">
-                    <i class="fas fa-filter me-2 text-primary"></i>
-                    تصفية النتائج
-                </h5>
+        <div class="card shadow-lg ultra-modern-filter-card border-0">
+            <div class="card-header bg-gradient-primary text-white border-0 py-4">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <div class="filter-header-icon me-3">
+                            <i class="fas fa-filter fa-lg"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-1 fw-bold">البحث والتصفية المتقدمة</h5>
+                            <p class="mb-0 text-white-50 small">ابحث عن الموظفين باستخدام معايير متعددة ومتقدمة</p>
+                        </div>
+                    </div>
+                    <div class="filter-stats text-white-50 text-end">
+                        <small>{{ employees|length }} نتيجة</small>
+                    </div>
+                </div>
             </div>
             <div class="card-body p-4">
                 <form method="get" action="" id="employeeFilterForm">

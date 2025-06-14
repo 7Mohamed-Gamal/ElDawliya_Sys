@@ -36,14 +36,80 @@
     <!-- Custom CSS -->
     <style>
         :root {
-            --primary-color: #3498db;
-            --secondary-color: #2c3e50;
-            --success-color: #2ecc71;
-            --danger-color: #e74c3c;
-            --warning-color: #f39c12;
-            --info-color: #3498db;
-            --light-color: #ecf0f1;
-            --dark-color: #2c3e50;
+            /* Modern Color Palette */
+            --primary-color: #1e40af;
+            --primary-light: #3b82f6;
+            --primary-dark: #1e3a8a;
+            --primary-gradient: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+
+            --secondary-color: #1f2937;
+            --secondary-light: #374151;
+            --secondary-dark: #111827;
+
+            --accent-color: #f59e0b;
+            --accent-light: #fbbf24;
+            --accent-dark: #d97706;
+
+            --success-color: #10b981;
+            --success-light: #34d399;
+            --success-dark: #059669;
+
+            --danger-color: #ef4444;
+            --danger-light: #f87171;
+            --danger-dark: #dc2626;
+
+            --warning-color: #f59e0b;
+            --warning-light: #fbbf24;
+            --warning-dark: #d97706;
+
+            --info-color: #06b6d4;
+            --info-light: #22d3ee;
+            --info-dark: #0891b2;
+
+            /* Neutral Colors */
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+
+            /* Background Colors */
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8fafc;
+            --bg-tertiary: #f1f5f9;
+            --bg-dark: #0f172a;
+
+            /* Text Colors */
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --text-tertiary: #94a3b8;
+            --text-inverse: #ffffff;
+
+            /* Shadows */
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+
+            /* Border Radius */
+            --radius-sm: 0.375rem;
+            --radius-md: 0.5rem;
+            --radius-lg: 0.75rem;
+            --radius-xl: 1rem;
+            --radius-2xl: 1.5rem;
+
+            /* Transitions */
+            --transition-fast: 150ms ease-in-out;
+            --transition-normal: 300ms ease-in-out;
+            --transition-slow: 500ms ease-in-out;
+
+            /* Typography */
             --font-family: {% if system_settings.font_family %}
                 {% if system_settings.font_family == 'cairo' %}'Cairo'
                 {% elif system_settings.font_family == 'tajawal' %}'Tajawal'
@@ -52,30 +118,82 @@
                 {% elif system_settings.font_family == 'noto-sans-arabic' %}'Noto Sans Arabic'
                 {% else %}'Cairo'
                 {% endif %}
-                {% else %}{{ current_font|default:'Cairo' }}{% endif %}, sans-serif;
+                {% else %}{{ current_font|default:'Cairo' }}{% endif %}, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+            --font-size-xs: 0.75rem;
+            --font-size-sm: 0.875rem;
+            --font-size-base: 1rem;
+            --font-size-lg: 1.125rem;
+            --font-size-xl: 1.25rem;
+            --font-size-2xl: 1.5rem;
+            --font-size-3xl: 1.875rem;
+            --font-size-4xl: 2.25rem;
+
+            /* Spacing */
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --spacing-2xl: 3rem;
+        }
+
+        /* Global Styles */
+        * {
+            box-sizing: border-box;
         }
 
         body {
             font-family: var(--font-family);
-            background-color: #f8f9fa;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            font-size: var(--font-size-base);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overflow-x: hidden;
         }
 
+        /* Enhanced Navbar */
         .navbar {
-            background-color: var(--primary-color);
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            background: var(--primary-gradient);
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-lg);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            transition: var(--transition-normal);
+            position: sticky;
+            top: 0;
+            z-index: 1030;
         }
 
         .navbar-brand {
-            font-weight: bold;
-            color: white !important;
+            font-weight: 700;
+            color: var(--text-inverse) !important;
+            font-size: var(--font-size-xl);
+            transition: var(--transition-fast);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+
+        .navbar-brand:hover {
+            transform: translateY(-1px);
+            color: var(--accent-light) !important;
         }
 
         .navbar-light .navbar-nav .nav-link {
-            color: rgba(255, 255, 255, 0.85);
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+            transition: var(--transition-fast);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-sm) var(--spacing-md);
+            margin: 0 var(--spacing-xs);
         }
 
         .navbar-light .navbar-nav .nav-link:hover {
-            color: white;
+            color: var(--text-inverse);
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-1px);
         }
 
         .with-sidebar {
@@ -83,39 +201,99 @@
             padding-right: 0;
         }
 
+        /* Enhanced Page Layout */
         .page-wrapper {
             display: flex;
             flex-direction: column;
             min-height: 100vh;
+            position: relative;
         }
 
         .content-wrapper {
             display: flex;
             flex: 1;
+            position: relative;
         }
 
-        .sidebar {
-            width: 250px;
-            background-color: var(--secondary-color);
-            color: white;
-            padding-top: 20px;
-            transition: all 0.3s;
+        /* Loading Animation */
+        .page-wrapper::before {
+            content: '';
             position: fixed;
-            height: 100%;
-            z-index: 100;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: var(--primary-gradient);
+            transform: translateX(-100%);
+            animation: pageLoad 0.8s ease-out;
+            z-index: 9999;
+        }
+
+        @keyframes pageLoad {
+            0% { transform: translateX(-100%); }
+            50% { transform: translateX(-20%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* Enhanced Sidebar */
+        .sidebar {
+            width: 280px;
+            background: linear-gradient(180deg, var(--secondary-color) 0%, var(--secondary-dark) 100%);
+            color: var(--text-inverse);
+            padding-top: var(--spacing-xl);
+            transition: var(--transition-normal);
+            position: fixed;
+            height: 100vh;
+            z-index: 1020;
             overflow-y: auto;
+            overflow-x: hidden;
+            box-shadow: var(--shadow-xl);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
         }
 
         .sidebar-header {
-            padding: 0 20px 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            margin-bottom: 20px;
+            padding: 0 var(--spacing-xl) var(--spacing-xl);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+            margin-bottom: var(--spacing-xl);
+            position: relative;
+        }
+
+        .sidebar-header::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: var(--spacing-xl);
+            right: var(--spacing-xl);
+            height: 2px;
+            background: var(--primary-gradient);
+            border-radius: 1px;
         }
 
         .sidebar-header h3 {
             margin: 0;
-            font-size: 1.5rem;
-            color: white;
+            font-size: var(--font-size-xl);
+            font-weight: 700;
+            color: var(--text-inverse);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
         }
 
         .sidebar-menu {
@@ -125,189 +303,505 @@
         }
 
         .sidebar-menu-item {
-            margin-bottom: 5px;
+            margin-bottom: var(--spacing-xs);
+            position: relative;
         }
 
         .sidebar-menu-item a {
             display: flex;
             align-items: center;
-            padding: 10px 20px;
-            color: rgba(255, 255, 255, 0.8);
+            padding: var(--spacing-md) var(--spacing-xl);
+            color: rgba(255, 255, 255, 0.85);
             text-decoration: none;
-            transition: all 0.3s;
+            transition: var(--transition-normal);
+            border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+            margin-right: var(--spacing-md);
+            font-weight: 500;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .sidebar-menu-item a::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 100%;
+            background: var(--primary-gradient);
+            transition: var(--transition-normal);
+            z-index: -1;
         }
 
         .sidebar-menu-item a:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-            color: white;
+            color: var(--text-inverse);
+            transform: translateX(-5px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .sidebar-menu-item a:hover::before {
+            width: 100%;
         }
 
         .sidebar-menu-item a i {
-            margin-left: 10px;
-            width: 20px;
-            text-align: center;
+            margin-left: var(--spacing-md);
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: var(--font-size-lg);
+            transition: var(--transition-fast);
+        }
+
+        .sidebar-menu-item a:hover i {
+            transform: scale(1.1);
         }
 
         .sidebar-menu-item.active a {
-            background-color: var(--primary-color);
-            color: white;
-            font-weight: bold;
+            background: var(--primary-gradient);
+            color: var(--text-inverse);
+            font-weight: 600;
+            transform: translateX(-5px);
+            box-shadow: var(--shadow-lg);
         }
 
+        .sidebar-menu-item.active a::before {
+            width: 100%;
+        }
+
+        .sidebar-menu-item.active::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 60%;
+            background: var(--accent-color);
+            border-radius: 2px 0 0 2px;
+        }
+
+        /* Enhanced Main Content */
         .main-content {
             flex: 1;
-            padding: 20px;
-            margin-right: 250px;
-            transition: all 0.3s;
+            padding: var(--spacing-xl);
+            margin-right: 280px;
+            transition: var(--transition-normal);
+            background: var(--bg-secondary);
+            min-height: calc(100vh - 76px);
+            position: relative;
         }
 
+        /* Sidebar Collapsed States */
         .sidebar-collapsed .sidebar {
-            width: 70px;
+            width: 80px;
         }
 
-        .sidebar-collapsed .sidebar-header h3,
+        .sidebar-collapsed .sidebar-header h3 span,
         .sidebar-collapsed .sidebar-menu-item a span {
-            display: none;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateX(20px);
+            transition: var(--transition-fast);
+        }
+
+        .sidebar-collapsed .sidebar-menu-item a {
+            justify-content: center;
+            padding: var(--spacing-md);
+        }
+
+        .sidebar-collapsed .sidebar-menu-item a i {
+            margin-left: 0;
         }
 
         .sidebar-collapsed .main-content {
-            margin-right: 70px;
+            margin-right: 80px;
         }
 
+        /* Enhanced Card Components */
         .card {
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
-            border: none;
+            background: var(--bg-primary);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-md);
+            margin-bottom: var(--spacing-xl);
+            border: 1px solid var(--gray-200);
+            transition: var(--transition-normal);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--primary-gradient);
+            opacity: 0;
+            transition: var(--transition-normal);
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .card:hover::before {
+            opacity: 1;
         }
 
         .card-header {
-            background-color: white;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-            border-radius: 10px 10px 0 0 !important;
-            padding: 15px 20px;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--gray-50) 100%);
+            border-bottom: 1px solid var(--gray-200);
+            border-radius: var(--radius-xl) var(--radius-xl) 0 0 !important;
+            padding: var(--spacing-lg) var(--spacing-xl);
+            position: relative;
+        }
+
+        .card-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: var(--spacing-xl);
+            right: var(--spacing-xl);
+            height: 1px;
+            background: linear-gradient(90deg, transparent 0%, var(--primary-color) 50%, transparent 100%);
         }
 
         .card-title {
             margin-bottom: 0;
-            font-weight: bold;
-            color: var(--secondary-color);
+            font-weight: 700;
+            color: var(--text-primary);
+            font-size: var(--font-size-lg);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
         }
 
         .card-body {
-            padding: 20px;
+            padding: var(--spacing-xl);
+            background: var(--bg-primary);
+        }
+
+        /* Glass Card Variant */
+        .card.glass {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .card.glass .card-header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        /* Enhanced Button Styles */
+        .btn {
+            border-radius: var(--radius-lg);
+            font-weight: 600;
+            padding: var(--spacing-sm) var(--spacing-lg);
+            transition: var(--transition-normal);
+            border: none;
+            position: relative;
+            overflow: hidden;
+            text-transform: none;
+            letter-spacing: 0.025em;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: var(--transition-normal);
+        }
+
+        .btn:hover::before {
+            left: 100%;
         }
 
         .btn-primary {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
+            background: var(--primary-gradient);
+            color: var(--text-inverse);
+            box-shadow: var(--shadow-md);
         }
 
         .btn-primary:hover {
-            background-color: #2980b9;
-            border-color: #2980b9;
+            background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-color) 100%);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            color: var(--text-inverse);
         }
 
         .btn-success {
-            background-color: var(--success-color);
-            border-color: var(--success-color);
+            background: linear-gradient(135deg, var(--success-color) 0%, var(--success-light) 100%);
+            color: var(--text-inverse);
+            box-shadow: var(--shadow-md);
         }
 
         .btn-success:hover {
-            background-color: #27ae60;
-            border-color: #27ae60;
+            background: linear-gradient(135deg, var(--success-dark) 0%, var(--success-color) 100%);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            color: var(--text-inverse);
         }
 
         .btn-danger {
-            background-color: var(--danger-color);
-            border-color: var(--danger-color);
+            background: linear-gradient(135deg, var(--danger-color) 0%, var(--danger-light) 100%);
+            color: var(--text-inverse);
+            box-shadow: var(--shadow-md);
         }
 
         .btn-danger:hover {
-            background-color: #c0392b;
-            border-color: #c0392b;
+            background: linear-gradient(135deg, var(--danger-dark) 0%, var(--danger-color) 100%);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            color: var(--text-inverse);
+        }
+
+        .btn-outline-light {
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: var(--text-inverse);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .btn-outline-light:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+            color: var(--text-inverse);
+            transform: translateY(-2px);
+        }
+
+        /* Enhanced Table Styles */
+        .table {
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
         }
 
         .table th {
-            font-weight: bold;
-            background-color: #f8f9fa;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--gray-50) 0%, var(--gray-100) 100%);
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--primary-color);
+            padding: var(--spacing-md) var(--spacing-lg);
+            font-size: var(--font-size-sm);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
+        .table td {
+            padding: var(--spacing-md) var(--spacing-lg);
+            border-bottom: 1px solid var(--gray-200);
+            vertical-align: middle;
+        }
+
+        .table tbody tr:hover {
+            background: var(--gray-50);
+            transform: scale(1.01);
+            transition: var(--transition-fast);
+        }
+
+        /* Enhanced Stat Cards */
         .stat-card {
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
-            color: white;
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-xl);
+            margin-bottom: var(--spacing-xl);
+            color: var(--text-inverse);
             position: relative;
             overflow: hidden;
-            min-height: 120px;
+            min-height: 140px;
+            transition: var(--transition-normal);
+            cursor: pointer;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+            opacity: 0;
+            transition: var(--transition-normal);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: var(--shadow-2xl);
+        }
+
+        .stat-card:hover::before {
+            opacity: 1;
         }
 
         .stat-card .stat-icon {
             position: absolute;
-            bottom: -15px;
-            left: 10px;
-            font-size: 4rem;
+            bottom: -20px;
+            left: var(--spacing-md);
+            font-size: 5rem;
+            opacity: 0.2;
+            transition: var(--transition-normal);
+        }
+
+        .stat-card:hover .stat-icon {
             opacity: 0.3;
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .stat-card .stat-content {
+            position: relative;
+            z-index: 2;
         }
 
         .stat-card .stat-number {
-            font-size: 2rem;
-            font-weight: bold;
-            margin-bottom: 5px;
+            font-size: var(--font-size-3xl);
+            font-weight: 800;
+            margin-bottom: var(--spacing-sm);
+            line-height: 1;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .stat-card .stat-title {
-            font-size: 1rem;
-            opacity: 0.8;
+            font-size: var(--font-size-base);
+            opacity: 0.9;
+            font-weight: 500;
+            margin-bottom: var(--spacing-xs);
         }
 
+        .stat-card .stat-subtitle {
+            font-size: var(--font-size-sm);
+            opacity: 0.7;
+            font-weight: 400;
+        }
+
+        /* Stat Card Variants */
         .stat-card.primary {
-            background-color: var(--primary-color);
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
         }
 
         .stat-card.success {
-            background-color: var(--success-color);
+            background: linear-gradient(135deg, var(--success-color) 0%, var(--success-light) 100%);
         }
 
         .stat-card.warning {
-            background-color: var(--warning-color);
+            background: linear-gradient(135deg, var(--warning-color) 0%, var(--warning-light) 100%);
         }
 
         .stat-card.danger {
-            background-color: var(--danger-color);
+            background: linear-gradient(135deg, var(--danger-color) 0%, var(--danger-light) 100%);
         }
 
         .stat-card.info {
-            background-color: var(--info-color);
+            background: linear-gradient(135deg, var(--info-color) 0%, var(--info-light) 100%);
         }
 
         .stat-card.secondary {
-            background-color: var(--secondary-color);
+            background: linear-gradient(135deg, var(--secondary-color) 0%, var(--secondary-light) 100%);
         }
 
-        /* Responsive Adjustments */
+        /* Animated Counter Effect */
+        .stat-number {
+            animation: countUp 1s ease-out;
+        }
+
+        @keyframes countUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Enhanced Responsive Design */
+
+        /* Tablet Styles */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 260px;
+            }
+
+            .main-content {
+                margin-right: 260px;
+                padding: var(--spacing-lg);
+            }
+
+            .sidebar-collapsed .sidebar {
+                width: 70px;
+            }
+
+            .sidebar-collapsed .main-content {
+                margin-right: 70px;
+            }
+        }
+
+        /* Mobile Styles */
         @media (max-width: 768px) {
             .sidebar {
                 width: 0;
                 padding: 0;
                 transform: translateX(100%);
-                right: -250px;
+                right: -280px;
                 z-index: 1050;
+                transition: var(--transition-normal);
             }
 
             .main-content {
                 margin-right: 0;
+                padding: var(--spacing-md);
             }
 
             .sidebar.show {
-                width: 250px;
-                padding-top: 20px;
+                width: 280px;
+                padding-top: var(--spacing-xl);
                 transform: translateX(0);
                 right: 0;
             }
 
-            /* Overlay for mobile sidebar */
+            .navbar-brand {
+                font-size: var(--font-size-lg);
+            }
+
+            .card {
+                margin-bottom: var(--spacing-lg);
+                border-radius: var(--radius-lg);
+            }
+
+            .card-header {
+                padding: var(--spacing-md) var(--spacing-lg);
+            }
+
+            .card-body {
+                padding: var(--spacing-lg);
+            }
+
+            .stat-card {
+                min-height: 120px;
+                padding: var(--spacing-lg);
+            }
+
+            .stat-card .stat-number {
+                font-size: var(--font-size-2xl);
+            }
+
+            .btn {
+                padding: var(--spacing-md) var(--spacing-lg);
+                font-size: var(--font-size-sm);
+            }
+
+            /* Enhanced Mobile Sidebar Overlay */
             .sidebar-overlay {
                 display: none;
                 position: fixed;
@@ -315,13 +809,328 @@
                 left: 0;
                 right: 0;
                 bottom: 0;
-                background-color: rgba(0, 0, 0, 0.5);
+                background: rgba(0, 0, 0, 0.6);
+                backdrop-filter: blur(4px);
                 z-index: 1040;
+                transition: var(--transition-normal);
             }
 
             .sidebar-overlay.show {
                 display: block;
+                animation: fadeIn 0.3s ease-out;
             }
+
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+        }
+
+        /* Small Mobile Styles */
+        @media (max-width: 480px) {
+            .main-content {
+                padding: var(--spacing-sm);
+            }
+
+            .navbar-brand span {
+                display: none;
+            }
+
+            .card-header {
+                padding: var(--spacing-sm) var(--spacing-md);
+            }
+
+            .card-body {
+                padding: var(--spacing-md);
+            }
+
+            .stat-card {
+                min-height: 100px;
+                padding: var(--spacing-md);
+            }
+
+            .stat-card .stat-number {
+                font-size: var(--font-size-xl);
+            }
+
+            .stat-card .stat-icon {
+                font-size: 3.5rem;
+                bottom: -15px;
+            }
+
+            .btn {
+                padding: var(--spacing-sm) var(--spacing-md);
+                font-size: var(--font-size-xs);
+            }
+
+            .table th,
+            .table td {
+                padding: var(--spacing-sm);
+                font-size: var(--font-size-sm);
+            }
+        }
+
+        /* High DPI Displays */
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            .card,
+            .stat-card,
+            .btn {
+                -webkit-font-smoothing: antialiased;
+                -moz-osx-font-smoothing: grayscale;
+            }
+        }
+
+        /* Reduced Motion Support */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* Dark Mode Support (Future Enhancement) */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-primary: #1e293b;
+                --bg-secondary: #0f172a;
+                --text-primary: #f1f5f9;
+                --text-secondary: #cbd5e1;
+                --gray-200: #374151;
+                --gray-100: #4b5563;
+                --gray-50: #6b7280;
+            }
+        }
+        /* Modern Utility Classes */
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+        }
+
+        .gradient-text {
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .fade-in {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .slide-in-right {
+            animation: slideInRight 0.5s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        /* Enhanced Page Header */
+        .page-header {
+            background: var(--bg-primary);
+            border-radius: var(--radius-xl);
+            padding: var(--spacing-xl);
+            margin-bottom: var(--spacing-xl);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--gray-200);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-gradient);
+        }
+
+        .page-header h1,
+        .page-header h2,
+        .page-title {
+            color: var(--text-primary);
+            font-weight: 800;
+            font-size: var(--font-size-3xl);
+            margin-bottom: var(--spacing-sm);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            line-height: 1.2;
+        }
+
+        .page-title i {
+            color: var(--primary-color);
+            font-size: var(--font-size-2xl);
+        }
+
+        .breadcrumb {
+            background: transparent;
+            padding: 0;
+            margin: 0;
+            font-size: var(--font-size-sm);
+        }
+
+        .breadcrumb-item {
+            color: var(--text-secondary);
+        }
+
+        .breadcrumb-item + .breadcrumb-item::before {
+            content: "←";
+            color: var(--text-tertiary);
+            margin: 0 var(--spacing-sm);
+        }
+
+        .breadcrumb-item.active {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .breadcrumb-item a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: var(--transition-fast);
+        }
+
+        .breadcrumb-item a:hover {
+            color: var(--primary-color);
+        }
+
+        /* Enhanced Alert Messages */
+        .alert {
+            border-radius: var(--radius-lg);
+            border: none;
+            padding: var(--spacing-lg);
+            margin-bottom: var(--spacing-lg);
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .alert::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 4px;
+            background: currentColor;
+        }
+
+        .alert-success {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(52, 211, 153, 0.05) 100%);
+            color: var(--success-dark);
+            border-left: 4px solid var(--success-color);
+        }
+
+        .alert-danger {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(248, 113, 113, 0.05) 100%);
+            color: var(--danger-dark);
+            border-left: 4px solid var(--danger-color);
+        }
+
+        .alert-warning {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(251, 191, 36, 0.05) 100%);
+            color: var(--warning-dark);
+            border-left: 4px solid var(--warning-color);
+        }
+
+        .alert-info {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.1) 0%, rgba(34, 211, 238, 0.05) 100%);
+            color: var(--info-dark);
+            border-left: 4px solid var(--info-color);
+        }
+
+        /* Loading States */
+        .loading {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        /* Skeleton Loading */
+        .skeleton {
+            background: linear-gradient(90deg, var(--gray-200) 25%, var(--gray-100) 50%, var(--gray-200) 75%);
+            background-size: 200% 100%;
+            animation: skeleton 1.5s infinite;
+            border-radius: var(--radius-md);
+        }
+
+        @keyframes skeleton {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Accessibility Utilities */
+        .sr-only {
+            position: absolute !important;
+            width: 1px !important;
+            height: 1px !important;
+            padding: 0 !important;
+            margin: -1px !important;
+            overflow: hidden !important;
+            clip: rect(0, 0, 0, 0) !important;
+            white-space: nowrap !important;
+            border: 0 !important;
+        }
+
+        /* Focus indicators */
+        *:focus {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        .btn:focus,
+        .sidebar-menu-item a:focus {
+            outline: 2px solid var(--accent-color);
+            outline-offset: 2px;
         }
     </style>
 
@@ -329,147 +1138,225 @@
 </head>
 <body>
     <div class="page-wrapper">
-        <!-- Navbar -->
-        <nav class="navbar navbar-expand-lg navbar-light with-sidebar">
+        <!-- Enhanced Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-light with-sidebar" role="navigation" aria-label="الشريط العلوي الرئيسي">
             <div class="container-fluid">
                 <div class="d-flex align-items-center">
-                    <button id="sidebarToggle" class="btn btn-light me-2">
-                        <i class="fas fa-bars"></i>
+                    <button id="sidebarToggle"
+                            class="btn btn-light me-2"
+                            aria-label="تبديل الشريط الجانبي"
+                            aria-expanded="true"
+                            aria-controls="sidebar">
+                        <i class="fas fa-bars" aria-hidden="true"></i>
                     </button>
-                    <a class="navbar-brand" href="{% url 'Hr:dashboard' %}">
-                        <i class="fas fa-users me-2"></i>
+                    <a class="navbar-brand" href="{% url 'Hr:dashboard' %}" aria-label="الصفحة الرئيسية لنظام الموارد البشرية">
+                        <i class="fas fa-users" aria-hidden="true"></i>
                         <span>نظام الموارد البشرية</span>
                     </a>
                 </div>
                 <div class="d-flex align-items-center">
-                    <div class="user-info me-3 d-flex align-items-center">
-                        <i class="fas fa-user-circle text-light me-2 fs-5"></i>
+                    <div class="user-info me-3 d-flex align-items-center" role="status" aria-label="معلومات المستخدم">
+                        <i class="fas fa-user-circle text-light me-2 fs-5" aria-hidden="true"></i>
                         <span class="text-light fw-bold">{{ request.user.username }}</span>
                     </div>
-                    <a href="{% url 'accounts:logout' %}" class="btn btn-outline-light btn-sm">
-                        <i class="fas fa-sign-out-alt me-1"></i> تسجيل الخروج
+                    <a href="{% url 'accounts:logout' %}"
+                       class="btn btn-outline-light btn-sm"
+                       aria-label="تسجيل الخروج من النظام">
+                        <i class="fas fa-sign-out-alt me-1" aria-hidden="true"></i>
+                        <span>تسجيل الخروج</span>
                     </a>
                 </div>
             </div>
         </nav>
 
         <div class="content-wrapper">
-            <!-- Sidebar -->
-            <aside class="sidebar">
+            <!-- Enhanced Sidebar -->
+            <aside id="sidebar" class="sidebar" role="navigation" aria-label="القائمة الجانبية الرئيسية">
                 <div class="sidebar-header">
-                    <h3><i class="fas fa-users me-2"></i> الموارد البشرية</h3>
+                    <h3>
+                        <i class="fas fa-users" aria-hidden="true"></i>
+                        <span>الموارد البشرية</span>
+                    </h3>
                 </div>
-                <ul class="sidebar-menu">
-                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-                        <a href="{% url 'Hr:dashboard' %}">
-                            <i class="fas fa-tachometer-alt"></i>
-                            <span>لوحة التحكم</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'list' and 'employees' in request.path %}active{% endif %}">
-                        <a href="{% url 'Hr:employees:list' %}">
-                            <i class="fas fa-users"></i>
-                            <span>قائمة الموظفين</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'create' and 'employees' in request.path %}active{% endif %}">
-                        <a href="{% url 'Hr:employees:create' %}">
-                            <i class="fas fa-user-plus"></i>
-                            <span>إضافة موظف جديد</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'employee_search' %}active{% endif %}">
-                        <a href="{% url 'Hr:employees:employee_search' %}">
-                            <i class="fas fa-search"></i>
-                            <span>البحث عن موظف</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'list' and 'departments' in request.path %}active{% endif %}">
-                        <a href="{% url 'Hr:departments:list' %}">
-                            <i class="fas fa-building"></i>
-                            <span>الأقسام</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'list' and 'jobs' in request.path %}active{% endif %}">
-                        <a href="{% url 'Hr:jobs:list' %}">
-                            <i class="fas fa-briefcase"></i>
-                            <span>الوظائف</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'salary_item_list' %}active{% endif %}">
-                        <a href="{% url 'Hr:salary_item_list' %}">
-                            <i class="fas fa-money-bill-wave"></i>
-                            <span>الرواتب</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-menu-item {% if 'attendance/dashboard' in request.path %}active{% endif %}">
-                        <a href="{% url 'attendance:dashboard' %}">
-                            <i class="fas fa-clock"></i>
-                            <span>نظام الحضور والانصراف</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'record_list' %}active{% endif %}">
-                        <a href="{% url 'attendance:record_list' %}">
-                            <i class="fas fa-clipboard-check"></i>
-                            <span>سجل الحضور والانصراف</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'mark_attendance' %}active{% endif %}">
-                        <a href="{% url 'attendance:mark_attendance' %}">
-                            <i class="fas fa-fingerprint"></i>
-                            <span>تسجيل الحضور</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'list' and 'alerts' in request.path %}active{% endif %}">
-                        <a href="{% url 'Hr:alerts:list' %}">
-                            <i class="fas fa-bell"></i>
-                            <span>التنبيهات</span>
-                        </a>
-                    </li>
-                    <li class="sidebar-menu-item">
-                        <a href="{% url 'accounts:home' %}">
-                            <i class="fas fa-home"></i>
-                            <span>الصفحة الرئيسية</span>
-                        </a>
-                    </li>
-                </ul>
+                <nav class="sidebar-nav" role="navigation" aria-label="قائمة التنقل الرئيسية">
+                    <ul class="sidebar-menu" role="menubar">
+                        <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" role="none">
+                            <a href="{% url 'Hr:dashboard' %}"
+                               role="menuitem"
+                               aria-label="لوحة التحكم"
+                               {% if request.resolver_match.url_name == 'dashboard' %}aria-current="page"{% endif %}>
+                                <i class="fas fa-tachometer-alt" aria-hidden="true"></i>
+                                <span>لوحة التحكم</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'list' and 'employees' in request.path %}active{% endif %}" role="none">
+                            <a href="{% url 'Hr:employees:list' %}"
+                               role="menuitem"
+                               aria-label="قائمة الموظفين"
+                               {% if request.resolver_match.url_name == 'list' and 'employees' in request.path %}aria-current="page"{% endif %}>
+                                <i class="fas fa-users" aria-hidden="true"></i>
+                                <span>قائمة الموظفين</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'create' and 'employees' in request.path %}active{% endif %}" role="none">
+                            <a href="{% url 'Hr:employees:create' %}"
+                               role="menuitem"
+                               aria-label="إضافة موظف جديد"
+                               {% if request.resolver_match.url_name == 'create' and 'employees' in request.path %}aria-current="page"{% endif %}>
+                                <i class="fas fa-user-plus" aria-hidden="true"></i>
+                                <span>إضافة موظف جديد</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'employee_search' %}active{% endif %}" role="none">
+                            <a href="{% url 'Hr:employees:employee_search' %}"
+                               role="menuitem"
+                               aria-label="البحث عن موظف"
+                               {% if request.resolver_match.url_name == 'employee_search' %}aria-current="page"{% endif %}>
+                                <i class="fas fa-search" aria-hidden="true"></i>
+                                <span>البحث عن موظف</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'list' and 'departments' in request.path %}active{% endif %}" role="none">
+                            <a href="{% url 'Hr:departments:list' %}"
+                               role="menuitem"
+                               aria-label="الأقسام"
+                               {% if request.resolver_match.url_name == 'list' and 'departments' in request.path %}aria-current="page"{% endif %}>
+                                <i class="fas fa-building" aria-hidden="true"></i>
+                                <span>الأقسام</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'list' and 'jobs' in request.path %}active{% endif %}" role="none">
+                            <a href="{% url 'Hr:jobs:list' %}"
+                               role="menuitem"
+                               aria-label="الوظائف"
+                               {% if request.resolver_match.url_name == 'list' and 'jobs' in request.path %}aria-current="page"{% endif %}>
+                                <i class="fas fa-briefcase" aria-hidden="true"></i>
+                                <span>الوظائف</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'salary_item_list' %}active{% endif %}" role="none">
+                            <a href="{% url 'Hr:salary_item_list' %}"
+                               role="menuitem"
+                               aria-label="الرواتب"
+                               {% if request.resolver_match.url_name == 'salary_item_list' %}aria-current="page"{% endif %}>
+                                <i class="fas fa-money-bill-wave" aria-hidden="true"></i>
+                                <span>الرواتب</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item {% if 'attendance/dashboard' in request.path %}active{% endif %}" role="none">
+                            <a href="{% url 'attendance:dashboard' %}"
+                               role="menuitem"
+                               aria-label="نظام الحضور والانصراف"
+                               {% if 'attendance/dashboard' in request.path %}aria-current="page"{% endif %}>
+                                <i class="fas fa-clock" aria-hidden="true"></i>
+                                <span>نظام الحضور والانصراف</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'record_list' %}active{% endif %}" role="none">
+                            <a href="{% url 'attendance:record_list' %}"
+                               role="menuitem"
+                               aria-label="سجل الحضور والانصراف"
+                               {% if request.resolver_match.url_name == 'record_list' %}aria-current="page"{% endif %}>
+                                <i class="fas fa-clipboard-check" aria-hidden="true"></i>
+                                <span>سجل الحضور والانصراف</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'mark_attendance' %}active{% endif %}" role="none">
+                            <a href="{% url 'attendance:mark_attendance' %}"
+                               role="menuitem"
+                               aria-label="تسجيل الحضور"
+                               {% if request.resolver_match.url_name == 'mark_attendance' %}aria-current="page"{% endif %}>
+                                <i class="fas fa-fingerprint" aria-hidden="true"></i>
+                                <span>تسجيل الحضور</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item {% if request.resolver_match.url_name == 'list' and 'alerts' in request.path %}active{% endif %}" role="none">
+                            <a href="{% url 'Hr:alerts:list' %}"
+                               role="menuitem"
+                               aria-label="التنبيهات"
+                               {% if request.resolver_match.url_name == 'list' and 'alerts' in request.path %}aria-current="page"{% endif %}>
+                                <i class="fas fa-bell" aria-hidden="true"></i>
+                                <span>التنبيهات</span>
+                            </a>
+                        </li>
+                        <li class="sidebar-menu-item" role="none">
+                            <a href="{% url 'accounts:home' %}"
+                               role="menuitem"
+                               aria-label="الصفحة الرئيسية">
+                                <i class="fas fa-home" aria-hidden="true"></i>
+                                <span>الصفحة الرئيسية</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
             </aside>
 
-            <!-- Main Content -->
-            <div class="main-content">
+            <!-- Enhanced Main Content -->
+            <main class="main-content fade-in" role="main" aria-label="المحتوى الرئيسي">
+                <!-- Enhanced Messages -->
                 {% if messages %}
-                    <div class="messages">
+                    <div class="messages" role="status" aria-live="polite">
                         {% for message in messages %}
-                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                                {{ message }}
-                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show slide-in-right"
+                                 role="alert"
+                                 aria-label="رسالة {{ message.tags }}">
+                                <div class="d-flex align-items-center">
+                                    {% if message.tags == 'success' %}
+                                        <i class="fas fa-check-circle me-2" aria-hidden="true"></i>
+                                    {% elif message.tags == 'error' or message.tags == 'danger' %}
+                                        <i class="fas fa-exclamation-triangle me-2" aria-hidden="true"></i>
+                                    {% elif message.tags == 'warning' %}
+                                        <i class="fas fa-exclamation-circle me-2" aria-hidden="true"></i>
+                                    {% elif message.tags == 'info' %}
+                                        <i class="fas fa-info-circle me-2" aria-hidden="true"></i>
+                                    {% endif %}
+                                    <span>{{ message }}</span>
+                                </div>
+                                <button type="button"
+                                        class="btn-close"
+                                        data-bs-dismiss="alert"
+                                        aria-label="إغلاق الرسالة"></button>
                             </div>
                         {% endfor %}
                     </div>
                 {% endif %}
 
-                <!-- Page Header -->
-                <div class="page-header mb-4">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h2 class="mb-1">{% block page_title %}الموارد البشرية{% endblock %}</h2>
-                            <nav aria-label="breadcrumb">
-                                <ol class="breadcrumb mb-0">
+                <!-- Enhanced Page Header -->
+                <header class="page-header fade-in" role="banner">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                        <div class="page-title-section">
+                            <h1 class="page-title">
+                                {% block page_icon %}
+                                    <i class="fas fa-users" aria-hidden="true"></i>
+                                {% endblock %}
+                                {% block page_title %}الموارد البشرية{% endblock %}
+                            </h1>
+                            <nav aria-label="مسار التنقل" class="breadcrumb-nav">
+                                <ol class="breadcrumb">
                                     {% block breadcrumb %}
-                                    <li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
-                                    <li class="breadcrumb-item active">الموارد البشرية</li>
+                                    <li class="breadcrumb-item">
+                                        <a href="{% url 'accounts:home' %}" aria-label="الصفحة الرئيسية">
+                                            <i class="fas fa-home me-1" aria-hidden="true"></i>
+                                            الرئيسية
+                                        </a>
+                                    </li>
+                                    <li class="breadcrumb-item active" aria-current="page">الموارد البشرية</li>
                                     {% endblock %}
                                 </ol>
                             </nav>
+                            {% block page_description %}{% endblock %}
                         </div>
-                        <div class="page-actions">
+                        <div class="page-actions slide-in-right">
                             {% block page_actions %}{% endblock %}
                         </div>
                     </div>
-                </div>
+                </header>
 
-                {% block content %}{% endblock %}
-            </div>
+                <!-- Content Area -->
+                <section class="content-area" role="region" aria-label="محتوى الصفحة">
+                    {% block content %}{% endblock %}
+                </section>
+            </main>
         </div>
     </div>
 
@@ -479,53 +1366,230 @@
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-    <!-- Custom JavaScript -->
+    <!-- Enhanced Custom JavaScript -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Sidebar Toggle
+            // Enhanced Sidebar Toggle with Accessibility
             const sidebarToggle = document.getElementById('sidebarToggle');
             const pageWrapper = document.querySelector('.page-wrapper');
             const sidebar = document.querySelector('.sidebar');
+            let sidebarCollapsed = false;
 
             // Create overlay element for mobile
             const overlay = document.createElement('div');
             overlay.className = 'sidebar-overlay';
+            overlay.setAttribute('aria-hidden', 'true');
             document.body.appendChild(overlay);
 
+            // Enhanced sidebar toggle functionality
             if (sidebarToggle) {
                 sidebarToggle.addEventListener('click', function() {
-                    pageWrapper.classList.toggle('sidebar-collapsed');
+                    sidebarCollapsed = !sidebarCollapsed;
 
-                    // For mobile devices
-                    if (window.innerWidth <= 768) {
+                    // Update ARIA attributes
+                    sidebarToggle.setAttribute('aria-expanded', !sidebarCollapsed);
+
+                    // For desktop
+                    if (window.innerWidth > 768) {
+                        pageWrapper.classList.toggle('sidebar-collapsed');
+
+                        // Announce to screen readers
+                        const announcement = sidebarCollapsed ? 'تم طي الشريط الجانبي' : 'تم توسيع الشريط الجانبي';
+                        announceToScreenReader(announcement);
+                    } else {
+                        // For mobile devices
                         sidebar.classList.toggle('show');
                         overlay.classList.toggle('show');
+
+                        // Manage focus and body scroll
+                        if (sidebar.classList.contains('show')) {
+                            document.body.style.overflow = 'hidden';
+                            sidebar.setAttribute('aria-hidden', 'false');
+                            overlay.setAttribute('aria-hidden', 'false');
+
+                            // Focus first menu item
+                            const firstMenuItem = sidebar.querySelector('.sidebar-menu-item a');
+                            if (firstMenuItem) {
+                                firstMenuItem.focus();
+                            }
+                        } else {
+                            document.body.style.overflow = '';
+                            sidebar.setAttribute('aria-hidden', 'true');
+                            overlay.setAttribute('aria-hidden', 'true');
+                            sidebarToggle.focus();
+                        }
                     }
                 });
             }
 
             // Close sidebar when clicking on overlay
             overlay.addEventListener('click', function() {
+                closeMobileSidebar();
+            });
+
+            // Close sidebar with Escape key
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && sidebar.classList.contains('show')) {
+                    closeMobileSidebar();
+                }
+            });
+
+            // Function to close mobile sidebar
+            function closeMobileSidebar() {
                 sidebar.classList.remove('show');
                 overlay.classList.remove('show');
-                pageWrapper.classList.remove('sidebar-collapsed');
-            });
+                document.body.style.overflow = '';
+                sidebar.setAttribute('aria-hidden', 'true');
+                overlay.setAttribute('aria-hidden', 'true');
+                sidebarToggle.focus();
+                sidebarCollapsed = false;
+                sidebarToggle.setAttribute('aria-expanded', 'true');
+            }
 
             // Handle window resize
             window.addEventListener('resize', function() {
                 if (window.innerWidth > 768) {
                     overlay.classList.remove('show');
+                    sidebar.classList.remove('show');
+                    document.body.style.overflow = '';
+                    sidebar.setAttribute('aria-hidden', 'false');
+                    overlay.setAttribute('aria-hidden', 'true');
                 }
             });
 
-            // Auto-dismiss alerts after 5 seconds
-            setTimeout(function() {
-                const alerts = document.querySelectorAll('.alert');
-                alerts.forEach(function(alert) {
-                    const bsAlert = new bootstrap.Alert(alert);
-                    bsAlert.close();
+            // Enhanced alert handling with accessibility
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert, index) {
+                // Add role and aria-live for better accessibility
+                alert.setAttribute('role', 'alert');
+                alert.setAttribute('aria-live', 'assertive');
+
+                // Auto-dismiss after 7 seconds with fade out
+                setTimeout(function() {
+                    if (alert && alert.parentNode) {
+                        alert.style.transition = 'opacity 0.5s ease-out';
+                        alert.style.opacity = '0';
+
+                        setTimeout(function() {
+                            if (alert && alert.parentNode) {
+                                const bsAlert = new bootstrap.Alert(alert);
+                                bsAlert.close();
+                            }
+                        }, 500);
+                    }
+                }, 7000 + (index * 1000)); // Stagger dismissal
+            });
+
+            // Smooth scroll for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
                 });
-            }, 5000);
+            });
+
+            // Enhanced keyboard navigation for sidebar
+            const sidebarLinks = sidebar.querySelectorAll('.sidebar-menu-item a');
+            sidebarLinks.forEach((link, index) => {
+                link.addEventListener('keydown', function(e) {
+                    if (e.key === 'ArrowDown') {
+                        e.preventDefault();
+                        const nextLink = sidebarLinks[index + 1] || sidebarLinks[0];
+                        nextLink.focus();
+                    } else if (e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        const prevLink = sidebarLinks[index - 1] || sidebarLinks[sidebarLinks.length - 1];
+                        prevLink.focus();
+                    }
+                });
+            });
+
+            // Loading state management
+            function showLoading(element) {
+                element.classList.add('loading');
+                element.setAttribute('aria-busy', 'true');
+            }
+
+            function hideLoading(element) {
+                element.classList.remove('loading');
+                element.setAttribute('aria-busy', 'false');
+            }
+
+            // Screen reader announcements
+            function announceToScreenReader(message) {
+                const announcement = document.createElement('div');
+                announcement.setAttribute('aria-live', 'polite');
+                announcement.setAttribute('aria-atomic', 'true');
+                announcement.className = 'sr-only';
+                announcement.textContent = message;
+                document.body.appendChild(announcement);
+
+                setTimeout(() => {
+                    document.body.removeChild(announcement);
+                }, 1000);
+            }
+
+            // Add loading states to forms
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                form.addEventListener('submit', function() {
+                    const submitBtn = form.querySelector('button[type="submit"], input[type="submit"]');
+                    if (submitBtn) {
+                        showLoading(submitBtn);
+                        submitBtn.disabled = true;
+                    }
+                });
+            });
+
+            // Enhanced card hover effects
+            const cards = document.querySelectorAll('.card');
+            cards.forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-4px)';
+                });
+
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0)';
+                });
+            });
+
+            // Initialize tooltips if Bootstrap is available
+            if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl);
+                });
+            }
+
+            // Performance optimization: Intersection Observer for animations
+            if ('IntersectionObserver' in window) {
+                const observerOptions = {
+                    threshold: 0.1,
+                    rootMargin: '0px 0px -50px 0px'
+                };
+
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('fade-in');
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                }, observerOptions);
+
+                // Observe elements that should animate in
+                document.querySelectorAll('.card, .stat-card').forEach(el => {
+                    observer.observe(el);
+                });
+            }
+
+            console.log('HR System Enhanced UI loaded successfully');
         });
     </script>
 
