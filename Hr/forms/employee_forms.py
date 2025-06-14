@@ -72,7 +72,7 @@ class EmployeeForm(forms.ModelForm):
         queryset=Job.objects.all(),
         label=_('الوظيفة'),
         widget=forms.Select(attrs={'class': 'form-select'}),
-        to_field_name='jop_name'  # Use job name as the value field
+        required=False
     )
 
     def clean_emp_image(self):
@@ -181,15 +181,24 @@ class EmployeeForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        
-        # Get the selected job
-        job = cleaned_data.get('jop_name')
-        if job:
-            # Update the cleaned data with both job name and code
-            cleaned_data['jop_name'] = job.jop_name
-            cleaned_data['jop_code'] = job.jop_code
-            
         return cleaned_data
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+
+        # Handle job selection properly
+        job = self.cleaned_data.get('jop_name')
+        if job:
+            instance.jop_name = job.jop_name
+            instance.jop_code = job.jop_code
+        else:
+            # Clear job fields if no job selected
+            instance.jop_name = None
+            instance.jop_code = None
+
+        if commit:
+            instance.save()
+        return instance
 
 
 class EmployeeFilterForm(forms.Form):
