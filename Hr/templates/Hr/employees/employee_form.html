@@ -174,12 +174,129 @@ document.addEventListener('DOMContentLoaded', function() {
 <style>
     /* إعدادات التصميم لنموذج الموظف */
     .accordion-button:not(.collapsed) {
-        background-color: rgba(13, 110, 253, 0.1);
-        color: #0d6efd;
+        background-color: rgba(30, 64, 175, 0.1) !important;
+        color: var(--primary-color) !important;
     }
 
     .accordion-button:focus {
-        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        box-shadow: 0 0 0 0.25rem rgba(30, 64, 175, 0.25) !important;
+    }
+
+    /* ===== TEXT VISIBILITY FIXES FOR EMPLOYEE FORM ===== */
+
+    /* Card Header Text */
+    .card-header h5 {
+        color: var(--text-primary) !important;
+    }
+
+    /* Form Labels */
+    .form-label {
+        color: var(--text-primary) !important;
+        font-weight: 600 !important;
+    }
+
+    /* Form Controls */
+    .form-control,
+    .form-select {
+        color: var(--text-primary) !important;
+        background-color: var(--bg-primary) !important;
+        border-color: var(--gray-300) !important;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: var(--primary-color) !important;
+        box-shadow: 0 0 0 0.2rem rgba(30, 64, 175, 0.25) !important;
+        color: var(--text-primary) !important;
+    }
+
+    .form-control::placeholder {
+        color: var(--text-tertiary) !important;
+    }
+
+    /* Help Text */
+    .form-text {
+        color: var(--text-secondary) !important;
+    }
+
+    /* Error Messages */
+    .invalid-feedback {
+        color: var(--danger-color) !important;
+    }
+
+    /* Alert Messages */
+    .alert {
+        color: var(--text-primary) !important;
+    }
+
+    .alert-danger {
+        background-color: rgba(239, 68, 68, 0.1) !important;
+        border-color: rgba(239, 68, 68, 0.2) !important;
+        color: var(--danger-dark) !important;
+    }
+
+    /* Accordion Text */
+    .accordion-button {
+        color: var(--text-primary) !important;
+        background-color: var(--bg-primary) !important;
+    }
+
+    .accordion-button.collapsed {
+        color: var(--text-secondary) !important;
+    }
+
+    .accordion-body {
+        background-color: var(--bg-primary) !important;
+        color: var(--text-primary) !important;
+    }
+
+    .accordion-item {
+        background-color: var(--bg-primary) !important;
+        border-color: var(--gray-200) !important;
+    }
+
+    /* Button Text */
+    .btn {
+        color: var(--text-inverse) !important;
+    }
+
+    .btn-light {
+        color: var(--text-primary) !important;
+        background-color: var(--gray-100) !important;
+        border-color: var(--gray-300) !important;
+    }
+
+    .btn-outline-secondary {
+        color: var(--text-secondary) !important;
+        border-color: var(--gray-300) !important;
+    }
+
+    .btn-outline-secondary:hover {
+        background-color: var(--gray-600) !important;
+        color: var(--text-inverse) !important;
+    }
+
+    /* Form Validation States */
+    .was-validated .form-control:valid {
+        border-color: var(--success-color) !important;
+    }
+
+    .was-validated .form-control:invalid {
+        border-color: var(--danger-color) !important;
+    }
+
+    .valid-feedback {
+        color: var(--success-color) !important;
+    }
+
+    /* Ensure all text is visible */
+    .card-body * {
+        color: inherit;
+    }
+
+    /* Comments in template */
+    .card-body .row .col-md-4 {
+        color: var(--text-primary) !important;
     }
 </style>
 {% endblock %}

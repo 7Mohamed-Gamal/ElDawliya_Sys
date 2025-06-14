@@ -14,16 +14,97 @@
 <style>
     /* Dashboard specific styles (these override or augment the base styles) */
     .bg-gradient-warning-subtle {
-        background: linear-gradient(45deg, #a48a35, #11110b);
+        background: linear-gradient(45deg, #f59e0b, #fbbf24);
+        color: var(--text-inverse) !important;
     }
-    
+
     .quick-access-toolbar .card {
-        background: linear-gradient(to right, #0775e4, #ffffff);
+        background: var(--bg-primary);
+        border: 1px solid var(--gray-200);
     }
-    
+
+    .quick-access-toolbar .card .card-body {
+        color: var(--text-primary) !important;
+    }
+
     .quick-search .input-group {
-        border-radius: 50px;
+        border-radius: var(--radius-2xl);
         overflow: hidden;
+    }
+
+    .quick-search .form-control {
+        border: 1px solid var(--gray-300);
+        color: var(--text-primary) !important;
+    }
+
+    .quick-search .form-control::placeholder {
+        color: var(--text-tertiary) !important;
+    }
+
+    /* Enhanced stats cards for dashboard */
+    .stats-card.highlight-card {
+        transition: var(--transition-normal);
+        border: 1px solid var(--gray-200);
+    }
+
+    .stats-card.highlight-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-xl);
+    }
+
+    .stats-card .stats-number {
+        color: var(--text-primary) !important;
+    }
+
+    .stats-card .stats-title {
+        color: var(--text-secondary) !important;
+    }
+
+    /* Action cards styling */
+    .action-card {
+        border: 1px solid var(--gray-200);
+        transition: var(--transition-normal);
+    }
+
+    .action-card:hover {
+        border-color: var(--primary-color);
+        box-shadow: var(--shadow-md);
+    }
+
+    .action-card .text-dark {
+        color: var(--text-primary) !important;
+    }
+
+    .action-card .text-muted {
+        color: var(--text-secondary) !important;
+    }
+
+    /* Timeline styling */
+    .timeline-item h6 {
+        color: var(--text-primary) !important;
+    }
+
+    .timeline-item .text-muted {
+        color: var(--text-secondary) !important;
+    }
+
+    /* Gradient cards text fixes */
+    .bg-gradient-primary,
+    .bg-gradient-success,
+    .bg-gradient-warning,
+    .bg-gradient-info {
+        color: var(--text-inverse) !important;
+    }
+
+    .bg-gradient-primary h4,
+    .bg-gradient-primary p,
+    .bg-gradient-success h4,
+    .bg-gradient-success p,
+    .bg-gradient-warning h4,
+    .bg-gradient-warning p,
+    .bg-gradient-info h4,
+    .bg-gradient-info p {
+        color: var(--text-inverse) !important;
     }
 </style>
 {% endblock %}
