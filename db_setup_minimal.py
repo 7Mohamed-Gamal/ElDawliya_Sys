@@ -268,6 +268,6 @@ def application(environ, start_response):
     return [html.encode('utf-8')]
 
 if __name__ == '__main__':
-    print("Starting database setup server on http://localhost:8000")
-    httpd = make_server('', 8000, application)
+    print("Starting database setup server on http://localhost:8080")
+    httpd = make_server('', 8080, application)
     httpd.serve_forever()

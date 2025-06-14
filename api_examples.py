@@ -15,7 +15,7 @@ import json
 from typing import Dict, Any, Optional
 
 # Configuration
-API_BASE_URL = os.getenv('API_BASE_URL', 'http://localhost:8000/api/v1/')
+API_BASE_URL = os.getenv('API_BASE_URL', 'http://localhost:8080/api/v1/')
 API_KEY = os.getenv('API_KEY', 'your-api-key-here')
 
 class ElDawliyaAPI:

@@ -475,5 +475,5 @@ def application(environ, start_response):
 
 if __name__ == '__main__':
     print("Starting database setup server on http://localhost:8000")
-    httpd = make_server('', 8000, application)
+    httpd = make_server('', 8080, application)
     httpd.serve_forever()

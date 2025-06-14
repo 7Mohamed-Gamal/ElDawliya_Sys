@@ -56,7 +56,7 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
-7. افتح المتصفح وانتقل إلى `http://127.0.0.1:8000`
+7. افتح المتصفح وانتقل إلى `http://127.0.0.1:8080`
 
 ## كيفية الاستخدام
 

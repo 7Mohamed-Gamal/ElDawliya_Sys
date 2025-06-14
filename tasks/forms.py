@@ -15,13 +15,22 @@ class TaskStepForm(forms.ModelForm):
 class TaskForm(forms.ModelForm):
     class Meta:
         model = Task
-        fields = ['description', 'assigned_to', 'start_date', 'end_date', 'status']
+        fields = ['title', 'description', 'assigned_to', 'start_date', 'end_date', 'status']
         widgets = {
-            'description': forms.Textarea(attrs={'rows': 3, 'class': 'form-control'}),
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'عنوان المهمة (اختياري)'}),
+            'description': forms.Textarea(attrs={'rows': 3, 'class': 'form-control', 'placeholder': 'وصف تفصيلي للمهمة'}),
             'assigned_to': forms.Select(attrs={'class': 'form-select'}),
             'start_date': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
             'end_date': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
             'status': forms.Select(attrs={'class': 'form-select'})
+        }
+        labels = {
+            'title': 'عنوان المهمة',
+            'description': 'وصف المهمة',
+            'assigned_to': 'المكلف بالمهمة',
+            'start_date': 'تاريخ البدء',
+            'end_date': 'تاريخ الانتهاء',
+            'status': 'حالة المهمة'
         }
     
     def clean(self):

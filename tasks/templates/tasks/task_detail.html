@@ -7,7 +7,13 @@
 
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="{% url 'tasks:list' %}">المهام</a></li>
-<li class="breadcrumb-item active">{{ task.description|truncatechars:30 }}</li>
+<li class="breadcrumb-item active">
+    {% if not is_meeting_task and task.title %}
+        {{ task.title|truncatechars:30 }}
+    {% else %}
+        {{ task.description|truncatechars:30 }}
+    {% endif %}
+</li>
 {% endblock %}
 
 {% block content %}
@@ -45,10 +51,22 @@
             </div>
             <div class="card-body">
                 <div class="task-details">
+                    {% if not is_meeting_task and task.title %}
+                    <div class="task-title mb-4">
+                        <h5 class="mb-3">
+                            <i class="fas fa-heading me-2 text-primary"></i>
+                            عنوان المهمة
+                        </h5>
+                        <div class="p-3 bg-light rounded">
+                            <h6 class="mb-0 text-primary">{{ task.title }}</h6>
+                        </div>
+                    </div>
+                    {% endif %}
+
                     <div class="task-description mb-4">
                         <h5 class="mb-3">
                             <i class="fas fa-align-left me-2 text-primary"></i>
-                            الوصف
+                            {% if not is_meeting_task and task.title %}التفاصيل{% else %}الوصف{% endif %}
                         </h5>
                         <div class="p-3 bg-light rounded">
                             <p class="mb-0">{{ task.description|linebreaks }}</p>
@@ -137,6 +155,32 @@
                             </div>
                         </div>
                         {% endif %}
+                        {% if not is_meeting_task and task.created_at %}
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex">
+                                <div class="feature-icon bg-primary bg-opacity-10 text-primary rounded p-3 me-3">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">تاريخ الإنشاء</h6>
+                                    <p class="mb-0">{{ task.created_at|date:"j F Y, g:i A" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if not is_meeting_task and task.updated_at %}
+                        <div class="col-md-6 mb-3">
+                            <div class="d-flex">
+                                <div class="feature-icon bg-primary bg-opacity-10 text-primary rounded p-3 me-3">
+                                    <i class="fas fa-edit"></i>
+                                </div>
+                                <div>
+                                    <h6 class="fw-bold mb-1">آخر تحديث</h6>
+                                    <p class="mb-0">{{ task.updated_at|date:"j F Y, g:i A" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
 
                     {% if task.meeting %}
@@ -190,7 +234,7 @@
                                 <div class="meeting-attendees">
                                     <h6 class="mb-2">
                                         <i class="fas fa-users text-primary me-2"></i>
-                                        حضور الاجتماع
+                                        حضور الاجتماع ({{ task.meeting.attendees.count }})
                                     </h6>
                                     {% if task.meeting.attendees.all %}
                                     <div class="row">
@@ -204,6 +248,9 @@
                                                 {% if attendee.user == task.assigned_to %}
                                                 <span class="badge bg-info ms-2">مكلف بالمهمة</span>
                                                 {% endif %}
+                                                {% if attendee.user == task.meeting.created_by %}
+                                                <span class="badge bg-success ms-2">منشئ الاجتماع</span>
+                                                {% endif %}
                                             </div>
                                         </div>
                                         {% endfor %}
@@ -211,6 +258,41 @@
                                     {% else %}
                                     <p class="text-muted mb-0">لم يتم تحديد حضور للاجتماع</p>
                                     {% endif %}
+                                </div>
+
+                                <!-- Meeting Tasks Summary -->
+                                <hr class="my-3">
+                                <div class="meeting-tasks-summary">
+                                    <h6 class="mb-2">
+                                        <i class="fas fa-tasks text-primary me-2"></i>
+                                        ملخص مهام الاجتماع
+                                    </h6>
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="text-center p-2 bg-light rounded">
+                                                <div class="h5 mb-1 text-primary">{{ meeting_tasks_stats.total|default:0 }}</div>
+                                                <small class="text-muted">إجمالي المهام</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="text-center p-2 bg-light rounded">
+                                                <div class="h5 mb-1 text-success">{{ meeting_tasks_stats.completed|default:0 }}</div>
+                                                <small class="text-muted">مكتملة</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="text-center p-2 bg-light rounded">
+                                                <div class="h5 mb-1 text-warning">{{ meeting_tasks_stats.in_progress|default:0 }}</div>
+                                                <small class="text-muted">قيد التنفيذ</small>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="text-center p-2 bg-light rounded">
+                                                <div class="h5 mb-1 text-secondary">{{ meeting_tasks_stats.pending|default:0 }}</div>
+                                                <small class="text-muted">قيد الانتظار</small>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                                 {% endif %}
                             </div>
@@ -456,42 +538,66 @@
             </div>
         </div>
 
-        <!-- Task Timer -->
+        <!-- Task Progress -->
         <div class="card mb-4">
             <div class="card-header bg-white py-3">
-                <h5 class="mb-0">مؤقت المهمة</h5>
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    تقدم المهمة
+                </h5>
             </div>
             <div class="card-body">
-                {% if task.status == 'in_progress' %}
-                    <div class="text-center mb-3">
-                        <div class="timer-display d-flex justify-content-center gap-3 my-3">
-                            <div class="timer-item">
-                                <div class="timer-value days">00</div>
-                                <div class="timer-label">يوم</div>
-                            </div>
-                            <div class="timer-item">
-                                <div class="timer-value hours">00</div>
-                                <div class="timer-label">ساعة</div>
-                            </div>
-                            <div class="timer-item">
-                                <div class="timer-value minutes">00</div>
-                                <div class="timer-label">دقيقة</div>
-                            </div>
-                            <div class="timer-item">
-                                <div class="timer-value seconds">00</div>
-                                <div class="timer-label">ثانية</div>
+                {% if steps %}
+                    {% if is_meeting_task and steps_stats %}
+                        <div class="progress mb-3" style="height: 20px;">
+                            <div class="progress-bar bg-success" role="progressbar"
+                                 style="width: {{ steps_stats.progress_percentage }}%"
+                                 aria-valuenow="{{ steps_stats.progress_percentage }}"
+                                 aria-valuemin="0" aria-valuemax="100">
+                                {{ steps_stats.progress_percentage }}%
                             </div>
                         </div>
-                        <div class="task-timer-status text-success mb-3">
-                            <i class="fas fa-circle me-1"></i>
-                            جاري العمل عليها الآن
+                        <div class="text-center">
+                            <span class="badge bg-primary">{{ steps_stats.completed }} من {{ steps_stats.total }} خطوة مكتملة</span>
                         </div>
-                    </div>
+                    {% else %}
+                        <div class="progress mb-3" style="height: 20px;">
+                            <div class="progress-bar bg-primary" role="progressbar"
+                                 style="width: {% if task.status == 'completed' %}100{% elif task.status == 'in_progress' %}50{% else %}10{% endif %}%"
+                                 aria-valuenow="{% if task.status == 'completed' %}100{% elif task.status == 'in_progress' %}50{% else %}10{% endif %}"
+                                 aria-valuemin="0" aria-valuemax="100">
+                                {% if task.status == 'completed' %}100%{% elif task.status == 'in_progress' %}50%{% else %}10%{% endif %}
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <span class="badge bg-info">{{ steps|length }} خطوة مسجلة</span>
+                        </div>
+                    {% endif %}
                 {% else %}
                     <div class="text-center py-4">
-                        <i class="fas fa-clock text-muted fa-2x mb-3"></i>
-                        <p class="mb-0 text-muted">قم بتغيير حالة المهمة إلى "يجرى العمل عليها" لبدء المؤقت</p>
+                        <i class="fas fa-tasks text-muted fa-2x mb-3"></i>
+                        <p class="mb-0 text-muted">لم يتم إضافة خطوات للمهمة بعد</p>
+                        <small class="text-muted">ابدأ بإضافة خطوات لتتبع التقدم</small>
                     </div>
+                {% endif %}
+
+                {% if task.status == 'in_progress' %}
+                <hr class="my-3">
+                <div class="task-timer-status text-center">
+                    <div class="d-flex align-items-center justify-content-center mb-2">
+                        <div class="spinner-grow spinner-grow-sm text-success me-2" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <span class="text-success fw-bold">جاري العمل على المهمة</span>
+                    </div>
+                    <small class="text-muted">
+                        {% if not is_meeting_task and task.created_at %}
+                            بدأت منذ {{ task.created_at|timesince }}
+                        {% elif is_meeting_task %}
+                            بدأت منذ {{ task.created_at|timesince }}
+                        {% endif %}
+                    </small>
+                </div>
                 {% endif %}
             </div>
         </div>

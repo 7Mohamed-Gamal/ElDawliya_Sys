@@ -97,7 +97,7 @@ Example meeting tasks:
 
 ### 1. **View Task List**
 ```
-URL: http://127.0.0.1:8000/tasks/list/
+URL: http://127.0.0.1:8080/tasks/list/
 ```
 - Login with any user that has meeting tasks assigned
 - Verify meeting tasks appear with "مهمة اجتماع" badge

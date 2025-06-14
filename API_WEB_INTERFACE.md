@@ -175,7 +175,7 @@ python manage.py runserver
 start_with_api_interface.bat
 ```
 
-ثم اذهب إلى: http://localhost:8000/
+ثم اذهب إلى: http://localhost:8080/
 
 ---
 

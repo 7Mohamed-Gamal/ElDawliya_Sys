@@ -121,7 +121,12 @@
                             {% endif %}
                         </div>
 
+                        {% if task.task_type == 'regular' and task.original_task.title %}
+                        <h5 class="card-title mb-2">{{ task.original_task.title }}</h5>
+                        <p class="text-muted mb-3">{{ task.description|truncatechars:80 }}</p>
+                        {% else %}
                         <h5 class="card-title mb-3">{{ task.description|truncatechars:100 }}</h5>
+                        {% endif %}
 
                         <div class="d-flex flex-wrap task-meta">
                             <div class="me-4 mb-2">
@@ -141,6 +146,13 @@
                                 <i class="fas fa-tasks text-success me-1"></i>
                                 <span class="small text-muted">الخطوات:</span>
                                 <span class="small">{{ task.steps.count }}</span>
+                            </div>
+                            {% endif %}
+                            {% if task.task_type == 'regular' and task.original_task.created_at %}
+                            <div class="mb-2">
+                                <i class="fas fa-calendar-plus text-info me-1"></i>
+                                <span class="small text-muted">تاريخ الإنشاء:</span>
+                                <span class="small">{{ task.original_task.created_at|date:"j F Y g:i A" }}</span>
                             </div>
                             {% endif %}
                             {% if task.task_type == 'meeting' %}
@@ -177,8 +189,12 @@
                                     عرض التفاصيل
                                 </a>
                                 {% else %}
-                                <a href="{% url 'meetings:detail' task.meeting.id %}" class="btn btn-primary btn-sm">
+                                <a href="{% url 'tasks:detail' task.id %}" class="btn btn-primary btn-sm">
                                     <i class="fas fa-eye me-1"></i>
+                                    عرض تفاصيل المهمة
+                                </a>
+                                <a href="{% url 'meetings:detail' task.meeting.id %}" class="btn btn-outline-info btn-sm">
+                                    <i class="fas fa-users me-1"></i>
                                     عرض الاجتماع
                                 </a>
                                 {% endif %}

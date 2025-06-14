@@ -45,9 +45,9 @@ python manage.py runserver
 ## 🌐 الوصول للنظام
 
 ### الصفحات الجديدة:
-- **إعدادات AI**: http://localhost:8000/api/v1/ai/settings/
-- **إضافة مقدم**: http://localhost:8000/api/v1/ai/add-config/
-- **لوحة تحكم API**: http://localhost:8000/api/v1/dashboard/
+- **إعدادات AI**: http://localhost:8080/api/v1/ai/settings/
+- **إضافة مقدم**: http://localhost:8080/api/v1/ai/add-config/
+- **لوحة تحكم API**: http://localhost:8080/api/v1/dashboard/
 
 ### من الصفحة الرئيسية:
 - قسم جديد: **"إعدادات الذكاء الاصطناعي"**
@@ -127,7 +127,7 @@ python manage.py runserver
 
 ### 1. الوصول لإعدادات AI
 ```
-http://localhost:8000/api/v1/ai/settings/
+http://localhost:8080/api/v1/ai/settings/
 ```
 
 ### 2. إضافة مقدم خدمة جديد

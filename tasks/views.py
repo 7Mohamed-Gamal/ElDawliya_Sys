@@ -136,6 +136,7 @@ def task_list(request):
     for task in regular_tasks:
         unified_tasks.append({
             'id': task.id,
+            'title': task.title,
             'description': task.description,
             'status': task.status,
             'start_date': task.start_date,
@@ -158,6 +159,7 @@ def task_list(request):
 
         unified_tasks.append({
             'id': f"meeting_{mtask.id}",  # Prefix to avoid ID conflicts
+            'title': None,  # Meeting tasks don't have titles
             'description': mtask.description,
             'status': mtask.status,
             'start_date': mtask.created_at,  # Use creation time as start
@@ -260,6 +262,26 @@ def task_detail(request, pk):
         # المهام ذات الصلة من نفس الاجتماع
         related_tasks = MeetingTask.objects.filter(meeting=task.meeting).exclude(id=task.id)[:5]
 
+        # إحصائيات مهام الاجتماع
+        meeting_tasks_stats = {
+            'total': task.meeting.meeting_tasks.count(),
+            'completed': task.meeting.meeting_tasks.filter(status='completed').count(),
+            'in_progress': task.meeting.meeting_tasks.filter(status='in_progress').count(),
+            'pending': task.meeting.meeting_tasks.filter(status='pending').count(),
+        }
+
+        # إحصائيات الخطوات للمهام المرتبطة بالاجتماعات
+        steps_stats = None
+        if steps.exists():
+            completed_steps = steps.filter(completed=True).count() if is_meeting_task else 0
+            total_steps = steps.count()
+            progress_percentage = (completed_steps / total_steps * 100) if total_steps > 0 else 0
+            steps_stats = {
+                'completed': completed_steps,
+                'total': total_steps,
+                'progress_percentage': round(progress_percentage, 1)
+            }
+
     else:
         # للمهام العادية
         if request.method == 'POST':
@@ -279,8 +301,19 @@ def task_detail(request, pk):
         # المهام ذات الصلة
         if task.meeting:
             related_tasks = Task.objects.filter(meeting=task.meeting).exclude(id=task.id)[:5]
-        else:
+        elif task.created_by:
             related_tasks = Task.objects.filter(created_by=task.created_by).exclude(id=task.id)[:5]
+        else:
+            related_tasks = Task.objects.filter(assigned_to=task.assigned_to).exclude(id=task.id)[:5]
+
+        # إحصائيات الخطوات للمهام العادية
+        if steps.exists() and not is_meeting_task:
+            total_steps = steps.count()
+            steps_stats = {
+                'completed': 0,  # Regular tasks don't track step completion
+                'total': total_steps,
+                'progress_percentage': 50 if task.status == 'in_progress' else (100 if task.status == 'completed' else 10)
+            }
 
     context = {
         'task': task,
@@ -289,8 +322,13 @@ def task_detail(request, pk):
         'status_form': status_form,
         'steps': steps,
         'related_tasks': related_tasks,
-        'task_type': 'meeting' if is_meeting_task else 'regular'
+        'task_type': 'meeting' if is_meeting_task else 'regular',
+        'steps_stats': steps_stats
     }
+
+    # Add meeting stats for meeting tasks
+    if is_meeting_task:
+        context['meeting_tasks_stats'] = meeting_tasks_stats
 
     return render(request, 'tasks/task_detail.html', context)
 
