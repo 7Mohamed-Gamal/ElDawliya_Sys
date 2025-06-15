@@ -2,6 +2,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q, Count
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+from django.template.loader import render_to_string
 
 from Hr.models import Department, Job, Employee
 from Hr.forms import EmployeeForm, EmployeeFilterForm, EmployeeSearchForm
@@ -527,3 +530,100 @@ def employee_export(request):
     except Exception as e:
         messages.error(request, f'حدث خطأ أثناء تصدير البيانات: {str(e)}')
         return redirect('Hr:employees:list')
+
+
+@login_required
+@require_http_methods(["GET"])
+def employee_list_ajax(request):
+    """AJAX endpoint for dynamic employee filtering"""
+    try:
+        # Get status parameter
+        status = request.GET.get('status', 'active')
+
+        # Calculate all statistics first (for the entire system)
+        all_employees = Employee.objects.select_related('department')
+        total_employees_system = all_employees.count()
+        active_employees_system = all_employees.filter(working_condition='سارى').count()
+        on_leave_employees_system = all_employees.filter(working_condition='إجازة').count()
+        resigned_employees_system = all_employees.filter(working_condition='استقالة').count()
+
+        # Filter employees based on status
+        if status == 'inactive':
+            employees = all_employees.filter(working_condition='استقالة').order_by('emp_id')
+        else:
+            employees = all_employees.filter(working_condition__in=['سارى']).order_by('emp_id')
+
+        # Apply additional filters if provided
+        filter_form = EmployeeFilterForm(request.GET or None)
+        if filter_form.is_valid():
+            # Apply search filters
+            search_query = filter_form.cleaned_data.get('search')
+            if search_query:
+                employees = employees.filter(
+                    Q(emp_full_name__icontains=search_query) |
+                    Q(emp_first_name__icontains=search_query) |
+                    Q(emp_second_name__icontains=search_query) |
+                    Q(emp_id__icontains=search_query) |
+                    Q(national_id__icontains=search_query)
+                )
+
+            # Apply other filters
+            department = filter_form.cleaned_data.get('department')
+            if department:
+                employees = employees.filter(department=department)
+
+            job = filter_form.cleaned_data.get('job')
+            if job:
+                employees = employees.filter(jop_code=job.jop_code)
+
+            working_condition = filter_form.cleaned_data.get('working_condition')
+            if working_condition:
+                employees = employees.filter(working_condition=working_condition)
+
+            insurance_status = filter_form.cleaned_data.get('insurance_status')
+            if insurance_status:
+                employees = employees.filter(insurance_status=insurance_status)
+
+        # Calculate filtered statistics
+        filtered_count = employees.count()
+
+        # Prepare response data
+        response_data = {
+            'success': True,
+            'status': status,
+            'statistics': {
+                'total_employees': total_employees_system,
+                'active_employees': active_employees_system,
+                'on_leave_employees': on_leave_employees_system,
+                'resigned_employees': resigned_employees_system,
+                'filtered_count': filtered_count,
+                'active_percentage': round((active_employees_system / total_employees_system * 100) if total_employees_system > 0 else 0, 1),
+                'resigned_percentage': round((resigned_employees_system / total_employees_system * 100) if total_employees_system > 0 else 0, 1),
+            },
+            'employees_count': filtered_count,
+        }
+
+        # Render employee list HTML
+        context = {
+            'employees': employees,
+            'status': status,
+            'total_employees': total_employees_system,
+            'active_employees': active_employees_system,
+            'on_leave_employees': on_leave_employees_system,
+            'resigned_employees': resigned_employees_system,
+        }
+
+        # Render both table and card views
+        table_html = render_to_string('Hr/employees/partials/employee_table.html', context, request=request)
+        card_html = render_to_string('Hr/employees/partials/employee_cards.html', context, request=request)
+
+        response_data['table_html'] = table_html
+        response_data['card_html'] = card_html
+
+        return JsonResponse(response_data)
+
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': f'حدث خطأ أثناء تحميل البيانات: {str(e)}'
+        }, status=500)

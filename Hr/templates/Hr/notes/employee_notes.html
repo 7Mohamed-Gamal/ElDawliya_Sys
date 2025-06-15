@@ -1,0 +1,428 @@
+{% extends 'Hr/base_hr.html' %}
+{% load static %}
+{% load image_utils %}
+{% load json_filters %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .employee-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        color: white;
+    }
+    
+    .stats-mini-card {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+        backdrop-filter: blur(10px);
+    }
+    
+    .note-card {
+        border: none;
+        border-radius: 15px;
+        transition: all 0.3s ease;
+        border-left: 4px solid #dee2e6;
+    }
+    
+    .note-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    
+    .note-card.positive {
+        border-left-color: #28a745;
+    }
+    
+    .note-card.negative {
+        border-left-color: #dc3545;
+    }
+    
+    .note-card.general {
+        border-left-color: #17a2b8;
+    }
+    
+    .note-meta {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+    
+    .filter-section {
+        background: #f8f9fa;
+        border-radius: 15px;
+        border: 2px solid #e9ecef;
+    }
+    
+    .employee-avatar {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .priority-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .timeline-item {
+        position: relative;
+        padding-left: 2rem;
+    }
+    
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: 0.5rem;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #dee2e6;
+    }
+    
+    .timeline-item::after {
+        content: '';
+        position: absolute;
+        left: 0.25rem;
+        top: 1rem;
+        width: 0.5rem;
+        height: 0.5rem;
+        background: #007bff;
+        border-radius: 50%;
+    }
+    
+    .timeline-item:last-child::before {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block page_title %}
+<div class="d-flex align-items-center justify-content-between">
+    <div>
+        <h1 class="h3 mb-1 text-gray-800">
+            <i class="fas fa-user-edit text-primary me-2"></i>
+            {{ title }}
+        </h1>
+        <p class="text-muted mb-0">إدارة وعرض ملاحظات الموظف</p>
+    </div>
+    <div>
+        <a href="{% url 'Hr:notes:create' %}?employee_id={{ employee.emp_id }}" class="btn btn-primary me-2">
+            <i class="fas fa-plus me-2"></i>
+            إضافة ملاحظة جديدة
+        </a>
+        <a href="{% url 'Hr:notes:dashboard' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-right me-2"></i>
+            العودة للوحة المعلومات
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Employee Information Header -->
+<div class="employee-header p-4 mb-4">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <div class="d-flex align-items-center">
+                <div class="me-4">
+                    {% if employee.emp_image %}
+                    <img src="{{ employee.emp_image|binary_to_img }}" 
+                         alt="{{ employee.emp_full_name }}"
+                         class="employee-avatar">
+                    {% else %}
+                    <div class="employee-avatar bg-white bg-opacity-20 d-flex align-items-center justify-content-center text-white"
+                         style="font-size: 2.5rem; font-weight: bold;">
+                        {{ employee.emp_first_name|slice:":1"|upper }}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="text-white">
+                    <h2 class="mb-1">{{ employee.emp_full_name|default:employee.emp_first_name }}</h2>
+                    <p class="mb-1 opacity-75">{{ employee.jop_name|default:"غير محدد" }}</p>
+                    <p class="mb-0 opacity-75">
+                        <i class="fas fa-building me-1"></i>
+                        {{ employee.department.dept_name|default:"غير محدد" }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="row g-2">
+                <div class="col-6">
+                    <div class="stats-mini-card p-3 text-center">
+                        <div class="h4 mb-0">{{ employee_stats.total_notes }}</div>
+                        <small class="opacity-75">إجمالي الملاحظات</small>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="stats-mini-card p-3 text-center">
+                        <div class="h4 mb-0">{{ employee_stats.positive_notes }}</div>
+                        <small class="opacity-75">إيجابية</small>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="stats-mini-card p-3 text-center">
+                        <div class="h4 mb-0">{{ employee_stats.negative_notes }}</div>
+                        <small class="opacity-75">سلبية</small>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="stats-mini-card p-3 text-center">
+                        <div class="h4 mb-0">{{ employee_stats.follow_up_notes }}</div>
+                        <small class="opacity-75">تتطلب متابعة</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters Section -->
+<div class="filter-section p-4 mb-4">
+    <h5 class="mb-3">
+        <i class="fas fa-filter me-2"></i>
+        تصفية الملاحظات
+    </h5>
+    
+    <form method="get" class="row g-3">
+        <div class="col-md-3">
+            <div class="form-floating">
+                {{ filter_form.search }}
+                <label for="{{ filter_form.search.id_for_label }}">{{ filter_form.search.label }}</label>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="form-floating">
+                {{ filter_form.note_type }}
+                <label for="{{ filter_form.note_type.id_for_label }}">{{ filter_form.note_type.label }}</label>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="form-floating">
+                {{ filter_form.priority }}
+                <label for="{{ filter_form.priority.id_for_label }}">{{ filter_form.priority.label }}</label>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="form-floating">
+                {{ filter_form.date_from }}
+                <label for="{{ filter_form.date_from.id_for_label }}">{{ filter_form.date_from.label }}</label>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="form-floating">
+                {{ filter_form.date_to }}
+                <label for="{{ filter_form.date_to.id_for_label }}">{{ filter_form.date_to.label }}</label>
+            </div>
+        </div>
+        <div class="col-md-1">
+            <button type="submit" class="btn btn-primary h-100">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+        
+        <!-- Additional Filters -->
+        <div class="col-12">
+            <div class="d-flex gap-3 flex-wrap">
+                <div class="form-check">
+                    {{ filter_form.is_important }}
+                    <label class="form-check-label" for="{{ filter_form.is_important.id_for_label }}">
+                        {{ filter_form.is_important.label }}
+                    </label>
+                </div>
+                <div class="form-check">
+                    {{ filter_form.is_confidential }}
+                    <label class="form-check-label" for="{{ filter_form.is_confidential.id_for_label }}">
+                        {{ filter_form.is_confidential.label }}
+                    </label>
+                </div>
+                <div class="form-check">
+                    {{ filter_form.follow_up_required }}
+                    <label class="form-check-label" for="{{ filter_form.follow_up_required.id_for_label }}">
+                        {{ filter_form.follow_up_required.label }}
+                    </label>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Notes List -->
+<div class="row">
+    {% for note in notes %}
+    <div class="col-lg-6 mb-4">
+        <div class="card note-card {{ note.note_type }} h-100">
+            <div class="card-header d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                    <h6 class="mb-1">
+                        <a href="{% url 'Hr:notes:detail' note.id %}" class="text-decoration-none">
+                            {{ note.title }}
+                        </a>
+                    </h6>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <span class="badge bg-{{ note.get_note_type_display_color }}">
+                            {{ note.get_note_type_display }}
+                        </span>
+                        <span class="badge bg-{{ note.get_priority_display_color }} priority-badge">
+                            {{ note.get_priority_display }}
+                        </span>
+                        {% if note.is_important %}
+                        <span class="badge bg-warning text-dark">مهم</span>
+                        {% endif %}
+                        {% if note.is_confidential %}
+                        <span class="badge bg-dark">سري</span>
+                        {% endif %}
+                        {% if note.follow_up_required %}
+                        <span class="badge bg-info">متابعة</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
+                            data-bs-toggle="dropdown">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <li>
+                            <a class="dropdown-item" href="{% url 'Hr:notes:detail' note.id %}">
+                                <i class="fas fa-eye me-2"></i>عرض التفاصيل
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="{% url 'Hr:notes:edit' note.id %}">
+                                <i class="fas fa-edit me-2"></i>تعديل
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item text-danger" href="{% url 'Hr:notes:delete' note.id %}">
+                                <i class="fas fa-trash me-2"></i>حذف
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body">
+                <p class="card-text">{{ note.content|truncatewords:20 }}</p>
+                
+                {% if note.evaluation_score %}
+                <div class="mb-2">
+                    <small class="text-muted">درجة التقييم:</small>
+                    <span class="badge bg-primary">{{ note.evaluation_score }}/100</span>
+                </div>
+                {% endif %}
+                
+                {% if note.tags %}
+                <div class="mb-2">
+                    {% for tag in note.tags|split:"," %}
+                    <span class="badge bg-light text-dark me-1">#{{ tag|trim }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                {% if note.follow_up_date %}
+                <div class="mb-2">
+                    <small class="text-muted">
+                        <i class="fas fa-calendar me-1"></i>
+                        متابعة في: {{ note.follow_up_date }}
+                    </small>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-transparent note-meta">
+                <div class="d-flex justify-content-between align-items-center">
+                    <small>
+                        <i class="fas fa-user me-1"></i>
+                        {{ note.created_by.get_full_name|default:note.created_by.username }}
+                    </small>
+                    <small>
+                        <i class="fas fa-clock me-1"></i>
+                        {{ note.created_at|timesince }} مضت
+                    </small>
+                </div>
+                {% if note.last_modified_by and note.updated_at != note.created_at %}
+                <small class="text-muted">
+                    <i class="fas fa-edit me-1"></i>
+                    آخر تعديل: {{ note.updated_at|timesince }} مضت
+                </small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="text-center py-5">
+            <i class="fas fa-sticky-note fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">لا توجد ملاحظات</h4>
+            <p class="text-muted">لم يتم العثور على ملاحظات مطابقة للمعايير المحددة</p>
+            <a href="{% url 'Hr:notes:create' %}?employee_id={{ employee.emp_id }}" class="btn btn-primary">
+                <i class="fas fa-plus me-2"></i>
+                إضافة أول ملاحظة
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if notes.has_other_pages %}
+<nav aria-label="تصفح الملاحظات">
+    <ul class="pagination justify-content-center">
+        {% if notes.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ notes.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                <i class="fas fa-chevron-right"></i>
+            </a>
+        </li>
+        {% endif %}
+        
+        {% for num in notes.paginator.page_range %}
+        {% if notes.number == num %}
+        <li class="page-item active">
+            <span class="page-link">{{ num }}</span>
+        </li>
+        {% elif num > notes.number|add:'-3' and num < notes.number|add:'3' %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ num }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">{{ num }}</a>
+        </li>
+        {% endif %}
+        {% endfor %}
+        
+        {% if notes.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ notes.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">
+                <i class="fas fa-chevron-left"></i>
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit form on filter change
+    const filterForm = document.querySelector('form');
+    const selectElements = filterForm.querySelectorAll('select');
+    
+    selectElements.forEach(select => {
+        select.addEventListener('change', function() {
+            filterForm.submit();
+        });
+    });
+    
+    // Date picker auto-submit
+    const dateInputs = filterForm.querySelectorAll('input[type="date"]');
+    dateInputs.forEach(input => {
+        input.addEventListener('change', function() {
+            filterForm.submit();
+        });
+    });
+});
+</script>
+{% endblock %}

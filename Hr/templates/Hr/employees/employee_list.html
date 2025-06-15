@@ -7,21 +7,32 @@
 {% block title %}قائمة الموظفين - نظام الدولية{% endblock %}
 
 {% block page_title %}
-<div class="modern-page-header d-flex align-items-center justify-content-between">
-    <div class="page-title-section">
-        <h1 class="page-title mb-1 fw-bold text-dark">
-            <i class="fas fa-users text-primary me-2"></i>
-            إدارة الموظفين
-        </h1>
-        <p class="page-subtitle text-muted mb-0">عرض وإدارة بيانات الموظفين في النظام</p>
+<div class="modern-page-header">
+    <!-- Centered Header Section -->
+    <div class="row justify-content-center mb-4">
+        <div class="col-lg-8 text-center">
+            <div class="page-title-section">
+                <h1 class="page-title mb-2 fw-bold text-dark">
+                    <i class="fas fa-users text-primary me-2"></i>
+                    إدارة الموظفين
+                </h1>
+                <p class="page-subtitle text-muted mb-0 fs-5">عرض وإدارة بيانات الموظفين في النظام</p>
+            </div>
+        </div>
     </div>
-    <div class="page-actions">
-        {% if perms.Hr.add_employee or user|is_admin %}
-        <a href="{% url 'Hr:employees:create' %}" class="btn btn-primary btn-lg modern-btn">
-            <i class="fas fa-user-plus me-2"></i>
-            إضافة موظف جديد
-        </a>
-        {% endif %}
+
+    <!-- Add Employee Button - Left Side (RTL) -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-start">
+                {% if perms.Hr.add_employee or user|is_admin %}
+                <a href="{% url 'Hr:employees:create' %}" class="btn btn-primary btn-lg modern-btn shadow-sm">
+                    <i class="fas fa-user-plus me-2"></i>
+                    إضافة موظف جديد
+                </a>
+                {% endif %}
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -32,8 +43,16 @@
 {% endblock %}
 
 {% block content %}
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay" style="display: none;">
+    <div class="text-center">
+        <div class="loading-spinner mb-3"></div>
+        <h5 class="text-primary">جاري تحديث البيانات...</h5>
+        <p class="text-muted">يرجى الانتظار</p>
+    </div>
+</div>
 <!-- Enhanced Statistics Cards with Modern Design -->
-<div class="stats-section mb-5">
+<div class="stats-section mb-5" id="statsSection">
     <div class="row g-4">
         <div class="col-xl-3 col-md-6">
             <div class="card stats-card ultra-modern-stats-card bg-gradient-primary border-0 h-100 hover-lift-enhanced">
@@ -44,9 +63,9 @@
                         </div>
                     </div>
                     <div class="stats-content position-relative z-2">
-                        <h3 class="stats-number text-white mb-1 fw-bold counter-animate" data-target="{{ total_employees }}">0</h3>
+                        <h3 class="stats-number text-white mb-1 fw-bold counter-animate" id="totalEmployeesCount" data-target="{{ total_employees }}">{{ total_employees }}</h3>
                         <p class="stats-title text-white text-opacity-90 mb-0 fw-medium">إجمالي الموظفين</p>
-                        <small class="text-white text-opacity-75">في النظام</small>
+                        <small class="text-white text-opacity-75" id="totalEmployeesSubtext">في النظام</small>
                     </div>
                     <div class="stats-decoration position-absolute">
                         <i class="fas fa-users opacity-05"></i>
@@ -70,9 +89,9 @@
                         </div>
                     </div>
                     <div class="stats-content position-relative z-2">
-                        <h3 class="stats-number text-white mb-1 fw-bold counter-animate" data-target="{{ active_employees }}">0</h3>
+                        <h3 class="stats-number text-white mb-1 fw-bold counter-animate" id="activeEmployeesCount" data-target="{{ active_employees }}">{{ active_employees }}</h3>
                         <p class="stats-title text-white text-opacity-90 mb-0 fw-medium">الموظفين النشطين</p>
-                        <small class="text-white text-opacity-75">{% widthratio active_employees total_employees 100 %}% من الإجمالي</small>
+                        <small class="text-white text-opacity-75" id="activeEmployeesPercentage">{% widthratio active_employees total_employees 100 %}% من الإجمالي</small>
                     </div>
                     <div class="stats-decoration position-absolute">
                         <i class="fas fa-user-check opacity-05"></i>
@@ -81,7 +100,7 @@
                 </div>
                 <div class="card-footer bg-transparent border-0 py-2">
                     <div class="progress ultra-modern-progress" style="height: 4px;">
-                        <div class="progress-bar bg-white progress-bar-animated progress-bar-striped" style="width: {% widthratio active_employees total_employees 100 %}%" role="progressbar"></div>
+                        <div class="progress-bar bg-white progress-bar-animated progress-bar-striped" id="activeEmployeesProgress" style="width: {% widthratio active_employees total_employees 100 %}%" role="progressbar"></div>
                     </div>
                 </div>
             </div>
@@ -96,9 +115,9 @@
                         </div>
                     </div>
                     <div class="stats-content position-relative z-2">
-                        <h3 class="stats-number text-white mb-1 fw-bold counter-animate" data-target="{{ on_leave_employees }}">0</h3>
+                        <h3 class="stats-number text-white mb-1 fw-bold counter-animate" id="onLeaveEmployeesCount" data-target="{{ on_leave_employees }}">{{ on_leave_employees }}</h3>
                         <p class="stats-title text-white text-opacity-90 mb-0 fw-medium">في إجازة</p>
-                        <small class="text-white text-opacity-75">موظفين مؤقتاً</small>
+                        <small class="text-white text-opacity-75" id="onLeaveEmployeesSubtext">موظفين مؤقتاً</small>
                     </div>
                     <div class="stats-decoration position-absolute">
                         <i class="fas fa-pause-circle opacity-05"></i>
@@ -107,7 +126,7 @@
                 </div>
                 <div class="card-footer bg-transparent border-0 py-2">
                     <div class="progress ultra-modern-progress" style="height: 4px;">
-                        <div class="progress-bar bg-white progress-bar-animated progress-bar-striped" style="width: {% widthratio on_leave_employees total_employees 100 %}%" role="progressbar"></div>
+                        <div class="progress-bar bg-white progress-bar-animated progress-bar-striped" id="onLeaveEmployeesProgress" style="width: {% widthratio on_leave_employees total_employees 100 %}%" role="progressbar"></div>
                     </div>
                 </div>
             </div>
@@ -122,9 +141,9 @@
                         </div>
                     </div>
                     <div class="stats-content position-relative z-2">
-                        <h3 class="stats-number text-white mb-1 fw-bold counter-animate" data-target="{{ resigned_employees }}">0</h3>
+                        <h3 class="stats-number text-white mb-1 fw-bold counter-animate" id="resignedEmployeesCount" data-target="{{ resigned_employees }}">{{ resigned_employees }}</h3>
                         <p class="stats-title text-white text-opacity-90 mb-0 fw-medium">المستقيلين</p>
-                        <small class="text-white text-opacity-75">موظفين سابقين</small>
+                        <small class="text-white text-opacity-75" id="resignedEmployeesSubtext">موظفين سابقين</small>
                     </div>
                     <div class="stats-decoration position-absolute">
                         <i class="fas fa-user-times opacity-05"></i>
@@ -133,7 +152,7 @@
                 </div>
                 <div class="card-footer bg-transparent border-0 py-2">
                     <div class="progress ultra-modern-progress" style="height: 4px;">
-                        <div class="progress-bar bg-white progress-bar-animated progress-bar-striped" style="width: {% widthratio resigned_employees total_employees 100 %}%" role="progressbar"></div>
+                        <div class="progress-bar bg-white progress-bar-animated progress-bar-striped" id="resignedEmployeesProgress" style="width: {% widthratio resigned_employees total_employees 100 %}%" role="progressbar"></div>
                     </div>
                 </div>
             </div>
@@ -142,7 +161,7 @@
 </div>
 
 <!-- Ultra Modern Status Toggle -->
-<div class="ultra-modern-toggle-container mb-5">
+<div class="ultra-modern-toggle-container mb-5" id="statusToggleContainer">
     <div class="card border-0 shadow-lg ultra-modern-toggle-card">
         <div class="card-body p-4">
             <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
@@ -160,8 +179,8 @@
                     </div>
                     <div class="toggle-content">
                         <h5 id="toggleStatusText" class="mb-1 fw-bold d-flex align-items-center {% if status == 'inactive' %}text-danger{% else %}text-success{% endif %}">
-                            <i class="fas {% if status == 'inactive' %}fa-user-times{% else %}fa-user-check{% endif %} me-2"></i>
-                            {% if status == 'inactive' %}موظفين غير نشطين{% else %}موظفين نشطين{% endif %}
+                            <i id="toggleStatusIcon" class="fas {% if status == 'inactive' %}fa-user-times{% else %}fa-user-check{% endif %} me-2"></i>
+                            <span id="toggleStatusLabel">{% if status == 'inactive' %}موظفين غير نشطين{% else %}موظفين نشطين{% endif %}</span>
                         </h5>
                         <p class="text-muted mb-0 small">انقر للتبديل بين عرض الموظفين النشطين وغير النشطين</p>
                     </div>
@@ -172,14 +191,14 @@
                             <div class="stats-mini-icon bg-success-subtle text-success mb-1">
                                 <i class="fas fa-user-check"></i>
                             </div>
-                            <div class="fw-bold text-success fs-4">{{ active_employees }}</div>
+                            <div class="fw-bold text-success fs-4" id="toggleActiveCount">{{ active_employees }}</div>
                             <small class="text-muted fw-medium">نشط</small>
                         </div>
                         <div class="text-center stats-mini-card inactive-stats">
                             <div class="stats-mini-icon bg-danger-subtle text-danger mb-1">
                                 <i class="fas fa-user-times"></i>
                             </div>
-                            <div class="fw-bold text-danger fs-4">{{ resigned_employees }}</div>
+                            <div class="fw-bold text-danger fs-4" id="toggleInactiveCount">{{ resigned_employees }}</div>
                             <small class="text-muted fw-medium">مستقيل</small>
                         </div>
                     </div>
@@ -488,11 +507,11 @@
                         <div class="header-content">
                             <h5 id="employeeListTitle" class="mb-2 fw-bold text-dark">
                                 {% if status == 'inactive' %}
-                                <i class="fas fa-user-times text-danger me-2"></i>
-                                قائمة الموظفين غير النشطين
+                                <i id="employeeListIcon" class="fas fa-user-times text-danger me-2"></i>
+                                <span id="employeeListTitleText">قائمة الموظفين غير النشطين</span>
                                 {% else %}
-                                <i class="fas fa-users text-success me-2"></i>
-                                قائمة الموظفين النشطين
+                                <i id="employeeListIcon" class="fas fa-users text-success me-2"></i>
+                                <span id="employeeListTitleText">قائمة الموظفين النشطين</span>
                                 {% endif %}
                             </h5>
                             {% if employees %}
@@ -500,7 +519,7 @@
                                 <div class="result-count">
                                     <span class="badge bg-primary-subtle text-primary px-3 py-2">
                                         <i class="fas fa-users me-1"></i>
-                                        <span class="fw-bold">{{ employees|length }}</span> موظف
+                                        <span class="fw-bold" id="employeeListCount">{{ employees|length }}</span> موظف
                                     </span>
                                 </div>
                                 {% if request.GET %}
@@ -568,7 +587,7 @@
                     </div>
                 </div>
             </div>
-            <div class="card-body p-0">
+            <div class="card-body p-0" id="employeeListContainer">
                 {% if employees %}
 
                 <!-- Modern Card View (Hidden by default) -->
@@ -1321,6 +1340,105 @@
     .card .text-muted {
         color: var(--text-secondary) !important;
     }
+
+    /* Dynamic filtering transitions */
+    .stats-section {
+        transition: all 0.3s ease;
+    }
+
+    .stats-card {
+        transition: all 0.3s ease;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
+    }
+
+    .ultra-modern-toggle-card {
+        transition: all 0.3s ease;
+    }
+
+    .employee-list-container {
+        transition: opacity 0.3s ease;
+    }
+
+    .content-loading {
+        opacity: 0.6;
+        pointer-events: none;
+    }
+
+    /* Loading overlay */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+        backdrop-filter: blur(2px);
+    }
+
+    .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #007bff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Enhanced hover effects */
+    .modern-btn {
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .modern-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,123,255,0.3);
+    }
+
+    .modern-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+    }
+
+    .modern-btn:hover::before {
+        left: 100%;
+    }
+
+    /* Counter animation */
+    .counter-animate {
+        transition: all 0.3s ease;
+    }
+
+    /* Status indicator animations */
+    .status-indicator {
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { opacity: 1; }
+        50% { opacity: 0.7; }
+        100% { opacity: 1; }
+    }
 </style>
 {% endblock extra_css %}
 
@@ -1329,6 +1447,7 @@
     // Define Django URLs and CSRF token for use in external JS
     const employeeDetailUrlTemplate = "{% url 'Hr:employees:detail' 0 %}";
     const employeeListUrl = "{% url 'Hr:employees:list' %}";
+    const employeeListAjaxUrl = "{% url 'Hr:employees:list_ajax' %}";
     const newEmployeeUrl = "{% url 'Hr:employees:create' %}";
     const exportUrlTemplate = "{% url 'Hr:employees:export' %}";
     const csrfToken = "{{ csrf_token }}";

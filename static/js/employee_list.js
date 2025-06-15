@@ -368,17 +368,64 @@ document.addEventListener('DOMContentLoaded', function() {
     // ===== وظائف التبديل بين الموظفين النشطين وغير النشطين =====
     function updateToggleTextAndRedirect() {
         const newStatus = toggleCheckbox.checked ? 'active' : 'inactive';
-        urlParams.set('status', newStatus);
-        // Preserve other query parameters
-        const otherParams = ['search', 'emp_code', 'department', 'job', 'working_condition', 'insurance_status', 'phone', 'national_id', 'car', 'insurance_number', 'hire_date_from', 'hire_date_to', 'birth_date_from', 'birth_date_to', 'age_from', 'age_to', 'marital_status', 'governorate', 'shift_type', 'car_pick_up_point'];
-        otherParams.forEach(param => {
-            if (urlParams.has(param) && param !== 'status') {
-                // it's already handled by urlParams.set('status', newStatus)
-            } else if (!urlParams.has(param) && param !== 'status') {
-                 // if param is not in url, do not add it unless it's the status
+
+        // Use AJAX for dynamic filtering instead of page reload
+        updateEmployeeListDynamically(newStatus);
+    }
+
+    // New function for dynamic AJAX filtering
+    function updateEmployeeListDynamically(status) {
+        // Show loading state
+        showLoadingState();
+
+        // Prepare URL parameters
+        const currentParams = new URLSearchParams(window.location.search);
+        currentParams.set('status', status);
+
+        // Make AJAX request
+        fetch(`${employeeListAjaxUrl}?${currentParams.toString()}`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Content-Type': 'application/json',
             }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update statistics cards
+                updateStatisticsCards(data.statistics);
+
+                // Update toggle UI
+                updateToggleUI(status, data.statistics);
+
+                // Update employee list
+                updateEmployeeListContent(data);
+
+                // Update URL without page reload
+                const newUrl = `${window.location.pathname}?${currentParams.toString()}`;
+                window.history.pushState({}, '', newUrl);
+
+                // Re-initialize interactions
+                setTimeout(() => {
+                    addTableInteractions();
+                    addCardInteractions();
+                    initializeDeleteButtons();
+                }, 100);
+
+                // Show success message
+                showToast(`تم تحديث قائمة ${status === 'active' ? 'الموظفين النشطين' : 'الموظفين غير النشطين'} بنجاح`, 'success');
+            } else {
+                showToast('حدث خطأ أثناء تحديث البيانات', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('حدث خطأ في الاتصال بالخادم', 'error');
+        })
+        .finally(() => {
+            hideLoadingState();
         });
-        window.location.href = `${window.location.pathname}?${urlParams.toString()}`;
     }
 
 
@@ -398,6 +445,165 @@ document.addEventListener('DOMContentLoaded', function() {
                 employeeListTitle.textContent = 'قائمة الموظفين غير النشطين';
             }
         }
+    }
+
+    // Function to update statistics cards dynamically
+    function updateStatisticsCards(stats) {
+        // Update total employees
+        const totalEmployeesCount = document.getElementById('totalEmployeesCount');
+        if (totalEmployeesCount) {
+            animateCounterUpdate(totalEmployeesCount, stats.total_employees);
+        }
+
+        // Update active employees
+        const activeEmployeesCount = document.getElementById('activeEmployeesCount');
+        const activeEmployeesPercentage = document.getElementById('activeEmployeesPercentage');
+        const activeEmployeesProgress = document.getElementById('activeEmployeesProgress');
+
+        if (activeEmployeesCount) {
+            animateCounterUpdate(activeEmployeesCount, stats.active_employees);
+        }
+        if (activeEmployeesPercentage) {
+            activeEmployeesPercentage.textContent = `${stats.active_percentage}% من الإجمالي`;
+        }
+        if (activeEmployeesProgress) {
+            activeEmployeesProgress.style.width = `${stats.active_percentage}%`;
+        }
+
+        // Update resigned employees
+        const resignedEmployeesCount = document.getElementById('resignedEmployeesCount');
+        const resignedEmployeesProgress = document.getElementById('resignedEmployeesProgress');
+
+        if (resignedEmployeesCount) {
+            animateCounterUpdate(resignedEmployeesCount, stats.resigned_employees);
+        }
+        if (resignedEmployeesProgress) {
+            resignedEmployeesProgress.style.width = `${stats.resigned_percentage}%`;
+        }
+
+        // Update on leave employees
+        const onLeaveEmployeesCount = document.getElementById('onLeaveEmployeesCount');
+        if (onLeaveEmployeesCount) {
+            animateCounterUpdate(onLeaveEmployeesCount, stats.on_leave_employees);
+        }
+    }
+
+    // Function to update toggle UI
+    function updateToggleUI(status, stats) {
+        const toggleStatusText = document.getElementById('toggleStatusText');
+        const toggleStatusIcon = document.getElementById('toggleStatusIcon');
+        const toggleStatusLabel = document.getElementById('toggleStatusLabel');
+        const toggleActiveCount = document.getElementById('toggleActiveCount');
+        const toggleInactiveCount = document.getElementById('toggleInactiveCount');
+
+        if (status === 'active') {
+            if (toggleStatusText) {
+                toggleStatusText.classList.remove('text-danger');
+                toggleStatusText.classList.add('text-success');
+            }
+            if (toggleStatusIcon) {
+                toggleStatusIcon.className = 'fas fa-user-check me-2';
+            }
+            if (toggleStatusLabel) {
+                toggleStatusLabel.textContent = 'موظفين نشطين';
+            }
+        } else {
+            if (toggleStatusText) {
+                toggleStatusText.classList.remove('text-success');
+                toggleStatusText.classList.add('text-danger');
+            }
+            if (toggleStatusIcon) {
+                toggleStatusIcon.className = 'fas fa-user-times me-2';
+            }
+            if (toggleStatusLabel) {
+                toggleStatusLabel.textContent = 'موظفين غير نشطين';
+            }
+        }
+
+        // Update mini stats
+        if (toggleActiveCount) {
+            animateCounterUpdate(toggleActiveCount, stats.active_employees);
+        }
+        if (toggleInactiveCount) {
+            animateCounterUpdate(toggleInactiveCount, stats.resigned_employees);
+        }
+
+        // Update list title
+        const employeeListIcon = document.getElementById('employeeListIcon');
+        const employeeListTitleText = document.getElementById('employeeListTitleText');
+        const employeeListCount = document.getElementById('employeeListCount');
+
+        if (status === 'active') {
+            if (employeeListIcon) {
+                employeeListIcon.className = 'fas fa-users text-success me-2';
+            }
+            if (employeeListTitleText) {
+                employeeListTitleText.textContent = 'قائمة الموظفين النشطين';
+            }
+        } else {
+            if (employeeListIcon) {
+                employeeListIcon.className = 'fas fa-user-times text-danger me-2';
+            }
+            if (employeeListTitleText) {
+                employeeListTitleText.textContent = 'قائمة الموظفين غير النشطين';
+            }
+        }
+
+        if (employeeListCount) {
+            animateCounterUpdate(employeeListCount, stats.filtered_count);
+        }
+    }
+
+    // Function to update employee list content
+    function updateEmployeeListContent(data) {
+        const employeeListContainer = document.getElementById('employeeListContainer');
+        if (!employeeListContainer) return;
+
+        // Add fade out effect
+        employeeListContainer.style.transition = 'opacity 0.3s ease';
+        employeeListContainer.style.opacity = '0';
+
+        setTimeout(() => {
+            // Update table view
+            const tableView = document.getElementById('tableView');
+            if (tableView && data.table_html) {
+                tableView.outerHTML = data.table_html;
+            }
+
+            // Update card view
+            const cardView = document.getElementById('cardView');
+            if (cardView && data.card_html) {
+                cardView.outerHTML = data.card_html;
+            }
+
+            // Restore view mode
+            const savedView = localStorage.getItem('employeeViewMode') || 'table';
+            if (savedView === 'card') {
+                showCardView();
+            } else {
+                showTableView();
+            }
+
+            // Fade in effect
+            employeeListContainer.style.opacity = '1';
+        }, 300);
+    }
+
+    // Animate counter updates
+    function animateCounterUpdate(element, targetValue) {
+        const currentValue = parseInt(element.textContent) || 0;
+        const increment = (targetValue - currentValue) / 20;
+        let current = currentValue;
+
+        const timer = setInterval(() => {
+            current += increment;
+            if ((increment > 0 && current >= targetValue) || (increment < 0 && current <= targetValue)) {
+                element.textContent = targetValue;
+                clearInterval(timer);
+            } else {
+                element.textContent = Math.floor(current);
+            }
+        }, 50);
     }
 
     if (toggleCheckbox && toggleStatusText) {
@@ -704,9 +910,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Enhanced Loading States
     function showLoadingState() {
-        const loadingIndicator = document.getElementById('loadingIndicator');
-        if (loadingIndicator) {
-            loadingIndicator.style.display = 'block';
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        if (loadingOverlay) {
+            loadingOverlay.style.display = 'flex';
         }
 
         // Add loading class to main content
@@ -714,18 +920,28 @@ document.addEventListener('DOMContentLoaded', function() {
         if (mainContent) {
             mainContent.classList.add('content-loading');
         }
+
+        // Disable toggle during loading
+        if (toggleCheckbox) {
+            toggleCheckbox.disabled = true;
+        }
     }
 
     function hideLoadingState() {
-        const loadingIndicator = document.getElementById('loadingIndicator');
-        if (loadingIndicator) {
-            loadingIndicator.style.display = 'none';
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        if (loadingOverlay) {
+            loadingOverlay.style.display = 'none';
         }
 
         // Remove loading class
         const mainContent = document.querySelector('.card-body');
         if (mainContent) {
             mainContent.classList.remove('content-loading');
+        }
+
+        // Re-enable toggle
+        if (toggleCheckbox) {
+            toggleCheckbox.disabled = false;
         }
     }
 

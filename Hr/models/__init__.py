@@ -13,7 +13,7 @@ from Hr.models.attendance_models import (
 # Importar nuevos modelos (se crearán a continuación)
 from Hr.models.pickup_point_models import PickupPoint
 from Hr.models.task_models import EmployeeTask
-from Hr.models.note_models import EmployeeNote
+from Hr.models.note_models import EmployeeNote, EmployeeNoteHistory
 from Hr.models.file_models import EmployeeFile
 from Hr.models.hr_task_models import HrTask
 from Hr.models.leave_models import LeaveType, EmployeeLeave
@@ -22,7 +22,7 @@ from Hr.models.evaluation_models import EmployeeEvaluation
 # Exportar todos los modelos
 __all__ = [
     'Department', 'Job', 'JobInsurance', 'Car', 'Employee',
-    'PickupPoint', 'EmployeeTask', 'EmployeeNote', 'EmployeeFile',
+    'PickupPoint', 'EmployeeTask', 'EmployeeNote', 'EmployeeNoteHistory', 'EmployeeFile',
     'HrTask', 'LeaveType', 'EmployeeLeave',
     'SalaryItem', 'EmployeeSalaryItem', 'PayrollPeriod', 'PayrollEntry', 'PayrollItemDetail',
     'AttendanceRule', 'EmployeeAttendanceRule', 'OfficialHoliday',

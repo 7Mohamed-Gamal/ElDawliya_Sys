@@ -1,0 +1,404 @@
+{% extends 'Hr/base_hr.html' %}
+{% load static %}
+{% load image_utils %}
+{% load json_filters %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .note-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 15px;
+        color: white;
+    }
+    
+    .note-content-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .employee-info-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border: none;
+        border-radius: 15px;
+    }
+    
+    .history-item {
+        border-left: 3px solid #dee2e6;
+        transition: all 0.3s ease;
+    }
+    
+    .history-item:hover {
+        border-left-color: #007bff;
+        background-color: #f8f9fa;
+    }
+    
+    .badge-large {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+    }
+    
+    .action-buttons {
+        position: sticky;
+        top: 20px;
+        z-index: 100;
+    }
+    
+    .note-meta {
+        background: rgba(0, 123, 255, 0.1);
+        border-radius: 10px;
+        padding: 1rem;
+    }
+    
+    .employee-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+    }
+</style>
+{% endblock %}
+
+{% block page_title %}
+<div class="d-flex align-items-center justify-content-between">
+    <div>
+        <h1 class="h3 mb-1 text-gray-800">
+            <i class="fas fa-sticky-note text-primary me-2"></i>
+            {{ title }}
+        </h1>
+        <p class="text-muted mb-0">عرض تفاصيل الملاحظة وتاريخ التعديلات</p>
+    </div>
+    <div>
+        <a href="{% url 'Hr:notes:employee_notes' note.employee.emp_id %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-right me-2"></i>
+            العودة لملاحظات الموظف
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Note Content -->
+    <div class="col-lg-8 mb-4">
+        <!-- Note Header -->
+        <div class="note-header p-4 mb-4">
+            <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                    <h2 class="mb-2 text-white">{{ note.title }}</h2>
+                    <div class="d-flex gap-2 flex-wrap mb-3">
+                        <span class="badge bg-{{ note.get_note_type_display_color }} badge-large">
+                            <i class="fas fa-tag me-1"></i>
+                            {{ note.get_note_type_display }}
+                        </span>
+                        <span class="badge bg-{{ note.get_priority_display_color }} badge-large">
+                            <i class="fas fa-flag me-1"></i>
+                            {{ note.get_priority_display }}
+                        </span>
+                        {% if note.is_important %}
+                        <span class="badge bg-warning text-dark badge-large">
+                            <i class="fas fa-star me-1"></i>
+                            مهم
+                        </span>
+                        {% endif %}
+                        {% if note.is_confidential %}
+                        <span class="badge bg-dark badge-large">
+                            <i class="fas fa-lock me-1"></i>
+                            سري
+                        </span>
+                        {% endif %}
+                        {% if note.follow_up_required %}
+                        <span class="badge bg-info badge-large">
+                            <i class="fas fa-calendar-check me-1"></i>
+                            متابعة
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Note Meta Information -->
+            <div class="note-meta">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <small class="text-white-50 d-block">تم الإنشاء بواسطة</small>
+                        <span class="text-white">
+                            <i class="fas fa-user me-1"></i>
+                            {{ note.created_by.get_full_name|default:note.created_by.username }}
+                        </span>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-white-50 d-block">تاريخ الإنشاء</small>
+                        <span class="text-white">
+                            <i class="fas fa-clock me-1"></i>
+                            {{ note.created_at|date:"Y/m/d H:i" }}
+                        </span>
+                    </div>
+                    {% if note.last_modified_by and note.updated_at != note.created_at %}
+                    <div class="col-md-6">
+                        <small class="text-white-50 d-block">آخر تعديل بواسطة</small>
+                        <span class="text-white">
+                            <i class="fas fa-edit me-1"></i>
+                            {{ note.last_modified_by.get_full_name|default:note.last_modified_by.username }}
+                        </span>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-white-50 d-block">تاريخ آخر تعديل</small>
+                        <span class="text-white">
+                            <i class="fas fa-clock me-1"></i>
+                            {{ note.updated_at|date:"Y/m/d H:i" }}
+                        </span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Note Content -->
+        <div class="card note-content-card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-file-alt me-2"></i>
+                    محتوى الملاحظة
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="note-content" style="white-space: pre-wrap; line-height: 1.6;">{{ note.content }}</div>
+                
+                {% if note.evaluation_link or note.evaluation_score %}
+                <hr>
+                <h6 class="mb-3">
+                    <i class="fas fa-chart-line me-2"></i>
+                    معلومات التقييم
+                </h6>
+                <div class="row g-3">
+                    {% if note.evaluation_link %}
+                    <div class="col-md-8">
+                        <strong>رابط التقييم:</strong><br>
+                        <a href="{{ note.evaluation_link }}" target="_blank" class="text-primary">
+                            <i class="fas fa-external-link-alt me-1"></i>
+                            عرض التقييم
+                        </a>
+                    </div>
+                    {% endif %}
+                    {% if note.evaluation_score %}
+                    <div class="col-md-4">
+                        <strong>درجة التقييم:</strong><br>
+                        <span class="badge bg-primary fs-6">{{ note.evaluation_score }}/100</span>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                {% if note.tags %}
+                <hr>
+                <h6 class="mb-3">
+                    <i class="fas fa-tags me-2"></i>
+                    العلامات
+                </h6>
+                <div class="d-flex gap-2 flex-wrap">
+                    {% for tag in note.tags|split:"," %}
+                    <span class="badge bg-light text-dark border">#{{ tag|trim }}</span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                {% if note.follow_up_date %}
+                <hr>
+                <div class="alert alert-info">
+                    <i class="fas fa-calendar-check me-2"></i>
+                    <strong>تاريخ المتابعة المطلوبة:</strong> {{ note.follow_up_date }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- History Section -->
+        {% if history %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    تاريخ التعديلات
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for item in history %}
+                <div class="history-item p-3 mb-3 rounded">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <h6 class="mb-1">
+                                <span class="badge bg-{{ item.action|default:'secondary' }}">
+                                    {{ item.get_action_display }}
+                                </span>
+                            </h6>
+                            <p class="text-muted mb-1">
+                                بواسطة: {{ item.changed_by.get_full_name|default:item.changed_by.username }}
+                            </p>
+                            {% if item.notes %}
+                            <p class="mb-0">{{ item.notes }}</p>
+                            {% endif %}
+                        </div>
+                        <small class="text-muted">
+                            {{ item.changed_at|date:"Y/m/d H:i" }}
+                        </small>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Action Buttons -->
+        <div class="action-buttons mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-cogs me-2"></i>
+                        الإجراءات
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'Hr:notes:edit' note.id %}" class="btn btn-primary">
+                            <i class="fas fa-edit me-2"></i>
+                            تعديل الملاحظة
+                        </a>
+                        <a href="{% url 'Hr:notes:create' %}?employee_id={{ note.employee.emp_id }}" class="btn btn-success">
+                            <i class="fas fa-plus me-2"></i>
+                            إضافة ملاحظة جديدة
+                        </a>
+                        <a href="{% url 'Hr:notes:employee_notes' note.employee.emp_id %}" class="btn btn-outline-info">
+                            <i class="fas fa-list me-2"></i>
+                            جميع ملاحظات الموظف
+                        </a>
+                        <hr>
+                        <a href="{% url 'Hr:notes:delete' note.id %}" class="btn btn-outline-danger">
+                            <i class="fas fa-trash me-2"></i>
+                            حذف الملاحظة
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Employee Information -->
+        <div class="card employee-info-card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-user me-2"></i>
+                    معلومات الموظف
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    {% if note.employee.emp_image %}
+                    <img src="{{ note.employee.emp_image|binary_to_img }}" 
+                         alt="{{ note.employee.emp_full_name }}"
+                         class="employee-avatar">
+                    {% else %}
+                    <div class="employee-avatar bg-primary text-white d-flex align-items-center justify-content-center mx-auto"
+                         style="font-size: 2rem; font-weight: bold;">
+                        {{ note.employee.emp_first_name|slice:":1"|upper }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <h5 class="text-center mb-3">
+                    {{ note.employee.emp_full_name|default:note.employee.emp_first_name }}
+                </h5>
+                
+                <div class="employee-details">
+                    <div class="mb-2">
+                        <strong>رقم الموظف:</strong><br>
+                        <span class="text-muted">{{ note.employee.emp_id }}</span>
+                    </div>
+                    <div class="mb-2">
+                        <strong>القسم:</strong><br>
+                        <span class="text-muted">{{ note.employee.department.dept_name|default:"غير محدد" }}</span>
+                    </div>
+                    <div class="mb-2">
+                        <strong>الوظيفة:</strong><br>
+                        <span class="text-muted">{{ note.employee.jop_name|default:"غير محدد" }}</span>
+                    </div>
+                    <div class="mb-2">
+                        <strong>حالة العمل:</strong><br>
+                        <span class="badge bg-{% if note.employee.working_condition == 'سارى' %}success{% else %}warning{% endif %}">
+                            {{ note.employee.working_condition|default:"غير محدد" }}
+                        </span>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="d-grid">
+                    <a href="{% url 'Hr:employees:detail' note.employee.emp_id %}" class="btn btn-outline-primary">
+                        <i class="fas fa-user-circle me-2"></i>
+                        عرض ملف الموظف
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Related Notes -->
+        {% if note.employee.notes.all|length > 1 %}
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-sticky-note me-2"></i>
+                    ملاحظات أخرى للموظف
+                </h6>
+            </div>
+            <div class="card-body">
+                {% for related_note in note.employee.notes.all %}
+                {% if related_note.id != note.id %}
+                <div class="mb-2">
+                    <a href="{% url 'Hr:notes:detail' related_note.id %}" class="text-decoration-none">
+                        <small class="text-muted">{{ related_note.created_at|date:"Y/m/d" }}</small><br>
+                        {{ related_note.title|truncatechars:40 }}
+                    </a>
+                    <span class="badge bg-{{ related_note.get_note_type_display_color }} ms-2">
+                        {{ related_note.get_note_type_display }}
+                    </span>
+                </div>
+                <hr class="my-2">
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Smooth scrolling for internal links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            document.querySelector(this.getAttribute('href')).scrollIntoView({
+                behavior: 'smooth'
+            });
+        });
+    });
+    
+    // Confirm delete action
+    const deleteButton = document.querySelector('a[href*="delete"]');
+    if (deleteButton) {
+        deleteButton.addEventListener('click', function(e) {
+            if (!confirm('هل أنت متأكد من حذف هذه الملاحظة؟')) {
+                e.preventDefault();
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

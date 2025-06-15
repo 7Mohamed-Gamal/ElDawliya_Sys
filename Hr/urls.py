@@ -20,7 +20,8 @@ from .views.insurance_views import (
 from .views.employee_views import (
     dashboard, employee_list, employee_create, employee_detail,
     employee_edit, employee_delete, employee_search, employee_print,
-    employee_detail_view, employee_dashboard_simple, employee_export
+    employee_detail_view, employee_dashboard_simple, employee_export,
+    employee_list_ajax
 )
 from .views.car_views import (
     car_list, car_create, car_detail, car_edit, car_delete
@@ -34,8 +35,9 @@ from .views.task_views import (
     employee_task_edit, employee_task_delete, task_step_toggle, task_step_delete
 )
 from .views.note_views import (
-    employee_note_list, employee_note_create, employee_note_detail,
-    employee_note_edit, employee_note_delete
+    employee_notes_dashboard, employee_notes_create, employee_search_ajax,
+    employee_notes_list, employee_note_detail, employee_note_edit,
+    employee_note_delete, employee_notes_reports
 )
 from .views.file_views import (
     employee_file_list, employee_file_create, employee_file_detail,
@@ -76,6 +78,7 @@ app_name = 'Hr'
 # أنماط عناوين URL للموظفين
 employee_patterns = [
     path('', employee_list, name='list'),
+    path('ajax/', employee_list_ajax, name='list_ajax'),
     path('create/', employee_create, name='create'),
     path('<int:emp_id>/', employee_detail, name='detail'),
     path('<int:emp_id>/edit/', employee_edit, name='edit'),
@@ -152,11 +155,14 @@ task_patterns = [
 
 # أنماط عناوين URL لملاحظات الموظفين
 note_patterns = [
-    path('', employee_note_list, name='list'),
-    path('create/', employee_note_create, name='create'),
-    path('<int:pk>/', employee_note_detail, name='detail'),
-    path('<int:pk>/edit/', employee_note_edit, name='edit'),
-    path('<int:pk>/delete/', employee_note_delete, name='delete'),
+    path('', employee_notes_dashboard, name='dashboard'),
+    path('create/', employee_notes_create, name='create'),
+    path('search/ajax/', employee_search_ajax, name='employee_search_ajax'),
+    path('employee/<str:employee_id>/', employee_notes_list, name='employee_notes'),
+    path('note/<int:note_id>/', employee_note_detail, name='detail'),
+    path('note/<int:note_id>/edit/', employee_note_edit, name='edit'),
+    path('note/<int:note_id>/delete/', employee_note_delete, name='delete'),
+    path('reports/', employee_notes_reports, name='reports'),
 ]
 
 # أنماط عناوين URL لملفات الموظفين
@@ -256,11 +262,12 @@ urlpatterns = [
     path('dashboard_simple/', employee_dashboard_simple, name='dashboard_simple'),
     # تضمين أنماط URL لكل قسم
     path('employees/', include((employee_patterns, 'employees'))),
-    path('employees/detail_view/', employee_detail_view, name='detail_view'),  
+    path('employees/detail_view/', employee_detail_view, name='detail_view'),
     path('departments/', include((department_patterns, 'departments'))),
     path('jobs/', include((job_patterns, 'jobs'))),
     path('insurance_jobs/', include((insurance_job_patterns, 'insurance_jobs'))),
     path('salaries/', include((salary_patterns, 'salaries'))),
+    path('notes/', include((note_patterns, 'notes'))),
 
     # بنود الرواتب
     path('salary_items/', salary_item_list, name='salary_item_list'),

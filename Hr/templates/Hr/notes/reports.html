@@ -1,0 +1,527 @@
+{% extends 'Hr/base_hr.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.css" rel="stylesheet">
+<style>
+    .report-form-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 15px;
+        color: white;
+    }
+    
+    .report-results-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 400px;
+        margin: 20px 0;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 20px 0;
+    }
+    
+    .stat-item {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    
+    .stat-item:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #007bff;
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .table-responsive {
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .export-buttons {
+        position: sticky;
+        top: 20px;
+        z-index: 100;
+    }
+    
+    .form-floating label {
+        color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .form-floating .form-control,
+    .form-floating .form-select {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: white;
+    }
+    
+    .form-floating .form-control:focus,
+    .form-floating .form-select:focus {
+        background: rgba(255, 255, 255, 0.2);
+        border-color: rgba(255, 255, 255, 0.5);
+        color: white;
+        box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.25);
+    }
+    
+    .form-floating .form-control::placeholder,
+    .form-floating .form-select option {
+        color: rgba(255, 255, 255, 0.7);
+    }
+    
+    .form-check-input:checked {
+        background-color: #fff;
+        border-color: #fff;
+    }
+    
+    .form-check-label {
+        color: rgba(255, 255, 255, 0.9);
+    }
+</style>
+{% endblock %}
+
+{% block page_title %}
+<div class="d-flex align-items-center justify-content-between">
+    <div>
+        <h1 class="h3 mb-1 text-gray-800">
+            <i class="fas fa-chart-bar text-primary me-2"></i>
+            {{ title }}
+        </h1>
+        <p class="text-muted mb-0">تقارير وإحصائيات شاملة لملاحظات الموظفين</p>
+    </div>
+    <div>
+        <a href="{% url 'Hr:notes:dashboard' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-right me-2"></i>
+            العودة للوحة المعلومات
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Report Form -->
+    <div class="col-lg-4 mb-4">
+        <div class="card report-form-card h-100">
+            <div class="card-header border-0">
+                <h5 class="mb-0 text-white">
+                    <i class="fas fa-filter me-2"></i>
+                    إعدادات التقرير
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" id="reportForm">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <div class="form-floating">
+                            {{ form.report_type }}
+                            <label for="{{ form.report_type.id_for_label }}">{{ form.report_type.label }}</label>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-3 mb-3">
+                        <div class="col-12">
+                            <div class="form-floating">
+                                {{ form.date_from }}
+                                <label for="{{ form.date_from.id_for_label }}">{{ form.date_from.label }}</label>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-floating">
+                                {{ form.date_to }}
+                                <label for="{{ form.date_to.id_for_label }}">{{ form.date_to.label }}</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-floating">
+                            {{ form.department }}
+                            <label for="{{ form.department.id_for_label }}">{{ form.department.label }}</label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-floating">
+                            {{ form.employee }}
+                            <label for="{{ form.employee.id_for_label }}">{{ form.employee.label }}</label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            {{ form.include_confidential }}
+                            <label class="form-check-label" for="{{ form.include_confidential.id_for_label }}">
+                                {{ form.include_confidential.label }}
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="form-floating">
+                            {{ form.export_format }}
+                            <label for="{{ form.export_format.id_for_label }}">{{ form.export_format.label }}</label>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-light btn-lg">
+                            <i class="fas fa-chart-line me-2"></i>
+                            إنشاء التقرير
+                        </button>
+                        <button type="submit" name="export" value="1" class="btn btn-outline-light">
+                            <i class="fas fa-download me-2"></i>
+                            تصدير التقرير
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Report Results -->
+    <div class="col-lg-8">
+        {% if report_data %}
+        <div class="card report-results-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    نتائج التقرير
+                </h5>
+                <div class="export-buttons">
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="exportReport('pdf')">
+                            <i class="fas fa-file-pdf me-1"></i>
+                            PDF
+                        </button>
+                        <button type="button" class="btn btn-outline-success btn-sm" onclick="exportReport('excel')">
+                            <i class="fas fa-file-excel me-1"></i>
+                            Excel
+                        </button>
+                        <button type="button" class="btn btn-outline-info btn-sm" onclick="exportReport('csv')">
+                            <i class="fas fa-file-csv me-1"></i>
+                            CSV
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if report_data.type == 'employee_summary' %}
+                <!-- Employee Summary Report -->
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-number">{{ report_data.total_employees }}</div>
+                        <div class="stat-label">إجمالي الموظفين</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">{{ report_data.total_notes }}</div>
+                        <div class="stat-label">إجمالي الملاحظات</div>
+                    </div>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>الموظف</th>
+                                <th>القسم</th>
+                                <th>إجمالي</th>
+                                <th>إيجابية</th>
+                                <th>سلبية</th>
+                                <th>عامة</th>
+                                <th>مهمة</th>
+                                <th>متوسط التقييم</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in report_data.data %}
+                            <tr>
+                                <td>{{ item.employee__emp_full_name|default:item.employee__emp_first_name }}</td>
+                                <td>{{ item.employee__department__dept_name|default:"-" }}</td>
+                                <td><span class="badge bg-primary">{{ item.total_notes }}</span></td>
+                                <td><span class="badge bg-success">{{ item.positive_notes }}</span></td>
+                                <td><span class="badge bg-danger">{{ item.negative_notes }}</span></td>
+                                <td><span class="badge bg-info">{{ item.general_notes }}</span></td>
+                                <td><span class="badge bg-warning">{{ item.important_notes }}</span></td>
+                                <td>
+                                    {% if item.avg_evaluation_score %}
+                                    <span class="badge bg-secondary">{{ item.avg_evaluation_score|floatformat:1 }}/100</span>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                {% elif report_data.type == 'department_summary' %}
+                <!-- Department Summary Report -->
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-number">{{ report_data.total_departments }}</div>
+                        <div class="stat-label">إجمالي الأقسام</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">{{ report_data.total_notes }}</div>
+                        <div class="stat-label">إجمالي الملاحظات</div>
+                    </div>
+                </div>
+                
+                <div class="chart-container">
+                    <canvas id="departmentChart"></canvas>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>القسم</th>
+                                <th>عدد الموظفين</th>
+                                <th>إجمالي الملاحظات</th>
+                                <th>إيجابية</th>
+                                <th>سلبية</th>
+                                <th>عامة</th>
+                                <th>متوسط التقييم</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in report_data.data %}
+                            <tr>
+                                <td>{{ item.employee__department__dept_name|default:"غير محدد" }}</td>
+                                <td><span class="badge bg-info">{{ item.employees_count }}</span></td>
+                                <td><span class="badge bg-primary">{{ item.total_notes }}</span></td>
+                                <td><span class="badge bg-success">{{ item.positive_notes }}</span></td>
+                                <td><span class="badge bg-danger">{{ item.negative_notes }}</span></td>
+                                <td><span class="badge bg-info">{{ item.general_notes }}</span></td>
+                                <td>
+                                    {% if item.avg_evaluation_score %}
+                                    <span class="badge bg-secondary">{{ item.avg_evaluation_score|floatformat:1 }}/100</span>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                {% elif report_data.type == 'type_summary' %}
+                <!-- Type Summary Report -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>توزيع الملاحظات حسب النوع</h6>
+                        <div class="chart-container" style="height: 300px;">
+                            <canvas id="typeChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>توزيع الملاحظات حسب الأولوية</h6>
+                        <div class="chart-container" style="height: 300px;">
+                            <canvas id="priorityChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                {% elif report_data.type == 'date_range' %}
+                <!-- Date Range Report -->
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-number">{{ report_data.total_notes }}</div>
+                        <div class="stat-label">إجمالي الملاحظات</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">{{ report_data.date_from }}</div>
+                        <div class="stat-label">من تاريخ</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">{{ report_data.date_to }}</div>
+                        <div class="stat-label">إلى تاريخ</div>
+                    </div>
+                </div>
+                
+                <div class="chart-container">
+                    <canvas id="trendsChart"></canvas>
+                </div>
+                
+                {% elif report_data.type == 'performance_trends' %}
+                <!-- Performance Trends Report -->
+                <div class="row">
+                    <div class="col-12">
+                        <h6>اتجاهات الأداء الشهرية</h6>
+                        <div class="chart-container">
+                            <canvas id="performanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <h6>أفضل الموظفين أداءً</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>الموظف</th>
+                                        <th>متوسط التقييم</th>
+                                        <th>الملاحظات الإيجابية</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for performer in report_data.top_performers|slice:":5" %}
+                                    <tr>
+                                        <td>{{ performer.employee__emp_full_name|default:performer.employee__emp_first_name }}</td>
+                                        <td><span class="badge bg-success">{{ performer.avg_score|floatformat:1 }}</span></td>
+                                        <td><span class="badge bg-primary">{{ performer.positive_notes }}</span></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>الموظفين الذين يحتاجون تطوير</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>الموظف</th>
+                                        <th>متوسط التقييم</th>
+                                        <th>الملاحظات السلبية</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for performer in report_data.bottom_performers|slice:":5" %}
+                                    <tr>
+                                        <td>{{ performer.employee__emp_full_name|default:performer.employee__emp_first_name }}</td>
+                                        <td><span class="badge bg-warning">{{ performer.avg_score|floatformat:1 }}</span></td>
+                                        <td><span class="badge bg-danger">{{ performer.negative_notes }}</span></td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <!-- No Report Generated -->
+        <div class="card report-results-card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">لم يتم إنشاء تقرير بعد</h4>
+                <p class="text-muted">اختر نوع التقرير والمعايير المطلوبة من النموذج الجانبي</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set default dates
+    const dateFrom = document.getElementById('{{ form.date_from.id_for_label }}');
+    const dateTo = document.getElementById('{{ form.date_to.id_for_label }}');
+    
+    if (!dateFrom.value) {
+        const lastMonth = new Date();
+        lastMonth.setMonth(lastMonth.getMonth() - 1);
+        dateFrom.value = lastMonth.toISOString().split('T')[0];
+    }
+    
+    if (!dateTo.value) {
+        const today = new Date();
+        dateTo.value = today.toISOString().split('T')[0];
+    }
+    
+    {% if report_data %}
+    // Initialize charts based on report type
+    {% if report_data.type == 'department_summary' %}
+    initDepartmentChart();
+    {% elif report_data.type == 'type_summary' %}
+    initTypeCharts();
+    {% elif report_data.type == 'date_range' %}
+    initTrendsChart();
+    {% elif report_data.type == 'performance_trends' %}
+    initPerformanceChart();
+    {% endif %}
+    {% endif %}
+});
+
+{% if report_data.type == 'department_summary' %}
+function initDepartmentChart() {
+    const ctx = document.getElementById('departmentChart').getContext('2d');
+    const data = {{ report_data.data|safe }};
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: data.map(item => item.employee__department__dept_name || 'غير محدد'),
+            datasets: [{
+                label: 'إجمالي الملاحظات',
+                data: data.map(item => item.total_notes),
+                backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+{% endif %}
+
+function exportReport(format) {
+    const form = document.getElementById('reportForm');
+    const exportFormat = document.getElementById('{{ form.export_format.id_for_label }}');
+    exportFormat.value = format;
+    
+    const exportInput = document.createElement('input');
+    exportInput.type = 'hidden';
+    exportInput.name = 'export';
+    exportInput.value = '1';
+    form.appendChild(exportInput);
+    
+    form.submit();
+    
+    form.removeChild(exportInput);
+}
+</script>
+{% endblock %}
