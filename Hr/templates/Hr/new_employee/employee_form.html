@@ -1,0 +1,922 @@
+{% extends 'Hr/base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+    {% if action == 'create' %}إضافة موظف جديد{% else %}تعديل بيانات الموظف{% endif %} - ElDawliya
+{% endblock %}
+
+{% block page_title %}
+    <i class="fas fa-{% if action == 'create' %}user-plus{% else %}user-edit{% endif %} me-2"></i>
+    {% if action == 'create' %}إضافة موظف جديد{% else %}تعديل بيانات الموظف{% endif %}
+{% endblock %}
+
+{% block header_actions %}
+    <div class="btn-group" role="group">
+        <button type="submit" form="employeeForm" class="btn btn-primary">
+            <i class="fas fa-save"></i>
+            {% if action == 'create' %}إضافة الموظف{% else %}حفظ التغييرات{% endif %}
+        </button>
+        <a href="{% if action == 'update' %}{% url 'hr:new_employee_detail' object.pk %}{% else %}{% url 'hr:new_employee_list' %}{% endif %}"
+           class="btn btn-outline-secondary">
+            <i class="fas fa-times"></i>
+            إلغاء
+        </a>
+    </div>
+{% endblock %}
+
+{% block content %}
+<form method="post" enctype="multipart/form-data" id="employeeForm" novalidate>
+    {% csrf_token %}
+
+    <!-- Progress Steps -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-12">
+                    <ul class="nav nav-pills nav-justified" id="formSteps">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#step1" data-bs-toggle="pill">
+                                <i class="fas fa-user me-2"></i>
+                                البيانات الشخصية
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#step2" data-bs-toggle="pill">
+                                <i class="fas fa-briefcase me-2"></i>
+                                بيانات التوظيف
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#step3" data-bs-toggle="pill">
+                                <i class="fas fa-phone me-2"></i>
+                                معلومات الاتصال
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#step4" data-bs-toggle="pill">
+                                <i class="fas fa-cog me-2"></i>
+                                إعدادات إضافية
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Content -->
+    <div class="tab-content">
+        <!-- Step 1: Personal Information -->
+        <div class="tab-pane fade show active" id="step1">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-user me-2"></i>
+                        البيانات الشخصية
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Photo Upload -->
+                        <div class="col-md-12 mb-4">
+                            <div class="text-center">
+                                <div class="mb-3">
+                                    {% if form.instance.photo %}
+                                        <img src="{{ form.instance.photo.url }}" id="photoPreview"
+                                             class="rounded-circle border border-3 border-primary"
+                                             width="120" height="120" alt="صورة الموظف">
+                                    {% else %}
+                                        <div id="photoPreview" class="bg-light rounded-circle d-flex align-items-center justify-content-center mx-auto border border-3 border-dashed"
+                                             style="width: 120px; height: 120px;">
+                                            <i class="fas fa-camera fa-2x text-muted"></i>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    {{ form.photo|add_class:"form-control" }}
+                                    <small class="form-text text-muted">
+                                        اختر صورة شخصية (اختياري) - الحد الأقصى 2 ميجابايت
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- First Name -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.first_name.id_for_label }}" class="form-label required">
+                                الاسم الأول
+                            </label>
+                            {{ form.first_name|add_class:"form-control" }}
+                            {% if form.first_name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.first_name.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Last Name -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.last_name.id_for_label }}" class="form-label required">
+                                الاسم الأخير
+                            </label>
+                            {{ form.last_name|add_class:"form-control" }}
+                            {% if form.last_name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.last_name.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Full Name -->
+                        <div class="col-md-12 mb-3">
+                            <label for="{{ form.full_name.id_for_label }}" class="form-label">
+                                الاسم الكامل
+                            </label>
+                            {{ form.full_name|add_class:"form-control" }}
+                            <small class="form-text text-muted">
+                                سيتم ملؤه تلقائياً من الاسم الأول والأخير
+                            </small>
+                            {% if form.full_name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.full_name.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- National ID -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.national_id.id_for_label }}" class="form-label">
+                                الرقم القومي
+                            </label>
+                            {{ form.national_id|add_class:"form-control" }}
+                            {% if form.national_id.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.national_id.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Date of Birth -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.date_of_birth.id_for_label }}" class="form-label">
+                                تاريخ الميلاد
+                            </label>
+                            {{ form.date_of_birth|add_class:"form-control" }}
+                            {% if form.date_of_birth.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.date_of_birth.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Gender -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.gender.id_for_label }}" class="form-label">
+                                الجنس
+                            </label>
+                            {{ form.gender|add_class:"form-select" }}
+                            {% if form.gender.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.gender.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Marital Status -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.marital_status.id_for_label }}" class="form-label">
+                                الحالة الاجتماعية
+                            </label>
+                            {{ form.marital_status|add_class:"form-select" }}
+                            {% if form.marital_status.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.marital_status.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Nationality -->
+                        <div class="col-md-12 mb-3">
+                            <label for="{{ form.nationality.id_for_label }}" class="form-label">
+                                الجنسية
+                            </label>
+                            {{ form.nationality|add_class:"form-control" }}
+                            {% if form.nationality.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.nationality.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Address -->
+                        <div class="col-md-12 mb-3">
+                            <label for="{{ form.address.id_for_label }}" class="form-label">
+                                العنوان
+                            </label>
+                            {{ form.address|add_class:"form-control" }}
+                            {% if form.address.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.address.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-end">
+                    <button type="button" class="btn btn-primary" onclick="nextStep(2)">
+                        التالي
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Employment Information -->
+        <div class="tab-pane fade" id="step2">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-briefcase me-2"></i>
+                        بيانات التوظيف
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Employee Number -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.employee_number.id_for_label }}" class="form-label">
+                                رقم الموظف
+                            </label>
+                            {{ form.employee_number|add_class:"form-control" }}
+                            <small class="form-text text-muted">
+                                سيتم إنشاؤه تلقائياً إذا ترك فارغاً
+                            </small>
+                            {% if form.employee_number.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.employee_number.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Hire Date -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.hire_date.id_for_label }}" class="form-label required">
+                                تاريخ التوظيف
+                            </label>
+                            {{ form.hire_date|add_class:"form-control" }}
+                            {% if form.hire_date.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.hire_date.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Company -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.company.id_for_label }}" class="form-label required">
+                                الشركة
+                            </label>
+                            {{ form.company|add_class:"form-select" }}
+                            {% if form.company.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.company.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Branch -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.branch.id_for_label }}" class="form-label">
+                                الفرع
+                            </label>
+                            {{ form.branch|add_class:"form-select" }}
+                            {% if form.branch.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.branch.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Department -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.department.id_for_label }}" class="form-label">
+                                القسم
+                            </label>
+                            {{ form.department|add_class:"form-select" }}
+                            {% if form.department.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.department.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Job Position -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.job_position.id_for_label }}" class="form-label">
+                                المنصب الوظيفي
+                            </label>
+                            {{ form.job_position|add_class:"form-select" }}
+                            {% if form.job_position.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.job_position.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Direct Manager -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.direct_manager.id_for_label }}" class="form-label">
+                                المدير المباشر
+                            </label>
+                            {{ form.direct_manager|add_class:"form-select" }}
+                            {% if form.direct_manager.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.direct_manager.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Employment Type -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.employment_type.id_for_label }}" class="form-label required">
+                                نوع التوظيف
+                            </label>
+                            {{ form.employment_type|add_class:"form-select" }}
+                            {% if form.employment_type.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.employment_type.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Contract Dates -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.contract_start_date.id_for_label }}" class="form-label">
+                                بداية العقد
+                            </label>
+                            {{ form.contract_start_date|add_class:"form-control" }}
+                            {% if form.contract_start_date.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.contract_start_date.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.contract_end_date.id_for_label }}" class="form-label">
+                                نهاية العقد
+                            </label>
+                            {{ form.contract_end_date|add_class:"form-control" }}
+                            {% if form.contract_end_date.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.contract_end_date.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Status -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.status.id_for_label }}" class="form-label required">
+                                الحالة الوظيفية
+                            </label>
+                            {{ form.status|add_class:"form-select" }}
+                            {% if form.status.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.status.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-secondary" onclick="previousStep(1)">
+                        <i class="fas fa-arrow-right"></i>
+                        السابق
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="nextStep(3)">
+                        التالي
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Contact Information -->
+        <div class="tab-pane fade" id="step3">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-phone me-2"></i>
+                        معلومات الاتصال
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Email -->
+                        <div class="col-md-12 mb-3">
+                            <label for="{{ form.email.id_for_label }}" class="form-label required">
+                                البريد الإلكتروني
+                            </label>
+                            {{ form.email|add_class:"form-control" }}
+                            {% if form.email.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.email.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Primary Phone -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.phone_primary.id_for_label }}" class="form-label required">
+                                الهاتف الأساسي
+                            </label>
+                            {{ form.phone_primary|add_class:"form-control" }}
+                            {% if form.phone_primary.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.phone_primary.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Secondary Phone -->
+                        <div class="col-md-6 mb-3">
+                            <label for="{{ form.phone_secondary.id_for_label }}" class="form-label">
+                                الهاتف الثانوي
+                            </label>
+                            {{ form.phone_secondary|add_class:"form-control" }}
+                            {% if form.phone_secondary.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.phone_secondary.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-secondary" onclick="previousStep(2)">
+                        <i class="fas fa-arrow-right"></i>
+                        السابق
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="nextStep(4)">
+                        التالي
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 4: Additional Settings -->
+        <div class="tab-pane fade" id="step4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cog me-2"></i>
+                        إعدادات إضافية
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <!-- Notes -->
+                        <div class="col-md-12 mb-3">
+                            <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                ملاحظات
+                            </label>
+                            {{ form.notes|add_class:"form-control" }}
+                            <small class="form-text text-muted">
+                                أي ملاحظات إضافية حول الموظف
+                            </small>
+                            {% if form.notes.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.notes.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Is Active -->
+                        <div class="col-md-12 mb-3">
+                            <div class="form-check">
+                                {{ form.is_active|add_class:"form-check-input" }}
+                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                    الموظف نشط
+                                </label>
+                                <small class="form-text text-muted d-block">
+                                    إلغاء التحديد سيجعل الموظف غير نشط في النظام
+                                </small>
+                            </div>
+                            {% if form.is_active.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.is_active.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Form Summary -->
+                    <div class="alert alert-info">
+                        <h6 class="alert-heading">
+                            <i class="fas fa-info-circle me-2"></i>
+                            ملخص البيانات
+                        </h6>
+                        <div id="formSummary">
+                            <p class="mb-1"><strong>الاسم:</strong> <span id="summaryName">-</span></p>
+                            <p class="mb-1"><strong>البريد الإلكتروني:</strong> <span id="summaryEmail">-</span></p>
+                            <p class="mb-1"><strong>الشركة:</strong> <span id="summaryCompany">-</span></p>
+                            <p class="mb-0"><strong>المنصب:</strong> <span id="summaryPosition">-</span></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer d-flex justify-content-between">
+                    <button type="button" class="btn btn-outline-secondary" onclick="previousStep(3)">
+                        <i class="fas fa-arrow-right"></i>
+                        السابق
+                    </button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-save"></i>
+                        {% if action == 'create' %}إضافة الموظف{% else %}حفظ التغييرات{% endif %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center py-4">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">جاري المعالجة...</span>
+                </div>
+                <h5>جاري حفظ بيانات الموظف...</h5>
+                <p class="text-muted mb-0">يرجى الانتظار</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.required::after {
+    content: " *";
+    color: #dc3545;
+}
+
+.form-control:invalid,
+.form-select:invalid {
+    border-color: #dc3545;
+}
+
+.form-control:valid,
+.form-select:valid {
+    border-color: #198754;
+}
+
+.nav-pills .nav-link {
+    border-radius: 8px;
+    margin: 0 2px;
+}
+
+.nav-pills .nav-link.active {
+    background: linear-gradient(135deg, var(--eldawliya-primary) 0%, var(--eldawliya-secondary) 100%);
+}
+
+#photoPreview {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+#photoPreview:hover {
+    transform: scale(1.05);
+}
+
+.step-indicator {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+}
+
+.step-indicator .step {
+    flex: 1;
+    text-align: center;
+    position: relative;
+}
+
+.step-indicator .step::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #e9ecef;
+    z-index: 1;
+}
+
+.step-indicator .step:first-child::before {
+    left: 50%;
+}
+
+.step-indicator .step:last-child::before {
+    right: 50%;
+}
+
+.step-indicator .step.active::before {
+    background: var(--eldawliya-primary);
+}
+
+.step-indicator .step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e9ecef;
+    color: #6c757d;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    position: relative;
+    z-index: 2;
+    transition: all 0.3s ease;
+}
+
+.step-indicator .step.active .step-number {
+    background: var(--eldawliya-primary);
+    color: white;
+}
+
+.step-indicator .step.completed .step-number {
+    background: var(--eldawliya-success);
+    color: white;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Initialize form
+    initializeForm();
+
+    // Auto-generate full name
+    $('#id_first_name, #id_last_name').on('input', function() {
+        updateFullName();
+    });
+
+    // Photo preview
+    $('#id_photo').on('change', function() {
+        previewPhoto(this);
+    });
+
+    // Company change handler
+    $('#id_company').on('change', function() {
+        loadBranches();
+        loadDepartments();
+        loadJobPositions();
+    });
+
+    // Branch change handler
+    $('#id_branch').on('change', function() {
+        loadDepartments();
+    });
+
+    // Department change handler
+    $('#id_department').on('change', function() {
+        loadJobPositions();
+    });
+
+    // Form submission
+    $('#employeeForm').on('submit', function(e) {
+        e.preventDefault();
+        submitForm();
+    });
+
+    // Update summary when fields change
+    $('input, select, textarea').on('change input', function() {
+        updateFormSummary();
+    });
+
+    // Initial summary update
+    updateFormSummary();
+});
+
+function initializeForm() {
+    // Set default values
+    if (!$('#id_hire_date').val()) {
+        $('#id_hire_date').val(new Date().toISOString().split('T')[0]);
+    }
+
+    // Load dependent dropdowns if editing
+    {% if action == 'update' %}
+        loadBranches();
+        loadDepartments();
+        loadJobPositions();
+    {% endif %}
+}
+
+function updateFullName() {
+    const firstName = $('#id_first_name').val().trim();
+    const lastName = $('#id_last_name').val().trim();
+    const fullName = [firstName, lastName].filter(name => name).join(' ');
+    $('#id_full_name').val(fullName);
+}
+
+function previewPhoto(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            $('#photoPreview').html(`
+                <img src="${e.target.result}" class="rounded-circle border border-3 border-primary"
+                     width="120" height="120" alt="صورة الموظف">
+            `);
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function loadBranches() {
+    const companyId = $('#id_company').val();
+    const branchSelect = $('#id_branch');
+    const currentBranch = branchSelect.data('current-value') || '';
+
+    branchSelect.html('<option value="">-- اختر الفرع --</option>');
+
+    if (companyId) {
+        $.get('{% url "hr:get_branches_by_company" %}', {company_id: companyId}, function(data) {
+            data.branches.forEach(function(branch) {
+                const selected = branch.id == currentBranch ? 'selected' : '';
+                branchSelect.append(`<option value="${branch.id}" ${selected}>${branch.name}</option>`);
+            });
+        });
+    }
+}
+
+function loadDepartments() {
+    const branchId = $('#id_branch').val();
+    const departmentSelect = $('#id_department');
+    const currentDepartment = departmentSelect.data('current-value') || '';
+
+    departmentSelect.html('<option value="">-- اختر القسم --</option>');
+
+    if (branchId) {
+        $.get('{% url "hr:get_departments_by_branch" %}', {branch_id: branchId}, function(data) {
+            data.departments.forEach(function(department) {
+                const selected = department.id == currentDepartment ? 'selected' : '';
+                departmentSelect.append(`<option value="${department.id}" ${selected}>${department.name}</option>`);
+            });
+        });
+    }
+}
+
+function loadJobPositions() {
+    const departmentId = $('#id_department').val();
+    const positionSelect = $('#id_job_position');
+    const currentPosition = positionSelect.data('current-value') || '';
+
+    positionSelect.html('<option value="">-- اختر المنصب --</option>');
+
+    if (departmentId) {
+        $.get('{% url "hr:get_job_positions_by_department" %}', {department_id: departmentId}, function(data) {
+            data.job_positions.forEach(function(position) {
+                const selected = position.id == currentPosition ? 'selected' : '';
+                positionSelect.append(`<option value="${position.id}" ${selected}>${position.title}</option>`);
+            });
+        });
+    }
+}
+
+function nextStep(stepNumber) {
+    // Validate current step
+    if (!validateCurrentStep()) {
+        return;
+    }
+
+    // Show next step
+    $(`#step${stepNumber}-tab`).click();
+}
+
+function previousStep(stepNumber) {
+    $(`#step${stepNumber}-tab`).click();
+}
+
+function validateCurrentStep() {
+    const activeTab = $('.tab-pane.active');
+    let isValid = true;
+
+    // Check required fields in current step
+    activeTab.find('input[required], select[required]').each(function() {
+        if (!$(this).val()) {
+            $(this).addClass('is-invalid');
+            isValid = false;
+        } else {
+            $(this).removeClass('is-invalid');
+        }
+    });
+
+    if (!isValid) {
+        showAlert('يرجى ملء جميع الحقول المطلوبة', 'warning');
+    }
+
+    return isValid;
+}
+
+function updateFormSummary() {
+    $('#summaryName').text($('#id_full_name').val() || '-');
+    $('#summaryEmail').text($('#id_email').val() || '-');
+    $('#summaryCompany').text($('#id_company option:selected').text() || '-');
+    $('#summaryPosition').text($('#id_job_position option:selected').text() || '-');
+}
+
+function submitForm() {
+    // Show loading modal
+    $('#loadingModal').modal('show');
+
+    // Validate entire form
+    if (!$('#employeeForm')[0].checkValidity()) {
+        $('#loadingModal').modal('hide');
+        showAlert('يرجى مراجعة البيانات المدخلة وتصحيح الأخطاء', 'danger');
+        return;
+    }
+
+    // Submit form
+    const formData = new FormData($('#employeeForm')[0]);
+
+    $.ajax({
+        url: $('#employeeForm').attr('action') || window.location.href,
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+            $('#loadingModal').modal('hide');
+
+            if (response.success) {
+                showAlert('تم حفظ بيانات الموظف بنجاح', 'success');
+
+                // Redirect after success
+                setTimeout(function() {
+                    window.location.href = response.redirect_url || '{% url "hr:new_employee_list" %}';
+                }, 1500);
+            } else {
+                showAlert('حدث خطأ في حفظ البيانات', 'danger');
+                displayFormErrors(response.errors);
+            }
+        },
+        error: function(xhr) {
+            $('#loadingModal').modal('hide');
+
+            if (xhr.status === 400) {
+                // Form validation errors
+                const errors = JSON.parse(xhr.responseText);
+                displayFormErrors(errors);
+            } else {
+                showAlert('حدث خطأ في الاتصال بالخادم', 'danger');
+            }
+        }
+    });
+}
+
+function displayFormErrors(errors) {
+    // Clear previous errors
+    $('.is-invalid').removeClass('is-invalid');
+    $('.invalid-feedback').remove();
+
+    // Display new errors
+    for (const field in errors) {
+        const fieldElement = $(`#id_${field}`);
+        if (fieldElement.length) {
+            fieldElement.addClass('is-invalid');
+            fieldElement.after(`<div class="invalid-feedback d-block">${errors[field][0]}</div>`);
+        }
+    }
+}
+
+function showAlert(message, type) {
+    const alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'exclamation-circle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+
+    $('.main-content').prepend(alertHtml);
+
+    // Auto-hide after 5 seconds
+    setTimeout(function() {
+        $('.alert').fadeOut();
+    }, 5000);
+}
+
+// Set current values for dependent dropdowns
+{% if action == 'update' %}
+$(document).ready(function() {
+    $('#id_branch').data('current-value', '{{ form.instance.branch.id|default:"" }}');
+    $('#id_department').data('current-value', '{{ form.instance.department.id|default:"" }}');
+    $('#id_job_position').data('current-value', '{{ form.instance.job_position.id|default:"" }}');
+});
+{% endif %}
+</script>
+{% endblock %}

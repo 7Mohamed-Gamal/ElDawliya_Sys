@@ -1,0 +1,621 @@
+{% extends 'Hr/base.html' %}
+{% load static %}
+
+{% block title %}إدخالات الرواتب - نظام الرواتب - ElDawliya{% endblock %}
+
+{% block page_title %}
+    <i class="fas fa-money-check-alt me-2"></i>
+    إدارة إدخالات الرواتب
+{% endblock %}
+
+{% block header_actions %}
+    <div class="btn-group" role="group">
+        <a href="{% url 'hr:payroll_entry_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i>
+            إدخال راتب جديد
+        </a>
+        <button type="button" class="btn btn-outline-success" onclick="calculatePayroll()">
+            <i class="fas fa-calculator"></i>
+            حساب الرواتب
+        </button>
+        <button type="button" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#bulkApprovalModal">
+            <i class="fas fa-check-double"></i>
+            موافقة مجمعة
+        </button>
+        <button type="button" class="btn btn-outline-info" onclick="exportPayroll()">
+            <i class="fas fa-file-export"></i>
+            تصدير
+        </button>
+    </div>
+{% endblock %}
+
+{% block content %}
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card border-start border-primary border-4">
+            <div class="stats-number text-primary">{{ total_entries }}</div>
+            <div class="stats-label">إجمالي الإدخالات</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card border-start border-warning border-4">
+            <div class="stats-number text-warning">{{ pending_entries }}</div>
+            <div class="stats-label">في الانتظار</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card border-start border-success border-4">
+            <div class="stats-number text-success">{{ approved_entries }}</div>
+            <div class="stats-label">موافق عليها</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card border-start border-info border-4">
+            <div class="stats-number text-info">{{ total_amount|floatformat:2 }}</div>
+            <div class="stats-label">إجمالي المبلغ (ج.م)</div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-filter me-2"></i>
+            البحث والتصفية
+        </h5>
+    </div>
+    <div class="card-body">
+        <form method="get" id="filterForm">
+            <div class="row g-3">
+                <!-- Employee Filter -->
+                <div class="col-lg-3 col-md-6">
+                    <label for="employee" class="form-label">الموظف</label>
+                    <select class="form-select" id="employee" name="employee">
+                        <option value="">جميع الموظفين</option>
+                        {% for emp in employees %}
+                            <option value="{{ emp.id }}" {% if employee_filter == emp.id|stringformat:"s" %}selected{% endif %}>
+                                {{ emp.full_name }} ({{ emp.employee_number }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Period Filter -->
+                <div class="col-lg-3 col-md-6">
+                    <label for="period" class="form-label">فترة الراتب</label>
+                    <select class="form-select" id="period" name="period">
+                        <option value="">جميع الفترات</option>
+                        {% for period in payroll_periods %}
+                            <option value="{{ period.id }}" {% if period_filter == period.id|stringformat:"s" %}selected{% endif %}>
+                                {{ period.name }} ({{ period.start_date }} - {{ period.end_date }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Status Filter -->
+                <div class="col-lg-2 col-md-6">
+                    <label for="status" class="form-label">الحالة</label>
+                    <select class="form-select" id="status" name="status">
+                        <option value="">جميع الحالات</option>
+                        {% for value, label in status_choices %}
+                            <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Department Filter -->
+                <div class="col-lg-2 col-md-6">
+                    <label for="department" class="form-label">القسم</label>
+                    <select class="form-select" id="department" name="department">
+                        <option value="">جميع الأقسام</option>
+                        {% for dept in departments %}
+                            <option value="{{ dept.id }}" {% if department_filter == dept.id|stringformat:"s" %}selected{% endif %}>
+                                {{ dept.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Amount Range -->
+                <div class="col-lg-2 col-md-6">
+                    <label for="min_amount" class="form-label">الحد الأدنى للمبلغ</label>
+                    <input type="number" class="form-control" id="min_amount" name="min_amount" 
+                           value="{{ min_amount }}" step="0.01" placeholder="0.00">
+                </div>
+
+                <div class="col-lg-2 col-md-6">
+                    <label for="max_amount" class="form-label">الحد الأقصى للمبلغ</label>
+                    <input type="number" class="form-control" id="max_amount" name="max_amount" 
+                           value="{{ max_amount }}" step="0.01" placeholder="999999.99">
+                </div>
+            </div>
+
+            <div class="row mt-3">
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i>
+                        بحث
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
+                        <i class="fas fa-eraser"></i>
+                        مسح الفلاتر
+                    </button>
+                    <button type="button" class="btn btn-outline-warning" onclick="setPendingFilter()">
+                        <i class="fas fa-clock"></i>
+                        المعلقة فقط
+                    </button>
+                    <button type="button" class="btn btn-outline-success" onclick="setCurrentPeriodFilter()">
+                        <i class="fas fa-calendar"></i>
+                        الفترة الحالية
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Payroll Entries Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-list me-2"></i>
+            إدخالات الرواتب ({{ payroll_entries|length }} من {{ page_obj.paginator.count }})
+        </h5>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+            <label class="form-check-label" for="selectAll">
+                تحديد الكل
+            </label>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        {% if payroll_entries %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th width="50">
+                                <input type="checkbox" class="form-check-input" id="selectAllHeader" onchange="toggleSelectAll()">
+                            </th>
+                            <th>الموظف</th>
+                            <th>فترة الراتب</th>
+                            <th>الراتب الأساسي</th>
+                            <th>الاستحقاقات</th>
+                            <th>الخصومات</th>
+                            <th>صافي الراتب</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in payroll_entries %}
+                        <tr>
+                            <td>
+                                <input type="checkbox" class="form-check-input entry-checkbox" 
+                                       value="{{ entry.id }}" name="selected_entries">
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    {% if entry.employee.photo %}
+                                        <img src="{{ entry.employee.photo.url }}" class="rounded-circle me-2" width="32" height="32">
+                                    {% else %}
+                                        <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center me-2" 
+                                             style="width: 32px; height: 32px;">
+                                            <i class="fas fa-user text-white"></i>
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        <strong>{{ entry.employee.full_name }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ entry.employee.employee_number }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <strong>{{ entry.period.name }}</strong>
+                                <br>
+                                <small class="text-muted">{{ entry.period.start_date }} - {{ entry.period.end_date }}</small>
+                            </td>
+                            <td>
+                                <strong class="text-primary">{{ entry.basic_salary|floatformat:2 }}</strong>
+                                <br>
+                                <small class="text-muted">ج.م</small>
+                            </td>
+                            <td>
+                                <strong class="text-success">{{ entry.total_earnings|floatformat:2 }}</strong>
+                                <br>
+                                <small class="text-muted">ج.م</small>
+                            </td>
+                            <td>
+                                <strong class="text-danger">{{ entry.total_deductions|floatformat:2 }}</strong>
+                                <br>
+                                <small class="text-muted">ج.م</small>
+                            </td>
+                            <td>
+                                <strong class="text-info fs-6">{{ entry.net_salary|floatformat:2 }}</strong>
+                                <br>
+                                <small class="text-muted">ج.م</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-{% if entry.status == 'draft' %}secondary{% elif entry.status == 'calculated' %}warning{% elif entry.status == 'approved' %}success{% elif entry.status == 'paid' %}primary{% else %}danger{% endif %}">
+                                    {{ entry.get_status_display }}
+                                </span>
+                                {% if entry.approved_by %}
+                                    <br>
+                                    <small class="text-muted">{{ entry.approved_by.get_full_name }}</small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{% url 'hr:payroll_entry_detail' entry.pk %}" 
+                                       class="btn btn-outline-primary" title="عرض التفاصيل">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    
+                                    {% if entry.status == 'calculated' %}
+                                        <button type="button" class="btn btn-outline-success" 
+                                                onclick="approveEntry({{ entry.id }})" title="موافقة">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger" 
+                                                onclick="rejectEntry({{ entry.id }})" title="رفض">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    {% endif %}
+                                    
+                                    {% if entry.status == 'approved' %}
+                                        <button type="button" class="btn btn-outline-info" 
+                                                onclick="generatePayslip({{ entry.id }})" title="كشف راتب">
+                                            <i class="fas fa-file-pdf"></i>
+                                        </button>
+                                    {% endif %}
+                                    
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-outline-secondary dropdown-toggle" 
+                                                data-bs-toggle="dropdown">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li>
+                                                <a class="dropdown-item" href="{% url 'hr:payroll_entry_update' entry.pk %}">
+                                                    <i class="fas fa-edit me-2"></i>
+                                                    تعديل
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <button class="dropdown-item" onclick="recalculateEntry({{ entry.id }})">
+                                                    <i class="fas fa-calculator me-2"></i>
+                                                    إعادة حساب
+                                                </button>
+                                            </li>
+                                            <li>
+                                                <button class="dropdown-item" onclick="duplicateEntry({{ entry.id }})">
+                                                    <i class="fas fa-copy me-2"></i>
+                                                    نسخ
+                                                </button>
+                                            </li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <button class="dropdown-item text-danger" 
+                                                        onclick="deleteEntry({{ entry.id }})">
+                                                    <i class="fas fa-trash me-2"></i>
+                                                    حذف
+                                                </button>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-info">
+                            <th colspan="3">الإجمالي</th>
+                            <th>{{ total_basic_salary|floatformat:2 }} ج.م</th>
+                            <th>{{ total_earnings|floatformat:2 }} ج.م</th>
+                            <th>{{ total_deductions|floatformat:2 }} ج.م</th>
+                            <th>{{ total_net_salary|floatformat:2 }} ج.م</th>
+                            <th colspan="2"></th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <div class="card-footer">
+                <nav aria-label="تنقل الصفحات">
+                    <ul class="pagination justify-content-center mb-0">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.paginator.num_pages }}">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-money-check-alt fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">لا توجد إدخالات رواتب</h5>
+                <p class="text-muted">لم يتم العثور على إدخالات رواتب مطابقة لمعايير البحث</p>
+                <a href="{% url 'hr:payroll_entry_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i>
+                    إضافة أول إدخال راتب
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Bulk Approval Modal -->
+<div class="modal fade" id="bulkApprovalModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-check-double me-2"></i>
+                    الموافقة المجمعة على الرواتب
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="bulkApprovalForm">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">اختر الإجراء:</label>
+                        <select class="form-select" name="action" required>
+                            <option value="">-- اختر الإجراء --</option>
+                            <option value="approve">موافقة على الإدخالات المحددة</option>
+                            <option value="reject">رفض الإدخالات المحددة</option>
+                            <option value="recalculate">إعادة حساب الإدخالات المحددة</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="bulkNotes" class="form-label">ملاحظات (اختياري)</label>
+                        <textarea class="form-control" id="bulkNotes" name="notes" rows="3" 
+                                  placeholder="أدخل ملاحظات حول القرار..."></textarea>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        سيتم تطبيق الإجراء على الإدخالات المحددة فقط.
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" onclick="executeBulkAction()">تنفيذ الإجراء</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Filter functions
+function clearFilters() {
+    $('#filterForm')[0].reset();
+    window.location.href = '{% url "hr:payroll_entry_list" %}';
+}
+
+function setPendingFilter() {
+    $('#status').val('calculated');
+    $('#filterForm').submit();
+}
+
+function setCurrentPeriodFilter() {
+    // Set current period filter - implement based on your period logic
+    $('#filterForm').submit();
+}
+
+// Selection functions
+function toggleSelectAll() {
+    const selectAll = $('#selectAll').is(':checked') || $('#selectAllHeader').is(':checked');
+    $('.entry-checkbox').prop('checked', selectAll);
+    updateBulkActionsButton();
+}
+
+function updateBulkActionsButton() {
+    const selectedCount = $('.entry-checkbox:checked').length;
+    const bulkButton = $('[data-bs-target="#bulkApprovalModal"]');
+    
+    if (selectedCount > 0) {
+        bulkButton.removeClass('btn-outline-warning').addClass('btn-warning');
+        bulkButton.html(`<i class="fas fa-check-double"></i> موافقة مجمعة (${selectedCount})`);
+    } else {
+        bulkButton.removeClass('btn-warning').addClass('btn-outline-warning');
+        bulkButton.html('<i class="fas fa-check-double"></i> موافقة مجمعة');
+    }
+}
+
+// Update selection count when checkboxes change
+$(document).on('change', '.entry-checkbox', function() {
+    updateBulkActionsButton();
+});
+
+// Entry operations
+function approveEntry(entryId) {
+    if (confirm('هل تريد الموافقة على هذا الإدخال؟')) {
+        $.post(`/hr/payroll/entries/${entryId}/approve/`, {
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+        }, function(response) {
+            if (response.success) {
+                showAlert('تم الموافقة على الإدخال بنجاح', 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showAlert(response.error, 'danger');
+            }
+        });
+    }
+}
+
+function rejectEntry(entryId) {
+    const reason = prompt('أدخل سبب الرفض:');
+    if (reason) {
+        $.post(`/hr/payroll/entries/${entryId}/reject/`, {
+            reason: reason,
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+        }, function(response) {
+            if (response.success) {
+                showAlert('تم رفض الإدخال', 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showAlert(response.error, 'danger');
+            }
+        });
+    }
+}
+
+function recalculateEntry(entryId) {
+    if (confirm('هل تريد إعادة حساب هذا الإدخال؟')) {
+        $.post(`/hr/payroll/entries/${entryId}/recalculate/`, {
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+        }, function(response) {
+            if (response.success) {
+                showAlert('تم إعادة حساب الإدخال بنجاح', 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showAlert(response.error, 'danger');
+            }
+        });
+    }
+}
+
+function generatePayslip(entryId) {
+    window.open(`/hr/payroll/entries/${entryId}/payslip/`, '_blank');
+}
+
+function duplicateEntry(entryId) {
+    if (confirm('هل تريد نسخ هذا الإدخال؟')) {
+        $.post(`/hr/payroll/entries/${entryId}/duplicate/`, {
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+        }, function(response) {
+            if (response.success) {
+                showAlert('تم نسخ الإدخال بنجاح', 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showAlert(response.error, 'danger');
+            }
+        });
+    }
+}
+
+function deleteEntry(entryId) {
+    if (confirm('هل أنت متأكد من حذف هذا الإدخال؟\n\nتحذير: هذا الإجراء لا يمكن التراجع عنه.')) {
+        $.post(`/hr/payroll/entries/${entryId}/delete/`, {
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+        }, function(response) {
+            if (response.success) {
+                showAlert('تم حذف الإدخال بنجاح', 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showAlert(response.error, 'danger');
+            }
+        });
+    }
+}
+
+// Bulk operations
+function executeBulkAction() {
+    const selectedEntries = $('.entry-checkbox:checked').map(function() {
+        return this.value;
+    }).get();
+    
+    if (selectedEntries.length === 0) {
+        showAlert('يرجى اختيار إدخال واحد على الأقل', 'warning');
+        return;
+    }
+    
+    const action = $('#bulkApprovalForm select[name="action"]').val();
+    const notes = $('#bulkNotes').val();
+    
+    if (!action) {
+        showAlert('يرجى اختيار الإجراء', 'warning');
+        return;
+    }
+    
+    $.post('/hr/payroll/entries/bulk-action/', {
+        action: action,
+        notes: notes,
+        entry_ids: selectedEntries,
+        csrfmiddlewaretoken: '{{ csrf_token }}'
+    }, function(response) {
+        if (response.success) {
+            $('#bulkApprovalModal').modal('hide');
+            showAlert(`تم تنفيذ الإجراء على ${selectedEntries.length} إدخال`, 'success');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showAlert(response.error, 'danger');
+        }
+    });
+}
+
+// Other operations
+function calculatePayroll() {
+    window.location.href = '{% url "hr:payroll_calculation" %}';
+}
+
+function exportPayroll() {
+    const params = new URLSearchParams(window.location.search);
+    params.set('export', 'excel');
+    window.open(`${window.location.pathname}?${params.toString()}`);
+}
+
+// Show alert
+function showAlert(message, type) {
+    const alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'exclamation-circle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    $('.main-content').prepend(alertHtml);
+    
+    setTimeout(function() {
+        $('.alert').fadeOut();
+    }, 5000);
+}
+</script>
+{% endblock %}

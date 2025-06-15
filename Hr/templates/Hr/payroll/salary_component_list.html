@@ -1,0 +1,529 @@
+{% extends 'Hr/base.html' %}
+{% load static %}
+
+{% block title %}مكونات الراتب - نظام الرواتب - ElDawliya{% endblock %}
+
+{% block page_title %}
+    <i class="fas fa-puzzle-piece me-2"></i>
+    إدارة مكونات الراتب
+{% endblock %}
+
+{% block header_actions %}
+    <div class="btn-group" role="group">
+        <a href="{% url 'hr:salary_component_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i>
+            إضافة مكون جديد
+        </a>
+        <button type="button" class="btn btn-outline-success" onclick="importComponents()">
+            <i class="fas fa-file-import"></i>
+            استيراد مكونات
+        </button>
+        <button type="button" class="btn btn-outline-info" onclick="exportComponents()">
+            <i class="fas fa-file-export"></i>
+            تصدير
+        </button>
+    </div>
+{% endblock %}
+
+{% block content %}
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card border-start border-primary border-4">
+            <div class="stats-number text-primary">{{ total_components }}</div>
+            <div class="stats-label">إجمالي المكونات</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card border-start border-success border-4">
+            <div class="stats-number text-success">{{ earnings_count }}</div>
+            <div class="stats-label">مكونات الاستحقاق</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card border-start border-danger border-4">
+            <div class="stats-number text-danger">{{ deductions_count }}</div>
+            <div class="stats-label">مكونات الخصم</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card border-start border-info border-4">
+            <div class="stats-number text-info">{{ active_components }}</div>
+            <div class="stats-label">المكونات النشطة</div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-filter me-2"></i>
+            البحث والتصفية
+        </h5>
+    </div>
+    <div class="card-body">
+        <form method="get" id="filterForm">
+            <div class="row g-3">
+                <!-- Search -->
+                <div class="col-lg-4 col-md-6">
+                    <label for="search" class="form-label">البحث</label>
+                    <input type="text" class="form-control" id="search" name="search" 
+                           value="{{ search_value }}" placeholder="اسم المكون، الكود...">
+                </div>
+
+                <!-- Component Type Filter -->
+                <div class="col-lg-2 col-md-6">
+                    <label for="component_type" class="form-label">نوع المكون</label>
+                    <select class="form-select" id="component_type" name="component_type">
+                        <option value="">جميع الأنواع</option>
+                        {% for value, label in component_type_choices %}
+                            <option value="{{ value }}" {% if component_type_filter == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Calculation Method Filter -->
+                <div class="col-lg-2 col-md-6">
+                    <label for="calculation_method" class="form-label">طريقة الحساب</label>
+                    <select class="form-select" id="calculation_method" name="calculation_method">
+                        <option value="">جميع الطرق</option>
+                        {% for value, label in calculation_method_choices %}
+                            <option value="{{ value }}" {% if calculation_method_filter == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Status Filter -->
+                <div class="col-lg-2 col-md-6">
+                    <label for="is_active" class="form-label">الحالة</label>
+                    <select class="form-select" id="is_active" name="is_active">
+                        <option value="">جميع الحالات</option>
+                        <option value="true" {% if is_active_filter == 'true' %}selected{% endif %}>نشط</option>
+                        <option value="false" {% if is_active_filter == 'false' %}selected{% endif %}>غير نشط</option>
+                    </select>
+                </div>
+
+                <!-- Taxable Filter -->
+                <div class="col-lg-2 col-md-6">
+                    <label for="is_taxable" class="form-label">خاضع للضريبة</label>
+                    <select class="form-select" id="is_taxable" name="is_taxable">
+                        <option value="">الكل</option>
+                        <option value="true" {% if is_taxable_filter == 'true' %}selected{% endif %}>نعم</option>
+                        <option value="false" {% if is_taxable_filter == 'false' %}selected{% endif %}>لا</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row mt-3">
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i>
+                        بحث
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
+                        <i class="fas fa-eraser"></i>
+                        مسح الفلاتر
+                    </button>
+                    <div class="btn-group ms-2">
+                        <button type="button" class="btn btn-outline-success" onclick="filterByType('earning')">
+                            <i class="fas fa-plus-circle"></i>
+                            الاستحقاقات
+                        </button>
+                        <button type="button" class="btn btn-outline-danger" onclick="filterByType('deduction')">
+                            <i class="fas fa-minus-circle"></i>
+                            الخصومات
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Components Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-list me-2"></i>
+            مكونات الراتب ({{ components|length }} من {{ page_obj.paginator.count }})
+        </h5>
+        <div class="btn-group btn-group-sm">
+            <button type="button" class="btn btn-outline-primary" onclick="toggleView('table')" id="tableViewBtn">
+                <i class="fas fa-table"></i>
+                جدول
+            </button>
+            <button type="button" class="btn btn-outline-primary" onclick="toggleView('cards')" id="cardsViewBtn">
+                <i class="fas fa-th-large"></i>
+                بطاقات
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        {% if components %}
+            <!-- Table View -->
+            <div id="tableView" class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>الكود</th>
+                            <th>اسم المكون</th>
+                            <th>النوع</th>
+                            <th>طريقة الحساب</th>
+                            <th>القيمة الافتراضية</th>
+                            <th>خاضع للضريبة</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for component in components %}
+                        <tr>
+                            <td>
+                                <strong class="text-primary">{{ component.code }}</strong>
+                            </td>
+                            <td>
+                                <div>
+                                    <strong>{{ component.name }}</strong>
+                                    {% if component.description %}
+                                        <br>
+                                        <small class="text-muted">{{ component.description|truncatechars:50 }}</small>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-{% if component.component_type == 'earning' %}success{% else %}danger{% endif %}">
+                                    <i class="fas fa-{% if component.component_type == 'earning' %}plus{% else %}minus{% endif %}-circle me-1"></i>
+                                    {{ component.get_component_type_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-info">
+                                    {{ component.get_calculation_method_display }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if component.default_value %}
+                                    <strong>{{ component.default_value }}</strong>
+                                    {% if component.calculation_method == 'percentage' %}%{% else %}ج.م{% endif %}
+                                {% else %}
+                                    <span class="text-muted">غير محدد</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if component.is_taxable %}
+                                    <span class="badge bg-warning">
+                                        <i class="fas fa-check"></i>
+                                        نعم
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-times"></i>
+                                        لا
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if component.is_active %}
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-check-circle"></i>
+                                        نشط
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-pause-circle"></i>
+                                        غير نشط
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{% url 'hr:salary_component_detail' component.pk %}" 
+                                       class="btn btn-outline-primary" title="عرض التفاصيل">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'hr:salary_component_update' component.pk %}" 
+                                       class="btn btn-outline-warning" title="تعديل">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-outline-info" 
+                                            onclick="copyComponent({{ component.id }})" title="نسخ">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-outline-secondary dropdown-toggle" 
+                                                data-bs-toggle="dropdown">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li>
+                                                <button class="dropdown-item" onclick="toggleStatus({{ component.id }})">
+                                                    <i class="fas fa-{% if component.is_active %}pause{% else %}play{% endif %} me-2"></i>
+                                                    {% if component.is_active %}إلغاء التفعيل{% else %}تفعيل{% endif %}
+                                                </button>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item" href="#">
+                                                    <i class="fas fa-users me-2"></i>
+                                                    الموظفين المرتبطين
+                                                </a>
+                                            </li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <button class="dropdown-item text-danger" 
+                                                        onclick="deleteComponent({{ component.id }}, '{{ component.name }}')">
+                                                    <i class="fas fa-trash me-2"></i>
+                                                    حذف
+                                                </button>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Cards View -->
+            <div id="cardsView" class="p-3" style="display: none;">
+                <div class="row">
+                    {% for component in components %}
+                    <div class="col-lg-4 col-md-6 mb-3">
+                        <div class="card h-100 border-start border-{% if component.component_type == 'earning' %}success{% else %}danger{% endif %} border-4">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="card-title mb-0">{{ component.name }}</h6>
+                                    <span class="badge bg-{% if component.is_active %}success{% else %}secondary{% endif %}">
+                                        {% if component.is_active %}نشط{% else %}غير نشط{% endif %}
+                                    </span>
+                                </div>
+                                <p class="text-muted small mb-2">{{ component.code }}</p>
+                                {% if component.description %}
+                                    <p class="card-text small">{{ component.description|truncatechars:80 }}</p>
+                                {% endif %}
+                                <div class="row text-center">
+                                    <div class="col-6">
+                                        <small class="text-muted">النوع</small>
+                                        <br>
+                                        <span class="badge bg-{% if component.component_type == 'earning' %}success{% else %}danger{% endif %}">
+                                            {{ component.get_component_type_display }}
+                                        </span>
+                                    </div>
+                                    <div class="col-6">
+                                        <small class="text-muted">طريقة الحساب</small>
+                                        <br>
+                                        <span class="badge bg-info">
+                                            {{ component.get_calculation_method_display }}
+                                        </span>
+                                    </div>
+                                </div>
+                                {% if component.default_value %}
+                                <div class="text-center mt-2">
+                                    <small class="text-muted">القيمة الافتراضية</small>
+                                    <br>
+                                    <strong class="text-primary">
+                                        {{ component.default_value }}
+                                        {% if component.calculation_method == 'percentage' %}%{% else %}ج.م{% endif %}
+                                    </strong>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="card-footer bg-transparent">
+                                <div class="btn-group w-100" role="group">
+                                    <a href="{% url 'hr:salary_component_detail' component.pk %}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'hr:salary_component_update' component.pk %}" 
+                                       class="btn btn-sm btn-outline-warning">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-info" 
+                                            onclick="copyComponent({{ component.id }})">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <div class="card-footer">
+                <nav aria-label="تنقل الصفحات">
+                    <ul class="pagination justify-content-center mb-0">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.paginator.num_pages }}">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-puzzle-piece fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">لا توجد مكونات راتب</h5>
+                <p class="text-muted">لم يتم العثور على مكونات راتب مطابقة لمعايير البحث</p>
+                <a href="{% url 'hr:salary_component_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i>
+                    إضافة أول مكون راتب
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Filter functions
+function clearFilters() {
+    $('#filterForm')[0].reset();
+    window.location.href = '{% url "hr:salary_component_list" %}';
+}
+
+function filterByType(type) {
+    $('#component_type').val(type);
+    $('#filterForm').submit();
+}
+
+// View toggle functions
+function toggleView(viewType) {
+    if (viewType === 'table') {
+        $('#tableView').show();
+        $('#cardsView').hide();
+        $('#tableViewBtn').addClass('active');
+        $('#cardsViewBtn').removeClass('active');
+        localStorage.setItem('componentsView', 'table');
+    } else {
+        $('#tableView').hide();
+        $('#cardsView').show();
+        $('#tableViewBtn').removeClass('active');
+        $('#cardsViewBtn').addClass('active');
+        localStorage.setItem('componentsView', 'cards');
+    }
+}
+
+// Component operations
+function copyComponent(componentId) {
+    if (confirm('هل تريد نسخ هذا المكون؟')) {
+        $.post(`/hr/payroll/components/${componentId}/copy/`, {
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+        }, function(response) {
+            if (response.success) {
+                showAlert('تم نسخ المكون بنجاح', 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showAlert(response.error, 'danger');
+            }
+        });
+    }
+}
+
+function toggleStatus(componentId) {
+    $.post(`/hr/payroll/components/${componentId}/toggle-status/`, {
+        csrfmiddlewaretoken: '{{ csrf_token }}'
+    }, function(response) {
+        if (response.success) {
+            showAlert('تم تغيير حالة المكون بنجاح', 'success');
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showAlert(response.error, 'danger');
+        }
+    });
+}
+
+function deleteComponent(componentId, componentName) {
+    if (confirm(`هل أنت متأكد من حذف المكون "${componentName}"؟\n\nتحذير: هذا الإجراء لا يمكن التراجع عنه.`)) {
+        $.post(`/hr/payroll/components/${componentId}/delete/`, {
+            csrfmiddlewaretoken: '{{ csrf_token }}'
+        }, function(response) {
+            if (response.success) {
+                showAlert('تم حذف المكون بنجاح', 'success');
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showAlert(response.error, 'danger');
+            }
+        });
+    }
+}
+
+// Import/Export functions
+function importComponents() {
+    // Implement import functionality
+    showAlert('ميزة الاستيراد قيد التطوير', 'info');
+}
+
+function exportComponents() {
+    const params = new URLSearchParams(window.location.search);
+    params.set('export', 'excel');
+    window.open(`${window.location.pathname}?${params.toString()}`);
+}
+
+// Show alert
+function showAlert(message, type) {
+    const alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'exclamation-circle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    $('.main-content').prepend(alertHtml);
+    
+    setTimeout(function() {
+        $('.alert').fadeOut();
+    }, 5000);
+}
+
+// Initialize view from localStorage
+$(document).ready(function() {
+    const savedView = localStorage.getItem('componentsView') || 'table';
+    toggleView(savedView);
+});
+</script>
+{% endblock %}

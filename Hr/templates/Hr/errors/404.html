@@ -1,0 +1,49 @@
+{% extends 'Hr/base.html' %}
+{% load static %}
+
+{% block title %}{{ error_title }} - ElDawliya{% endblock %}
+
+{% block page_title %}
+    <i class="fas fa-exclamation-triangle me-2"></i>
+    {{ error_title }}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-6 col-md-8">
+            <div class="card border-0 shadow">
+                <div class="card-body text-center py-5">
+                    <div class="error-icon mb-4">
+                        <i class="fas fa-search fa-5x text-muted"></i>
+                    </div>
+                    
+                    <h1 class="display-1 fw-bold text-primary">{{ error_code }}</h1>
+                    <h2 class="h4 mb-3">{{ error_title }}</h2>
+                    <p class="text-muted mb-4">{{ error_message }}</p>
+                    <p class="small text-muted mb-4">{{ error_description }}</p>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                        <a href="/hr/" class="btn btn-primary">
+                            <i class="fas fa-home me-2"></i>
+                            العودة للرئيسية
+                        </a>
+                        <button type="button" class="btn btn-outline-secondary" onclick="history.back()">
+                            <i class="fas fa-arrow-right me-2"></i>
+                            العودة للخلف
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.error-icon {
+    opacity: 0.3;
+}
+</style>
+{% endblock %}

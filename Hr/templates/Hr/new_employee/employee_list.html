@@ -1,0 +1,601 @@
+{% extends 'Hr/base.html' %}
+{% load static %}
+
+{% block title %}قائمة الموظفين - نظام الموارد البشرية - ElDawliya{% endblock %}
+
+{% block page_title %}
+    <i class="fas fa-users me-2"></i>
+    إدارة الموظفين
+{% endblock %}
+
+{% block header_actions %}
+    <div class="btn-group" role="group">
+        <a href="{% url 'hr:new_employee_create' %}" class="btn btn-primary">
+            <i class="fas fa-user-plus"></i>
+            إضافة موظف جديد
+        </a>
+        <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#bulkActionsModal">
+            <i class="fas fa-tasks"></i>
+            عمليات مجمعة
+        </button>
+        <button type="button" class="btn btn-outline-success" onclick="exportEmployees()">
+            <i class="fas fa-file-excel"></i>
+            تصدير Excel
+        </button>
+    </div>
+{% endblock %}
+
+{% block content %}
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card border-start border-primary border-4">
+            <div class="stats-number text-primary">{{ total_employees }}</div>
+            <div class="stats-label">إجمالي الموظفين</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card border-start border-success border-4">
+            <div class="stats-number text-success">{{ active_employees }}</div>
+            <div class="stats-label">الموظفين النشطين</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card border-start border-warning border-4">
+            <div class="stats-number text-warning">{{ inactive_employees }}</div>
+            <div class="stats-label">غير النشطين</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card border-start border-info border-4">
+            <div class="stats-number text-info">{{ on_leave_employees }}</div>
+            <div class="stats-label">في إجازة</div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters and Search -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-filter me-2"></i>
+            البحث والتصفية
+        </h5>
+    </div>
+    <div class="card-body">
+        <form method="get" id="filterForm">
+            <div class="row g-3">
+                <!-- Search -->
+                <div class="col-lg-3 col-md-6">
+                    <label for="search" class="form-label">البحث</label>
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="search" name="search" 
+                               value="{{ search_value }}" placeholder="رقم الموظف، الاسم، البريد...">
+                        <button class="btn btn-outline-secondary" type="button" onclick="clearSearch()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Company Filter -->
+                <div class="col-lg-2 col-md-6">
+                    <label for="company" class="form-label">الشركة</label>
+                    <select class="form-select" id="company" name="company" onchange="loadBranches()">
+                        <option value="">جميع الشركات</option>
+                        {% for company in companies %}
+                            <option value="{{ company.id }}" {% if company_filter == company.id|stringformat:"s" %}selected{% endif %}>
+                                {{ company.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Branch Filter -->
+                <div class="col-lg-2 col-md-6">
+                    <label for="branch" class="form-label">الفرع</label>
+                    <select class="form-select" id="branch" name="branch" onchange="loadDepartments()">
+                        <option value="">جميع الفروع</option>
+                        {% for branch in branches %}
+                            <option value="{{ branch.id }}" {% if branch_filter == branch.id|stringformat:"s" %}selected{% endif %}>
+                                {{ branch.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Department Filter -->
+                <div class="col-lg-2 col-md-6">
+                    <label for="department" class="form-label">القسم</label>
+                    <select class="form-select" id="department" name="department">
+                        <option value="">جميع الأقسام</option>
+                        {% for department in departments %}
+                            <option value="{{ department.id }}" {% if department_filter == department.id|stringformat:"s" %}selected{% endif %}>
+                                {{ department.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Status Filter -->
+                <div class="col-lg-2 col-md-6">
+                    <label for="status" class="form-label">الحالة</label>
+                    <select class="form-select" id="status" name="status">
+                        <option value="">جميع الحالات</option>
+                        {% for value, label in status_choices %}
+                            <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Employment Type Filter -->
+                <div class="col-lg-1 col-md-6">
+                    <label for="employment_type" class="form-label">نوع التوظيف</label>
+                    <select class="form-select" id="employment_type" name="employment_type">
+                        <option value="">الكل</option>
+                        {% for value, label in employment_type_choices %}
+                            <option value="{{ value }}" {% if employment_type_filter == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="row mt-3">
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i>
+                        بحث
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
+                        <i class="fas fa-eraser"></i>
+                        مسح الفلاتر
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Employees Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-list me-2"></i>
+            قائمة الموظفين ({{ employees|length }} من {{ page_obj.paginator.count }})
+        </h5>
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+            <label class="form-check-label" for="selectAll">
+                تحديد الكل
+            </label>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        {% if employees %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th width="50">
+                                <input type="checkbox" class="form-check-input" id="selectAllHeader" onchange="toggleSelectAll()">
+                            </th>
+                            <th>الصورة</th>
+                            <th>رقم الموظف</th>
+                            <th>الاسم الكامل</th>
+                            <th>القسم</th>
+                            <th>المنصب</th>
+                            <th>تاريخ التوظيف</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for employee in employees %}
+                        <tr>
+                            <td>
+                                <input type="checkbox" class="form-check-input employee-checkbox" 
+                                       value="{{ employee.id }}" name="selected_employees">
+                            </td>
+                            <td>
+                                {% if employee.photo %}
+                                    <img src="{{ employee.photo.url }}" class="rounded-circle" width="40" height="40">
+                                {% else %}
+                                    <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center" 
+                                         style="width: 40px; height: 40px;">
+                                        <i class="fas fa-user text-white"></i>
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <strong>{{ employee.employee_number }}</strong>
+                            </td>
+                            <td>
+                                <div>
+                                    <strong>{{ employee.full_name }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ employee.email }}</small>
+                                </div>
+                            </td>
+                            <td>{{ employee.department.name|default:"غير محدد" }}</td>
+                            <td>{{ employee.job_position.title|default:"غير محدد" }}</td>
+                            <td>{{ employee.hire_date }}</td>
+                            <td>
+                                <span class="badge bg-{% if employee.status == 'active' %}success{% elif employee.status == 'inactive' %}secondary{% elif employee.status == 'on_leave' %}warning{% else %}danger{% endif %}">
+                                    {{ employee.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm" role="group">
+                                    <a href="{% url 'hr:new_employee_detail' employee.pk %}" 
+                                       class="btn btn-outline-primary" title="عرض التفاصيل">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'hr:new_employee_update' employee.pk %}" 
+                                       class="btn btn-outline-warning" title="تعديل">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-outline-info" 
+                                            onclick="showQuickStats({{ employee.id }})" title="إحصائيات سريعة">
+                                        <i class="fas fa-chart-bar"></i>
+                                    </button>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-outline-secondary dropdown-toggle" 
+                                                data-bs-toggle="dropdown">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li>
+                                                <a class="dropdown-item" href="{% url 'hr:new_employee_documents' employee.pk %}">
+                                                    <i class="fas fa-file-alt me-2"></i>
+                                                    الوثائق
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item" href="#">
+                                                    <i class="fas fa-clock me-2"></i>
+                                                    سجل الحضور
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item" href="#">
+                                                    <i class="fas fa-calendar-times me-2"></i>
+                                                    طلبات الإجازة
+                                                </a>
+                                            </li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <button class="dropdown-item text-danger" 
+                                                        onclick="confirmDelete({{ employee.id }}, '{{ employee.full_name }}')">
+                                                    <i class="fas fa-trash me-2"></i>
+                                                    حذف
+                                                </button>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <div class="card-footer">
+                <nav aria-label="تنقل الصفحات">
+                    <ul class="pagination justify-content-center mb-0">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page=1">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.paginator.num_pages }}">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">لا توجد موظفين</h5>
+                <p class="text-muted">لم يتم العثور على موظفين مطابقين لمعايير البحث</p>
+                <a href="{% url 'hr:new_employee_create' %}" class="btn btn-primary">
+                    <i class="fas fa-user-plus"></i>
+                    إضافة أول موظف
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Bulk Actions Modal -->
+<div class="modal fade" id="bulkActionsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-tasks me-2"></i>
+                    العمليات المجمعة
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="bulkActionsForm" method="post" action="{% url 'hr:new_employee_bulk_update' %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">اختر العملية:</label>
+                        <select class="form-select" name="action" required>
+                            <option value="">-- اختر العملية --</option>
+                            <option value="activate">تفعيل الموظفين المحددين</option>
+                            <option value="deactivate">إلغاء تفعيل الموظفين المحددين</option>
+                            <option value="export">تصدير بيانات الموظفين المحددين</option>
+                        </select>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        سيتم تطبيق العملية على الموظفين المحددين فقط.
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" onclick="executeBulkAction()">تنفيذ العملية</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Stats Modal -->
+<div class="modal fade" id="quickStatsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    إحصائيات سريعة للموظف
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="quickStatsContent">
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">جاري التحميل...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Filter functions
+function loadBranches() {
+    const companyId = $('#company').val();
+    const branchSelect = $('#branch');
+    const departmentSelect = $('#department');
+    
+    // Clear dependent dropdowns
+    branchSelect.html('<option value="">جميع الفروع</option>');
+    departmentSelect.html('<option value="">جميع الأقسام</option>');
+    
+    if (companyId) {
+        $.get('{% url "hr:get_branches_by_company" %}', {company_id: companyId}, function(data) {
+            data.branches.forEach(function(branch) {
+                branchSelect.append(`<option value="${branch.id}">${branch.name}</option>`);
+            });
+        });
+    }
+}
+
+function loadDepartments() {
+    const branchId = $('#branch').val();
+    const departmentSelect = $('#department');
+    
+    departmentSelect.html('<option value="">جميع الأقسام</option>');
+    
+    if (branchId) {
+        $.get('{% url "hr:get_departments_by_branch" %}', {branch_id: branchId}, function(data) {
+            data.departments.forEach(function(department) {
+                departmentSelect.append(`<option value="${department.id}">${department.name}</option>`);
+            });
+        });
+    }
+}
+
+function clearFilters() {
+    $('#filterForm')[0].reset();
+    window.location.href = '{% url "hr:new_employee_list" %}';
+}
+
+function clearSearch() {
+    $('#search').val('');
+    $('#filterForm').submit();
+}
+
+// Selection functions
+function toggleSelectAll() {
+    const selectAll = $('#selectAll').is(':checked') || $('#selectAllHeader').is(':checked');
+    $('.employee-checkbox').prop('checked', selectAll);
+    updateBulkActionsButton();
+}
+
+function updateBulkActionsButton() {
+    const selectedCount = $('.employee-checkbox:checked').length;
+    const bulkButton = $('[data-bs-target="#bulkActionsModal"]');
+    
+    if (selectedCount > 0) {
+        bulkButton.removeClass('btn-outline-primary').addClass('btn-warning');
+        bulkButton.html(`<i class="fas fa-tasks"></i> عمليات مجمعة (${selectedCount})`);
+    } else {
+        bulkButton.removeClass('btn-warning').addClass('btn-outline-primary');
+        bulkButton.html('<i class="fas fa-tasks"></i> عمليات مجمعة');
+    }
+}
+
+// Update selection count when checkboxes change
+$(document).on('change', '.employee-checkbox', function() {
+    updateBulkActionsButton();
+});
+
+// Bulk actions
+function executeBulkAction() {
+    const selectedEmployees = $('.employee-checkbox:checked').map(function() {
+        return this.value;
+    }).get();
+    
+    if (selectedEmployees.length === 0) {
+        alert('يرجى اختيار موظف واحد على الأقل');
+        return;
+    }
+    
+    // Add selected employee IDs to form
+    selectedEmployees.forEach(function(id) {
+        $('#bulkActionsForm').append(`<input type="hidden" name="employee_ids" value="${id}">`);
+    });
+    
+    $('#bulkActionsForm').submit();
+}
+
+// Export functions
+function exportEmployees() {
+    const selectedEmployees = $('.employee-checkbox:checked').map(function() {
+        return this.value;
+    }).get();
+    
+    if (selectedEmployees.length === 0) {
+        // Export all filtered employees
+        const form = $('<form>', {
+            method: 'post',
+            action: '{% url "hr:new_employee_bulk_update" %}'
+        });
+        
+        form.append($('<input>', {type: 'hidden', name: 'csrfmiddlewaretoken', value: '{{ csrf_token }}'}));
+        form.append($('<input>', {type: 'hidden', name: 'action', value: 'export'}));
+        
+        // Add current filter parameters
+        {% for key, value in request.GET.items %}
+            form.append($('<input>', {type: 'hidden', name: '{{ key }}', value: '{{ value }}'}));
+        {% endfor %}
+        
+        $('body').append(form);
+        form.submit();
+        form.remove();
+    } else {
+        // Export selected employees
+        const form = $('<form>', {
+            method: 'post',
+            action: '{% url "hr:new_employee_bulk_update" %}'
+        });
+        
+        form.append($('<input>', {type: 'hidden', name: 'csrfmiddlewaretoken', value: '{{ csrf_token }}'}));
+        form.append($('<input>', {type: 'hidden', name: 'action', value: 'export'}));
+        
+        selectedEmployees.forEach(function(id) {
+            form.append($('<input>', {type: 'hidden', name: 'employee_ids', value: id}));
+        });
+        
+        $('body').append(form);
+        form.submit();
+        form.remove();
+    }
+}
+
+// Quick stats
+function showQuickStats(employeeId) {
+    $('#quickStatsModal').modal('show');
+    
+    $.get('{% url "hr:new_employee_quick_stats" pk=0 %}'.replace('0', employeeId), function(data) {
+        const content = `
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <h5 class="text-primary">${data.age}</h5>
+                            <small class="text-muted">العمر (سنة)</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <h5 class="text-success">${data.years_of_service}</h5>
+                            <small class="text-muted">سنوات الخدمة</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <h5 class="text-info">${data.documents_count}</h5>
+                            <small class="text-muted">عدد الوثائق</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <div class="card bg-light">
+                        <div class="card-body text-center">
+                            <h5 class="text-warning">${data.current_month_attendance}</h5>
+                            <small class="text-muted">أيام الحضور هذا الشهر</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        $('#quickStatsContent').html(content);
+    }).fail(function() {
+        $('#quickStatsContent').html('<div class="alert alert-danger">حدث خطأ في تحميل البيانات</div>');
+    });
+}
+
+// Delete confirmation
+function confirmDelete(employeeId, employeeName) {
+    if (confirm(`هل أنت متأكد من حذف الموظف "${employeeName}"؟\n\nتحذير: هذا الإجراء لا يمكن التراجع عنه.`)) {
+        window.location.href = `/hr/employees/${employeeId}/delete/`;
+    }
+}
+
+// Auto-submit search form on Enter
+$('#search').on('keypress', function(e) {
+    if (e.which === 13) {
+        $('#filterForm').submit();
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,581 @@
+{% extends 'Hr/base.html' %}
+{% load static %}
+
+{% block title %}تقرير الحضور والانصراف - نظام الموارد البشرية - ElDawliya{% endblock %}
+
+{% block page_title %}
+    <i class="fas fa-chart-line me-2"></i>
+    تقرير الحضور والانصراف
+{% endblock %}
+
+{% block header_actions %}
+    <div class="btn-group" role="group">
+        <button type="button" class="btn btn-primary" onclick="generateReport()">
+            <i class="fas fa-play"></i>
+            إنشاء التقرير
+        </button>
+        <button type="button" class="btn btn-outline-success" onclick="exportReport()">
+            <i class="fas fa-file-excel"></i>
+            تصدير Excel
+        </button>
+        <button type="button" class="btn btn-outline-info" onclick="printReport()">
+            <i class="fas fa-print"></i>
+            طباعة
+        </button>
+    </div>
+{% endblock %}
+
+{% block content %}
+<!-- Report Filters -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-filter me-2"></i>
+            معايير التقرير
+        </h5>
+    </div>
+    <div class="card-body">
+        <form method="get" id="reportForm">
+            <div class="row g-3">
+                <!-- Date Range -->
+                <div class="col-lg-3 col-md-6">
+                    <label for="start_date" class="form-label required">من تاريخ</label>
+                    <input type="date" class="form-control" id="start_date" name="start_date" 
+                           value="{{ form.start_date.value|default:'' }}" required>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <label for="end_date" class="form-label required">إلى تاريخ</label>
+                    <input type="date" class="form-control" id="end_date" name="end_date" 
+                           value="{{ form.end_date.value|default:'' }}" required>
+                </div>
+
+                <!-- Company Filter -->
+                <div class="col-lg-3 col-md-6">
+                    <label for="company" class="form-label">الشركة</label>
+                    <select class="form-select" id="company" name="company" onchange="loadBranches()">
+                        <option value="">جميع الشركات</option>
+                        {% for company in form.company.field.queryset %}
+                            <option value="{{ company.id }}" {% if form.company.value == company.id %}selected{% endif %}>
+                                {{ company.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Branch Filter -->
+                <div class="col-lg-3 col-md-6">
+                    <label for="branch" class="form-label">الفرع</label>
+                    <select class="form-select" id="branch" name="branch">
+                        <option value="">جميع الفروع</option>
+                        {% for branch in form.branch.field.queryset %}
+                            <option value="{{ branch.id }}" {% if form.branch.value == branch.id %}selected{% endif %}>
+                                {{ branch.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Employee Filter -->
+                <div class="col-lg-6 col-md-12">
+                    <label for="employee" class="form-label">الموظف</label>
+                    <select class="form-select" id="employee" name="employee">
+                        <option value="">جميع الموظفين</option>
+                        {% for employee in form.employee.field.queryset %}
+                            <option value="{{ employee.id }}" {% if form.employee.value == employee.id %}selected{% endif %}>
+                                {{ employee.full_name }} ({{ employee.employee_number }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Status Filter -->
+                <div class="col-lg-3 col-md-6">
+                    <label for="status" class="form-label">الحالة</label>
+                    <select class="form-select" id="status" name="status">
+                        <option value="">جميع الحالات</option>
+                        {% for value, label in form.status.field.choices %}
+                            <option value="{{ value }}" {% if form.status.value == value %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Report Type -->
+                <div class="col-lg-3 col-md-6">
+                    <label for="report_type" class="form-label">نوع التقرير</label>
+                    <select class="form-select" id="report_type" name="report_type">
+                        <option value="summary">ملخص</option>
+                        <option value="detailed">تفصيلي</option>
+                        <option value="daily">يومي</option>
+                        <option value="monthly">شهري</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="row mt-3">
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i>
+                        إنشاء التقرير
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
+                        <i class="fas fa-eraser"></i>
+                        مسح الفلاتر
+                    </button>
+                    <button type="button" class="btn btn-outline-info" onclick="setPresetRange('today')">
+                        اليوم
+                    </button>
+                    <button type="button" class="btn btn-outline-info" onclick="setPresetRange('week')">
+                        هذا الأسبوع
+                    </button>
+                    <button type="button" class="btn btn-outline-info" onclick="setPresetRange('month')">
+                        هذا الشهر
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if report_stats %}
+<!-- Report Statistics -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card border-start border-primary border-4">
+            <div class="stats-number text-primary">{{ report_stats.total_records }}</div>
+            <div class="stats-label">إجمالي السجلات</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card border-start border-success border-4">
+            <div class="stats-number text-success">{{ report_stats.present_count }}</div>
+            <div class="stats-label">حاضر</div>
+            <small class="text-muted">{{ report_stats.present_percentage|floatformat:1 }}%</small>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card border-start border-warning border-4">
+            <div class="stats-number text-warning">{{ report_stats.late_count }}</div>
+            <div class="stats-label">متأخر</div>
+            <small class="text-muted">{{ report_stats.late_percentage|floatformat:1 }}%</small>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card border-start border-info border-4">
+            <div class="stats-number text-info">{{ report_stats.overtime_count }}</div>
+            <div class="stats-label">وقت إضافي</div>
+            <small class="text-muted">{{ report_stats.overtime_percentage|floatformat:1 }}%</small>
+        </div>
+    </div>
+</div>
+
+<!-- Additional Statistics -->
+<div class="row mb-4">
+    <div class="col-lg-6 mb-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h4 class="text-warning mb-1">{{ report_stats.total_late_minutes }}</h4>
+                <p class="text-muted mb-0">إجمالي دقائق التأخير</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-3">
+        <div class="card">
+            <div class="card-body text-center">
+                <h4 class="text-info mb-1">{{ report_stats.total_overtime_minutes }}</h4>
+                <p class="text-muted mb-0">إجمالي دقائق الوقت الإضافي</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if attendance_summary %}
+<!-- Attendance Summary -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-table me-2"></i>
+            ملخص الحضور
+        </h5>
+        <div class="btn-group btn-group-sm">
+            <button type="button" class="btn btn-outline-primary" onclick="toggleView('table')">
+                <i class="fas fa-table"></i>
+                جدول
+            </button>
+            <button type="button" class="btn btn-outline-primary" onclick="toggleView('chart')">
+                <i class="fas fa-chart-bar"></i>
+                مخطط
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <!-- Table View -->
+        <div id="tableView" class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>الموظف</th>
+                        <th>القسم</th>
+                        <th>أيام الحضور</th>
+                        <th>أيام التأخير</th>
+                        <th>إجمالي ساعات العمل</th>
+                        <th>دقائق التأخير</th>
+                        <th>الوقت الإضافي</th>
+                        <th>معدل الحضور</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for employee_id, data in attendance_summary.items %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                {% if data.employee.photo %}
+                                    <img src="{{ data.employee.photo.url }}" class="rounded-circle me-2" width="32" height="32">
+                                {% else %}
+                                    <div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center me-2" 
+                                         style="width: 32px; height: 32px;">
+                                        <i class="fas fa-user text-white"></i>
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    <strong>{{ data.employee.full_name }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ data.employee.employee_number }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ data.employee.department.name|default:"غير محدد" }}</td>
+                        <td>
+                            <span class="badge bg-success">{{ data.days|length }}</span>
+                        </td>
+                        <td>
+                            {% with late_days=data.days.values|length %}
+                                {% if late_days > 0 %}
+                                    <span class="badge bg-warning">{{ late_days }}</span>
+                                {% else %}
+                                    <span class="text-muted">0</span>
+                                {% endif %}
+                            {% endwith %}
+                        </td>
+                        <td>
+                            {% with total_hours=data.days.values|length %}
+                                <strong>{{ total_hours|floatformat:1 }}</strong>
+                            {% endwith %}
+                        </td>
+                        <td>
+                            {% with total_late=data.days.values|length %}
+                                {% if total_late > 0 %}
+                                    <span class="text-warning">{{ total_late }}</span>
+                                {% else %}
+                                    <span class="text-muted">0</span>
+                                {% endif %}
+                            {% endwith %}
+                        </td>
+                        <td>
+                            {% with total_overtime=data.days.values|length %}
+                                {% if total_overtime > 0 %}
+                                    <span class="text-info">{{ total_overtime }}</span>
+                                {% else %}
+                                    <span class="text-muted">0</span>
+                                {% endif %}
+                            {% endwith %}
+                        </td>
+                        <td>
+                            <div class="progress" style="height: 20px;">
+                                {% with attendance_rate=85 %}
+                                    <div class="progress-bar bg-{% if attendance_rate >= 90 %}success{% elif attendance_rate >= 75 %}warning{% else %}danger{% endif %}" 
+                                         style="width: {{ attendance_rate }}%">
+                                        {{ attendance_rate }}%
+                                    </div>
+                                {% endwith %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Chart View -->
+        <div id="chartView" class="p-4" style="display: none;">
+            <canvas id="attendanceChart" height="100"></canvas>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if not attendance_summary and form.is_bound %}
+<!-- No Data Message -->
+<div class="card">
+    <div class="card-body text-center py-5">
+        <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+        <h5 class="text-muted">لا توجد بيانات للفترة المحددة</h5>
+        <p class="text-muted">يرجى تعديل معايير البحث وإعادة المحاولة</p>
+        <button type="button" class="btn btn-primary" onclick="clearFilters()">
+            <i class="fas fa-eraser"></i>
+            مسح الفلاتر
+        </button>
+    </div>
+</div>
+{% endif %}
+
+<!-- Loading Spinner -->
+<div class="loading-spinner text-center" style="display: none;">
+    <div class="spinner-border text-primary mb-3" role="status">
+        <span class="visually-hidden">جاري إنشاء التقرير...</span>
+    </div>
+    <h5>جاري إنشاء التقرير...</h5>
+    <p class="text-muted">يرجى الانتظار</p>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.required::after {
+    content: " *";
+    color: #dc3545;
+}
+
+.progress {
+    border-radius: 10px;
+}
+
+.stats-card {
+    transition: all 0.3s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+@media print {
+    .btn, .card-header .btn-group, .no-print {
+        display: none !important;
+    }
+    
+    .card {
+        border: 1px solid #dee2e6 !important;
+        box-shadow: none !important;
+    }
+    
+    .table {
+        font-size: 12px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Initialize chart
+let attendanceChart = null;
+
+$(document).ready(function() {
+    // Set default date range (last 30 days)
+    if (!$('#start_date').val()) {
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setDate(endDate.getDate() - 30);
+        
+        $('#start_date').val(startDate.toISOString().split('T')[0]);
+        $('#end_date').val(endDate.toISOString().split('T')[0]);
+    }
+    
+    // Initialize chart if data exists
+    {% if attendance_summary %}
+        initializeChart();
+    {% endif %}
+});
+
+function generateReport() {
+    if (!validateForm()) {
+        return;
+    }
+    
+    showLoading();
+    $('#reportForm').submit();
+}
+
+function validateForm() {
+    const startDate = $('#start_date').val();
+    const endDate = $('#end_date').val();
+    
+    if (!startDate || !endDate) {
+        showAlert('يرجى تحديد فترة التقرير', 'warning');
+        return false;
+    }
+    
+    if (new Date(startDate) > new Date(endDate)) {
+        showAlert('تاريخ البداية يجب أن يكون قبل تاريخ النهاية', 'warning');
+        return false;
+    }
+    
+    return true;
+}
+
+function clearFilters() {
+    $('#reportForm')[0].reset();
+    
+    // Set default date range
+    const endDate = new Date();
+    const startDate = new Date();
+    startDate.setDate(endDate.getDate() - 30);
+    
+    $('#start_date').val(startDate.toISOString().split('T')[0]);
+    $('#end_date').val(endDate.toISOString().split('T')[0]);
+}
+
+function setPresetRange(range) {
+    const today = new Date();
+    let startDate, endDate;
+    
+    switch(range) {
+        case 'today':
+            startDate = endDate = today;
+            break;
+        case 'week':
+            startDate = new Date(today);
+            startDate.setDate(today.getDate() - today.getDay());
+            endDate = new Date(startDate);
+            endDate.setDate(startDate.getDate() + 6);
+            break;
+        case 'month':
+            startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+            endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            break;
+    }
+    
+    $('#start_date').val(startDate.toISOString().split('T')[0]);
+    $('#end_date').val(endDate.toISOString().split('T')[0]);
+}
+
+function loadBranches() {
+    const companyId = $('#company').val();
+    const branchSelect = $('#branch');
+    
+    branchSelect.html('<option value="">جميع الفروع</option>');
+    
+    if (companyId) {
+        $.get('{% url "hr:get_branches_by_company" %}', {company_id: companyId}, function(data) {
+            data.branches.forEach(function(branch) {
+                branchSelect.append(`<option value="${branch.id}">${branch.name}</option>`);
+            });
+        });
+    }
+}
+
+function toggleView(viewType) {
+    if (viewType === 'table') {
+        $('#tableView').show();
+        $('#chartView').hide();
+    } else {
+        $('#tableView').hide();
+        $('#chartView').show();
+        
+        if (!attendanceChart) {
+            initializeChart();
+        }
+    }
+}
+
+function initializeChart() {
+    const ctx = document.getElementById('attendanceChart');
+    if (!ctx) return;
+    
+    // Sample data - replace with actual data from template
+    const data = {
+        labels: ['الأسبوع 1', 'الأسبوع 2', 'الأسبوع 3', 'الأسبوع 4'],
+        datasets: [
+            {
+                label: 'حاضر',
+                data: [85, 90, 88, 92],
+                backgroundColor: 'rgba(40, 167, 69, 0.8)',
+            },
+            {
+                label: 'متأخر',
+                data: [10, 8, 12, 6],
+                backgroundColor: 'rgba(255, 193, 7, 0.8)',
+            },
+            {
+                label: 'غائب',
+                data: [5, 2, 0, 2],
+                backgroundColor: 'rgba(220, 53, 69, 0.8)',
+            }
+        ]
+    };
+    
+    attendanceChart = new Chart(ctx, {
+        type: 'bar',
+        data: data,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: true,
+                    text: 'إحصائيات الحضور الأسبوعية'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function exportReport() {
+    if (!validateForm()) {
+        return;
+    }
+    
+    const params = new URLSearchParams($('#reportForm').serialize());
+    params.set('export', 'excel');
+    
+    window.open(`${window.location.pathname}?${params.toString()}`);
+}
+
+function printReport() {
+    window.print();
+}
+
+function showLoading() {
+    $('.loading-spinner').show();
+    $('.card').hide();
+}
+
+function hideLoading() {
+    $('.loading-spinner').hide();
+    $('.card').show();
+}
+
+function showAlert(message, type) {
+    const alertHtml = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'exclamation-circle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    $('.main-content').prepend(alertHtml);
+    
+    setTimeout(function() {
+        $('.alert').fadeOut();
+    }, 5000);
+}
+</script>
+{% endblock %}
