@@ -1,112 +1,231 @@
-# نظام تسجيل الأحداث (Audit Logging System)
+# تطبيق سجلات التدقيق (Audit Application)
 
-تم تصميم هذا التطبيق لتسجيل و تتبع أنشطة المستخدمين والأحداث المهمة في النظام، مما يساعد في الرقابة والامتثال وتحديد المشكلات الأمنية.
+## نظرة عامة (Application Overview)
 
-## المميزات الرئيسية
+تطبيق سجلات التدقيق مسؤول عن تسجيل ومراقبة جميع العمليات والأنشطة في نظام الدولية. يوفر نظام تدقيق شامل لتتبع تغييرات البيانات، عمليات المستخدمين، والأنشطة الأمنية مع إمكانيات بحث وتحليل متقدمة.
 
-- تسجيل تلقائي للأحداث (إنشاء، تحديث، حذف، عرض)
+**الغرض الرئيسي**: تسجيل شامل لجميع العمليات والأنشطة لضمان الأمان والمساءلة.
+
+## الميزات الرئيسية (Key Features)
+
+### 1. تسجيل العمليات (Operation Logging)
+- تسجيل تلقائي لجميع عمليات CRUD
+- تتبع تغييرات البيانات
 - تسجيل عمليات تسجيل الدخول والخروج
-- تخزين معلومات تفصيلية عن كل حدث (المستخدم، الوقت، IP، المتصفح، البيانات المتغيرة)
-- واجهة رسومية لاستعراض وتصفية وتصدير السجلات
-- تكامل مع نظام المستخدمين وإدارة الصلاحيات
-- مرونة في التخصيص والتوسعة
+- مراقبة الأنشطة الحساسة
+- تسجيل محاولات الوصول المرفوضة
 
-## المكونات الرئيسية
+### 2. معلومات مفصلة (Detailed Information)
+- معلومات المستخدم والجلسة
+- عنوان IP ومعلومات المتصفح
+- تفاصيل الكائن المتأثر
+- بيانات التغييرات (قبل وبعد)
+- الوقت الدقيق للعملية
 
-1. **نموذج AuditLog**: لتخزين بيانات السجلات
-2. **Middleware**: للتقاط الأحداث تلقائيًا
-3. **Signals**: لتسجيل عمليات الدخول والخروج
-4. **وظائف مساعدة**: للتسجيل اليدوي
-5. **واجهة إدارة**: لعرض وتصفية السجلات
+### 3. البحث والفلترة (Search & Filtering)
+- بحث متقدم في السجلات
+- فلترة حسب المستخدم والتاريخ
+- فلترة حسب نوع العملية
+- فلترة حسب التطبيق والنموذج
+- تصدير نتائج البحث
 
-## كيفية الاستخدام
+### 4. التقارير والتحليلات (Reports & Analytics)
+- تقارير النشاط اليومي/الشهري
+- إحصائيات المستخدمين
+- تحليل الأنماط الأمنية
+- تنبيهات الأنشطة المشبوهة
+- رسوم بيانية للأنشطة
+
+### 5. الأمان والامتثال (Security & Compliance)
+- حماية سجلات التدقيق من التلاعب
+- نسخ احتياطية آمنة
+- الامتثال لمعايير التدقيق
+- تشفير البيانات الحساسة
+- سياسات الاحتفاظ بالسجلات
+
+## هيكل النماذج (Models Documentation)
+
+### AuditLog (سجل التدقيق)
+```python
+class AuditLog(models.Model):
+    # أنواع العمليات
+    CREATE = 'CREATE'
+    UPDATE = 'UPDATE'
+    DELETE = 'DELETE'
+    VIEW = 'VIEW'
+    LOGIN = 'LOGIN'
+    LOGOUT = 'LOGOUT'
+    OTHER = 'OTHER'
+
+    ACTION_CHOICES = [
+        (CREATE, 'إنشاء'),
+        (UPDATE, 'تحديث'),
+        (DELETE, 'حذف'),
+        (VIEW, 'عرض'),
+        (LOGIN, 'تسجيل دخول'),
+        (LOGOUT, 'تسجيل خروج'),
+        (OTHER, 'أخرى'),
+    ]
+
+    # معلومات المستخدم
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True) # المستخدم
+
+    # تفاصيل العملية
+    action = models.CharField(max_length=50, choices=ACTION_CHOICES)    # الإجراء
+    timestamp = models.DateTimeField(auto_now_add=True)                 # وقت الإجراء
+    ip_address = models.GenericIPAddressField(null=True, blank=True)    # عنوان IP
+    user_agent = models.TextField(null=True, blank=True)                # معلومات المتصفح
+    app_name = models.CharField(max_length=100, null=True, blank=True)  # اسم التطبيق
+
+    # معلومات الكائن المتأثر
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True, blank=True) # نوع المحتوى
+    object_id = models.CharField(max_length=255, null=True, blank=True) # معرف الكائن
+    content_object = GenericForeignKey('content_type', 'object_id')     # الكائن المرتبط
+
+    # تفاصيل إضافية
+    object_repr = models.CharField(max_length=255, null=True, blank=True) # وصف الكائن
+    action_details = models.TextField(null=True, blank=True)            # تفاصيل الإجراء
+    change_data = models.JSONField(null=True, blank=True)               # بيانات التغييرات
+```
+
+### خصائص النموذج (Model Properties)
+- **الفهرسة المحسنة**: فهارس على الحقول المستخدمة في البحث
+- **العلاقات العامة**: استخدام GenericForeignKey لربط أي نموذج
+- **البيانات المرنة**: حقل JSON لتخزين بيانات التغييرات
+- **الأمان**: حماية من الحذف العرضي للسجلات
+
+## العروض (Views Documentation)
+
+### AuditLogListView
+```python
+class AuditLogListView(LoginRequiredMixin, PermissionRequiredMixin, ListView):
+    """عرض قائمة سجلات التدقيق"""
+    model = AuditLog
+    template_name = 'audit/log_list.html'
+    context_object_name = 'logs'
+    paginate_by = 50
+    permission_required = 'audit.view_auditlog'
+
+    def get_queryset(self):
+        # فلترة حسب المستخدم والتاريخ ونوع العملية
+        # البحث والترتيب
+        # تطبيق الصلاحيات
+```
+
+### audit_dashboard
+```python
+@login_required
+@permission_required('audit.view_auditlog')
+def audit_dashboard(request):
+    """لوحة تحكم سجلات التدقيق"""
+    # إحصائيات اليوم والأسبوع
+    # أكثر المستخدمين نشاطاً
+    # أكثر العمليات تكراراً
+    # السجلات الحديثة
+```
+
+## الإشارات (Signals)
+
+### تسجيل تلقائي للعمليات
+```python
+@receiver(post_save)
+def log_model_save(sender, instance, created, **kwargs):
+    """تسجيل عمليات الحفظ"""
+    action = AuditLog.CREATE if created else AuditLog.UPDATE
+    # إنشاء سجل التدقيق
+
+@receiver(post_delete)
+def log_model_delete(sender, instance, **kwargs):
+    """تسجيل عمليات الحذف"""
+    # إنشاء سجل الحذف
+
+@receiver(user_logged_in)
+def log_user_login(sender, request, user, **kwargs):
+    """تسجيل عمليات تسجيل الدخول"""
+    # تسجيل الدخول الناجح
+
+@receiver(user_logged_out)
+def log_user_logout(sender, request, user, **kwargs):
+    """تسجيل عمليات تسجيل الخروج"""
+    # تسجيل الخروج
+```
+
+## الأدوات المساعدة (Utilities)
+
+### دوال مساعدة
+```python
+def get_client_ip(request):
+    """الحصول على عنوان IP الحقيقي للعميل"""
+
+def get_change_data(instance, created):
+    """الحصول على بيانات التغييرات"""
+
+def log_custom_action(user, action, details, obj=None, app_name=None):
+    """تسجيل عملية مخصصة"""
+```
+
+## كيفية الاستخدام (Usage)
 
 ### التسجيل التلقائي
-
-تم تكوين middleware لتسجيل معظم العمليات تلقائيًا (GET، POST، PUT، DELETE)، لا يحتاج المطورون إلى أي تعديل للاستفادة من هذه الميزة.
+تم تكوين middleware لتسجيل معظم العمليات تلقائياً
 
 ### التسجيل اليدوي
-
-يمكن استخدام الوظائف المساعدة لتسجيل الأحداث المحددة يدويًا، على سبيل المثال:
-
 ```python
-from audit.utils import log_action, log_create, log_update, log_delete
+from audit.utils import log_custom_action
 
-# تسجيل عملية إنشاء
-log_create(request.user, object_instance, action_details="إنشاء عنصر جديد")
-
-# تسجيل عملية تحديث
-log_update(request.user, object_instance, 
-          original_data=old_data, new_data=new_data, 
-          action_details="تحديث بيانات العنصر")
-
-# تسجيل عملية حذف
-log_delete(request.user, object_instance, action_details="حذف العنصر")
-
-# تسجيل حدث مخصص
-log_action(request.user, AuditLog.OTHER, 
-          action_details="عملية مخصصة", 
-          app_name="my_app",
-          change_data={"key": "value"})
+# تسجيل عملية مخصصة
+log_custom_action(
+    user=request.user,
+    action='CUSTOM_ACTION',
+    details='تم تنفيذ عملية مخصصة',
+    app_name='my_app'
+)
 ```
 
 ### الوصول إلى السجلات
-
-يمكن الوصول إلى واجهة تسجيل الأحداث من خلال:
 - واجهة المستخدم: `/audit/`
 - لوحة الإدارة: قسم "سجلات التدقيق"
 
-يمكن تصفية السجلات حسب:
-- المستخدم
-- نوع الإجراء
-- التطبيق
-- التاريخ
-- البحث النصي
-
-## الصلاحيات
-
-يتطلب الوصول إلى سجلات التدقيق أحد الصلاحيات التالية:
+## الصلاحيات (Permissions)
 - مدير (is_superuser)
 - طاقم إداري (is_staff)
 - صلاحية خاصة: 'audit.view_auditlog'
 
-## التخصيص
+## التكامل مع التطبيقات الأخرى (Integration)
 
-يمكن تخصيص نظام التسجيل من خلال:
-
-1. **تعديل EXCLUDED_URLS في middleware.py**: لاستبعاد مسارات URL من التسجيل
-2. **تخصيص قوالب العرض**: في مجلد templates/audit
-3. **إضافة سجلات مخصصة**: باستخدام وظائف log_*
-
-## الأداء
-
-نظرًا لأن نظام التسجيل يقوم بعمليات كتابة مع كل طلب، فهناك بعض النصائح للأداء:
-- استخدم EXCLUDED_URLS لاستبعاد المسارات عالية الحجم
-- ضع في اعتبارك جدولة مهمة دورية لأرشفة السجلات القديمة
-- راقب حجم الجدول مع نمو البيانات
-
-## مثال على تسجيل إجراء مخصص
-
+### تسجيل العمليات في التطبيقات الأخرى
 ```python
-from django.views import View
-from django.http import HttpResponse
-from audit.utils import log_action
-from audit.models import AuditLog
+from audit.utils import log_custom_action
 
-class CustomActionView(View):
-    def post(self, request, *args, **kwargs):
-        # قم بالعملية المطلوبة
-        result = some_operation()
-        
-        # سجل الإجراء
-        log_action(
-            user=request.user,
-            action=AuditLog.OTHER,
-            action_details="عملية مخصصة: " + str(result),
-            app_name="my_app",
-            change_data={"result": result},
-            ip_address=get_client_ip(request),
-            user_agent=request.META.get('HTTP_USER_AGENT', '')
-        )
-        
-        return HttpResponse("تمت العملية بنجاح")
+def my_view(request):
+    # تنفيذ العملية
+    result = perform_some_action()
+
+    # تسجيل العملية
+    log_custom_action(
+        user=request.user,
+        action='CUSTOM_ACTION',
+        details='تم تنفيذ عملية مخصصة',
+        app_name='my_app'
+    )
+```
+
+### Middleware للتسجيل التلقائي
+```python
+class AuditMiddleware:
+    """Middleware لتسجيل العمليات تلقائياً"""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        # حفظ المستخدم وتسجيل العمليات
+        response = self.get_response(request)
+        return response
+```
+
+---
+
+**تم إنشاء هذا التوثيق في**: 2025-06-16
+**الإصدار**: 1.0
+**المطور**: فريق تطوير نظام الدولية

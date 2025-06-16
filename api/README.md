@@ -1,47 +1,150 @@
-# ElDawliya System API
+# تطبيق واجهة برمجة التطبيقات (API Application)
 
-API شامل لنظام الدولية الإداري مع دمج الذكاء الاصطناعي باستخدام Google Gemini.
+## نظرة عامة (Application Overview)
 
-## المميزات
+تطبيق واجهة برمجة التطبيقات يوفر REST API شامل لنظام الدولية مع تكامل الذكاء الاصطناعي. يتضمن إدارة مفاتيح API، محادثات الذكاء الاصطناعي، تسجيل الاستخدام، وواجهات برمجية لجميع وحدات النظام.
 
-### 🔐 المصادقة والأمان
-- **API Key Authentication**: مفاتيح API آمنة للتطبيقات الخارجية
-- **JWT Authentication**: رموز JWT للمصادقة المؤقتة
-- **Session Authentication**: مصادقة الجلسة للواجهات الداخلية
-- **صلاحيات متقدمة**: نظام صلاحيات مرن حسب المجموعات
+**الغرض الرئيسي**: توفير واجهات برمجية آمنة ومتكاملة مع دعم الذكاء الاصطناعي.
 
-### 📊 إدارة البيانات
-- **الموارد البشرية**: الموظفين والأقسام
-- **المخزون**: المنتجات والفئات والموردين
-- **المهام**: إدارة المهام والتكليفات
-- **الاجتماعات**: جدولة ومتابعة الاجتماعات
+## الميزات الرئيسية (Key Features)
 
-### 🤖 الذكاء الاصطناعي
-- **Gemini AI Chat**: محادثات ذكية مع السياق
-- **تحليل البيانات**: تحليل ذكي لبيانات النظام
-- **الرؤى والتوصيات**: استخراج الرؤى والتوصيات
+### 1. REST API شامل (Comprehensive REST API)
+- واجهات برمجية لجميع وحدات النظام
+- مصادقة آمنة بمفاتيح API
+- تسلسل البيانات المتقدم
+- فلترة وبحث متقدم
+- ترقيم الصفحات
 
-### 📈 المراقبة والتحليل
-- **سجلات الاستخدام**: تتبع جميع طلبات API
-- **إحصائيات الأداء**: مراقبة أداء API
-- **معدل الطلبات**: حماية من الإفراط في الاستخدام
+### 2. تكامل الذكاء الاصطناعي (AI Integration)
+- دعم Google Gemini
+- محادثات ذكية
+- تحليل البيانات بالذكاء الاصطناعي
+- معالجة اللغة الطبيعية
+- إجابات ذكية على الاستفسارات
 
-## التثبيت والإعداد
+### 3. إدارة مفاتيح API (API Key Management)
+- إنشاء وإدارة مفاتيح API
+- تحكم في الصلاحيات
+- تتبع الاستخدام
+- انتهاء صلاحية المفاتيح
+- إحصائيات الاستخدام
+
+### 4. تسجيل الاستخدام (Usage Logging)
+- تسجيل جميع طلبات API
+- مراقبة الأداء
+- إحصائيات مفصلة
+- تحليل الاستخدام
+- تنبيهات الحدود
+
+### 5. واجهة ويب تفاعلية (Interactive Web Interface)
+- واجهة ويب لاختبار API
+- محرر طلبات تفاعلي
+- عرض الاستجابات
+- توثيق تفاعلي
+- أمثلة عملية
+
+## هيكل النماذج (Models Documentation)
+
+### APIKey (مفتاح API)
+```python
+class APIKey(models.Model):
+    name = models.CharField(max_length=100)                            # اسم المفتاح
+    key = models.CharField(max_length=64, unique=True)                 # المفتاح
+    user = models.ForeignKey(User, on_delete=models.CASCADE)           # المستخدم
+    is_active = models.BooleanField(default=True)                      # نشط
+    permissions = models.JSONField(default=list)                       # الصلاحيات
+    rate_limit = models.IntegerField(default=1000)                     # حد المعدل (طلبات/ساعة)
+    expires_at = models.DateTimeField(null=True, blank=True)           # تاريخ الانتهاء
+    last_used = models.DateTimeField(null=True, blank=True)            # آخر استخدام
+    created_at = models.DateTimeField(auto_now_add=True)               # تاريخ الإنشاء
+```
+
+### GeminiConversation (محادثة Gemini)
+```python
+class GeminiConversation(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)           # المستخدم
+    title = models.CharField(max_length=200)                           # عنوان المحادثة
+    context = models.TextField(blank=True)                             # السياق
+    is_active = models.BooleanField(default=True)                      # نشط
+    created_at = models.DateTimeField(auto_now_add=True)               # تاريخ الإنشاء
+    updated_at = models.DateTimeField(auto_now=True)                   # تاريخ التحديث
+```
+
+### GeminiMessage (رسالة Gemini)
+```python
+class GeminiMessage(models.Model):
+    ROLE_CHOICES = [
+        ('user', 'مستخدم'),
+        ('assistant', 'مساعد'),
+        ('system', 'نظام'),
+    ]
+
+    conversation = models.ForeignKey(GeminiConversation, related_name='messages') # المحادثة
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES)       # الدور
+    content = models.TextField()                                       # المحتوى
+    timestamp = models.DateTimeField(auto_now_add=True)                # الوقت
+    tokens_used = models.IntegerField(default=0)                       # الرموز المستخدمة
+    response_time = models.FloatField(null=True, blank=True)           # وقت الاستجابة
+```
+
+### APIUsageLog (سجل استخدام API)
+```python
+class APIUsageLog(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4)        # معرف فريد
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True) # المستخدم
+    api_key = models.ForeignKey(APIKey, on_delete=models.SET_NULL, null=True) # مفتاح API
+    endpoint = models.CharField(max_length=200)                        # نقطة النهاية
+    method = models.CharField(max_length=10)                           # طريقة HTTP
+    status_code = models.IntegerField()                                # رمز الاستجابة
+    response_time = models.FloatField()                                # وقت الاستجابة (ثواني)
+    timestamp = models.DateTimeField(auto_now_add=True)                # الوقت
+    ip_address = models.GenericIPAddressField(null=True, blank=True)   # عنوان IP
+    user_agent = models.TextField(blank=True)                          # معلومات المتصفح
+```
+
+### AIProvider (مقدم خدمة الذكاء الاصطناعي)
+```python
+class AIProvider(models.Model):
+    PROVIDER_CHOICES = [
+        ('gemini', 'Google Gemini'),
+        ('openai', 'OpenAI GPT'),
+        ('claude', 'Anthropic Claude'),
+        ('huggingface', 'Hugging Face'),
+        ('ollama', 'Ollama (Local)'),
+        ('custom', 'مخصص'),
+    ]
+
+    name = models.CharField(max_length=100)                            # اسم المقدم
+    provider_type = models.CharField(max_length=20, choices=PROVIDER_CHOICES) # نوع المقدم
+    api_endpoint = models.URLField()                                   # نقطة النهاية
+    is_active = models.BooleanField(default=True)                      # نشط
+    max_tokens = models.IntegerField(default=1000)                     # الحد الأقصى للرموز
+    temperature = models.FloatField(default=0.7)                       # درجة الإبداع
+    description = models.TextField(blank=True)                         # الوصف
+```
+
+### AIConfiguration (إعدادات الذكاء الاصطناعي)
+```python
+class AIConfiguration(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='ai_configurations') # المستخدم
+    provider = models.ForeignKey(AIProvider, on_delete=models.CASCADE) # مقدم الخدمة
+    api_key = models.CharField(max_length=500)                         # مفتاح API
+    model_name = models.CharField(max_length=200, default='gemini-1.5-flash') # اسم النموذج
+    is_default = models.BooleanField(default=False)                    # الإعداد الافتراضي
+    is_active = models.BooleanField(default=True)                      # نشط
+    max_tokens = models.IntegerField(default=1000)                     # الحد الأقصى للرموز
+    temperature = models.FloatField(default=0.7)                       # درجة الإبداع
+    created_at = models.DateTimeField(auto_now_add=True)               # تاريخ الإنشاء
+```
+
+## التثبيت والإعداد (Installation & Setup)
 
 ### 1. تثبيت المتطلبات
-
 ```bash
 pip install -r requirements.txt
 ```
 
 ### 2. إعداد متغيرات البيئة
-
-انسخ ملف `.env.example` إلى `.env` وقم بتعديل القيم:
-
-```bash
-cp .env.example .env
-```
-
 ```env
 # Gemini AI Configuration
 GEMINI_API_KEY=your-gemini-api-key-here
@@ -54,20 +157,12 @@ API_THROTTLE_USER=60
 ```
 
 ### 3. تشغيل الترحيلات
-
 ```bash
 python manage.py makemigrations api
 python manage.py migrate
 ```
 
-### 4. إعداد مجموعات المستخدمين
-
-```bash
-python manage.py setup_api_groups
-```
-
-### 5. إنشاء مفتاح API
-
+### 4. إنشاء مفتاح API
 ```bash
 python manage.py create_api_key username --name "My API Key" --expires-days 30
 ```
