@@ -97,6 +97,27 @@
         transform: translateY(-3px);
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
     }
+
+    .task-card-link {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+    }
+
+    .task-card-link:hover {
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .task-card.clickable {
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .task-card.clickable:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    }
     
     .task-card .progress {
         height: 6px;
@@ -410,6 +431,53 @@
                     <div class="row">
                         {% for task in meeting.meeting_tasks.all %}
                         <div class="col-md-6">
+                            {% if user.is_superuser or user == task.assigned_to %}
+                            <a href="{% url 'meetings:task_detail' task_id=task.id %}" class="task-card-link">
+                                <div class="card task-card clickable">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h6 class="card-title mb-0">
+                                                <span class="status-badge {{ task.status }}"></span>
+                                                {{ task.description }}
+                                            </h6>
+                                            <span class="badge bg-{{ task.status|cut:'pending'|cut:'completed'|cut:'in_progress'|yesno:'warning,success,primary' }}">
+                                                {{ task.get_status_display }}
+                                            </span>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-user me-1"></i>
+                                                {{ task.assigned_to.get_full_name|default:task.assigned_to.username }}
+                                            </small>
+                                            <small class="text-muted">
+                                                <i class="fas fa-calendar-alt me-1"></i>
+                                                {{ task.end_date|date:"Y-m-d" }}
+                                            </small>
+                                        </div>
+
+                                        {% if task.status == 'in_progress' %}
+                                        <div class="progress">
+                                            <div class="progress-bar bg-primary" role="progressbar" style="width: 50%" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        {% elif task.status == 'completed' %}
+                                        <div class="progress">
+                                            <div class="progress-bar bg-success" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        {% else %}
+                                        <div class="progress">
+                                            <div class="progress-bar bg-warning" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        {% endif %}
+
+                                        <div class="mt-2 text-center">
+                                            <small class="text-primary">
+                                                <i class="fas fa-eye me-1"></i>انقر لعرض التفاصيل
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                            {% else %}
                             <div class="card task-card">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-start mb-2">
@@ -431,7 +499,7 @@
                                             {{ task.end_date|date:"Y-m-d" }}
                                         </small>
                                     </div>
-                                    
+
                                     {% if task.status == 'in_progress' %}
                                     <div class="progress">
                                         <div class="progress-bar bg-primary" role="progressbar" style="width: 50%" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100"></div>
@@ -445,8 +513,15 @@
                                         <div class="progress-bar bg-warning" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
                                     </div>
                                     {% endif %}
+
+                                    <div class="mt-2 text-center">
+                                        <small class="text-muted">
+                                            <i class="fas fa-lock me-1"></i>لا يمكن الوصول
+                                        </small>
+                                    </div>
                                 </div>
                             </div>
+                            {% endif %}
                         </div>
                         {% endfor %}
                     </div>

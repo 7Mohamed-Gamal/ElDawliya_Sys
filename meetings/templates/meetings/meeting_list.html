@@ -266,6 +266,50 @@
     .meeting-title:hover::after {
         width: 100%;
     }
+
+    .meeting-title.restricted {
+        color: #999;
+        cursor: not-allowed;
+        text-decoration: none;
+    }
+
+    .meeting-title.restricted:hover {
+        color: #999;
+        text-decoration: none;
+    }
+
+    .meeting-title.restricted::after {
+        display: none;
+    }
+
+    .access-indicator {
+        font-size: 0.8rem;
+        padding: 2px 8px;
+        border-radius: 12px;
+        margin-right: 8px;
+    }
+
+    .access-allowed {
+        background-color: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+        border: 1px solid rgba(40, 167, 69, 0.2);
+    }
+
+    .access-restricted {
+        background-color: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+        border: 1px solid rgba(220, 53, 69, 0.2);
+    }
+
+    .meeting-card.restricted {
+        opacity: 0.7;
+        background: linear-gradient(to bottom, #f8f9fa, #e9ecef);
+    }
+
+    .meeting-card.restricted:hover {
+        transform: none;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+    }
     
     @media (max-width: 768px) {
         .filters-container {
@@ -351,11 +395,26 @@
         {% if meetings %}
             {% for meeting in meetings %}
                 <div class="col-md-6 col-lg-4">
-                    <div class="card meeting-card {{ meeting.status }}">
+                    <div class="card meeting-card {{ meeting.status }} {% if not meeting.user_can_access %}restricted{% endif %}"
+                         {% if not meeting.user_can_access %}
+                         data-bs-toggle="tooltip"
+                         data-bs-placement="top"
+                         title="ليس لديك صلاحية للوصول إلى هذا الاجتماع. يجب أن تكون ضمن قائمة الحضور أو مدير عام."
+                         {% endif %}>
                         <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center">
                             <h5 class="mb-0">
                                 <span class="status-indicator status-{{ meeting.status }}"></span>
-                                <a href="{% url 'meetings:detail' pk=meeting.pk %}" class="meeting-title">{{ meeting.title }}</a>
+                                {% if meeting.user_can_access %}
+                                    <a href="{% url 'meetings:detail' pk=meeting.pk %}" class="meeting-title">{{ meeting.title }}</a>
+                                    <span class="access-indicator access-allowed">
+                                        <i class="fas fa-check-circle"></i> يمكن الوصول
+                                    </span>
+                                {% else %}
+                                    <span class="meeting-title restricted">{{ meeting.title }}</span>
+                                    <span class="access-indicator access-restricted">
+                                        <i class="fas fa-lock"></i> مقيد الوصول
+                                    </span>
+                                {% endif %}
                             </h5>
                             <span class="badge bg-{{ meeting.status|cut:'pending'|cut:'completed'|cut:'cancelled'|yesno:'warning,success,danger' }}">
                                 {{ meeting.get_status_display }}
@@ -382,7 +441,7 @@
                                             <i class="fas fa-edit"></i> تعديل
                                         </a>
                                     {% endif %}
-                                    
+
                                     {% if perms.meetings.delete_meeting or user|is_admin or user == meeting.created_by %}
                                         <button type="button" class="btn btn-sm btn-danger delete-meeting"
                                                 data-meeting-id="{{ meeting.pk }}"
@@ -390,10 +449,16 @@
                                             <i class="fas fa-trash"></i> حذف
                                         </button>
                                     {% endif %}
-                                    
-                                    <a href="{% url 'meetings:detail' pk=meeting.pk %}" class="btn btn-sm btn-primary rounded-circle" title="التفاصيل">
-                                        <i class="fas fa-eye"></i>
-                                    </a>
+
+                                    {% if meeting.user_can_access %}
+                                        <a href="{% url 'meetings:detail' pk=meeting.pk %}" class="btn btn-sm btn-primary rounded-circle" title="التفاصيل">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    {% else %}
+                                        <button class="btn btn-sm btn-secondary rounded-circle" title="لا يمكن الوصول" disabled>
+                                            <i class="fas fa-lock"></i>
+                                        </button>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -426,4 +491,59 @@
         <i class="fas fa-plus"></i>
     </a>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Handle delete meeting buttons
+        document.querySelectorAll('.delete-meeting').forEach(function(button) {
+            button.addEventListener('click', function() {
+                const meetingId = this.dataset.meetingId;
+                const meetingTitle = this.dataset.meetingTitle;
+
+                if (confirm(`هل أنت متأكد من حذف الاجتماع "${meetingTitle}"؟\n\nسيتم حذف كافة بيانات الاجتماع بما في ذلك الحضور والمهام المرتبطة به.`)) {
+                    // Create and submit a form for deletion
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `/meetings/${meetingId}/delete/`;
+
+                    // Add CSRF token
+                    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+                    if (csrfToken) {
+                        const csrfInput = document.createElement('input');
+                        csrfInput.type = 'hidden';
+                        csrfInput.name = 'csrfmiddlewaretoken';
+                        csrfInput.value = csrfToken.value;
+                        form.appendChild(csrfInput);
+                    }
+
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        });
+
+        // Add visual feedback for restricted meetings
+        document.querySelectorAll('.meeting-card.restricted').forEach(function(card) {
+            card.addEventListener('click', function(e) {
+                // Prevent any clicks on restricted meeting cards
+                e.preventDefault();
+                e.stopPropagation();
+
+                // Show a brief visual feedback
+                this.style.transform = 'scale(0.98)';
+                setTimeout(() => {
+                    this.style.transform = '';
+                }, 150);
+            });
+        });
+    });
+</script>
 {% endblock %}

@@ -1,0 +1,439 @@
+{% extends "meetings/base_meetings.html" %}
+{% load static %}
+{% load i18n %}
+{% load django_permissions %}
+
+{% block title %}تفاصيل المهمة - {{ task.description|truncatechars:50 }}{% endblock %}
+
+{% block page_title %}تفاصيل المهمة{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'meetings:dashboard' %}">الاجتماعات</a></li>
+<li class="breadcrumb-item"><a href="{% url 'meetings:detail' pk=meeting.pk %}">{{ meeting.title }}</a></li>
+<li class="breadcrumb-item active">تفاصيل المهمة</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .task-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 0.5rem;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    .task-status {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 2rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        margin-bottom: 1rem;
+    }
+    
+    .task-status.pending {
+        background-color: rgba(255, 152, 0, 0.2);
+        color: #ff9800;
+        border: 2px solid #ff9800;
+    }
+    
+    .task-status.in_progress {
+        background-color: rgba(33, 150, 243, 0.2);
+        color: #2196f3;
+        border: 2px solid #2196f3;
+    }
+    
+    .task-status.completed {
+        background-color: rgba(76, 175, 80, 0.2);
+        color: #4caf50;
+        border: 2px solid #4caf50;
+    }
+    
+    .info-card {
+        background: white;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        margin-bottom: 1.5rem;
+        border-left: 4px solid var(--primary-color);
+    }
+    
+    .info-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding: 0.5rem 0;
+    }
+    
+    .info-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .info-item i {
+        width: 24px;
+        text-align: center;
+        margin-left: 12px;
+        color: var(--primary-color);
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: #6c757d;
+        min-width: 120px;
+    }
+    
+    .progress-circle {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.2rem;
+        color: white;
+        margin: 0 auto;
+    }
+    
+    .step-item {
+        background: white;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        border-right: 4px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+    
+    .step-item.completed {
+        border-right-color: #28a745;
+        background: linear-gradient(90deg, rgba(40, 167, 69, 0.05) 0%, white 100%);
+    }
+    
+    .step-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .related-task-card {
+        background: white;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+        cursor: pointer;
+        text-decoration: none;
+        color: inherit;
+    }
+    
+    .related-task-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        text-decoration: none;
+        color: inherit;
+    }
+    
+    .btn-action {
+        border-radius: 0.375rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem 1.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .stats-card {
+        background: white;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        margin-bottom: 1rem;
+    }
+    
+    .stats-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: var(--primary-color);
+    }
+    
+    .stats-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Task Header -->
+    <div class="task-header">
+        <div class="d-flex justify-content-between align-items-start flex-wrap">
+            <div class="flex-grow-1">
+                <div class="task-status {{ task.status }}">{{ task.get_status_display }}</div>
+                <h2 class="mb-3">{{ task.description }}</h2>
+                <div class="d-flex flex-wrap gap-3">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-calendar-alt me-2"></i>
+                        <span>تاريخ الإنشاء: {{ task.created_at|date:"Y-m-d" }}</span>
+                    </div>
+                    {% if task.end_date %}
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-clock me-2"></i>
+                        <span>تاريخ الانتهاء: {{ task.end_date|date:"Y-m-d" }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="action-buttons d-flex gap-2 mt-3 mt-md-0">
+                <a href="{% url 'meetings:detail' pk=meeting.pk %}" class="btn btn-light btn-action">
+                    <i class="fas fa-arrow-right"></i>
+                    <span>العودة للاجتماع</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Task Information -->
+        <div class="col-md-8">
+            <!-- Task Details -->
+            <div class="info-card">
+                <h5 class="mb-3">
+                    <i class="fas fa-info-circle me-2 text-primary"></i>
+                    معلومات المهمة
+                </h5>
+                <div class="info-item">
+                    <i class="fas fa-user"></i>
+                    <span class="info-label">المكلف:</span>
+                    <span>{{ task.assigned_to.get_full_name|default:task.assigned_to.username }}</span>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-users"></i>
+                    <span class="info-label">الاجتماع:</span>
+                    <a href="{% url 'meetings:detail' pk=meeting.pk %}" class="text-decoration-none">{{ meeting.title }}</a>
+                </div>
+                <div class="info-item">
+                    <i class="fas fa-calendar"></i>
+                    <span class="info-label">تاريخ الاجتماع:</span>
+                    <span>{{ meeting.date|date:"Y-m-d H:i" }}</span>
+                </div>
+                {% if task.end_date %}
+                <div class="info-item">
+                    <i class="fas fa-flag-checkered"></i>
+                    <span class="info-label">تاريخ الانتهاء:</span>
+                    <span>{{ task.end_date|date:"Y-m-d" }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Progress Steps -->
+            <div class="info-card">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list-check me-2 text-primary"></i>
+                        خطوات التقدم
+                        {% if steps_stats %}
+                        <span class="badge bg-primary ms-2">{{ steps_stats.completed }}/{{ steps_stats.total }}</span>
+                        {% endif %}
+                    </h5>
+                </div>
+                
+                {% if steps %}
+                <div class="steps-list">
+                    {% for step in steps %}
+                    <div class="step-item {% if step.completed %}completed{% endif %}">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center mb-2">
+                                    {% if step.completed %}
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    {% else %}
+                                    <i class="far fa-circle text-muted me-2"></i>
+                                    {% endif %}
+                                    <strong>{{ step.description }}</strong>
+                                </div>
+                                {% if step.notes %}
+                                <p class="text-muted mb-2">{{ step.notes }}</p>
+                                {% endif %}
+                                <small class="text-muted">
+                                    <i class="fas fa-user me-1"></i>{{ step.created_by.get_full_name|default:step.created_by.username }}
+                                    <i class="fas fa-clock me-1 ms-3"></i>{{ step.created_at|date:"Y-m-d H:i" }}
+                                    {% if step.completed and step.completion_date %}
+                                    <i class="fas fa-check me-1 ms-3"></i>{{ step.completion_date|date:"Y-m-d H:i" }}
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">لم يتم إضافة أي خطوات حتى الآن</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Related Tasks -->
+            {% if related_tasks %}
+            <div class="info-card">
+                <h5 class="mb-3">
+                    <i class="fas fa-tasks me-2 text-primary"></i>
+                    مهام أخرى من نفس الاجتماع
+                </h5>
+                {% for related_task in related_tasks %}
+                <a href="{% url 'meetings:task_detail' task_id=related_task.id %}" class="related-task-card d-block">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="mb-1">{{ related_task.description|truncatechars:60 }}</h6>
+                            <small class="text-muted">
+                                <i class="fas fa-user me-1"></i>{{ related_task.assigned_to.get_full_name|default:related_task.assigned_to.username }}
+                            </small>
+                        </div>
+                        <span class="badge bg-{{ related_task.status|cut:'pending'|cut:'completed'|cut:'in_progress'|yesno:'warning,success,primary' }}">
+                            {{ related_task.get_status_display }}
+                        </span>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-md-4">
+            <!-- Progress Stats -->
+            {% if steps_stats %}
+            <div class="stats-card">
+                <div class="progress-circle" style="background: conic-gradient(#28a745 {{ steps_stats.progress_percentage }}%, #e9ecef {{ steps_stats.progress_percentage }}%);">
+                    {{ steps_stats.progress_percentage }}%
+                </div>
+                <div class="stats-label">نسبة الإنجاز</div>
+            </div>
+            {% endif %}
+
+            <!-- Task Status Update -->
+            {% if user.is_superuser or user == task.assigned_to %}
+            <div class="info-card">
+                <h6 class="mb-3">
+                    <i class="fas fa-edit me-2"></i>
+                    تحديث الحالة
+                </h6>
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="update_status" value="1">
+                    <div class="mb-3">
+                        <label for="{{ status_form.status.id_for_label }}" class="form-label">حالة المهمة</label>
+                        {{ status_form.status }}
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-save me-1"></i>
+                        حفظ التغييرات
+                    </button>
+                </form>
+            </div>
+
+            <!-- Add Progress Step -->
+            <div class="info-card">
+                <h6 class="mb-3">
+                    <i class="fas fa-plus me-2"></i>
+                    إضافة خطوة جديدة
+                </h6>
+                <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="add_step" value="1">
+                    <div class="mb-3">
+                        <label for="{{ step_form.description.id_for_label }}" class="form-label">وصف الخطوة</label>
+                        {{ step_form.description }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="{{ step_form.notes.id_for_label }}" class="form-label">ملاحظات</label>
+                        {{ step_form.notes }}
+                    </div>
+                    <div class="mb-3 form-check">
+                        {{ step_form.completed }}
+                        <label for="{{ step_form.completed.id_for_label }}" class="form-check-label">
+                            مكتملة
+                        </label>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="fas fa-plus me-1"></i>
+                        إضافة الخطوة
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+
+            <!-- Meeting Stats -->
+            {% if meeting_tasks_stats %}
+            <div class="info-card">
+                <h6 class="mb-3">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    إحصائيات مهام الاجتماع
+                </h6>
+                <div class="row text-center">
+                    <div class="col-6 mb-2">
+                        <div class="stats-number text-success">{{ meeting_tasks_stats.completed }}</div>
+                        <div class="stats-label">مكتملة</div>
+                    </div>
+                    <div class="col-6 mb-2">
+                        <div class="stats-number text-primary">{{ meeting_tasks_stats.in_progress }}</div>
+                        <div class="stats-label">قيد التنفيذ</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="stats-number text-warning">{{ meeting_tasks_stats.pending }}</div>
+                        <div class="stats-label">قيد الانتظار</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="stats-number text-info">{{ meeting_tasks_stats.total }}</div>
+                        <div class="stats-label">إجمالي</div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-submit status form on change
+        const statusSelect = document.querySelector('select[name="status"]');
+        if (statusSelect) {
+            statusSelect.addEventListener('change', function() {
+                if (confirm('هل تريد تحديث حالة المهمة؟')) {
+                    this.form.submit();
+                }
+            });
+        }
+        
+        // Form validation
+        const forms = document.querySelectorAll('form');
+        forms.forEach(form => {
+            form.addEventListener('submit', function(event) {
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>جاري الحفظ...';
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

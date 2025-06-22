@@ -21,4 +21,7 @@ urlpatterns = [
 
     # التقارير
     path('reports/', views.reports, name='reports'),
+
+    # المهام
+    path('task/<int:task_id>/', views.meeting_task_detail, name='task_detail'),
 ]

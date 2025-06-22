@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from .models import Meeting, Attendee, MeetingTask
 import json
-from .forms import MeetingForm
+from .forms import MeetingForm, MeetingTaskStepForm, MeetingTaskStatusForm
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from django.contrib.auth import get_user_model
@@ -13,32 +13,41 @@ from django.db.models import Count, Avg, Q
 User = get_user_model()
 
 @login_required
-@permission_required('meetings.view_meeting', login_url='accounts:access_denied')
 def dashboard(request):
     """عرض لوحة تحكم الاجتماعات"""
+    # تصفية الاجتماعات حسب صلاحية الوصول للمستخدم
+    if request.user.is_superuser:
+        # المدير العام يرى جميع الاجتماعات
+        accessible_meetings = Meeting.objects.all()
+    else:
+        # المستخدمون العاديون يرون فقط الاجتماعات التي أنشؤوها أو مدعوون إليها
+        accessible_meetings = Meeting.objects.filter(
+            Q(created_by=request.user) | Q(attendees__user=request.user)
+        ).distinct()
+
     # إحصائيات الاجتماعات
-    total_meetings = Meeting.objects.count()
-    
+    total_meetings = accessible_meetings.count()
+
     # اجتماعات اليوم
     today = timezone.now().date()
-    today_meetings = Meeting.objects.filter(date__date=today)
+    today_meetings = accessible_meetings.filter(date__date=today)
     today_meetings_count = today_meetings.count()
-    
+
     # اجتماعات الأسبوع
     week_start = today
     week_end = today + timedelta(days=6)
-    week_meetings = Meeting.objects.filter(date__date__gte=week_start, date__date__lte=week_end).count()
-    
+    week_meetings = accessible_meetings.filter(date__date__gte=week_start, date__date__lte=week_end).count()
+
     # الاجتماعات المكتملة
-    completed_meetings = Meeting.objects.filter(status='completed').count()
-    
+    completed_meetings = accessible_meetings.filter(status='completed').count()
+
     # الاجتماعات القادمة (من اليوم فصاعدًا، بما في ذلك الاجتماعات قيد الانتظار)
-    upcoming_meetings = Meeting.objects.filter(
+    upcoming_meetings = accessible_meetings.filter(
         date__date__gte=today,
     ).order_by('date')[:5]
-    
+
     # عدد الاجتماعات القادمة (مع التركيز على الاجتماعات قيد الانتظار)
-    upcoming_meetings_count = Meeting.objects.filter(
+    upcoming_meetings_count = accessible_meetings.filter(
         date__date__gte=today,
         status='pending'
     ).count()
@@ -56,35 +65,67 @@ def dashboard(request):
     return render(request, 'meetings/dashboard.html', context)
 
 @login_required
-@permission_required('meetings.view_meeting', login_url='accounts:access_denied')
 def meeting_list(request):
-    meetings = Meeting.objects.all().order_by('-date')
-    
+    # تصفية الاجتماعات حسب صلاحية الوصول للمستخدم
+    if request.user.is_superuser:
+        # المدير العام يرى جميع الاجتماعات
+        meetings = Meeting.objects.all().order_by('-date')
+    else:
+        # المستخدمون العاديون يرون فقط الاجتماعات التي أنشؤوها أو مدعوون إليها
+        meetings = Meeting.objects.filter(
+            Q(created_by=request.user) | Q(attendees__user=request.user)
+        ).distinct().order_by('-date')
+
     # تطبيق عوامل التصفية
     date_from = request.GET.get('date_from')
     date_to = request.GET.get('date_to')
     status = request.GET.get('status')
-    
+    search = request.GET.get('search')
+
     if date_from:
         meetings = meetings.filter(date__date__gte=date_from)
-    
+
     if date_to:
         meetings = meetings.filter(date__date__lte=date_to)
-    
+
     if status:
         meetings = meetings.filter(status=status)
-    
+
+    if search:
+        meetings = meetings.filter(
+            Q(title__icontains=search) | Q(topic__icontains=search)
+        )
+
+    # إضافة معلومات الحضور لكل اجتماع لتحديد إمكانية الوصول
+    meetings_with_access = []
+    for meeting in meetings:
+        # التحقق من إمكانية الوصول للمستخدم الحالي
+        user_can_access = (
+            request.user.is_superuser or
+            meeting.attendees.filter(user=request.user).exists() or
+            meeting.created_by == request.user
+        )
+        meeting.user_can_access = user_can_access
+        meetings_with_access.append(meeting)
+
     return render(request, 'meetings/meeting_list.html', {
-        'meetings': meetings,
+        'meetings': meetings_with_access,
         'date_from': date_from,
         'date_to': date_to,
-        'status': status
+        'status': status,
+        'search': search
     })
 
 @login_required
-@permission_required('meetings.view_meeting', login_url='accounts:access_denied')
 def meeting_detail(request, pk):
     meeting = get_object_or_404(Meeting, pk=pk)
+
+    # التحقق من صلاحية الوصول - فقط المدير العام أو الحضور أو منشئ الاجتماع
+    if not (request.user.is_superuser or
+            meeting.attendees.filter(user=request.user).exists() or
+            meeting.created_by == request.user):
+        messages.error(request, "ليس لديك صلاحية للوصول إلى هذا الاجتماع")
+        return redirect('meetings:list')
     
     # حساب إحصائيات المهام
     total_tasks = meeting.meeting_tasks.count()
@@ -315,20 +356,81 @@ def calendar_view(request):
     return render(request, 'meetings/calendar.html', {'meetings': meetings})
 
 @login_required
-@permission_required('meetings.view_meeting', login_url='accounts:access_denied')
-def task_detail(request, pk):
-    """عرض تفاصيل مهمة الاجتماع"""
+def meeting_task_detail(request, task_id):
+    """عرض تفاصيل مهمة الاجتماع مع إمكانية التحديث"""
     # الحصول على المهمة بواسطة المعرف
-    task = get_object_or_404(MeetingTask, pk=pk)
-    
+    task = get_object_or_404(MeetingTask, pk=task_id)
+
+    # التحقق من صلاحية الوصول - فقط المدير العام أو المكلف بالمهمة
+    if not (request.user.is_superuser or request.user == task.assigned_to):
+        messages.error(request, "ليس لديك صلاحية للوصول إلى هذه المهمة")
+        return redirect('meetings:detail', pk=task.meeting.pk)
+
     # الحصول على بيانات الاجتماع المرتبط
     meeting = task.meeting
-    
+
+    # معالجة إضافة خطوة جديدة
+    step_form = None
+    status_form = None
+
+    if request.method == 'POST':
+        if 'add_step' in request.POST:
+            step_form = MeetingTaskStepForm(request.POST, meeting_task=task, user=request.user)
+            if step_form.is_valid():
+                step_form.save()
+                messages.success(request, "تم إضافة الخطوة بنجاح")
+                return redirect('meetings:task_detail', task_id=task.id)
+        elif 'update_status' in request.POST:
+            status_form = MeetingTaskStatusForm(request.POST, instance=task)
+            if status_form.is_valid():
+                status_form.save()
+                messages.success(request, "تم تحديث حالة المهمة بنجاح")
+                return redirect('meetings:task_detail', task_id=task.id)
+
+    # إنشاء النماذج للعرض
+    if not step_form:
+        step_form = MeetingTaskStepForm(meeting_task=task, user=request.user)
+    if not status_form:
+        status_form = MeetingTaskStatusForm(instance=task)
+
+    # الحصول على الخطوات
+    steps = task.steps.all().order_by('created_at')
+
+    # المهام ذات الصلة من نفس الاجتماع
+    related_tasks = MeetingTask.objects.filter(meeting=task.meeting).exclude(id=task.id)[:5]
+
+    # إحصائيات مهام الاجتماع
+    meeting_tasks_stats = {
+        'total': task.meeting.meeting_tasks.count(),
+        'completed': task.meeting.meeting_tasks.filter(status='completed').count(),
+        'in_progress': task.meeting.meeting_tasks.filter(status='in_progress').count(),
+        'pending': task.meeting.meeting_tasks.filter(status='pending').count(),
+    }
+
+    # إحصائيات الخطوات
+    steps_stats = None
+    if steps.exists():
+        completed_steps = steps.filter(completed=True).count()
+        total_steps = steps.count()
+        progress_percentage = (completed_steps / total_steps * 100) if total_steps > 0 else 0
+        steps_stats = {
+            'completed': completed_steps,
+            'total': total_steps,
+            'progress_percentage': round(progress_percentage, 1)
+        }
+
     context = {
         'task': task,
         'meeting': meeting,
+        'step_form': step_form,
+        'status_form': status_form,
+        'steps': steps,
+        'related_tasks': related_tasks,
+        'meeting_tasks_stats': meeting_tasks_stats,
+        'steps_stats': steps_stats,
+        'is_meeting_task': True,
     }
-    return render(request, 'meetings/task_detail.html', context)
+    return render(request, 'meetings/meeting_task_detail.html', context)
 
 @login_required
 @permission_required('meetings.view_report', login_url='accounts:access_denied')
