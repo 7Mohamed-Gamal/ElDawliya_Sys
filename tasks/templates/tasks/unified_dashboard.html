@@ -1,0 +1,372 @@
+{% extends 'tasks/base_tasks.html' %}
+{% load static %}
+
+{% block title %}لوحة تحكم المهام الموحدة - نظام الدولية{% endblock %}
+
+{% block page_title %}لوحة تحكم المهام الموحدة{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item active">لوحة تحكم المهام</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .unified-stats-card {
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+        background: linear-gradient(135deg, var(--card-bg-1), var(--card-bg-2));
+    }
+    
+    .unified-stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    
+    .stats-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--icon-color-1), var(--icon-color-2));
+    }
+    
+    .task-type-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin-left: 8px;
+    }
+    
+    .task-item {
+        transition: all 0.2s ease;
+        border-left: 4px solid transparent;
+        padding: 12px;
+        margin-bottom: 8px;
+        border-radius: 8px;
+        background: #f8f9fa;
+    }
+    
+    .task-item:hover {
+        background-color: #e9ecef;
+        border-left-color: #007bff;
+        transform: translateX(5px);
+    }
+    
+    .task-item.overdue {
+        border-left-color: #dc3545;
+        background-color: #fff5f5;
+    }
+    
+    .task-item.completed {
+        border-left-color: #28a745;
+        background-color: #f0fff4;
+    }
+    
+    .progress-ring {
+        width: 120px;
+        height: 120px;
+        position: relative;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+    
+    .activity-item {
+        padding: 8px 12px;
+        border-radius: 6px;
+        margin-bottom: 6px;
+        background: #f8f9fa;
+        border-left: 3px solid #007bff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Enhanced Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card unified-stats-card h-100" style="--card-bg-1: #667eea; --card-bg-2: #764ba2; --icon-color-1: #667eea; --icon-color-2: #764ba2;">
+            <div class="card-body text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2 text-white-50">إجمالي المهام</h6>
+                        <h2 class="mb-0">{{ total_tasks }}</h2>
+                        <small class="text-white-50">
+                            {% if user_is_superuser %}جميع المهام في النظام{% else %}مهامك الشخصية{% endif %}
+                        </small>
+                    </div>
+                    <div class="stats-icon">
+                        <i class="fas fa-tasks fa-2x text-white"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="h6 mb-0">{{ task_type_stats.regular }}</div>
+                            <small>مهام عادية</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="h6 mb-0">{{ task_type_stats.meeting }}</div>
+                            <small>مهام اجتماعات</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card unified-stats-card h-100" style="--card-bg-1: #11998e; --card-bg-2: #38ef7d; --icon-color-1: #11998e; --icon-color-2: #38ef7d;">
+            <div class="card-body text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2 text-white-50">المهام المكتملة</h6>
+                        <h2 class="mb-0">{{ completed_tasks }}</h2>
+                        <small class="text-white-50">
+                            {{ completion_rate }}% معدل الإنجاز
+                        </small>
+                    </div>
+                    <div class="stats-icon">
+                        <i class="fas fa-check-circle fa-2x text-white"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <div class="progress" style="height: 8px; background-color: rgba(255,255,255,0.2);">
+                        <div class="progress-bar bg-white" role="progressbar" 
+                             style="width: {{ completion_rate }}%" 
+                             aria-valuenow="{{ completion_rate }}" 
+                             aria-valuemin="0" aria-valuemax="100">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card unified-stats-card h-100" style="--card-bg-1: #3742fa; --card-bg-2: #2f3542; --icon-color-1: #3742fa; --icon-color-2: #2f3542;">
+            <div class="card-body text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2 text-white-50">قيد التنفيذ</h6>
+                        <h2 class="mb-0">{{ in_progress_tasks }}</h2>
+                        <small class="text-white-50">
+                            {% if total_tasks > 0 %}
+                                {{ in_progress_tasks|floatformat:0 }}/{{ total_tasks }} مهمة
+                            {% else %}
+                                لا توجد مهام
+                            {% endif %}
+                        </small>
+                    </div>
+                    <div class="stats-icon">
+                        <i class="fas fa-spinner fa-2x text-white"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <a href="{% url 'tasks:list' %}?status=in_progress" class="btn btn-outline-light btn-sm w-100">
+                        <i class="fas fa-eye me-1"></i> عرض الجارية
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card unified-stats-card h-100" style="--card-bg-1: #ff3838; --card-bg-2: #ff9500; --icon-color-1: #ff3838; --icon-color-2: #ff9500;">
+            <div class="card-body text-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-subtitle mb-2 text-white-50">المهام المتأخرة</h6>
+                        <h2 class="mb-0">{{ overdue_tasks }}</h2>
+                        <small class="text-white-50">
+                            {% if overdue_tasks > 0 %}
+                                تحتاج متابعة عاجلة
+                            {% else %}
+                                جميع المهام في الوقت المحدد
+                            {% endif %}
+                        </small>
+                    </div>
+                    <div class="stats-icon">
+                        <i class="fas fa-exclamation-triangle fa-2x text-white"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <a href="{% url 'tasks:list' %}?overdue_only=true" class="btn btn-outline-light btn-sm w-100">
+                        <i class="fas fa-eye me-1"></i> عرض المتأخرة
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Tasks and Activity -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2 text-primary"></i>
+                    المهام الأخيرة
+                </h5>
+                <a href="{% url 'tasks:list' %}" class="btn btn-outline-primary btn-sm">
+                    عرض الكل
+                </a>
+            </div>
+            <div class="card-body">
+                {% for task in my_recent_tasks %}
+                <div class="task-item {% if task.is_overdue %}overdue{% elif task.status == 'completed' %}completed{% endif %}">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center mb-1">
+                                <span class="task-type-badge 
+                                    {% if task.task_type == 'regular' %}bg-primary text-white
+                                    {% else %}bg-info text-white{% endif %}">
+                                    {{ task.get_task_type_display }}
+                                </span>
+                                <h6 class="mb-0">
+                                    <a href="{{ task.get_absolute_url }}" class="text-decoration-none">
+                                        {{ task.get_display_title }}
+                                    </a>
+                                </h6>
+                            </div>
+                            <p class="text-muted mb-1 small">{{ task.description|truncatechars:80 }}</p>
+                            <div class="d-flex align-items-center">
+                                <span class="badge 
+                                    {% if task.status == 'completed' %}bg-success
+                                    {% elif task.status == 'in_progress' %}bg-primary
+                                    {% elif task.is_overdue %}bg-danger
+                                    {% else %}bg-secondary{% endif %} me-2">
+                                    {{ task.get_status_display }}
+                                </span>
+                                {% if task.meeting %}
+                                <small class="text-muted">
+                                    <i class="fas fa-users me-1"></i>{{ task.meeting.title }}
+                                </small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <small class="text-muted d-block">{{ task.assigned_to.username }}</small>
+                            {% if task.end_date %}
+                            <small class="text-muted d-block">
+                                {% if task.is_overdue %}
+                                    <i class="fas fa-exclamation-triangle text-danger"></i>
+                                {% endif %}
+                                {{ task.end_date|date:"M d" }}
+                            </small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-inbox fa-3x mb-3"></i>
+                    <p>لا توجد مهام حديثة</p>
+                    <a href="{% url 'tasks:create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-1"></i> إنشاء مهمة جديدة
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2 text-success"></i>
+                    نظرة سريعة
+                </h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="progress-ring mx-auto mb-3" style="background: conic-gradient(#28a745 {{ completion_rate }}%, #e9ecef {{ completion_rate }}%); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #28a745; font-size: 1.5rem; font-weight: bold;">
+                    {{ completion_rate }}%
+                </div>
+                <p class="mb-0 text-muted">معدل إنجاز المهام</p>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-clock me-2 text-info"></i>
+                    النشاط الأخير
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="activity-item">
+                    <div class="d-flex justify-content-between">
+                        <span>مهام جديدة</span>
+                        <strong>{{ recent_activity.new_tasks }}</strong>
+                    </div>
+                    <small class="text-muted">آخر 7 أيام</small>
+                </div>
+                <div class="activity-item">
+                    <div class="d-flex justify-content-between">
+                        <span>مهام مكتملة</span>
+                        <strong>{{ recent_activity.completed_tasks }}</strong>
+                    </div>
+                    <small class="text-muted">آخر 7 أيام</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Overdue Tasks Alert -->
+{% if overdue_tasks_list %}
+<div class="row">
+    <div class="col-12">
+        <div class="alert alert-warning">
+            <h5 class="alert-heading">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                مهام متأخرة تحتاج متابعة
+            </h5>
+            <div class="row">
+                {% for task in overdue_tasks_list %}
+                <div class="col-md-6 mb-2">
+                    <a href="{{ task.get_absolute_url }}" class="text-decoration-none">
+                        <div class="d-flex align-items-center">
+                            <span class="task-type-badge 
+                                {% if task.task_type == 'regular' %}bg-primary text-white
+                                {% else %}bg-info text-white{% endif %} me-2">
+                                {{ task.get_task_type_display }}
+                            </span>
+                            <span class="text-dark">{{ task.get_display_title }}</span>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Auto-refresh dashboard every 5 minutes
+    setTimeout(function() {
+        location.reload();
+    }, 300000);
+    
+    // Initialize tooltips
+    document.addEventListener('DOMContentLoaded', function() {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %}

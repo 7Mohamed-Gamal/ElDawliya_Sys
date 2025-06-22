@@ -10,89 +10,251 @@
 <li class="breadcrumb-item active">لوحة تحكم المهام</li>
 {% endblock %}
 
+{% block extra_css %}
+<style>
+    .stats-card {
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        border: none;
+        border-radius: 15px;
+        overflow: hidden;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    .stats-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--icon-color-1), var(--icon-color-2));
+    }
+
+    .completion-rate {
+        font-size: 2.5rem;
+        font-weight: 700;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .priority-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .task-item {
+        transition: all 0.2s ease;
+        border-left: 4px solid transparent;
+    }
+
+    .task-item:hover {
+        background-color: #f8f9fa;
+        border-left-color: #007bff;
+        transform: translateX(5px);
+    }
+
+    .progress-ring {
+        width: 120px;
+        height: 120px;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="row">
-    <!-- Summary Cards -->
-    <div class="col-md-6 col-lg-3">
-        <div class="card">
+<!-- Enhanced Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card stats-card h-100" style="--icon-color-1: #667eea; --icon-color-2: #764ba2;">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="card-subtitle text-muted mb-1">إجمالي المهام</h6>
-                        <h2 class="mb-0">{{ total_tasks }}</h2>
+                        <h6 class="card-subtitle text-muted mb-2">إجمالي المهام</h6>
+                        <h2 class="mb-0 text-primary">{{ total_tasks }}</h2>
+                        <small class="text-muted">
+                            {% if user_is_superuser %}جميع المهام في النظام{% else %}مهامك الشخصية{% endif %}
+                        </small>
                     </div>
-                    <div class="bg-primary rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                    <div class="stats-icon">
                         <i class="fas fa-tasks fa-2x text-white"></i>
                     </div>
                 </div>
                 <div class="mt-3">
-                    <a href="{% url 'tasks:list' %}" class="btn btn-sm btn-light w-100">
-                        <i class="fas fa-arrow-left ml-1"></i> عرض المهام
+                    <a href="{% url 'tasks:list' %}" class="btn btn-sm btn-outline-primary w-100">
+                        <i class="fas fa-eye me-1"></i> عرض المهام
                     </a>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="col-md-6 col-lg-3">
-        <div class="card">
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card stats-card h-100" style="--icon-color-1: #11998e; --icon-color-2: #38ef7d;">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="card-subtitle text-muted mb-1">المهام المكتملة</h6>
+                        <h6 class="card-subtitle text-muted mb-2">المهام المكتملة</h6>
                         <h2 class="mb-0 text-success">{{ completed_tasks }}</h2>
+                        <small class="text-success">
+                            {% if total_tasks > 0 %}
+                                {{ completion_rate }}% معدل الإنجاز
+                            {% else %}
+                                لا توجد مهام
+                            {% endif %}
+                        </small>
                     </div>
-                    <div class="bg-success rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                    <div class="stats-icon">
                         <i class="fas fa-check-circle fa-2x text-white"></i>
                     </div>
                 </div>
                 <div class="mt-3">
-                    <a href="{% url 'tasks:completed' %}" class="btn btn-sm btn-light w-100">
-                        <i class="fas fa-arrow-left ml-1"></i> عرض المهام المكتملة
+                    <a href="{% url 'tasks:completed' %}" class="btn btn-sm btn-outline-success w-100">
+                        <i class="fas fa-eye me-1"></i> عرض المكتملة
                     </a>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="col-md-6 col-lg-3">
-        <div class="card">
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card stats-card h-100" style="--icon-color-1: #3742fa; --icon-color-2: #2f3542;">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="card-subtitle text-muted mb-1">المهام قيد التنفيذ</h6>
+                        <h6 class="card-subtitle text-muted mb-2">قيد التنفيذ</h6>
                         <h2 class="mb-0 text-info">{{ in_progress_tasks }}</h2>
+                        <small class="text-info">
+                            {% if total_tasks > 0 %}
+                                {{ in_progress_tasks|floatformat:0 }}/{{ total_tasks }} مهمة
+                            {% else %}
+                                لا توجد مهام
+                            {% endif %}
+                        </small>
                     </div>
-                    <div class="bg-info rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                    <div class="stats-icon">
                         <i class="fas fa-spinner fa-2x text-white"></i>
                     </div>
                 </div>
                 <div class="mt-3">
-                    <a href="{% url 'tasks:list' %}?status=in_progress" class="btn btn-sm btn-light w-100">
-                        <i class="fas fa-arrow-left ml-1"></i> عرض المهام قيد التنفيذ
+                    <a href="{% url 'tasks:list' %}?status=in_progress" class="btn btn-sm btn-outline-info w-100">
+                        <i class="fas fa-eye me-1"></i> عرض الجارية
                     </a>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="col-md-6 col-lg-3">
-        <div class="card">
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="card stats-card h-100" style="--icon-color-1: #ff3838; --icon-color-2: #ff9500;">
             <div class="card-body">
                 <div class="d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="card-subtitle text-muted mb-1">المهام المتأخرة</h6>
+                        <h6 class="card-subtitle text-muted mb-2">المهام المتأخرة</h6>
                         <h2 class="mb-0 text-danger">{{ overdue_tasks }}</h2>
+                        <small class="text-danger">
+                            {% if overdue_tasks > 0 %}
+                                تحتاج متابعة عاجلة
+                            {% else %}
+                                جميع المهام في الوقت المحدد
+                            {% endif %}
+                        </small>
                     </div>
-                    <div class="bg-danger rounded-circle p-3 d-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
-                        <i class="fas fa-exclamation-circle fa-2x text-white"></i>
+                    <div class="stats-icon">
+                        <i class="fas fa-exclamation-triangle fa-2x text-white"></i>
                     </div>
                 </div>
                 <div class="mt-3">
-                    <a href="{% url 'tasks:list' %}?status=overdue" class="btn btn-sm btn-light w-100">
-                        <i class="fas fa-arrow-left ml-1"></i> عرض المهام المتأخرة
+                    <a href="{% url 'tasks:list' %}?overdue_only=true" class="btn btn-sm btn-outline-danger w-100">
+                        <i class="fas fa-eye me-1"></i> عرض المتأخرة
                     </a>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Performance Overview -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2 text-primary"></i>
+                    نظرة عامة على الأداء
+                </h5>
+                <div class="completion-rate">{{ completion_rate }}%</div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="progress mb-3" style="height: 10px;">
+                            <div class="progress-bar bg-success" role="progressbar"
+                                 style="width: {{ completion_rate }}%"
+                                 aria-valuenow="{{ completion_rate }}"
+                                 aria-valuemin="0" aria-valuemax="100">
+                            </div>
+                        </div>
+                        <p class="text-muted mb-0">معدل إنجاز المهام</p>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="h4 mb-0 text-success">{{ completed_tasks }}</div>
+                                <small class="text-muted">مكتملة</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="h4 mb-0 text-info">{{ in_progress_tasks }}</div>
+                                <small class="text-muted">جارية</small>
+                            </div>
+                            <div class="col-4">
+                                <div class="h4 mb-0 text-danger">{{ overdue_tasks }}</div>
+                                <small class="text-muted">متأخرة</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-flag me-2 text-warning"></i>
+                    توزيع الأولويات
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for priority in priority_stats %}
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="priority-badge
+                        {% if priority.priority == 'urgent' %}bg-danger text-white
+                        {% elif priority.priority == 'high' %}bg-warning text-dark
+                        {% elif priority.priority == 'medium' %}bg-info text-white
+                        {% else %}bg-secondary text-white{% endif %}">
+                        {% if priority.priority == 'urgent' %}عاجلة
+                        {% elif priority.priority == 'high' %}عالية
+                        {% elif priority.priority == 'medium' %}متوسطة
+                        {% else %}منخفضة{% endif %}
+                    </span>
+                    <span class="fw-bold">{{ priority.count }}</span>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center mb-0">لا توجد مهام</p>
+                {% endfor %}
             </div>
         </div>
     </div>

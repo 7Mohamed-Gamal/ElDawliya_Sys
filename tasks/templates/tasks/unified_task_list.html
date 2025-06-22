@@ -1,0 +1,389 @@
+{% extends 'tasks/base_tasks.html' %}
+{% load static %}
+
+{% block title %}قائمة المهام الموحدة - نظام الدولية{% endblock %}
+
+{% block page_title %}قائمة المهام الموحدة{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'tasks:dashboard' %}">لوحة التحكم</a></li>
+<li class="breadcrumb-item active">قائمة المهام</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .filter-card {
+        border: none;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border-radius: 10px;
+    }
+    
+    .task-card {
+        transition: all 0.2s ease;
+        border: none;
+        border-radius: 10px;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .task-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    .task-card.overdue {
+        border-left: 4px solid #dc3545;
+    }
+    
+    .task-card.completed {
+        border-left: 4px solid #28a745;
+    }
+    
+    .task-card.in-progress {
+        border-left: 4px solid #007bff;
+    }
+    
+    .task-type-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .priority-badge {
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 10px;
+    }
+    
+    .progress-bar-custom {
+        height: 6px;
+        border-radius: 3px;
+        background-color: #e9ecef;
+        overflow: hidden;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        border-radius: 3px;
+        transition: width 0.3s ease;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Statistics Summary -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <h3 class="mb-1">{{ total_count }}</h3>
+                <small>إجمالي المهام</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <h3 class="mb-1">{{ completed_count }}</h3>
+                <small>مكتملة</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <h3 class="mb-1">{{ in_progress_count }}</h3>
+                <small>قيد التنفيذ</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <h3 class="mb-1">{{ overdue_count }}</h3>
+                <small>متأخرة</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters and Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card filter-card">
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        {{ filter_form.search }}
+                    </div>
+                    <div class="col-md-2">
+                        {{ filter_form.task_type }}
+                    </div>
+                    <div class="col-md-2">
+                        {{ filter_form.status }}
+                    </div>
+                    <div class="col-md-2">
+                        {{ filter_form.priority }}
+                    </div>
+                    <div class="col-md-2">
+                        {{ filter_form.assigned_to }}
+                    </div>
+                    <div class="col-md-1">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            {{ filter_form.overdue_only }}
+                            <label class="form-check-label" for="{{ filter_form.overdue_only.id_for_label }}">
+                                {{ filter_form.overdue_only.label }}
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <a href="{% url 'tasks:create' %}" class="btn btn-success">
+                            <i class="fas fa-plus me-1"></i> إنشاء مهمة جديدة
+                        </a>
+                        {% if user_is_superuser %}
+                        <button type="button" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#bulkActionsModal">
+                            <i class="fas fa-cogs me-1"></i> إجراءات مجمعة
+                        </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtered Results Summary -->
+{% if filtered_stats.total != total_count %}
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="alert alert-info">
+            <i class="fas fa-filter me-2"></i>
+            عرض {{ filtered_stats.total }} من أصل {{ total_count }} مهمة
+            ({{ filtered_stats.regular }} عادية، {{ filtered_stats.meeting }} اجتماع)
+            <a href="{% url 'tasks:list' %}" class="btn btn-sm btn-outline-info ms-2">إزالة الفلاتر</a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Tasks List -->
+<div class="row">
+    {% for task in tasks %}
+    <div class="col-12 mb-3">
+        <div class="card task-card {% if task.is_overdue %}overdue{% elif task.status == 'completed' %}completed{% elif task.status == 'in_progress' %}in-progress{% endif %}">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="d-flex align-items-center mb-2">
+                            <span class="task-type-badge 
+                                {% if task.task_type == 'regular' %}bg-primary text-white
+                                {% else %}bg-info text-white{% endif %} me-2">
+                                {{ task.get_task_type_display }}
+                            </span>
+                            
+                            {% if task.priority %}
+                            <span class="priority-badge 
+                                {% if task.priority == 'urgent' %}bg-danger text-white
+                                {% elif task.priority == 'high' %}bg-warning text-dark
+                                {% elif task.priority == 'medium' %}bg-info text-white
+                                {% else %}bg-secondary text-white{% endif %} me-2">
+                                {{ task.get_priority_display }}
+                            </span>
+                            {% endif %}
+                            
+                            <span class="badge 
+                                {% if task.status == 'completed' %}bg-success
+                                {% elif task.status == 'in_progress' %}bg-primary
+                                {% elif task.is_overdue %}bg-danger
+                                {% else %}bg-secondary{% endif %}">
+                                {{ task.get_status_display }}
+                            </span>
+                        </div>
+                        
+                        <h5 class="card-title mb-2">
+                            <a href="{{ task.get_absolute_url }}" class="text-decoration-none">
+                                {{ task.get_display_title }}
+                            </a>
+                        </h5>
+                        
+                        <p class="card-text text-muted mb-2">
+                            {{ task.description|truncatechars:120 }}
+                        </p>
+                        
+                        <div class="d-flex align-items-center text-muted small">
+                            <i class="fas fa-user me-1"></i>
+                            <span class="me-3">{{ task.assigned_to.username }}</span>
+                            
+                            {% if task.meeting %}
+                            <i class="fas fa-users me-1"></i>
+                            <span class="me-3">{{ task.meeting.title }}</span>
+                            {% endif %}
+                            
+                            {% if task.steps_count > 0 %}
+                            <i class="fas fa-list me-1"></i>
+                            <span class="me-3">{{ task.steps_count }} خطوة</span>
+                            {% endif %}
+                            
+                            {% if task.end_date %}
+                            <i class="fas fa-calendar me-1"></i>
+                            <span class="{% if task.is_overdue %}text-danger{% endif %}">
+                                {{ task.end_date|date:"Y-m-d" }}
+                                {% if task.is_overdue %}
+                                    (متأخرة {{ task.days_until_due|add:"-1" }} يوم)
+                                {% elif task.days_until_due <= 3 %}
+                                    ({{ task.days_until_due }} يوم متبقي)
+                                {% endif %}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4 text-end">
+                        <div class="mb-2">
+                            <small class="text-muted d-block">التقدم</small>
+                            <div class="progress-bar-custom">
+                                <div class="progress-fill 
+                                    {% if task.progress_percentage == 100 %}bg-success
+                                    {% elif task.progress_percentage >= 50 %}bg-primary
+                                    {% else %}bg-warning{% endif %}" 
+                                    style="width: {{ task.progress_percentage }}%">
+                                </div>
+                            </div>
+                            <small class="text-muted">{{ task.progress_percentage }}%</small>
+                        </div>
+                        
+                        <div class="btn-group" role="group">
+                            <a href="{{ task.get_absolute_url }}" class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            {% if task.can_be_edited_by %}
+                            <button type="button" class="btn btn-outline-secondary btn-sm" 
+                                    onclick="updateTaskStatus('{{ task.id }}', '{{ task.status }}')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="text-center py-5">
+            <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+            <h4 class="text-muted">لا توجد مهام</h4>
+            <p class="text-muted">لم يتم العثور على مهام تطابق معايير البحث</p>
+            <a href="{% url 'tasks:create' %}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i> إنشاء مهمة جديدة
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if is_paginated %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="Task pagination">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">الأولى</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">السابقة</a>
+                </li>
+                {% endif %}
+                
+                <li class="page-item active">
+                    <span class="page-link">
+                        صفحة {{ page_obj.number }} من {{ page_obj.paginator.num_pages }}
+                    </span>
+                </li>
+                
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">التالية</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">الأخيرة</a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function updateTaskStatus(taskId, currentStatus) {
+    // Create a simple status update modal or dropdown
+    const statuses = {
+        'pending': 'قيد الانتظار',
+        'in_progress': 'قيد التنفيذ', 
+        'completed': 'مكتملة'
+    };
+    
+    let options = '';
+    for (const [value, label] of Object.entries(statuses)) {
+        const selected = value === currentStatus ? 'selected' : '';
+        options += `<option value="${value}" ${selected}>${label}</option>`;
+    }
+    
+    const newStatus = prompt(`تحديث حالة المهمة:\n\nاختر الحالة الجديدة:\n- pending: قيد الانتظار\n- in_progress: قيد التنفيذ\n- completed: مكتملة\n\nالحالة الحالية: ${statuses[currentStatus]}`, currentStatus);
+    
+    if (newStatus && newStatus !== currentStatus && statuses[newStatus]) {
+        fetch(`/tasks/${taskId}/update_status/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            },
+            body: JSON.stringify({status: newStatus})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('حدث خطأ: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('حدث خطأ في الاتصال');
+        });
+    }
+}
+
+// Auto-submit form on filter change
+document.addEventListener('DOMContentLoaded', function() {
+    const filterSelects = document.querySelectorAll('select[name="task_type"], select[name="status"], select[name="priority"], select[name="assigned_to"]');
+    filterSelects.forEach(select => {
+        select.addEventListener('change', function() {
+            this.form.submit();
+        });
+    });
+});
+</script>
+{% endblock %}
