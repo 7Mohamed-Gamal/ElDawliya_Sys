@@ -1,0 +1,63 @@
+{% load i18n %}
+
+<!-- Breadcrumb Navigation Component -->
+<div class="breadcrumb-container">
+    <div class="container-fluid">
+        <nav aria-label="مسار التنقل" role="navigation">
+            <ol class="breadcrumb">
+                <!-- Home Link -->
+                <li class="breadcrumb-item">
+                    <a href="{% url 'home_dashboard' %}" aria-label="الصفحة الرئيسية">
+                        <i class="breadcrumb-icon fas fa-home" aria-hidden="true"></i>
+                        <span>الرئيسية</span>
+                    </a>
+                </li>
+                
+                <!-- Dynamic Breadcrumb Items -->
+                {% for item in breadcrumb_items %}
+                    {% if item.url and not forloop.last %}
+                        <li class="breadcrumb-item">
+                            <a href="{{ item.url }}" {% if item.title %}title="{{ item.title }}"{% endif %}>
+                                {% if item.icon %}
+                                    <i class="breadcrumb-icon {{ item.icon }}" aria-hidden="true"></i>
+                                {% endif %}
+                                <span>{{ item.name }}</span>
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="breadcrumb-item active" aria-current="page">
+                            {% if item.icon %}
+                                <i class="breadcrumb-icon {{ item.icon }}" aria-hidden="true"></i>
+                            {% endif %}
+                            <span>{{ item.name }}</span>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<!-- Page Header Component -->
+{% if page_title or page_subtitle or page_actions %}
+<div class="page-header">
+    <div class="container-fluid">
+        <div class="page-header-content">
+            <div class="page-title-section">
+                {% if page_title %}
+                    <h1 class="page-title">{{ page_title }}</h1>
+                {% endif %}
+                {% if page_subtitle %}
+                    <p class="page-subtitle">{{ page_subtitle }}</p>
+                {% endif %}
+            </div>
+            
+            {% if page_actions %}
+                <div class="page-actions">
+                    {{ page_actions|safe }}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}

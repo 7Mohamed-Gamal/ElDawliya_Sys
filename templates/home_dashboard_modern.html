@@ -1,0 +1,692 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}الصفحة الرئيسية - نظام إدارة الشركة الدولية إنترناشونال{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Modern Dashboard Layout */
+    .dashboard-container {
+        min-height: calc(100vh - 200px);
+        padding: var(--space-6) 0;
+    }
+
+    .dashboard-header {
+        background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%);
+        color: var(--white);
+        padding: var(--space-8) 0;
+        margin-bottom: var(--space-8);
+        border-radius: var(--radius-2xl);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .dashboard-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+        opacity: 0.3;
+    }
+
+    .dashboard-header .container {
+        position: relative;
+        z-index: 1;
+    }
+
+    .welcome-title {
+        font-size: var(--text-4xl);
+        font-weight: var(--font-bold);
+        margin-bottom: var(--space-2);
+    }
+
+    .welcome-subtitle {
+        font-size: var(--text-lg);
+        opacity: 0.9;
+        margin-bottom: 0;
+    }
+
+    .user-avatar {
+        width: 80px;
+        height: 80px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: var(--radius-full);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: var(--text-3xl);
+        margin-bottom: var(--space-4);
+    }
+
+    /* Department Cards */
+    .department-section {
+        margin-bottom: var(--space-12);
+    }
+
+    .department-title {
+        font-size: var(--text-2xl);
+        font-weight: var(--font-semibold);
+        color: var(--text-primary);
+        margin-bottom: var(--space-6);
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+    }
+
+    .department-icon {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-700) 100%);
+        border-radius: var(--radius-xl);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--white);
+        font-size: var(--text-lg);
+    }
+
+    .feature-card {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-xl);
+        padding: var(--space-6);
+        text-decoration: none;
+        color: inherit;
+        transition: all var(--transition-base);
+        position: relative;
+        overflow: hidden;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .feature-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary-500) 0%, var(--primary-700) 100%);
+        transform: scaleX(0);
+        transition: transform var(--transition-base);
+    }
+
+    .feature-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-xl);
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .feature-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    .feature-card-icon {
+        width: 56px;
+        height: 56px;
+        background: linear-gradient(135deg, var(--primary-100) 0%, var(--primary-200) 100%);
+        border-radius: var(--radius-xl);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary-600);
+        font-size: var(--text-xl);
+        margin-bottom: var(--space-4);
+        transition: all var(--transition-base);
+    }
+
+    .feature-card:hover .feature-card-icon {
+        background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-700) 100%);
+        color: var(--white);
+        transform: scale(1.1);
+    }
+
+    .feature-card-title {
+        font-size: var(--text-lg);
+        font-weight: var(--font-semibold);
+        color: var(--text-primary);
+        margin-bottom: var(--space-2);
+    }
+
+    .feature-card-description {
+        font-size: var(--text-sm);
+        color: var(--text-secondary);
+        line-height: var(--leading-relaxed);
+        flex-grow: 1;
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+        margin-bottom: var(--space-8);
+    }
+
+    .stat-card {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-xl);
+        padding: var(--space-6);
+        text-align: center;
+        transition: all var(--transition-base);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+
+    .stat-number {
+        font-size: var(--text-3xl);
+        font-weight: var(--font-bold);
+        color: var(--primary-600);
+        margin-bottom: var(--space-2);
+    }
+
+    .stat-label {
+        font-size: var(--text-sm);
+        color: var(--text-secondary);
+        font-weight: var(--font-medium);
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-xl);
+        padding: var(--space-6);
+        margin-bottom: var(--space-8);
+    }
+
+    .quick-action-btn {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+        padding: var(--space-3) var(--space-4);
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-lg);
+        text-decoration: none;
+        color: var(--text-primary);
+        transition: all var(--transition-fast);
+        width: 100%;
+        margin-bottom: var(--space-3);
+    }
+
+    .quick-action-btn:hover {
+        background: var(--primary-50);
+        border-color: var(--primary-200);
+        color: var(--primary-700);
+        transform: translateX(-2px);
+    }
+
+    .quick-action-icon {
+        width: 32px;
+        height: 32px;
+        background: var(--primary-100);
+        border-radius: var(--radius-lg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary-600);
+        font-size: var(--text-sm);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .dashboard-header {
+            padding: var(--space-6) 0;
+            margin-bottom: var(--space-6);
+            text-align: center;
+        }
+
+        .welcome-title {
+            font-size: var(--text-2xl);
+        }
+
+        .welcome-subtitle {
+            font-size: var(--text-base);
+        }
+
+        .user-avatar {
+            width: 60px;
+            height: 60px;
+            font-size: var(--text-xl);
+            margin: 0 auto var(--space-4);
+        }
+
+        .department-title {
+            font-size: var(--text-xl);
+            text-align: center;
+            justify-content: center;
+        }
+
+        .feature-card {
+            padding: var(--space-4);
+            text-align: center;
+        }
+
+        .feature-card-icon {
+            margin: 0 auto var(--space-3);
+        }
+
+        .stats-grid .col {
+            margin-bottom: var(--space-4);
+        }
+    }
+
+    /* Dark theme adjustments */
+    [data-theme="dark"] .dashboard-header {
+        background: linear-gradient(135deg, var(--primary-700) 0%, var(--primary-900) 100%);
+    }
+
+    [data-theme="dark"] .feature-card-icon {
+        background: linear-gradient(135deg, var(--primary-800) 0%, var(--primary-900) 100%);
+        color: var(--primary-300);
+    }
+
+    [data-theme="dark"] .feature-card:hover .feature-card-icon {
+        background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%);
+        color: var(--white);
+    }
+
+    [data-theme="dark"] .quick-action-btn:hover {
+        background: var(--primary-900);
+        border-color: var(--primary-700);
+        color: var(--primary-300);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Welcome Header -->
+    <div class="dashboard-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="welcome-title">مرحباً، {{ request.user.first_name|default:request.user.username }}</h1>
+                    <p class="welcome-subtitle">نظام إدارة الشركة الدولية إنترناشونال - لوحة التحكم الرئيسية</p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Quick Stats -->
+        <div class="stats-grid grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="stat-card">
+                <div class="stat-number">{{ total_employees|default:0 }}</div>
+                <div class="stat-label">إجمالي الموظفين</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ active_meetings|default:0 }}</div>
+                <div class="stat-label">الاجتماعات النشطة</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ pending_tasks|default:0 }}</div>
+                <div class="stat-label">المهام المعلقة</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">{{ total_orders|default:0 }}</div>
+                <div class="stat-label">طلبات الشراء</div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="row mb-8">
+            <div class="col-lg-4">
+                <div class="quick-actions">
+                    <h3 class="text-lg font-semibold mb-4">إجراءات سريعة</h3>
+                    <a href="{% url 'meetings:create' %}" class="quick-action-btn">
+                        <div class="quick-action-icon">
+                            <i class="fas fa-plus"></i>
+                        </div>
+                        <span>إنشاء اجتماع جديد</span>
+                    </a>
+                    <a href="{% url 'tasks:create' %}" class="quick-action-btn">
+                        <div class="quick-action-icon">
+                            <i class="fas fa-tasks"></i>
+                        </div>
+                        <span>إضافة مهمة جديدة</span>
+                    </a>
+                    <a href="{% url 'Hr:employee_create' %}" class="quick-action-btn">
+                        <div class="quick-action-icon">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <span>إضافة موظف جديد</span>
+                    </a>
+                    <a href="{% url 'Purchase_orders:purchase_request_create' %}" class="quick-action-btn">
+                        <div class="quick-action-icon">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <span>طلب شراء جديد</span>
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-8">
+                <!-- Recent Activity placeholder -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">النشاط الأخير</h3>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-secondary">سيتم عرض النشاط الأخير هنا...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Department Sections -->
+        {% if perms.Hr.view_employee or perms.Hr.add_employee or perms.Hr.change_employee or perms.Hr.delete_employee %}
+        <div class="department-section">
+            <h2 class="department-title">
+                <div class="department-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                قسم الموارد البشرية
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <a href="{% url 'Hr:dashboard' %}" class="feature-card">
+                    <div class="feature-card-icon">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <h3 class="feature-card-title">الصفحة الرئيسية</h3>
+                    <p class="feature-card-description">الصفحة الرئيسية لقسم الموارد البشرية</p>
+                </a>
+                <a href="{% url 'Hr:employee_list' %}" class="feature-card">
+                    <div class="feature-card-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3 class="feature-card-title">قائمة الموظفين</h3>
+                    <p class="feature-card-description">عرض وإدارة بيانات جميع الموظفين</p>
+                </a>
+                <a href="{% url 'Hr:employee_create' %}" class="feature-card">
+                    <div class="feature-card-icon">
+                        <i class="fas fa-user-plus"></i>
+                    </div>
+                    <h3 class="feature-card-title">إضافة موظف</h3>
+                    <p class="feature-card-description">إضافة موظف جديد إلى النظام</p>
+                </a>
+                <a href="{% url 'Hr:department_list' %}" class="feature-card">
+                    <div class="feature-card-icon">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <h3 class="feature-card-title">الأقسام</h3>
+                    <p class="feature-card-description">إدارة أقسام الشركة</p>
+                </a>
+                <a href="{% url 'Hr:position_list' %}" class="feature-card">
+                    <div class="feature-card-icon">
+                        <i class="fas fa-briefcase"></i>
+                    </div>
+                    <h3 class="feature-card-title">المناصب</h3>
+                    <p class="feature-card-description">إدارة المناصب الوظيفية</p>
+                </a>
+                <a href="{% url 'Hr:attendance_list' %}" class="feature-card">
+                    <div class="feature-card-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <h3 class="feature-card-title">الحضور والانصراف</h3>
+                    <p class="feature-card-description">متابعة حضور وانصراف الموظفين</p>
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if perms.inventory.view_product or perms.inventory.add_product or perms.inventory.change_product or perms.inventory.delete_product %}
+        <div class="department-section">
+            <h2 class="department-title">
+                <div class="department-icon">
+                    <i class="fas fa-warehouse"></i>
+                </div>
+                قسم المخزن
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <a href="{% url 'inventory:dashboard' %}" class="feature-card">
+                    <div class="feature-card-icon">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <h3 class="feature-card-title">الصفحة الرئيسية</h3>
+                    <p class="feature-card-description">الصفحة الرئيسية للمخزن</p>
+                </a>
+                <a href="{% url 'inventory:product_list' %}" class="feature-card">
+                    <div class="feature-card-icon">
+                        <i class="fas fa-box"></i>
+                    </div>
+                    <h3 class="feature-card-title">قطع الغيار</h3>
+                    <p class="feature-card-description">إدارة مخزون قطع الغيار</p>
+                </a>
+                <a href="{% url 'inventory:invoice_list' %}" class="feature-card">
+                    <div class="feature-card-icon">
+                        <i class="fas fa-file-invoice"></i>
+                    </div>
+                    <h3 class="feature-card-title">الفواتير</h3>
+                    <p class="feature-card-description">إدارة فواتير المخزن</p>
+                </a>
+                <a href="{% url 'inventory:supplier_list' %}" class="feature-card">
+                    <div class="feature-card-icon">
+                        <i class="fas fa-truck"></i>
+                    </div>
+                    <h3 class="feature-card-title">الموردين</h3>
+                    <p class="feature-card-description">إدارة بيانات الموردين</p>
+                </a>
+                <a href="{% url 'inventory:category_list' %}" class="feature-card">
+                    <div class="feature-card-icon">
+                        <i class="fas fa-tags"></i>
+                    </div>
+                    <h3 class="feature-card-title">التصنيفات</h3>
+                    <p class="feature-card-description">إدارة تصنيفات المنتجات</p>
+                </a>
+                <a href="{% url 'inventory:reports' %}" class="feature-card">
+                    <div class="feature-card-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <h3 class="feature-card-title">التقارير</h3>
+                    <p class="feature-card-description">تقارير المخزن والمبيعات</p>
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if perms.meetings.view_meeting or perms.meetings.add_meeting or perms.meetings.change_meeting or perms.meetings.delete_meeting %}
+        <div class="department-section">
+            <h2 class="department-title">
+                <div class="department-icon">
+                    <i class="fas fa-calendar"></i>
+                </div>
+                قسم الاجتماعات
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <a href="{% url 'meetings:list' %}" class="feature-card">
+                    <div class="feature-card-icon">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <h3 class="feature-card-title">الصفحة الرئيسية</h3>
+                    <p class="feature-card-description">الصفحة الرئيسية للاجتماعات</p>
+                </a>
+                <a href="{% url 'meetings:list' %}" class="feature-card">
+                    <div class="feature-card-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <h3 class="feature-card-title">قائمة الاجتماعات</h3>
+                    <p class="feature-card-description">عرض جميع الاجتماعات</p>
+                </a>
+                <a href="{% url 'meetings:create' %}" class="feature-card">
+                    <div class="feature-card-icon">
+                        <i class="fas fa-plus"></i>
+                    </div>
+                    <h3 class="feature-card-title">إنشاء اجتماع</h3>
+                    <p class="feature-card-description">إضافة اجتماع جديد</p>
+                </a>
+                <a href="{% url 'meetings:calendar' %}" class="feature-card">
+                    <div class="feature-card-icon">
+                        <i class="fas fa-calendar-week"></i>
+                    </div>
+                    <h3 class="feature-card-title">التقويم</h3>
+                    <p class="feature-card-description">عرض الاجتماعات في التقويم</p>
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if perms.tasks.view_task or perms.tasks.add_task or perms.tasks.change_task or perms.tasks.delete_task %}
+        <div class="department-section">
+            <h2 class="department-title">
+                <div class="department-icon">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                قسم المهام
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <a href="{% url 'tasks:list' %}" class="feature-card">
+                    <div class="feature-card-icon">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <h3 class="feature-card-title">الصفحة الرئيسية</h3>
+                    <p class="feature-card-description">الصفحة الرئيسية للمهام</p>
+                </a>
+                <a href="{% url 'tasks:list' %}" class="feature-card">
+                    <div class="feature-card-icon">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <h3 class="feature-card-title">قائمة المهام</h3>
+                    <p class="feature-card-description">عرض جميع المهام</p>
+                </a>
+                <a href="{% url 'tasks:create' %}" class="feature-card">
+                    <div class="feature-card-icon">
+                        <i class="fas fa-plus"></i>
+                    </div>
+                    <h3 class="feature-card-title">إنشاء مهمة</h3>
+                    <p class="feature-card-description">إضافة مهمة جديدة</p>
+                </a>
+                <a href="{% url 'tasks:my_tasks' %}" class="feature-card">
+                    <div class="feature-card-icon">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <h3 class="feature-card-title">مهامي</h3>
+                    <p class="feature-card-description">المهام المخصصة لي</p>
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if perms.Purchase_orders.view_purchaseorder or perms.Purchase_orders.add_purchaseorder or perms.Purchase_orders.change_purchaseorder or perms.Purchase_orders.delete_purchaseorder %}
+        <div class="department-section">
+            <h2 class="department-title">
+                <div class="department-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+                قسم طلبات الشراء
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <a href="{% url 'Purchase_orders:dashboard' %}" class="feature-card">
+                    <div class="feature-card-icon">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <h3 class="feature-card-title">الصفحة الرئيسية</h3>
+                    <p class="feature-card-description">الصفحة الرئيسية لطلبات الشراء</p>
+                </a>
+                <a href="{% url 'Purchase_orders:purchase_request_list' %}" class="feature-card">
+                    <div class="feature-card-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <h3 class="feature-card-title">طلبات الشراء</h3>
+                    <p class="feature-card-description">عرض جميع طلبات الشراء</p>
+                </a>
+                <a href="{% url 'Purchase_orders:purchase_request_create' %}" class="feature-card">
+                    <div class="feature-card-icon">
+                        <i class="fas fa-plus"></i>
+                    </div>
+                    <h3 class="feature-card-title">طلب شراء جديد</h3>
+                    <p class="feature-card-description">إنشاء طلب شراء جديد</p>
+                </a>
+                <a href="{% url 'Purchase_orders:supplier_list' %}" class="feature-card">
+                    <div class="feature-card-icon">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <h3 class="feature-card-title">الموردين</h3>
+                    <p class="feature-card-description">إدارة بيانات الموردين</p>
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if perms.cars.view_car or perms.cars.add_car or perms.cars.change_car or perms.cars.delete_car %}
+        <div class="department-section">
+            <h2 class="department-title">
+                <div class="department-icon">
+                    <i class="fas fa-car"></i>
+                </div>
+                قسم السيارات
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <a href="{% url 'cars:home' %}" class="feature-card">
+                    <div class="feature-card-icon">
+                        <i class="fas fa-home"></i>
+                    </div>
+                    <h3 class="feature-card-title">الصفحة الرئيسية</h3>
+                    <p class="feature-card-description">الصفحة الرئيسية لتطبيق السيارات</p>
+                </a>
+                <a href="{% url 'cars:car_list' %}" class="feature-card">
+                    <div class="feature-card-icon">
+                        <i class="fas fa-car"></i>
+                    </div>
+                    <h3 class="feature-card-title">قائمة السيارات</h3>
+                    <p class="feature-card-description">عرض وإدارة السيارات</p>
+                </a>
+                <a href="{% url 'cars:trip_list' %}" class="feature-card">
+                    <div class="feature-card-icon">
+                        <i class="fas fa-route"></i>
+                    </div>
+                    <h3 class="feature-card-title">الرحلات</h3>
+                    <p class="feature-card-description">إدارة رحلات السيارات</p>
+                </a>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if user.is_superuser %}
+        <div class="department-section">
+            <h2 class="department-title">
+                <div class="department-icon">
+                    <i class="fas fa-cogs"></i>
+                </div>
+                إدارة النظام
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <a href="/admin/" class="feature-card">
+                    <div class="feature-card-icon">
+                        <i class="fas fa-tools"></i>
+                    </div>
+                    <h3 class="feature-card-title">لوحة الإدارة</h3>
+                    <p class="feature-card-description">إدارة النظام والمستخدمين</p>
+                </a>
+                <a href="{% url 'administrator:system_settings' %}" class="feature-card">
+                    <div class="feature-card-icon">
+                        <i class="fas fa-cog"></i>
+                    </div>
+                    <h3 class="feature-card-title">إعدادات النظام</h3>
+                    <p class="feature-card-description">تخصيص إعدادات النظام</p>
+                </a>
+                <a href="{% url 'administrator:backup' %}" class="feature-card">
+                    <div class="feature-card-icon">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <h3 class="feature-card-title">النسخ الاحتياطي</h3>
+                    <p class="feature-card-description">إدارة النسخ الاحتياطية</p>
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

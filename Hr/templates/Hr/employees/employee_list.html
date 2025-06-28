@@ -12,21 +12,24 @@
 {% block content %}
 <div class="page-wrapper">
     <!-- Page Header -->
-    <div class="page-header section-spacing">
+    <div class="page-header">
         <div class="page-header-content">
-            <div class="page-title">
-                <i class="fas fa-users page-title-icon"></i>
-                <span>إدارة الموظفين</span>
+            <div class="page-title-section">
+                <div class="page-title">
+                    <i class="fas fa-users page-title-icon"></i>
+                    <span>إدارة الموظفين</span>
+                </div>
+                <div class="page-subtitle">عرض وإدارة بيانات الموظفين في النظام</div>
             </div>
             <div class="page-header-actions">
-                <div class="btn-toolbar">
+                <div class="btn-group">
                     {% if perms.Hr.add_employee or user|is_admin %}
-                    <a href="{% url 'Hr:employees:create' %}" class="btn btn-primary">
+                    <a href="{% url 'Hr:employees:create' %}" class="btn btn-primary btn-with-icon">
                         <i class="fas fa-user-plus"></i>
                         <span>إضافة موظف جديد</span>
                     </a>
                     {% endif %}
-                    <button class="btn btn-secondary" onclick="exportToExcel()">
+                    <button class="btn btn-secondary btn-with-icon" onclick="exportToExcel()">
                         <i class="fas fa-file-excel"></i>
                         <span>تصدير Excel</span>
                     </button>
@@ -37,114 +40,137 @@
 
     <!-- Statistics Cards -->
     <div class="section-spacing">
-        <div class="stats-grid">
-    <div class="stats-card">
-        <div class="stats-icon">
-            <i class="fas fa-users"></i>
-        </div>
-        <div class="stats-content">
-            <div class="stats-number">{{ total_employees }}</div>
-            <div class="stats-label">إجمالي الموظفين</div>
-            <div class="stats-description">في النظام</div>
-        </div>
-    </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Total Employees Card -->
+            <div class="card card-stats">
+                <div class="card-body">
+                    <div class="stats-content">
+                        <div class="stats-icon stats-icon-primary">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stats-info">
+                            <div class="stats-number">{{ total_employees }}</div>
+                            <div class="stats-label">إجمالي الموظفين</div>
+                            <div class="stats-description">في النظام</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-    <div class="stats-card stats-card-success">
-        <div class="stats-icon">
-            <i class="fas fa-user-check"></i>
-        </div>
-        <div class="stats-content">
-            <div class="stats-number">{{ active_employees }}</div>
-            <div class="stats-label">الموظفين النشطين</div>
-            <div class="stats-description">{% widthratio active_employees total_employees 100 %}% من الإجمالي</div>
-        </div>
-    </div>
+            <!-- Active Employees Card -->
+            <div class="card card-stats">
+                <div class="card-body">
+                    <div class="stats-content">
+                        <div class="stats-icon stats-icon-success">
+                            <i class="fas fa-user-check"></i>
+                        </div>
+                        <div class="stats-info">
+                            <div class="stats-number">{{ active_employees }}</div>
+                            <div class="stats-label">الموظفين النشطين</div>
+                            <div class="stats-description">{% widthratio active_employees total_employees 100 %}% من الإجمالي</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-    <div class="stats-card stats-card-warning">
-        <div class="stats-icon">
-            <i class="fas fa-pause-circle"></i>
-        </div>
-        <div class="stats-content">
-            <div class="stats-number">{{ on_leave_employees }}</div>
-            <div class="stats-label">في إجازة</div>
-            <div class="stats-description">موظفين مؤقتاً</div>
-        </div>
-    </div>
+            <!-- On Leave Employees Card -->
+            <div class="card card-stats">
+                <div class="card-body">
+                    <div class="stats-content">
+                        <div class="stats-icon stats-icon-warning">
+                            <i class="fas fa-pause-circle"></i>
+                        </div>
+                        <div class="stats-info">
+                            <div class="stats-number">{{ on_leave_employees }}</div>
+                            <div class="stats-label">في إجازة</div>
+                            <div class="stats-description">موظفين مؤقتاً</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-    <div class="stats-card stats-card-danger">
-        <div class="stats-icon">
-            <i class="fas fa-user-times"></i>
-        </div>
-        <div class="stats-content">
-            <div class="stats-number">{{ resigned_employees }}</div>
-            <div class="stats-label">المستقيلين</div>
-            <div class="stats-description">موظفين سابقين</div>
-        </div>
-    </div>
+            <!-- Resigned Employees Card -->
+            <div class="card card-stats">
+                <div class="card-body">
+                    <div class="stats-content">
+                        <div class="stats-icon stats-icon-danger">
+                            <i class="fas fa-user-times"></i>
+                        </div>
+                        <div class="stats-info">
+                            <div class="stats-number">{{ resigned_employees }}</div>
+                            <div class="stats-label">المستقيلين</div>
+                            <div class="stats-description">موظفين سابقين</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- Status Toggle -->
     <div class="section-spacing">
-<div class="card">
-    <div class="card-body">
-        <div class="status-toggle-container">
-            <div class="status-toggle-content">
-                <div class="toggle-wrapper">
-                    <input id="employeeStatusToggle" type="checkbox" class="toggle-input" {% if status != 'inactive' %}checked{% endif %}>
-                    <label for="employeeStatusToggle" class="toggle-label">
-                        <span class="toggle-slider">
-                            <i class="fas fa-user-check toggle-icon-active"></i>
-                            <i class="fas fa-user-times toggle-icon-inactive"></i>
-                        </span>
-                    </label>
-                </div>
-                <div class="toggle-text">
-                    <h6 id="toggleStatusText" class="{% if status == 'inactive' %}text-danger{% else %}text-success{% endif %}">
-                        <i id="toggleStatusIcon" class="fas {% if status == 'inactive' %}fa-user-times{% else %}fa-user-check{% endif %}"></i>
-                        <span id="toggleStatusLabel">{% if status == 'inactive' %}موظفين غير نشطين{% else %}موظفين نشطين{% endif %}</span>
-                    </h6>
-                    <p class="text-muted">انقر للتبديل بين عرض الموظفين النشطين وغير النشطين</p>
-                </div>
-            </div>
-            <div class="toggle-stats">
-                <div class="mini-stats">
-                    <div class="mini-stat">
-                        <div class="mini-stat-icon text-success">
-                            <i class="fas fa-user-check"></i>
+        <div class="card">
+            <div class="card-body">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+                    <div class="flex items-center gap-4">
+                        <!-- Modern Toggle Switch -->
+                        <div class="switch-container">
+                            <input id="employeeStatusToggle" type="checkbox" class="switch-input" {% if status != 'inactive' %}checked{% endif %}>
+                            <label for="employeeStatusToggle" class="switch-label">
+                                <span class="switch-slider">
+                                    <i class="fas fa-user-check switch-icon-active"></i>
+                                    <i class="fas fa-user-times switch-icon-inactive"></i>
+                                </span>
+                            </label>
                         </div>
-                        <div class="mini-stat-number text-success" id="toggleActiveCount">{{ active_employees }}</div>
-                        <div class="mini-stat-label">نشط</div>
+
+                        <div class="toggle-info">
+                            <h6 id="toggleStatusText" class="text-lg font-semibold {% if status == 'inactive' %}text-danger{% else %}text-success{% endif %}">
+                                <i id="toggleStatusIcon" class="fas {% if status == 'inactive' %}fa-user-times{% else %}fa-user-check{% endif %} ml-2"></i>
+                                <span id="toggleStatusLabel">{% if status == 'inactive' %}موظفين غير نشطين{% else %}موظفين نشطين{% endif %}</span>
+                            </h6>
+                            <p class="text-muted text-sm">انقر للتبديل بين عرض الموظفين النشطين وغير النشطين</p>
+                        </div>
                     </div>
-                    <div class="mini-stat">
-                        <div class="mini-stat-icon text-danger">
-                            <i class="fas fa-user-times"></i>
+
+                    <!-- Mini Statistics -->
+                    <div class="flex gap-6">
+                        <div class="text-center">
+                            <div class="flex items-center justify-center w-12 h-12 bg-success-light rounded-full mb-2">
+                                <i class="fas fa-user-check text-success"></i>
+                            </div>
+                            <div class="text-2xl font-bold text-success" id="toggleActiveCount">{{ active_employees }}</div>
+                            <div class="text-sm text-muted">نشط</div>
                         </div>
-                        <div class="mini-stat-number text-danger" id="toggleInactiveCount">{{ resigned_employees }}</div>
-                        <div class="mini-stat-label">مستقيل</div>
+                        <div class="text-center">
+                            <div class="flex items-center justify-center w-12 h-12 bg-danger-light rounded-full mb-2">
+                                <i class="fas fa-user-times text-danger"></i>
+                            </div>
+                            <div class="text-2xl font-bold text-danger" id="toggleInactiveCount">{{ resigned_employees }}</div>
+                            <div class="text-sm text-muted">مستقيل</div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
 
     <!-- Search and Filter Section -->
     <div class="section-spacing">
         <div class="card">
-    <div class="card-header">
-        <div class="card-header-content">
-            <div class="card-title">
-                <i class="fas fa-filter"></i>
-                <span>البحث والتصفية المتقدمة</span>
+            <div class="card-header">
+                <div class="card-header-content">
+                    <div class="card-title">
+                        <i class="fas fa-filter"></i>
+                        <span>البحث والتصفية المتقدمة</span>
+                    </div>
+                    <div class="card-subtitle">ابحث عن الموظفين باستخدام معايير متعددة ومتقدمة</div>
+                </div>
+                <div class="card-header-actions">
+                    <span class="badge badge-secondary">{{ employees|length }} نتيجة</span>
+                </div>
             </div>
-            <div class="card-subtitle">ابحث عن الموظفين باستخدام معايير متعددة ومتقدمة</div>
-        </div>
-        <div class="card-header-actions">
-            <span class="badge badge-secondary">{{ employees|length }} نتيجة</span>
-        </div>
-    </div>
     <div class="card-body">
         <form method="get" action="" id="employeeFilterForm">
             <!-- Active Filters -->
@@ -201,23 +227,27 @@
 
             <!-- Search Section -->
             <div class="search-section">
-                <div class="search-row">
-                    <div class="search-main">
-                        <div class="input-group">
-                            <span class="input-group-text">
-                                <i class="fas fa-search"></i>
-                            </span>
-                            <input type="text" name="search" class="form-control"
-                                   placeholder="بحث شامل: الاسم، الكود، الرقم القومي، الهاتف، العنوان..."
-                                   value="{{ request.GET.search|default:'' }}" autocomplete="off">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-search"></i>بحث
-                            </button>
+                <div class="flex flex-col lg:flex-row gap-4">
+                    <div class="flex-1">
+                        <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" name="search" class="form-control"
+                                       placeholder="بحث شامل: الاسم، الكود، الرقم القومي، الهاتف، العنوان..."
+                                       value="{{ request.GET.search|default:'' }}" autocomplete="off">
+                                <button type="submit" class="btn btn-primary btn-with-icon">
+                                    <i class="fas fa-search"></i>
+                                    <span>بحث</span>
+                                </button>
+                            </div>
                         </div>
                     </div>
-                    <div class="search-actions">
-                        <button type="button" class="btn btn-outline-secondary" id="advancedSearchToggle">
-                            <i class="fas fa-sliders-h"></i>فلاتر متقدمة
+                    <div class="flex gap-2">
+                        <button type="button" class="btn btn-outline-secondary btn-with-icon" id="advancedSearchToggle">
+                            <i class="fas fa-sliders-h"></i>
+                            <span>فلاتر متقدمة</span>
                         </button>
                         <button type="button" class="btn btn-outline-secondary" id="viewToggle" title="تبديل العرض">
                             <i class="fas fa-th-large"></i>
@@ -236,7 +266,7 @@
                             الفلاتر الأساسية
                         </h6>
                     </div>
-                    <div class="filter-grid">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                         <div class="form-group">
                             <label class="form-label">
                                 <i class="fas fa-id-badge"></i>
@@ -370,19 +400,19 @@
 
             <!-- Action Buttons -->
             <div class="filter-actions">
-                <div class="filter-actions-row">
-                    <button type="submit" class="btn btn-primary">
+                <div class="flex flex-wrap gap-3">
+                    <button type="submit" class="btn btn-primary btn-with-icon">
                         <i class="fas fa-search"></i>
-                        تطبيق الفلاتر
+                        <span>تطبيق الفلاتر</span>
                     </button>
-                    <a href="{% url 'Hr:employees:list' %}" class="btn btn-outline-secondary">
+                    <a href="{% url 'Hr:employees:list' %}" class="btn btn-outline-secondary btn-with-icon">
                         <i class="fas fa-undo"></i>
-                        إعادة تعيين
+                        <span>إعادة تعيين</span>
                     </a>
-                    <button type="button" class="btn btn-outline-secondary" data-bs-toggle="collapse"
+                    <button type="button" class="btn btn-outline-secondary btn-with-icon" data-bs-toggle="collapse"
                             data-bs-target="#advancedFilters" aria-expanded="false" aria-controls="advancedFilters">
                         <i class="fas fa-sliders-h"></i>
-                        متقدم
+                        <span>متقدم</span>
                     </button>
                 </div>
             </div>
@@ -394,80 +424,82 @@
     <!-- Employee List Container -->
     <div class="section-spacing">
         <div class="card">
-    <div class="card-header">
-        <div class="card-header-content">
-            <div class="card-title" id="employeeListTitle">
-                {% if status == 'inactive' %}
-                <i id="employeeListIcon" class="fas fa-user-times text-danger"></i>
-                <span id="employeeListTitleText">قائمة الموظفين غير النشطين</span>
-                {% else %}
-                <i id="employeeListIcon" class="fas fa-users text-success"></i>
-                <span id="employeeListTitleText">قائمة الموظفين النشطين</span>
-                {% endif %}
-            </div>
-            {% if employees %}
-            <div class="card-subtitle">
-                <span class="badge badge-primary" id="employeeListCount">{{ employees|length }}</span> موظف
-                {% if request.GET %}
-                <span class="text-muted">
-                    <i class="fas fa-filter"></i>
-                    مطابق لمعايير البحث
-                </span>
-                {% endif %}
-            </div>
-            {% endif %}
-        </div>
-        <div class="card-header-actions">
-            <!-- View Toggle -->
-            <div class="btn-group" role="group">
-                <button type="button" class="btn btn-outline-secondary active" id="tableViewBtn" title="عرض جدول">
-                    <i class="fas fa-table"></i>
-                </button>
-                <button type="button" class="btn btn-outline-secondary" id="cardViewBtn" title="عرض بطاقات">
-                    <i class="fas fa-th-large"></i>
-                </button>
-            </div>
+            <div class="card-header">
+                <div class="card-header-content">
+                    <div class="card-title" id="employeeListTitle">
+                        {% if status == 'inactive' %}
+                        <i id="employeeListIcon" class="fas fa-user-times text-danger"></i>
+                        <span id="employeeListTitleText">قائمة الموظفين غير النشطين</span>
+                        {% else %}
+                        <i id="employeeListIcon" class="fas fa-users text-success"></i>
+                        <span id="employeeListTitleText">قائمة الموظفين النشطين</span>
+                        {% endif %}
+                    </div>
+                    {% if employees %}
+                    <div class="card-subtitle">
+                        <span class="badge badge-primary" id="employeeListCount">{{ employees|length }}</span> موظف
+                        {% if request.GET %}
+                        <span class="text-muted">
+                            <i class="fas fa-filter"></i>
+                            مطابق لمعايير البحث
+                        </span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-header-actions">
+                    <div class="flex gap-2">
+                        <!-- View Toggle -->
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-outline-secondary active" id="tableViewBtn" title="عرض جدول">
+                                <i class="fas fa-table"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" id="cardViewBtn" title="عرض بطاقات">
+                                <i class="fas fa-th-large"></i>
+                            </button>
+                        </div>
 
-            <!-- Sort Dropdown -->
-            <div class="dropdown">
-                <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="fas fa-sort"></i>
-                    ترتيب
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="sortDropdown">
-                    <li><h6 class="dropdown-header">ترتيب حسب</h6></li>
-                    <li><a class="dropdown-item sort-option" href="#" data-sort="emp_id">
-                        <i class="fas fa-hashtag"></i>رقم الموظف
-                    </a></li>
-                    <li><a class="dropdown-item sort-option" href="#" data-sort="emp_full_name">
-                        <i class="fas fa-user"></i>الاسم
-                    </a></li>
-                    <li><a class="dropdown-item sort-option" href="#" data-sort="department">
-                        <i class="fas fa-building"></i>القسم
-                    </a></li>
-                    <li><a class="dropdown-item sort-option" href="#" data-sort="emp_date_hiring">
-                        <i class="fas fa-calendar"></i>تاريخ التعيين
-                    </a></li>
-                    <li><hr class="dropdown-divider"></li>
-                    <li><h6 class="dropdown-header">اتجاه الترتيب</h6></li>
-                    <li><a class="dropdown-item sort-direction" href="#" data-direction="asc">
-                        <i class="fas fa-arrow-up"></i>تصاعدي
-                    </a></li>
-                    <li><a class="dropdown-item sort-direction" href="#" data-direction="desc">
-                        <i class="fas fa-arrow-down"></i>تنازلي
-                    </a></li>
-                </ul>
-            </div>
+                        <!-- Sort Dropdown -->
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary dropdown-toggle btn-with-icon" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-sort"></i>
+                                <span>ترتيب</span>
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="sortDropdown">
+                                <li><h6 class="dropdown-header">ترتيب حسب</h6></li>
+                                <li><a class="dropdown-item sort-option" href="#" data-sort="emp_id">
+                                    <i class="fas fa-hashtag"></i>رقم الموظف
+                                </a></li>
+                                <li><a class="dropdown-item sort-option" href="#" data-sort="emp_full_name">
+                                    <i class="fas fa-user"></i>الاسم
+                                </a></li>
+                                <li><a class="dropdown-item sort-option" href="#" data-sort="department">
+                                    <i class="fas fa-building"></i>القسم
+                                </a></li>
+                                <li><a class="dropdown-item sort-option" href="#" data-sort="emp_date_hiring">
+                                    <i class="fas fa-calendar"></i>تاريخ التعيين
+                                </a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><h6 class="dropdown-header">اتجاه الترتيب</h6></li>
+                                <li><a class="dropdown-item sort-direction" href="#" data-direction="asc">
+                                    <i class="fas fa-arrow-up"></i>تصاعدي
+                                </a></li>
+                                <li><a class="dropdown-item sort-direction" href="#" data-direction="desc">
+                                    <i class="fas fa-arrow-down"></i>تنازلي
+                                </a></li>
+                            </ul>
+                        </div>
 
-            <!-- Add Employee Button -->
-            {% if perms.Hr.add_employee or user|is_admin %}
-            <a href="{% url 'Hr:employees:create' %}" class="btn btn-primary">
-                <i class="fas fa-user-plus"></i>
-                إضافة موظف جديد
-            </a>
-            {% endif %}
-        </div>
-    </div>
+                        <!-- Add Employee Button -->
+                        {% if perms.Hr.add_employee or user|is_admin %}
+                        <a href="{% url 'Hr:employees:create' %}" class="btn btn-primary btn-with-icon">
+                            <i class="fas fa-user-plus"></i>
+                            <span>إضافة موظف جديد</span>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
     <div class="card-body" id="employeeListContainer">
         {% if employees %}
         <!-- Card View (Hidden by default) -->
@@ -618,88 +650,88 @@
 
         <!-- Table View -->
         <div id="tableView" class="table-responsive">
-            <table class="table" id="employeesTable">
-                <thead>
+            <table class="table table-modern" id="employeesTable">
+                <thead class="table-header">
                     <tr>
-                        <th class="sortable" data-sort="emp_id">
-                            <div class="table-header">
+                        <th class="table-th sortable" data-sort="emp_id">
+                            <div class="table-header-content">
                                 <i class="fas fa-hashtag"></i>
-                                الرقم
-                                <i class="fas fa-sort"></i>
+                                <span>الرقم</span>
+                                <i class="fas fa-sort sort-icon"></i>
                             </div>
                         </th>
-                        <th class="sortable" data-sort="emp_full_name">
-                            <div class="table-header">
+                        <th class="table-th sortable" data-sort="emp_full_name">
+                            <div class="table-header-content">
                                 <i class="fas fa-user"></i>
-                                الموظف
-                                <i class="fas fa-sort"></i>
+                                <span>الموظف</span>
+                                <i class="fas fa-sort sort-icon"></i>
                             </div>
                         </th>
-                        <th class="sortable" data-sort="department">
-                            <div class="table-header">
+                        <th class="table-th sortable" data-sort="department">
+                            <div class="table-header-content">
                                 <i class="fas fa-building"></i>
-                                القسم
-                                <i class="fas fa-sort"></i>
+                                <span>القسم</span>
+                                <i class="fas fa-sort sort-icon"></i>
                             </div>
                         </th>
-                        <th>
-                            <div class="table-header">
+                        <th class="table-th">
+                            <div class="table-header-content">
                                 <i class="fas fa-briefcase"></i>
-                                الوظيفة
+                                <span>الوظيفة</span>
                             </div>
                         </th>
-                        <th>
-                            <div class="table-header">
+                        <th class="table-th">
+                            <div class="table-header-content">
                                 <i class="fas fa-phone"></i>
-                                الهاتف
+                                <span>الهاتف</span>
                             </div>
                         </th>
-                        <th class="sortable" data-sort="working_condition">
-                            <div class="table-header">
+                        <th class="table-th sortable" data-sort="working_condition">
+                            <div class="table-header-content">
                                 <i class="fas fa-user-check"></i>
-                                الحالة
-                                <i class="fas fa-sort"></i>
+                                <span>الحالة</span>
+                                <i class="fas fa-sort sort-icon"></i>
                             </div>
                         </th>
-                        <th>
-                            <div class="table-header">
+                        <th class="table-th">
+                            <div class="table-header-content">
                                 <i class="fas fa-cogs"></i>
-                                العمليات
+                                <span>العمليات</span>
                             </div>
                         </th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="table-body">
                     {% for employee in employees %}
-                    <tr class="employee-row" data-emp-id="{{ employee.emp_id }}"
+                    <tr class="table-row employee-row" data-emp-id="{{ employee.emp_id }}"
                         data-emp-name="{{ employee.emp_full_name|default:employee.emp_first_name }}"
                         data-dept="{{ employee.department.dept_name|default:'' }}"
                         data-condition="{{ employee.working_condition|default:'' }}">
 
                         <!-- Employee ID -->
-                        <td>
+                        <td class="table-cell">
                             <span class="badge badge-primary">
                                 #{{ employee.emp_id }}
                             </span>
                         </td>
 
                         <!-- Employee Info -->
-                        <td>
-                            <div class="employee-info-cell">
-                                <div class="employee-avatar">
+                        <td class="table-cell">
+                            <div class="flex items-center gap-3">
+                                <div class="avatar-container">
                                     {% if employee.emp_image %}
                                     <img src="{{ employee.emp_image|binary_to_img }}" alt="{{ employee.emp_full_name }}"
-                                         class="avatar">
+                                         class="avatar avatar-md">
                                     {% else %}
-                                    <div class="avatar avatar-placeholder">
+                                    <div class="avatar avatar-md avatar-placeholder">
                                         {{ employee.emp_first_name|slice:":1"|upper }}
                                     </div>
                                     {% endif %}
                                 </div>
-                                <div class="employee-details">
-                                    <div class="employee-name-wrapper">
+                                <div class="employee-info">
+                                    <div class="employee-name">
                                         <a href="{% url 'Hr:employees:detail' employee.emp_id %}"
-                                           class="employee-name">
+                                           class="link link-primary font-medium">
                                             {{ employee.emp_full_name|default:employee.emp_first_name }}
                                         </a>
                                     </div>
@@ -716,67 +748,66 @@
                         </td>
 
                         <!-- Department -->
-                        <td>
+                        <td class="table-cell">
                             {% if employee.department %}
-                            <div class="department-info">
-                                <span class="badge badge-info">
-                                    <i class="fas fa-building"></i>
-                                    {{ employee.department.dept_name }}
-                                </span>
-                            </div>
+                            <span class="badge badge-info badge-with-icon">
+                                <i class="fas fa-building"></i>
+                                <span>{{ employee.department.dept_name }}</span>
+                            </span>
                             {% else %}
                             <span class="text-muted">-</span>
                             {% endif %}
                         </td>
 
                         <!-- Job -->
-                        <td>
+                        <td class="table-cell">
                             {% if employee.jop_name %}
-                            <div class="job-info">
-                                <span class="job-title">{{ employee.jop_name }}</span>
-                            </div>
+                            <span class="text-sm font-medium">{{ employee.jop_name }}</span>
                             {% else %}
                             <span class="text-muted">-</span>
                             {% endif %}
                         </td>
 
                         <!-- Phone -->
-                        <td>
+                        <td class="table-cell">
                             {% if employee.emp_phone1 %}
-                            <a href="tel:{{ employee.emp_phone1 }}" class="phone-link">
-                                <i class="fas fa-phone"></i>
+                            <a href="tel:{{ employee.emp_phone1 }}" class="link link-primary">
+                                <i class="fas fa-phone ml-1"></i>
                                 <span>{{ employee.emp_phone1 }}</span>
                             </a>
                             {% else %}
                             <span class="text-muted">-</span>
                             {% endif %}
                         </td>
+
                         <!-- Status -->
-                        <td>
-                            <div class="status-wrapper">
-                                {% if employee.working_condition == 'سارى' %}
-                                <span class="badge badge-success">
-                                    <i class="fas fa-check-circle"></i>نشط
-                                </span>
-                                {% elif employee.working_condition == 'منقطع عن العمل' %}
-                                <span class="badge badge-warning">
-                                    <i class="fas fa-pause-circle"></i>منقطع
-                                </span>
-                                {% elif employee.working_condition == 'استقالة' %}
-                                <span class="badge badge-danger">
-                                    <i class="fas fa-times-circle"></i>استقالة
-                                </span>
-                                {% else %}
-                                <span class="badge badge-secondary">
-                                    <i class="fas fa-question-circle"></i>{{ employee.working_condition|default:"غير محدد" }}
-                                </span>
-                                {% endif %}
-                            </div>
+                        <td class="table-cell">
+                            {% if employee.working_condition == 'سارى' %}
+                            <span class="badge badge-success badge-with-icon">
+                                <i class="fas fa-check-circle"></i>
+                                <span>نشط</span>
+                            </span>
+                            {% elif employee.working_condition == 'منقطع عن العمل' %}
+                            <span class="badge badge-warning badge-with-icon">
+                                <i class="fas fa-pause-circle"></i>
+                                <span>منقطع</span>
+                            </span>
+                            {% elif employee.working_condition == 'استقالة' %}
+                            <span class="badge badge-danger badge-with-icon">
+                                <i class="fas fa-times-circle"></i>
+                                <span>استقالة</span>
+                            </span>
+                            {% else %}
+                            <span class="badge badge-secondary badge-with-icon">
+                                <i class="fas fa-question-circle"></i>
+                                <span>{{ employee.working_condition|default:"غير محدد" }}</span>
+                            </span>
+                            {% endif %}
                         </td>
 
                         <!-- Actions -->
-                        <td>
-                            <div class="action-buttons">
+                        <td class="table-cell">
+                            <div class="table-actions">
                                 <div class="btn-group" role="group">
                                     <a href="{% url 'Hr:employees:detail' employee.emp_id %}"
                                        class="btn btn-outline-primary btn-sm" title="عرض التفاصيل">
@@ -825,46 +856,89 @@
 
         {% else %}
         <div class="empty-state">
-            <i class="fas fa-users"></i>
-            <p>لا يوجد موظفين بالمعايير المحددة.</p>
+            <div class="empty-state-content">
+                <div class="empty-state-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="empty-state-title">
+                    {% if status == 'inactive' %}
+                    لا توجد موظفين غير نشطين
+                    {% else %}
+                    لا توجد موظفين نشطين
+                    {% endif %}
+                </div>
+                <div class="empty-state-description">
+                    {% if request.GET %}
+                    لم يتم العثور على موظفين يطابقون معايير البحث المحددة.
+                    جرب تعديل الفلاتر أو البحث بكلمات مختلفة.
+                    {% else %}
+                    {% if status == 'inactive' %}
+                    لا يوجد موظفين غير نشطين في النظام حالياً.
+                    {% else %}
+                    لا يوجد موظفين نشطين في النظام حالياً.
+                    {% endif %}
+                    {% endif %}
+                </div>
+                <div class="empty-state-actions">
+                    {% if request.GET %}
+                    <a href="{% url 'Hr:employees:list' %}" class="btn btn-outline-primary btn-with-icon">
+                        <i class="fas fa-undo"></i>
+                        <span>إعادة تعيين الفلاتر</span>
+                    </a>
+                    {% endif %}
+                    {% if perms.Hr.add_employee or user|is_admin %}
+                    <a href="{% url 'Hr:employees:create' %}" class="btn btn-primary btn-with-icon">
+                        <i class="fas fa-user-plus"></i>
+                        <span>إضافة موظف جديد</span>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
         </div>
         {% endif %}
             </div>
         </div>
 
     {% if employees_by_department %}
-    <div class="card">
-        <div class="card-header">
-            <h5 class="card-title">
-                <i class="fas fa-chart-pie"></i>
-                توزيع الموظفين حسب الأقسام
-            </h5>
-        </div>
-        <div class="card-body">
-            <div class="stats-grid">
-                {% for dept in employees_by_department %}
-                <div class="stat-item">
-                    <div class="stat-card">
-                         <h6 class="stat-title">{{ dept.dept_name }}</h6>
-                         <div class="stat-value-row">
-                             <span class="stat-value">{{ dept.count }}</span>
-                             {% if dept.dept_code %}
-                             <a href="{% url 'Hr:departments:detail' dept.dept_code %}" class="btn btn-sm btn-link">عرض</a>
-                             {% endif %}
-                         </div>
-                         <div class="progress-bar-container">
-                             <div class="progress-bar"
-                                  style="width: {% widthratio dept.count total_employees 100 %}%;">
-                             </div>
-                         </div>
-                         <small class="stat-percentage">{% widthratio dept.count total_employees 100 %}% من الإجمالي</small>
+    <div class="section-spacing">
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header-content">
+                    <div class="card-title">
+                        <i class="fas fa-chart-pie"></i>
+                        <span>توزيع الموظفين حسب الأقسام</span>
                     </div>
+                    <div class="card-subtitle">عرض إحصائيات الموظفين موزعة على الأقسام المختلفة</div>
                 </div>
-                {% endfor %}
+            </div>
+            <div class="card-body">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    {% for dept in employees_by_department %}
+                    <div class="card card-stats">
+                        <div class="card-body">
+                            <div class="flex items-center justify-between mb-3">
+                                <h6 class="text-sm font-medium text-muted">{{ dept.dept_name }}</h6>
+                                {% if dept.dept_code %}
+                                <a href="{% url 'Hr:departments:detail' dept.dept_code %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                            <div class="text-2xl font-bold text-primary mb-2">{{ dept.count }}</div>
+                            <div class="progress-container mb-2">
+                                <div class="progress-bar bg-primary"
+                                     style="width: {% widthratio dept.count total_employees 100 %}%;">
+                                </div>
+                            </div>
+                            <small class="text-muted">{% widthratio dept.count total_employees 100 %}% من الإجمالي</small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
         </div>
     </div>
-        {% endif %}
+    {% endif %}
         </div>
     </div>
 
@@ -872,62 +946,55 @@
     <div class="section-spacing">
         <div class="card">
             <div class="card-header">
-                <h5 class="card-title">روابط سريعة</h5>
+                <div class="card-header-content">
+                    <div class="card-title">
+                        <i class="fas fa-link"></i>
+                        <span>روابط سريعة</span>
+                    </div>
+                    <div class="card-subtitle">الوصول السريع للعمليات الأكثر استخداماً</div>
+                </div>
             </div>
             <div class="card-body">
-                <div class="quick-links-grid">
-                    <div class="quick-link-item">
-                        <a href="{% url 'Hr:employees:list' %}" class="quick-link-card">
-                            <div class="quick-link-content">
-                                <div class="quick-link-icon">
-                                    <i class="fas fa-users"></i>
-                                </div>
-                                <div class="quick-link-text">
-                                    <h6>قائمة الموظفين</h6>
-                                    <p>عرض وإدارة بيانات الموظفين</p>
-                                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <a href="{% url 'Hr:employees:list' %}" class="card card-hover">
+                        <div class="card-body text-center">
+                            <div class="w-12 h-12 bg-primary-light rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-users text-primary text-xl"></i>
                             </div>
-                        </a>
-                    </div>
-                    <div class="quick-link-item">
-                        <a href="{% url 'Hr:employees:create' %}" class="quick-link-card">
-                            <div class="quick-link-content">
-                                <div class="quick-link-icon">
-                                    <i class="fas fa-user-plus"></i>
-                                </div>
-                                <div class="quick-link-text">
-                                    <h6>إضافة موظف جديد</h6>
-                                    <p>تسجيل بيانات موظف جديد</p>
-                                </div>
+                            <h6 class="font-medium mb-2">قائمة الموظفين</h6>
+                            <p class="text-sm text-muted">عرض وإدارة بيانات الموظفين</p>
+                        </div>
+                    </a>
+
+                    <a href="{% url 'Hr:employees:create' %}" class="card card-hover">
+                        <div class="card-body text-center">
+                            <div class="w-12 h-12 bg-success-light rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-user-plus text-success text-xl"></i>
                             </div>
-                        </a>
-                    </div>
-                    <div class="quick-link-item">
-                        <a href="{% url 'Hr:departments:list' %}" class="quick-link-card">
-                            <div class="quick-link-content">
-                                <div class="quick-link-icon">
-                                    <i class="fas fa-building"></i>
-                                </div>
-                                <div class="quick-link-text">
-                                    <h6>الأقسام</h6>
-                                    <p>عرض وإدارة الأقسام</p>
-                                </div>
+                            <h6 class="font-medium mb-2">إضافة موظف جديد</h6>
+                            <p class="text-sm text-muted">تسجيل بيانات موظف جديد</p>
+                        </div>
+                    </a>
+
+                    <a href="{% url 'Hr:departments:list' %}" class="card card-hover">
+                        <div class="card-body text-center">
+                            <div class="w-12 h-12 bg-info-light rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-building text-info text-xl"></i>
                             </div>
-                        </a>
-                    </div>
-                    <div class="quick-link-item">
-                        <a href="{% url 'Hr:jobs:list' %}" class="quick-link-card">
-                            <div class="quick-link-content">
-                                <div class="quick-link-icon">
-                                    <i class="fas fa-briefcase"></i>
-                                </div>
-                                <div class="quick-link-text">
-                                    <h6>الوظائف</h6>
-                                    <p>عرض وإدارة المسميات الوظيفية</p>
-                                </div>
+                            <h6 class="font-medium mb-2">الأقسام</h6>
+                            <p class="text-sm text-muted">عرض وإدارة الأقسام</p>
+                        </div>
+                    </a>
+
+                    <a href="{% url 'Hr:jobs:list' %}" class="card card-hover">
+                        <div class="card-body text-center">
+                            <div class="w-12 h-12 bg-warning-light rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-briefcase text-warning text-xl"></i>
                             </div>
-                        </a>
-                    </div>
+                            <h6 class="font-medium mb-2">الوظائف</h6>
+                            <p class="text-sm text-muted">عرض وإدارة المسميات الوظيفية</p>
+                        </div>
+                    </a>
                 </div>
             </div>
         </div>

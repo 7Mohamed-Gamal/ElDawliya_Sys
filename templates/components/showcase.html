@@ -1,0 +1,417 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}مكتبة المكونات - نظام الدولية{% endblock %}
+
+{% block breadcrumb %}
+    {% with breadcrumb_items=breadcrumb_items page_title="مكتبة المكونات" page_subtitle="عرض شامل لجميع مكونات واجهة المستخدم" %}
+        {% include 'components/breadcrumb.html' %}
+    {% endwith %}
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Buttons Section -->
+        <div class="content-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <div class="section-icon">
+                        <i class="fas fa-mouse-pointer"></i>
+                    </div>
+                    الأزرار
+                </h2>
+                <p class="section-subtitle">مجموعة متنوعة من الأزرار للتفاعل مع النظام</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Primary Buttons -->
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">الأزرار الأساسية</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex flex-column gap-3">
+                            <button class="btn btn-primary">
+                                <i class="fas fa-save"></i>
+                                <span>حفظ</span>
+                            </button>
+                            <button class="btn btn-secondary">إلغاء</button>
+                            <button class="btn btn-success">
+                                <i class="fas fa-check"></i>
+                                <span>موافق</span>
+                            </button>
+                            <button class="btn btn-warning">تحذير</button>
+                            <button class="btn btn-error">حذف</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Outline Buttons -->
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">الأزرار المحددة</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex flex-column gap-3">
+                            <button class="btn btn-outline-primary">أساسي</button>
+                            <button class="btn btn-outline-secondary">ثانوي</button>
+                            <button class="btn btn-ghost">شفاف</button>
+                            <button class="btn btn-ghost-primary">شفاف أساسي</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Button Sizes -->
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">أحجام الأزرار</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex flex-column gap-3">
+                            <button class="btn btn-primary btn-xs">صغير جداً</button>
+                            <button class="btn btn-primary btn-sm">صغير</button>
+                            <button class="btn btn-primary">عادي</button>
+                            <button class="btn btn-primary btn-lg">كبير</button>
+                            <button class="btn btn-primary btn-xl">كبير جداً</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Forms Section -->
+        <div class="content-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <div class="section-icon">
+                        <i class="fas fa-edit"></i>
+                    </div>
+                    النماذج
+                </h2>
+                <p class="section-subtitle">عناصر النماذج والتحقق من صحة البيانات</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Basic Form -->
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">نموذج أساسي</h4>
+                    </div>
+                    <div class="card-body">
+                        <form class="needs-validation" novalidate>
+                            <div class="form-group">
+                                <label class="form-label required" for="name">الاسم الكامل</label>
+                                <input type="text" class="form-control" id="name" placeholder="أدخل الاسم الكامل" required>
+                                <div class="invalid-feedback">يرجى إدخال الاسم الكامل</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label required" for="email">البريد الإلكتروني</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-envelope"></i>
+                                    </span>
+                                    <input type="email" class="form-control" id="email" placeholder="example@domain.com" required>
+                                </div>
+                                <div class="invalid-feedback">يرجى إدخال بريد إلكتروني صحيح</div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="department">القسم</label>
+                                <select class="form-control form-select" id="department">
+                                    <option value="">اختر القسم</option>
+                                    <option value="hr">الموارد البشرية</option>
+                                    <option value="it">تقنية المعلومات</option>
+                                    <option value="finance">المالية</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" for="notes">ملاحظات</label>
+                                <textarea class="form-control textarea" id="notes" rows="3" placeholder="أدخل أي ملاحظات إضافية"></textarea>
+                                <div class="form-text">يمكنك إضافة أي معلومات إضافية هنا</div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="agree" required>
+                                    <label class="form-check-label" for="agree">
+                                        أوافق على الشروط والأحكام
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="d-flex gap-3">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i>
+                                    <span>حفظ</span>
+                                </button>
+                                <button type="reset" class="btn btn-secondary">إعادة تعيين</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Form Controls -->
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">عناصر التحكم</h4>
+                    </div>
+                    <div class="card-body">
+                        <!-- Checkboxes -->
+                        <div class="mb-4">
+                            <h6 class="mb-3">خانات الاختيار</h6>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="option1" checked>
+                                <label class="form-check-label" for="option1">خيار أول</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="option2">
+                                <label class="form-check-label" for="option2">خيار ثاني</label>
+                            </div>
+                        </div>
+
+                        <!-- Radio Buttons -->
+                        <div class="mb-4">
+                            <h6 class="mb-3">أزرار الاختيار</h6>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="status" id="active" checked>
+                                <label class="form-check-label" for="active">نشط</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="radio" name="status" id="inactive">
+                                <label class="form-check-label" for="inactive">غير نشط</label>
+                            </div>
+                        </div>
+
+                        <!-- Switches -->
+                        <div class="mb-4">
+                            <h6 class="mb-3">المفاتيح</h6>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="notifications" checked>
+                                <label class="form-check-label" for="notifications">تفعيل التنبيهات</label>
+                            </div>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="darkMode">
+                                <label class="form-check-label" for="darkMode">المظهر الداكن</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Badges and Progress Section -->
+        <div class="content-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <div class="section-icon">
+                        <i class="fas fa-tags"></i>
+                    </div>
+                    الشارات والتقدم
+                </h2>
+                <p class="section-subtitle">عناصر لعرض الحالة والتقدم</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Badges -->
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">الشارات</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex flex-wrap gap-2 mb-4">
+                            <span class="badge badge-primary">أساسي</span>
+                            <span class="badge badge-success">نجح</span>
+                            <span class="badge badge-warning">تحذير</span>
+                            <span class="badge badge-error">خطأ</span>
+                            <span class="badge badge-secondary">ثانوي</span>
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2 mb-4">
+                            <span class="badge badge-outline-primary">أساسي محدد</span>
+                            <span class="badge badge-outline-success">نجح محدد</span>
+                            <span class="badge badge-outline-warning">تحذير محدد</span>
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2">
+                            <span class="badge badge-primary badge-sm">صغير</span>
+                            <span class="badge badge-primary">عادي</span>
+                            <span class="badge badge-primary badge-lg">كبير</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progress Bars -->
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">أشرطة التقدم</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <label class="form-label">التقدم الأساسي (75%)</label>
+                            <div class="progress">
+                                <div class="progress-bar" style="width: 75%" data-animate data-width="75%">75%</div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">نجح (60%)</label>
+                            <div class="progress">
+                                <div class="progress-bar progress-bar-success" style="width: 60%" data-animate data-width="60%"></div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">تحذير (40%)</label>
+                            <div class="progress">
+                                <div class="progress-bar progress-bar-warning" style="width: 40%" data-animate data-width="40%"></div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">خطأ (20%)</label>
+                            <div class="progress">
+                                <div class="progress-bar progress-bar-error" style="width: 20%" data-animate data-width="20%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal and Loading Section -->
+        <div class="content-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <div class="section-icon">
+                        <i class="fas fa-window-maximize"></i>
+                    </div>
+                    النوافذ والتحميل
+                </h2>
+                <p class="section-subtitle">النوافذ المنبثقة وعناصر التحميل</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Modal Triggers -->
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">النوافذ المنبثقة</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex flex-column gap-3">
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
+                                <i class="fas fa-window-maximize"></i>
+                                <span>فتح نافذة عادية</span>
+                            </button>
+                            <button class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#largeModal">
+                                <i class="fas fa-expand"></i>
+                                <span>فتح نافذة كبيرة</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loading States -->
+                <div class="card">
+                    <div class="card-header">
+                        <h4 class="card-title">حالات التحميل</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex flex-column gap-4">
+                            <div>
+                                <h6>دوارات التحميل</h6>
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="spinner spinner-sm"></div>
+                                    <div class="spinner"></div>
+                                    <div class="spinner spinner-lg"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h6>دوارات النمو</h6>
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="spinner-grow spinner-grow-sm"></div>
+                                    <div class="spinner-grow"></div>
+                                    <div class="spinner-grow spinner-grow-lg"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h6>أزرار التحميل</h6>
+                                <button class="btn btn-primary" data-loading="2000">
+                                    <i class="fas fa-download"></i>
+                                    <span>تحميل البيانات</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Example Modal -->
+<div class="modal" id="exampleModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">نافذة تجريبية</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>هذه نافذة تجريبية لعرض كيفية عمل النوافذ المنبثقة في النظام.</p>
+                <p>يمكنك إضافة أي محتوى تريده هنا، مثل النماذج أو الجداول أو أي عناصر أخرى.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary">حفظ التغييرات</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Large Modal -->
+<div class="modal modal-lg" id="largeModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">نافذة كبيرة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>العمود الأول</h6>
+                        <p>محتوى العمود الأول هنا...</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>العمود الثاني</h6>
+                        <p>محتوى العمود الثاني هنا...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add some demo functionality
+    const forms = document.querySelectorAll('.needs-validation');
+    forms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            ComponentManager.showToast('تم حفظ البيانات بنجاح!', 'success');
+        });
+    });
+});
+</script>
+{% endblock %}
