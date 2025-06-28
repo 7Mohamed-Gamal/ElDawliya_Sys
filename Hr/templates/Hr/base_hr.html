@@ -1708,6 +1708,8 @@
     </style>
 
     {% block extra_css %}{% endblock %}
+    <!-- Modern HR CSS Theme -->
+    <link rel="stylesheet" href="{% static 'Hr/css/hr_modern.css' %}">
 </head>
 <body>
     <div class="page-wrapper">
@@ -1728,6 +1730,10 @@
                     </a>
                 </div>
                 <div class="d-flex align-items-center">
+                    <!-- زر تبديل الوضع الليلي/النهاري -->
+                    <button id="themeToggle" class="btn btn-outline-light btn-sm me-2" aria-label="تبديل الوضع الليلي/النهاري" title="تبديل الوضع الليلي/النهاري">
+                        <i id="themeIcon" class="fas fa-moon"></i>
+                    </button>
                     <div class="user-info me-3 d-flex align-items-center" role="status" aria-label="معلومات المستخدم">
                         <i class="fas fa-user-circle text-light me-2 fs-5" aria-hidden="true"></i>
                         <span class="text-light fw-bold">{{ request.user.first_name }} {{ request.user.last_name }}</span>
@@ -2176,5 +2182,35 @@
     </script>
 
     {% block extra_js %}{% endblock %}
+    <!-- Theme Toggle Script -->
+    <script>
+    // حفظ تفضيل المستخدم في localStorage
+    function setTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+        document.getElementById('themeIcon').className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+    }
+    // استرجاع التفضيل أو النظام
+    function getPreferredTheme() {
+        const stored = localStorage.getItem('theme');
+        if (stored) return stored;
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+        // تفعيل الوضع المناسب عند التحميل
+        setTheme(getPreferredTheme());
+        // تبديل عند الضغط
+        document.getElementById('themeToggle').addEventListener('click', function() {
+            const current = document.documentElement.getAttribute('data-theme') || 'light';
+            setTheme(current === 'dark' ? 'light' : 'dark');
+        });
+        // تحديث الأيقونة عند تغيير النظام
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+            if (!localStorage.getItem('theme')) {
+                setTheme(e.matches ? 'dark' : 'light');
+            }
+        });
+    });
+    </script>
 </body>
 </html>

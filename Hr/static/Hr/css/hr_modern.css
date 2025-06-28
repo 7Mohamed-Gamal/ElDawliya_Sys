@@ -1,0 +1,140 @@
+/*
+ * HR Modern UI Theme - Supports Light & Dark Modes
+ * Professional, modern, and eye-comfortable design
+ * Font family is inherited from :root (Django context)
+ */
+:root {
+    /* Font family is inherited from Django context */
+}
+
+body {
+    font-family: var(--font-family);
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    transition: background 0.3s, color 0.3s;
+}
+
+/* Light Theme Variables */
+[data-theme="light"]:root, :root:not([data-theme="dark"]) {
+    --primary-color: #1e40af;
+    --primary-light: #3b82f6;
+    --primary-dark: #1e3a8a;
+    --primary-gradient: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+    --secondary-color: #1f2937;
+    --secondary-light: #374151;
+    --secondary-dark: #111827;
+    --accent-color: #f59e0b;
+    --success-color: #10b981;
+    --danger-color: #ef4444;
+    --warning-color: #f59e0b;
+    --info-color: #06b6d4;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-400: #9ca3af;
+    --gray-500: #6b7280;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+    --gray-900: #111827;
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8fafc;
+    --bg-tertiary: #f1f5f9;
+    --bg-dark: #0f172a;
+    --text-primary: #1e293b;
+    --text-secondary: #64748b;
+    --text-tertiary: #94a3b8;
+    --text-inverse: #ffffff;
+}
+
+/* Dark Theme Variables */
+[data-theme="dark"]:root, @media (prefers-color-scheme: dark) {
+    --primary-color: #60a5fa;
+    --primary-light: #93c5fd;
+    --primary-dark: #1e3a8a;
+    --primary-gradient: linear-gradient(135deg, #1e3a8a 0%, #60a5fa 100%);
+    --secondary-color: #0f172a;
+    --secondary-light: #1e293b;
+    --secondary-dark: #020617;
+    --accent-color: #fbbf24;
+    --success-color: #34d399;
+    --danger-color: #f87171;
+    --warning-color: #fbbf24;
+    --info-color: #22d3ee;
+    --gray-50: #1e293b;
+    --gray-100: #334155;
+    --gray-200: #475569;
+    --gray-300: #64748b;
+    --gray-400: #94a3b8;
+    --gray-500: #cbd5e1;
+    --gray-600: #e5e7eb;
+    --gray-700: #f1f5f9;
+    --gray-800: #f8fafc;
+    --gray-900: #ffffff;
+    --bg-primary: #1e293b;
+    --bg-secondary: #0f172a;
+    --bg-tertiary: #1e293b;
+    --bg-dark: #020617;
+    --text-primary: #f1f5f9;
+    --text-secondary: #cbd5e1;
+    --text-tertiary: #94a3b8;
+    --text-inverse: #1e293b;
+}
+
+/* Example: Card, Button, Table, etc. (inherits variables) */
+.card, .main-content, .sidebar, .navbar, .page-header, .modal-content, .dropdown-menu, .list-group-item {
+    background: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 24px 0 rgba(30, 64, 175, 0.07);
+    transition: background 0.3s, color 0.3s;
+}
+
+.btn-primary {
+    background: var(--primary-gradient) !important;
+    color: var(--text-inverse) !important;
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 8px 0 rgba(30, 64, 175, 0.10);
+    transition: background 0.3s, color 0.3s;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-color) 100%) !important;
+    color: var(--text-inverse) !important;
+}
+
+.table th, .table td {
+    background: var(--bg-primary) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--gray-200) !important;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+    background: var(--bg-tertiary);
+}
+::-webkit-scrollbar-thumb {
+    background: var(--gray-200);
+    border-radius: 4px;
+}
+
+/* Utility: Glass effect */
+.glass-effect {
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(8px);
+}
+
+/* Utility: Gradient text */
+.gradient-text {
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Smooth transitions for theme change */
+* {
+    transition: background 0.3s, color 0.3s, border-color 0.3s;
+}
