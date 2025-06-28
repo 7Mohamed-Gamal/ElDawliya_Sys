@@ -10,26 +10,34 @@
 {% block page_subtitle %}عرض وإدارة بيانات الموظفين في النظام{% endblock %}
 
 {% block content %}
-<!-- Page Header -->
-<div class="page-header">
-    <div class="page-header-content">
-        <div class="page-title">
-            <i class="fas fa-users page-title-icon"></i>
-            <span>إدارة الموظفين</span>
-        </div>
-        <div class="page-header-actions">
-            {% if perms.Hr.add_employee or user|is_admin %}
-            <a href="{% url 'Hr:employees:create' %}" class="btn btn-primary">
-                <i class="fas fa-user-plus"></i>
-                <span>إضافة موظف جديد</span>
-            </a>
-            {% endif %}
+<div class="page-wrapper">
+    <!-- Page Header -->
+    <div class="page-header section-spacing">
+        <div class="page-header-content">
+            <div class="page-title">
+                <i class="fas fa-users page-title-icon"></i>
+                <span>إدارة الموظفين</span>
+            </div>
+            <div class="page-header-actions">
+                <div class="btn-toolbar">
+                    {% if perms.Hr.add_employee or user|is_admin %}
+                    <a href="{% url 'Hr:employees:create' %}" class="btn btn-primary">
+                        <i class="fas fa-user-plus"></i>
+                        <span>إضافة موظف جديد</span>
+                    </a>
+                    {% endif %}
+                    <button class="btn btn-secondary" onclick="exportToExcel()">
+                        <i class="fas fa-file-excel"></i>
+                        <span>تصدير Excel</span>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- Statistics Cards -->
-<div class="stats-grid">
+    <!-- Statistics Cards -->
+    <div class="section-spacing">
+        <div class="stats-grid">
     <div class="stats-card">
         <div class="stats-icon">
             <i class="fas fa-users"></i>
@@ -73,9 +81,11 @@
             <div class="stats-description">موظفين سابقين</div>
         </div>
     </div>
-</div>
+        </div>
+    </div>
 
-<!-- Status Toggle -->
+    <!-- Status Toggle -->
+    <div class="section-spacing">
 <div class="card">
     <div class="card-body">
         <div class="status-toggle-container">
@@ -120,8 +130,9 @@
 </div>
 
 
-<!-- Search and Filter Section -->
-<div class="card">
+    <!-- Search and Filter Section -->
+    <div class="section-spacing">
+        <div class="card">
     <div class="card-header">
         <div class="card-header-content">
             <div class="card-title">
@@ -376,11 +387,13 @@
                 </div>
             </div>
         </form>
+        </div>
+        </div>
     </div>
-</div>
 
-<!-- Employee List Container -->
-<div class="card">
+    <!-- Employee List Container -->
+    <div class="section-spacing">
+        <div class="card">
     <div class="card-header">
         <div class="card-header-content">
             <div class="card-title" id="employeeListTitle">
@@ -851,12 +864,12 @@
             </div>
         </div>
     </div>
-    {% endif %}
-</div>
-</div>
+        {% endif %}
+        </div>
+    </div>
 
-<div class="row">
-    <div class="col-12">
+    <!-- Quick Links Section -->
+    <div class="section-spacing">
         <div class="card">
             <div class="card-header">
                 <h5 class="card-title">روابط سريعة</h5>
@@ -1005,6 +1018,7 @@
             </div>
         </div>
     </div>
+</div>
 </div>
 
 {% endblock %}
