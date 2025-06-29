@@ -15,177 +15,212 @@
 {% endblock %}
 
 {% block content %}
-<!-- Search and Filter Section -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card shadow-sm">
-            <div class="card-header bg-light py-3 d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 fw-semibold">
-                    <i class="fas fa-building text-primary me-2"></i>قائمة الأقسام
-                </h5>
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h4 class="mb-0">{{ title }}</h4>
-                    {% if perms.Hr.add_department or user|is_admin %}
-                    <a href="{% url 'Hr:departments:create' %}" class="btn btn-primary">
-                        <i class="fas fa-plus-circle me-1"></i> إضافة قسم جديد
-                    </a>
-                    {% endif %}
-                </div>
+<div class="section-spacing">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-header-content">
+            <div class="page-title">
+                <i class="fas fa-building"></i>
+                <span>قائمة الأقسام</span>
             </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-8 mb-3 mb-md-0">
-                        <div class="input-group">
-                            <span class="input-group-text bg-light">
-                                <i class="fas fa-search text-muted"></i>
-                            </span>
-                            <input type="text" id="departmentSearch" class="form-control" placeholder="ابحث عن قسم (بالاسم أو الكود)..." aria-label="بحث">
-                            <button class="btn btn-outline-secondary" type="button" id="clearSearch">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
+            <div class="page-subtitle">إدارة أقسام الشركة والموظفين</div>
+        </div>
+        <div class="page-actions">
+            {% if perms.Hr.add_department or user|is_admin %}
+            <a href="{% url 'Hr:departments:create' %}" class="btn btn-primary btn-with-icon">
+                <i class="fas fa-plus-circle"></i>
+                <span>إضافة قسم جديد</span>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="card">
+        <div class="card-header">
+            <div class="card-header-content">
+                <div class="card-title">
+                    <i class="fas fa-search"></i>
+                    <span>البحث والتصفية</span>
+                </div>
+                <div class="card-subtitle">البحث في الأقسام وتصفيتها</div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div class="lg:col-span-2">
+                    <div class="search-input-group">
+                        <i class="fas fa-search search-icon"></i>
+                        <input type="text" id="departmentSearch" class="form-control search-input" placeholder="ابحث عن قسم (بالاسم أو الكود)..." aria-label="بحث">
+                        <button class="search-clear-btn" type="button" id="clearSearch">
+                            <i class="fas fa-times"></i>
+                        </button>
                     </div>
-                    <div class="col-md-4">
-                        <select id="departmentSort" class="form-select">
-                            <option value="name">ترتيب حسب الاسم</option>
+                </div>
+                <div>
+                    <select id="departmentSort" class="form-select">
+                        <option value="name">ترتيب حسب الاسم</option>
                             <option value="code">ترتيب حسب الكود</option>
-                            <option value="employees">ترتيب حسب عدد الموظفين</option>
-                        </select>
-                    </div>
+                        <option value="employees">ترتيب حسب عدد الموظفين</option>
+                    </select>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Department Cards View -->
-<div class="row g-4" id="departmentsContainer">
-    {% if departments %}
-        {% for department in departments %}
-        <div class="col-lg-4 col-md-6 department-card"
-             data-name="{{ department.dept_name }}"
-             data-code="{{ department.dept_code }}"
-             data-employees="{{ department.employee_count }}">
-            <div class="card shadow-sm h-100">
+    <!-- Department Cards View -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="departmentsContainer">
+        {% if departments %}
+            {% for department in departments %}
+            <div class="department-card card card-hover"
+                 data-name="{{ department.dept_name }}"
+                 data-code="{{ department.dept_code }}"
+                 data-employees="{{ department.employee_count }}">
                 <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-start mb-3">
-                        <h5 class="card-title">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="card-title">
                             {% if department.is_active %}
-                            <span class="status-indicator status-active" title="نشط"></span>
+                            <span class="status-badge status-success" title="نشط"></span>
                             {% else %}
-                            <span class="status-indicator status-inactive" title="غير نشط"></span>
+                            <span class="status-badge status-inactive" title="غير نشط"></span>
                             {% endif %}
-                            {{ department.dept_name }}
-                        </h5>
-                        <span class="badge bg-primary rounded-pill">{{ department.employee_count }} موظف</span>
+                            <span>{{ department.dept_name }}</span>
+                        </div>
+                        <div class="badge badge-primary">{{ department.employee_count }} موظف</div>
                     </div>
 
                     {% if department.manager %}
-                    <div class="department-manager d-flex align-items-center mb-3 pb-3 border-bottom">
-                        {% if department.manager.emp_image %}
-                        <img src="{{ department.manager.emp_image|binary_to_img }}" alt="{{ department.manager.emp_full_name }}" class="rounded-circle me-2 object-fit-cover" width="48" height="48">
-                        {% else %}
-                        <div class="avatar bg-primary text-white me-2">
-                            {% if department.manager.emp_first_name %}
-                                {{ department.manager.emp_first_name|slice:":1"|upper }}
+                    <div class="border-b pb-4 mb-4">
+                        <div class="flex items-center space-x-3 space-x-reverse">
+                            {% if department.manager.emp_image %}
+                            <img src="{{ department.manager.emp_image|binary_to_img }}" alt="{{ department.manager.emp_full_name }}" class="avatar avatar-md">
                             {% else %}
-                                <i class="fas fa-user"></i>
+                            <div class="avatar avatar-md bg-primary text-white">
+                                {% if department.manager.emp_first_name %}
+                                    {{ department.manager.emp_first_name|slice:":1"|upper }}
+                                {% else %}
+                                    <i class="fas fa-user"></i>
+                                {% endif %}
+                            </div>
                             {% endif %}
-                        </div>
-                        {% endif %}
-                        <div>
-                            <a href="{% url 'Hr:employees:detail' department.manager.emp_id %}" class="d-block fw-medium text-decoration-none">{{ department.manager.emp_full_name }}</a>
-                            <small class="text-muted">
-                                <i class="fas fa-user-tie me-1"></i>مدير القسم
-                                {% if department.manager.jop_name %}
-                                <span class="d-block mt-1"><i class="fas fa-briefcase me-1"></i>{{ department.manager.jop_name }}</span>
-                                {% endif %}
-                                {% if department.manager.emp_phone1 %}
-                                <span class="d-block mt-1"><i class="fas fa-phone me-1"></i>{{ department.manager.emp_phone1 }}</span>
-                                {% endif %}
-                            </small>
+                            <div class="flex-1">
+                                <a href="{% url 'Hr:employees:detail' department.manager.emp_id %}" class="font-medium text-gray-900 hover:text-primary transition-colors">{{ department.manager.emp_full_name }}</a>
+                                <div class="text-sm text-muted mt-1">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-user-tie ml-1"></i>
+                                        <span>مدير القسم</span>
+                                    </div>
+                                    {% if department.manager.jop_name %}
+                                    <div class="flex items-center mt-1">
+                                        <i class="fas fa-briefcase ml-1"></i>
+                                        <span>{{ department.manager.jop_name }}</span>
+                                    </div>
+                                    {% endif %}
+                                    {% if department.manager.emp_phone1 %}
+                                    <div class="flex items-center mt-1">
+                                        <i class="fas fa-phone ml-1"></i>
+                                        <span>{{ department.manager.emp_phone1 }}</span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
                         </div>
                     </div>
                     {% else %}
-                    <div class="department-manager d-flex align-items-center mb-3 pb-3 border-bottom">
-                        <div class="avatar bg-secondary text-white me-2">
-                            <i class="fas fa-user-slash"></i>
-                        </div>
-                        <div>
-                            <span class="d-block fw-medium text-muted">غير محدد</span>
-                            <small class="text-muted">مدير القسم</small>
+                    <div class="border-b pb-4 mb-4">
+                        <div class="flex items-center space-x-3 space-x-reverse">
+                            <div class="avatar avatar-md bg-gray-400 text-white">
+                                <i class="fas fa-user-slash"></i>
+                            </div>
+                            <div class="flex-1">
+                                <span class="font-medium text-muted">غير محدد</span>
+                                <div class="text-sm text-muted">مدير القسم</div>
+                            </div>
                         </div>
                     </div>
                     {% endif %}
 
-                    <p class="card-text text-muted mb-3">{{ department.note|default:"لا توجد ملاحظات"|truncatechars:100 }}</p>
+                    <p class="text-muted mb-4">{{ department.note|default:"لا توجد ملاحظات"|truncatechars:100 }}</p>
 
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <small class="text-muted d-block">كود القسم: {{ department.dept_code }}</small>
+                    <div class="flex justify-between items-center">
+                        <div class="text-sm text-muted">
+                            كود القسم: {{ department.dept_code }}
                         </div>
-                        <div class="btn-group btn-group-sm">
-                            <a href="{% url 'Hr:departments:detail' department.dept_code %}" class="btn btn-outline-primary" title="عرض التفاصيل">
+                        <div class="flex space-x-2 space-x-reverse">
+                            <a href="{% url 'Hr:departments:detail' department.dept_code %}" class="btn btn-sm btn-outline-primary" title="عرض التفاصيل">
                                 <i class="fas fa-eye"></i>
                             </a>
                             {% if perms.Hr.change_department or user|is_admin %}
                             <a href="{% url 'Hr:departments:edit' department.dept_code %}" class="btn btn-sm btn-primary">
-                                <i class="fas fa-edit"></i> تعديل
+                                <i class="fas fa-edit"></i>
                             </a>
                             {% endif %}
                             {% if perms.Hr.delete_department or user|is_admin %}
                             <button type="button" class="btn btn-sm btn-danger delete-department"
                                     data-department-id="{{ department.dept_code }}"
                                     data-department-name="{{ department.dept_name }}">
-                                <i class="fas fa-trash"></i> حذف
+                                <i class="fas fa-trash"></i>
                             </button>
                             {% endif %}
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-        {% endfor %}
-    {% else %}
-        <div class="col-12">
-            <div class="text-center py-5">
-                <i class="fas fa-building fa-3x mb-3 text-muted"></i>
-                <p class="mb-0">لا توجد أقسام مسجلة حالياً.</p>
-                {% if perms.hr.add_department or user.is_admin %}
-                <a href="{% url 'Hr:departments:create' %}" class="btn btn-primary mt-3">
-                    <i class="fas fa-plus-circle me-1"></i> إضافة قسم جديد
-                </a>
-                {% endif %}
+            {% endfor %}
+        {% else %}
+            <div class="col-span-full">
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <div class="empty-state-title">لا توجد أقسام</div>
+                    <div class="empty-state-description">لا توجد أقسام مسجلة حالياً في النظام</div>
+                    {% if perms.Hr.add_department or user.is_admin %}
+                    <div class="empty-state-action">
+                        <a href="{% url 'Hr:departments:create' %}" class="btn btn-primary btn-with-icon">
+                            <i class="fas fa-plus-circle"></i>
+                            <span>إضافة قسم جديد</span>
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- No Results Message -->
+        <div id="noResults" class="col-span-full hidden">
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="fas fa-search"></i>
+                </div>
+                <div class="empty-state-title">لا توجد نتائج</div>
+                <div class="empty-state-description">لا توجد نتائج مطابقة لبحثك</div>
+                <div class="empty-state-action">
+                    <button id="resetSearch" class="btn btn-outline-primary btn-with-icon">
+                        <i class="fas fa-redo"></i>
+                        <span>عرض جميع الأقسام</span>
+                    </button>
+                </div>
             </div>
         </div>
-    {% endif %}
 
-    <!-- No Results Message -->
-    <div id="noResults" class="col-12 d-none">
-        <div class="text-center py-5">
-            <i class="fas fa-search fa-3x mb-3 text-muted"></i>
-            <p class="mb-0">لا توجد نتائج مطابقة لبحثك.</p>
-            <button id="resetSearch" class="btn btn-outline-primary mt-3">
-                <i class="fas fa-redo me-1"></i> عرض جميع الأقسام
-            </button>
-        </div>
-    </div>
-
-    <!-- Add New Department Card -->
-    {% if perms.hr.add_department or user.is_admin %}
-    <div class="col-lg-4 col-md-6" id="addDepartmentCard">
-        <div class="card h-100 border-dashed border-primary-subtle">
-            <div class="card-body d-flex flex-column justify-content-center align-items-center h-100 py-5">
-                <i class="fas fa-plus-circle fa-3x text-primary mb-3"></i>
-                <h5 class="card-title text-center">إضافة قسم جديد</h5>
-                <p class="card-text text-center text-muted mb-4">قم بإضافة قسم جديد إلى الهيكل التنظيمي للشركة</p>
-                <a href="{% url 'Hr:departments:create' %}" class="btn btn-primary">
-                    <i class="fas fa-plus-circle me-1"></i> إضافة قسم
+        <!-- Add New Department Card -->
+        {% if perms.Hr.add_department or user.is_admin %}
+        <div id="addDepartmentCard" class="card card-dashed card-hover">
+            <div class="card-body text-center py-8">
+                <div class="empty-state-icon text-primary mb-4">
+                    <i class="fas fa-plus-circle"></i>
+                </div>
+                <div class="card-title mb-2">إضافة قسم جديد</div>
+                <div class="text-muted mb-4">قم بإضافة قسم جديد إلى الهيكل التنظيمي للشركة</div>
+                <a href="{% url 'Hr:departments:create' %}" class="btn btn-primary btn-with-icon">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>إضافة قسم</span>
                 </a>
             </div>
         </div>
+        {% endif %}
     </div>
-    {% endif %}
 </div>
 
 <!-- Delete Confirmation Modal -->

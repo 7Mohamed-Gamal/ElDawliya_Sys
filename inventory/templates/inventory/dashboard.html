@@ -5,47 +5,52 @@
 
 {% block title %}{% trans "لوحة تحكم المخزن" %}{% endblock %}
 
-{% block extra_css %}
-<!-- إضافة ستايل مودال طلب الشراء -->
-<style>
-    /* تنسيقات إضافية للوحة التحكم */
-    .card {
-        transition: all 0.3s ease;
-    }
-    .card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
-    }
-</style>
-{% endblock %}
-
 {% block content %}
 {% csrf_token %}
 
-<div class="container-fluid py-4">
-    <div class="row">
-        <div class="col-lg-3 col-md-6 col-sm-6">
-            <div class="card bg-primary text-white mb-4">
-                <div class="card-body">
-                    <h5>{% trans "عدد الأصناف" %}</h5>
-                    <h2>{{ total_products }}</h2>
-                </div>
-                <div class="card-footer d-flex align-items-center justify-content-between">
-                    <a class="small text-white stretched-link" href="{% url 'inventory:product_list' %}">{% trans "تفاصيل" %}</a>
-                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
-                </div>
+<div class="section-spacing">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-header-content">
+            <div class="page-title">
+                <i class="fas fa-warehouse"></i>
+                <span>{% trans "لوحة تحكم المخزن" %}</span>
+            </div>
+            <div class="page-subtitle">نظرة عامة على حالة المخزن والمنتجات</div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="stats-card stats-card-primary">
+            <div class="stats-card-icon">
+                <i class="fas fa-boxes"></i>
+            </div>
+            <div class="stats-card-content">
+                <div class="stats-card-title">{% trans "عدد الأصناف" %}</div>
+                <div class="stats-card-value">{{ total_products }}</div>
+            </div>
+            <div class="stats-card-footer">
+                <a href="{% url 'inventory:product_list' %}" class="stats-card-link">
+                    <span>{% trans "تفاصيل" %}</span>
+                    <i class="fas fa-arrow-left"></i>
+                </a>
             </div>
         </div>
-        <div class="col-lg-3 col-md-6 col-sm-6">
-            <div class="card bg-warning text-white mb-4">
-                <div class="card-body">
-                    <h5>{% trans "أصناف منخفضة" %}</h5>
-                    <h2>{{ low_stock_count }}</h2>
-                </div>
-                <div class="card-footer d-flex align-items-center justify-content-between">
-                    <a class="small text-white stretched-link" href="{% url 'inventory:product_list' %}?stock_status=low">{% trans "تفاصيل" %}</a>
-                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
-                </div>
+
+        <div class="stats-card stats-card-warning">
+            <div class="stats-card-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="stats-card-content">
+                <div class="stats-card-title">{% trans "أصناف منخفضة" %}</div>
+                <div class="stats-card-value">{{ low_stock_count }}</div>
+            </div>
+            <div class="stats-card-footer">
+                <a href="{% url 'inventory:product_list' %}?stock_status=low" class="stats-card-link">
+                    <span>{% trans "تفاصيل" %}</span>
+                    <i class="fas fa-arrow-left"></i>
+                </a>
             </div>
         </div>
         <div class="col-lg-3 col-md-6 col-sm-6">

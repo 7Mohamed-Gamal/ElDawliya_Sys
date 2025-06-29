@@ -11,28 +11,29 @@
 
 {% block content %}
 <!-- Quick Access Toolbar -->
-<div class="quick-access-toolbar mb-4">
-    <div class="card shadow-sm border-0">
-        <div class="card-body py-2">
-            <div class="d-flex flex-wrap justify-content-between align-items-center">
-                <div class="quick-actions d-flex">
-                    <a href="{% url 'Hr:employees:create' %}" class="btn btn-sm btn-primary me-2">
-                        <i class="fas fa-user-plus me-1"></i> إضافة موظف
+<div class="section-spacing">
+    <div class="card">
+        <div class="card-body">
+            <div class="flex flex-wrap justify-between items-center gap-4">
+                <div class="flex flex-wrap gap-2">
+                    <a href="{% url 'Hr:employees:create' %}" class="btn btn-primary btn-with-icon">
+                        <i class="fas fa-user-plus"></i>
+                        <span>إضافة موظف</span>
                     </a>
-                    <a href="#" class="btn btn-sm btn-outline-info me-2" onclick="alert('نظام الحضور غير متاح حالياً')">
-                        <i class="fas fa-clipboard-check me-1"></i> سجل الحضور
+                    <a href="#" class="btn btn-outline-info btn-with-icon" onclick="alert('نظام الحضور غير متاح حالياً')">
+                        <i class="fas fa-clipboard-check"></i>
+                        <span>سجل الحضور</span>
                     </a>
-                    <a href="{% url 'Hr:employees:employee_search' %}" class="btn btn-sm btn-outline-success me-2">
-                        <i class="fas fa-search me-1"></i> البحث المتقدم
+                    <a href="{% url 'Hr:employees:employee_search' %}" class="btn btn-outline-success btn-with-icon">
+                        <i class="fas fa-search"></i>
+                        <span>البحث المتقدم</span>
                     </a>
                 </div>
-                <div class="quick-search">
-                    <div class="input-group">
-                        <input type="text" class="form-control form-control-sm" id="quickSearch" placeholder="بحث عن موظف..." aria-label="بحث عن موظف">
-                        <button class="btn btn-sm btn-outline-secondary" type="button" id="quickSearchBtn">
-                            <i class="fas fa-search"></i>
-                        </button>
-                    </div>
+                <div class="input-group max-w-sm">
+                    <input type="text" class="form-control" id="quickSearch" placeholder="بحث عن موظف..." aria-label="بحث عن موظف">
+                    <button class="btn btn-outline-secondary" type="button" id="quickSearchBtn">
+                        <i class="fas fa-search"></i>
+                    </button>
                 </div>
             </div>
         </div>
@@ -40,75 +41,72 @@
 </div>
 
 <!-- Top Stats Cards Section -->
-<div class="row mb-4 g-3">
-    <div class="col-xl-3 col-md-6">
-        <a href="{% url 'Hr:employees:list' %}" class="text-decoration-none">
-            <div class="card shadow-sm stats-card primary h-100 highlight-card">
-                <div class="card-body d-flex align-items-center p-3">
-                    <div class="stats-icon-wrapper bg-primary-subtle rounded-circle me-3 flex-shrink-0">
-                        <i class="fas fa-users text-primary"></i>
+<div class="section-spacing">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+        <a href="{% url 'Hr:employees:list' %}" class="card card-stats card-hover">
+            <div class="card-body">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-primary-light rounded-full flex items-center justify-center me-3">
+                            <i class="fas fa-users text-primary text-xl"></i>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-bold text-primary">{{ total_employees }}</div>
+                            <p class="text-sm text-muted mb-0">إجمالي الموظفين</p>
+                        </div>
                     </div>
-                    <div>
-                        <div class="stats-number fs-2 fw-bold">{{ total_employees }}</div>
-                        <p class="stats-title text-muted mb-0">إجمالي الموظفين</p>
-                    </div>
-                    <div class="ms-auto">
-                        <span class="badge bg-primary-subtle text-primary rounded-pill">الكل</span>
-                    </div>
+                    <div class="badge badge-primary">الكل</div>
                 </div>
             </div>
         </a>
-    </div>
-    <div class="col-xl-3 col-md-6">
-        <a href="{% url 'Hr:employees:list' %}?status=active" class="text-decoration-none">
-            <div class="card shadow-sm stats-card success h-100 highlight-card">
-                <div class="card-body d-flex align-items-center p-3">
-                    <div class="stats-icon-wrapper bg-success-subtle rounded-circle me-3 flex-shrink-0">
-                        <i class="fas fa-user-check text-success"></i>
+
+        <a href="{% url 'Hr:employees:list' %}?status=active" class="card card-stats card-hover">
+            <div class="card-body">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-success-light rounded-full flex items-center justify-center me-3">
+                            <i class="fas fa-user-check text-success text-xl"></i>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-bold text-success">{{ active_employees }}</div>
+                            <p class="text-sm text-muted mb-0">الموظفين النشطين</p>
+                        </div>
                     </div>
-                    <div>
-                        <div class="stats-number fs-2 fw-bold">{{ active_employees }}</div>
-                        <p class="stats-title text-muted mb-0">الموظفين النشطين</p>
-                    </div>
-                    <div class="ms-auto">
-                        <span class="badge bg-success-subtle text-success rounded-pill">نشط</span>
-                    </div>
+                    <div class="badge badge-success">نشط</div>
                 </div>
             </div>
         </a>
-    </div>
-    <div class="col-xl-3 col-md-6">
-        <a href="{% url 'Hr:departments:list' %}" class="text-decoration-none">
-            <div class="card shadow-sm stats-card info h-100 highlight-card">
-                <div class="card-body d-flex align-items-center p-3">
-                    <div class="stats-icon-wrapper bg-info-subtle rounded-circle me-3 flex-shrink-0">
-                        <i class="fas fa-building text-info"></i>
+
+        <a href="{% url 'Hr:departments:list' %}" class="card card-stats card-hover">
+            <div class="card-body">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-info-light rounded-full flex items-center justify-center me-3">
+                            <i class="fas fa-building text-info text-xl"></i>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-bold text-info">{{ departments_count }}</div>
+                            <p class="text-sm text-muted mb-0">الأقسام</p>
+                        </div>
                     </div>
-                    <div>
-                        <div class="stats-number fs-2 fw-bold">{{ departments_count }}</div>
-                        <p class="stats-title text-muted mb-0">الأقسام</p>
-                    </div>
-                    <div class="ms-auto">
-                        <i class="fas fa-angle-left text-muted"></i>
-                    </div>
+                    <i class="fas fa-chevron-left text-muted"></i>
                 </div>
             </div>
         </a>
-    </div>
-    <div class="col-xl-3 col-md-6">
-        <a href="{% url 'Hr:jobs:list' %}" class="text-decoration-none">
-            <div class="card shadow-sm stats-card warning h-100 highlight-card">
-                <div class="card-body d-flex align-items-center p-3">
-                    <div class="stats-icon-wrapper bg-warning-subtle rounded-circle me-3 flex-shrink-0">
-                        <i class="fas fa-briefcase text-warning"></i>
+
+        <a href="{% url 'Hr:jobs:list' %}" class="card card-stats card-hover">
+            <div class="card-body">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-warning-light rounded-full flex items-center justify-center me-3">
+                            <i class="fas fa-briefcase text-warning text-xl"></i>
+                        </div>
+                        <div>
+                            <div class="text-2xl font-bold text-warning">{{ jobs_count }}</div>
+                            <p class="text-sm text-muted mb-0">الوظائف</p>
+                        </div>
                     </div>
-                    <div>
-                        <div class="stats-number fs-2 fw-bold">{{ jobs_count }}</div>
-                        <p class="stats-title text-muted mb-0">الوظائف</p>
-                    </div>
-                    <div class="ms-auto">
-                        <i class="fas fa-angle-left text-muted"></i>
-                    </div>
+                    <i class="fas fa-chevron-left text-muted"></i>
                 </div>
             </div>
         </a>
@@ -116,66 +114,74 @@
 </div>
 
 <!-- Main Content Section -->
-<div class="row g-4">
-    <!-- Left Column -->
-    <div class="col-lg-8">
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-light py-3 border-bottom">
-                <h5 class="mb-0 fw-semibold">
-                    <i class="fas fa-users me-2 text-primary"></i>
-                    إدارة الموظفين
-                </h5>
-            </div>
-            <div class="card-body p-4">
-                <div class="row g-3">
-                    <div class="col-md-6 col-xl-4">
-                        <a href="{% url 'Hr:employees:list' %}" class="card action-card h-100 text-decoration-none shadow-hover">
-                            <div class="card-body d-flex align-items-center p-3">
-                                <div class="action-icon bg-primary-subtle text-primary rounded-circle me-3 flex-shrink-0">
-                                    <i class="fas fa-users"></i>
-                                </div>
-                                <div>
-                                    <h6 class="mb-1 text-dark">قائمة الموظفين</h6>
-                                    <p class="text-muted small mb-0">عرض وإدارة بيانات الموظفين</p>
+<div class="section-spacing">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left Column -->
+        <div class="lg:col-span-2">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-header-content">
+                        <div class="card-title">
+                            <i class="fas fa-users"></i>
+                            <span>إدارة الموظفين</span>
+                        </div>
+                        <div class="card-subtitle">العمليات الأساسية لإدارة الموظفين</div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <a href="{% url 'Hr:employees:list' %}" class="card card-hover">
+                            <div class="card-body">
+                                <div class="flex items-center">
+                                    <div class="w-12 h-12 bg-primary-light rounded-full flex items-center justify-center me-3">
+                                        <i class="fas fa-users text-primary text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="font-medium mb-1">قائمة الموظفين</h6>
+                                        <p class="text-sm text-muted mb-0">عرض وإدارة بيانات الموظفين</p>
+                                    </div>
                                 </div>
                             </div>
                         </a>
-                    </div>
-                    <div class="col-md-6 col-xl-4">
-                        <a href="{% url 'Hr:employees:create' %}" class="card action-card h-100 text-decoration-none shadow-hover">
-                            <div class="card-body d-flex align-items-center p-3">
-                                <div class="action-icon bg-success-subtle text-success rounded-circle me-3 flex-shrink-0">
-                                    <i class="fas fa-user-plus"></i>
-                                </div>
-                                <div>
-                                    <h6 class="mb-1 text-dark">إضافة موظف جديد</h6>
-                                    <p class="text-muted small mb-0">تسجيل بيانات موظف جديد</p>
-                                </div>
-                            </div>
-                        </a>
-                    </div>
-                    <div class="col-md-6 col-xl-4">
-                        <a href="{% url 'Hr:departments:list' %}" class="card action-card h-100 text-decoration-none shadow-hover">
-                            <div class="card-body d-flex align-items-center p-3">
-                                <div class="action-icon bg-info-subtle text-info rounded-circle me-3 flex-shrink-0">
-                                    <i class="fas fa-building"></i>
-                                </div>
-                                <div>
-                                    <h6 class="mb-1 text-dark">الأقسام</h6>
-                                    <p class="text-muted small mb-0">عرض وإدارة الأقسام</p>
+
+                        <a href="{% url 'Hr:employees:create' %}" class="card card-hover">
+                            <div class="card-body">
+                                <div class="flex items-center">
+                                    <div class="w-12 h-12 bg-success-light rounded-full flex items-center justify-center me-3">
+                                        <i class="fas fa-user-plus text-success text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="font-medium mb-1">إضافة موظف جديد</h6>
+                                        <p class="text-sm text-muted mb-0">تسجيل بيانات موظف جديد</p>
+                                    </div>
                                 </div>
                             </div>
                         </a>
-                    </div>
-                    <div class="col-md-6 col-xl-4">
-                        <a href="{% url 'Hr:jobs:list' %}" class="card action-card h-100 text-decoration-none shadow-hover">
-                            <div class="card-body d-flex align-items-center p-3">
-                                <div class="action-icon bg-warning-subtle text-warning rounded-circle me-3 flex-shrink-0">
-                                    <i class="fas fa-briefcase"></i>
+
+                        <a href="{% url 'Hr:departments:list' %}" class="card card-hover">
+                            <div class="card-body">
+                                <div class="flex items-center">
+                                    <div class="w-12 h-12 bg-info-light rounded-full flex items-center justify-center me-3">
+                                        <i class="fas fa-building text-info text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="font-medium mb-1">الأقسام</h6>
+                                        <p class="text-sm text-muted mb-0">عرض وإدارة الأقسام</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h6 class="mb-1 text-dark">الوظائف</h6>
-                                    <p class="text-muted small mb-0">عرض وإدارة المسميات الوظيفية</p>
+                            </div>
+                        </a>
+
+                        <a href="{% url 'Hr:jobs:list' %}" class="card card-hover">
+                            <div class="card-body">
+                                <div class="flex items-center">
+                                    <div class="w-12 h-12 bg-warning-light rounded-full flex items-center justify-center me-3">
+                                        <i class="fas fa-briefcase text-warning text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="font-medium mb-1">الوظائف</h6>
+                                        <p class="text-sm text-muted mb-0">عرض وإدارة المسميات الوظيفية</p>
+                                    </div>
                                 </div>
                             </div>
                         </a>
@@ -183,74 +189,86 @@
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Right Column -->
-    <div class="col-lg-4">
-        <!-- Attendance Card -->
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-light py-3 border-bottom">
-                <h5 class="mb-0 fw-semibold">
-                    <i class="fas fa-clock me-2 text-primary"></i>
-                    الحضور والانصراف
-                </h5>
-            </div>
-            <div class="card-body p-4">
-                <div class="d-grid gap-3">
-                    <a href="#" class="card action-card text-decoration-none shadow-hover" onclick="alert('نظام الحضور غير متاح حالياً')">
-                        <div class="card-body d-flex align-items-center p-3">
-                            <div class="action-icon bg-primary-subtle text-primary rounded-circle me-3 flex-shrink-0">
-                                <i class="fas fa-clipboard-list"></i>
-                            </div>
-                            <div>
-                                <h6 class="mb-1 text-dark">سجلات الحضور</h6>
-                                <p class="text-muted small mb-0">عرض وإدارة سجلات الحضور</p>
+        <!-- Right Column -->
+        <div class="space-y-6">
+            <!-- Attendance Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-header-content">
+                        <div class="card-title">
+                            <i class="fas fa-clock"></i>
+                            <span>الحضور والانصراف</span>
+                        </div>
+                        <div class="card-subtitle">إدارة الحضور والانصراف</div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <a href="#" class="card card-hover" onclick="alert('نظام الحضور غير متاح حالياً')">
+                        <div class="card-body">
+                            <div class="flex items-center">
+                                <div class="w-12 h-12 bg-primary-light rounded-full flex items-center justify-center me-3">
+                                    <i class="fas fa-clipboard-list text-primary text-xl"></i>
+                                </div>
+                                <div>
+                                    <h6 class="font-medium mb-1">سجلات الحضور</h6>
+                                    <p class="text-sm text-muted mb-0">عرض وإدارة سجلات الحضور</p>
+                                </div>
                             </div>
                         </div>
                     </a>
                 </div>
             </div>
-        </div>
 
-        <!-- Recent Activities -->
-        <div class="card shadow-sm">
-            <div class="card-header bg-light py-3 border-bottom">
-                <h5 class="mb-0 fw-semibold">
-                    <i class="fas fa-history me-2 text-primary"></i>
-                    النشاطات الأخيرة
-                </h5>
-            </div>
-            <div class="card-body p-4">
-                <div class="timeline">
-                    {% if recent_employees %}
-                        {% for employee in recent_employees|slice:":5" %}
-                        <div class="timeline-item d-flex align-items-center mb-3">
-                            <div class="timeline-icon bg-success-subtle text-success rounded-circle me-3 flex-shrink-0">
-                                <i class="fas fa-user-plus"></i>
-                            </div>
-                            <div class="flex-grow-1">
-                                <h6 class="mb-1">تم إضافة موظف جديد</h6>
-                                <p class="text-muted small mb-0">
-                                    {{ employee.emp_full_name }} - {{ employee.department.dept_name|default:"بدون قسم" }}
-                                </p>
-                                <small class="text-muted">{{ employee.emp_date_hiring|timesince }} مضت</small>
-                            </div>
-                            <a href="{% url 'Hr:employees:detail' employee.emp_id %}" class="btn btn-sm btn-outline-primary">
-                                عرض
-                            </a>
+            <!-- Recent Activities -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-header-content">
+                        <div class="card-title">
+                            <i class="fas fa-history"></i>
+                            <span>النشاطات الأخيرة</span>
                         </div>
-                        {% endfor %}
+                        <div class="card-subtitle">آخر العمليات المنجزة</div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if recent_employees %}
+                        <div class="space-y-3">
+                            {% for employee in recent_employees|slice:":5" %}
+                            <div class="flex items-center p-3 bg-light rounded-lg">
+                                <div class="w-10 h-10 bg-success-light rounded-full flex items-center justify-center me-3">
+                                    <i class="fas fa-user-plus text-success"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <h6 class="font-medium mb-1">تم إضافة موظف جديد</h6>
+                                    <p class="text-sm text-muted mb-1">
+                                        {{ employee.emp_full_name }} - {{ employee.department.dept_name|default:"بدون قسم" }}
+                                    </p>
+                                    <small class="text-muted">{{ employee.emp_date_hiring|timesince }} مضت</small>
+                                </div>
+                                <a href="{% url 'Hr:employees:detail' employee.emp_id %}" class="btn btn-sm btn-outline-primary">
+                                    عرض
+                                </a>
+                            </div>
+                            {% endfor %}
+                        </div>
                     {% else %}
-                        <div class="text-center py-3">
-                            <i class="fas fa-clock fa-2x text-muted mb-2"></i>
-                            <p class="text-muted mb-0">لا توجد أنشطة حديثة</p>
+                        <div class="empty-state">
+                            <div class="empty-state-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="empty-state-content">
+                                <h6 class="empty-state-title">لا توجد أنشطة حديثة</h6>
+                                <p class="empty-state-description">ستظهر هنا آخر العمليات المنجزة</p>
+                            </div>
                         </div>
                     {% endif %}
-                </div>
-                <div class="text-center mt-3">
-                    <a href="{% url 'Hr:employees:list' %}" class="btn btn-outline-primary btn-sm">
-                        عرض جميع الموظفين
-                    </a>
+
+                    <div class="text-center mt-4">
+                        <a href="{% url 'Hr:employees:list' %}" class="btn btn-outline-primary btn-sm">
+                            عرض جميع الموظفين
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -258,40 +276,45 @@
 </div>
 
 <!-- Quick Stats Row -->
-<div class="row mt-4 g-3">
-    <div class="col-md-3">
-        <div class="card bg-gradient-primary text-white">
+<div class="section-spacing">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="card card-gradient-primary text-white">
             <div class="card-body text-center">
-                <i class="fas fa-calendar-check fa-2x mb-2"></i>
-                <h4>{{ today_attendance|default:"0" }}</h4>
-                <p class="mb-0">حضور اليوم</p>
+                <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-calendar-check text-white text-2xl"></i>
+                </div>
+                <div class="text-3xl font-bold mb-2">{{ today_attendance|default:"0" }}</div>
+                <p class="text-white text-opacity-90 mb-0">حضور اليوم</p>
             </div>
         </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-gradient-success text-white">
+
+        <div class="card card-gradient-success text-white">
             <div class="card-body text-center">
-                <i class="fas fa-user-shield fa-2x mb-2"></i>
-                <h4>{{ insured_employees|default:"0" }}</h4>
-                <p class="mb-0">مؤمن عليهم</p>
+                <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-user-shield text-white text-2xl"></i>
+                </div>
+                <div class="text-3xl font-bold mb-2">{{ insured_employees|default:"0" }}</div>
+                <p class="text-white text-opacity-90 mb-0">مؤمن عليهم</p>
             </div>
         </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-gradient-warning text-white">
+
+        <div class="card card-gradient-warning text-white">
             <div class="card-body text-center">
-                <i class="fas fa-calendar-times fa-2x mb-2"></i>
-                <h4>{{ on_leave_today|default:"0" }}</h4>
-                <p class="mb-0">في إجازة اليوم</p>
+                <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-calendar-times text-white text-2xl"></i>
+                </div>
+                <div class="text-3xl font-bold mb-2">{{ on_leave_today|default:"0" }}</div>
+                <p class="text-white text-opacity-90 mb-0">في إجازة اليوم</p>
             </div>
         </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-gradient-info text-white">
+
+        <div class="card card-gradient-info text-white">
             <div class="card-body text-center">
-                <i class="fas fa-birthday-cake fa-2x mb-2"></i>
-                <h4>{{ birthdays_today|default:"0" }}</h4>
-                <p class="mb-0">أعياد ميلاد اليوم</p>
+                <div class="w-16 h-16 bg-white bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-birthday-cake text-white text-2xl"></i>
+                </div>
+                <div class="text-3xl font-bold mb-2">{{ birthdays_today|default:"0" }}</div>
+                <p class="text-white text-opacity-90 mb-0">أعياد ميلاد اليوم</p>
             </div>
         </div>
     </div>

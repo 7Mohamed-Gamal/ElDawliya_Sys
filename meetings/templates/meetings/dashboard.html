@@ -10,44 +10,67 @@
 <li class="breadcrumb-item active">لوحة تحكم الاجتماعات</li>
 {% endblock %}
 
-{% block extra_css %}
-<style>
-    .dashboard-card {
-        border-radius: 0.75rem;
-        overflow: hidden;
-        transition: all 0.3s ease;
-    }
-    
-    .dashboard-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
-    }
-    
-    .stat-card {
-        display: flex;
-        align-items: center;
-        padding: 1.5rem;
-        border-radius: 0.75rem;
-        background: white;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-    }
-    
-    .stat-icon {
-        width: 60px;
-        height: 60px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 50%;
-        margin-left: 1rem;
-        font-size: 1.5rem;
-    }
-    
-    .stat-info h4 {
-        font-size: 2rem;
-        font-weight: 700;
-        margin-bottom: 0.25rem;
-    }
+{% block content %}
+<div class="section-spacing">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-header-content">
+            <div class="page-title">
+                <i class="fas fa-calendar-alt"></i>
+                <span>لوحة تحكم الاجتماعات</span>
+            </div>
+            <div class="page-subtitle">إدارة الاجتماعات والمواعيد</div>
+        </div>
+        <div class="page-actions">
+            <a href="{% url 'meetings:meeting_create' %}" class="btn btn-primary btn-with-icon">
+                <i class="fas fa-plus"></i>
+                <span>اجتماع جديد</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="stats-card stats-card-primary">
+            <div class="stats-card-icon">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="stats-card-content">
+                <div class="stats-card-title">إجمالي الاجتماعات</div>
+                <div class="stats-card-value">{{ total_meetings }}</div>
+            </div>
+        </div>
+
+        <div class="stats-card stats-card-info">
+            <div class="stats-card-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stats-card-content">
+                <div class="stats-card-title">اجتماعات اليوم</div>
+                <div class="stats-card-value">{{ today_meetings }}</div>
+            </div>
+        </div>
+
+        <div class="stats-card stats-card-success">
+            <div class="stats-card-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stats-card-content">
+                <div class="stats-card-title">اجتماعات مكتملة</div>
+                <div class="stats-card-value">{{ completed_meetings }}</div>
+            </div>
+        </div>
+
+        <div class="stats-card stats-card-warning">
+            <div class="stats-card-icon">
+                <i class="fas fa-calendar-times"></i>
+            </div>
+            <div class="stats-card-content">
+                <div class="stats-card-title">اجتماعات قادمة</div>
+                <div class="stats-card-value">{{ upcoming_meetings }}</div>
+            </div>
+        </div>
+    </div>
     
     .stat-info span {
         color: #6c757d;

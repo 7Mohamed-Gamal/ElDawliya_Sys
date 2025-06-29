@@ -42,126 +42,131 @@
 {% endblock %}
 
 {% block content %}
-<div class="card shadow-sm">
-    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-        <h5 class="mb-0">
-            <i class="fas fa-user-plus me-2"></i>
-            {{ title }}
-        </h5>
-        <a href="{% url 'Hr:list' %}" class="btn btn-outline-secondary">
-            <i class="fas fa-arrow-right me-1"></i>
-            العودة للقائمة
-        </a>
-    </div>
-    <div class="card-body">
-        <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
-            {% csrf_token %}
-            
-            {% if form.non_field_errors %}
-            <div class="alert alert-danger" role="alert">
-                {% for error in form.non_field_errors %}
-                <p class="mb-0">{{ error }}</p>
-                {% endfor %}
+<div class="section-spacing">
+    <div class="card">
+        <div class="card-header">
+            <div class="card-header-content">
+                <div class="card-title">
+                    <i class="fas fa-user-plus"></i>
+                    <span>{{ title }}</span>
+                </div>
+                <div class="card-subtitle">إدخال بيانات موظف جديد</div>
             </div>
-            {% endif %}
+            <div class="card-actions">
+                <a href="{% url 'Hr:list' %}" class="btn btn-outline-secondary btn-with-icon">
+                    <i class="fas fa-arrow-right"></i>
+                    <span>العودة للقائمة</span>
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                {% csrf_token %}
+
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger mb-4" role="alert">
+                    {% for error in form.non_field_errors %}
+                    <p class="mb-0">{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
             
-            <!-- تنظيم الحقول في أقسام -->
-            <div class="accordion mb-4" id="employeeFormAccordion">
-                <!-- المعلومات الأساسية -->
-                <div class="accordion-item">
-                    <h2 class="accordion-header" id="heading1">
-                        <button class="accordion-button" type="button" 
-                                data-bs-toggle="collapse" data-bs-target="#collapse1" 
-                                aria-expanded="true" aria-controls="collapse1">
-                            المعلومات الأساسية
-                        </button>
-                    </h2>
-                    <div id="collapse1" class="accordion-collapse collapse show" 
-                         aria-labelledby="heading1" data-bs-parent="#employeeFormAccordion">
-                        <div class="accordion-body">
-                            <div class="row">
-                                <div class="col-md-4 mb-3">
+                <!-- تنظيم الحقول في أقسام -->
+                <div class="space-y-6">
+                    <!-- المعلومات الأساسية -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-header-content">
+                                <div class="card-title">
+                                    <i class="fas fa-user"></i>
+                                    <span>المعلومات الأساسية</span>
+                                </div>
+                                <div class="card-subtitle">البيانات الشخصية الأساسية للموظف</div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="form-group">
                                     <label for="{{ form.emp_id.id_for_label }}" class="form-label">{{ form.emp_id.label }}</label>
                                     {{ form.emp_id }}
                                     {% if form.emp_id.errors %}
-                                    <div class="invalid-feedback d-block">{{ form.emp_id.errors }}</div>
+                                    <div class="form-error">{{ form.emp_id.errors }}</div>
                                     {% endif %}
                                 </div>
-                                <div class="col-md-4 mb-3">
+                                <div class="form-group">
                                     <label for="{{ form.emp_first_name.id_for_label }}" class="form-label">{{ form.emp_first_name.label }}</label>
                                     {{ form.emp_first_name }}
                                     {% if form.emp_first_name.errors %}
-                                    <div class="invalid-feedback d-block">{{ form.emp_first_name.errors }}</div>
+                                    <div class="form-error">{{ form.emp_first_name.errors }}</div>
                                     {% endif %}
                                 </div>
-                                <div class="col-md-4 mb-3">
+                                <div class="form-group">
                                     <label for="{{ form.emp_second_name.id_for_label }}" class="form-label">{{ form.emp_second_name.label }}</label>
                                     {{ form.emp_second_name }}
                                     {% if form.emp_second_name.errors %}
-                                    <div class="invalid-feedback d-block">{{ form.emp_second_name.errors }}</div>
+                                    <div class="form-error">{{ form.emp_second_name.errors }}</div>
                                     {% endif %}
                                 </div>
-                                <div class="col-md-4 mb-3">
+                                <div class="form-group">
                                     <label for="{{ form.emp_full_name.id_for_label }}" class="form-label">{{ form.emp_full_name.label }}</label>
                                     {{ form.emp_full_name }}
                                     {% if form.emp_full_name.errors %}
-                                    <div class="invalid-feedback d-block">{{ form.emp_full_name.errors }}</div>
+                                    <div class="form-error">{{ form.emp_full_name.errors }}</div>
                                     {% endif %}
                                 </div>
-                                <div class="col-md-4 mb-3">
+                                <div class="form-group">
                                     <label for="{{ form.emp_name_english.id_for_label }}" class="form-label">{{ form.emp_name_english.label }}</label>
                                     {{ form.emp_name_english }}
                                     {% if form.emp_name_english.errors %}
-                                    <div class="invalid-feedback d-block">{{ form.emp_name_english.errors }}</div>
+                                    <div class="form-error">{{ form.emp_name_english.errors }}</div>
                                     {% endif %}
                                 </div>
-                                <div class="col-md-4 mb-3">
+                                <div class="form-group">
                                     <label for="{{ form.mother_name.id_for_label }}" class="form-label">{{ form.mother_name.label }}</label>
                                     {{ form.mother_name }}
                                     {% if form.mother_name.errors %}
-                                    <div class="invalid-feedback d-block">{{ form.mother_name.errors }}</div>
+                                    <div class="form-error">{{ form.mother_name.errors }}</div>
                                     {% endif %}
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                
-                <!-- معلومات الهوية -->
-                <div class="accordion-item">
-                    <h2 class="accordion-header" id="heading2">
-                        <button class="accordion-button collapsed" type="button" 
-                                data-bs-toggle="collapse" data-bs-target="#collapse2" 
-                                aria-expanded="false" aria-controls="collapse2">
-                            معلومات الهوية
-                        </button>
-                    </h2>
-                    <div id="collapse2" class="accordion-collapse collapse" 
-                         aria-labelledby="heading2" data-bs-parent="#employeeFormAccordion">
-                        <div class="accordion-body">
-                            <div class="row">
-                                <div class="col-md-4 mb-3">
+
+                    <!-- معلومات الهوية -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-header-content">
+                                <div class="card-title">
+                                    <i class="fas fa-id-card"></i>
+                                    <span>معلومات الهوية</span>
+                                </div>
+                                <div class="card-subtitle">بيانات الهوية والجنسية</div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="form-group">
                                     <label for="{{ form.national_id.id_for_label }}" class="form-label">{{ form.national_id.label }}</label>
                                     {{ form.national_id }}
                                     {% if form.national_id.errors %}
-                                    <div class="invalid-feedback d-block">{{ form.national_id.errors }}</div>
+                                    <div class="form-error">{{ form.national_id.errors }}</div>
                                     {% endif %}
                                 </div>
-                                <div class="col-md-4 mb-3">
+                                <div class="form-group">
                                     <label for="{{ form.date_birth.id_for_label }}" class="form-label">{{ form.date_birth.label }}</label>
                                     {{ form.date_birth }}
                                     {% if form.date_birth.errors %}
-                                    <div class="invalid-feedback d-block">{{ form.date_birth.errors }}</div>
+                                    <div class="form-error">{{ form.date_birth.errors }}</div>
                                     {% endif %}
                                 </div>
-                                <div class="col-md-4 mb-3">
+                                <div class="form-group">
                                     <label for="{{ form.place_birth.id_for_label }}" class="form-label">{{ form.place_birth.label }}</label>
                                     {{ form.place_birth }}
                                     {% if form.place_birth.errors %}
-                                    <div class="invalid-feedback d-block">{{ form.place_birth.errors }}</div>
+                                    <div class="form-error">{{ form.place_birth.errors }}</div>
                                     {% endif %}
                                 </div>
-                                <div class="col-md-4 mb-3">
+                                <div class="form-group">
                                     <label for="{{ form.emp_nationality.id_for_label }}" class="form-label">{{ form.emp_nationality.label }}</label>
                                     <select name="{{ form.emp_nationality.html_name }}" id="{{ form.emp_nationality.auto_id }}" class="form-select nationality-select {% if form.emp_nationality.errors %}is-invalid{% endif %}" {% if form.emp_nationality.field.required %}required{% endif %}>
                                         <option value="">اختر الجنسية</option>
@@ -186,60 +191,59 @@
                                         <option value="موريتاني">موريتاني</option>
                                     </select>
                                     {% if form.emp_nationality.errors %}
-                                    <div class="invalid-feedback d-block">{{ form.emp_nationality.errors }}</div>
+                                    <div class="form-error">{{ form.emp_nationality.errors }}</div>
                                     {% endif %}
                                 </div>
-                                <div class="col-md-4 mb-3">
+                                <div class="form-group">
                                     <label for="{{ form.emp_marital_status.id_for_label }}" class="form-label">{{ form.emp_marital_status.label }}</label>
                                     {{ form.emp_marital_status }}
                                     {% if form.emp_marital_status.errors %}
-                                    <div class="invalid-feedback d-block">{{ form.emp_marital_status.errors }}</div>
+                                    <div class="form-error">{{ form.emp_marital_status.errors }}</div>
                                     {% endif %}
                                 </div>
-                                <div class="col-md-4 mb-3">
+                                <div class="form-group">
                                     <label for="{{ form.military_service_certificate.id_for_label }}" class="form-label">{{ form.military_service_certificate.label }}</label>
                                     {{ form.military_service_certificate }}
                                     {% if form.military_service_certificate.errors %}
-                                    <div class="invalid-feedback d-block">{{ form.military_service_certificate.errors }}</div>
+                                    <div class="form-error">{{ form.military_service_certificate.errors }}</div>
                                     {% endif %}
                                 </div>
-                                <div class="col-md-4 mb-3">
+                                <div class="form-group">
                                     <div class="form-check">
                                         {{ form.people_with_special_needs }}
                                         <label class="form-check-label" for="{{ form.people_with_special_needs.id_for_label }}">
                                             {{ form.people_with_special_needs.label }}
                                         </label>
                                         {% if form.people_with_special_needs.errors %}
-                                        <div class="invalid-feedback d-block">{{ form.people_with_special_needs.errors }}</div>
+                                        <div class="form-error">{{ form.people_with_special_needs.errors }}</div>
                                         {% endif %}
                                     </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- بيانات الاتصال -->
-                <div class="accordion-item">
-                    <h2 class="accordion-header" id="heading3">
-                        <button class="accordion-button collapsed" type="button"
-                                data-bs-toggle="collapse" data-bs-target="#collapse3"
-                                aria-expanded="false" aria-controls="collapse3">
-                            بيانات الاتصال
-                        </button>
-                    </h2>
-                    <div id="collapse3" class="accordion-collapse collapse"
-                         aria-labelledby="heading3" data-bs-parent="#employeeFormAccordion">
-                        <div class="accordion-body">
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
+                    <!-- بيانات الاتصال -->
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-header-content">
+                                <div class="card-title">
+                                    <i class="fas fa-phone"></i>
+                                    <span>بيانات الاتصال</span>
+                                </div>
+                                <div class="card-subtitle">معلومات الاتصال والعنوان</div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="form-group">
                                     <label for="{{ form.emp_phone1.id_for_label }}" class="form-label">{{ form.emp_phone1.label }}</label>
                                     {{ form.emp_phone1 }}
                                     {% if form.emp_phone1.errors %}
-                                    <div class="invalid-feedback d-block">{{ form.emp_phone1.errors }}</div>
+                                    <div class="form-error">{{ form.emp_phone1.errors }}</div>
                                     {% endif %}
                                 </div>
-                                <div class="col-md-6 mb-3">
+                                <div class="form-group">
                                     <label for="{{ form.emp_phone2.id_for_label }}" class="form-label">{{ form.emp_phone2.label }}</label>
                                     {{ form.emp_phone2 }}
                                     {% if form.emp_phone2.errors %}
@@ -398,17 +402,18 @@
                 </div>
             </div>
 
-            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                <a href="{% url 'Hr:employees:list' %}" class="btn btn-light me-md-2">
-                    <i class="fas fa-times me-1"></i>
-                    إلغاء
-                </a>
-                <button type="submit" class="btn btn-primary px-4">
-                    <i class="fas fa-save me-1"></i>
-                    {{ button_text|default:"حفظ" }}
-                </button>
-            </div>
-        </form>
+                <div class="form-actions">
+                    <a href="{% url 'Hr:employees:list' %}" class="btn btn-outline-secondary btn-with-icon">
+                        <i class="fas fa-times"></i>
+                        <span>إلغاء</span>
+                    </a>
+                    <button type="submit" class="btn btn-primary btn-with-icon">
+                        <i class="fas fa-save"></i>
+                        <span>{{ button_text|default:"حفظ" }}</span>
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 {% endblock %}

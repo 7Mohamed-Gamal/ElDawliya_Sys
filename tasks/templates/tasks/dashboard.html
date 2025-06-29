@@ -10,44 +10,67 @@
 <li class="breadcrumb-item active">لوحة تحكم المهام</li>
 {% endblock %}
 
-{% block extra_css %}
-<style>
-    .stats-card {
-        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-        border: none;
-        border-radius: 15px;
-        overflow: hidden;
-    }
+{% block content %}
+<div class="section-spacing">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-header-content">
+            <div class="page-title">
+                <i class="fas fa-tasks"></i>
+                <span>لوحة تحكم المهام</span>
+            </div>
+            <div class="page-subtitle">نظرة عامة على المهام والأنشطة</div>
+        </div>
+        <div class="page-actions">
+            <a href="{% url 'tasks:task_create' %}" class="btn btn-primary btn-with-icon">
+                <i class="fas fa-plus"></i>
+                <span>مهمة جديدة</span>
+            </a>
+        </div>
+    </div>
 
-    .stats-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    }
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="stats-card stats-card-primary">
+            <div class="stats-card-icon">
+                <i class="fas fa-list-check"></i>
+            </div>
+            <div class="stats-card-content">
+                <div class="stats-card-title">إجمالي المهام</div>
+                <div class="stats-card-value">{{ total_tasks }}</div>
+            </div>
+        </div>
 
-    .stats-icon {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: linear-gradient(135deg, var(--icon-color-1), var(--icon-color-2));
-    }
+        <div class="stats-card stats-card-success">
+            <div class="stats-card-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stats-card-content">
+                <div class="stats-card-title">المهام المكتملة</div>
+                <div class="stats-card-value">{{ completed_tasks }}</div>
+            </div>
+        </div>
 
-    .completion-rate {
-        font-size: 2.5rem;
-        font-weight: 700;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
+        <div class="stats-card stats-card-warning">
+            <div class="stats-card-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stats-card-content">
+                <div class="stats-card-title">المهام المعلقة</div>
+                <div class="stats-card-value">{{ pending_tasks }}</div>
+            </div>
+        </div>
 
-    .priority-badge {
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: 600;
+        <div class="stats-card stats-card-danger">
+            <div class="stats-card-icon">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="stats-card-content">
+                <div class="stats-card-title">المهام المتأخرة</div>
+                <div class="stats-card-value">{{ overdue_tasks }}</div>
+            </div>
+        </div>
+    </div>
     }
 
     .task-item {

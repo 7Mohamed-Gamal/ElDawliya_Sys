@@ -12,42 +12,78 @@
 {% endblock %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col-md-12">
-        <h2 class="mb-3">
-            <i class="fas fa-tachometer-alt me-2"></i>لوحة تحكم طلبات الشراء
-        </h2>
-        <p class="text-muted">مرحبًا بك في نظام إدارة طلبات الشراء. يمكنك من هنا متابعة طلبات الشراء وإدارتها.</p>
+<div class="section-spacing">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-header-content">
+            <div class="page-title">
+                <i class="fas fa-shopping-cart"></i>
+                <span>لوحة تحكم طلبات الشراء</span>
+            </div>
+            <div class="page-subtitle">إدارة ومتابعة طلبات الشراء والموافقات</div>
+        </div>
+        <div class="page-actions">
+            <a href="{% url 'purchase_orders:purchase_request_create' %}" class="btn btn-primary btn-with-icon">
+                <i class="fas fa-plus"></i>
+                <span>طلب شراء جديد</span>
+            </a>
+        </div>
     </div>
-</div>
 
-<!-- إحصائيات سريعة -->
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card bg-primary text-white">
-            <div class="card-body">
-                <h5 class="card-title">إجمالي الطلبات</h5>
-                <h2 class="display-4">{{ total_requests }}</h2>
-                <p class="card-text">
-                    <i class="fas fa-shopping-cart"></i> العدد الكلي للطلبات
-                </p>
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="stats-card stats-card-primary">
+            <div class="stats-card-icon">
+                <i class="fas fa-shopping-cart"></i>
+            </div>
+            <div class="stats-card-content">
+                <div class="stats-card-title">إجمالي الطلبات</div>
+                <div class="stats-card-value">{{ total_requests }}</div>
+            </div>
+            <div class="stats-card-footer">
+                <span class="stats-card-description">العدد الكلي للطلبات</span>
+            </div>
+        </div>
+
+        <div class="stats-card stats-card-warning">
+            <div class="stats-card-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stats-card-content">
+                <div class="stats-card-title">قيد الانتظار</div>
+                <div class="stats-card-value">{{ pending_requests }}</div>
+            </div>
+            <div class="stats-card-footer">
+                <span class="stats-card-description">طلبات تنتظر الموافقة</span>
+            </div>
+        </div>
+
+        <div class="stats-card stats-card-success">
+            <div class="stats-card-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="stats-card-content">
+                <div class="stats-card-title">موافق عليها</div>
+                <div class="stats-card-value">{{ approved_requests }}</div>
+            </div>
+            <div class="stats-card-footer">
+                <span class="stats-card-description">طلبات تمت الموافقة عليها</span>
+            </div>
+        </div>
+
+        <div class="stats-card stats-card-danger">
+            <div class="stats-card-icon">
+                <i class="fas fa-times-circle"></i>
+            </div>
+            <div class="stats-card-content">
+                <div class="stats-card-title">مرفوضة</div>
+                <div class="stats-card-value">{{ rejected_requests }}</div>
+            </div>
+            <div class="stats-card-footer">
+                <span class="stats-card-description">طلبات مرفوضة</span>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card bg-warning text-dark">
-            <div class="card-body">
-                <h5 class="card-title">قيد الانتظار</h5>
-                <h2 class="display-4">{{ pending_requests }}</h2>
-                <p class="card-text">
-                    <i class="fas fa-clock"></i> طلبات تنتظر الموافقة
-                </p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-success text-white">
-            <div class="card-body">
                 <h5 class="card-title">تمت الموافقة</h5>
                 <h2 class="display-4">{{ approved_requests }}</h2>
                 <p class="card-text">
