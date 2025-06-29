@@ -134,6 +134,11 @@ note_patterns = [
 ]
 
 urlpatterns = [
+    # Main dashboard
+    path('', dashboard, name='dashboard'),
+    path('dashboard/', dashboard, name='dashboard_alt'),
+
+    # Module patterns
     path('employees/', include((employee_patterns, app_name), namespace='employees')),
     path('departments/', include((department_patterns, app_name), namespace='departments')),
     path('jobs/', include((job_patterns, app_name), namespace='jobs')),
