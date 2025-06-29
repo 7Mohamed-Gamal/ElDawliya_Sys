@@ -147,7 +147,7 @@
                             كود القسم: {{ department.dept_code }}
                         </div>
                         <div class="flex space-x-2 space-x-reverse">
-                            <a href="{% url 'Hr:departments:detail' department.dept_code %}" class="btn btn-sm btn-outline-primary" title="عرض التفاصيل">
+                            <a href="{% url 'Hr:departments:department_detail' department.dept_code %}" class="btn btn-sm btn-outline-primary" title="عرض التفاصيل">
                                 <i class="fas fa-eye"></i>
                             </a>
                             {% if perms.Hr.change_department or user|is_admin %}

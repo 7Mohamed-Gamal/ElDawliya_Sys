@@ -55,6 +55,32 @@ Looking at the actual URL patterns in `Hr/urls.py`:
 **Breadcrumb Navigation:**
 - **Line 11**: `{% url 'Hr:jobs:list' %}` → `{% url 'Hr:jobs:job_list' %}`
 
+### 8. `Hr/templates/Hr/dashboard.html`
+**Dashboard Stats Cards and Navigation:**
+- **Line 80**: `{% url 'Hr:departments:list' %}` → `{% url 'Hr:departments:department_list' %}`
+- **Line 97**: `{% url 'Hr:jobs:list' %}` → `{% url 'Hr:jobs:job_list' %}`
+- **Line 161**: `{% url 'Hr:departments:list' %}` → `{% url 'Hr:departments:department_list' %}`
+- **Line 175**: `{% url 'Hr:jobs:list' %}` → `{% url 'Hr:jobs:job_list' %}`
+
+### 9. `Hr/templates/Hr/employees/employee_list.html`
+**Employee List Template - Department Detail Links and Quick Actions:**
+- **Line 922**: `{% url 'Hr:departments:detail' dept.dept_code %}` → `{% url 'Hr:departments:department_detail' dept.dept_code %}`
+- **Line 979**: `{% url 'Hr:departments:list' %}` → `{% url 'Hr:departments:department_list' %}`
+- **Line 989**: `{% url 'Hr:jobs:list' %}` → `{% url 'Hr:jobs:job_list' %}`
+
+### 10. `Hr/templates/Hr/departments/department_list.html`
+**Department List Template - Detail View Links:**
+- **Line 150**: `{% url 'Hr:departments:detail' department.dept_code %}` → `{% url 'Hr:departments:department_detail' department.dept_code %}`
+
+### 11. `Hr/templates/Hr/departments/department_performance.html`
+**Department Performance Template - Breadcrumb and Navigation:**
+- **Line 14**: `{% url 'Hr:departments:detail' department.dept_code %}` → `{% url 'Hr:departments:department_detail' department.dept_code %}`
+- **Line 26**: `{% url 'Hr:departments:detail' department.dept_code %}` → `{% url 'Hr:departments:department_detail' department.dept_code %}`
+
+### 12. `Hr/templates/Hr/reports/department_report.html`
+**Department Report Template - Detail View Links:**
+- **Line 84**: `{% url 'Hr:departments:detail' department.dept_code %}` → `{% url 'Hr:departments:department_detail' department.dept_code %}`
+
 ## ✅ Verification Results
 
 ### URL Pattern Test Results:
@@ -102,3 +128,19 @@ For future development, here are the correct URL pattern names:
 
 ## 🚀 Status
 ✅ **RESOLVED** - The HR dashboard at `/Hr/` now loads successfully without NoReverseMatch errors.
+
+## 📝 Latest Fix (Employee List Template & URL Pattern)
+**Issue**: NoReverseMatch error in `Hr/templates/Hr/employees/employee_list.html` at line 922
+**Root Cause**: Two-part issue:
+1. Template using `{% url 'Hr:departments:detail' %}` instead of `{% url 'Hr:departments:department_detail' %}`
+2. URL pattern parameter mismatch: pattern used `<int:dept_id>` but view expected `dept_code`
+
+**Solution**:
+1. **Fixed URL pattern in `Hr/urls.py`**: Changed `<int:dept_id>` to `<int:dept_code>` for all department URLs
+2. **Fixed 6 additional URL references** across 5 template files:
+   - Employee list template: 3 URL fixes (department detail + quick actions)
+   - Department list template: 1 URL fix (detail view link)
+   - Department performance template: 2 URL fixes (breadcrumb + navigation)
+   - Department report template: 1 URL fix (detail view link)
+
+**Total Files Fixed**: 12 template files + 1 URL configuration file with 20+ URL reference corrections

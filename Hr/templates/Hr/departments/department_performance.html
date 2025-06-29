@@ -11,7 +11,7 @@
 <li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
 <li class="breadcrumb-item"><a href="{% url 'Hr:dashboard' %}">الموارد البشرية</a></li>
 <li class="breadcrumb-item"><a href="{% url 'Hr:departments:department_list' %}">الأقسام</a></li>
-<li class="breadcrumb-item"><a href="{% url 'Hr:departments:detail' department.dept_code %}">{{ department.dept_name }}</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Hr:departments:department_detail' department.dept_code %}">{{ department.dept_name }}</a></li>
 <li class="breadcrumb-item active">أداء القسم</li>
 {% endblock %}
 
@@ -23,7 +23,7 @@
                 <h5 class="mb-0 fw-semibold">
                     <i class="fas fa-chart-line text-primary me-2"></i>أداء قسم {{ department.dept_name }}
                 </h5>
-                <a href="{% url 'Hr:departments:detail' department.dept_code %}" class="btn btn-outline-primary">
+                <a href="{% url 'Hr:departments:department_detail' department.dept_code %}" class="btn btn-outline-primary">
                     <i class="fas fa-arrow-right me-1"></i> العودة للقسم
                 </a>
             </div>

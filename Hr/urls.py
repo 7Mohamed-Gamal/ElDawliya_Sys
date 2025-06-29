@@ -56,19 +56,19 @@ employee_patterns = [
 department_patterns = [
     path('', department_list, name='department_list'),
     path('create/', department_create, name='department_create'),
-    path('<int:dept_id>/', department_detail, name='department_detail'),
-    path('<int:dept_id>/edit/', department_edit, name='department_edit'),
-    path('<int:dept_id>/delete/', department_delete, name='department_delete'),
-    path('<int:dept_id>/performance/', department_performance, name='department_performance'),
+    path('<int:dept_code>/', department_detail, name='department_detail'),
+    path('<int:dept_code>/edit/', department_edit, name='department_edit'),
+    path('<int:dept_code>/delete/', department_delete, name='department_delete'),
+    path('<int:dept_code>/performance/', department_performance, name='department_performance'),
 ]
 
 # Job patterns
 job_patterns = [
     path('', job_list, name='job_list'),
     path('create/', job_create, name='job_create'),
-    path('<int:job_id>/', job_detail, name='job_detail'),
-    path('<int:job_id>/edit/', job_edit, name='job_edit'),
-    path('<int:job_id>/delete/', job_delete, name='job_delete'),
+    path('<int:jop_code>/', job_detail, name='job_detail'),
+    path('<int:jop_code>/edit/', job_edit, name='job_edit'),
+    path('<int:jop_code>/delete/', job_delete, name='job_delete'),
     path('next_code/', get_next_job_code, name='get_next_job_code'),
 ]
 

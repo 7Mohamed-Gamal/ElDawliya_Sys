@@ -81,7 +81,7 @@
                     <td>{{ department.location }}</td>
                     <td class="text-center">
                         {% if perms.Hr.view_department_detail or user|is_admin %}
-                        <a href="{% url 'Hr:departments:detail' department.dept_code %}" class="btn btn-sm btn-primary">
+                        <a href="{% url 'Hr:departments:department_detail' department.dept_code %}" class="btn btn-sm btn-primary">
                             <i class="fas fa-eye"></i>
                         </a>
                         {% endif %}
