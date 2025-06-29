@@ -36,7 +36,7 @@ def salary_item_create(request):
         if form.is_valid():
             form.save()
             messages.success(request, 'تم إنشاء بند الراتب بنجاح')
-            return redirect('Hr:salary_item_list')
+            return redirect('Hr:salaries:salary_item_list')
     else:
         form = SalaryItemForm()
     
@@ -58,7 +58,7 @@ def salary_item_edit(request, pk):
         if form.is_valid():
             form.save()
             messages.success(request, 'تم تحديث بند الراتب بنجاح')
-            return redirect('Hr:salary_item_list')
+            return redirect('Hr:salaries:salary_item_list')
     else:
         form = SalaryItemForm(instance=salary_item)
     
@@ -79,7 +79,7 @@ def salary_item_delete(request, pk):
     if request.method == 'POST':
         salary_item.delete()
         messages.success(request, 'تم حذف بند الراتب بنجاح')
-        return redirect('Hr:salary_item_list')
+        return redirect('Hr:salaries:salary_item_list')
     
     context = {
         'salary_item': salary_item,
