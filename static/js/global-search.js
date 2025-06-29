@@ -76,11 +76,19 @@ class GlobalSearchManager {
                 e.preventDefault();
                 this.openSearch();
             }
-            
+
             if (e.key === 'Escape' && this.isSearchActive) {
                 this.closeSearch();
             }
         });
+
+        // Search trigger button
+        const searchTrigger = document.querySelector('.global-search-trigger');
+        if (searchTrigger) {
+            searchTrigger.addEventListener('click', () => {
+                this.openSearch();
+            });
+        }
 
         // Search input events
         this.searchInput.addEventListener('input', (e) => {

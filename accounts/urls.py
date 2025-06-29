@@ -11,4 +11,7 @@ urlpatterns = [
     path('create-user/', views.create_user_view, name='create_user'),
     path('edit-permissions/<int:user_id>/', views.edit_permissions_view, name='edit_permissions'),
     path('access-denied/', views.access_denied, name='access_denied'),
+
+    # Global Search API
+    path('api/global-search/', views.global_search_api, name='global_search_api'),
 ]

@@ -8,3 +8,6 @@ class CoreConfig(AppConfig):
     def ready(self):
         # Import the custom collations module to register the collations
         import core.db_collations
+
+        # Import synchronization signals to register them
+        import core.synchronization

@@ -4,6 +4,7 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin  # Import Django's default admin
 from .views import test_view
+from accounts.views import global_search_api
 
 # Import the database setup view directly to avoid database dependency
 # This allows the database setup URL to work even when the database is unavailable
@@ -31,7 +32,7 @@ urlpatterns = [
     path('accounts/', include('accounts.urls')),  # مسارات تطبيق الحسابات
     path('meetings/', include('meetings.urls')),  # مسارات تطبيق الاجتماعات
     path('tasks/', include('tasks.urls')),  # مسارات تطبيق المهام
-    path('Hr/', include('Hr.urls', namespace='Hr')), # مسارات تطبيق الموارد البشرية - now using namespace
+    path('Hr/', include('Hr.urls')), # مسارات تطبيق الموارد البشرية - now using namespace
     path('attendance/', include('attendance.urls')),
     path('inventory/', include('inventory.urls')), # مسارات تطبيق مخزن قطع الغيار
     path('purchase/', include('Purchase_orders.urls')), # مسارات تطبيق طلبات الشراء
@@ -40,7 +41,9 @@ urlpatterns = [
     path('audit/', include('audit.urls')),  # مسارات تطبيق تسجيل الأحداث
     path('employee-tasks/', include('employee_tasks.urls')),  # مسارات تطبيق مهام الموظفين
     path('cars/', include('cars.urls')),  # مسارات تطبيق السيارات
+    path('core/', include('core.urls')),  # مسارات النظام الأساسي
     path('api/v1/', include('api.urls')),  # مسارات API
+    path('api/global-search/', global_search_api, name='global_search_api'),  # Global search API endpoint
     path('', lambda request: redirect('accounts:login'), name='home'),  # إعادة توجيه الصفحة الرئيسية إلى صفحة الحسابات
 ]
 

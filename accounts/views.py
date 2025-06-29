@@ -7,6 +7,11 @@ from meetings.models import Meeting
 from tasks.models import Task
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.db.models import Q
+from django.urls import reverse
+import json
 
 # استيراد وظائف إنشاء التنبيهات
 try:
@@ -239,3 +244,280 @@ def edit_permissions_view(request, user_id):
     return render(request, 'accounts/edit_permissions.html', context)
 
 
+# Global Search API
+@login_required
+@csrf_exempt
+def global_search_api(request):
+    """
+    Global search API endpoint that searches across all modules
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+    try:
+        data = json.loads(request.body)
+        query = data.get('query', '').strip()
+        module_filter = data.get('module', '').strip()
+        limit = min(int(data.get('limit', 20)), 50)  # Max 50 results
+
+        if len(query) < 2:
+            return JsonResponse({'results': []})
+
+        results = []
+
+        # Search in HR module
+        if not module_filter or module_filter == 'hr':
+            results.extend(search_hr_data(query, request.user, limit))
+
+        # Search in Inventory module
+        if not module_filter or module_filter == 'inventory':
+            results.extend(search_inventory_data(query, request.user, limit))
+
+        # Search in Tasks module
+        if not module_filter or module_filter == 'tasks':
+            results.extend(search_tasks_data(query, request.user, limit))
+
+        # Search in Meetings module
+        if not module_filter or module_filter == 'meetings':
+            results.extend(search_meetings_data(query, request.user, limit))
+
+        # Search in Purchase Orders module
+        if not module_filter or module_filter == 'purchase_orders':
+            results.extend(search_purchase_orders_data(query, request.user, limit))
+
+        # Sort results by relevance
+        results = sorted(results, key=lambda x: x.get('score', 0), reverse=True)[:limit]
+
+        return JsonResponse({'results': results})
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+def search_hr_data(query, user, limit):
+    """Search in HR module data"""
+    results = []
+
+    try:
+        # Import HR models
+        from Hr.models import Employee, Department
+
+        # Search employees
+        employees = Employee.objects.filter(
+            Q(emp_first_name__icontains=query) |
+            Q(emp_second_name__icontains=query) |
+            Q(emp_full_name__icontains=query) |
+            Q(emp_id__icontains=query)
+        ).filter(working_condition='سارى')[:limit//2]
+
+        for emp in employees:
+            results.append({
+                'module': 'hr',
+                'type': 'employee',
+                'title': emp.emp_full_name,
+                'description': f'موظف - {emp.department.dept_name if emp.department else "بدون قسم"}',
+                'url': f'/Hr/employees/{emp.emp_id}/',
+                'icon': 'fas fa-user',
+                'meta': [
+                    f'الرقم: {emp.emp_id}',
+                    f'القسم: {emp.department.dept_name if emp.department else "غير محدد"}'
+                ],
+                'score': calculate_relevance_score(query, emp.emp_full_name)
+            })
+
+        # Search departments
+        departments = Department.objects.filter(
+            Q(dept_name__icontains=query) |
+            Q(dept_code__icontains=query)
+        )[:limit//2]
+
+        for dept in departments:
+            results.append({
+                'module': 'hr',
+                'type': 'department',
+                'title': dept.dept_name,
+                'description': f'قسم - {dept.dept_code}',
+                'url': f'/Hr/departments/{dept.dept_code}/',
+                'icon': 'fas fa-building',
+                'meta': [
+                    f'الكود: {dept.dept_code}',
+                    f'عدد الموظفين: {dept.employee_set.count()}'
+                ],
+                'score': calculate_relevance_score(query, dept.dept_name)
+            })
+
+    except Exception as e:
+        print(f"Error searching HR data: {e}")
+
+    return results
+
+
+def search_inventory_data(query, user, limit):
+    """Search in Inventory module data"""
+    results = []
+
+    try:
+        from inventory.models import Product
+
+        # Search products
+        products = Product.objects.filter(
+            Q(name__icontains=query) |
+            Q(product_id__icontains=query)
+        )[:limit]
+
+        for product in products:
+            results.append({
+                'module': 'inventory',
+                'type': 'product',
+                'title': product.name,
+                'description': f'منتج - {getattr(product, "category", "بدون تصنيف")}',
+                'url': f'/inventory/products/{product.product_id}/',
+                'icon': 'fas fa-box',
+                'meta': [
+                    f'الكود: {product.product_id}',
+                    f'الكمية: {getattr(product, "quantity", "غير محدد")}'
+                ],
+                'score': calculate_relevance_score(query, product.name)
+            })
+
+    except Exception as e:
+        print(f"Error searching inventory data: {e}")
+
+    return results
+
+
+def search_tasks_data(query, user, limit):
+    """Search in Tasks module data"""
+    results = []
+
+    try:
+        # Search tasks accessible to user
+        if user.is_superuser:
+            tasks = Task.objects.filter(
+                Q(title__icontains=query) |
+                Q(description__icontains=query)
+            )[:limit]
+        else:
+            tasks = Task.objects.filter(
+                Q(title__icontains=query) |
+                Q(description__icontains=query)
+            ).filter(
+                Q(assigned_to=user) |
+                Q(created_by=user)
+            )[:limit]
+
+        for task in tasks:
+            results.append({
+                'module': 'tasks',
+                'type': 'task',
+                'title': task.title,
+                'description': task.description[:100] + '...' if len(task.description) > 100 else task.description,
+                'url': f'/tasks/{task.id}/',
+                'icon': 'fas fa-tasks',
+                'meta': [
+                    f'الحالة: {task.get_status_display()}',
+                    f'الأولوية: {task.get_priority_display()}'
+                ],
+                'score': calculate_relevance_score(query, task.title)
+            })
+
+    except Exception as e:
+        print(f"Error searching tasks data: {e}")
+
+    return results
+
+
+def search_meetings_data(query, user, limit):
+    """Search in Meetings module data"""
+    results = []
+
+    try:
+        # Search meetings
+        meetings = Meeting.objects.filter(
+            Q(title__icontains=query) |
+            Q(description__icontains=query)
+        )[:limit]
+
+        for meeting in meetings:
+            results.append({
+                'module': 'meetings',
+                'type': 'meeting',
+                'title': meeting.title,
+                'description': f'اجتماع - {getattr(meeting, "location", "")}',
+                'url': f'/meetings/{meeting.id}/',
+                'icon': 'fas fa-calendar-alt',
+                'meta': [
+                    f'التاريخ: {meeting.date_time.strftime("%Y-%m-%d") if hasattr(meeting, "date_time") else "غير محدد"}',
+                    f'المكان: {getattr(meeting, "location", "غير محدد")}'
+                ],
+                'score': calculate_relevance_score(query, meeting.title)
+            })
+
+    except Exception as e:
+        print(f"Error searching meetings data: {e}")
+
+    return results
+
+
+def search_purchase_orders_data(query, user, limit):
+    """Search in Purchase Orders module data"""
+    results = []
+
+    try:
+        from Purchase_orders.models import PurchaseRequest
+
+        # Search purchase requests
+        requests = PurchaseRequest.objects.filter(
+            Q(description__icontains=query)
+        )[:limit]
+
+        for req in requests:
+            results.append({
+                'module': 'purchase_orders',
+                'type': 'purchase_request',
+                'title': f'طلب شراء #{req.id}',
+                'description': req.description[:100] + '...' if len(req.description) > 100 else req.description,
+                'url': f'/purchase/requests/{req.id}/',
+                'icon': 'fas fa-shopping-cart',
+                'meta': [
+                    f'الحالة: {getattr(req, "status", "غير محدد")}',
+                    f'التاريخ: {req.created_at.strftime("%Y-%m-%d") if hasattr(req, "created_at") else "غير محدد"}'
+                ],
+                'score': calculate_relevance_score(query, req.description)
+            })
+
+    except Exception as e:
+        print(f"Error searching purchase orders data: {e}")
+
+    return results
+
+
+def calculate_relevance_score(query, text):
+    """Calculate relevance score for search results"""
+    if not query or not text:
+        return 0
+
+    query_lower = query.lower()
+    text_lower = text.lower()
+
+    # Exact match gets highest score
+    if query_lower == text_lower:
+        return 100
+
+    # Starts with query gets high score
+    if text_lower.startswith(query_lower):
+        return 80
+
+    # Contains query gets medium score
+    if query_lower in text_lower:
+        return 60
+
+    # Word match gets lower score
+    query_words = query_lower.split()
+    text_words = text_lower.split()
+
+    matches = sum(1 for word in query_words if any(word in text_word for text_word in text_words))
+    if matches > 0:
+        return 40 + (matches * 10)
+
+    return 0

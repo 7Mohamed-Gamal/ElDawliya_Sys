@@ -32,6 +32,11 @@ from inventory.models import TblProducts, TblCategories
 from tasks.models import Task
 from meetings.models import Meeting
 
+# Import core services
+from core.data_integration import data_integration_service
+from core.permissions import UnifiedPermissionService
+from core.reporting import reporting_service
+
 User = get_user_model()
 logger = logging.getLogger(__name__)
 
@@ -413,3 +418,346 @@ def api_usage_stats(request):
     }
 
     return Response(stats, status=status.HTTP_200_OK)
+
+
+# Unified Data Integration API Endpoints
+# نقاط النهاية الموحدة لتكامل البيانات
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def employee_unified_data(request, employee_id):
+    """
+    Get unified employee data with all related information
+    جلب البيانات الموحدة للموظف مع جميع المعلومات المرتبطة
+    """
+    permission_service = UnifiedPermissionService(request.user)
+
+    if not permission_service.can_access_employee_data(employee_id):
+        return Response(
+            {'error': 'ليس لديك صلاحية للوصول لبيانات هذا الموظف'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    # Get employee with all relations
+    employee = data_integration_service.get_employee_with_relations(employee_id)
+    if not employee:
+        return Response(
+            {'error': 'الموظف غير موجود'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    # Get unified tasks
+    unified_tasks = data_integration_service.get_employee_tasks_unified(employee_id)
+
+    # Serialize employee data
+    employee_data = EmployeeSerializer(employee).data
+
+    # Add unified data
+    employee_data['unified_tasks'] = unified_tasks
+    employee_data['task_statistics'] = {
+        'total_tasks': len(unified_tasks),
+        'active_tasks': len([t for t in unified_tasks if t['status'] in ['pending', 'in_progress']]),
+        'completed_tasks': len([t for t in unified_tasks if t['status'] == 'completed']),
+        'overdue_tasks': len([t for t in unified_tasks if t['due_date'] and t['due_date'] < timezone.now().date() and t['status'] in ['pending', 'in_progress']])
+    }
+
+    return Response(employee_data, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def department_analytics(request, department_id):
+    """
+    Get comprehensive department analytics
+    جلب التحليلات الشاملة للقسم
+    """
+    permission_service = UnifiedPermissionService(request.user)
+
+    if not permission_service.has_module_permission('hr', 'view'):
+        return Response(
+            {'error': 'ليس لديك صلاحية لعرض تحليلات الأقسام'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    analytics = data_integration_service.get_department_analytics(department_id)
+    if not analytics:
+        return Response(
+            {'error': 'القسم غير موجود'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+
+    return Response(analytics, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def validate_cross_module_data(request):
+    """
+    Validate data consistency across modules
+    التحقق من صحة البيانات عبر الوحدات
+    """
+    data = request.data.get('data', {})
+    module = request.data.get('module', '')
+
+    if not module:
+        return Response(
+            {'error': 'يجب تحديد الوحدة'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    permission_service = UnifiedPermissionService(request.user)
+    if not permission_service.has_module_permission(module, 'view'):
+        return Response(
+            {'error': f'ليس لديك صلاحية للوصول لوحدة {module}'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    errors = data_integration_service.validate_cross_module_data(data, module)
+
+    return Response({
+        'valid': len(errors) == 0,
+        'errors': errors
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def user_permissions_summary(request):
+    """
+    Get comprehensive summary of user permissions
+    جلب ملخص شامل لصلاحيات المستخدم
+    """
+    permission_service = UnifiedPermissionService(request.user)
+    permissions = permission_service.get_user_permissions_summary()
+
+    return Response(permissions, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def accessible_departments(request):
+    """
+    Get list of departments user can access
+    جلب قائمة الأقسام التي يمكن للمستخدم الوصول إليها
+    """
+    permission_service = UnifiedPermissionService(request.user)
+    departments = permission_service.get_user_accessible_departments()
+
+    department_data = DepartmentSerializer(departments, many=True).data
+
+    return Response(department_data, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def clear_integration_cache(request):
+    """
+    Clear data integration cache (admin only)
+    مسح ذاكرة التخزين المؤقت لتكامل البيانات (للمديرين فقط)
+    """
+    if not request.user.is_staff:
+        return Response(
+            {'error': 'هذه العملية متاحة للمديرين فقط'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    data_integration_service.clear_all_cache()
+
+    return Response(
+        {'message': 'تم مسح ذاكرة التخزين المؤقت بنجاح'},
+        status=status.HTTP_200_OK
+    )
+
+
+# Enhanced Reporting API Endpoints
+# نقاط نهاية API للتقارير المحسنة
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def dashboard_data(request):
+    """
+    Get comprehensive dashboard data
+    جلب بيانات لوحة التحكم الشاملة
+    """
+    try:
+        date_range = request.GET.get('date_range', '30d')
+
+        # Validate date range
+        valid_ranges = ['7d', '30d', '90d', '1y']
+        if date_range not in valid_ranges:
+            return Response(
+                {'error': f'نطاق التاريخ غير صحيح. القيم المسموحة: {", ".join(valid_ranges)}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        dashboard_data = reporting_service.get_dashboard_data(
+            user=request.user,
+            date_range=date_range
+        )
+
+        return Response(dashboard_data, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        logger.error(f"Error getting dashboard data: {e}")
+        return Response(
+            {'error': 'حدث خطأ أثناء جلب بيانات لوحة التحكم'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def generate_custom_report(request):
+    """
+    Generate a custom report based on configuration
+    إنشاء تقرير مخصص بناءً على التكوين
+    """
+    try:
+        report_config = request.data
+
+        # Validate required fields
+        if not isinstance(report_config, dict):
+            return Response(
+                {'error': 'تكوين التقرير يجب أن يكون كائن JSON'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Set default values
+        report_config.setdefault('type', 'summary')
+        report_config.setdefault('date_range', '30d')
+        report_config.setdefault('modules', ['all'])
+        report_config.setdefault('format', 'json')
+
+        report_data = reporting_service.generate_custom_report(
+            report_config=report_config,
+            user=request.user
+        )
+
+        return Response(report_data, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        logger.error(f"Error generating custom report: {e}")
+        return Response(
+            {'error': 'حدث خطأ أثناء إنشاء التقرير المخصص'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def export_report(request):
+    """
+    Export report in specified format
+    تصدير التقرير بالتنسيق المحدد
+    """
+    try:
+        report_data = request.data.get('report_data')
+        format_type = request.data.get('format', 'json')
+
+        if not report_data:
+            return Response(
+                {'error': 'بيانات التقرير مطلوبة'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if format_type not in reporting_service.supported_formats:
+            return Response(
+                {'error': f'تنسيق غير مدعوم. التنسيقات المدعومة: {", ".join(reporting_service.supported_formats)}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return reporting_service.export_report(report_data, format_type)
+
+    except Exception as e:
+        logger.error(f"Error exporting report: {e}")
+        return Response(
+            {'error': 'حدث خطأ أثناء تصدير التقرير'},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def report_templates(request):
+    """
+    Get available report templates
+    جلب قوالب التقارير المتاحة
+    """
+    templates = [
+        {
+            'id': 'employee_summary',
+            'name': 'ملخص الموظفين',
+            'description': 'تقرير شامل عن الموظفين والأقسام',
+            'modules': ['employee'],
+            'chart_types': ['pie', 'bar'],
+            'default_date_range': '30d'
+        },
+        {
+            'id': 'task_performance',
+            'name': 'أداء المهام',
+            'description': 'تحليل أداء المهام ومعدلات الإنجاز',
+            'modules': ['task'],
+            'chart_types': ['line', 'bar'],
+            'default_date_range': '30d'
+        },
+        {
+            'id': 'meeting_analytics',
+            'name': 'تحليل الاجتماعات',
+            'description': 'إحصائيات الاجتماعات والحضور',
+            'modules': ['meeting'],
+            'chart_types': ['pie', 'bar'],
+            'default_date_range': '30d'
+        },
+        {
+            'id': 'inventory_status',
+            'name': 'حالة المخزون',
+            'description': 'تقرير شامل عن حالة المخزون والمنتجات',
+            'modules': ['inventory'],
+            'chart_types': ['doughnut', 'bar'],
+            'default_date_range': '7d'
+        },
+        {
+            'id': 'purchase_analysis',
+            'name': 'تحليل المشتريات',
+            'description': 'تحليل طلبات الشراء والموردين',
+            'modules': ['purchase'],
+            'chart_types': ['bar', 'line'],
+            'default_date_range': '90d'
+        },
+        {
+            'id': 'comprehensive_overview',
+            'name': 'نظرة عامة شاملة',
+            'description': 'تقرير شامل لجميع وحدات النظام',
+            'modules': ['all'],
+            'chart_types': ['pie', 'bar', 'line'],
+            'default_date_range': '30d'
+        }
+    ]
+
+    return Response({
+        'templates': templates,
+        'supported_formats': reporting_service.supported_formats,
+        'supported_chart_types': reporting_service.chart_types,
+        'available_date_ranges': ['7d', '30d', '90d', '1y']
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def clear_reporting_cache(request):
+    """
+    Clear reporting cache (admin only)
+    مسح ذاكرة التخزين المؤقت للتقارير (للمديرين فقط)
+    """
+    if not request.user.is_staff:
+        return Response(
+            {'error': 'هذه العملية متاحة للمديرين فقط'},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    reporting_service.clear_cache()
+
+    return Response(
+        {'message': 'تم مسح ذاكرة التخزين المؤقت للتقارير بنجاح'},
+        status=status.HTTP_200_OK
+    )

@@ -3059,3 +3059,103 @@ p {
     border-radius: var(--radius-md);
     flex-shrink: 0;
 }
+
+.result-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.result-title {
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: var(--space-1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.result-description {
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+    margin-bottom: var(--space-1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.result-meta {
+    display: flex;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+}
+
+.meta-item {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    background: var(--gray-100);
+    padding: var(--space-1) var(--space-2);
+    border-radius: var(--radius-sm);
+}
+
+.result-actions {
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.search-no-results,
+.search-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-8);
+    color: var(--text-muted);
+    text-align: center;
+}
+
+.search-no-results i,
+.search-error i {
+    font-size: 3rem;
+    margin-bottom: var(--space-4);
+    opacity: 0.5;
+}
+
+.search-error {
+    color: var(--danger-600);
+}
+
+.search-error i {
+    color: var(--danger-500);
+}
+
+/* ===== UTILITY COMPONENTS ===== */
+.text-gradient {
+    background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.backdrop-blur {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.glass-effect {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.shadow-soft {
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+}
+
+.shadow-medium {
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.1);
+}
+
+.shadow-strong {
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12);
+}

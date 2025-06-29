@@ -103,6 +103,21 @@ urlpatterns = [
     path('ai/chat/', views.gemini_chat, name='gemini_chat'),
     path('ai/analyze/', views.gemini_analyze_data, name='gemini_analyze'),
 
+    # Unified Data Integration Endpoints
+    path('integration/employee/<str:employee_id>/', views.employee_unified_data, name='employee_unified_data'),
+    path('integration/department/<int:department_id>/analytics/', views.department_analytics, name='department_analytics'),
+    path('integration/validate/', views.validate_cross_module_data, name='validate_cross_module_data'),
+    path('integration/permissions/', views.user_permissions_summary, name='user_permissions_summary'),
+    path('integration/departments/', views.accessible_departments, name='accessible_departments'),
+    path('integration/cache/clear/', views.clear_integration_cache, name='clear_integration_cache'),
+
+    # Enhanced Reporting Endpoints
+    path('reporting/dashboard/', views.dashboard_data, name='dashboard_data'),
+    path('reporting/generate/', views.generate_custom_report, name='generate_custom_report'),
+    path('reporting/export/', views.export_report, name='export_report'),
+    path('reporting/templates/', views.report_templates, name='report_templates'),
+    path('reporting/cache/clear/', views.clear_reporting_cache, name='clear_reporting_cache'),
+
     # ViewSet URLs
     path('', include(router.urls)),
 ]

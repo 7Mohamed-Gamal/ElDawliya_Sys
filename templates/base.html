@@ -146,6 +146,16 @@
                 </li>
                 {% endif %}
 
+                <!-- Global Search -->
+                {% if user.is_authenticated %}
+                <li class="nav-item" role="none">
+                    <button class="nav-link global-search-trigger" type="button" aria-label="البحث العام" title="البحث في جميع أنحاء النظام (Ctrl+K)">
+                        <i class="nav-link-icon fas fa-search" aria-hidden="true"></i>
+                        <span>بحث</span>
+                    </button>
+                </li>
+                {% endif %}
+
                 <!-- User Dropdown -->
                 {% if user.is_authenticated %}
                 <li class="nav-item dropdown" role="none">
@@ -294,6 +304,8 @@
     <script src="{% static 'js/navigation.js' %}"></script>
     <!-- Component Library -->
     <script src="{% static 'js/components.js' %}"></script>
+    <!-- Global Search System -->
+    <script src="{% static 'js/global-search.js' %}"></script>
     <!-- ElDawliya Theme System -->
     <script src="{% static 'js/theme-toggle.js' %}"></script>
     <!-- Custom JavaScript -->
