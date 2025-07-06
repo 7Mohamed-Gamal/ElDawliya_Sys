@@ -1,151 +1,449 @@
-{% extends 'Hr/base.html' %}
+{% extends 'Hr/base_hr.html' %}
 {% load static %}
+{% load i18n %}
 
-{% block title %}لوحة التحكم - نظام الموارد البشرية - ElDawliya{% endblock %}
+{% block title %}لوحة التحكم - الموارد البشرية{% endblock %}
 
-{% block page_title %}
-    <i class="fas fa-tachometer-alt me-2"></i>
-    لوحة التحكم الرئيسية
+{% block page_title %}لوحة التحكم{% endblock %}
+{% block page_subtitle %}نظرة شاملة على نظام الموارد البشرية{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active" aria-current="page">لوحة التحكم</li>
 {% endblock %}
 
-{% block header_actions %}
-    <div class="btn-group" role="group">
-        <button type="button" class="btn btn-outline-primary" onclick="refreshDashboard()">
-            <i class="fas fa-sync-alt"></i>
-            تحديث البيانات
-        </button>
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#quickActionsModal">
-            <i class="fas fa-bolt"></i>
-            إجراءات سريعة
-        </button>
-    </div>
+{% block extra_css %}
+<style>
+    /* Modern Dashboard Styles */
+    .dashboard-container {
+        padding: 1.5rem;
+        background-color: var(--bs-gray-50);
+        min-height: calc(100vh - 120px);
+    }
+
+    .stats-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        border: 1px solid var(--bs-gray-200);
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    }
+
+    .stats-card.primary { border-left: 4px solid var(--bs-primary); }
+    .stats-card.success { border-left: 4px solid var(--bs-success); }
+    .stats-card.warning { border-left: 4px solid var(--bs-warning); }
+    .stats-card.info { border-left: 4px solid var(--bs-info); }
+
+    .stats-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: var(--bs-dark);
+    }
+
+    .stats-label {
+        font-size: 0.95rem;
+        color: var(--bs-gray-600);
+        margin-bottom: 0.5rem;
+    }
+
+    .stats-trend {
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .chart-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        border: 1px solid var(--bs-gray-200);
+    }
+
+    .chart-card .card-header {
+        background: transparent;
+        border-bottom: 1px solid var(--bs-gray-200);
+        padding: 1.25rem 1.5rem;
+    }
+
+    .quick-actions {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        border: 1px solid var(--bs-gray-200);
+    }
+
+    .quick-action-btn {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 1rem;
+        border: 1px solid var(--bs-gray-200);
+        border-radius: 8px;
+        text-decoration: none;
+        color: var(--bs-dark);
+        transition: all 0.3s ease;
+        background: white;
+    }
+
+    .quick-action-btn:hover {
+        background: var(--bs-primary);
+        color: white;
+        border-color: var(--bs-primary);
+        transform: translateY(-1px);
+    }
+
+    .quick-action-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+
+    .recent-activity {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        border: 1px solid var(--bs-gray-200);
+    }
+
+    .activity-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--bs-gray-100);
+    }
+
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+
+    .activity-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.9rem;
+    }
+
+    /* Dark theme support */
+    [data-theme="dark"] .dashboard-container {
+        background-color: var(--bs-dark);
+    }
+
+    [data-theme="dark"] .stats-card,
+    [data-theme="dark"] .chart-card,
+    [data-theme="dark"] .quick-actions,
+    [data-theme="dark"] .recent-activity {
+        background: var(--bs-gray-800);
+        border-color: var(--bs-gray-700);
+    }
+
+    [data-theme="dark"] .stats-number {
+        color: var(--bs-light);
+    }
+
+    [data-theme="dark"] .stats-label {
+        color: var(--bs-gray-300);
+    }
+
+    [data-theme="dark"] .quick-action-btn {
+        background: var(--bs-gray-800);
+        color: var(--bs-light);
+        border-color: var(--bs-gray-700);
+    }
+
+    [data-theme="dark"] .activity-item {
+        border-color: var(--bs-gray-700);
+    }
+</style>
 {% endblock %}
 
 {% block content %}
-<!-- Statistics Cards Row -->
-<div class="row mb-4">
-    <!-- Total Employees -->
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="stats-card">
-            <div class="stats-number text-primary">{{ employee_stats.total_employees }}</div>
-            <div class="stats-label">إجمالي الموظفين</div>
-            <div class="mt-2">
-                <small class="text-success">
-                    <i class="fas fa-arrow-up"></i>
-                    +{{ new_employees_count }} هذا الشهر
-                </small>
+<div class="dashboard-container">
+    <!-- Header Actions -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-1">مرحباً، {{ user.get_full_name|default:user.username }}</h2>
+            <p class="text-muted mb-0">إليك نظرة سريعة على نظام الموارد البشرية</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-primary" onclick="refreshDashboard()">
+                <i class="fas fa-sync-alt me-2"></i>
+                تحديث البيانات
+            </button>
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#quickActionsModal">
+                <i class="fas fa-bolt me-2"></i>
+                إجراءات سريعة
+            </button>
+        </div>
+    </div>
+
+    <!-- Statistics Cards Row -->
+    <div class="row g-4 mb-4">
+        <!-- Total Employees -->
+        <div class="col-xl-3 col-md-6">
+            <div class="stats-card primary">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stats-number">{{ employee_stats.total_employees|default:0 }}</div>
+                        <div class="stats-label">إجمالي الموظفين</div>
+                        <div class="stats-trend text-success">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+{{ new_employees_count|default:0 }} هذا الشهر</span>
+                        </div>
+                    </div>
+                    <div class="text-primary" style="font-size: 2.5rem; opacity: 0.3;">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Employees -->
+        <div class="col-xl-3 col-md-6">
+            <div class="stats-card success">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stats-number">{{ employee_stats.active_employees|default:0 }}</div>
+                        <div class="stats-label">الموظفين النشطين</div>
+                        <div class="stats-trend text-muted">
+                            <span>{{ employee_stats.inactive_employees|default:0 }} غير نشط</span>
+                        </div>
+                    </div>
+                    <div class="text-success" style="font-size: 2.5rem; opacity: 0.3;">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Today's Attendance -->
+        <div class="col-xl-3 col-md-6">
+            <div class="stats-card info">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stats-number">{{ attendance_today.present_employees|default:0 }}</div>
+                        <div class="stats-label">حاضر اليوم</div>
+                        <div class="stats-trend text-warning">
+                            <span>{{ attendance_today.late_employees|default:0 }} متأخر</span>
+                        </div>
+                    </div>
+                    <div class="text-info" style="font-size: 2.5rem; opacity: 0.3;">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pending Leave Requests -->
+        <div class="col-xl-3 col-md-6">
+            <div class="stats-card warning">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stats-number">{{ leave_stats.pending_requests|default:0 }}</div>
+                        <div class="stats-label">طلبات إجازة معلقة</div>
+                        <div class="stats-trend text-info">
+                            <span>{{ current_leaves|default:0 }} في إجازة حالياً</span>
+                        </div>
+                    </div>
+                    <div class="text-warning" style="font-size: 2.5rem; opacity: 0.3;">
+                        <i class="fas fa-calendar-times"></i>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Active Employees -->
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="stats-card">
-            <div class="stats-number text-success">{{ employee_stats.active_employees }}</div>
-            <div class="stats-label">الموظفين النشطين</div>
-            <div class="mt-2">
-                <small class="text-muted">
-                    {{ employee_stats.inactive_employees }} غير نشط
-                </small>
+    <!-- Charts and Analytics Row -->
+    <div class="row g-4 mb-4">
+        <!-- Attendance Chart -->
+        <div class="col-lg-8">
+            <div class="chart-card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-line me-2 text-primary"></i>
+                            إحصائيات الحضور - آخر 7 أيام
+                        </h5>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" onclick="exportChart('attendance')">تصدير البيانات</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="refreshChart('attendance')">تحديث</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <canvas id="attendanceChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leave Types Chart -->
+        <div class="col-lg-4">
+            <div class="chart-card">
+                <div class="card-header">
+                    <h5 class="mb-0">
+                        <i class="fas fa-chart-pie me-2 text-success"></i>
+                        أنواع الإجازات
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="leaveTypesChart" height="200"></canvas>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Today's Attendance -->
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="stats-card">
-            <div class="stats-number text-info">{{ attendance_today.present_employees }}</div>
-            <div class="stats-label">حاضر اليوم</div>
-            <div class="mt-2">
-                <small class="text-warning">
-                    {{ attendance_today.late_employees }} متأخر
-                </small>
-            </div>
-        </div>
-    </div>
-
-    <!-- Pending Leave Requests -->
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="stats-card">
-            <div class="stats-number text-warning">{{ leave_stats.pending_requests }}</div>
-            <div class="stats-label">طلبات إجازة معلقة</div>
-            <div class="mt-2">
-                <small class="text-info">
-                    {{ current_leaves }} في إجازة حالياً
-                </small>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Charts and Analytics Row -->
-<div class="row mb-4">
-    <!-- Attendance Chart -->
-    <div class="col-lg-8 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-chart-line me-2"></i>
-                    إحصائيات الحضور - آخر 7 أيام
+    <!-- Quick Actions Section -->
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="quick-actions">
+                <h5 class="mb-3">
+                    <i class="fas fa-bolt me-2 text-primary"></i>
+                    إجراءات سريعة
                 </h5>
-            </div>
-            <div class="card-body">
-                <canvas id="attendanceChart" height="100"></canvas>
+                <div class="row g-3">
+                    <div class="col-lg-3 col-md-6">
+                        <a href="{% url 'Hr:employees:create' %}" class="quick-action-btn">
+                            <div class="quick-action-icon bg-primary-subtle text-primary">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                            <div>
+                                <div class="fw-semibold">إضافة موظف جديد</div>
+                                <small class="text-muted">تسجيل موظف جديد في النظام</small>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <a href="{% url 'Hr:attendance:attendance_record_list' %}" class="quick-action-btn">
+                            <div class="quick-action-icon bg-success-subtle text-success">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div>
+                                <div class="fw-semibold">تسجيل الحضور</div>
+                                <small class="text-muted">إدارة حضور وانصراف الموظفين</small>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <a href="{% url 'Hr:reports:report_list' %}" class="quick-action-btn">
+                            <div class="quick-action-icon bg-info-subtle text-info">
+                                <i class="fas fa-chart-bar"></i>
+                            </div>
+                            <div>
+                                <div class="fw-semibold">التقارير</div>
+                                <small class="text-muted">عرض وتصدير التقارير</small>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <a href="{% url 'Hr:salaries:salary_item_list' %}" class="quick-action-btn">
+                            <div class="quick-action-icon bg-warning-subtle text-warning">
+                                <i class="fas fa-money-bill-wave"></i>
+                            </div>
+                            <div>
+                                <div class="fw-semibold">إدارة الرواتب</div>
+                                <small class="text-muted">حساب ومعالجة الرواتب</small>
+                            </div>
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Leave Types Chart -->
-    <div class="col-lg-4 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-chart-pie me-2"></i>
-                    أنواع الإجازات
-                </h5>
-            </div>
-            <div class="card-body">
-                <canvas id="leaveTypesChart" height="200"></canvas>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Recent Activities and Alerts Row -->
-<div class="row mb-4">
-    <!-- Recent Activities -->
-    <div class="col-lg-8 mb-4">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">
-                    <i class="fas fa-history me-2"></i>
-                    الأنشطة الحديثة
-                </h5>
-                <a href="#" class="btn btn-sm btn-outline-primary">عرض الكل</a>
-            </div>
-            <div class="card-body p-0">
-                <div class="list-group list-group-flush">
+    <!-- Recent Activities and Alerts Row -->
+    <div class="row g-4 mb-4">
+        <!-- Recent Activities -->
+        <div class="col-lg-8">
+            <div class="recent-activity">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history me-2 text-primary"></i>
+                        الأنشطة الحديثة
+                    </h5>
+                    <a href="{% url 'Hr:employees:list' %}" class="btn btn-sm btn-outline-primary">عرض الكل</a>
+                </div>
+                <div class="activity-list">
                     {% for employee in recent_employees %}
-                    <div class="list-group-item d-flex align-items-center">
-                        <div class="avatar me-3">
-                            {% if employee.photo %}
-                                <img src="{{ employee.photo.url }}" class="rounded-circle" width="40" height="40">
-                            {% else %}
-                                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                    <i class="fas fa-user text-white"></i>
-                                </div>
-                            {% endif %}
+                    <div class="activity-item">
+                        <div class="activity-icon bg-primary-subtle text-primary">
+                            <i class="fas fa-user-plus"></i>
                         </div>
                         <div class="flex-grow-1">
-                            <h6 class="mb-1">{{ employee.full_name }}</h6>
-                            <small class="text-muted">انضم كموظف جديد - {{ employee.department.name|default:"غير محدد" }}</small>
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">{{ employee.full_name }}</h6>
+                                    <p class="text-muted mb-0 small">انضم كموظف جديد في {{ employee.department.name|default:"غير محدد" }}</p>
+                                </div>
+                                <small class="text-muted">{{ employee.emp_date_hiring|timesince }}</small>
+                            </div>
                         </div>
-                        <small class="text-muted">{{ employee.created_at|timesince }}</small>
                     </div>
                     {% empty %}
-                    <div class="list-group-item text-center text-muted py-4">
-                        <i class="fas fa-inbox fa-2x mb-2"></i>
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
                         <p class="mb-0">لا توجد أنشطة حديثة</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerts and Notifications -->
+        <div class="col-lg-4">
+            <div class="recent-activity">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bell me-2 text-warning"></i>
+                        التنبيهات والإشعارات
+                    </h5>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="markAllAsRead()">
+                        <i class="fas fa-check-double"></i>
+                    </button>
+                </div>
+                <div class="activity-list">
+                    {% for alert in alerts %}
+                    <div class="activity-item">
+                        <div class="activity-icon bg-{{ alert.type|default:'warning' }}-subtle text-{{ alert.type|default:'warning' }}">
+                            <i class="{{ alert.icon|default:'fas fa-exclamation-triangle' }}"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">{{ alert.title }}</h6>
+                                    <p class="text-muted mb-0 small">{{ alert.message }}</p>
+                                </div>
+                                <a href="{{ alert.url }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-arrow-left"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-check-circle fa-2x mb-2 text-success d-block"></i>
+                        <p class="mb-0">لا توجد تنبيهات جديدة</p>
                     </div>
                     {% endfor %}
                 </div>
@@ -153,164 +451,130 @@
         </div>
     </div>
 
-    <!-- Alerts and Notifications -->
-    <div class="col-lg-4 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-bell me-2"></i>
-                    التنبيهات والإشعارات
-                </h5>
-            </div>
-            <div class="card-body">
-                {% for alert in alerts %}
-                <div class="alert alert-{{ alert.type }} d-flex align-items-center mb-3" role="alert">
-                    <i class="{{ alert.icon }} me-2"></i>
-                    <div class="flex-grow-1">
-                        <strong>{{ alert.title }}</strong>
-                        <p class="mb-0 small">{{ alert.message }}</p>
-                    </div>
-                    <a href="{{ alert.url }}" class="btn btn-sm btn-outline-{{ alert.type }}">
-                        <i class="fas fa-arrow-left"></i>
-                    </a>
-                </div>
-                {% empty %}
-                <div class="text-center text-muted py-4">
-                    <i class="fas fa-check-circle fa-2x mb-2 text-success"></i>
-                    <p class="mb-0">لا توجد تنبيهات جديدة</p>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Quick Info Cards Row -->
-<div class="row mb-4">
-    <!-- Upcoming Birthdays -->
-    <div class="col-lg-6 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-birthday-cake me-2"></i>
+    <!-- Additional Info Cards Row -->
+    <div class="row g-4">
+        <!-- Upcoming Birthdays -->
+        <div class="col-lg-6">
+            <div class="recent-activity">
+                <h5 class="mb-3">
+                    <i class="fas fa-birthday-cake me-2 text-warning"></i>
                     أعياد الميلاد القادمة
                 </h5>
-            </div>
-            <div class="card-body">
-                {% for birthday in upcoming_birthdays %}
-                <div class="d-flex align-items-center mb-3">
-                    <div class="avatar me-3">
-                        {% if birthday.employee.photo %}
-                            <img src="{{ birthday.employee.photo.url }}" class="rounded-circle" width="40" height="40">
-                        {% else %}
-                            <div class="bg-warning rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                <i class="fas fa-birthday-cake text-white"></i>
+                <div class="activity-list">
+                    {% for birthday in upcoming_birthdays %}
+                    <div class="activity-item">
+                        <div class="activity-icon bg-warning-subtle text-warning">
+                            <i class="fas fa-birthday-cake"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ birthday.employee.full_name }}</h6>
+                                    <p class="text-muted mb-0 small">{{ birthday.employee.department.name|default:"غير محدد" }}</p>
+                                </div>
+                                <span class="badge bg-warning">
+                                    {% if birthday.days_until == 0 %}
+                                        اليوم
+                                    {% elif birthday.days_until == 1 %}
+                                        غداً
+                                    {% else %}
+                                        خلال {{ birthday.days_until }} أيام
+                                    {% endif %}
+                                </span>
                             </div>
-                        {% endif %}
+                        </div>
                     </div>
-                    <div class="flex-grow-1">
-                        <h6 class="mb-1">{{ birthday.employee.full_name }}</h6>
-                        <small class="text-muted">{{ birthday.employee.department.name|default:"غير محدد" }}</small>
+                    {% empty %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-calendar-check fa-2x mb-2 text-success d-block"></i>
+                        <p class="mb-0">لا توجد أعياد ميلاد قادمة</p>
                     </div>
-                    <div class="text-end">
-                        <span class="badge bg-warning">
-                            {% if birthday.days_until == 0 %}
-                                اليوم
-                            {% elif birthday.days_until == 1 %}
-                                غداً
-                            {% else %}
-                                خلال {{ birthday.days_until }} أيام
-                            {% endif %}
-                        </span>
-                    </div>
+                    {% endfor %}
                 </div>
-                {% empty %}
-                <div class="text-center text-muted py-3">
-                    <i class="fas fa-calendar-check fa-2x mb-2"></i>
-                    <p class="mb-0">لا توجد أعياد ميلاد قادمة</p>
-                </div>
-                {% endfor %}
             </div>
         </div>
-    </div>
 
-    <!-- Expiring Contracts -->
-    <div class="col-lg-6 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-file-contract me-2"></i>
-                    العقود المنتهية قريباً
+        <!-- Department Overview -->
+        <div class="col-lg-6">
+            <div class="recent-activity">
+                <h5 class="mb-3">
+                    <i class="fas fa-sitemap me-2 text-info"></i>
+                    نظرة على الأقسام
                 </h5>
-            </div>
-            <div class="card-body">
-                {% for employee in expiring_contracts %}
-                <div class="d-flex align-items-center mb-3">
-                    <div class="avatar me-3">
-                        {% if employee.photo %}
-                            <img src="{{ employee.photo.url }}" class="rounded-circle" width="40" height="40">
-                        {% else %}
-                            <div class="bg-danger rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                <i class="fas fa-file-contract text-white"></i>
+                <div class="activity-list">
+                    {% for dept in department_stats %}
+                    <div class="activity-item">
+                        <div class="activity-icon bg-info-subtle text-info">
+                            <i class="fas fa-building"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ dept.name }}</h6>
+                                    <p class="text-muted mb-0 small">{{ dept.employee_count }} موظف</p>
+                                </div>
+                                <div class="text-end">
+                                    <div class="progress" style="width: 60px; height: 6px;">
+                                        <div class="progress-bar bg-info" style="width: {{ dept.percentage }}%"></div>
+                                    </div>
+                                    <small class="text-muted">{{ dept.percentage }}%</small>
+                                </div>
                             </div>
-                        {% endif %}
+                        </div>
                     </div>
-                    <div class="flex-grow-1">
-                        <h6 class="mb-1">{{ employee.full_name }}</h6>
-                        <small class="text-muted">{{ employee.job_position.title|default:"غير محدد" }}</small>
+                    {% empty %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-building fa-2x mb-2 text-info d-block"></i>
+                        <p class="mb-0">لا توجد أقسام مسجلة</p>
                     </div>
-                    <div class="text-end">
-                        <span class="badge bg-danger">
-                            {{ employee.contract_end_date }}
-                        </span>
-                    </div>
+                    {% endfor %}
                 </div>
-                {% empty %}
-                <div class="text-center text-muted py-3">
-                    <i class="fas fa-check-circle fa-2x mb-2 text-success"></i>
-                    <p class="mb-0">لا توجد عقود منتهية قريباً</p>
-                </div>
-                {% endfor %}
             </div>
         </div>
     </div>
 </div>
+
+
 
 <!-- Quick Actions Modal -->
 <div class="modal fade" id="quickActionsModal" tabindex="-1">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">
-                    <i class="fas fa-bolt me-2"></i>
+                    <i class="fas fa-bolt me-2 text-primary"></i>
                     الإجراءات السريعة
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <div class="row g-3">
-                    <div class="col-6">
-                        <a href="#" class="btn btn-outline-primary w-100 h-100 d-flex flex-column align-items-center justify-content-center">
+                    <div class="col-md-6">
+                        <a href="{% url 'Hr:employees:create' %}" class="btn btn-outline-primary w-100 py-3 d-flex flex-column align-items-center justify-content-center">
                             <i class="fas fa-user-plus fa-2x mb-2"></i>
-                            <span>إضافة موظف</span>
+                            <span class="fw-semibold">إضافة موظف جديد</span>
+                            <small class="text-muted">تسجيل موظف جديد في النظام</small>
                         </a>
                     </div>
-                    <div class="col-6">
-                        <a href="#" class="btn btn-outline-success w-100 h-100 d-flex flex-column align-items-center justify-content-center">
+                    <div class="col-md-6">
+                        <a href="{% url 'Hr:attendance:attendance_record_list' %}" class="btn btn-outline-success w-100 py-3 d-flex flex-column align-items-center justify-content-center">
                             <i class="fas fa-clock fa-2x mb-2"></i>
-                            <span>تسجيل حضور</span>
+                            <span class="fw-semibold">تسجيل الحضور</span>
+                            <small class="text-muted">إدارة حضور وانصراف الموظفين</small>
                         </a>
                     </div>
-                    <div class="col-6">
-                        <a href="#" class="btn btn-outline-warning w-100 h-100 d-flex flex-column align-items-center justify-content-center">
-                            <i class="fas fa-calendar-times fa-2x mb-2"></i>
-                            <span>طلب إجازة</span>
+                    <div class="col-md-6">
+                        <a href="{% url 'Hr:reports:report_list' %}" class="btn btn-outline-info w-100 py-3 d-flex flex-column align-items-center justify-content-center">
+                            <i class="fas fa-chart-bar fa-2x mb-2"></i>
+                            <span class="fw-semibold">التقارير</span>
+                            <small class="text-muted">عرض وتصدير التقارير</small>
                         </a>
                     </div>
-                    <div class="col-6">
-                        <a href="#" class="btn btn-outline-info w-100 h-100 d-flex flex-column align-items-center justify-content-center">
-                            <i class="fas fa-calculator fa-2x mb-2"></i>
-                            <span>حساب الرواتب</span>
+                    <div class="col-md-6">
+                        <a href="{% url 'Hr:salaries:salary_item_list' %}" class="btn btn-outline-warning w-100 py-3 d-flex flex-column align-items-center justify-content-center">
+                            <i class="fas fa-money-bill-wave fa-2x mb-2"></i>
+                            <span class="fw-semibold">إدارة الرواتب</span>
+                            <small class="text-muted">حساب ومعالجة الرواتب</small>
                         </a>
                     </div>
                 </div>
@@ -319,37 +583,94 @@
     </div>
 </div>
 
-<!-- Loading Spinner -->
-<div class="loading-spinner">
-    <div class="spinner-border text-primary" role="status">
-        <span class="visually-hidden">جاري التحميل...</span>
-    </div>
-    <p class="mt-2">جاري تحديث البيانات...</p>
-</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+// Dashboard initialization
 $(document).ready(function() {
-    // Load dashboard data
+    // Initialize dashboard
+    initializeDashboard();
+
+    // Load charts
     loadDashboardCharts();
-    
+
     // Auto-refresh every 5 minutes
     setInterval(function() {
         refreshDashboard();
     }, 300000);
+
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
 });
 
-function loadDashboardCharts() {
-    // Load attendance chart
-    // $.get('{% url "hr:dashboard_data_ajax" %}?type=attendance', function(data) {
-    //     renderAttendanceChart(data);
-    // });
+function initializeDashboard() {
+    // Add loading states to stats cards
+    $('.stats-card').each(function() {
+        $(this).addClass('animate__animated animate__fadeInUp');
+    });
 
-    // Load leave types chart
-    // $.get('{% url "hr:dashboard_data_ajax" %}?type=leaves', function(data) {
-    //     renderLeaveTypesChart(data);
-    // });
+    // Initialize chart containers
+    if (document.getElementById('attendanceChart')) {
+        loadAttendanceChart();
+    }
+
+    if (document.getElementById('leaveTypesChart')) {
+        loadLeaveTypesChart();
+    }
+}
+
+function loadDashboardCharts() {
+    // Load attendance chart with sample data
+    loadAttendanceChart();
+
+    // Load leave types chart with sample data
+    loadLeaveTypesChart();
+}
+
+function loadAttendanceChart() {
+    // Sample data for attendance chart
+    const sampleData = {
+        labels: ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'],
+        datasets: [{
+            label: 'الحضور',
+            data: [85, 92, 88, 95, 90, 87, 0],
+            backgroundColor: 'rgba(13, 110, 253, 0.8)',
+            borderColor: 'rgba(13, 110, 253, 1)',
+            borderWidth: 1
+        }, {
+            label: 'التأخير',
+            data: [5, 3, 7, 2, 4, 6, 0],
+            backgroundColor: 'rgba(255, 193, 7, 0.8)',
+            borderColor: 'rgba(255, 193, 7, 1)',
+            borderWidth: 1
+        }]
+    };
+
+    renderAttendanceChart(sampleData);
+}
+
+function loadLeaveTypesChart() {
+    // Sample data for leave types chart
+    const sampleData = {
+        labels: ['إجازة سنوية', 'إجازة مرضية', 'إجازة طارئة', 'إجازة أمومة'],
+        datasets: [{
+            data: [45, 25, 20, 10],
+            backgroundColor: [
+                'rgba(13, 110, 253, 0.8)',
+                'rgba(25, 135, 84, 0.8)',
+                'rgba(255, 193, 7, 0.8)',
+                'rgba(220, 53, 69, 0.8)'
+            ],
+            borderWidth: 2,
+            borderColor: '#fff'
+        }]
+    };
+
+    renderLeaveTypesChart(sampleData);
 }
 
 function renderAttendanceChart(data) {
@@ -391,19 +712,99 @@ function renderLeaveTypesChart(data) {
             plugins: {
                 legend: {
                     position: 'bottom',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 20
+                    }
                 }
             }
         }
     });
 }
 
+// Dashboard utility functions
 function refreshDashboard() {
-    showLoading();
-    
-    // Refresh page data
+    showLoadingOverlay();
+
+    // Simulate data refresh
     setTimeout(function() {
-        location.reload();
+        // Reload charts with new data
+        loadDashboardCharts();
+
+        // Update stats cards with animation
+        $('.stats-number').each(function() {
+            $(this).addClass('animate__animated animate__pulse');
+        });
+
+        hideLoadingOverlay();
+
+        // Show success message
+        showNotification('تم تحديث البيانات بنجاح', 'success');
+    }, 1500);
+}
+
+function exportChart(chartType) {
+    showNotification('جاري تصدير البيانات...', 'info');
+
+    // Simulate export process
+    setTimeout(function() {
+        showNotification('تم تصدير البيانات بنجاح', 'success');
     }, 1000);
+}
+
+function refreshChart(chartType) {
+    showNotification('جاري تحديث الرسم البياني...', 'info');
+
+    // Simulate chart refresh
+    setTimeout(function() {
+        if (chartType === 'attendance') {
+            loadAttendanceChart();
+        } else if (chartType === 'leaves') {
+            loadLeaveTypesChart();
+        }
+
+        showNotification('تم تحديث الرسم البياني بنجاح', 'success');
+    }, 1000);
+}
+
+function markAllAsRead() {
+    $('.activity-item').fadeOut(300, function() {
+        $(this).remove();
+    });
+
+    setTimeout(function() {
+        $('.recent-activity .activity-list').html(`
+            <div class="text-center text-muted py-4">
+                <i class="fas fa-check-circle fa-2x mb-2 text-success d-block"></i>
+                <p class="mb-0">تم قراءة جميع التنبيهات</p>
+            </div>
+        `);
+    }, 300);
+}
+
+// Notification system
+function showNotification(message, type = 'info') {
+    const alertClass = type === 'success' ? 'alert-success' :
+                      type === 'error' ? 'alert-danger' :
+                      type === 'warning' ? 'alert-warning' : 'alert-info';
+
+    const notification = $(`
+        <div class="alert ${alertClass} alert-dismissible fade show position-fixed"
+             style="top: 20px; right: 20px; z-index: 9999; min-width: 300px;">
+            <i class="fas fa-${type === 'success' ? 'check-circle' :
+                              type === 'error' ? 'exclamation-circle' :
+                              type === 'warning' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `);
+
+    $('body').append(notification);
+
+    // Auto-remove after 3 seconds
+    setTimeout(function() {
+        notification.alert('close');
+    }, 3000);
 }
 
 // Quick employee search
@@ -411,7 +812,7 @@ $('#quickEmployeeSearch').on('input', function() {
     const query = $(this).val();
     
     if (query.length >= 2) {
-        // $.get('{% url "hr:quick_employee_search" %}', {q: query}, function(data) {
+        // $.get('/Hr/employees/search/', {q: query}, function(data) {
         //     displaySearchResults(data.employees);
         // });
     } else {

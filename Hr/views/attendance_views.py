@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from django.db.models import Q
 from django.core.paginator import Paginator
+from django.http import JsonResponse
 
 from Hr.models.attendance_models import (
     AttendanceRule, EmployeeAttendanceRule, OfficialHoliday,
@@ -401,12 +402,69 @@ def fetch_attendance_data(request):
             start_date = form.cleaned_data['start_date']
             end_date = form.cleaned_data['end_date']
             clear_existing = form.cleaned_data['clear_existing']
-            
+
             try:
-                # Here you would implement the actual machine communication logic
-                # For now, just show a success message
-                messages.success(request, _('تم جلب بيانات الحضور بنجاح'))
+                from Hr.utils import ZKDeviceService, AttendanceProcessor
+                from datetime import datetime, time
+                from django.utils import timezone
+
+                # Convert dates to datetime objects
+                start_datetime = timezone.make_aware(datetime.combine(start_date, time.min))
+                end_datetime = timezone.make_aware(datetime.combine(end_date, time.max))
+
+                # Connect to ZK device and fetch data
+                with ZKDeviceService(machine.ip_address, machine.port) as zk_device:
+                    if not zk_device.is_connected:
+                        messages.error(request, _('فشل في الاتصال بجهاز البصمة'))
+                        return redirect('Hr:attendance:fetch_attendance_data')
+
+                    # Get attendance records from device
+                    zk_records = zk_device.get_attendance_records(start_datetime, end_datetime)
+
+                    if not zk_records:
+                        messages.warning(request, _('لم يتم العثور على سجلات في الفترة المحددة'))
+                        return redirect('Hr:attendance:attendance_record_list')
+
+                    # Process and store records
+                    processor = AttendanceProcessor()
+
+                    # Validate records first
+                    valid_records, validation_errors = processor.validate_zk_records(zk_records)
+
+                    if validation_errors:
+                        for error in validation_errors[:5]:  # Show first 5 errors
+                            messages.warning(request, f'تحذير: {error}')
+
+                    # Process valid records
+                    if valid_records:
+                        results = processor.process_zk_records(
+                            machine=machine,
+                            zk_records=valid_records,
+                            clear_existing=clear_existing,
+                            user=request.user
+                        )
+
+                        # Show results
+                        if results['processed'] > 0:
+                            messages.success(request,
+                                _('تم جلب وحفظ {} سجل حضور بنجاح').format(results['processed']))
+
+                        if results['skipped'] > 0:
+                            messages.info(request,
+                                _('تم تجاهل {} سجل موجود مسبقاً').format(results['skipped']))
+
+                        if results['errors'] > 0:
+                            messages.error(request,
+                                _('حدثت أخطاء في {} سجل').format(results['errors']))
+
+                            # Show first few error details
+                            for error in results['error_details'][:3]:
+                                messages.error(request, error)
+                    else:
+                        messages.error(request, _('لا توجد سجلات صالحة للمعالجة'))
+
                 return redirect('Hr:attendance:attendance_record_list')
+
             except Exception as e:
                 messages.error(request, _('حدث خطأ أثناء جلب البيانات: {}').format(str(e)))
     else:
@@ -416,6 +474,242 @@ def fetch_attendance_data(request):
         'form': form,
         'page_title': _('جلب بيانات الحضور')
     })
+
+
+@login_required
+def zk_device_connection(request):
+    """View for ZK device connection interface"""
+    from Hr.models.attendance_models import AttendanceMachine
+
+    attendance_machines = AttendanceMachine.objects.filter(is_active=True)
+
+    return render(request, 'Hr/attendance/zk_device_connection.html', {
+        'page_title': _('اتصال جهاز البصمة'),
+        'attendance_machines': attendance_machines
+    })
+
+
+@login_required
+def test_zk_connection(request):
+    """AJAX view for testing ZK device connection"""
+    if request.method == 'POST':
+        try:
+            import json
+            from Hr.utils import ZKDeviceService
+
+            data = json.loads(request.body)
+            ip_address = data.get('ip_address')
+            port = int(data.get('port', 4370))
+            password = data.get('password', '')
+
+            if not ip_address:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'عنوان IP مطلوب'
+                })
+
+            # Test connection
+            zk_device = ZKDeviceService(ip_address, port, password)
+            if zk_device.connect():
+                device_info = zk_device.get_device_info()
+                zk_device.disconnect()
+
+                return JsonResponse({
+                    'success': True,
+                    'message': 'تم الاتصال بجهاز البصمة بنجاح',
+                    'device_info': device_info
+                })
+            else:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'فشل في الاتصال بجهاز البصمة'
+                })
+
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': f'خطأ في الاتصال: {str(e)}'
+            })
+
+    return JsonResponse({'success': False, 'error': 'طريقة غير مدعومة'})
+
+
+@login_required
+def fetch_zk_records_ajax(request):
+    """AJAX view for fetching ZK records without saving"""
+    if request.method == 'POST':
+        try:
+            import json
+            from Hr.utils import ZKDeviceService
+            from datetime import datetime, time
+            from django.utils import timezone
+
+            data = json.loads(request.body)
+            ip_address = data.get('ip_address')
+            port = int(data.get('port', 4370))
+            password = data.get('password', '')
+            start_date = data.get('start_date')
+            end_date = data.get('end_date')
+
+            if not ip_address:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'عنوان IP مطلوب'
+                })
+
+            # Parse dates
+            start_datetime = None
+            end_datetime = None
+
+            if start_date:
+                start_datetime = timezone.make_aware(
+                    datetime.combine(datetime.strptime(start_date, '%Y-%m-%d').date(), time.min)
+                )
+
+            if end_date:
+                end_datetime = timezone.make_aware(
+                    datetime.combine(datetime.strptime(end_date, '%Y-%m-%d').date(), time.max)
+                )
+
+            # Connect and fetch records
+            with ZKDeviceService(ip_address, port, password) as zk_device:
+                if not zk_device.is_connected:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'فشل في الاتصال بجهاز البصمة'
+                    })
+
+                records = zk_device.get_attendance_records(start_datetime, end_datetime)
+
+                # Format records for display
+                formatted_records = []
+                for record in records:
+                    formatted_records.append({
+                        'user_id': record.get('user_id', ''),
+                        'timestamp': record.get('timestamp').strftime('%Y-%m-%d %H:%M:%S') if record.get('timestamp') else '',
+                        'verify_type': record.get('verify_type', 0),
+                        'in_out_mode': 'حضور' if record.get('in_out_mode') == 0 else 'انصراف',
+                        'raw_data': record.get('raw_data', '')
+                    })
+
+                return JsonResponse({
+                    'success': True,
+                    'records': formatted_records,
+                    'total_count': len(formatted_records)
+                })
+
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': f'خطأ في جلب البيانات: {str(e)}'
+            })
+
+    return JsonResponse({'success': False, 'error': 'طريقة غير مدعومة'})
+
+
+@login_required
+def save_zk_records_to_db(request):
+    """AJAX view for saving ZK records to database"""
+    if request.method == 'POST':
+        try:
+            import json
+            from Hr.utils import ZKDeviceService, AttendanceProcessor
+            from Hr.models.attendance_models import AttendanceMachine
+            from datetime import datetime, time
+            from django.utils import timezone
+
+            data = json.loads(request.body)
+            machine_id = data.get('machine_id')
+            ip_address = data.get('ip_address')
+            port = int(data.get('port', 4370))
+            password = data.get('password', '')
+            start_date = data.get('start_date')
+            end_date = data.get('end_date')
+            clear_existing = data.get('clear_existing', False)
+
+            if not machine_id:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'معرف الجهاز مطلوب'
+                })
+
+            # Get machine
+            try:
+                machine = AttendanceMachine.objects.get(id=machine_id)
+            except AttendanceMachine.DoesNotExist:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'جهاز البصمة غير موجود'
+                })
+
+            # Parse dates
+            start_datetime = None
+            end_datetime = None
+
+            if start_date:
+                start_datetime = timezone.make_aware(
+                    datetime.combine(datetime.strptime(start_date, '%Y-%m-%d').date(), time.min)
+                )
+
+            if end_date:
+                end_datetime = timezone.make_aware(
+                    datetime.combine(datetime.strptime(end_date, '%Y-%m-%d').date(), time.max)
+                )
+
+            # Connect and fetch records
+            with ZKDeviceService(ip_address, port, password) as zk_device:
+                if not zk_device.is_connected:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'فشل في الاتصال بجهاز البصمة'
+                    })
+
+                records = zk_device.get_attendance_records(start_datetime, end_datetime)
+
+                if not records:
+                    return JsonResponse({
+                        'success': True,
+                        'message': 'لا توجد سجلات في الفترة المحددة',
+                        'results': {
+                            'total_records': 0,
+                            'processed': 0,
+                            'skipped': 0,
+                            'errors': 0
+                        }
+                    })
+
+                # Process records
+                processor = AttendanceProcessor()
+                valid_records, validation_errors = processor.validate_zk_records(records)
+
+                if valid_records:
+                    results = processor.process_zk_records(
+                        machine=machine,
+                        zk_records=valid_records,
+                        clear_existing=clear_existing,
+                        user=request.user
+                    )
+
+                    return JsonResponse({
+                        'success': True,
+                        'message': f'تم معالجة {results["processed"]} سجل بنجاح',
+                        'results': results,
+                        'validation_errors': validation_errors
+                    })
+                else:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'لا توجد سجلات صالحة للمعالجة',
+                        'validation_errors': validation_errors
+                    })
+
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': f'خطأ في حفظ البيانات: {str(e)}'
+            })
+
+    return JsonResponse({'success': False, 'error': 'طريقة غير مدعومة'})
 
 @login_required
 def attendance_summary_list(request):

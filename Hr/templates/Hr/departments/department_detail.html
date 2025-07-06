@@ -25,11 +25,11 @@
             <div class="page-subtitle">تفاصيل القسم ومعلومات الموظفين</div>
         </div>
         <div class="page-actions">
-            <a href="{% url 'Hr:departments:edit' department.dept_code %}" class="btn btn-primary btn-with-icon">
+            <a href="{% url 'Hr:departments:department_edit' department.dept_code %}" class="btn btn-primary btn-with-icon">
                 <i class="fas fa-edit"></i>
                 <span>تعديل</span>
             </a>
-            <a href="{% url 'Hr:departments:delete' department.dept_code %}" class="btn btn-outline-danger btn-with-icon delete-btn" data-bs-toggle="modal" data-bs-target="#deleteModal" data-name="{{ department.dept_name }}" data-url="{% url 'Hr:departments:delete' department.dept_code %}">
+            <a href="{% url 'Hr:departments:department_delete' department.dept_code %}" class="btn btn-outline-danger btn-with-icon delete-btn" data-bs-toggle="modal" data-bs-target="#deleteModal" data-name="{{ department.dept_name }}" data-url="{% url 'Hr:departments:department_delete' department.dept_code %}">
                 <i class="fas fa-trash-alt"></i>
                 <span>حذف</span>
             </a>
@@ -133,7 +133,7 @@
 </a>
                                     </div>
                                     <div class="col-md-6">
-                                        <a href="{% url 'Hr:departments:performance' department.dept_code %}" class="btn btn-warning btn-sm d-block">
+                                        <a href="{% url 'Hr:departments:department_performance' department.dept_code %}" class="btn btn-warning btn-sm d-block">
                                             <i class="fas fa-chart-line me-1"></i> أداء القسم
                                         </a>
                                     </div>

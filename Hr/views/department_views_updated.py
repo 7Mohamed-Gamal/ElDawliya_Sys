@@ -136,7 +136,7 @@ def department_edit(request, dept_code):
             department = form.save()
 
             messages.success(request, f'تم تعديل القسم "{department.dept_name}" بنجاح')
-            return redirect('Hr:departments:detail', dept_code=department.dept_code)
+            return redirect('Hr:departments:department_detail', dept_code=department.dept_code)
     else:
         # تعيين القيم الافتراضية للحقول الجديدة
         form = DepartmentForm(instance=department)
@@ -163,11 +163,11 @@ def department_delete(request, dept_code):
         # Check if there are any employees in this department
         if department.employees.exists():
             messages.error(request, 'لا يمكن حذف القسم لأنه يحتوي على موظفين')
-            return redirect('Hr:departments:detail', dept_code=department.dept_code)
+            return redirect('Hr:departments:department_detail', dept_code=department.dept_code)
 
         department.delete()
         messages.success(request, 'تم حذف القسم بنجاح')
-        return redirect('Hr:departments:list')
+        return redirect('Hr:departments:department_list')
 
     context = {
         'department': department,

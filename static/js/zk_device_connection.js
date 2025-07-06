@@ -55,8 +55,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Handle Serial connection parameters
             }
             
-            // Simulate connection
-            simulateConnection(connectionParams);
+            // Test actual connection
+            testConnection(connectionParams);
         });
     }
     
@@ -71,8 +71,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            // Simulate reading records
-            simulateReadRecords();
+            // Read records from device
+            readRecords();
         });
     }
     
@@ -81,16 +81,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     if (saveToDbConfirmBtn) {
         saveToDbConfirmBtn.addEventListener('click', function() {
-            const dbHost = document.getElementById('dbHost').value;
-            const dbName = document.getElementById('dbName').value;
-            
-            if (!dbHost || !dbName) {
-                showAlert('يرجى إدخال معلومات قاعدة البيانات المطلوبة', 'warning');
-                return;
-            }
-            
-            // Simulate saving to database
-            simulateSaveToDatabase(dbHost, dbName);
+            // Save to database
+            saveToDatabase();
         });
     }
     
@@ -131,98 +123,223 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 /**
- * Simulate connection to the device
+ * Test connection to the device
  * @param {Object} params - Connection parameters
  */
-function simulateConnection(params) {
+function testConnection(params) {
+    const connectBtn = document.getElementById('connectBtn');
     const connectionStatus = document.getElementById('connectionStatus');
-    
-    // Show loading state
+
+    // Show connecting status
+    connectBtn.disabled = true;
+    connectBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> جاري الاتصال...';
     connectionStatus.textContent = 'جاري الاتصال...';
     connectionStatus.classList.remove('status-connected', 'status-disconnected');
     connectionStatus.classList.add('status-connecting');
-    
-    // Simulate connection delay
-    setTimeout(function() {
-        // Simulate successful connection
-        connectionStatus.textContent = 'متصل';
-        connectionStatus.classList.remove('status-connecting', 'status-disconnected');
-        connectionStatus.classList.add('status-connected');
-        
-        // Show success message
-        showAlert('تم الاتصال بجهاز البصمة بنجاح!', 'success');
-        
-        // Enable device tabs
-        document.querySelectorAll('#deviceTabs .nav-link').forEach(tab => {
-            tab.classList.remove('disabled');
-        });
-    }, 1500);
+
+    // Make AJAX call to test connection
+    fetch('/Hr/attendance/ajax/test-zk-connection/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(params)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Successful connection
+            connectionStatus.textContent = 'متصل';
+            connectionStatus.classList.remove('status-connecting', 'status-disconnected');
+            connectionStatus.classList.add('status-connected');
+
+            // Show success message
+            showAlert('تم الاتصال بجهاز البصمة بنجاح!', 'success');
+
+            // Enable device tabs
+            document.querySelectorAll('#deviceTabs .nav-link').forEach(tab => {
+                tab.classList.remove('disabled');
+            });
+
+            // Store connection params for later use
+            window.zkConnectionParams = params;
+        } else {
+            // Connection failed
+            connectionStatus.textContent = 'فشل الاتصال';
+            connectionStatus.classList.remove('status-connecting');
+            connectionStatus.classList.add('status-disconnected');
+
+            showAlert(data.error || 'فشل في الاتصال بجهاز البصمة', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        connectionStatus.textContent = 'خطأ في الاتصال';
+        connectionStatus.classList.remove('status-connecting');
+        connectionStatus.classList.add('status-disconnected');
+
+        showAlert('حدث خطأ أثناء الاتصال بجهاز البصمة', 'danger');
+    })
+    .finally(() => {
+        // Re-enable connect button
+        connectBtn.disabled = false;
+        connectBtn.innerHTML = '<i class="fas fa-plug me-2"></i> توصيل';
+    });
 }
 
 /**
- * Simulate reading records from the device
+ * Read records from the device
  */
-function simulateReadRecords() {
+function readRecords() {
+    if (!window.zkConnectionParams) {
+        showAlert('يجب الاتصال بالجهاز أولاً', 'warning');
+        return;
+    }
+
     const recordsTableBody = document.getElementById('recordsTableBody');
-    
+    const readRecordsBtn = document.getElementById('readRecordsBtn');
+
     // Clear existing records
     recordsTableBody.innerHTML = '';
-    
-    // Show loading message
+
+    // Show loading state
+    readRecordsBtn.disabled = true;
+    readRecordsBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> جاري القراءة...';
     showAlert('جاري قراءة السجلات من الجهاز...', 'info');
-    
-    // Simulate reading delay
-    setTimeout(function() {
-        // Generate sample records
-        const sampleRecords = [
-            { id: 1, empId: '1001', verifyMode: 'FP', inOut: 'حضور', date: '2023-04-18 08:05:22', shift: 'صباحي', result: 'حضور' },
-            { id: 2, empId: '1001', verifyMode: 'FP', inOut: 'انصراف', date: '2023-04-18 16:30:45', shift: 'صباحي', result: 'انصراف' },
-            { id: 3, empId: '1002', verifyMode: 'FP', inOut: 'حضور', date: '2023-04-18 08:15:10', shift: 'صباحي', result: 'حضور متأخر' },
-            { id: 4, empId: '1002', verifyMode: 'FP', inOut: 'انصراف', date: '2023-04-18 16:05:33', shift: 'صباحي', result: 'انصراف مبكر' },
-            { id: 5, empId: '1003', verifyMode: 'FP', inOut: 'حضور', date: '2023-04-18 08:02:17', shift: 'صباحي', result: 'حضور' },
-            { id: 6, empId: '1003', verifyMode: 'FP', inOut: 'انصراف', date: '2023-04-18 16:45:12', shift: 'صباحي', result: 'انصراف' },
-            { id: 7, empId: '1004', verifyMode: 'FP', inOut: 'حضور', date: '2023-04-18 08:10:05', shift: 'صباحي', result: 'حضور' },
-            { id: 8, empId: '1004', verifyMode: 'FP', inOut: 'انصراف', date: '2023-04-18 16:15:30', shift: 'صباحي', result: 'انصراف' }
-        ];
-        
-        // Populate table with sample records
-        sampleRecords.forEach(record => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${record.id}</td>
-                <td>${record.empId}</td>
-                <td>${record.verifyMode}</td>
-                <td>${record.inOut}</td>
-                <td>${record.date}</td>
-                <td>${record.shift}</td>
-                <td>${record.result}</td>
-            `;
-            recordsTableBody.appendChild(row);
-        });
-        
-        // Show success message
-        showAlert(`تم قراءة ${sampleRecords.length} سجل بنجاح`, 'success');
-    }, 2000);
+
+    // Prepare request data
+    const requestData = {
+        ...window.zkConnectionParams,
+        start_date: document.getElementById('startDate')?.value || null,
+        end_date: document.getElementById('endDate')?.value || null
+    };
+
+    // Make AJAX call to fetch records
+    fetch('/Hr/attendance/ajax/fetch-zk-records/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Populate table with records
+            data.records.forEach((record, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${record.user_id}</td>
+                    <td>FP</td>
+                    <td>${record.in_out_mode}</td>
+                    <td>${record.timestamp}</td>
+                    <td>-</td>
+                    <td>-</td>
+                `;
+                recordsTableBody.appendChild(row);
+            });
+
+            // Show success message
+            showAlert(`تم قراءة ${data.total_count} سجل بنجاح`, 'success');
+        } else {
+            showAlert(data.error || 'فشل في قراءة السجلات', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('حدث خطأ أثناء قراءة السجلات', 'danger');
+    })
+    .finally(() => {
+        // Re-enable button
+        readRecordsBtn.disabled = false;
+        readRecordsBtn.innerHTML = '<i class="fas fa-sync-alt me-2"></i> قراءة السجلات';
+    });
 }
 
 /**
- * Simulate saving records to database
- * @param {string} host - Database host
- * @param {string} dbName - Database name
+ * Save records to database
  */
-function simulateSaveToDatabase(host, dbName) {
-    // Show loading message
+function saveToDatabase() {
+    if (!window.zkConnectionParams) {
+        showAlert('يجب الاتصال بالجهاز أولاً', 'warning');
+        return;
+    }
+
+    const saveToDbConfirmBtn = document.getElementById('saveToDbConfirmBtn');
+    const machineSelect = document.getElementById('machineSelect');
+
+    if (!machineSelect || !machineSelect.value) {
+        showAlert('يجب اختيار جهاز البصمة', 'warning');
+        return;
+    }
+
+    // Show loading state
+    saveToDbConfirmBtn.disabled = true;
+    saveToDbConfirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> جاري الحفظ...';
     showAlert('جاري حفظ البيانات في قاعدة البيانات...', 'info');
-    
-    // Simulate saving delay
-    setTimeout(function() {
-        // Show success message
-        showAlert(`تم حفظ البيانات بنجاح في قاعدة البيانات "${dbName}" على المضيف "${host}"`, 'success');
-        
-        // Close modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('dbConnectionModal'));
-        if (modal) modal.hide();
-    }, 1500);
+
+    // Prepare request data
+    const requestData = {
+        ...window.zkConnectionParams,
+        machine_id: machineSelect.value,
+        start_date: document.getElementById('startDate')?.value || null,
+        end_date: document.getElementById('endDate')?.value || null,
+        clear_existing: document.getElementById('clearExisting')?.checked || false
+    };
+
+    // Make AJAX call to save records
+    fetch('/Hr/attendance/ajax/save-zk-records/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert(data.message, 'success');
+
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('dbConnectionModal'));
+            if (modal) modal.hide();
+        } else {
+            showAlert(data.error || 'فشل في حفظ البيانات', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('حدث خطأ أثناء حفظ البيانات', 'danger');
+    })
+    .finally(() => {
+        // Re-enable button
+        saveToDbConfirmBtn.disabled = false;
+        saveToDbConfirmBtn.innerHTML = 'حفظ البيانات';
+    });
+}
+
+/**
+ * Get CSRF cookie value
+ * @param {string} name - Cookie name
+ * @returns {string} Cookie value
+ */
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
 }
 
 /**

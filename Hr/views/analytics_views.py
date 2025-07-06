@@ -15,7 +15,7 @@ def analytics_dashboard(request):
     """عرض لوحة تحليل البيانات"""
     # Employee statistics
     total_employees = Employee.objects.count()
-    active_employees = Employee.objects.filter(working_condition='سارى',Insurance_Status='مؤمن عليه').count()
+    active_employees = Employee.objects.filter(working_condition='سارى',insurance_status='مؤمن عليه').count()
     on_leave_employees = Employee.objects.filter(working_condition='إجازة').count()
     resigned_employees = Employee.objects.filter(working_condition='استقالة').count()
     

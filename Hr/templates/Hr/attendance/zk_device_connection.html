@@ -206,20 +206,27 @@
             <div class="modal-body">
                 <form id="dbConnectionForm">
                     <div class="mb-3">
-                        <label for="dbHost" class="form-label">المضيف (Host)</label>
-                        <input type="text" class="form-control" id="dbHost" value="localhost">
+                        <label for="machineSelect" class="form-label">اختر جهاز البصمة</label>
+                        <select class="form-control" id="machineSelect" required>
+                            <option value="">-- اختر جهاز البصمة --</option>
+                            {% for machine in attendance_machines %}
+                            <option value="{{ machine.id }}">{{ machine.name }} ({{ machine.ip_address }})</option>
+                            {% endfor %}
+                        </select>
                     </div>
                     <div class="mb-3">
-                        <label for="dbName" class="form-label">اسم قاعدة البيانات</label>
-                        <input type="text" class="form-control" id="dbName">
+                        <label for="startDate" class="form-label">تاريخ البداية</label>
+                        <input type="date" class="form-control" id="startDate">
                     </div>
                     <div class="mb-3">
-                        <label for="dbUsername" class="form-label">اسم المستخدم</label>
-                        <input type="text" class="form-control" id="dbUsername" value="root">
+                        <label for="endDate" class="form-label">تاريخ النهاية</label>
+                        <input type="date" class="form-control" id="endDate">
                     </div>
-                    <div class="mb-3">
-                        <label for="dbPassword" class="form-label">كلمة المرور</label>
-                        <input type="password" class="form-control" id="dbPassword">
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="clearExisting">
+                        <label class="form-check-label" for="clearExisting">
+                            مسح السجلات الموجودة مسبقاً
+                        </label>
                     </div>
                 </form>
             </div>

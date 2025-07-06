@@ -209,7 +209,7 @@
 
                 {% if employee_list|length > 5 %}
                 <div class="text-center p-3 border-top">
-                    <a href="{% url 'Hr:departments:employee_list' form.instance.dept_code %}" class="btn btn-link text-decoration-none">
+                    <a href="{% url 'Hr:employees:list' %}?department={{ form.instance.dept_code }}" class="btn btn-link text-decoration-none">
                         عرض كل الموظفين ({{ employee_count }})
                     </a>
                 </div>
