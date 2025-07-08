@@ -8,7 +8,7 @@
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
 <li class="breadcrumb-item"><a href="{% url 'Hr:dashboard' %}">الموظفين</a></li>
-<li class="breadcrumb-item"><a href="{% url 'employees:salary_item_list' %}">بنود الرواتب</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Hr:salaries:salary_item_list' %}">بنود الرواتب</a></li>
 <li class="breadcrumb-item active">{{ page_title }}</li>
 {% endblock %}
 
@@ -30,7 +30,7 @@
                 <button type="submit" class="btn btn-danger">
                     <i class="fas fa-trash"></i> نعم، احذف البند
                 </button>
-                <a href="{% url 'employees:salary_item_list' %}" class="btn btn-secondary">
+                <a href="{% url 'Hr:salaries:salary_item_list' %}" class="btn btn-secondary">
                     <i class="fas fa-times"></i> إلغاء
                 </a>
             </div>

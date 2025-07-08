@@ -14,7 +14,7 @@
 
 {% block page_actions %}
 {% if perms.Hr.add_salaryitem %}
-<a href="{% url 'Hr:salary_item_create' %}" class="btn btn-primary">
+<a href="{% url 'Hr:salaries:salary_item_create' %}" class="btn btn-primary">
     <i class="fas fa-plus me-1"></i>
     إضافة بند راتب
 </a>
@@ -73,12 +73,12 @@
                         </td>
                         <td>
                             {% if perms.Hr.change_salaryitem %}
-                            <a href="{% url 'Hr:salary_item_edit' item.pk %}" class="btn btn-sm btn-outline-primary">
+                            <a href="{% url 'Hr:salaries:salary_item_edit' item.pk %}" class="btn btn-sm btn-outline-primary">
                                 <i class="fas fa-edit"></i>
                             </a>
                             {% endif %}
                             {% if perms.Hr.delete_salaryitem %}
-                            <a href="{% url 'Hr:salary_item_delete' item.pk %}" class="btn btn-sm btn-outline-danger">
+                            <a href="{% url 'Hr:salaries:salary_item_delete' item.pk %}" class="btn btn-sm btn-outline-danger">
                                 <i class="fas fa-trash"></i>
                             </a>
                             {% endif %}
