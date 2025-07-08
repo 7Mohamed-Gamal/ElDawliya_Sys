@@ -3,30 +3,431 @@
 {% load form_utils %}
 {% load django_permissions %}
 
-{% block title %}إضافة موظف{% endblock %}
+{% block title %}{{ title|default:"إضافة موظف" }} - نظام الدولية{% endblock %}
 
-{% block page_title %}{{ title }}{% endblock %}
+{% block page_title %}{{ title|default:"إضافة موظف" }}{% endblock %}
+{% block page_subtitle %}إدارة بيانات الموظفين في النظام{% endblock %}
 
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Hr:dashboard' %}">الموارد البشرية</a></li>
 <li class="breadcrumb-item"><a href="{% url 'Hr:employees:list' %}">الموظفين</a></li>
-<li class="breadcrumb-item active">{{ title }}</li>
+<li class="breadcrumb-item active">{{ title|default:"إضافة موظف" }}</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.employee-form-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: calc(100vh - 200px);
+    padding: 2rem 0;
+}
+
+.form-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.form-card:hover {
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.form-header {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+    padding: 2rem;
+    text-align: center;
+    position: relative;
+}
+
+.form-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
+}
+
+.form-header-content {
+    position: relative;
+    z-index: 1;
+}
+
+.form-icon {
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 2rem;
+}
+
+.form-body {
+    padding: 2.5rem;
+}
+
+.form-section {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: #f8fafc;
+    border-radius: 12px;
+    border-left: 4px solid #3b82f6;
+}
+
+.section-title {
+    color: #1e293b;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.form-group {
+    position: relative;
+}
+
+.form-label {
+    display: block;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    transform: translateY(-1px);
+}
+
+.form-control.is-invalid {
+    border-color: #ef4444;
+}
+
+.form-control.is-valid {
+    border-color: #10b981;
+}
+
+.invalid-feedback {
+    color: #ef4444;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+.form-actions {
+    background: #f8fafc;
+    padding: 2rem;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+}
+
+.btn-modern {
+    padding: 0.75rem 2rem;
+    border: none;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+}
+
+.btn-secondary {
+    background: #6b7280;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #4b5563;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(107, 114, 128, 0.3);
+}
+
+@media (max-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .form-actions {
+        flex-direction: column;
+    }
+
+    .btn-modern {
+        width: 100%;
+        justify-content: center;
+    }
+}
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="form-container">
-  <h2 class="form-title">إضافة موظف جديد</h2>
-  <form method="post" autocomplete="off">
-    {% csrf_token %}
-    <div class="form-fields">
-      {{ form.as_p }}
+<div class="employee-form-container">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10 col-xl-8">
+                <div class="form-card">
+                    <!-- Form Header -->
+                    <div class="form-header">
+                        <div class="form-header-content">
+                            <div class="form-icon">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                            <h2 class="mb-0">{{ title|default:"إضافة موظف جديد" }}</h2>
+                            <p class="mb-0 opacity-75">أدخل بيانات الموظف الجديد في النظام</p>
+                        </div>
+                    </div>
+
+                    <!-- Form Body -->
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate>
+                        {% csrf_token %}
+                        <div class="form-body">
+                            <!-- Personal Information Section -->
+                            <div class="form-section">
+                                <h3 class="section-title">
+                                    <i class="fas fa-user text-primary"></i>
+                                    البيانات الشخصية
+                                </h3>
+                                <div class="form-row">
+                                    {% for field in form %}
+                                        {% if field.name in "emp_first_name,emp_middle_name,emp_last_name,emp_full_name,emp_national_id,emp_phone,emp_email" %}
+                                        <div class="form-group">
+                                            <label class="form-label" for="{{ field.id_for_label }}">
+                                                {{ field.label }}
+                                                {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                                            </label>
+                                            {{ field|add_class:"form-control" }}
+                                            {% if field.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ field.errors.0 }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- Employment Information Section -->
+                            <div class="form-section">
+                                <h3 class="section-title">
+                                    <i class="fas fa-briefcase text-success"></i>
+                                    بيانات التوظيف
+                                </h3>
+                                <div class="form-row">
+                                    {% for field in form %}
+                                        {% if field.name in "department,jop_code,emp_date_hiring,working_condition,emp_salary" %}
+                                        <div class="form-group">
+                                            <label class="form-label" for="{{ field.id_for_label }}">
+                                                {{ field.label }}
+                                                {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                                            </label>
+                                            {{ field|add_class:"form-control" }}
+                                            {% if field.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ field.errors.0 }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+
+                            <!-- Additional Information Section -->
+                            <div class="form-section">
+                                <h3 class="section-title">
+                                    <i class="fas fa-info-circle text-info"></i>
+                                    معلومات إضافية
+                                </h3>
+                                <div class="form-row">
+                                    {% for field in form %}
+                                        {% if field.name not in "emp_first_name,emp_middle_name,emp_last_name,emp_full_name,emp_national_id,emp_phone,emp_email,department,jop_code,emp_date_hiring,working_condition,emp_salary" %}
+                                        <div class="form-group">
+                                            <label class="form-label" for="{{ field.id_for_label }}">
+                                                {{ field.label }}
+                                                {% if field.field.required %}<span class="text-danger">*</span>{% endif %}
+                                            </label>
+                                            {{ field|add_class:"form-control" }}
+                                            {% if field.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ field.errors.0 }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="form-actions">
+                            <a href="{% url 'Hr:employees:list' %}" class="btn-modern btn-secondary">
+                                <i class="fas fa-times"></i>
+                                إلغاء
+                            </a>
+                            <button type="submit" class="btn-modern btn-primary">
+                                <i class="fas fa-save"></i>
+                                حفظ البيانات
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="form-actions">
-      <button type="submit" class="modern-btn primary">حفظ</button>
-      <a href="{% url 'Hr:employees:list' %}" class="modern-btn secondary">إلغاء</a>
-    </div>
-  </form>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Form validation
+    const forms = document.querySelectorAll('.needs-validation');
+
+    Array.prototype.slice.call(forms).forEach(function(form) {
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+
+                // Show first invalid field
+                const firstInvalid = form.querySelector(':invalid');
+                if (firstInvalid) {
+                    firstInvalid.focus();
+                    firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+            form.classList.add('was-validated');
+        }, false);
+    });
+
+    // Real-time validation
+    const inputs = document.querySelectorAll('.form-control');
+    inputs.forEach(function(input) {
+        input.addEventListener('blur', function() {
+            if (this.checkValidity()) {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            } else {
+                this.classList.remove('is-valid');
+                this.classList.add('is-invalid');
+            }
+        });
+
+        input.addEventListener('input', function() {
+            if (this.classList.contains('is-invalid') && this.checkValidity()) {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            }
+        });
+    });
+
+    // Auto-generate full name
+    const firstNameField = document.querySelector('[name="emp_first_name"]');
+    const middleNameField = document.querySelector('[name="emp_middle_name"]');
+    const lastNameField = document.querySelector('[name="emp_last_name"]');
+    const fullNameField = document.querySelector('[name="emp_full_name"]');
+
+    function updateFullName() {
+        if (firstNameField && lastNameField && fullNameField) {
+            const firstName = firstNameField.value.trim();
+            const middleName = middleNameField ? middleNameField.value.trim() : '';
+            const lastName = lastNameField.value.trim();
+
+            let fullName = firstName;
+            if (middleName) fullName += ' ' + middleName;
+            if (lastName) fullName += ' ' + lastName;
+
+            fullNameField.value = fullName;
+        }
+    }
+
+    if (firstNameField) firstNameField.addEventListener('input', updateFullName);
+    if (middleNameField) middleNameField.addEventListener('input', updateFullName);
+    if (lastNameField) lastNameField.addEventListener('input', updateFullName);
+
+    // Loading state for form submission
+    const submitBtn = document.querySelector('button[type="submit"]');
+    const form = document.querySelector('form');
+
+    if (form && submitBtn) {
+        form.addEventListener('submit', function() {
+            if (form.checkValidity()) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الحفظ...';
+            }
+        });
+    }
+
+    // Smooth scrolling for form sections
+    const sectionTitles = document.querySelectorAll('.section-title');
+    sectionTitles.forEach(function(title) {
+        title.style.cursor = 'pointer';
+        title.addEventListener('click', function() {
+            this.parentElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
+
+    // Auto-save draft (optional)
+    let autoSaveTimer;
+    const formInputs = document.querySelectorAll('input, select, textarea');
+
+    formInputs.forEach(function(input) {
+        input.addEventListener('input', function() {
+            clearTimeout(autoSaveTimer);
+            autoSaveTimer = setTimeout(function() {
+                // Auto-save logic can be implemented here
+                console.log('Auto-saving draft...');
+            }, 2000);
+        });
+    });
+});
+</script>
 {% endblock %}
 
 {% block extra_js %}
