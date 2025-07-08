@@ -2,6 +2,7 @@
 {% load static %}
 {% load form_utils %}
 {% load django_permissions %}
+{% load widget_tweaks %}
 
 {% block title %}{{ title|default:"إضافة موظف" }} - نظام الدولية{% endblock %}
 
@@ -426,14 +427,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 2000);
         });
     });
-});
-</script>
-{% endblock %}
 
-{% block extra_js %}
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // تحقق من صحة النماذج
+    // Additional form validation (Arabic version)
     (function () {
         'use strict'
 
@@ -454,23 +449,23 @@ document.addEventListener('DOMContentLoaded', function() {
             })
     })()
 
-    // تعبئة الاسم الكامل تلقائيًا
-    const firstNameInput = document.getElementById('id_emp_first_name');
-    const secondNameInput = document.getElementById('id_emp_second_name');
-    const fullNameInput = document.getElementById('id_emp_full_name');
+    // تعبئة الاسم الكامل تلقائيًا (Alternative implementation)
+    const firstNameInputAlt = document.getElementById('id_emp_first_name');
+    const secondNameInputAlt = document.getElementById('id_emp_second_name');
+    const fullNameInputAlt = document.getElementById('id_emp_full_name');
 
-    if (firstNameInput && secondNameInput && fullNameInput) {
-        const updateFullName = () => {
-            const firstName = firstNameInput.value.trim() || '';
-            const secondName = secondNameInput.value.trim() || '';
+    if (firstNameInputAlt && secondNameInputAlt && fullNameInputAlt) {
+        const updateFullNameAlt = () => {
+            const firstName = firstNameInputAlt.value.trim() || '';
+            const secondName = secondNameInputAlt.value.trim() || '';
 
             if (firstName || secondName) {
-                fullNameInput.value = [firstName, secondName].filter(Boolean).join(' ');
+                fullNameInputAlt.value = [firstName, secondName].filter(Boolean).join(' ');
             }
         };
 
-        firstNameInput.addEventListener('blur', updateFullName);
-        secondNameInput.addEventListener('blur', updateFullName);
+        firstNameInputAlt.addEventListener('blur', updateFullNameAlt);
+        secondNameInputAlt.addEventListener('blur', updateFullNameAlt);
     }
 
     // حساب مبلغ التأمين المستحق
