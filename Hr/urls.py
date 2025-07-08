@@ -1,5 +1,6 @@
 from django.urls import path, include
 
+# Legacy views (existing)
 from .views.employee_views import (
     dashboard, employee_list, employee_create, employee_detail,
     employee_edit, employee_delete, employee_search, employee_print,
@@ -45,6 +46,76 @@ from .views.attendance_views import (
     fetch_attendance_data, attendance_summary_list, zk_device_connection,
     test_zk_connection, fetch_zk_records_ajax, save_zk_records_to_db
 )
+
+# New HRMS views (using placeholders for development)
+from .views.core.placeholder_views import (
+    # Company views
+    company_list, company_create, company_detail, company_edit, company_delete,
+    company_toggle_status, company_dashboard, company_export, company_search_ajax, company_stats_ajax,
+    # Branch views
+    branch_list, branch_create, branch_detail, branch_edit, branch_delete,
+    branch_toggle_status, branches_by_company, branch_search_ajax,
+    # Department views
+    department_list, department_create, department_detail, department_edit, department_delete,
+    department_hierarchy, departments_by_branch, department_search_ajax,
+    # Job position views
+    job_position_list, job_position_create, job_position_detail, job_position_edit, job_position_delete,
+    positions_by_department, job_position_search_ajax
+)
+
+# Create placeholder modules for URL patterns
+class PlaceholderModule:
+    def __getattr__(self, name):
+        # Return the appropriate function based on the name
+        if 'company' in name:
+            return globals().get(name, company_list)
+        elif 'branch' in name:
+            return globals().get(name, branch_list)
+        elif 'department' in name:
+            return globals().get(name, department_list)
+        elif 'job_position' in name or 'position' in name:
+            return globals().get(name, job_position_list)
+        else:
+            return globals().get(name, company_list)
+
+company_views = PlaceholderModule()
+branch_views = PlaceholderModule()
+department_views_new = PlaceholderModule()
+job_position_views = PlaceholderModule()
+
+try:
+    from .views.employee import (
+        employee_views_new, employee_document_views, employee_emergency_contact_views,
+        employee_training_views
+    )
+except ImportError:
+    employee_views_new = employee_document_views = employee_emergency_contact_views = employee_training_views = None
+
+try:
+    from .views.leave import (
+        leave_type_views, leave_policy_views, leave_request_views, leave_balance_views
+    )
+except ImportError:
+    leave_type_views = leave_policy_views = leave_request_views = leave_balance_views = None
+
+try:
+    from .views.attendance import (
+        work_shift_views, attendance_machine_views_new, attendance_record_views_new,
+        attendance_summary_views_new, employee_shift_assignment_views
+    )
+except ImportError:
+    work_shift_views = attendance_machine_views_new = attendance_record_views_new = None
+    attendance_summary_views_new = employee_shift_assignment_views = None
+
+try:
+    from .views.payroll import (
+        salary_component_views, employee_salary_structure_views, payroll_period_views_new,
+        payroll_entry_views_new, tax_configuration_views
+    )
+except ImportError:
+    salary_component_views = employee_salary_structure_views = payroll_period_views_new = None
+    payroll_entry_views_new = tax_configuration_views = None
+
 from .views import update_data
 
 app_name = 'Hr'
@@ -189,20 +260,210 @@ attendance_patterns = [
     path('ajax/save-zk-records/', save_zk_records_to_db, name='save_zk_records_to_db'),
 ]
 
+# ==================== NEW HRMS MODULE PATTERNS ====================
+
+# Company patterns
+company_patterns = [
+    path('', company_views.company_list, name='list'),
+    path('create/', company_views.company_create, name='create'),
+    path('<int:company_id>/', company_views.company_detail, name='detail'),
+    path('<int:company_id>/edit/', company_views.company_edit, name='edit'),
+    path('<int:company_id>/delete/', company_views.company_delete, name='delete'),
+    path('<int:company_id>/toggle-status/', company_views.company_toggle_status, name='toggle_status'),
+    path('<int:company_id>/dashboard/', company_views.company_dashboard, name='dashboard'),
+    path('export/', company_views.company_export, name='export'),
+    path('ajax/search/', company_views.company_search_ajax, name='search_ajax'),
+    path('<int:company_id>/ajax/stats/', company_views.company_stats_ajax, name='stats_ajax'),
+]
+
+# Branch patterns
+branch_patterns = [
+    path('', branch_views.branch_list, name='list'),
+    path('create/', branch_views.branch_create, name='create'),
+    path('<int:branch_id>/', branch_views.branch_detail, name='detail'),
+    path('<int:branch_id>/edit/', branch_views.branch_edit, name='edit'),
+    path('<int:branch_id>/delete/', branch_views.branch_delete, name='delete'),
+    path('<int:branch_id>/toggle-status/', branch_views.branch_toggle_status, name='toggle_status'),
+    path('by-company/<int:company_id>/', branch_views.branches_by_company, name='by_company'),
+    path('ajax/search/', branch_views.branch_search_ajax, name='search_ajax'),
+]
+
+# Enhanced Department patterns
+department_new_patterns = [
+    path('', department_views_new.department_list, name='list'),
+    path('create/', department_views_new.department_create, name='create'),
+    path('<int:department_id>/', department_views_new.department_detail, name='detail'),
+    path('<int:department_id>/edit/', department_views_new.department_edit, name='edit'),
+    path('<int:department_id>/delete/', department_views_new.department_delete, name='delete'),
+    path('<int:department_id>/hierarchy/', department_views_new.department_hierarchy, name='hierarchy'),
+    path('by-branch/<int:branch_id>/', department_views_new.departments_by_branch, name='by_branch'),
+    path('ajax/search/', department_views_new.department_search_ajax, name='search_ajax'),
+]
+
+# Job Position patterns
+job_position_patterns = [
+    path('', job_position_views.job_position_list, name='list'),
+    path('create/', job_position_views.job_position_create, name='create'),
+    path('<int:position_id>/', job_position_views.job_position_detail, name='detail'),
+    path('<int:position_id>/edit/', job_position_views.job_position_edit, name='edit'),
+    path('<int:position_id>/delete/', job_position_views.job_position_delete, name='delete'),
+    path('by-department/<int:department_id>/', job_position_views.positions_by_department, name='by_department'),
+    path('ajax/search/', job_position_views.job_position_search_ajax, name='search_ajax'),
+]
+
+# Leave Type patterns
+leave_type_patterns = [
+    path('', leave_type_views.leave_type_list, name='list'),
+    path('create/', leave_type_views.leave_type_create, name='create'),
+    path('<int:leave_type_id>/', leave_type_views.leave_type_detail, name='detail'),
+    path('<int:leave_type_id>/edit/', leave_type_views.leave_type_edit, name='edit'),
+    path('<int:leave_type_id>/delete/', leave_type_views.leave_type_delete, name='delete'),
+    path('<int:leave_type_id>/toggle-status/', leave_type_views.leave_type_toggle_status, name='toggle_status'),
+]
+
+# Leave Policy patterns
+leave_policy_patterns = [
+    path('', leave_policy_views.leave_policy_list, name='list'),
+    path('create/', leave_policy_views.leave_policy_create, name='create'),
+    path('<int:policy_id>/', leave_policy_views.leave_policy_detail, name='detail'),
+    path('<int:policy_id>/edit/', leave_policy_views.leave_policy_edit, name='edit'),
+    path('<int:policy_id>/delete/', leave_policy_views.leave_policy_delete, name='delete'),
+    path('<int:policy_id>/employees/', leave_policy_views.policy_applicable_employees, name='applicable_employees'),
+]
+
+# Leave Request patterns
+leave_request_patterns = [
+    path('', leave_request_views.leave_request_list, name='list'),
+    path('create/', leave_request_views.leave_request_create, name='create'),
+    path('<int:request_id>/', leave_request_views.leave_request_detail, name='detail'),
+    path('<int:request_id>/edit/', leave_request_views.leave_request_edit, name='edit'),
+    path('<int:request_id>/delete/', leave_request_views.leave_request_delete, name='delete'),
+    path('<int:request_id>/approve/', leave_request_views.leave_request_approve, name='approve'),
+    path('<int:request_id>/reject/', leave_request_views.leave_request_reject, name='reject'),
+    path('<int:request_id>/cancel/', leave_request_views.leave_request_cancel, name='cancel'),
+    path('pending/', leave_request_views.pending_leave_requests, name='pending'),
+    path('calendar/', leave_request_views.leave_calendar, name='calendar'),
+]
+
+# Leave Balance patterns
+leave_balance_patterns = [
+    path('', leave_balance_views.leave_balance_list, name='list'),
+    path('employee/<int:employee_id>/', leave_balance_views.employee_leave_balance, name='employee_balance'),
+    path('<int:balance_id>/adjust/', leave_balance_views.adjust_leave_balance, name='adjust'),
+    path('<int:balance_id>/encash/', leave_balance_views.encash_leave_balance, name='encash'),
+    path('bulk-update/', leave_balance_views.bulk_update_balances, name='bulk_update'),
+    path('report/', leave_balance_views.leave_balance_report, name='report'),
+]
+
+# Work Shift patterns
+work_shift_patterns = [
+    path('', work_shift_views.work_shift_list, name='list'),
+    path('create/', work_shift_views.work_shift_create, name='create'),
+    path('<int:shift_id>/', work_shift_views.work_shift_detail, name='detail'),
+    path('<int:shift_id>/edit/', work_shift_views.work_shift_edit, name='edit'),
+    path('<int:shift_id>/delete/', work_shift_views.work_shift_delete, name='delete'),
+    path('<int:shift_id>/employees/', work_shift_views.shift_employees, name='employees'),
+]
+
+# Attendance Machine (New) patterns
+attendance_machine_new_patterns = [
+    path('', attendance_machine_views_new.machine_list, name='list'),
+    path('create/', attendance_machine_views_new.machine_create, name='create'),
+    path('<int:machine_id>/', attendance_machine_views_new.machine_detail, name='detail'),
+    path('<int:machine_id>/edit/', attendance_machine_views_new.machine_edit, name='edit'),
+    path('<int:machine_id>/delete/', attendance_machine_views_new.machine_delete, name='delete'),
+    path('<int:machine_id>/test-connection/', attendance_machine_views_new.test_machine_connection, name='test_connection'),
+    path('<int:machine_id>/sync-users/', attendance_machine_views_new.sync_machine_users, name='sync_users'),
+    path('<int:machine_id>/fetch-records/', attendance_machine_views_new.fetch_machine_records, name='fetch_records'),
+]
+
+# Salary Component patterns
+salary_component_patterns = [
+    path('', salary_component_views.component_list, name='list'),
+    path('create/', salary_component_views.component_create, name='create'),
+    path('<int:component_id>/', salary_component_views.component_detail, name='detail'),
+    path('<int:component_id>/edit/', salary_component_views.component_edit, name='edit'),
+    path('<int:component_id>/delete/', salary_component_views.component_delete, name='delete'),
+    path('<int:component_id>/toggle-status/', salary_component_views.component_toggle_status, name='toggle_status'),
+]
+
+# Employee Document patterns
+employee_document_patterns = [
+    path('', employee_document_views.document_list, name='list'),
+    path('create/', employee_document_views.document_create, name='create'),
+    path('<int:document_id>/', employee_document_views.document_detail, name='detail'),
+    path('<int:document_id>/edit/', employee_document_views.document_edit, name='edit'),
+    path('<int:document_id>/delete/', employee_document_views.document_delete, name='delete'),
+    path('<int:document_id>/verify/', employee_document_views.document_verify, name='verify'),
+    path('<int:document_id>/download/', employee_document_views.document_download, name='download'),
+    path('by-employee/<int:employee_id>/', employee_document_views.documents_by_employee, name='by_employee'),
+    path('expiring/', employee_document_views.expiring_documents, name='expiring'),
+]
+
+# Employee Emergency Contact patterns
+emergency_contact_patterns = [
+    path('', employee_emergency_contact_views.contact_list, name='list'),
+    path('create/', employee_emergency_contact_views.contact_create, name='create'),
+    path('<int:contact_id>/', employee_emergency_contact_views.contact_detail, name='detail'),
+    path('<int:contact_id>/edit/', employee_emergency_contact_views.contact_edit, name='edit'),
+    path('<int:contact_id>/delete/', employee_emergency_contact_views.contact_delete, name='delete'),
+    path('by-employee/<int:employee_id>/', employee_emergency_contact_views.contacts_by_employee, name='by_employee'),
+]
+
+# Employee Training patterns
+employee_training_patterns = [
+    path('', employee_training_views.training_list, name='list'),
+    path('create/', employee_training_views.training_create, name='create'),
+    path('<int:training_id>/', employee_training_views.training_detail, name='detail'),
+    path('<int:training_id>/edit/', employee_training_views.training_edit, name='edit'),
+    path('<int:training_id>/delete/', employee_training_views.training_delete, name='delete'),
+    path('<int:training_id>/complete/', employee_training_views.training_complete, name='complete'),
+    path('<int:training_id>/certificate/', employee_training_views.training_certificate, name='certificate'),
+    path('by-employee/<int:employee_id>/', employee_training_views.trainings_by_employee, name='by_employee'),
+    path('calendar/', employee_training_views.training_calendar, name='calendar'),
+]
+
 urlpatterns = [
     # Main dashboard
     path('', dashboard, name='dashboard'),
     path('dashboard/', dashboard, name='dashboard_alt'),
 
-    # Module patterns
+    # ==================== CORE ORGANIZATIONAL STRUCTURE ====================
+    path('companies/', include((company_patterns, app_name), namespace='companies')),
+    path('branches/', include((branch_patterns, app_name), namespace='branches')),
+    path('departments-new/', include((department_new_patterns, app_name), namespace='departments_new')),
+    path('job-positions/', include((job_position_patterns, app_name), namespace='job_positions')),
+
+    # ==================== EMPLOYEE MANAGEMENT ====================
     path('employees/', include((employee_patterns, app_name), namespace='employees')),
+    path('employee-documents/', include((employee_document_patterns, app_name), namespace='employee_documents')),
+    path('emergency-contacts/', include((emergency_contact_patterns, app_name), namespace='emergency_contacts')),
+    path('employee-training/', include((employee_training_patterns, app_name), namespace='employee_training')),
+
+    # ==================== LEAVE MANAGEMENT ====================
+    path('leave-types/', include((leave_type_patterns, app_name), namespace='leave_types')),
+    path('leave-policies/', include((leave_policy_patterns, app_name), namespace='leave_policies')),
+    path('leave-requests/', include((leave_request_patterns, app_name), namespace='leave_requests')),
+    path('leave-balances/', include((leave_balance_patterns, app_name), namespace='leave_balances')),
+
+    # ==================== ATTENDANCE & TIME TRACKING ====================
+    path('work-shifts/', include((work_shift_patterns, app_name), namespace='work_shifts')),
+    path('attendance-machines-new/', include((attendance_machine_new_patterns, app_name), namespace='attendance_machines_new')),
+    path('attendance/', include((attendance_patterns, app_name), namespace='attendance')),
+
+    # ==================== PAYROLL MANAGEMENT ====================
+    path('salary-components/', include((salary_component_patterns, app_name), namespace='salary_components')),
+    path('salaries/', include((salary_patterns, app_name), namespace='salaries')),
+
+    # ==================== LEGACY MODULES (for backward compatibility) ====================
     path('departments/', include((department_patterns, app_name), namespace='departments')),
     path('jobs/', include((job_patterns, app_name), namespace='jobs')),
-    path('salaries/', include((salary_patterns, app_name), namespace='salaries')),
-    path('attendance/', include((attendance_patterns, app_name), namespace='attendance')),
     path('reports/', include((report_patterns, app_name), namespace='reports')),
     path('analytics/', include((analytics_patterns, app_name), namespace='analytics')),
     path('org_chart/', include((org_chart_patterns, app_name), namespace='org_chart')),
     path('alerts/', include((alert_patterns, app_name), namespace='alerts')),
     path('notes/', include((note_patterns, app_name), namespace='notes')),
+
+    # Update data utility
+    path('update-data/', update_data, name='update_data'),
 ]

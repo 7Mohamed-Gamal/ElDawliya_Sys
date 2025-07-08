@@ -1,0 +1,193 @@
+{% extends 'Hr/base_hr.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Page Header -->
+            <div class="page-header">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h3 class="page-title">{{ title }}</h3>
+                        <ul class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{% url 'Hr:dashboard' %}">لوحة التحكم</a></li>
+                            <li class="breadcrumb-item active">{{ title }}</li>
+                        </ul>
+                    </div>
+                    <div class="col-auto">
+                        <div class="btn-group">
+                            <a href="#" class="btn btn-primary">
+                                <i class="fas fa-edit"></i> تعديل
+                            </a>
+                            <a href="#" class="btn btn-danger">
+                                <i class="fas fa-trash"></i> حذف
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Development Notice -->
+            <div class="alert alert-info alert-dismissible fade show" role="alert">
+                <i class="fas fa-info-circle"></i>
+                <strong>قيد التطوير:</strong> صفحة تفاصيل {{ model_name }} قيد التطوير. البيانات المعروضة وهمية.
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <!-- Detail Cards -->
+            <div class="row">
+                <!-- Basic Information -->
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title">المعلومات الأساسية</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <p class="mb-0"><strong>المعرف:</strong></p>
+                                </div>
+                                <div class="col-sm-9">
+                                    <p class="text-muted mb-0">#{{ item_id }}</p>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <p class="mb-0"><strong>الاسم:</strong></p>
+                                </div>
+                                <div class="col-sm-9">
+                                    <p class="text-muted mb-0">{{ model_name }} نموذجي</p>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <p class="mb-0"><strong>الكود:</strong></p>
+                                </div>
+                                <div class="col-sm-9">
+                                    <p class="text-muted mb-0">CODE{{ item_id|stringformat:"03d" }}</p>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <p class="mb-0"><strong>الحالة:</strong></p>
+                                </div>
+                                <div class="col-sm-9">
+                                    <span class="badge bg-success">نشط</span>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <p class="mb-0"><strong>تاريخ الإنشاء:</strong></p>
+                                </div>
+                                <div class="col-sm-9">
+                                    <p class="text-muted mb-0">{{ "now"|date:"Y-m-d H:i" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Statistics -->
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title">إحصائيات</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="text-center">
+                                <div class="mb-3">
+                                    <i class="fas fa-chart-bar fa-2x text-primary"></i>
+                                </div>
+                                <h4 class="text-primary">قيد التطوير</h4>
+                                <p class="text-muted">سيتم عرض الإحصائيات هنا</p>
+                            </div>
+                            
+                            <!-- Sample Stats -->
+                            <div class="row text-center mt-4">
+                                <div class="col-6">
+                                    <div class="border-end">
+                                        <h5 class="text-primary">{{ item_id }}0</h5>
+                                        <p class="text-muted mb-0">العدد الكلي</p>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <h5 class="text-success">{{ item_id }}5</h5>
+                                    <p class="text-muted mb-0">النشط</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h5 class="card-title">إجراءات سريعة</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-grid gap-2">
+                                <a href="#" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-edit"></i> تعديل البيانات
+                                </a>
+                                <a href="#" class="btn btn-outline-info btn-sm">
+                                    <i class="fas fa-print"></i> طباعة
+                                </a>
+                                <a href="#" class="btn btn-outline-success btn-sm">
+                                    <i class="fas fa-download"></i> تصدير
+                                </a>
+                                <a href="#" class="btn btn-outline-warning btn-sm">
+                                    <i class="fas fa-history"></i> السجل
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Information -->
+            <div class="row mt-3">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title">معلومات إضافية</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="text-center py-4">
+                                <i class="fas fa-info-circle fa-2x text-muted mb-3"></i>
+                                <h5 class="text-muted">معلومات تفصيلية</h5>
+                                <p class="text-muted">سيتم عرض المعلومات التفصيلية لـ {{ model_name }} هنا</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Back Button -->
+            <div class="row mt-3">
+                <div class="col-12">
+                    <a href="{% url 'Hr:dashboard' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> العودة
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Auto-dismiss alert after 5 seconds
+    setTimeout(function() {
+        $('.alert').alert('close');
+    }, 5000);
+});
+</script>
+{% endblock %}

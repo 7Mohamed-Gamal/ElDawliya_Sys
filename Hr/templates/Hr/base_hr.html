@@ -88,6 +88,64 @@
                         </a>
                     </li>
 
+                    <!-- ==================== ORGANIZATIONAL STRUCTURE ==================== -->
+
+                    <!-- Company Management -->
+                    <li class="nav-item has-submenu">
+                        <a href="#" class="nav-link submenu-toggle {% if 'companies' in request.resolver_match.namespace|default:'' %}active{% endif %}">
+                            <i class="nav-icon fas fa-building"></i>
+                            <span class="nav-text">إدارة الشركات</span>
+                            <i class="submenu-arrow fas fa-chevron-down"></i>
+                        </a>
+                        <ul class="nav-submenu">
+                            <li><a href="{% url 'Hr:companies:list' %}" class="nav-sublink">قائمة الشركات</a></li>
+                            <li><a href="{% url 'Hr:companies:create' %}" class="nav-sublink">إضافة شركة</a></li>
+                        </ul>
+                    </li>
+
+                    <!-- Branch Management -->
+                    <li class="nav-item has-submenu">
+                        <a href="#" class="nav-link submenu-toggle {% if 'branches' in request.resolver_match.namespace|default:'' %}active{% endif %}">
+                            <i class="nav-icon fas fa-map-marker-alt"></i>
+                            <span class="nav-text">إدارة الفروع</span>
+                            <i class="submenu-arrow fas fa-chevron-down"></i>
+                        </a>
+                        <ul class="nav-submenu">
+                            <li><a href="{% url 'Hr:branches:list' %}" class="nav-sublink">قائمة الفروع</a></li>
+                            <li><a href="{% url 'Hr:branches:create' %}" class="nav-sublink">إضافة فرع</a></li>
+                        </ul>
+                    </li>
+
+                    <!-- Department Management (Enhanced) -->
+                    <li class="nav-item has-submenu">
+                        <a href="#" class="nav-link submenu-toggle {% if 'departments' in request.resolver_match.namespace|default:'' %}active{% endif %}">
+                            <i class="nav-icon fas fa-sitemap"></i>
+                            <span class="nav-text">إدارة الأقسام</span>
+                            <i class="submenu-arrow fas fa-chevron-down"></i>
+                        </a>
+                        <ul class="nav-submenu">
+                            <li><a href="{% url 'Hr:departments_new:list' %}" class="nav-sublink">قائمة الأقسام</a></li>
+                            <li><a href="{% url 'Hr:departments_new:create' %}" class="nav-sublink">إضافة قسم</a></li>
+                            <li><a href="{% url 'Hr:departments:department_list' %}" class="nav-sublink">الأقسام (قديم)</a></li>
+                        </ul>
+                    </li>
+
+                    <!-- Job Position Management -->
+                    <li class="nav-item has-submenu">
+                        <a href="#" class="nav-link submenu-toggle {% if 'job_positions' in request.resolver_match.namespace|default:'' %}active{% endif %}">
+                            <i class="nav-icon fas fa-briefcase"></i>
+                            <span class="nav-text">إدارة الوظائف</span>
+                            <i class="submenu-arrow fas fa-chevron-down"></i>
+                        </a>
+                        <ul class="nav-submenu">
+                            <li><a href="{% url 'Hr:job_positions:list' %}" class="nav-sublink">قائمة الوظائف</a></li>
+                            <li><a href="{% url 'Hr:job_positions:create' %}" class="nav-sublink">إضافة وظيفة</a></li>
+                            <li><a href="{% url 'Hr:jobs:job_list' %}" class="nav-sublink">الوظائف (قديم)</a></li>
+                        </ul>
+                    </li>
+
+                    <!-- ==================== EMPLOYEE MANAGEMENT ==================== -->
+
                     <!-- Employee Management -->
                     <li class="nav-item has-submenu">
                         <a href="#" class="nav-link submenu-toggle {% if 'employees' in request.resolver_match.namespace|default:'' %}active{% endif %}">
@@ -102,60 +160,117 @@
                         </ul>
                     </li>
 
-                    <!-- Department Management -->
+                    <!-- Employee Documents -->
                     <li class="nav-item has-submenu">
-                        <a href="#" class="nav-link submenu-toggle {% if 'departments' in request.resolver_match.namespace|default:'' %}active{% endif %}">
-                            <i class="nav-icon fas fa-sitemap"></i>
-                            <span class="nav-text">إدارة الأقسام</span>
+                        <a href="#" class="nav-link submenu-toggle {% if 'employee_documents' in request.resolver_match.namespace|default:'' %}active{% endif %}">
+                            <i class="nav-icon fas fa-file-alt"></i>
+                            <span class="nav-text">وثائق الموظفين</span>
                             <i class="submenu-arrow fas fa-chevron-down"></i>
                         </a>
                         <ul class="nav-submenu">
-                            <li><a href="{% url 'Hr:departments:department_list' %}" class="nav-sublink">قائمة الأقسام</a></li>
-                            <li><a href="{% url 'Hr:departments:department_create' %}" class="nav-sublink">إضافة قسم</a></li>
+                            <li><a href="{% url 'Hr:employee_documents:list' %}" class="nav-sublink">جميع الوثائق</a></li>
+                            <li><a href="{% url 'Hr:employee_documents:create' %}" class="nav-sublink">إضافة وثيقة</a></li>
+                            <li><a href="{% url 'Hr:employee_documents:expiring' %}" class="nav-sublink">الوثائق منتهية الصلاحية</a></li>
                         </ul>
                     </li>
 
-                    <!-- Job Management -->
-                    <li class="nav-item">
-                        <a href="{% url 'Hr:jobs:job_list' %}" class="nav-link {% if 'jobs' in request.resolver_match.namespace|default:'' %}active{% endif %}">
-                            <i class="nav-icon fas fa-briefcase"></i>
-                            <span class="nav-text">الوظائف</span>
+                    <!-- Emergency Contacts -->
+                    <li class="nav-item has-submenu">
+                        <a href="#" class="nav-link submenu-toggle {% if 'emergency_contacts' in request.resolver_match.namespace|default:'' %}active{% endif %}">
+                            <i class="nav-icon fas fa-phone"></i>
+                            <span class="nav-text">جهات الاتصال الطارئة</span>
+                            <i class="submenu-arrow fas fa-chevron-down"></i>
                         </a>
+                        <ul class="nav-submenu">
+                            <li><a href="{% url 'Hr:emergency_contacts:list' %}" class="nav-sublink">جميع جهات الاتصال</a></li>
+                            <li><a href="{% url 'Hr:emergency_contacts:create' %}" class="nav-sublink">إضافة جهة اتصال</a></li>
+                        </ul>
                     </li>
 
-                    <!-- Attendance Management -->
+                    <!-- Employee Training -->
                     <li class="nav-item has-submenu">
-                        <a href="#" class="nav-link submenu-toggle {% if 'attendance' in request.resolver_match.namespace|default:'' %}active{% endif %}">
+                        <a href="#" class="nav-link submenu-toggle {% if 'employee_training' in request.resolver_match.namespace|default:'' %}active{% endif %}">
+                            <i class="nav-icon fas fa-graduation-cap"></i>
+                            <span class="nav-text">التدريب والتطوير</span>
+                            <i class="submenu-arrow fas fa-chevron-down"></i>
+                        </a>
+                        <ul class="nav-submenu">
+                            <li><a href="{% url 'Hr:employee_training:list' %}" class="nav-sublink">جميع التدريبات</a></li>
+                            <li><a href="{% url 'Hr:employee_training:create' %}" class="nav-sublink">إضافة تدريب</a></li>
+                            <li><a href="{% url 'Hr:employee_training:calendar' %}" class="nav-sublink">تقويم التدريب</a></li>
+                        </ul>
+                    </li>
+
+                    <!-- ==================== LEAVE MANAGEMENT ==================== -->
+
+                    <!-- Leave Management -->
+                    <li class="nav-item has-submenu">
+                        <a href="#" class="nav-link submenu-toggle {% if 'leave' in request.resolver_match.namespace|default:'' %}active{% endif %}">
+                            <i class="nav-icon fas fa-calendar-times"></i>
+                            <span class="nav-text">إدارة الإجازات</span>
+                            <i class="submenu-arrow fas fa-chevron-down"></i>
+                        </a>
+                        <ul class="nav-submenu">
+                            <li><a href="{% url 'Hr:leave_types:list' %}" class="nav-sublink">أنواع الإجازات</a></li>
+                            <li><a href="{% url 'Hr:leave_policies:list' %}" class="nav-sublink">سياسات الإجازات</a></li>
+                            <li><a href="{% url 'Hr:leave_requests:list' %}" class="nav-sublink">طلبات الإجازات</a></li>
+                            <li><a href="{% url 'Hr:leave_requests:pending' %}" class="nav-sublink">الطلبات المعلقة</a></li>
+                            <li><a href="{% url 'Hr:leave_balances:list' %}" class="nav-sublink">أرصدة الإجازات</a></li>
+                            <li><a href="{% url 'Hr:leave_requests:calendar' %}" class="nav-sublink">تقويم الإجازات</a></li>
+                        </ul>
+                    </li>
+
+                    <!-- ==================== ATTENDANCE & TIME TRACKING ==================== -->
+
+                    <!-- Enhanced Attendance Management -->
+                    <li class="nav-item has-submenu">
+                        <a href="#" class="nav-link submenu-toggle {% if 'work_shifts' in request.resolver_match.namespace|default:'' or 'attendance' in request.resolver_match.namespace|default:'' %}active{% endif %}">
                             <i class="nav-icon fas fa-clock"></i>
                             <span class="nav-text">الحضور والانصراف</span>
                             <i class="submenu-arrow fas fa-chevron-down"></i>
                         </a>
                         <ul class="nav-submenu">
+                            <li><a href="{% url 'Hr:work_shifts:list' %}" class="nav-sublink">ورديات العمل</a></li>
+                            <li><a href="{% url 'Hr:attendance_machines_new:list' %}" class="nav-sublink">أجهزة الحضور</a></li>
                             <li><a href="{% url 'Hr:attendance:attendance_record_list' %}" class="nav-sublink">سجلات الحضور</a></li>
-                            <li><a href="{% url 'Hr:attendance:zk_device_connection' %}" class="nav-sublink">أجهزة البصمة</a></li>
+                            <li><a href="{% url 'Hr:attendance:attendance_summary_list' %}" class="nav-sublink">ملخصات الحضور</a></li>
+                            <li><a href="{% url 'Hr:attendance:zk_device_connection' %}" class="nav-sublink">أجهزة البصمة (قديم)</a></li>
                             <li><a href="{% url 'Hr:attendance:attendance_rule_list' %}" class="nav-sublink">قواعد الحضور</a></li>
                         </ul>
                     </li>
 
-                    <!-- Payroll Management -->
+                    <!-- ==================== PAYROLL MANAGEMENT ==================== -->
+
+                    <!-- Enhanced Payroll Management -->
                     <li class="nav-item has-submenu">
-                        <a href="#" class="nav-link submenu-toggle">
+                        <a href="#" class="nav-link submenu-toggle {% if 'salary' in request.resolver_match.namespace|default:'' %}active{% endif %}">
                             <i class="nav-icon fas fa-calculator"></i>
-                            <span class="nav-text">الرواتب</span>
+                            <span class="nav-text">إدارة الرواتب</span>
                             <i class="submenu-arrow fas fa-chevron-down"></i>
                         </a>
                         <ul class="nav-submenu">
+                            <li><a href="{% url 'Hr:salary_components:list' %}" class="nav-sublink">مكونات الراتب</a></li>
                             <li><a href="{% url 'Hr:salaries:payroll_calculate' %}" class="nav-sublink">حساب الرواتب</a></li>
                             <li><a href="{% url 'Hr:salaries:payroll_period_list' %}" class="nav-sublink">فترات الرواتب</a></li>
+                            <li><a href="{% url 'Hr:salaries:salary_item_list' %}" class="nav-sublink">عناصر الراتب</a></li>
                         </ul>
                     </li>
 
-                    <!-- Reports -->
-                    <li class="nav-item">
-                        <a href="{% url 'Hr:reports:report_list' %}" class="nav-link {% if 'reports' in request.resolver_match.namespace|default:'' %}active{% endif %}">
+                    <!-- ==================== REPORTS & ANALYTICS ==================== -->
+
+                    <!-- Enhanced Reports -->
+                    <li class="nav-item has-submenu">
+                        <a href="#" class="nav-link submenu-toggle {% if 'reports' in request.resolver_match.namespace|default:'' %}active{% endif %}">
                             <i class="nav-icon fas fa-chart-bar"></i>
                             <span class="nav-text">التقارير</span>
+                            <i class="submenu-arrow fas fa-chevron-down"></i>
                         </a>
+                        <ul class="nav-submenu">
+                            <li><a href="{% url 'Hr:reports:report_list' %}" class="nav-sublink">جميع التقارير</a></li>
+                            <li><a href="{% url 'Hr:reports:monthly_salary_report' %}" class="nav-sublink">تقرير الرواتب الشهري</a></li>
+                            <li><a href="{% url 'Hr:reports:employee_report' %}" class="nav-sublink">تقرير الموظفين</a></li>
+                            <li><a href="{% url 'Hr:leave_balances:report' %}" class="nav-sublink">تقرير أرصدة الإجازات</a></li>
+                        </ul>
                     </li>
 
                     <!-- Analytics -->
@@ -163,6 +278,32 @@
                         <a href="{% url 'Hr:analytics:analytics_dashboard' %}" class="nav-link {% if 'analytics' in request.resolver_match.namespace|default:'' %}active{% endif %}">
                             <i class="nav-icon fas fa-chart-line"></i>
                             <span class="nav-text">التحليلات</span>
+                        </a>
+                    </li>
+
+                    <!-- ==================== SYSTEM MANAGEMENT ==================== -->
+
+                    <!-- Organization Chart -->
+                    <li class="nav-item">
+                        <a href="{% url 'Hr:org_chart:org_chart' %}" class="nav-link {% if 'org_chart' in request.resolver_match.namespace|default:'' %}active{% endif %}">
+                            <i class="nav-icon fas fa-project-diagram"></i>
+                            <span class="nav-text">الهيكل التنظيمي</span>
+                        </a>
+                    </li>
+
+                    <!-- Notes -->
+                    <li class="nav-item">
+                        <a href="{% url 'Hr:notes:employee_notes_dashboard' %}" class="nav-link {% if 'notes' in request.resolver_match.namespace|default:'' %}active{% endif %}">
+                            <i class="nav-icon fas fa-sticky-note"></i>
+                            <span class="nav-text">الملاحظات</span>
+                        </a>
+                    </li>
+
+                    <!-- Alerts -->
+                    <li class="nav-item">
+                        <a href="{% url 'Hr:alerts:alert_list' %}" class="nav-link {% if 'alerts' in request.resolver_match.namespace|default:'' %}active{% endif %}">
+                            <i class="nav-icon fas fa-exclamation-triangle"></i>
+                            <span class="nav-text">التنبيهات</span>
                         </a>
                     </li>
                 </ul>
