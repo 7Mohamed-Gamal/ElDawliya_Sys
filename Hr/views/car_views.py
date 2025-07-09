@@ -2,8 +2,16 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 
-from Hr.models.car_models import Car
-from Hr.forms.employee_forms import CarForm
+from Hr.models.car_models import HrCar as Car
+# Temporarily disabled due to form conflicts
+# from Hr.forms.employee_forms import CarForm
+
+# Simple placeholder form
+from django import forms
+class CarForm(forms.ModelForm):
+    class Meta:
+        model = Car
+        fields = ['car_name']
 from administrator.decorators import django_permission_required
 from Hr.decorators import hr_module_permission_required
 

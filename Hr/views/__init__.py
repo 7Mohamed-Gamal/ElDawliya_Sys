@@ -29,12 +29,44 @@ from Hr.views.job_views import (
     get_next_job_code
 )
 
-from Hr.views.salary_views import (
-    salary_item_list, salary_item_create, salary_item_edit, salary_item_delete,
-    employee_salary_item_list, employee_salary_item_create, 
-    employee_salary_item_bulk_create, employee_salary_item_edit,
-    employee_salary_item_delete, payroll_calculate
-)
+# Temporarily disabled due to model conflicts
+# from Hr.views.salary_views import (
+#     salary_item_list, salary_item_create, salary_item_edit, salary_item_delete,
+#     employee_salary_item_list, employee_salary_item_create,
+#     employee_salary_item_bulk_create, employee_salary_item_edit,
+#     employee_salary_item_delete, payroll_calculate
+# )
+
+# Placeholder functions for salary views
+def salary_item_list(request):
+    return render(request, 'Hr/under_construction.html', {'title': 'قائمة بنود الرواتب'})
+
+def salary_item_create(request):
+    return render(request, 'Hr/under_construction.html', {'title': 'إنشاء بند راتب'})
+
+def salary_item_edit(request, pk):
+    return render(request, 'Hr/under_construction.html', {'title': 'تعديل بند راتب'})
+
+def salary_item_delete(request, pk):
+    return render(request, 'Hr/under_construction.html', {'title': 'حذف بند راتب'})
+
+def employee_salary_item_list(request):
+    return render(request, 'Hr/under_construction.html', {'title': 'قائمة رواتب الموظفين'})
+
+def employee_salary_item_create(request):
+    return render(request, 'Hr/under_construction.html', {'title': 'إنشاء راتب موظف'})
+
+def employee_salary_item_bulk_create(request):
+    return render(request, 'Hr/under_construction.html', {'title': 'إنشاء رواتب متعددة'})
+
+def employee_salary_item_edit(request, pk):
+    return render(request, 'Hr/under_construction.html', {'title': 'تعديل راتب موظف'})
+
+def employee_salary_item_delete(request, pk):
+    return render(request, 'Hr/under_construction.html', {'title': 'حذف راتب موظف'})
+
+def payroll_calculate(request):
+    return render(request, 'Hr/under_construction.html', {'title': 'حساب كشف الرواتب'})
 
 from Hr.views.car_views import (
     car_list, car_create, car_detail, car_edit, car_delete

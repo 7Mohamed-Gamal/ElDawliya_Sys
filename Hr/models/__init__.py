@@ -50,14 +50,19 @@ from Hr.models.payroll.salary_component_models import SalaryComponent
 # from Hr.models.notification.hr_notification_models import HRNotification
 
 # Legacy Models (for backward compatibility)
-# TODO: Create missing legacy model files
-# from Hr.models.legacy.legacy_models import (
-#     Job, JobInsurance, Car, SalaryItem, EmployeeSalaryItem,
-#     AttendanceRule, EmployeeAttendanceRule, OfficialHoliday,
-#     PayrollItemDetail, PickupPoint, EmployeeTask, EmployeeNote,
-#     EmployeeNoteHistory, EmployeeFile, HrTask, EmployeeLeave,
-#     EmployeeEvaluation
-# )
+from Hr.models.legacy.legacy_models import (
+    Job, JobInsurance, Car
+    # TODO: Add back when other legacy model files are created
+    # SalaryItem, EmployeeSalaryItem,
+    # AttendanceRule, EmployeeAttendanceRule, OfficialHoliday,
+    # PayrollItemDetail, PickupPoint, EmployeeNote,
+    # EmployeeNoteHistory, EmployeeFile, HrTask, EmployeeLeave,
+    # EmployeeEvaluation
+)
+
+# Import task models (avoiding conflicts with legacy models)
+# Temporarily disabled due to model conflicts
+# from Hr.models.task_models import EmployeeTask, TaskStep
 
 # Export all models
 __all__ = [
@@ -93,10 +98,15 @@ __all__ = [
     # 'HRNotification',
 
     # Legacy Models (backward compatibility)
-    # TODO: Add back when legacy model files are created
-    # 'Job', 'JobInsurance', 'Car', 'SalaryItem', 'EmployeeSalaryItem',
+    'Job', 'JobInsurance', 'Car',
+
+    # Task Models - temporarily disabled due to conflicts
+    # 'EmployeeTask', 'TaskStep',
+
+    # TODO: Add back when other legacy model files are created
+    # 'SalaryItem', 'EmployeeSalaryItem',
     # 'AttendanceRule', 'EmployeeAttendanceRule', 'OfficialHoliday',
-    # 'PayrollItemDetail', 'PickupPoint', 'EmployeeTask', 'EmployeeNote',
+    # 'PayrollItemDetail', 'PickupPoint', 'EmployeeNote',
     # 'EmployeeNoteHistory', 'EmployeeFile', 'HrTask', 'EmployeeLeave',
     # 'EmployeeEvaluation'
 ]

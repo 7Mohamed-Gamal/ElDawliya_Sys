@@ -1,6 +1,6 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from Hr.models.car_models import Car
+from Hr.models.car_models import HrCar as Car
 
 class PickupPoint(models.Model):
     """

@@ -5,7 +5,7 @@ from django.utils import timezone
 from datetime import timedelta
 from django.db.models import F
 
-from Hr.models.employee_model import Employee
+from Hr.models import Employee
 from Hr.models.car_models import Car
 from Hr.models.hr_task_models import HrTask
 from Hr.models.task_models import EmployeeTask

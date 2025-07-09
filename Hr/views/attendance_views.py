@@ -11,7 +11,7 @@ from Hr.models.attendance_models import (
     AttendanceRule, EmployeeAttendanceRule, OfficialHoliday,
     AttendanceMachine, AttendanceRecord, AttendanceSummary
 )
-from Hr.models.employee_model import Employee
+from Hr.models import Employee
 from Hr.forms.attendance_forms import (
     AttendanceRuleForm, EmployeeAttendanceRuleForm, EmployeeAttendanceRuleBulkForm,
     OfficialHolidayForm, AttendanceMachineForm, AttendanceRecordForm, FetchAttendanceDataForm

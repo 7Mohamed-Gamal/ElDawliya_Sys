@@ -3,8 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Count
 
-from Hr.models.department_models import Department
-from Hr.models.employee_model import Employee
+from Hr.models import Department, Employee
 from Hr.forms.employee_forms import DepartmentForm
 
 

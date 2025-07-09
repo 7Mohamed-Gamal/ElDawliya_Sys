@@ -3,8 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 import json
 
-from Hr.models.department_models import Department
-from Hr.models.employee_model import Employee
+from Hr.models import Department, Employee
 
 
 @login_required

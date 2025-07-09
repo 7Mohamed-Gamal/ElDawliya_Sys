@@ -3,8 +3,16 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 
-from Hr.models.job_models import Job
-from Hr.forms.employee_forms import JobForm
+from Hr.models.job_models import HrJob as Job
+# Temporarily disabled due to form conflicts
+# from Hr.forms.employee_forms import JobForm
+
+# Simple placeholder form
+from django import forms
+class JobForm(forms.ModelForm):
+    class Meta:
+        model = Job
+        fields = ['jop_name']
 from Hr.decorators import hr_module_permission_required
 
 @login_required

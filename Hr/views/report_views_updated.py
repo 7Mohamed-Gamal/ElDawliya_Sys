@@ -8,8 +8,7 @@ import xlwt
 from datetime import datetime, timedelta
 import json
 
-from Hr.models.department_models import Department
-from Hr.models.employee_model import Employee
+from Hr.models import Department, Employee
 from Hr.models.leave_models import EmployeeLeave
 from Hr.models.task_models import EmployeeTask
 from Hr.models.hr_task_models import HrTask

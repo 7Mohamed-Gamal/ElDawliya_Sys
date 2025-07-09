@@ -1,8 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from Hr.models.department_models import Department
-from Hr.models.employee_model import Employee
+from Hr.models import Department, Employee
 from Hr.forms.employee_forms import DepartmentForm
 
 @login_required

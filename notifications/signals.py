@@ -5,7 +5,8 @@ from django.utils import timezone
 from django.db.models import F
 
 # استيراد النماذج من التطبيقات الأخرى
-from Hr.models.task_models import EmployeeTask, TaskStep
+# Temporarily disabled due to model conflicts
+# from Hr.models.task_models import EmployeeTask, TaskStep
 from Hr.models.employee.employee_models import Employee
 from Hr.models.leave.leave_request_models import LeaveRequest
 
@@ -15,7 +16,7 @@ from .signals_tasks import *
 from .signals_inventory import *
 from .signals_purchase import *
 from .signals_inventory_purchase import *
-from Hr.models.car_models import Car
+from Hr.models import Car
 from meetings.models import Meeting, Attendee
 from tasks.models import Task, TaskStep as MeetingTaskStep
 from inventory.models import TblProducts, TblInvoiceitems
@@ -30,8 +31,8 @@ from .utils import (
 )
 
 
-# إشارات الموارد البشرية (HR)
-@receiver(post_save, sender=EmployeeTask)
+# إشارات الموارد البشرية (HR) - temporarily disabled due to model conflicts
+# @receiver(post_save, sender=EmployeeTask)
 def employee_task_notification(sender, instance, created, **kwargs):
     """إنشاء تنبيه عند إنشاء أو تحديث مهمة موظف"""
     if created:
@@ -65,7 +66,9 @@ def task_step_notification(sender, instance, created, **kwargs):
     if created:
         # الحصول على المهمة المرتبطة
         try:
-            task = EmployeeTask.objects.get(pk=instance.task_id)
+            # Temporarily disabled due to model conflicts
+            # task = EmployeeTask.objects.get(pk=instance.task_id)
+            pass
 
             # إنشاء تنبيه للمستخدم الذي قام بتكليف المهمة
             if task.assigned_by:
@@ -77,7 +80,7 @@ def task_step_notification(sender, instance, created, **kwargs):
                     content_object=task,
                     url=f'/Hr/tasks/{task.pk}/'
                 )
-        except EmployeeTask.DoesNotExist:
+        except Exception:
             pass
 
 

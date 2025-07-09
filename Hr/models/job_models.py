@@ -1,8 +1,8 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from Hr.models.department_models import Department
+from Hr.models import Department
 
-class Job(models.Model):
+class HrJob(models.Model):
     jop_code = models.IntegerField(  # اسم الحقل: jop_code (بالإنجليزية o)
         db_column='Jop_Code', 
         primary_key=True,

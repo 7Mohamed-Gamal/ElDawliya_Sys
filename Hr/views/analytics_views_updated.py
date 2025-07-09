@@ -6,8 +6,7 @@ from django.utils import timezone
 from datetime import timedelta, date
 from django.db.models.functions import ExtractMonth, ExtractYear, TruncMonth
 
-from Hr.models.employee_model import Employee
-from Hr.models.department_models import Department
+from Hr.models import Employee, Department
 from Hr.models.leave_models import EmployeeLeave
 from Hr.models.task_models import EmployeeTask
 from Hr.models.salary_models import PayrollEntry

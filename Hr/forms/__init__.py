@@ -1,11 +1,13 @@
 # استيراد النماذج الموجودة
-from .employee_forms import (
-    EmployeeForm, EmployeeFilterForm, DepartmentForm, JobForm, CarForm, EmployeeSearchForm
-)
-from .salary_forms import (
-    SalaryItemForm, EmployeeSalaryItemForm, EmployeeSalaryItemBulkForm,
-    PayrollPeriodForm, PayrollCalculationForm
-)
+# Temporarily disabled due to model field conflicts
+# from .employee_forms import (
+#     EmployeeForm, EmployeeFilterForm, DepartmentForm, JobForm, CarForm, EmployeeSearchForm
+# )
+# Temporarily disabled due to model conflicts
+# from .salary_forms import (
+#     SalaryItemForm, EmployeeSalaryItemForm, EmployeeSalaryItemBulkForm,
+#     PayrollPeriodForm, PayrollCalculationForm
+# )
 from .attendance_forms import (
     AttendanceRuleForm, EmployeeAttendanceRuleForm, EmployeeAttendanceRuleBulkForm,
     OfficialHolidayForm, AttendanceMachineForm, AttendanceRecordForm,
