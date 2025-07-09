@@ -6,7 +6,7 @@ Handles emergency contact information for employees
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator
-from django.contrib.auth.models import User
+from django.conf import settings
 
 
 class EmployeeEmergencyContact(models.Model):
@@ -226,7 +226,7 @@ class EmployeeEmergencyContact(models.Model):
     
     # Metadata
     created_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

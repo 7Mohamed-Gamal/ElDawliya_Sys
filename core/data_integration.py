@@ -19,7 +19,9 @@ from typing import Dict, List, Optional, Any, Union
 import logging
 
 # Import models from all modules
-from Hr.models import Employee, Department, Job
+from Hr.models.employee.employee_models import Employee
+from Hr.models.core.department_models import Department
+from Hr.models.core.job_position_models import JobPosition
 from tasks.models import Task
 from meetings.models import Meeting
 from inventory.models import TblProducts

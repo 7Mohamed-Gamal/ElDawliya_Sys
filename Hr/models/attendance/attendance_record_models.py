@@ -5,7 +5,7 @@ Handles individual attendance records and punch data
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from django.contrib.auth.models import User
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from datetime import datetime, time, timedelta
@@ -19,7 +19,7 @@ class AttendanceRecord(models.Model):
     
     # Employee Information
     employee = models.ForeignKey(
-        'employee.Employee',
+        'Hr.Employee',
         on_delete=models.CASCADE,
         related_name='attendance_records',
         verbose_name=_("الموظف")
@@ -203,7 +203,7 @@ class AttendanceRecord(models.Model):
     )
     
     approved_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -219,7 +219,7 @@ class AttendanceRecord(models.Model):
     
     # Metadata
     created_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

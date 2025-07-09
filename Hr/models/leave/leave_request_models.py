@@ -5,7 +5,7 @@ Handles leave requests, approvals, and workflow management
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from django.contrib.auth.models import User
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from datetime import date, timedelta
@@ -19,7 +19,7 @@ class LeaveRequest(models.Model):
     
     # Basic Information
     employee = models.ForeignKey(
-        'employee.Employee',
+        'Hr.Employee',
         on_delete=models.CASCADE,
         related_name='leave_requests',
         verbose_name=_("الموظف")
@@ -190,7 +190,7 @@ class LeaveRequest(models.Model):
     )
     
     return_confirmed_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -206,7 +206,7 @@ class LeaveRequest(models.Model):
     
     # Handover Information
     handover_to = models.ForeignKey(
-        'employee.Employee',
+        'Hr.Employee',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -262,7 +262,7 @@ class LeaveRequest(models.Model):
     
     # Metadata
     submitted_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -506,7 +506,7 @@ class LeaveApproval(models.Model):
     )
     
     approved_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='leave_approvals',
         verbose_name=_("تمت الموافقة بواسطة")

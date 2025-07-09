@@ -4,7 +4,7 @@ from django.db.models import Sum, Avg, Count
 from django.http import JsonResponse
 
 # Updated import to use HR's Employee model
-from Hr.models.employee_model import Employee
+from Hr.models.employee.employee_models import Employee
 from .models import Car, Trip, Settings, Supplier, RoutePoint
 from .forms import CarForm, TripForm, SettingsForm, SupplierForm, RoutePointForm
 

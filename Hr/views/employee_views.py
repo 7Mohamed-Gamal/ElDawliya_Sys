@@ -6,8 +6,12 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from django.template.loader import render_to_string
 
-from Hr.models import Department, Job, Employee
-from Hr.forms import EmployeeForm, EmployeeFilterForm, EmployeeSearchForm
+from Hr.models.core.department_models import Department
+from Hr.models.employee.employee_models import Employee
+# TODO: Update when Job model is available
+# from Hr.models import Job
+# TODO: Update when forms are available
+# from Hr.forms import EmployeeForm, EmployeeFilterForm, EmployeeSearchForm
 
 
 @login_required

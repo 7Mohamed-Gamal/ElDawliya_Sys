@@ -5,7 +5,7 @@ Handles leave policies and rules for different employee groups
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from django.contrib.auth.models import User
+from django.conf import settings
 from django.core.exceptions import ValidationError
 
 
@@ -35,7 +35,7 @@ class LeavePolicy(models.Model):
     
     # Applicability
     company = models.ForeignKey(
-        'core.Company',
+        'Hr.Company',
         on_delete=models.CASCADE,
         related_name='leave_policies',
         null=True,
@@ -43,25 +43,25 @@ class LeavePolicy(models.Model):
         verbose_name=_("الشركة"),
         help_text=_("إذا لم يتم تحديد شركة، ستطبق على جميع الشركات")
     )
-    
+
     branches = models.ManyToManyField(
-        'core.Branch',
+        'Hr.Branch',
         blank=True,
         related_name='leave_policies',
         verbose_name=_("الفروع"),
         help_text=_("الفروع التي تطبق عليها هذه السياسة")
     )
-    
+
     departments = models.ManyToManyField(
-        'core.Department',
+        'Hr.Department',
         blank=True,
         related_name='leave_policies',
         verbose_name=_("الأقسام"),
         help_text=_("الأقسام التي تطبق عليها هذه السياسة")
     )
-    
+
     job_positions = models.ManyToManyField(
-        'core.JobPosition',
+        'Hr.JobPosition',
         blank=True,
         related_name='leave_policies',
         verbose_name=_("الوظائف"),
@@ -224,7 +224,7 @@ class LeavePolicy(models.Model):
     
     # Metadata
     created_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

@@ -3,7 +3,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 from django.db.models import Count, Q
-from Hr.models import Employee
+from Hr.models.employee.employee_models import Employee
 
 
 class AttendanceRule(models.Model):
@@ -169,7 +169,7 @@ class LeaveBalance(models.Model):
     employee = models.ForeignKey(
         Employee,
         on_delete=models.CASCADE,
-        related_name='leave_balances',
+        related_name='attendance_leave_balances',
         verbose_name=_('Employee')
     )
     leave_type = models.ForeignKey(

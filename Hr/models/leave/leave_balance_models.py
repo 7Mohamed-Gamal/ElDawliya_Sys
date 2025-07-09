@@ -5,7 +5,7 @@ Handles leave balance tracking, accruals, and transactions
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from django.contrib.auth.models import User
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from datetime import date, timedelta
@@ -20,7 +20,7 @@ class LeaveBalance(models.Model):
     
     # Employee and Leave Type
     employee = models.ForeignKey(
-        'employee.Employee',
+        'Hr.Employee',
         on_delete=models.CASCADE,
         related_name='leave_balances',
         verbose_name=_("الموظف")
@@ -426,7 +426,7 @@ class LeaveTransaction(models.Model):
     )
     
     processed_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

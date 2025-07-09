@@ -5,7 +5,7 @@ Handles employee document management and archiving
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from django.contrib.auth.models import User
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 import os
@@ -122,7 +122,7 @@ class EmployeeDocument(models.Model):
     )
     
     verified_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -208,7 +208,7 @@ class EmployeeDocument(models.Model):
     
     # Metadata
     uploaded_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

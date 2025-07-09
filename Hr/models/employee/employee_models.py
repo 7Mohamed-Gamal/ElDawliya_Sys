@@ -6,7 +6,7 @@ Comprehensive employee management with personal and professional information
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator, EmailValidator
-from django.contrib.auth.models import User
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from datetime import date, timedelta
@@ -34,32 +34,32 @@ class Employee(models.Model):
     
     # Organizational Relationships
     company = models.ForeignKey(
-        'core.Company',
+        'Hr.Company',
         on_delete=models.CASCADE,
         related_name='employees',
         verbose_name=_("الشركة")
     )
-    
+
     branch = models.ForeignKey(
-        'core.Branch',
+        'Hr.Branch',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name='employees',
         verbose_name=_("الفرع")
     )
-    
+
     department = models.ForeignKey(
-        'core.Department',
+        'Hr.Department',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name='employees',
         verbose_name=_("القسم")
     )
-    
+
     job_position = models.ForeignKey(
-        'core.JobPosition',
+        'Hr.JobPosition',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -358,7 +358,7 @@ class Employee(models.Model):
     )
     
     user_account = models.OneToOneField(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -375,7 +375,7 @@ class Employee(models.Model):
     
     # Metadata
     created_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

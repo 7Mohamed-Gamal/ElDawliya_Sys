@@ -1,5 +1,5 @@
 from django import forms
-from Hr.models.employee_model import Employee
+from Hr.models.employee.employee_models import Employee
 from .models import Car, Trip, Settings, Supplier, RoutePoint
 
 class SupplierForm(forms.ModelForm):

@@ -3,8 +3,8 @@ from django.contrib.auth import get_user_model
 from .models import APIKey, GeminiConversation, GeminiMessage, APIUsageLog
 
 # Import models from other apps
-from Hr.models.employee_model import Employee
-from Hr.models.department_models import Department
+from Hr.models.employee.employee_models import Employee
+from Hr.models.core.department_models import Department
 from inventory.models import TblProducts, TblCategories, TblSuppliers
 from tasks.models import Task
 from meetings.models import Meeting

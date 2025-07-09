@@ -1,18 +1,21 @@
-from django.db import models
-from django.utils.translation import gettext_lazy as _
+# This file has been moved to legacy/legacy_models.py
+# to avoid conflicts with the new Department model in core/department_models.py
 
-class Department(models.Model):
-    dept_code = models.IntegerField(primary_key=True, verbose_name=_("رمز القسم"))
-    dept_name = models.CharField(max_length=250, verbose_name=_("اسم القسم"))
-    manager_id = models.IntegerField(null=True, blank=True, verbose_name=_("كود مدير القسم"))
-    is_active = models.BooleanField(default=True, verbose_name=_("نشط"))
-    note = models.TextField(null=True, blank=True, verbose_name=_("ملاحظات"))
+# from django.db import models
+# from django.utils.translation import gettext_lazy as _
 
-    def __str__(self):
-        return self.dept_name or ''
+# class Department(models.Model):
+#     dept_code = models.IntegerField(primary_key=True, verbose_name=_("رمز القسم"))
+#     dept_name = models.CharField(max_length=250, verbose_name=_("اسم القسم"))
+#     manager_id = models.IntegerField(null=True, blank=True, verbose_name=_("كود مدير القسم"))
+#     is_active = models.BooleanField(default=True, verbose_name=_("نشط"))
+#     note = models.TextField(null=True, blank=True, verbose_name=_("ملاحظات"))
 
-    class Meta:
-        managed = True
-        db_table = 'Tbl_Department'
-        verbose_name = _("القسم")
-        verbose_name_plural = _("الأقسام")
+#     def __str__(self):
+#         return self.dept_name or ''
+
+#     class Meta:
+#         managed = True
+#         db_table = 'Tbl_Department'
+#         verbose_name = _("القسم")
+#         verbose_name_plural = _("الأقسام")

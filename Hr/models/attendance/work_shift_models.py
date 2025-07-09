@@ -5,7 +5,7 @@ Handles work shift definitions and scheduling
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from django.contrib.auth.models import User
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from datetime import time, timedelta
 
@@ -185,7 +185,7 @@ class WorkShift(models.Model):
     
     # Metadata
     created_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

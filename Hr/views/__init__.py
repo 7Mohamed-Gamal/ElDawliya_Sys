@@ -3,11 +3,13 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.utils import timezone
 from django.http import JsonResponse
-from Hr.models.salary_models import PayrollPeriod, PayrollEntry, PayrollItemDetail, SalaryItem
-from Hr.models.employee_model import Employee
-from Hr.forms.salary_forms import PayrollPeriodForm
-from Hr.models.attendance_models import AttendanceRule, EmployeeAttendanceRule
-from Hr.forms.attendance_forms import AttendanceRuleForm, EmployeeAttendanceRuleForm, EmployeeAttendanceRuleBulkForm
+# TODO: Update imports when salary models are created
+# from Hr.models.salary_models import PayrollPeriod, PayrollEntry, PayrollItemDetail, SalaryItem
+from Hr.models.employee.employee_models import Employee
+# TODO: Update imports when forms are created
+# from Hr.forms.salary_forms import PayrollPeriodForm
+# from Hr.models.attendance_models import AttendanceRule, EmployeeAttendanceRule
+# from Hr.forms.attendance_forms import AttendanceRuleForm, EmployeeAttendanceRuleForm, EmployeeAttendanceRuleBulkForm
 
 # استيراد جميع الوظائف من وحداتها المحددة
 from Hr.views.employee_views import (

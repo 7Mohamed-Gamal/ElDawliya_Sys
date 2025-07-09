@@ -6,7 +6,7 @@ Handles branch/location information for multi-location companies
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator
-from django.contrib.auth.models import User
+from django.conf import settings
 
 
 class Branch(models.Model):
@@ -125,7 +125,7 @@ class Branch(models.Model):
     
     # Management
     manager = models.ForeignKey(
-        'employee.Employee',
+        'Hr.Employee',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -218,7 +218,7 @@ class Branch(models.Model):
     )
     
     created_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

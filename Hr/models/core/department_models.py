@@ -6,7 +6,7 @@ Handles department structure and hierarchy
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator
-from django.contrib.auth.models import User
+from django.conf import settings
 from django.core.exceptions import ValidationError
 
 
@@ -70,16 +70,16 @@ class Department(models.Model):
     
     # Management
     manager = models.ForeignKey(
-        'employee.Employee',
+        'Hr.Employee',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name='managed_departments',
         verbose_name=_("مدير القسم")
     )
-    
+
     assistant_manager = models.ForeignKey(
-        'employee.Employee',
+        'Hr.Employee',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -227,7 +227,7 @@ class Department(models.Model):
     )
     
     created_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

@@ -1,6 +1,6 @@
 from django.db import models
-# Import the HR app's Employee model
-from Hr.models.employee_model import Employee
+# Import the HR app's Employee model from the new structure
+from Hr.models.employee.employee_models import Employee
 
 class Supplier(models.Model):
     """Model for storing supplier information"""

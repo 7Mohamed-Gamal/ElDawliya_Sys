@@ -5,7 +5,7 @@ Handles daily attendance summaries and calculations
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from django.contrib.auth.models import User
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from datetime import datetime, timedelta
 from decimal import Decimal
@@ -19,7 +19,7 @@ class AttendanceSummary(models.Model):
     
     # Employee and Date
     employee = models.ForeignKey(
-        'employee.Employee',
+        'Hr.Employee',
         on_delete=models.CASCADE,
         related_name='attendance_summaries',
         verbose_name=_("الموظف")
@@ -144,7 +144,7 @@ class AttendanceSummary(models.Model):
     
     # Leave Information
     leave_request = models.ForeignKey(
-        'leave.LeaveRequest',
+        'Hr.LeaveRequest',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -207,7 +207,7 @@ class AttendanceSummary(models.Model):
     
     # Approval Information
     approved_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

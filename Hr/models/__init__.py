@@ -28,31 +28,36 @@ from Hr.models.leave.leave_balance_models import LeaveBalance
 
 # Payroll Management Models
 from Hr.models.payroll.salary_component_models import SalaryComponent
-from Hr.models.payroll.employee_salary_structure_models import EmployeeSalaryStructure
-from Hr.models.payroll.payroll_period_models import PayrollPeriod
-from Hr.models.payroll.payroll_entry_models import PayrollEntry
-from Hr.models.payroll.tax_configuration_models import TaxConfiguration
+# TODO: Create missing payroll model files
+# from Hr.models.payroll.employee_salary_structure_models import EmployeeSalaryStructure
+# from Hr.models.payroll.payroll_period_models import PayrollPeriod
+# from Hr.models.payroll.payroll_entry_models import PayrollEntry
+# from Hr.models.payroll.tax_configuration_models import TaxConfiguration
 
 # Performance Management Models
-from Hr.models.performance.performance_review_models import PerformanceReview
-from Hr.models.performance.performance_goal_models import PerformanceGoal
-from Hr.models.performance.performance_rating_models import PerformanceRating
+# TODO: Create missing performance model files
+# from Hr.models.performance.performance_review_models import PerformanceReview
+# from Hr.models.performance.performance_goal_models import PerformanceGoal
+# from Hr.models.performance.performance_rating_models import PerformanceRating
 
 # Document Management Models
-from Hr.models.document.document_category_models import DocumentCategory
-from Hr.models.document.document_template_models import DocumentTemplate
+# TODO: Create missing document model files
+# from Hr.models.document.document_category_models import DocumentCategory
+# from Hr.models.document.document_template_models import DocumentTemplate
 
 # Notification Models
-from Hr.models.notification.hr_notification_models import HRNotification
+# TODO: Create missing notification model files
+# from Hr.models.notification.hr_notification_models import HRNotification
 
 # Legacy Models (for backward compatibility)
-from Hr.models.legacy.legacy_models import (
-    Job, JobInsurance, Car, SalaryItem, EmployeeSalaryItem,
-    AttendanceRule, EmployeeAttendanceRule, OfficialHoliday,
-    PayrollItemDetail, PickupPoint, EmployeeTask, EmployeeNote,
-    EmployeeNoteHistory, EmployeeFile, HrTask, EmployeeLeave,
-    EmployeeEvaluation
-)
+# TODO: Create missing legacy model files
+# from Hr.models.legacy.legacy_models import (
+#     Job, JobInsurance, Car, SalaryItem, EmployeeSalaryItem,
+#     AttendanceRule, EmployeeAttendanceRule, OfficialHoliday,
+#     PayrollItemDetail, PickupPoint, EmployeeTask, EmployeeNote,
+#     EmployeeNoteHistory, EmployeeFile, HrTask, EmployeeLeave,
+#     EmployeeEvaluation
+# )
 
 # Export all models
 __all__ = [
@@ -70,22 +75,28 @@ __all__ = [
     'LeaveType', 'LeavePolicy', 'LeaveRequest', 'LeaveBalance',
 
     # Payroll Management Models
-    'SalaryComponent', 'EmployeeSalaryStructure', 'PayrollPeriod',
-    'PayrollEntry', 'TaxConfiguration',
+    'SalaryComponent',
+    # TODO: Add back when model files are created
+    # 'EmployeeSalaryStructure', 'PayrollPeriod',
+    # 'PayrollEntry', 'TaxConfiguration',
 
     # Performance Management Models
-    'PerformanceReview', 'PerformanceGoal', 'PerformanceRating',
+    # TODO: Add back when model files are created
+    # 'PerformanceReview', 'PerformanceGoal', 'PerformanceRating',
 
     # Document Management Models
-    'DocumentCategory', 'DocumentTemplate',
+    # TODO: Add back when model files are created
+    # 'DocumentCategory', 'DocumentTemplate',
 
     # Notification Models
-    'HRNotification',
+    # TODO: Add back when model files are created
+    # 'HRNotification',
 
     # Legacy Models (backward compatibility)
-    'Job', 'JobInsurance', 'Car', 'SalaryItem', 'EmployeeSalaryItem',
-    'AttendanceRule', 'EmployeeAttendanceRule', 'OfficialHoliday',
-    'PayrollItemDetail', 'PickupPoint', 'EmployeeTask', 'EmployeeNote',
-    'EmployeeNoteHistory', 'EmployeeFile', 'HrTask', 'EmployeeLeave',
-    'EmployeeEvaluation'
+    # TODO: Add back when legacy model files are created
+    # 'Job', 'JobInsurance', 'Car', 'SalaryItem', 'EmployeeSalaryItem',
+    # 'AttendanceRule', 'EmployeeAttendanceRule', 'OfficialHoliday',
+    # 'PayrollItemDetail', 'PickupPoint', 'EmployeeTask', 'EmployeeNote',
+    # 'EmployeeNoteHistory', 'EmployeeFile', 'HrTask', 'EmployeeLeave',
+    # 'EmployeeEvaluation'
 ]

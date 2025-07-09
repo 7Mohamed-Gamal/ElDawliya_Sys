@@ -6,7 +6,7 @@ Handles company-level information and settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator
-from django.contrib.auth.models import User
+from django.conf import settings
 
 
 class Company(models.Model):
@@ -190,7 +190,7 @@ class Company(models.Model):
     )
     
     created_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

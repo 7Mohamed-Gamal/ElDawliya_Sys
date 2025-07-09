@@ -5,7 +5,7 @@ Handles assignment of work shifts to employees
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from django.contrib.auth.models import User
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from datetime import date, timedelta
 
@@ -18,7 +18,7 @@ class EmployeeShiftAssignment(models.Model):
     
     # Employee and Shift
     employee = models.ForeignKey(
-        'employee.Employee',
+        'Hr.Employee',
         on_delete=models.CASCADE,
         related_name='shift_assignments',
         verbose_name=_("الموظف")
@@ -105,7 +105,7 @@ class EmployeeShiftAssignment(models.Model):
     )
     
     approved_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -176,7 +176,7 @@ class EmployeeShiftAssignment(models.Model):
     
     # Metadata
     created_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

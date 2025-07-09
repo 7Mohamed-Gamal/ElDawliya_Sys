@@ -3,9 +3,10 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Count
 
-from Hr.models.department_models import Department
-from Hr.models.employee_model import Employee
-from Hr.forms.employee_forms import DepartmentForm
+from Hr.models.core.department_models import Department
+from Hr.models.employee.employee_models import Employee
+# TODO: Update when forms are available
+# from Hr.forms.employee_forms import DepartmentForm
 from Hr.decorators import hr_module_permission_required
 
 
