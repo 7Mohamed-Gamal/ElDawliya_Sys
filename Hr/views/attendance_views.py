@@ -8,10 +8,10 @@ from django.core.paginator import Paginator
 from django.http import JsonResponse
 
 from Hr.models.attendance_models import (
-    AttendanceRule, EmployeeAttendanceRule, OfficialHoliday,
-    AttendanceMachine, AttendanceRecord, AttendanceSummary
+    HrAttendanceRule as AttendanceRule, HrEmployeeAttendanceRule as EmployeeAttendanceRule, HrOfficialHoliday as OfficialHoliday,
+    HrAttendanceMachine as AttendanceMachine, HrAttendanceRecord as AttendanceRecord, HrAttendanceSummary as AttendanceSummary
 )
-from Hr.models import Employee
+from Hr.models.employee.employee_models import Employee
 from Hr.forms.attendance_forms import (
     AttendanceRuleForm, EmployeeAttendanceRuleForm, EmployeeAttendanceRuleBulkForm,
     OfficialHolidayForm, AttendanceMachineForm, AttendanceRecordForm, FetchAttendanceDataForm
@@ -479,7 +479,7 @@ def fetch_attendance_data(request):
 @login_required
 def zk_device_connection(request):
     """View for ZK device connection interface"""
-    from Hr.models.attendance_models import AttendanceMachine
+    from Hr.models.attendance_models import HrAttendanceMachine as AttendanceMachine
 
     attendance_machines = AttendanceMachine.objects.filter(is_active=True)
 
@@ -614,7 +614,7 @@ def save_zk_records_to_db(request):
         try:
             import json
             from Hr.utils import ZKDeviceService, AttendanceProcessor
-            from Hr.models.attendance_models import AttendanceMachine
+            from Hr.models.attendance_models import HrAttendanceMachine as AttendanceMachine
             from datetime import datetime, time
             from django.utils import timezone
 

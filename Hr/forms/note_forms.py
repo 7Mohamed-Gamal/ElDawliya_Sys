@@ -1,9 +1,10 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 from django.db.models import Q
-from Hr.models.note_models import EmployeeNote
-from Hr.models.employee_model import Employee
-from Hr.models.base_models import Department, Car
+from Hr.models.note_models import HrEmployeeNote as EmployeeNote
+from Hr.models.employee.employee_models import Employee
+from Hr.models.base_models import Department
+from Hr.models.car_models import HrCar as Car
 
 
 class EmployeeSearchForm(forms.Form):

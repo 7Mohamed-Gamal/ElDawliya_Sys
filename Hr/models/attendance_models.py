@@ -1,10 +1,10 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 import json
-from .employee_model import Employee
+from Hr.models import Employee
 from django.core.validators import MinValueValidator, MaxValueValidator
 
-class AttendanceRule(models.Model):
+class HrAttendanceRule(models.Model):
     """
     Model for defining attendance rules
     """
@@ -54,12 +54,12 @@ class AttendanceRule(models.Model):
         managed = True
 
 
-class EmployeeAttendanceRule(models.Model):
+class HrEmployeeAttendanceRule(models.Model):
     """
     Model to link employees to attendance rules
     """
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='attendance_rules', verbose_name=_('الموظف'))
-    attendance_rule = models.ForeignKey(AttendanceRule, on_delete=models.CASCADE, related_name='employees', verbose_name=_('قاعدة الحضور'))
+    attendance_rule = models.ForeignKey(HrAttendanceRule, on_delete=models.CASCADE, related_name='employees', verbose_name=_('قاعدة الحضور'))
     effective_date = models.DateField(verbose_name=_('تاريخ السريان'))
     end_date = models.DateField(null=True, blank=True, verbose_name=_('تاريخ الانتهاء'))
     is_active = models.BooleanField(default=True, verbose_name=_('نشط'))
@@ -76,7 +76,7 @@ class EmployeeAttendanceRule(models.Model):
         managed = True
 
 
-class OfficialHoliday(models.Model):
+class HrOfficialHoliday(models.Model):
     """
     Model for defining official holidays
     """
@@ -98,7 +98,7 @@ class OfficialHoliday(models.Model):
         managed = True
 
 
-class AttendanceMachine(models.Model):
+class HrAttendanceMachine(models.Model):
     """
     Model for storing attendance machine details
     """
@@ -127,7 +127,7 @@ class AttendanceMachine(models.Model):
         managed = True
 
 
-class AttendanceRecord(models.Model):
+class HrAttendanceRecord(models.Model):
     """
     Model for storing attendance records
     """
@@ -141,12 +141,12 @@ class AttendanceRecord(models.Model):
         ('manual', _('يدوي')),
     ]
     
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='attendance_records', verbose_name=_('الموظف'))
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='hr_attendance_records', verbose_name=_('الموظف'))
     record_date = models.DateField(verbose_name=_('تاريخ التسجيل'))
     record_time = models.TimeField(verbose_name=_('وقت التسجيل'))
     record_type = models.CharField(max_length=5, choices=RECORD_TYPE_CHOICES, verbose_name=_('نوع التسجيل'))
     source = models.CharField(max_length=10, choices=SOURCE_CHOICES, default='machine', verbose_name=_('المصدر'))
-    machine = models.ForeignKey(AttendanceMachine, on_delete=models.SET_NULL, null=True, blank=True, related_name='records', verbose_name=_('الماكينة'))
+    machine = models.ForeignKey(HrAttendanceMachine, on_delete=models.SET_NULL, null=True, blank=True, related_name='records', verbose_name=_('الماكينة'))
     notes = models.TextField(blank=True, null=True, verbose_name=_('ملاحظات'))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('تاريخ الإنشاء'))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_('تاريخ التحديث'))
@@ -162,7 +162,7 @@ class AttendanceRecord(models.Model):
         managed = True
 
 
-class AttendanceSummary(models.Model):
+class HrAttendanceSummary(models.Model):
     """
     Model for storing daily attendance summaries
     """
@@ -175,7 +175,7 @@ class AttendanceSummary(models.Model):
         ('weekend', _('عطلة أسبوعية')),
     ]
     
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='attendance_summaries', verbose_name=_('الموظف'))
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='hr_attendance_summaries', verbose_name=_('الموظف'))
     date = models.DateField(verbose_name=_('التاريخ'))
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, verbose_name=_('الحالة'))
     time_in = models.TimeField(null=True, blank=True, verbose_name=_('وقت الحضور'))

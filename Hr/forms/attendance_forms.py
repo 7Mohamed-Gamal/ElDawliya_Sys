@@ -1,10 +1,10 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 from Hr.models.attendance_models import (
-    AttendanceRule, EmployeeAttendanceRule, OfficialHoliday,
-    AttendanceMachine, AttendanceRecord
+    HrAttendanceRule as AttendanceRule, HrEmployeeAttendanceRule as EmployeeAttendanceRule, HrOfficialHoliday as OfficialHoliday,
+    HrAttendanceMachine as AttendanceMachine, HrAttendanceRecord as AttendanceRecord
 )
-from Hr.models.employee_model import Employee
+from Hr.models.employee.employee_models import Employee
 
 
 class AttendanceRuleForm(forms.ModelForm):
@@ -98,7 +98,7 @@ class EmployeeAttendanceRuleBulkForm(forms.Form):
         widget=forms.Select(attrs={'class': 'form-select'})
     )
     employees = forms.ModelMultipleChoiceField(
-        queryset=Employee.objects.filter(working_condition='سارى'),
+        queryset=Employee.objects.filter(status='active'),
         label=_('الموظفين'),
         widget=forms.SelectMultiple(attrs={'class': 'form-select'})
     )

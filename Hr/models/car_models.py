@@ -30,4 +30,4 @@ class HrCar(models.Model):
         verbose_name = _("السيارة")
         verbose_name_plural = _("السيارات")
         managed = True
-        db_table = 'Tbl_Car'
+        db_table = 'Hr_Car'

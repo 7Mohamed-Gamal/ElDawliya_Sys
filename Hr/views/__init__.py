@@ -77,36 +77,171 @@ from Hr.views.pickup_point_views import (
     pickup_point_edit, pickup_point_delete
 )
 
-from Hr.views.insurance_views import (
-    insurance_job_list, insurance_job_create, insurance_job_detail,
-    insurance_job_edit, insurance_job_delete
-)
+# Temporarily disabled due to model conflicts
+# from Hr.views.insurance_views import (
+#     insurance_job_list, insurance_job_create, insurance_job_detail,
+#     insurance_job_edit, insurance_job_delete
+# )
 
-from Hr.views.task_views import (
-    employee_task_list, employee_task_create, employee_task_detail,
-    employee_task_edit, employee_task_delete, task_step_toggle, task_step_delete
-)
+# Placeholder functions for insurance views
+def insurance_job_list(request):
+    return render(request, 'Hr/under_construction.html', {'title': 'قائمة وظائف التأمين'})
 
-from Hr.views.note_views import (
-    employee_note_list, employee_note_create, employee_note_detail,
-    employee_note_edit, employee_note_delete
-)
+def insurance_job_create(request):
+    return render(request, 'Hr/under_construction.html', {'title': 'إنشاء وظيفة تأمين'})
 
-from Hr.views.file_views import (
-    employee_file_list, employee_file_create, employee_file_detail,
-    employee_file_edit, employee_file_delete
-)
+def insurance_job_detail(request, pk):
+    return render(request, 'Hr/under_construction.html', {'title': 'تفاصيل وظيفة التأمين'})
 
-from Hr.views.hr_task_views import (
-    hr_task_list, hr_task_create, hr_task_detail,
-    hr_task_edit, hr_task_delete
-)
+def insurance_job_edit(request, pk):
+    return render(request, 'Hr/under_construction.html', {'title': 'تعديل وظيفة التأمين'})
 
-from Hr.views.leave_views import (
-    leave_type_list, leave_type_create, leave_type_edit,
-    employee_leave_list, employee_leave_create, employee_leave_detail,
-    employee_leave_edit, employee_leave_approve
-)
+def insurance_job_delete(request, pk):
+    return render(request, 'Hr/under_construction.html', {'title': 'حذف وظيفة التأمين'})
+
+# Temporarily disabled due to model conflicts
+# from Hr.views.task_views import (
+#     employee_task_list, employee_task_create, employee_task_detail,
+#     employee_task_edit, employee_task_delete, task_step_toggle, task_step_delete
+# )
+
+# Placeholder functions for task views
+def employee_task_list(request):
+    return render(request, 'Hr/under_construction.html', {'title': 'قائمة مهام الموظفين'})
+
+def employee_task_create(request):
+    return render(request, 'Hr/under_construction.html', {'title': 'إنشاء مهمة موظف'})
+
+def employee_task_detail(request, pk):
+    return render(request, 'Hr/under_construction.html', {'title': 'تفاصيل مهمة الموظف'})
+
+def employee_task_edit(request, pk):
+    return render(request, 'Hr/under_construction.html', {'title': 'تعديل مهمة الموظف'})
+
+def employee_task_delete(request, pk):
+    return render(request, 'Hr/under_construction.html', {'title': 'حذف مهمة الموظف'})
+
+def task_step_toggle(request, pk):
+    return render(request, 'Hr/under_construction.html', {'title': 'تبديل خطوة المهمة'})
+
+def task_step_delete(request, pk):
+    return render(request, 'Hr/under_construction.html', {'title': 'حذف خطوة المهمة'})
+
+# Temporarily disabled due to model conflicts
+# from Hr.views.note_views import (
+#     employee_note_list, employee_note_create, employee_note_detail,
+#     employee_note_edit, employee_note_delete
+# )
+
+# Placeholder functions for note views
+def employee_note_list(request):
+    return render(request, 'Hr/under_construction.html', {'title': 'قائمة ملاحظات الموظفين'})
+
+def employee_note_create(request):
+    return render(request, 'Hr/under_construction.html', {'title': 'إنشاء ملاحظة موظف'})
+
+def employee_note_detail(request, pk):
+    return render(request, 'Hr/under_construction.html', {'title': 'تفاصيل ملاحظة الموظف'})
+
+def employee_note_edit(request, pk):
+    return render(request, 'Hr/under_construction.html', {'title': 'تعديل ملاحظة الموظف'})
+
+def employee_note_delete(request, pk):
+    return render(request, 'Hr/under_construction.html', {'title': 'حذف ملاحظة الموظف'})
+
+# Temporarily disabled due to model conflicts
+# from Hr.views.file_views import (
+#     employee_file_list, employee_file_create, employee_file_detail,
+#     employee_file_edit, employee_file_delete
+# )
+
+# Placeholder functions for file views
+def employee_file_list(request):
+    return render(request, 'Hr/under_construction.html', {'title': 'قائمة ملفات الموظفين'})
+
+def employee_file_create(request):
+    return render(request, 'Hr/under_construction.html', {'title': 'إنشاء ملف موظف'})
+
+def employee_file_detail(request, pk):
+    return render(request, 'Hr/under_construction.html', {'title': 'تفاصيل ملف الموظف'})
+
+def employee_file_edit(request, pk):
+    return render(request, 'Hr/under_construction.html', {'title': 'تعديل ملف الموظف'})
+
+def employee_file_delete(request, pk):
+    return render(request, 'Hr/under_construction.html', {'title': 'حذف ملف الموظف'})
+
+# Temporarily disabled due to model conflicts
+# from Hr.views.hr_task_views import (
+#     hr_task_list, hr_task_create, hr_task_detail,
+#     hr_task_edit, hr_task_delete
+# )
+
+# from Hr.views.leave_views import (
+#     leave_type_list, leave_type_create, leave_type_edit,
+#     employee_leave_list, employee_leave_create, employee_leave_detail,
+#     employee_leave_edit, employee_leave_approve
+# )
+
+# Placeholder functions for hr_task and leave views
+def hr_task_list(request):
+    return render(request, 'Hr/under_construction.html', {'title': 'قائمة مهام الموارد البشرية'})
+
+def hr_task_create(request):
+    return render(request, 'Hr/under_construction.html', {'title': 'إنشاء مهمة موارد بشرية'})
+
+def hr_task_detail(request, pk):
+    return render(request, 'Hr/under_construction.html', {'title': 'تفاصيل مهمة الموارد البشرية'})
+
+def hr_task_edit(request, pk):
+    return render(request, 'Hr/under_construction.html', {'title': 'تعديل مهمة الموارد البشرية'})
+
+def hr_task_delete(request, pk):
+    return render(request, 'Hr/under_construction.html', {'title': 'حذف مهمة الموارد البشرية'})
+
+def leave_type_list(request):
+    return render(request, 'Hr/under_construction.html', {'title': 'قائمة أنواع الإجازات'})
+
+def leave_type_create(request):
+    return render(request, 'Hr/under_construction.html', {'title': 'إنشاء نوع إجازة'})
+
+def leave_type_edit(request, pk):
+    return render(request, 'Hr/under_construction.html', {'title': 'تعديل نوع الإجازة'})
+
+def employee_leave_list(request):
+    return render(request, 'Hr/under_construction.html', {'title': 'قائمة إجازات الموظفين'})
+
+def employee_leave_create(request):
+    return render(request, 'Hr/under_construction.html', {'title': 'إنشاء إجازة موظف'})
+
+def employee_leave_detail(request, pk):
+    return render(request, 'Hr/under_construction.html', {'title': 'تفاصيل إجازة الموظف'})
+
+def employee_leave_edit(request, pk):
+    return render(request, 'Hr/under_construction.html', {'title': 'تعديل إجازة الموظف'})
+
+def employee_leave_approve(request, pk):
+    return render(request, 'Hr/under_construction.html', {'title': 'الموافقة على إجازة الموظف'})
+
+# Placeholder functions for report views
+def report_list(request):
+    return render(request, 'Hr/under_construction.html', {'title': 'قائمة التقارير'})
+
+def report_detail(request, pk):
+    return render(request, 'Hr/under_construction.html', {'title': 'تفاصيل التقرير'})
+
+def monthly_salary_report(request):
+    return render(request, 'Hr/under_construction.html', {'title': 'تقرير الرواتب الشهرية'})
+
+def employee_report(request):
+    return render(request, 'Hr/under_construction.html', {'title': 'تقرير الموظفين'})
+
+# Placeholder functions for analytics views
+def analytics_dashboard(request):
+    return render(request, 'Hr/under_construction.html', {'title': 'لوحة تحليل البيانات'})
+
+def analytics_chart(request):
+    return render(request, 'Hr/under_construction.html', {'title': 'الرسوم البيانية'})
 
 @login_required
 def payroll_period_list(request):

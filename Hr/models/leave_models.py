@@ -1,8 +1,8 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from Hr.models.employee_model import Employee
+from Hr.models import Employee
 
-class LeaveType(models.Model):
+class HrLeaveType(models.Model):
     """
     Modelo para tipos de permisos/licencias
     """
@@ -24,7 +24,7 @@ class LeaveType(models.Model):
         db_table = 'Hr_LeaveType'
         managed = True
 
-class EmployeeLeave(models.Model):
+class HrEmployeeLeave(models.Model):
     """
     Modelo para permisos/licencias de empleados
     """
@@ -36,7 +36,7 @@ class EmployeeLeave(models.Model):
     ]
 
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='leaves', verbose_name=_('الموظف'))
-    leave_type = models.ForeignKey(LeaveType, on_delete=models.CASCADE, related_name='employee_leaves', verbose_name=_('نوع الإجازة'))
+    leave_type = models.ForeignKey(HrLeaveType, on_delete=models.CASCADE, related_name='employee_leaves', verbose_name=_('نوع الإجازة'))
     start_date = models.DateField(verbose_name=_('تاريخ البداية'))
     end_date = models.DateField(verbose_name=_('تاريخ النهاية'))
     days_count = models.PositiveIntegerField(verbose_name=_('عدد الأيام'))

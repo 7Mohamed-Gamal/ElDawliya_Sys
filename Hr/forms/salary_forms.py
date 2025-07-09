@@ -1,6 +1,6 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
-from Hr.models.salary_models import SalaryItem, EmployeeSalaryItem, PayrollPeriod
+from Hr.models.salary_models import HrSalaryItem as SalaryItem, HrEmployeeSalaryItem as EmployeeSalaryItem, HrPayrollPeriod as PayrollPeriod
 from Hr.models.employee_model import Employee
 
 

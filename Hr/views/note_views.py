@@ -10,8 +10,8 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 import json
 
-from Hr.models.note_models import EmployeeNote, EmployeeNoteHistory
-from Hr.models.employee_model import Employee
+from Hr.models.note_models import HrEmployeeNote as EmployeeNote, HrEmployeeNoteHistory as EmployeeNoteHistory
+from Hr.models.employee.employee_models import Employee
 from Hr.models.base_models import Department
 from Hr.forms.note_forms import (
     EmployeeNoteForm, EmployeeSearchForm, EmployeeNoteFilterForm,

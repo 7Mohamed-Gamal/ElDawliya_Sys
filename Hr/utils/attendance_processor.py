@@ -9,8 +9,8 @@ from django.db import transaction
 from django.utils import timezone
 from django.contrib.auth.models import User
 
-from Hr.models.attendance_models import AttendanceMachine, AttendanceRecord, AttendanceSummary
-from Hr.models.employee_model import Employee
+from Hr.models.attendance_models import HrAttendanceMachine as AttendanceMachine, HrAttendanceRecord as AttendanceRecord, HrAttendanceSummary as AttendanceSummary
+from Hr.models.employee.employee_models import Employee
 
 logger = logging.getLogger(__name__)
 

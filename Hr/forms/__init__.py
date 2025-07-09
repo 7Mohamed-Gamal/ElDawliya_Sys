@@ -8,21 +8,24 @@
 #     SalaryItemForm, EmployeeSalaryItemForm, EmployeeSalaryItemBulkForm,
 #     PayrollPeriodForm, PayrollCalculationForm
 # )
-from .attendance_forms import (
-    AttendanceRuleForm, EmployeeAttendanceRuleForm, EmployeeAttendanceRuleBulkForm,
-    OfficialHolidayForm, AttendanceMachineForm, AttendanceRecordForm,
-    FetchAttendanceDataForm
-)
+# Temporarily disabled due to model conflicts
+# from .attendance_forms import (
+#     AttendanceRuleForm, EmployeeAttendanceRuleForm, EmployeeAttendanceRuleBulkForm,
+#     OfficialHolidayForm, AttendanceMachineForm, AttendanceRecordForm,
+#     FetchAttendanceDataForm
+# )
 
 # استيراد النماذج الجديدة
 from .pickup_point_forms import PickupPointForm
-from .insurance_forms import JobInsuranceForm
-from .task_forms import EmployeeTaskForm
-from .note_forms import EmployeeNoteForm
-from .file_forms import EmployeeFileForm
-from .hr_task_forms import HrTaskForm
-from .leave_forms import LeaveTypeForm, EmployeeLeaveForm
-from .evaluation_forms import EmployeeEvaluationForm
+# Temporarily disabled due to model conflicts
+# from .insurance_forms import JobInsuranceForm
+# Temporarily disabled due to model conflicts
+# from .task_forms import EmployeeTaskForm
+# from .note_forms import EmployeeNoteForm
+# from .file_forms import EmployeeFileForm
+# from .hr_task_forms import HrTaskForm
+# from .leave_forms import LeaveTypeForm, EmployeeLeaveForm
+# from .evaluation_forms import EmployeeEvaluationForm
 
 __all__ = [
     # النماذج الموجودة

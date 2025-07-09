@@ -4,7 +4,7 @@ Management command to test ZK device connection and functionality
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from Hr.utils import ZKDeviceService, AttendanceProcessor
-from Hr.models.attendance_models import AttendanceMachine
+from Hr.models.attendance_models import HrAttendanceMachine as AttendanceMachine
 
 
 class Command(BaseCommand):

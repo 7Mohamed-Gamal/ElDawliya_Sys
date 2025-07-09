@@ -2,7 +2,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from Hr.models.employee.employee_models import Employee
 
-class EmployeeTask(models.Model):
+class HrEmployeeTask(models.Model):
     """
     Modelo para tareas asignadas a empleados
     """

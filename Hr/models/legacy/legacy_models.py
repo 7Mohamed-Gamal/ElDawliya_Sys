@@ -100,7 +100,7 @@ class SalaryItem(models.Model):
 
 class EmployeeSalaryItem(models.Model):
     """Legacy Employee Salary Item model"""
-    employee = models.ForeignKey('LegacyEmployee', on_delete=models.CASCADE, verbose_name=_("الموظف"))
+    employee = models.ForeignKey('Hr.Employee', on_delete=models.CASCADE, verbose_name=_("الموظف"))
     salary_item = models.ForeignKey(SalaryItem, on_delete=models.CASCADE, verbose_name=_("بند الراتب"))
     amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("المبلغ"))
     start_date = models.DateField(verbose_name=_("تاريخ البداية"))
@@ -132,7 +132,7 @@ class AttendanceRule(models.Model):
 
 class EmployeeAttendanceRule(models.Model):
     """Legacy Employee Attendance Rule model"""
-    employee = models.ForeignKey('LegacyEmployee', on_delete=models.CASCADE, verbose_name=_("الموظف"))
+    employee = models.ForeignKey('Hr.Employee', on_delete=models.CASCADE, verbose_name=_("الموظف"))
     attendance_rule = models.ForeignKey(AttendanceRule, on_delete=models.CASCADE, verbose_name=_("قاعدة الحضور"))
     effective_date = models.DateField(verbose_name=_("تاريخ السريان"))
     is_active = models.BooleanField(default=True, verbose_name=_("نشط"))
@@ -183,7 +183,7 @@ class PayrollPeriod(models.Model):
 class PayrollEntry(models.Model):
     """Legacy Payroll Entry model"""
     period = models.ForeignKey(PayrollPeriod, on_delete=models.CASCADE, verbose_name=_("الفترة"))
-    employee = models.ForeignKey('LegacyEmployee', on_delete=models.CASCADE, verbose_name=_("الموظف"))
+    employee = models.ForeignKey('Hr.Employee', on_delete=models.CASCADE, verbose_name=_("الموظف"))
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("إجمالي المبلغ"))
     status = models.CharField(max_length=50, verbose_name=_("الحالة"))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("تاريخ الإنشاء"))
@@ -227,7 +227,7 @@ class PickupPoint(models.Model):
 class EmployeeTask(models.Model):
     """Legacy Employee Task model"""
     title = models.CharField(max_length=250, verbose_name=_("العنوان"))
-    employee = models.ForeignKey('LegacyEmployee', on_delete=models.CASCADE, verbose_name=_("الموظف"))
+    employee = models.ForeignKey('Hr.Employee', on_delete=models.CASCADE, verbose_name=_("الموظف"))
     assigned_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name=_("أسند بواسطة"))
     due_date = models.DateField(verbose_name=_("تاريخ الاستحقاق"))
     status = models.CharField(max_length=50, verbose_name=_("الحالة"))
@@ -246,7 +246,7 @@ class EmployeeTask(models.Model):
 
 class EmployeeNote(models.Model):
     """Legacy Employee Note model"""
-    employee = models.ForeignKey('LegacyEmployee', on_delete=models.CASCADE, verbose_name=_("الموظف"))
+    employee = models.ForeignKey('Hr.Employee', on_delete=models.CASCADE, verbose_name=_("الموظف"))
     title = models.CharField(max_length=250, verbose_name=_("العنوان"))
     content = models.TextField(verbose_name=_("المحتوى"))
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name=_("أنشئ بواسطة"))
@@ -279,7 +279,7 @@ class EmployeeNoteHistory(models.Model):
 
 class EmployeeFile(models.Model):
     """Legacy Employee File model"""
-    employee = models.ForeignKey('LegacyEmployee', on_delete=models.CASCADE, verbose_name=_("الموظف"))
+    employee = models.ForeignKey('Hr.Employee', on_delete=models.CASCADE, verbose_name=_("الموظف"))
     title = models.CharField(max_length=250, verbose_name=_("العنوان"))
     file = models.FileField(upload_to='employee_files/', verbose_name=_("الملف"))
     file_type = models.CharField(max_length=50, verbose_name=_("نوع الملف"))
@@ -317,7 +317,7 @@ class HrTask(models.Model):
 
 class EmployeeLeave(models.Model):
     """Legacy Employee Leave model"""
-    employee = models.ForeignKey('LegacyEmployee', on_delete=models.CASCADE, verbose_name=_("الموظف"))
+    employee = models.ForeignKey('Hr.Employee', on_delete=models.CASCADE, verbose_name=_("الموظف"))
     leave_type = models.ForeignKey('LeaveType', on_delete=models.CASCADE, verbose_name=_("نوع الإجازة"))
     start_date = models.DateField(verbose_name=_("تاريخ البداية"))
     end_date = models.DateField(verbose_name=_("تاريخ النهاية"))
@@ -336,7 +336,7 @@ class EmployeeLeave(models.Model):
 
 class EmployeeEvaluation(models.Model):
     """Legacy Employee Evaluation model"""
-    employee = models.ForeignKey('LegacyEmployee', on_delete=models.CASCADE, verbose_name=_("الموظف"))
+    employee = models.ForeignKey('Hr.Employee', on_delete=models.CASCADE, verbose_name=_("الموظف"))
     evaluation_date = models.DateField(verbose_name=_("تاريخ التقييم"))
     evaluator = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name=_("المقيم"))
     overall_rating = models.DecimalField(max_digits=3, decimal_places=2, verbose_name=_("التقييم العام"))
@@ -352,4 +352,4 @@ class EmployeeEvaluation(models.Model):
         verbose_name_plural = _("تقييمات الموظفين")
 
 
-# Note: LegacyEmployee will be defined in a separate file to avoid circular imports
+# Note: All employee references now point to Hr.Employee model

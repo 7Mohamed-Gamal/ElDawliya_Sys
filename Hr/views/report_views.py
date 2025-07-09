@@ -6,12 +6,12 @@ from django.utils import timezone
 import csv
 from datetime import datetime, timedelta
 
-from Hr.models.employee_model import Employee
-from Hr.models.leave_models import EmployeeLeave
-from Hr.models.task_models import EmployeeTask
-from Hr.models.hr_task_models import HrTask
-from Hr.models.salary_models import PayrollEntry
-from Hr.models.attendance_models import AttendanceRecord, AttendanceSummary
+from Hr.models import Employee
+from Hr.models.leave_models import HrEmployeeLeave as EmployeeLeave
+from Hr.models.task_models import HrEmployeeTask as EmployeeTask
+from Hr.models.hr_task_models import HrTaskNew as HrTask
+from Hr.models.salary_models import HrPayrollEntry as PayrollEntry
+from Hr.models.attendance_models import HrAttendanceRecord as AttendanceRecord, HrAttendanceSummary as AttendanceSummary
 from ..utils.permissions import require_report_permission, require_export_permission
 
 # Try to import xlwt but make it optional

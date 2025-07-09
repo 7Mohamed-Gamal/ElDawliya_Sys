@@ -1,11 +1,11 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth import get_user_model
-from Hr.models.employee_model import Employee
+from Hr.models import Employee
 
 User = get_user_model()
 
-class EmployeeNote(models.Model):
+class HrEmployeeNote(models.Model):
     """
     نموذج شامل لإدارة ملاحظات الموظفين مع ربط التقييمات
     """
@@ -27,7 +27,7 @@ class EmployeeNote(models.Model):
     employee = models.ForeignKey(
         Employee,
         on_delete=models.CASCADE,
-        related_name='notes',
+        related_name='employee_notes',
         verbose_name=_('الموظف')
     )
     title = models.CharField(
@@ -164,7 +164,7 @@ class EmployeeNote(models.Model):
         ]
 
 
-class EmployeeNoteHistory(models.Model):
+class HrEmployeeNoteHistory(models.Model):
     """
     نموذج لتتبع تاريخ تعديل الملاحظات (Audit Trail)
     """
@@ -177,7 +177,7 @@ class EmployeeNoteHistory(models.Model):
     ]
 
     note = models.ForeignKey(
-        EmployeeNote,
+        HrEmployeeNote,
         on_delete=models.CASCADE,
         related_name='history',
         verbose_name=_('الملاحظة')

@@ -5,8 +5,8 @@ from django.db.models import Sum
 from django.utils import timezone
 
 from Hr.models.salary_models import (
-    SalaryItem, EmployeeSalaryItem, PayrollPeriod, 
-    PayrollEntry, PayrollItemDetail
+    HrSalaryItem as SalaryItem, HrEmployeeSalaryItem as EmployeeSalaryItem, HrPayrollPeriod as PayrollPeriod,
+    HrPayrollEntry as PayrollEntry, HrPayrollItemDetail as PayrollItemDetail
 )
 from Hr.forms.salary_forms import (
     SalaryItemForm, EmployeeSalaryItemForm, EmployeeSalaryItemBulkForm,

@@ -5,10 +5,10 @@ from django.utils import timezone
 from datetime import timedelta
 import json
 
-from Hr.models.employee_model import Employee
-from Hr.models.leave_models import EmployeeLeave
-from Hr.models.attendance_models import AttendanceSummary
-from Hr.models.salary_models import PayrollEntry
+from Hr.models.employee.employee_models import Employee
+from Hr.models.leave_models import HrEmployeeLeave as EmployeeLeave
+from Hr.models.attendance_models import HrAttendanceSummary as AttendanceSummary
+from Hr.models.salary_models import HrPayrollEntry as PayrollEntry
 
 @login_required
 def analytics_dashboard(request):

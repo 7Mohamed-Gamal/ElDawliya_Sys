@@ -3,10 +3,10 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from datetime import timedelta
 
-from Hr.models.employee_model import Employee
-from Hr.models.car_models import Car
-from Hr.models.hr_task_models import HrTask
-from Hr.models.task_models import EmployeeTask
+from Hr.models.employee.employee_models import Employee
+from Hr.models.car_models import HrCar as Car
+from Hr.models.hr_task_models import HrTaskNew as HrTask
+from Hr.models.task_models import HrEmployeeTask as EmployeeTask
 
 @login_required
 def alert_list(request):

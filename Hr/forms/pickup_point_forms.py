@@ -1,6 +1,6 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
-from Hr.models.pickup_point_models import PickupPoint
+from Hr.models.pickup_point_models import HrPickupPoint as PickupPoint
 
 class PickupPointForm(forms.ModelForm):
     class Meta:

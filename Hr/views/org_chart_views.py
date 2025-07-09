@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 import json
 
-from Hr.models.employee_model import Employee
+from Hr.models.employee.employee_models import Employee
 
 @login_required
 def org_chart(request):

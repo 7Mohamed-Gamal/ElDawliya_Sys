@@ -12,7 +12,8 @@ from .views.department_views_updated import (
     department_delete, department_performance, department_detail
 )
 from .views.job_views import job_list, job_create, job_detail, job_edit, job_delete, get_next_job_code
-from .views.salary_views import (
+# Import salary views from main views module (temporarily using placeholders)
+from .views import (
     salary_item_list, salary_item_create, salary_item_edit, salary_item_delete,
     employee_salary_item_list, employee_salary_item_create, employee_salary_item_bulk_create,
     employee_salary_item_edit, employee_salary_item_delete,
@@ -21,10 +22,20 @@ from .views.salary_views import (
     payroll_entry_list, payroll_entry_detail, payroll_entry_approve, payroll_entry_reject,
     payroll_period_list
 )
-from .views.report_views import (
+# Temporarily disabled due to model conflicts
+# from .views.report_views import (
+#     report_list, report_detail, monthly_salary_report, employee_report
+# )
+# Import placeholder functions instead
+from .views import (
     report_list, report_detail, monthly_salary_report, employee_report
 )
-from .views.analytics_views import (
+# Temporarily disabled due to attendance model conflicts
+# from .views.analytics_views import (
+#     analytics_dashboard, analytics_chart
+# )
+# Import placeholder functions instead
+from .views import (
     analytics_dashboard, analytics_chart
 )
 from .views.org_chart_views import (
@@ -63,25 +74,22 @@ from .views.core.placeholder_views import (
     positions_by_department, job_position_search_ajax
 )
 
+# Create a simple placeholder function
+def placeholder_view(request, *args, **kwargs):
+    from django.shortcuts import render
+    return render(request, 'Hr/under_construction.html', {'title': 'تحت الإنشاء'})
+
 # Create placeholder modules for URL patterns
 class PlaceholderModule:
     def __getattr__(self, name):
-        # Return the appropriate function based on the name
-        if 'company' in name:
-            return globals().get(name, company_list)
-        elif 'branch' in name:
-            return globals().get(name, branch_list)
-        elif 'department' in name:
-            return globals().get(name, department_list)
-        elif 'job_position' in name or 'position' in name:
-            return globals().get(name, job_position_list)
-        else:
-            return globals().get(name, company_list)
+        # Return the placeholder function for any attribute
+        return placeholder_view
 
 company_views = PlaceholderModule()
 branch_views = PlaceholderModule()
 department_views_new = PlaceholderModule()
 job_position_views = PlaceholderModule()
+leave_type_views = PlaceholderModule()
 
 try:
     from .views.employee import (
@@ -89,14 +97,30 @@ try:
         employee_training_views
     )
 except ImportError:
-    employee_views_new = employee_document_views = employee_emergency_contact_views = employee_training_views = None
+    # Keep the placeholder modules if import fails
+    if 'employee_views_new' not in globals():
+        employee_views_new = PlaceholderModule()
+    if 'employee_document_views' not in globals():
+        employee_document_views = PlaceholderModule()
+    if 'employee_emergency_contact_views' not in globals():
+        employee_emergency_contact_views = PlaceholderModule()
+    if 'employee_training_views' not in globals():
+        employee_training_views = PlaceholderModule()
 
 try:
     from .views.leave import (
         leave_type_views, leave_policy_views, leave_request_views, leave_balance_views
     )
 except ImportError:
-    leave_type_views = leave_policy_views = leave_request_views = leave_balance_views = None
+    # Keep the placeholder modules if import fails
+    if 'leave_type_views' not in globals():
+        leave_type_views = PlaceholderModule()
+    if 'leave_policy_views' not in globals():
+        leave_policy_views = PlaceholderModule()
+    if 'leave_request_views' not in globals():
+        leave_request_views = PlaceholderModule()
+    if 'leave_balance_views' not in globals():
+        leave_balance_views = PlaceholderModule()
 
 try:
     from .views.attendance import (
@@ -104,8 +128,17 @@ try:
         attendance_summary_views_new, employee_shift_assignment_views
     )
 except ImportError:
-    work_shift_views = attendance_machine_views_new = attendance_record_views_new = None
-    attendance_summary_views_new = employee_shift_assignment_views = None
+    # Keep the placeholder modules if import fails
+    if 'work_shift_views' not in globals():
+        work_shift_views = PlaceholderModule()
+    if 'attendance_machine_views_new' not in globals():
+        attendance_machine_views_new = PlaceholderModule()
+    if 'attendance_record_views_new' not in globals():
+        attendance_record_views_new = PlaceholderModule()
+    if 'attendance_summary_views_new' not in globals():
+        attendance_summary_views_new = PlaceholderModule()
+    if 'employee_shift_assignment_views' not in globals():
+        employee_shift_assignment_views = PlaceholderModule()
 
 try:
     from .views.payroll import (
@@ -113,8 +146,17 @@ try:
         payroll_entry_views_new, tax_configuration_views
     )
 except ImportError:
-    salary_component_views = employee_salary_structure_views = payroll_period_views_new = None
-    payroll_entry_views_new = tax_configuration_views = None
+    # Keep the placeholder modules if import fails
+    if 'salary_component_views' not in globals():
+        salary_component_views = PlaceholderModule()
+    if 'employee_salary_structure_views' not in globals():
+        employee_salary_structure_views = PlaceholderModule()
+    if 'payroll_period_views_new' not in globals():
+        payroll_period_views_new = PlaceholderModule()
+    if 'payroll_entry_views_new' not in globals():
+        payroll_entry_views_new = PlaceholderModule()
+    if 'tax_configuration_views' not in globals():
+        tax_configuration_views = PlaceholderModule()
 
 from .views import update_data
 

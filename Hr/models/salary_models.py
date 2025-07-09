@@ -3,7 +3,7 @@ from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinValueValidator
 from decimal import Decimal
 
-class SalaryItem(models.Model):
+class HrSalaryItem(models.Model):
     """نموذج لبنود الرواتب"""
     ITEM_TYPES = [
         ('addition', _('إضافة')),
@@ -62,7 +62,7 @@ class SalaryItem(models.Model):
     def __str__(self):
         return f"{self.name} ({self.item_code})"
 
-class EmployeeSalaryItem(models.Model):
+class HrEmployeeSalaryItem(models.Model):
     """نموذج لبنود رواتب الموظفين"""
     employee = models.ForeignKey(
         'Employee',
@@ -71,7 +71,7 @@ class EmployeeSalaryItem(models.Model):
         verbose_name=_('الموظف')
     )
     salary_item = models.ForeignKey(
-        SalaryItem,
+        HrSalaryItem,
         on_delete=models.PROTECT,
         verbose_name=_('بند الراتب')
     )
@@ -110,7 +110,7 @@ class EmployeeSalaryItem(models.Model):
     def __str__(self):
         return f"{self.employee} - {self.salary_item}"
 
-class PayrollPeriod(models.Model):
+class HrPayrollPeriod(models.Model):
     """نموذج لفترات الرواتب"""
     PERIOD_STATUSES = [
         ('draft', _('مسودة')),
@@ -167,7 +167,7 @@ class PayrollPeriod(models.Model):
     def __str__(self):
         return f"{self.period.strftime('%Y-%m')} - {self.get_status_display()}"
 
-class PayrollEntry(models.Model):
+class HrPayrollEntry(models.Model):
     """نموذج لسجلات الرواتب"""
     ENTRY_STATUSES = [
         ('pending', _('قيد المراجعة')),
@@ -177,7 +177,7 @@ class PayrollEntry(models.Model):
     ]
 
     period = models.ForeignKey(
-        PayrollPeriod,
+        HrPayrollPeriod,
         on_delete=models.PROTECT,
         related_name='entries',
         verbose_name=_('فترة الراتب')
@@ -223,16 +223,16 @@ class PayrollEntry(models.Model):
     def __str__(self):
         return f"{self.employee} - {self.period}"
 
-class PayrollItemDetail(models.Model):
+class HrPayrollItemDetail(models.Model):
     """نموذج لتفاصيل بنود الراتب"""
     payroll_entry = models.ForeignKey(
-        PayrollEntry,
+        HrPayrollEntry,
         on_delete=models.CASCADE,
         related_name='items',
         verbose_name=_('سجل الراتب')
     )
     salary_item = models.ForeignKey(
-        SalaryItem,
+        HrSalaryItem,
         on_delete=models.PROTECT,
         verbose_name=_('بند الراتب')
     )
