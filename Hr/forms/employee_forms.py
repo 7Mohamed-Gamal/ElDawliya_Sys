@@ -19,6 +19,26 @@ INSURANCE_STATUS_CHOICES = [
     ('غير مؤمن عليه', 'غير مؤمن عليه'),
 ]
 
+# تعريف ثابت خيارات البطاقة الصحية المتوافقة مع LegacyEmployee
+HEALTH_CARD_CHOICES = [
+    ('موجودة', 'موجودة'),
+    ('غير موجوده', 'غير موجوده'),
+]
+
+# تعريف ثابت خيارات نوع الموظف (الجنس) المتوافقة مع LegacyEmployee
+EMP_TYPE_CHOICES = [
+    ('ذكر', 'ذكر'),
+    ('انثى', 'انثى'),
+]
+
+# تعريف ثابت خيارات الحالة الاجتماعية المتوافقة مع LegacyEmployee
+MARITAL_STATUS_CHOICES = [
+    ('أعزب', 'أعزب'),
+    ('متزوج', 'متزوج'),
+    ('مطلق', 'مطلق'),
+    ('أرمل', 'أرمل'),
+]
+
 class BinaryImageField(forms.FileField):  # Changed from ImageField to FileField
     """
     Custom form field for handling image uploads to BinaryField
@@ -493,7 +513,7 @@ class EmployeeSearchForm(forms.Form):
         })
     )
     health_card = forms.ChoiceField(
-        choices=[('', 'جميع حالات البطاقة الصحية')] + Employee.health_card_choices,
+        choices=[('', 'جميع حالات البطاقة الصحية')] + HEALTH_CARD_CHOICES,
         label='البطاقة الصحية',
         required=False,
         widget=forms.Select(attrs={'class': 'form-select'})
@@ -501,13 +521,13 @@ class EmployeeSearchForm(forms.Form):
 
     # معلومات شخصية
     emp_type = forms.ChoiceField(
-        choices=[('', 'الجميع')] + list(Employee.EMP_TYPE_CHOICES),
+        choices=[('', 'الجميع')] + EMP_TYPE_CHOICES,
         label='النوع',
         required=False,
         widget=forms.Select(attrs={'class': 'form-select'})
     )
     marital_status = forms.ChoiceField(
-        choices=[('', 'جميع الحالات')] + list(Employee.MARITAL_STATUS_CHOICES),
+        choices=[('', 'جميع الحالات')] + MARITAL_STATUS_CHOICES,
         label='الحالة الاجتماعية',
         required=False,
         widget=forms.Select(attrs={'class': 'form-select'})
