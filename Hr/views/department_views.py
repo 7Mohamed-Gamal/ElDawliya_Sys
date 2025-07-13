@@ -3,7 +3,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Count
 
-from Hr.models import Department, Employee
+# Use the legacy models that match the existing database tables
+from Hr.models.legacy.legacy_models import LegacyDepartment as Department
+from Hr.models.legacy_employee import LegacyEmployee as Employee
 from Hr.forms.employee_forms import DepartmentForm
 
 

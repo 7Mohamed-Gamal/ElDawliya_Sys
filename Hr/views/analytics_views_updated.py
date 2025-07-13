@@ -6,7 +6,9 @@ from django.utils import timezone
 from datetime import timedelta, date
 from django.db.models.functions import ExtractMonth, ExtractYear, TruncMonth
 
-from Hr.models import Employee, Department
+# Use the legacy models that match the existing database tables
+from Hr.models.legacy_employee import LegacyEmployee as Employee
+from Hr.models.legacy.legacy_models import LegacyDepartment as Department
 from Hr.models.leave_models import EmployeeLeave
 from Hr.models.task_models import EmployeeTask
 from Hr.models.salary_models import PayrollEntry

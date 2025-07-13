@@ -18,7 +18,16 @@ from django.core.paginator import Paginator
 from django.db import transaction
 import json
 
-from Hr.models import Company, Branch, Department, JobPosition, Employee
+# Import models that exist - use legacy models for compatibility
+try:
+    from Hr.models import Company, Branch, JobPosition
+except ImportError:
+    # Fallback if comprehensive models don't work
+    Company = Branch = JobPosition = None
+
+# Use legacy models that match existing database tables
+from Hr.models.legacy.legacy_models import LegacyDepartment as Department
+from Hr.models.legacy_employee import LegacyEmployee as Employee
 from Hr.forms.company_forms import CompanyForm, BranchForm, DepartmentForm, JobPositionForm
 
 

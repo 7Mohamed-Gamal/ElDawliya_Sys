@@ -3,7 +3,8 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from datetime import timedelta
 
-from Hr.models.employee.employee_models import Employee
+# Use the legacy Employee model that matches the existing database table
+from Hr.models.legacy_employee import LegacyEmployee as Employee
 from Hr.models.car_models import HrCar as Car
 from Hr.models.hr_task_models import HrTaskNew as HrTask
 from Hr.models.task_models import HrEmployeeTask as EmployeeTask
@@ -14,18 +15,12 @@ def alert_list(request):
     today = timezone.now().date()
     
     # Contract renewals due in the next 30 days
-    contract_renewals = Employee.objects.filter(
-        contract_renewal_date__isnull=False,
-        contract_renewal_date__gte=today,
-        contract_renewal_date__lte=today + timedelta(days=30)
-    ).order_by('contract_renewal_date')
-    
+    # NOTE: Disabled - contract_renewal_date field not available in legacy schema
+    contract_renewals = Employee.objects.none()  # Empty queryset for legacy compatibility
+
     # Health cards expiring in the next 30 days
-    health_cards = Employee.objects.filter(
-        health_card_expiry_date__isnull=False,
-        health_card_expiry_date__gte=today,
-        health_card_expiry_date__lte=today + timedelta(days=30)
-    ).order_by('health_card_expiry_date')
+    # NOTE: Disabled - health_card_expiry_date field not available in legacy schema
+    health_cards = Employee.objects.none()  # Empty queryset for legacy compatibility
     
     # Car licenses expiring in the next 30 days
     car_licenses = Car.objects.filter(

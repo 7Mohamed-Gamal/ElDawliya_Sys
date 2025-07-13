@@ -5,7 +5,8 @@ from django.utils import timezone
 from datetime import timedelta
 from django.db.models import F
 
-from Hr.models import Employee
+# Use the legacy Employee model that matches the existing database table
+from Hr.models.legacy_employee import LegacyEmployee as Employee
 from Hr.models.car_models import Car
 from Hr.models.hr_task_models import HrTask
 from Hr.models.task_models import EmployeeTask
@@ -20,12 +21,9 @@ def alert_list(request):
     settings = get_alert_settings(request)
     
     # قائمة تنبيهات العقود
-    contract_alerts = []
-    contract_expiry_query = Employee.objects.filter(
-        contract_expiry_date__isnull=False,
-        contract_expiry_date__gte=today,
-        contract_expiry_date__lte=today + timedelta(days=settings.get('contract_alert_days', 30)),
-    ).order_by('contract_expiry_date')
+    # NOTE: Disabled - contract_expiry_date field not available in legacy schema
+    # This feature requires the comprehensive Employee model with contract management
+    contract_alerts = []  # Empty list for legacy compatibility
     
     for employee in contract_expiry_query:
         days_remaining = (employee.contract_expiry_date - today).days
@@ -35,19 +33,9 @@ def alert_list(request):
         })
     
     # قائمة تنبيهات البطاقات الصحية
-    health_card_alerts = []
-    health_card_query = Employee.objects.filter(
-        health_card_expiry_date__isnull=False,
-        health_card_expiry_date__gte=today,
-        health_card_expiry_date__lte=today + timedelta(days=settings.get('health_card_alert_days', 30)),
-    ).order_by('health_card_expiry_date')
-    
-    for employee in health_card_query:
-        days_remaining = (employee.health_card_expiry_date - today).days
-        health_card_alerts.append({
-            'employee': employee,
-            'days_remaining': days_remaining
-        })
+    # NOTE: Disabled - health_card_expiry_date field not available in legacy schema
+    # This feature requires the comprehensive Employee model with health card tracking
+    health_card_alerts = []  # Empty list for legacy compatibility
     
     # قائمة تنبيهات المهام المتأخرة
     task_alerts = []
@@ -108,19 +96,9 @@ def alert_list(request):
         })
     
     # قائمة تنبيهات التأمينات
-    insurance_alerts = []
-    # هذه مجرد عينة، يمكن تغييرها حسب احتياجك
-    insurance_query = Employee.objects.filter(
-        insurance_status='مؤمن عليه',
-        insurance_date__lte=today - timedelta(days=365)
-    ).order_by('insurance_date')
-    
-    for employee in insurance_query:
-        days_since = (today - employee.insurance_date).days
-        insurance_alerts.append({
-            'employee': employee,
-            'days_since': days_since
-        })
+    # NOTE: Disabled - insurance_date field not available in legacy schema
+    # This feature requires the comprehensive Employee model with insurance date tracking
+    insurance_alerts = []  # Empty list for legacy compatibility
     
     context = {
         'settings': settings,

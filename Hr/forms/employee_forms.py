@@ -1,6 +1,23 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
-from Hr.models import Employee, Department, Job, Car
+from Hr.models import Employee, Job
+from Hr.models.car_models import HrCar as Car
+from Hr.models.legacy.legacy_models import LegacyDepartment as Department  # Use LegacyDepartment
+from Hr.models.legacy_employee import LegacyEmployee as Employee  # Import LegacyEmployee
+
+# تعريف ثابت خيارات حالة العمل المتوافقة مع LegacyEmployee
+WORKING_CONDITION_CHOICES = [
+    ('سارى', 'سارى'),
+    ('إجازة', 'إجازة'),
+    ('استقالة', 'استقالة'),
+    ('انقطاع عن العمل', 'انقطاع عن العمل'),
+]
+
+# تعريف ثابت خيارات حالة التأمين المتوافقة مع LegacyEmployee
+INSURANCE_STATUS_CHOICES = [
+    ('مؤمن عليه', 'مؤمن عليه'),
+    ('غير مؤمن عليه', 'غير مؤمن عليه'),
+]
 
 class BinaryImageField(forms.FileField):  # Changed from ImageField to FileField
     """
@@ -58,7 +75,7 @@ class BinaryImageField(forms.FileField):  # Changed from ImageField to FileField
 
 class EmployeeForm(forms.ModelForm):
     """
-    Form for creating and editing employees
+    نموذج إنشاء وتعديل الموظف متوافق مع نموذج LegacyEmployee فقط
     """
     emp_image = BinaryImageField(
         required=False,
@@ -85,41 +102,23 @@ class EmployeeForm(forms.ModelForm):
     class Meta:
         model = Employee
         fields = [
-            'emp_id', 'emp_first_name', 'emp_second_name', 'emp_full_name', 'emp_name_english', 'mother_name',
-            'national_id', 'date_birth', 'place_birth', 'emp_nationality', 'emp_marital_status',
-            'military_service_certificate', 'people_with_special_needs', 'emp_phone1', 'emp_phone2',
-            'emp_address', 'governorate', 'emp_type', 'working_condition', 'department',
-            'jop_name', 'emp_date_hiring', 'emp_car', 'insurance_status',  # Removed jop_code
-            'insurance_salary', 'health_card', 'shift_type','age','emp_image'
+            'emp_id', 'emp_first_name', 'emp_second_name', 'emp_full_name',
+            'working_condition', 'insurance_status', 'national_id',
+            'date_birth', 'emp_date_hiring', 'dept_name', 'jop_code', 'department'
         ]
         widgets = {
             'emp_id': forms.NumberInput(attrs={'class': 'form-control'}),
             'emp_first_name': forms.TextInput(attrs={'class': 'form-control'}),
             'emp_second_name': forms.TextInput(attrs={'class': 'form-control'}),
             'emp_full_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'emp_name_english': forms.TextInput(attrs={'class': 'form-control'}),
-            'mother_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'working_condition': forms.Select(attrs={'class': 'form-select'}),
+            'insurance_status': forms.Select(attrs={'class': 'form-select'}),
             'national_id': forms.TextInput(attrs={'class': 'form-control'}),
             'date_birth': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'place_birth': forms.TextInput(attrs={'class': 'form-control'}),
-            'emp_nationality': forms.TextInput(attrs={'class': 'form-control'}),
-            'emp_marital_status': forms.Select(attrs={'class': 'form-select'}),
-            'military_service_certificate': forms.Select(attrs={'class': 'form-select'}),
-            'people_with_special_needs': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'emp_phone1': forms.TextInput(attrs={'class': 'form-control'}),
-            'emp_phone2': forms.TextInput(attrs={'class': 'form-control'}),
-            'emp_address': forms.TextInput(attrs={'class': 'form-control'}),
-            'governorate': forms.TextInput(attrs={'class': 'form-control'}),
-            'emp_type': forms.Select(attrs={'class': 'form-select'}),
-            'working_condition': forms.Select(attrs={'class': 'form-select'}),
-            'department': forms.Select(attrs={'class': 'form-select'}),
             'emp_date_hiring': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
-            'emp_car': forms.TextInput(attrs={'class': 'form-control'}),
-            'insurance_status': forms.Select(attrs={'class': 'form-select'}),
-            'insurance_salary': forms.NumberInput(attrs={'class': 'form-control'}),
-            'health_card': forms.Select(attrs={'class': 'form-select'}),
-            'shift_type': forms.Select(attrs={'class': 'form-select'}),
-            'age': forms.TextInput(attrs={'class': 'form-control'}),
+            'dept_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'jop_code': forms.NumberInput(attrs={'class': 'form-control'}),
+            'department': forms.Select(attrs={'class': 'form-select'}),
         }
 
     def __init__(self, *args, **kwargs):
@@ -145,7 +144,8 @@ class EmployeeForm(forms.ModelForm):
         self.fieldsets = [
             (_('المعلومات الأساسية'), [
                 'emp_id', 'emp_first_name', 'emp_second_name', 'emp_full_name',
-                'emp_name_english', 'mother_name'
+                'working_condition', 'insurance_status', 'national_id',
+                'date_birth', 'emp_date_hiring', 'dept_name', 'jop_code', 'department'
             ]),
             (_('معلومات الهوية'), [
                 'national_id', 'date_birth', 'place_birth',
@@ -237,14 +237,14 @@ class EmployeeFilterForm(forms.Form):
     )
 
     working_condition = forms.ChoiceField(
-        choices=[('', _('جميع الحالات'))] + list(Employee.WORKING_CONDITION_CHOICES),
+        choices=[('', _('جميع الحالات'))] + WORKING_CONDITION_CHOICES,
         label=_('حالة العمل'),
         required=False,
         widget=forms.Select(attrs={'class': 'form-select'})
     )
 
     insurance_status = forms.ChoiceField(
-        choices=[('', _('جميع حالات التأمين'))] + list(Employee.INSURANCE_STATUS_CHOICES),
+        choices=[('', _('جميع حالات التأمين'))] + INSURANCE_STATUS_CHOICES,
         label=_('حالة التأمين'),
         required=False,
         widget=forms.Select(attrs={'class': 'form-select'})
@@ -344,11 +344,11 @@ class JobForm(forms.ModelForm):
     """
     class Meta:
         model = Job
-        fields = ['jop_code', 'jop_name', 'department']
+        fields = ['jop_code', 'jop_name']  # حذف department
         widgets = {
             'jop_code': forms.NumberInput(attrs={'class': 'form-control'}),
             'jop_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'department': forms.Select(attrs={'class': 'form-select'}),
+            # حذف 'department'
         }
 
     def __init__(self, *args, **kwargs):
@@ -455,7 +455,7 @@ class EmployeeSearchForm(forms.Form):
         widget=forms.Select(attrs={'class': 'form-select'})
     )
     working_condition = forms.ChoiceField(
-        choices=[('', 'جميع الحالات')] + list(Employee.WORKING_CONDITION_CHOICES),
+        choices=[('', 'جميع الحالات')] + WORKING_CONDITION_CHOICES,
         label='حالة العمل',
         required=False,
         widget=forms.Select(attrs={'class': 'form-select'})
@@ -478,7 +478,7 @@ class EmployeeSearchForm(forms.Form):
 
     # معلومات التأمين
     insurance_status = forms.ChoiceField(
-        choices=[('', 'جميع حالات التأمين')] + list(Employee.INSURANCE_STATUS_CHOICES),
+        choices=[('', 'جميع حالات التأمين')] + INSURANCE_STATUS_CHOICES,
         label='حالة التأمين',
         required=False,
         widget=forms.Select(attrs={'class': 'form-select'})

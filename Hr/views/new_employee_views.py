@@ -20,10 +20,20 @@ from django.utils import timezone
 from datetime import date, timedelta
 import json
 
-from Hr.models import (
-    Employee, Company, Branch, Department, JobPosition,
-    EmployeeDocument, EmployeeEmergencyContact, EmployeeTraining, EmployeeNote
-)
+# Import models that exist - use legacy models for compatibility
+try:
+    from Hr.models import (
+        Company, Branch, JobPosition,
+        EmployeeDocument, EmployeeEmergencyContact, EmployeeTraining, EmployeeNote
+    )
+except ImportError:
+    # Fallback if comprehensive models don't work
+    Company = Branch = JobPosition = None
+    EmployeeDocument = EmployeeEmergencyContact = EmployeeTraining = EmployeeNote = None
+
+# Use legacy models that match existing database tables
+from Hr.models.legacy.legacy_models import LegacyDepartment as Department
+from Hr.models.legacy_employee import LegacyEmployee as Employee
 from Hr.forms.new_employee_forms import (
     NewEmployeeForm, EmployeeDocumentForm, EmployeeEmergencyContactForm
 )
