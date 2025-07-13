@@ -5,240 +5,881 @@
 
 {% block title %}{% trans "لوحة تحكم المخزن" %}{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* ===== ENHANCED DASHBOARD HEADER STYLES ===== */
+    .dashboard-container {
+        padding: 0;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: calc(100vh - 100px);
+        position: relative;
+    }
+
+    .dashboard-header {
+        background: linear-gradient(135deg, var(--primary-color) 0%, #303f9f 100%);
+        color: white;
+        padding: 2.5rem 0;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    }
+
+    .dashboard-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.05)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+        opacity: 0.3;
+    }
+
+    .dashboard-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--secondary-color), var(--warning-color), var(--success-color));
+        opacity: 0.8;
+    }
+
+    .dashboard-header-content {
+        position: relative;
+        z-index: 2;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 2rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .dashboard-title {
+        font-size: 2.8rem;
+        font-weight: 700;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 1.2rem;
+        text-shadow: 0 3px 6px rgba(0,0,0,0.15);
+        line-height: 1.2;
+    }
+
+    .dashboard-title-icon {
+        font-size: 2.5rem;
+        opacity: 0.95;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+    }
+
+    .dashboard-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.92;
+        margin: 0;
+        font-weight: 400;
+        letter-spacing: 0.5px;
+        text-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .dashboard-meta {
+        display: flex;
+        align-items: center;
+        gap: 2rem;
+        margin-top: 0.5rem;
+        font-size: 0.95rem;
+        opacity: 0.85;
+    }
+
+    .dashboard-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .dashboard-meta-item i {
+        font-size: 1rem;
+    }
+
+    /* ===== ENHANCED STATISTICS CARDS STYLES ===== */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2.5rem;
+        padding: 0 2rem;
+        max-width: 1400px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .stats-card {
+        background: white;
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.04);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        backdrop-filter: blur(10px);
+    }
+
+    .stats-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 5px;
+        background: linear-gradient(90deg, var(--card-accent-color, #3f51b5), var(--card-accent-secondary, #5c6bc0));
+        transition: all 0.4s ease;
+        border-radius: 20px 20px 0 0;
+    }
+
+    .stats-card::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.1) 100%);
+        pointer-events: none;
+        border-radius: 20px;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-12px) scale(1.02);
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    }
+
+    .stats-card:hover::before {
+        height: 8px;
+        background: linear-gradient(90deg, var(--card-accent-color, #3f51b5), var(--card-accent-secondary, #5c6bc0), var(--card-accent-color, #3f51b5));
+    }
+
+    .stats-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1.5rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .stats-card-icon {
+        width: 70px;
+        height: 70px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        color: white;
+        background: linear-gradient(135deg, var(--card-accent-color, #3f51b5), var(--card-accent-secondary, #5c6bc0));
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        position: relative;
+        transition: all 0.3s ease;
+    }
+
+    .stats-card-icon::before {
+        content: '';
+        position: absolute;
+        inset: -2px;
+        background: linear-gradient(135deg, var(--card-accent-color, #3f51b5), var(--card-accent-secondary, #5c6bc0));
+        border-radius: 18px;
+        z-index: -1;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .stats-card:hover .stats-card-icon::before {
+        opacity: 0.3;
+    }
+
+    .stats-card-content {
+        flex: 1;
+        margin-bottom: 1.5rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .stats-card-title {
+        font-size: 1rem;
+        color: #6c757d;
+        margin-bottom: 0.8rem;
+        font-weight: 600;
+        letter-spacing: 0.3px;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+    }
+
+    .stats-card-value {
+        font-size: 2.8rem;
+        font-weight: 800;
+        color: #2c3e50;
+        margin: 0;
+        line-height: 1;
+        background: linear-gradient(135deg, #2c3e50, #34495e);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .stats-card-footer {
+        margin-top: auto;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .stats-card-link {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: var(--card-accent-color, #3f51b5);
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 0.9rem;
+        transition: all 0.2s ease;
+        padding: 0.5rem 0;
+    }
+
+    .stats-card-link:hover {
+        color: var(--card-accent-secondary, #5c6bc0);
+        transform: translateX(-2px);
+    }
+
+    .stats-card-link i {
+        transition: transform 0.2s ease;
+    }
+
+    .stats-card-link:hover i {
+        transform: translateX(-3px);
+    }
+
+    /* Card Color Variants */
+    .stats-card-primary {
+        --card-accent-color: #3f51b5;
+        --card-accent-secondary: #5c6bc0;
+    }
+
+    .stats-card-warning {
+        --card-accent-color: #ff9800;
+        --card-accent-secondary: #ffb74d;
+    }
+
+    .stats-card-danger {
+        --card-accent-color: #f44336;
+        --card-accent-secondary: #ef5350;
+    }
+
+    .stats-card-success {
+        --card-accent-color: #4caf50;
+        --card-accent-secondary: #66bb6a;
+    }
+
+    /* Content Section */
+    .content-section {
+        padding: 0 2rem 2rem;
+    }
+
+    /* ===== ENHANCED RESPONSIVE DESIGN ===== */
+    @media (max-width: 1400px) {
+        .stats-grid {
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.8rem;
+        }
+    }
+
+    @media (max-width: 1200px) {
+        .stats-grid {
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .dashboard-title {
+            font-size: 2.4rem;
+        }
+
+        .dashboard-subtitle {
+            font-size: 1.1rem;
+        }
+    }
+
+    @media (max-width: 992px) {
+        .stats-grid {
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.2rem;
+            padding: 0 1.5rem;
+        }
+
+        .dashboard-header {
+            padding: 2rem 0;
+        }
+
+        .dashboard-header-content {
+            padding: 0 1.5rem;
+        }
+
+        .content-section {
+            padding: 0 1.5rem 2rem;
+        }
+
+        .dashboard-title {
+            font-size: 2.2rem;
+        }
+
+        .dashboard-meta {
+            gap: 1.5rem;
+        }
+
+        .stats-card {
+            padding: 1.5rem;
+        }
+
+        .stats-card-icon {
+            width: 60px;
+            height: 60px;
+            font-size: 1.6rem;
+        }
+
+        .stats-card-value {
+            font-size: 2.4rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+            padding: 0 1rem;
+        }
+
+        .dashboard-header {
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+
+        .dashboard-header-content {
+            padding: 0 1rem;
+            text-align: center;
+        }
+
+        .content-section {
+            padding: 0 1rem 2rem;
+        }
+
+        .dashboard-title {
+            font-size: 2rem;
+            flex-direction: column;
+            gap: 0.8rem;
+            text-align: center;
+        }
+
+        .dashboard-title-icon {
+            font-size: 2.2rem;
+        }
+
+        .dashboard-subtitle {
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .dashboard-meta {
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .stats-card {
+            padding: 1.5rem;
+            border-radius: 16px;
+        }
+
+        .stats-card-icon {
+            width: 55px;
+            height: 55px;
+            font-size: 1.4rem;
+            border-radius: 14px;
+        }
+
+        .stats-card-value {
+            font-size: 2.2rem;
+        }
+
+        .stats-card-title {
+            font-size: 0.9rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .dashboard-title {
+            font-size: 1.5rem;
+        }
+
+        .dashboard-subtitle {
+            font-size: 0.9rem;
+        }
+
+        .stats-card-value {
+            font-size: 1.6rem;
+        }
+
+        .stats-card-title {
+            font-size: 0.85rem;
+        }
+    }
+
+    /* ===== ENHANCED RTL SUPPORT ===== */
+    [dir="rtl"] .stats-card-link {
+        flex-direction: row-reverse;
+    }
+
+    [dir="rtl"] .stats-card-link:hover {
+        transform: translateX(2px);
+    }
+
+    [dir="rtl"] .stats-card-link:hover i {
+        transform: translateX(3px);
+    }
+
+    [dir="rtl"] .dashboard-title {
+        text-align: right;
+        flex-direction: row-reverse;
+    }
+
+    [dir="rtl"] .dashboard-subtitle {
+        text-align: right;
+    }
+
+    [dir="rtl"] .dashboard-meta {
+        flex-direction: row-reverse;
+    }
+
+    [dir="rtl"] .dashboard-meta-item {
+        flex-direction: row-reverse;
+    }
+
+    [dir="rtl"] .stats-card-header {
+        flex-direction: row-reverse;
+    }
+
+    [dir="rtl"] .stats-card-footer {
+        text-align: right;
+    }
+
+    /* RTL Mobile adjustments */
+    @media (max-width: 768px) {
+        [dir="rtl"] .dashboard-title,
+        [dir="rtl"] .dashboard-subtitle {
+            text-align: center;
+        }
+
+        [dir="rtl"] .dashboard-meta {
+            justify-content: center;
+        }
+    }
+
+    /* RTL Animation adjustments */
+    [dir="rtl"] .stats-card:hover {
+        transform: translateY(-12px) scale(1.02);
+    }
+
+    /* ===== ACCESSIBILITY IMPROVEMENTS ===== */
+    .stats-card:focus-within {
+        outline: 2px solid var(--card-accent-color);
+        outline-offset: 2px;
+    }
+
+    .stats-card-link:focus {
+        outline: 2px solid var(--card-accent-color);
+        outline-offset: 2px;
+        border-radius: 4px;
+    }
+
+    /* Reduced motion support */
+    @media (prefers-reduced-motion: reduce) {
+        .stats-card,
+        .stats-card-link,
+        .stats-card-link i,
+        .stats-card::before {
+            transition: none;
+        }
+
+        .stats-card:hover {
+            transform: none;
+        }
+
+        .stats-card-link:hover {
+            transform: none;
+        }
+
+        .stats-card-link:hover i {
+            transform: none;
+        }
+    }
+
+    /* High contrast mode support */
+    @media (prefers-contrast: high) {
+        .stats-card {
+            border: 2px solid #000;
+        }
+
+        .stats-card-title {
+            color: #000;
+        }
+
+        .stats-card-value {
+            color: #000;
+        }
+    }
+
+    /* Enhanced Dark mode support */
+    @media (prefers-color-scheme: dark) {
+        .dashboard-container {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d3748 100%);
+        }
+
+        .dashboard-header {
+            background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+        }
+
+        .stats-card {
+            background: #2d3748;
+            border-color: #4a5568;
+            color: #e2e8f0;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .stats-card-title {
+            color: #a0aec0;
+        }
+
+        .stats-card-value {
+            color: #e2e8f0;
+            background: linear-gradient(135deg, #e2e8f0, #cbd5e0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .stats-card::after {
+            background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.05) 100%);
+        }
+    }
+
+    /* Performance optimizations */
+    .stats-card {
+        will-change: transform;
+    }
+
+    .stats-card-icon {
+        will-change: transform;
+    }
+
+    /* Loading states */
+    .stats-card.loading {
+        opacity: 0.7;
+        pointer-events: none;
+    }
+
+    .stats-card.loading .stats-card-value {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+        color: transparent;
+    }
+
+    @keyframes loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 {% csrf_token %}
 
-<div class="section-spacing">
-    <!-- Page Header -->
-    <div class="page-header">
-        <div class="page-header-content">
-            <div class="page-title">
-                <i class="fas fa-warehouse"></i>
+<div class="dashboard-container">
+    <!-- Enhanced Dashboard Header -->
+    <div class="dashboard-header">
+        <div class="dashboard-header-content">
+            <h1 class="dashboard-title">
+                <i class="fas fa-warehouse dashboard-title-icon"></i>
                 <span>{% trans "لوحة تحكم المخزن" %}</span>
+            </h1>
+            <p class="dashboard-subtitle">نظرة عامة شاملة على حالة المخزن والمنتجات</p>
+            <div class="dashboard-meta">
+                <div class="dashboard-meta-item">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>{% now "j F Y" %}</span>
+                </div>
+                <div class="dashboard-meta-item">
+                    <i class="fas fa-clock"></i>
+                    <span>{% now "H:i" %}</span>
+                </div>
+                <div class="dashboard-meta-item">
+                    <i class="fas fa-user"></i>
+                    <span>{{ user.get_full_name|default:user.username }}</span>
+                </div>
             </div>
-            <div class="page-subtitle">نظرة عامة على حالة المخزن والمنتجات</div>
         </div>
     </div>
 
-    <!-- Statistics Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Enhanced Statistics Cards -->
+    <div class="stats-grid">
         <div class="stats-card stats-card-primary">
-            <div class="stats-card-icon">
-                <i class="fas fa-boxes"></i>
+            <div class="stats-card-header">
+                <div class="stats-card-icon">
+                    <i class="fas fa-boxes"></i>
+                </div>
             </div>
             <div class="stats-card-content">
-                <div class="stats-card-title">{% trans "عدد الأصناف" %}</div>
+                <div class="stats-card-title">{% trans "إجمالي الأصناف" %}</div>
                 <div class="stats-card-value">{{ total_products }}</div>
             </div>
             <div class="stats-card-footer">
                 <a href="{% url 'inventory:product_list' %}" class="stats-card-link">
-                    <span>{% trans "تفاصيل" %}</span>
+                    <span>{% trans "عرض التفاصيل" %}</span>
                     <i class="fas fa-arrow-left"></i>
                 </a>
             </div>
         </div>
 
         <div class="stats-card stats-card-warning">
-            <div class="stats-card-icon">
-                <i class="fas fa-exclamation-triangle"></i>
+            <div class="stats-card-header">
+                <div class="stats-card-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
             </div>
             <div class="stats-card-content">
-                <div class="stats-card-title">{% trans "أصناف منخفضة" %}</div>
+                <div class="stats-card-title">{% trans "أصناف منخفضة المخزون" %}</div>
                 <div class="stats-card-value">{{ low_stock_count }}</div>
             </div>
             <div class="stats-card-footer">
                 <a href="{% url 'inventory:product_list' %}?stock_status=low" class="stats-card-link">
-                    <span>{% trans "تفاصيل" %}</span>
+                    <span>{% trans "عرض التفاصيل" %}</span>
                     <i class="fas fa-arrow-left"></i>
                 </a>
             </div>
         </div>
-        <div class="col-lg-3 col-md-6 col-sm-6">
-            <div class="card bg-danger text-white mb-4">
-                <div class="card-body">
-                    <h5>{% trans "أصناف غير متوفرة" %}</h5>
-                    <h2>{{ out_of_stock_count }}</h2>
-                </div>
-                <div class="card-footer d-flex align-items-center justify-content-between">
-                    <a class="small text-white stretched-link" href="{% url 'inventory:product_list' %}?stock_status=out">{% trans "تفاصيل" %}</a>
-                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
+
+        <div class="stats-card stats-card-danger">
+            <div class="stats-card-header">
+                <div class="stats-card-icon">
+                    <i class="fas fa-times-circle"></i>
                 </div>
             </div>
-        </div>
-        <div class="col-lg-3 col-md-6 col-sm-6">
-            <div class="card bg-success text-white mb-4">
-                <div class="card-body">
-                    <h5>{% trans "عدد الأذونات" %}</h5>
-                    <h2>{{ total_vouchers }}</h2>
-                </div>
-                <div class="card-footer d-flex align-items-center justify-content-between">
-                    <a class="small text-white stretched-link" href="{% url 'inventory:voucher_list' %}">{% trans "تفاصيل" %}</a>
-                    <div class="small text-white"><i class="fas fa-angle-right"></i></div>
-                </div>
+            <div class="stats-card-content">
+                <div class="stats-card-title">{% trans "أصناف غير متوفرة" %}</div>
+                <div class="stats-card-value">{{ out_of_stock_count }}</div>
+            </div>
+            <div class="stats-card-footer">
+                <a href="{% url 'inventory:product_list' %}?stock_status=out" class="stats-card-link">
+                    <span>{% trans "عرض التفاصيل" %}</span>
+                    <i class="fas fa-arrow-left"></i>
+                </a>
             </div>
         </div>
-    </div>
-    
-    <!-- أصناف تحتاج طلب شراء -->
-    <div class="row mt-4">
-        <div class="col-xl-6">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <i class="fas fa-exclamation-triangle me-1"></i>
-                    {% trans "أصناف تحتاج لطلب شراء" %}
-                </div>
-                <div class="card-body">
-                    {% if purchase_needed_products %}
-                    <div class="table-responsive">
-                        <table class="table table-striped">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>{% trans "كود الصنف" %}</th>
-                                    <th>{% trans "اسم الصنف" %}</th>
-                                    <th>{% trans "الكمية الحالية" %}</th>
-                                    <th>{% trans "الحد الأدنى" %}</th>
-                                    <th>{% trans "إجراءات" %}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for product in purchase_needed_products %}
-                                <tr>
-                                    <td>{{ product.product_id }}</td>
-                                    <td>{{ product.name }}</td>
-                                    <td>{{ product.quantity }}</td>
-                                    <td>{{ product.minimum_threshold }}</td>
-                                    <td>
-                                        {% has_purchase_module_permission "purchase_items" "add" as can_create_purchase %}
-                                        {% if can_create_purchase %}
-                                            <button data-product-id="{{ product.product_id }}" class="btn btn-primary btn-sm purchase-request-btn">
-                                                <i class="fas fa-shopping-cart"></i> {% trans "إنشاء طلب شراء" %}
-                                            </button>
-                                        {% else %}
-                                            <button class="btn btn-secondary btn-sm" disabled title="{% trans 'لا تملك صلاحية إنشاء طلب شراء' %}">
-                                                <i class="fas fa-shopping-cart"></i> {% trans "إنشاء طلب شراء" %}
-                                            </button>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <div class="alert alert-success">
-                        {% trans "لا توجد أصناف تحتاج لطلب شراء حالياً." %}
-                    </div>
-                    {% endif %}
+
+        <div class="stats-card stats-card-success">
+            <div class="stats-card-header">
+                <div class="stats-card-icon">
+                    <i class="fas fa-file-invoice"></i>
                 </div>
             </div>
-        </div>
-        
-        <!-- آخر الاذونات -->
-        <div class="col-xl-6">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <i class="fas fa-clipboard-list me-1"></i>
-                    {% trans "آخر الأذونات" %}
-                </div>
-                <div class="card-body">
-                    {% if recent_vouchers %}
-                    <div class="table-responsive">
-                        <table class="table table-striped">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>{% trans "رقم الإذن" %}</th>
-                                    <th>{% trans "نوع الإذن" %}</th>
-                                    <th>{% trans "التاريخ" %}</th>
-                                    <th>{% trans "إجراءات" %}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for voucher in recent_vouchers %}
-                                <tr>
-                                    <td>{{ voucher.voucher_number }}</td>
-                                    <td>{{ voucher.get_voucher_type_display }}</td>
-                                    <td>{{ voucher.date }}</td>
-                                    <td>
-                                        <a href="{% url 'inventory:voucher_detail' voucher.voucher_number %}" class="btn btn-info btn-sm">
-                                            <i class="fas fa-eye"></i> {% trans "عرض" %}
-                                        </a>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <div class="alert alert-info">
-                        {% trans "لا توجد أذونات حتى الآن." %}
-                    </div>
-                    {% endif %}
-                </div>
+            <div class="stats-card-content">
+                <div class="stats-card-title">{% trans "إجمالي الأذونات" %}</div>
+                <div class="stats-card-value">{{ total_vouchers }}</div>
+            </div>
+            <div class="stats-card-footer">
+                <a href="{% url 'inventory:voucher_list' %}" class="stats-card-link">
+                    <span>{% trans "عرض التفاصيل" %}</span>
+                    <i class="fas fa-arrow-left"></i>
+                </a>
             </div>
         </div>
     </div>
-    
-    <!-- الأصناف منخفضة المخزون -->
-    <div class="row mt-4">
-        <div class="col-xl-12">
-            <div class="card mb-4">
-                <div class="card-header">
-                    <i class="fas fa-bell me-1"></i>
-                    {% trans "أصناف منخفضة المخزون" %}
+
+    <div class="content-section">
+        <!-- Content Grid -->
+        <div class="row g-4">
+            <!-- أصناف تحتاج طلب شراء -->
+            <div class="col-xl-6">
+                <div class="card h-100">
+                    <div class="card-header d-flex align-items-center">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                        <h5 class="mb-0">{% trans "أصناف تحتاج لطلب شراء" %}</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if purchase_needed_products %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>{% trans "كود الصنف" %}</th>
+                                        <th>{% trans "اسم الصنف" %}</th>
+                                        <th>{% trans "الكمية الحالية" %}</th>
+                                        <th>{% trans "الحد الأدنى" %}</th>
+                                        <th>{% trans "إجراءات" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for product in purchase_needed_products %}
+                                    <tr>
+                                        <td><span class="badge bg-secondary">{{ product.product_id }}</span></td>
+                                        <td class="fw-medium">{{ product.name }}</td>
+                                        <td><span class="badge bg-danger">{{ product.quantity }}</span></td>
+                                        <td><span class="badge bg-warning">{{ product.minimum_threshold }}</span></td>
+                                        <td>
+                                            {% has_purchase_module_permission "purchase_items" "add" as can_create_purchase %}
+                                            {% if can_create_purchase %}
+                                                <button data-product-id="{{ product.product_id }}" class="btn btn-primary btn-sm purchase-request-btn">
+                                                    <i class="fas fa-shopping-cart"></i> {% trans "إنشاء طلب شراء" %}
+                                                </button>
+                                            {% else %}
+                                                <button class="btn btn-secondary btn-sm" disabled title="{% trans 'لا تملك صلاحية إنشاء طلب شراء' %}">
+                                                    <i class="fas fa-shopping-cart"></i> {% trans "إنشاء طلب شراء" %}
+                                                </button>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-success d-flex align-items-center">
+                            <i class="fas fa-check-circle me-2"></i>
+                            {% trans "لا توجد أصناف تحتاج لطلب شراء حالياً." %}
+                        </div>
+                        {% endif %}
+                    </div>
                 </div>
-                <div class="card-body">
-                    {% if low_stock_products %}
-                    <div class="table-responsive">
-                        <table class="table table-striped">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>{% trans "كود الصنف" %}</th>
-                                    <th>{% trans "اسم الصنف" %}</th>
-                                    <th>{% trans "الكمية الحالية" %}</th>
-                                    <th>{% trans "الحد الأدنى" %}</th>
-                                    <th>{% trans "الحد الأقصى" %}</th>
-                                    <th>{% trans "الوحدة" %}</th>
-                                    <th>{% trans "إجراءات" %}</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for product in low_stock_products %}
-                                <tr>
-                                    <td>{{ product.product_id }}</td>
-                                    <td>{{ product.name }}</td>
-                                    <td>{{ product.quantity }}</td>
-                                    <td>{{ product.minimum_threshold }}</td>
-                                    <td>{{ product.maximum_threshold }}</td>
-                                    <td>{{ product.unit }}</td>
-                                    <td>
-                                        <a href="{% url 'inventory:product_edit' product.product_id %}" class="btn btn-warning btn-sm">
-                                            <i class="fas fa-edit"></i> {% trans "تعديل" %}
-                                        </a>
-                                        {% has_purchase_module_permission "purchase_items" "add" as can_create_purchase %}
-                                        {% if can_create_purchase %}
-                                            <button data-product-id="{{ product.product_id }}" class="btn btn-primary btn-sm purchase-request-btn">
-                                                <i class="fas fa-shopping-cart"></i> {% trans "طلب شراء" %}
-                                            </button>
-                                        {% else %}
-                                            <button class="btn btn-secondary btn-sm" disabled title="{% trans 'لا تملك صلاحية إنشاء طلب شراء' %}">
-                                                <i class="fas fa-shopping-cart"></i> {% trans "طلب شراء" %}
-                                            </button>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+            </div>
+
+            <!-- آخر الاذونات -->
+            <div class="col-xl-6">
+                <div class="card h-100">
+                    <div class="card-header d-flex align-items-center">
+                        <i class="fas fa-clipboard-list text-info me-2"></i>
+                        <h5 class="mb-0">{% trans "آخر الأذونات" %}</h5>
                     </div>
-                    {% else %}
-                    <div class="alert alert-info">
-                        {% trans "لا توجد أصناف منخفضة المخزون حالياً." %}
+                    <div class="card-body">
+                        {% if recent_vouchers %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>{% trans "رقم الإذن" %}</th>
+                                        <th>{% trans "نوع الإذن" %}</th>
+                                        <th>{% trans "التاريخ" %}</th>
+                                        <th>{% trans "إجراءات" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for voucher in recent_vouchers %}
+                                    <tr>
+                                        <td><span class="badge bg-primary">{{ voucher.voucher_number }}</span></td>
+                                        <td class="fw-medium">{{ voucher.get_voucher_type_display }}</td>
+                                        <td class="text-muted">{{ voucher.date }}</td>
+                                        <td>
+                                            <a href="{% url 'inventory:voucher_detail' voucher.voucher_number %}" class="btn btn-outline-info btn-sm">
+                                                <i class="fas fa-eye"></i> {% trans "عرض" %}
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-info d-flex align-items-center">
+                            <i class="fas fa-info-circle me-2"></i>
+                            {% trans "لا توجد أذونات حتى الآن." %}
+                        </div>
+                        {% endif %}
                     </div>
-                    {% endif %}
-                    <div class="mt-3">
-                        <a href="{% url 'inventory:product_list' %}?stock_status=low" class="btn btn-primary">
-                            <i class="fas fa-list"></i> {% trans "عرض كل الأصناف منخفضة المخزون" %}
-                        </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- الأصناف منخفضة المخزون -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-bell text-warning me-2"></i>
+                            <h5 class="mb-0">{% trans "أصناف منخفضة المخزون" %}</h5>
+                        </div>
+                        {% if low_stock_products %}
+                        <span class="badge bg-warning">{{ low_stock_products|length }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="card-body">
+                        {% if low_stock_products %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>{% trans "كود الصنف" %}</th>
+                                        <th>{% trans "اسم الصنف" %}</th>
+                                        <th>{% trans "الكمية الحالية" %}</th>
+                                        <th>{% trans "الحد الأدنى" %}</th>
+                                        <th>{% trans "الحد الأقصى" %}</th>
+                                        <th>{% trans "الوحدة" %}</th>
+                                        <th>{% trans "إجراءات" %}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for product in low_stock_products %}
+                                    <tr>
+                                        <td><span class="badge bg-secondary">{{ product.product_id }}</span></td>
+                                        <td class="fw-medium">{{ product.name }}</td>
+                                        <td><span class="badge bg-danger">{{ product.quantity }}</span></td>
+                                        <td><span class="badge bg-warning">{{ product.minimum_threshold }}</span></td>
+                                        <td><span class="badge bg-success">{{ product.maximum_threshold }}</span></td>
+                                        <td class="text-muted">{{ product.unit }}</td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <a href="{% url 'inventory:product_edit' product.product_id %}" class="btn btn-outline-warning btn-sm">
+                                                    <i class="fas fa-edit"></i> {% trans "تعديل" %}
+                                                </a>
+                                                {% has_purchase_module_permission "purchase_items" "add" as can_create_purchase %}
+                                                {% if can_create_purchase %}
+                                                    <button data-product-id="{{ product.product_id }}" class="btn btn-outline-primary btn-sm purchase-request-btn">
+                                                        <i class="fas fa-shopping-cart"></i> {% trans "طلب شراء" %}
+                                                    </button>
+                                                {% else %}
+                                                    <button class="btn btn-outline-secondary btn-sm" disabled title="{% trans 'لا تملك صلاحية إنشاء طلب شراء' %}">
+                                                        <i class="fas fa-shopping-cart"></i> {% trans "طلب شراء" %}
+                                                    </button>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="mt-3 d-flex justify-content-center">
+                            <a href="{% url 'inventory:product_list' %}?stock_status=low" class="btn btn-primary">
+                                <i class="fas fa-list me-2"></i> {% trans "عرض كل الأصناف منخفضة المخزون" %}
+                            </a>
+                        </div>
+                        {% else %}
+                        <div class="alert alert-success d-flex align-items-center">
+                            <i class="fas fa-check-circle me-2"></i>
+                            {% trans "لا توجد أصناف منخفضة المخزون حالياً." %}
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -246,41 +887,86 @@
     </div>
 </div>
 
-<!-- مودال طلب الشراء -->
+<!-- Enhanced Purchase Request Modal -->
 <div class="modal fade" id="purchaseRequestModal" tabindex="-1" aria-labelledby="purchaseRequestModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="purchaseRequestModalLabel">{% trans "طلب شراء صنف" %}</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-gradient text-white" style="background: linear-gradient(135deg, var(--primary-color) 0%, #303f9f 100%);">
+                <h5 class="modal-title d-flex align-items-center" id="purchaseRequestModalLabel">
+                    <i class="fas fa-shopping-cart me-2"></i>
+                    {% trans "طلب شراء صنف" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <div class="product-info mb-3 p-3 bg-light rounded">
-                    <h5 class="mb-3">{% trans "معلومات الصنف" %}</h5>
-                    <p><strong>{% trans "رقم الصنف:" %}</strong> <span id="modal-product-id"></span></p>
-                    <p><strong>{% trans "اسم الصنف:" %}</strong> <span id="modal-product-name"></span></p>
-                    <p><strong>{% trans "الكمية الحالية:" %}</strong> <span id="modal-product-quantity"></span></p>
-                    <p><strong>{% trans "الحد الأدنى:" %}</strong> <span id="modal-product-min"></span></p>
+            <div class="modal-body p-4">
+                <div class="product-info mb-4 p-3 rounded-3" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-left: 4px solid var(--primary-color);">
+                    <h6 class="mb-3 d-flex align-items-center text-primary">
+                        <i class="fas fa-info-circle me-2"></i>
+                        {% trans "معلومات الصنف" %}
+                    </h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <strong class="text-muted me-2">{% trans "رقم الصنف:" %}</strong>
+                                <span class="badge bg-secondary" id="modal-product-id"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <strong class="text-muted me-2">{% trans "اسم الصنف:" %}</strong>
+                                <span class="fw-medium" id="modal-product-name"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <strong class="text-muted me-2">{% trans "الكمية الحالية:" %}</strong>
+                                <span class="badge bg-danger" id="modal-product-quantity"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <strong class="text-muted me-2">{% trans "الحد الأدنى:" %}</strong>
+                                <span class="badge bg-warning" id="modal-product-min"></span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <form id="purchaseRequestForm">
                     <div class="mb-3">
-                        <label for="quantityRequested" class="form-label">{% trans "الكمية المطلوبة" %}</label>
-                        <input type="number" class="form-control" id="quantityRequested" min="1" required>
-                        <div class="form-text">{% trans "حدد الكمية المطلوبة للشراء." %}</div>
+                        <label for="quantityRequested" class="form-label fw-medium">
+                            <i class="fas fa-calculator me-1 text-primary"></i>
+                            {% trans "الكمية المطلوبة" %}
+                        </label>
+                        <input type="number" class="form-control form-control-lg" id="quantityRequested" min="1" required
+                               placeholder="{% trans 'أدخل الكمية المطلوبة' %}">
+                        <div class="form-text">
+                            <i class="fas fa-lightbulb me-1"></i>
+                            {% trans "حدد الكمية المطلوبة للشراء." %}
+                        </div>
                     </div>
                     <div class="mb-3">
-                        <label for="requestNotes" class="form-label">{% trans "ملاحظات (اختياري)" %}</label>
-                        <textarea class="form-control" id="requestNotes" rows="2"></textarea>
+                        <label for="requestNotes" class="form-label fw-medium">
+                            <i class="fas fa-sticky-note me-1 text-primary"></i>
+                            {% trans "ملاحظات (اختياري)" %}
+                        </label>
+                        <textarea class="form-control" id="requestNotes" rows="3"
+                                  placeholder="{% trans 'أضف أي ملاحظات إضافية...' %}"></textarea>
                     </div>
-                    <div id="purchaseRequestStatus" class="alert alert-warning d-none">
+                    <div id="purchaseRequestStatus" class="alert d-none">
                         <!-- سيتم استخدام هذا العنصر لعرض حالة الطلب إذا كان موجودًا بالفعل -->
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">{% trans "إلغاء" %}</button>
-                <button type="button" class="btn btn-primary" id="submitPurchaseRequest">{% trans "إرسال طلب الشراء" %}</button>
+            <div class="modal-footer bg-light border-0 p-3">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>
+                    {% trans "إلغاء" %}
+                </button>
+                <button type="button" class="btn btn-primary" id="submitPurchaseRequest">
+                    <i class="fas fa-paper-plane me-1"></i>
+                    {% trans "إرسال طلب الشراء" %}
+                </button>
             </div>
         </div>
     </div>

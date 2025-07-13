@@ -11,112 +11,803 @@
 <li class="breadcrumb-item active">لوحة تحكم طلبات الشراء</li>
 {% endblock %}
 
+{% block extra_css %}
+<style>
+    /* ===== MODERN PURCHASE ORDERS DASHBOARD STYLES ===== */
+    .dashboard-container {
+        padding: 0;
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        min-height: calc(100vh - 100px);
+    }
+
+    .dashboard-header {
+        background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+        color: white;
+        padding: 2.5rem 0;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+        border-radius: 0 0 1.5rem 1.5rem;
+    }
+
+    .dashboard-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='4'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
+        opacity: 0.3;
+    }
+
+    .dashboard-header-content {
+        position: relative;
+        z-index: 2;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 0 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+    }
+
+    .dashboard-title-section {
+        flex: 1;
+        min-width: 300px;
+    }
+
+    .dashboard-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        line-height: 1.2;
+    }
+
+    .dashboard-title-icon {
+        font-size: 2.2rem;
+        opacity: 0.9;
+    }
+
+    .dashboard-subtitle {
+        font-size: 1.1rem;
+        margin: 0.5rem 0 0 0;
+        opacity: 0.9;
+        font-weight: 400;
+    }
+
+    .dashboard-actions {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .action-btn {
+        background: rgba(255, 255, 255, 0.15);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.75rem;
+        text-decoration: none;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+    }
+
+    .action-btn:hover {
+        background: rgba(255, 255, 255, 0.25);
+        border-color: rgba(255, 255, 255, 0.5);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .action-btn-primary {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-color: transparent;
+    }
+
+    .action-btn-primary:hover {
+        background: linear-gradient(135deg, #059669 0%, #047857 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+    }
+
+    /* ===== MODERN STATISTICS GRID ===== */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+        padding: 0 2rem;
+        margin-bottom: 3rem;
+    }
+
+    .stats-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.8rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        transition: all 0.3s ease;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stats-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--card-accent-color, #3b82f6);
+        border-radius: 1rem 1rem 0 0;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    .stats-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+
+    .stats-card-icon {
+        width: 3rem;
+        height: 3rem;
+        border-radius: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        background: var(--card-accent-color, #3b82f6);
+    }
+
+    .stats-card-content {
+        flex: 1;
+    }
+
+    .stats-card-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #6b7280;
+        margin: 0 0 0.5rem 0;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .stats-card-value {
+        font-size: 2.25rem;
+        font-weight: 700;
+        color: #111827;
+        margin: 0;
+        line-height: 1;
+    }
+
+    .stats-card-footer {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid #f3f4f6;
+    }
+
+    .stats-card-description {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin: 0;
+    }
+
+    .stats-card-link {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: var(--card-accent-color, #3b82f6);
+        text-decoration: none;
+        font-weight: 500;
+        font-size: 0.875rem;
+        transition: color 0.2s ease;
+    }
+
+    .stats-card-link:hover {
+        color: var(--card-accent-secondary, #1e40af);
+    }
+
+    /* Card Color Variants */
+    .stats-card-primary {
+        --card-accent-color: #3b82f6;
+        --card-accent-secondary: #1e40af;
+    }
+
+    .stats-card-warning {
+        --card-accent-color: #f59e0b;
+        --card-accent-secondary: #d97706;
+    }
+
+    .stats-card-success {
+        --card-accent-color: #10b981;
+        --card-accent-secondary: #059669;
+    }
+
+    .stats-card-danger {
+        --card-accent-color: #ef4444;
+        --card-accent-secondary: #dc2626;
+    }
+
+    /* ===== CONTENT SECTIONS ===== */
+    .content-section {
+        padding: 0 2rem 2rem;
+    }
+
+    .content-card {
+        background: white;
+        border-radius: 1rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        overflow: hidden;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .content-card-header {
+        padding: 1.5rem 2rem;
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .content-card-title {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1f2937;
+    }
+
+    .content-card-title i {
+        color: #3b82f6;
+        font-size: 1.1rem;
+    }
+
+    .content-card-actions {
+        display: flex;
+        gap: 0.75rem;
+    }
+
+    .btn-secondary-outline {
+        background: transparent;
+        border: 2px solid #e5e7eb;
+        color: #6b7280;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        text-decoration: none;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+        font-size: 0.875rem;
+    }
+
+    .btn-secondary-outline:hover {
+        border-color: #3b82f6;
+        color: #3b82f6;
+        background: rgba(59, 130, 246, 0.05);
+    }
+
+    .content-card-body {
+        padding: 0;
+    }
+
+    /* ===== MODERN TABLE STYLES ===== */
+    .table-container {
+        overflow-x: auto;
+    }
+
+    .modern-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.875rem;
+    }
+
+    .modern-table thead th {
+        background: #f8fafc;
+        color: #374151;
+        font-weight: 600;
+        padding: 1rem 1.5rem;
+        text-align: right;
+        border-bottom: 2px solid #e5e7eb;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .table-row {
+        transition: background-color 0.2s ease;
+        border-bottom: 1px solid #f3f4f6;
+    }
+
+    .table-row:hover {
+        background: #f8fafc;
+    }
+
+    .table-cell {
+        padding: 1rem 1.5rem;
+        vertical-align: middle;
+        color: #374151;
+    }
+
+    .table-cell-primary {
+        padding: 1rem 1.5rem;
+        vertical-align: middle;
+    }
+
+    .request-number {
+        font-weight: 600;
+        color: #3b82f6;
+        font-family: 'Courier New', monospace;
+    }
+
+    .request-date {
+        color: #6b7280;
+        font-size: 0.875rem;
+    }
+
+    .user-info {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .user-name {
+        font-weight: 500;
+        color: #374151;
+    }
+
+    /* ===== STATUS BADGES ===== */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.5rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .status-warning {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-success {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-danger {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .status-info {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    /* ===== ACTION BUTTONS ===== */
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .action-btn-small {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 0.375rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        transition: all 0.2s ease;
+        font-size: 0.75rem;
+    }
+
+    .action-btn-view {
+        background: #eff6ff;
+        color: #2563eb;
+        border: 1px solid #dbeafe;
+    }
+
+    .action-btn-view:hover {
+        background: #2563eb;
+        color: white;
+        transform: scale(1.1);
+    }
+
+    /* ===== EMPTY STATE ===== */
+    .empty-state {
+        padding: 3rem 1.5rem;
+        text-align: center;
+    }
+
+    .empty-state-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .empty-state-content i {
+        font-size: 3rem;
+        color: #d1d5db;
+    }
+
+    .empty-state-content p {
+        color: #6b7280;
+        margin: 0;
+        font-size: 1rem;
+    }
+
+    .btn-primary-small {
+        background: #3b82f6;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        text-decoration: none;
+        font-weight: 500;
+        transition: background-color 0.2s ease;
+    }
+
+    .btn-primary-small:hover {
+        background: #1e40af;
+        color: white;
+    }
+
+    /* ===== RESPONSIVE DESIGN ===== */
+    @media (max-width: 1200px) {
+        .stats-grid {
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.2rem;
+        }
+
+        .dashboard-title {
+            font-size: 2.2rem;
+        }
+    }
+
+    @media (max-width: 992px) {
+        .stats-grid {
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1rem;
+            padding: 0 1.5rem;
+        }
+
+        .dashboard-header-content {
+            padding: 0 1.5rem;
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .dashboard-title-section {
+            min-width: auto;
+        }
+
+        .content-section {
+            padding: 0 1.5rem 2rem;
+        }
+
+        .dashboard-title {
+            font-size: 2rem;
+        }
+
+        .stats-card {
+            padding: 1.2rem;
+        }
+
+        .content-card-header {
+            padding: 1.25rem 1.5rem;
+            flex-direction: column;
+            align-items: stretch;
+            text-align: center;
+        }
+
+        .modern-table thead th,
+        .table-cell,
+        .table-cell-primary {
+            padding: 0.75rem 1rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-header {
+            padding: 2rem 0;
+            border-radius: 0 0 1rem 1rem;
+        }
+
+        .dashboard-title {
+            font-size: 1.75rem;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .dashboard-actions {
+            width: 100%;
+            justify-content: center;
+        }
+
+        .action-btn {
+            flex: 1;
+            justify-content: center;
+            min-width: 0;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+            padding: 0 1rem;
+        }
+
+        .content-section {
+            padding: 0 1rem 2rem;
+        }
+
+        .content-card {
+            border-radius: 0.75rem;
+        }
+
+        .content-card-header {
+            padding: 1rem;
+        }
+
+        .content-card-title {
+            font-size: 1.1rem;
+        }
+
+        /* Mobile table adjustments */
+        .modern-table {
+            font-size: 0.8rem;
+        }
+
+        .modern-table thead th {
+            padding: 0.75rem 0.5rem;
+            font-size: 0.7rem;
+        }
+
+        .table-cell,
+        .table-cell-primary {
+            padding: 0.75rem 0.5rem;
+        }
+
+        .status-badge {
+            font-size: 0.65rem;
+            padding: 0.25rem 0.5rem;
+        }
+
+        .action-btn-small {
+            width: 1.75rem;
+            height: 1.75rem;
+            font-size: 0.7rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .dashboard-header-content {
+            padding: 0 1rem;
+        }
+
+        .stats-grid {
+            padding: 0 0.5rem;
+        }
+
+        .content-section {
+            padding: 0 0.5rem 2rem;
+        }
+
+        .dashboard-title {
+            font-size: 1.5rem;
+        }
+
+        .dashboard-subtitle {
+            font-size: 1rem;
+        }
+
+        /* Hide some table columns on very small screens */
+        .modern-table th:nth-child(3),
+        .modern-table td:nth-child(3) {
+            display: none;
+        }
+    }
+
+    /* ===== RTL SUPPORT ===== */
+    [dir="rtl"] .stats-card-link i {
+        transform: scaleX(-1);
+    }
+
+    [dir="rtl"] .action-btn i {
+        margin-left: 0;
+        margin-right: 0.5rem;
+    }
+
+    [dir="rtl"] .modern-table thead th {
+        text-align: right;
+    }
+
+    [dir="rtl"] .dashboard-header-content {
+        direction: rtl;
+    }
+
+    [dir="rtl"] .content-card-title {
+        direction: rtl;
+    }
+
+    /* ===== ACCESSIBILITY ===== */
+    @media (prefers-reduced-motion: reduce) {
+        .stats-card,
+        .action-btn,
+        .table-row,
+        .action-btn-small {
+            transition: none;
+        }
+
+        .stats-card:hover {
+            transform: none;
+        }
+
+        .action-btn:hover {
+            transform: none;
+        }
+
+        .action-btn-view:hover {
+            transform: none;
+        }
+    }
+
+    /* Focus states for accessibility */
+    .action-btn:focus,
+    .stats-card-link:focus,
+    .btn-secondary-outline:focus,
+    .action-btn-small:focus {
+        outline: 2px solid #3b82f6;
+        outline-offset: 2px;
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="section-spacing">
-    <!-- Page Header -->
-    <div class="page-header">
-        <div class="page-header-content">
-            <div class="page-title">
-                <i class="fas fa-shopping-cart"></i>
-                <span>لوحة تحكم طلبات الشراء</span>
+<div class="dashboard-container">
+    <!-- Modern Dashboard Header -->
+    <div class="dashboard-header">
+        <div class="dashboard-header-content">
+            <div class="dashboard-title-section">
+                <h1 class="dashboard-title">
+                    <i class="fas fa-shopping-cart dashboard-title-icon"></i>
+                    <span>لوحة تحكم طلبات الشراء</span>
+                </h1>
+                <p class="dashboard-subtitle">إدارة ومتابعة طلبات الشراء والموافقات بكفاءة عالية</p>
             </div>
-            <div class="page-subtitle">إدارة ومتابعة طلبات الشراء والموافقات</div>
-        </div>
-        <div class="page-actions">
-            <a href="{% url 'purchase_orders:purchase_request_create' %}" class="btn btn-primary btn-with-icon">
-                <i class="fas fa-plus"></i>
-                <span>طلب شراء جديد</span>
-            </a>
+            <div class="dashboard-actions">
+                <a href="{% url 'Purchase_orders:create_purchase_request' %}" class="action-btn action-btn-primary">
+                    <i class="fas fa-plus"></i>
+                    <span>طلب شراء جديد</span>
+                </a>
+                <a href="{% url 'Purchase_orders:purchase_request_list' %}" class="action-btn">
+                    <i class="fas fa-list"></i>
+                    <span>عرض جميع الطلبات</span>
+                </a>
+            </div>
         </div>
     </div>
 
-    <!-- Statistics Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <!-- Enhanced Statistics Cards -->
+    <div class="stats-grid">
         <div class="stats-card stats-card-primary">
-            <div class="stats-card-icon">
-                <i class="fas fa-shopping-cart"></i>
+            <div class="stats-card-header">
+                <div class="stats-card-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
             </div>
             <div class="stats-card-content">
                 <div class="stats-card-title">إجمالي الطلبات</div>
                 <div class="stats-card-value">{{ total_requests }}</div>
             </div>
             <div class="stats-card-footer">
-                <span class="stats-card-description">العدد الكلي للطلبات</span>
+                <a href="{% url 'Purchase_orders:purchase_request_list' %}" class="stats-card-link">
+                    <span>عرض التفاصيل</span>
+                    <i class="fas fa-arrow-left"></i>
+                </a>
             </div>
         </div>
 
         <div class="stats-card stats-card-warning">
-            <div class="stats-card-icon">
-                <i class="fas fa-clock"></i>
+            <div class="stats-card-header">
+                <div class="stats-card-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
             </div>
             <div class="stats-card-content">
                 <div class="stats-card-title">قيد الانتظار</div>
                 <div class="stats-card-value">{{ pending_requests }}</div>
             </div>
             <div class="stats-card-footer">
-                <span class="stats-card-description">طلبات تنتظر الموافقة</span>
+                <a href="{% url 'Purchase_orders:pending_approval' %}" class="stats-card-link">
+                    <span>مراجعة الطلبات</span>
+                    <i class="fas fa-arrow-left"></i>
+                </a>
             </div>
         </div>
 
         <div class="stats-card stats-card-success">
-            <div class="stats-card-icon">
-                <i class="fas fa-check-circle"></i>
+            <div class="stats-card-header">
+                <div class="stats-card-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
             </div>
             <div class="stats-card-content">
                 <div class="stats-card-title">موافق عليها</div>
                 <div class="stats-card-value">{{ approved_requests }}</div>
             </div>
             <div class="stats-card-footer">
-                <span class="stats-card-description">طلبات تمت الموافقة عليها</span>
+                <a href="{% url 'Purchase_orders:approved_requests' %}" class="stats-card-link">
+                    <span>عرض المعتمدة</span>
+                    <i class="fas fa-arrow-left"></i>
+                </a>
             </div>
         </div>
 
         <div class="stats-card stats-card-danger">
-            <div class="stats-card-icon">
-                <i class="fas fa-times-circle"></i>
+            <div class="stats-card-header">
+                <div class="stats-card-icon">
+                    <i class="fas fa-times-circle"></i>
+                </div>
             </div>
             <div class="stats-card-content">
                 <div class="stats-card-title">مرفوضة</div>
                 <div class="stats-card-value">{{ rejected_requests }}</div>
             </div>
             <div class="stats-card-footer">
-                <span class="stats-card-description">طلبات مرفوضة</span>
+                <a href="{% url 'Purchase_orders:rejected_requests' %}" class="stats-card-link">
+                    <span>عرض المرفوضة</span>
+                    <i class="fas fa-arrow-left"></i>
+                </a>
             </div>
         </div>
     </div>
-                <h5 class="card-title">تمت الموافقة</h5>
-                <h2 class="display-4">{{ approved_requests }}</h2>
-                <p class="card-text">
-                    <i class="fas fa-check-circle"></i> طلبات تمت الموافقة عليها
-                </p>
+    <!-- Enhanced Recent Requests Section -->
+    <div class="content-section">
+        <div class="content-card">
+            <div class="content-card-header">
+                <div class="content-card-title">
+                    <i class="fas fa-history"></i>
+                    <span>أحدث طلبات الشراء</span>
+                </div>
+                <div class="content-card-actions">
+                    {% if perms.Purchase_orders.view_purchaserequest or user|is_admin %}
+                        <a href="{% url 'Purchase_orders:purchase_request_list' %}" class="btn-secondary-outline">
+                            <i class="fas fa-list"></i>
+                            <span>عرض الكل</span>
+                        </a>
+                    {% endif %}
+                </div>
             </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card bg-danger text-white">
-            <div class="card-body">
-                <h5 class="card-title">مرفوضة</h5>
-                <h2 class="display-4">{{ rejected_requests }}</h2>
-                <p class="card-text">
-                    <i class="fas fa-times-circle"></i> طلبات تم رفضها
-                </p>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- أحدث طلبات الشراء -->
-<div class="row">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header bg-light">
-                <h5 class="mb-0">
-                    <i class="fas fa-list me-2"></i>أحدث طلبات الشراء
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-striped">
+            <div class="content-card-body">
+                <div class="table-container">
+                    <table class="modern-table">
                         <thead>
                             <tr>
                                 <th>رقم الطلب</th>
@@ -128,46 +819,66 @@
                         </thead>
                         <tbody>
                             {% for request in recent_requests %}
-                            <tr>
-                                <td>{{ request.request_number }}</td>
-                                <td>{{ request.request_date|date:"Y-m-d H:i" }}</td>
-                                <td>{{ request.requested_by.get_full_name|default:request.requested_by.username }}</td>
-                                <td>
+                            <tr class="table-row">
+                                <td class="table-cell-primary">
+                                    <span class="request-number">{{ request.request_number }}</span>
+                                </td>
+                                <td class="table-cell">
+                                    <span class="request-date">{{ request.request_date|date:"Y-m-d H:i" }}</span>
+                                </td>
+                                <td class="table-cell">
+                                    <div class="user-info">
+                                        <span class="user-name">{{ request.requested_by.get_full_name|default:request.requested_by.username }}</span>
+                                    </div>
+                                </td>
+                                <td class="table-cell">
                                     {% if request.status == 'pending' %}
-                                        <span class="badge bg-warning">قيد الانتظار</span>
+                                        <span class="status-badge status-warning">
+                                            <i class="fas fa-clock"></i>
+                                            قيد الانتظار
+                                        </span>
                                     {% elif request.status == 'approved' %}
-                                        <span class="badge bg-success">تمت الموافقة</span>
+                                        <span class="status-badge status-success">
+                                            <i class="fas fa-check-circle"></i>
+                                            تمت الموافقة
+                                        </span>
                                     {% elif request.status == 'rejected' %}
-                                        <span class="badge bg-danger">مرفوض</span>
+                                        <span class="status-badge status-danger">
+                                            <i class="fas fa-times-circle"></i>
+                                            مرفوض
+                                        </span>
                                     {% elif request.status == 'completed' %}
-                                        <span class="badge bg-info">مكتمل</span>
+                                        <span class="status-badge status-info">
+                                            <i class="fas fa-check-double"></i>
+                                            مكتمل
+                                        </span>
                                     {% endif %}
                                 </td>
-                                <td>
-                                    <a href="{% url 'Purchase_orders:purchase_request_detail' pk=request.pk %}" class="btn btn-sm btn-primary">
-                                        <i class="fas fa-eye"></i> عرض
-                                    </a>
+                                <td class="table-cell">
+                                    <div class="action-buttons">
+                                        <a href="{% url 'Purchase_orders:purchase_request_detail' pk=request.pk %}"
+                                           class="action-btn-small action-btn-view"
+                                           title="عرض التفاصيل">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                             {% empty %}
                             <tr>
-                                <td colspan="5" class="text-center">لا توجد طلبات شراء حتى الآن</td>
+                                <td colspan="5" class="empty-state">
+                                    <div class="empty-state-content">
+                                        <i class="fas fa-inbox"></i>
+                                        <p>لا توجد طلبات شراء حتى الآن</p>
+                                        <a href="{% url 'Purchase_orders:create_purchase_request' %}" class="btn-primary-small">
+                                            إنشاء أول طلب شراء
+                                        </a>
+                                    </div>
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
-                </div>
-                <div class="text-end mt-3">
-                    {% if perms.Purchase_orders.view_purchaserequest or user|is_admin %}
-                        <a href="{% url 'Purchase_orders:purchase_request_list' %}" class="btn btn-primary">
-                            <i class="fas fa-list me-1"></i>عرض جميع الطلبات
-                        </a>
-                    {% endif %}
-                    {% if perms.Purchase_orders.add_purchaserequest or user|is_admin %}
-                        <a href="{% url 'Purchase_orders:create_purchase_request' %}" class="btn btn-success">
-                            <i class="fas fa-plus me-1"></i>إنشاء طلب جديد
-                        </a>
-                    {% endif %}
                 </div>
             </div>
         </div>
