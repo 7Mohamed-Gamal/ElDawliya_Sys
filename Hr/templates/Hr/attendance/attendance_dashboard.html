@@ -1,0 +1,589 @@
+{% extends 'Hr/base_hr.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}لوحة تحكم الحضور والانصراف - الدولية{% endblock %}
+
+{% block page_title %}لوحة تحكم الحضور والانصراف{% endblock %}
+{% block page_subtitle %}مراقبة وإدارة حضور الموظفين في الوقت الفعلي{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item">
+    <a href="{% url 'Hr:attendance:dashboard' %}" class="breadcrumb-link">
+        <i class="fas fa-clock"></i>
+        <span>الحضور والانصراف</span>
+    </a>
+</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Modern Attendance Dashboard Styles */
+    .attendance-header {
+        background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%);
+        color: white;
+        padding: var(--space-8) 0;
+        margin-bottom: var(--space-8);
+        border-radius: var(--radius-2xl);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .attendance-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='40' height='40' viewBox='0 0 40 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='20' cy='20' r='2'/%3E%3C/g%3E%3C/svg%3E") repeat;
+        opacity: 0.3;
+    }
+
+    .attendance-header-content {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: var(--space-4);
+    }
+
+    .live-time {
+        background: rgba(255, 255, 255, 0.1);
+        padding: var(--space-4) var(--space-6);
+        border-radius: var(--radius-xl);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .live-time-display {
+        font-size: var(--text-2xl);
+        font-weight: var(--font-bold);
+        margin-bottom: var(--space-1);
+    }
+
+    .live-date-display {
+        font-size: var(--text-sm);
+        opacity: 0.9;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: var(--space-6);
+        margin-bottom: var(--space-8);
+    }
+
+    .stats-card {
+        background: var(--bg-primary);
+        border-radius: var(--radius-2xl);
+        padding: var(--space-6);
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--border-primary);
+        transition: all var(--transition-base);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-2xl);
+    }
+
+    .stats-card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--space-4);
+    }
+
+    .stats-card-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: var(--radius-xl);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: var(--text-2xl);
+    }
+
+    .stats-card-present .stats-card-icon {
+        background: linear-gradient(135deg, var(--success-500) 0%, var(--success-600) 100%);
+    }
+
+    .stats-card-absent .stats-card-icon {
+        background: linear-gradient(135deg, var(--danger-500) 0%, var(--danger-600) 100%);
+    }
+
+    .stats-card-late .stats-card-icon {
+        background: linear-gradient(135deg, var(--warning-500) 0%, var(--warning-600) 100%);
+    }
+
+    .stats-card-overtime .stats-card-icon {
+        background: linear-gradient(135deg, var(--info-500) 0%, var(--info-600) 100%);
+    }
+
+    .stats-card-value {
+        font-size: var(--text-4xl);
+        font-weight: var(--font-bold);
+        color: var(--text-primary);
+        margin-bottom: var(--space-2);
+        line-height: 1;
+    }
+
+    .stats-card-label {
+        color: var(--text-secondary);
+        font-weight: var(--font-medium);
+        margin-bottom: var(--space-3);
+    }
+
+    .stats-card-trend {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        font-size: var(--text-sm);
+    }
+
+    .trend-up {
+        color: var(--success-600);
+    }
+
+    .trend-down {
+        color: var(--danger-600);
+    }
+
+    .trend-neutral {
+        color: var(--gray-600);
+    }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr;
+        gap: var(--space-8);
+        margin-bottom: var(--space-8);
+    }
+
+    .dashboard-card {
+        background: var(--bg-primary);
+        border-radius: var(--radius-2xl);
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--border-primary);
+        overflow: hidden;
+    }
+
+    .dashboard-card-header {
+        background: linear-gradient(135deg, var(--gray-50) 0%, var(--gray-100) 100%);
+        padding: var(--space-6);
+        border-bottom: 1px solid var(--border-primary);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .dashboard-card-title {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+        font-weight: var(--font-semibold);
+        color: var(--text-primary);
+    }
+
+    .dashboard-card-body {
+        padding: var(--space-6);
+    }
+
+    .recent-activity-item {
+        display: flex;
+        align-items: center;
+        gap: var(--space-4);
+        padding: var(--space-4);
+        border-radius: var(--radius-lg);
+        margin-bottom: var(--space-3);
+        transition: background-color var(--transition-fast);
+    }
+
+    .recent-activity-item:hover {
+        background: var(--gray-50);
+    }
+
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: var(--radius-lg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: var(--text-lg);
+    }
+
+    .activity-check-in {
+        background: linear-gradient(135deg, var(--success-500) 0%, var(--success-600) 100%);
+    }
+
+    .activity-check-out {
+        background: linear-gradient(135deg, var(--info-500) 0%, var(--info-600) 100%);
+    }
+
+    .activity-break {
+        background: linear-gradient(135deg, var(--warning-500) 0%, var(--warning-600) 100%);
+    }
+
+    .activity-details h6 {
+        margin: 0 0 var(--space-1) 0;
+        color: var(--text-primary);
+        font-weight: var(--font-medium);
+    }
+
+    .activity-meta {
+        color: var(--text-secondary);
+        font-size: var(--text-sm);
+    }
+
+    .activity-time {
+        color: var(--text-tertiary);
+        font-size: var(--text-sm);
+        font-weight: var(--font-medium);
+    }
+
+    .quick-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-4);
+    }
+
+    .quick-action-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--space-3);
+        padding: var(--space-6);
+        border: 2px solid var(--border-primary);
+        border-radius: var(--radius-xl);
+        background: var(--bg-primary);
+        color: var(--text-primary);
+        text-decoration: none;
+        transition: all var(--transition-fast);
+    }
+
+    .quick-action-btn:hover {
+        border-color: var(--primary-500);
+        background: var(--primary-50);
+        color: var(--primary-700);
+        transform: translateY(-2px);
+    }
+
+    .quick-action-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: var(--radius-xl);
+        background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: var(--text-xl);
+    }
+
+    .chart-container {
+        height: 300px;
+        position: relative;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .attendance-header-content {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .quick-actions {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Attendance Header -->
+<div class="attendance-header">
+    <div class="attendance-header-content">
+        <div>
+            <h1 class="mb-2">
+                <i class="fas fa-clock me-3"></i>
+                لوحة تحكم الحضور والانصراف
+            </h1>
+            <p class="mb-0 opacity-90">مراقبة وإدارة حضور الموظفين في الوقت الفعلي</p>
+        </div>
+        <div class="live-time">
+            <div class="live-time-display" id="live-time">--:--:--</div>
+            <div class="live-date-display" id="live-date">-- -- ----</div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="stats-grid">
+    <div class="stats-card stats-card-present">
+        <div class="stats-card-header">
+            <div class="stats-card-icon">
+                <i class="fas fa-user-check"></i>
+            </div>
+        </div>
+        <div class="stats-card-value">{{ stats.present_today|default:0 }}</div>
+        <div class="stats-card-label">حاضر اليوم</div>
+        <div class="stats-card-trend">
+            <i class="fas fa-arrow-up trend-up"></i>
+            <span>+5% من الأمس</span>
+        </div>
+    </div>
+
+    <div class="stats-card stats-card-absent">
+        <div class="stats-card-header">
+            <div class="stats-card-icon">
+                <i class="fas fa-user-times"></i>
+            </div>
+        </div>
+        <div class="stats-card-value">{{ stats.absent_today|default:0 }}</div>
+        <div class="stats-card-label">غائب اليوم</div>
+        <div class="stats-card-trend">
+            <i class="fas fa-arrow-down trend-down"></i>
+            <span>-2% من الأمس</span>
+        </div>
+    </div>
+
+    <div class="stats-card stats-card-late">
+        <div class="stats-card-header">
+            <div class="stats-card-icon">
+                <i class="fas fa-clock"></i>
+            </div>
+        </div>
+        <div class="stats-card-value">{{ stats.late_today|default:0 }}</div>
+        <div class="stats-card-label">متأخر اليوم</div>
+        <div class="stats-card-trend">
+            <i class="fas fa-minus trend-neutral"></i>
+            <span>نفس الأمس</span>
+        </div>
+    </div>
+
+    <div class="stats-card stats-card-overtime">
+        <div class="stats-card-header">
+            <div class="stats-card-icon">
+                <i class="fas fa-business-time"></i>
+            </div>
+        </div>
+        <div class="stats-card-value">{{ stats.overtime_today|default:0 }}</div>
+        <div class="stats-card-label">عمل إضافي اليوم</div>
+        <div class="stats-card-trend">
+            <i class="fas fa-arrow-up trend-up"></i>
+            <span>+12% من الأمس</span>
+        </div>
+    </div>
+</div>
+
+<!-- Dashboard Grid -->
+<div class="dashboard-grid">
+    <!-- Recent Activity -->
+    <div class="dashboard-card">
+        <div class="dashboard-card-header">
+            <h5 class="dashboard-card-title">
+                <i class="fas fa-history"></i>
+                <span>النشاط الأخير</span>
+            </h5>
+            <a href="{% url 'Hr:attendance:record_list' %}" class="btn btn-outline-primary btn-sm">
+                عرض الكل
+            </a>
+        </div>
+        <div class="dashboard-card-body">
+            {% for activity in recent_activities %}
+            <div class="recent-activity-item">
+                <div class="activity-icon activity-{{ activity.record_type }}">
+                    {% if activity.record_type == 'in' %}
+                        <i class="fas fa-sign-in-alt"></i>
+                    {% elif activity.record_type == 'out' %}
+                        <i class="fas fa-sign-out-alt"></i>
+                    {% else %}
+                        <i class="fas fa-coffee"></i>
+                    {% endif %}
+                </div>
+                <div class="activity-details flex-grow-1">
+                    <h6>{{ activity.employee.full_name }}</h6>
+                    <div class="activity-meta">
+                        {% if activity.record_type == 'in' %}
+                            دخول - {{ activity.record_time|time:"H:i" }}
+                        {% elif activity.record_type == 'out' %}
+                            خروج - {{ activity.record_time|time:"H:i" }}
+                        {% else %}
+                            راحة - {{ activity.record_time|time:"H:i" }}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="activity-time">
+                    {{ activity.record_datetime|timesince }}
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-4">
+                <i class="fas fa-clock fa-2x text-muted mb-3"></i>
+                <p class="text-muted">لا توجد أنشطة حديثة</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="dashboard-card">
+        <div class="dashboard-card-header">
+            <h5 class="dashboard-card-title">
+                <i class="fas fa-bolt"></i>
+                <span>إجراءات سريعة</span>
+            </h5>
+        </div>
+        <div class="dashboard-card-body">
+            <div class="quick-actions">
+                <a href="{% url 'Hr:attendance:record_create' %}" class="quick-action-btn">
+                    <div class="quick-action-icon">
+                        <i class="fas fa-plus"></i>
+                    </div>
+                    <span>تسجيل حضور</span>
+                </a>
+
+                <a href="{% url 'Hr:attendance:shift_list' %}" class="quick-action-btn">
+                    <div class="quick-action-icon">
+                        <i class="fas fa-calendar-alt"></i>
+                    </div>
+                    <span>إدارة الورديات</span>
+                </a>
+
+                <a href="{% url 'Hr:attendance:report_list' %}" class="quick-action-btn">
+                    <div class="quick-action-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <span>التقارير</span>
+                </a>
+
+                <a href="{% url 'Hr:attendance:settings' %}" class="quick-action-btn">
+                    <div class="quick-action-icon">
+                        <i class="fas fa-cog"></i>
+                    </div>
+                    <span>الإعدادات</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Attendance Chart -->
+<div class="dashboard-card">
+    <div class="dashboard-card-header">
+        <h5 class="dashboard-card-title">
+            <i class="fas fa-chart-line"></i>
+            <span>إحصائيات الحضور الأسبوعية</span>
+        </h5>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-download me-2"></i>
+                تصدير
+            </button>
+        </div>
+    </div>
+    <div class="dashboard-card-body">
+        <div class="chart-container">
+            <canvas id="attendanceChart"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Live time update
+    function updateLiveTime() {
+        const now = new Date();
+        const timeElement = document.getElementById('live-time');
+        const dateElement = document.getElementById('live-date');
+        
+        if (timeElement) {
+            timeElement.textContent = now.toLocaleTimeString('ar-EG', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+        
+        if (dateElement) {
+            dateElement.textContent = now.toLocaleDateString('ar-EG', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+    }
+    
+    // Update time immediately and then every second
+    updateLiveTime();
+    setInterval(updateLiveTime, 1000);
+    
+    // Attendance Chart
+    const ctx = document.getElementById('attendanceChart');
+    if (ctx) {
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'],
+                datasets: [{
+                    label: 'حاضر',
+                    data: [85, 92, 88, 94, 89, 87, 0],
+                    borderColor: 'rgb(34, 197, 94)',
+                    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                    tension: 0.4
+                }, {
+                    label: 'غائب',
+                    data: [15, 8, 12, 6, 11, 13, 0],
+                    borderColor: 'rgb(239, 68, 68)',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    tension: 0.4
+                }, {
+                    label: 'متأخر',
+                    data: [5, 3, 7, 2, 4, 6, 0],
+                    borderColor: 'rgb(245, 158, 11)',
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

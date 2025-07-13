@@ -1,0 +1,578 @@
+{% extends 'Hr/base_hr.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}
+{% if company %}تعديل الشركة{% else %}إضافة شركة جديدة{% endif %} - الدولية
+{% endblock %}
+
+{% block page_title %}
+{% if company %}تعديل بيانات الشركة{% else %}إضافة شركة جديدة{% endif %}
+{% endblock %}
+
+{% block page_subtitle %}
+{% if company %}تحديث معلومات الشركة في النظام{% else %}إدخال بيانات شركة جديدة في النظام{% endif %}
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item">
+    <a href="{% url 'Hr:companies:list' %}" class="breadcrumb-link">
+        <i class="fas fa-building"></i>
+        <span>الشركات</span>
+    </a>
+</li>
+{% if company %}
+<li class="breadcrumb-item">
+    <a href="{% url 'Hr:companies:detail' company.pk %}" class="breadcrumb-link">
+        <span>{{ company.name }}</span>
+    </a>
+</li>
+<li class="breadcrumb-item active">تعديل</li>
+{% else %}
+<li class="breadcrumb-item active">إضافة شركة</li>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Modern Form Styles */
+    .form-container {
+        background: var(--bg-primary);
+        border-radius: var(--radius-2xl);
+        box-shadow: var(--shadow-lg);
+        border: 1px solid var(--border-primary);
+        overflow: hidden;
+    }
+
+    .form-header {
+        background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%);
+        color: white;
+        padding: var(--space-6);
+        text-align: center;
+    }
+
+    .form-body {
+        padding: var(--space-8);
+    }
+
+    .form-section {
+        margin-bottom: var(--space-8);
+    }
+
+    .form-section-title {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+        margin-bottom: var(--space-6);
+        padding-bottom: var(--space-3);
+        border-bottom: 2px solid var(--border-primary);
+        color: var(--text-primary);
+        font-weight: var(--font-semibold);
+        font-size: var(--text-lg);
+    }
+
+    .form-section-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: var(--radius-lg);
+        background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+    }
+
+    .form-group {
+        margin-bottom: var(--space-6);
+    }
+
+    .form-label {
+        font-weight: var(--font-medium);
+        color: var(--text-primary);
+        margin-bottom: var(--space-2);
+        display: block;
+    }
+
+    .form-control {
+        border: 1px solid var(--border-primary);
+        border-radius: var(--radius-lg);
+        padding: var(--space-3) var(--space-4);
+        transition: all var(--transition-fast);
+        background: var(--bg-primary);
+    }
+
+    .form-control:focus {
+        border-color: var(--primary-500);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        outline: none;
+    }
+
+    .form-text {
+        color: var(--text-tertiary);
+        font-size: var(--text-sm);
+        margin-top: var(--space-1);
+    }
+
+    .color-input-group {
+        display: flex;
+        gap: var(--space-3);
+        align-items: center;
+    }
+
+    .color-preview {
+        width: 40px;
+        height: 40px;
+        border-radius: var(--radius-lg);
+        border: 2px solid var(--border-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .logo-upload-area {
+        border: 2px dashed var(--border-primary);
+        border-radius: var(--radius-lg);
+        padding: var(--space-6);
+        text-align: center;
+        transition: all var(--transition-fast);
+        cursor: pointer;
+    }
+
+    .logo-upload-area:hover {
+        border-color: var(--primary-500);
+        background: var(--primary-50);
+    }
+
+    .logo-preview {
+        max-width: 200px;
+        max-height: 200px;
+        border-radius: var(--radius-lg);
+        margin: var(--space-4) auto;
+        display: block;
+    }
+
+    .form-actions {
+        background: var(--gray-50);
+        padding: var(--space-6);
+        border-top: 1px solid var(--border-primary);
+        display: flex;
+        gap: var(--space-3);
+        justify-content: flex-end;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-600) 100%);
+        border: none;
+        padding: var(--space-3) var(--space-6);
+        border-radius: var(--radius-lg);
+        font-weight: var(--font-medium);
+        transition: all var(--transition-fast);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .btn-secondary {
+        background: var(--gray-100);
+        color: var(--gray-700);
+        border: 1px solid var(--border-primary);
+        padding: var(--space-3) var(--space-6);
+        border-radius: var(--radius-lg);
+        font-weight: var(--font-medium);
+        transition: all var(--transition-fast);
+    }
+
+    .btn-secondary:hover {
+        background: var(--gray-200);
+        color: var(--gray-800);
+    }
+
+    .error-message {
+        color: var(--danger-600);
+        font-size: var(--text-sm);
+        margin-top: var(--space-1);
+    }
+
+    .form-control.is-invalid {
+        border-color: var(--danger-500);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .form-body {
+            padding: var(--space-4);
+        }
+
+        .form-actions {
+            flex-direction: column;
+        }
+
+        .color-input-group {
+            flex-direction: column;
+            align-items: stretch;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <!-- Form Header -->
+    <div class="form-header">
+        <h2 class="mb-2">
+            <i class="fas fa-building me-3"></i>
+            {% if company %}تعديل بيانات الشركة{% else %}إضافة شركة جديدة{% endif %}
+        </h2>
+        <p class="mb-0 opacity-90">
+            {% if company %}تحديث معلومات {{ company.name }}{% else %}إدخال بيانات الشركة الجديدة{% endif %}
+        </p>
+    </div>
+
+    <!-- Form Body -->
+    <form method="post" enctype="multipart/form-data" class="form-body">
+        {% csrf_token %}
+
+        <!-- Basic Information Section -->
+        <div class="form-section">
+            <h3 class="form-section-title">
+                <div class="form-section-icon">
+                    <i class="fas fa-info-circle"></i>
+                </div>
+                <span>المعلومات الأساسية</span>
+            </h3>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.name.id_for_label }}" class="form-label">{{ form.name.label }}</label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                            <div class="error-message">{{ form.name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.legal_name.id_for_label }}" class="form-label">{{ form.legal_name.label }}</label>
+                        {{ form.legal_name }}
+                        {% if form.legal_name.errors %}
+                            <div class="error-message">{{ form.legal_name.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.tax_id.id_for_label }}" class="form-label">{{ form.tax_id.label }}</label>
+                        {{ form.tax_id }}
+                        {% if form.tax_id.errors %}
+                            <div class="error-message">{{ form.tax_id.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.registration_number.id_for_label }}" class="form-label">{{ form.registration_number.label }}</label>
+                        {{ form.registration_number }}
+                        {% if form.registration_number.errors %}
+                            <div class="error-message">{{ form.registration_number.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.industry.id_for_label }}" class="form-label">{{ form.industry.label }}</label>
+                        {{ form.industry }}
+                        {% if form.industry.errors %}
+                            <div class="error-message">{{ form.industry.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.established_date.id_for_label }}" class="form-label">{{ form.established_date.label }}</label>
+                        {{ form.established_date }}
+                        {% if form.established_date.errors %}
+                            <div class="error-message">{{ form.established_date.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contact Information Section -->
+        <div class="form-section">
+            <h3 class="form-section-title">
+                <div class="form-section-icon">
+                    <i class="fas fa-address-book"></i>
+                </div>
+                <span>معلومات الاتصال</span>
+            </h3>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.email.id_for_label }}" class="form-label">{{ form.email.label }}</label>
+                        {{ form.email }}
+                        {% if form.email.errors %}
+                            <div class="error-message">{{ form.email.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.phone.id_for_label }}" class="form-label">{{ form.phone.label }}</label>
+                        {{ form.phone }}
+                        {% if form.phone.errors %}
+                            <div class="error-message">{{ form.phone.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.website.id_for_label }}" class="form-label">{{ form.website.label }}</label>
+                {{ form.website }}
+                {% if form.website.errors %}
+                    <div class="error-message">{{ form.website.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.address.id_for_label }}" class="form-label">{{ form.address.label }}</label>
+                {{ form.address }}
+                {% if form.address.errors %}
+                    <div class="error-message">{{ form.address.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="{{ form.city.id_for_label }}" class="form-label">{{ form.city.label }}</label>
+                        {{ form.city }}
+                        {% if form.city.errors %}
+                            <div class="error-message">{{ form.city.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="{{ form.country.id_for_label }}" class="form-label">{{ form.country.label }}</label>
+                        {{ form.country }}
+                        {% if form.country.errors %}
+                            <div class="error-message">{{ form.country.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="{{ form.postal_code.id_for_label }}" class="form-label">{{ form.postal_code.label }}</label>
+                        {{ form.postal_code }}
+                        {% if form.postal_code.errors %}
+                            <div class="error-message">{{ form.postal_code.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Branding Section -->
+        <div class="form-section">
+            <h3 class="form-section-title">
+                <div class="form-section-icon">
+                    <i class="fas fa-palette"></i>
+                </div>
+                <span>الهوية البصرية</span>
+            </h3>
+
+            <div class="form-group">
+                <label for="{{ form.logo.id_for_label }}" class="form-label">{{ form.logo.label }}</label>
+                <div class="logo-upload-area" onclick="document.getElementById('{{ form.logo.id_for_label }}').click()">
+                    {% if company.logo %}
+                        <img src="{{ company.logo.url }}" alt="Company Logo" class="logo-preview" id="logo-preview">
+                    {% else %}
+                        <div id="logo-placeholder">
+                            <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">اضغط لرفع شعار الشركة</p>
+                            <small class="text-muted">PNG, JPG, GIF (حد أقصى 5MB)</small>
+                        </div>
+                    {% endif %}
+                </div>
+                {{ form.logo }}
+                {% if form.logo.errors %}
+                    <div class="error-message">{{ form.logo.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.primary_color.id_for_label }}" class="form-label">{{ form.primary_color.label }}</label>
+                        <div class="color-input-group">
+                            {{ form.primary_color }}
+                            <div class="color-preview" id="primary-color-preview"></div>
+                        </div>
+                        {% if form.primary_color.errors %}
+                            <div class="error-message">{{ form.primary_color.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.secondary_color.id_for_label }}" class="form-label">{{ form.secondary_color.label }}</label>
+                        <div class="color-input-group">
+                            {{ form.secondary_color }}
+                            <div class="color-preview" id="secondary-color-preview"></div>
+                        </div>
+                        {% if form.secondary_color.errors %}
+                            <div class="error-message">{{ form.secondary_color.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Section -->
+        <div class="form-section">
+            <h3 class="form-section-title">
+                <div class="form-section-icon">
+                    <i class="fas fa-cog"></i>
+                </div>
+                <span>الإعدادات</span>
+            </h3>
+
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="{{ form.timezone.id_for_label }}" class="form-label">{{ form.timezone.label }}</label>
+                        {{ form.timezone }}
+                        {% if form.timezone.errors %}
+                            <div class="error-message">{{ form.timezone.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="{{ form.currency.id_for_label }}" class="form-label">{{ form.currency.label }}</label>
+                        {{ form.currency }}
+                        {% if form.currency.errors %}
+                            <div class="error-message">{{ form.currency.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="{{ form.fiscal_year_start.id_for_label }}" class="form-label">{{ form.fiscal_year_start.label }}</label>
+                        {{ form.fiscal_year_start }}
+                        {% if form.fiscal_year_start.errors %}
+                            <div class="error-message">{{ form.fiscal_year_start.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.employee_count.id_for_label }}" class="form-label">{{ form.employee_count.label }}</label>
+                        {{ form.employee_count }}
+                        {% if form.employee_count.errors %}
+                            <div class="error-message">{{ form.employee_count.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <div class="form-check">
+                            {{ form.is_active }}
+                            <label for="{{ form.is_active.id_for_label }}" class="form-check-label">
+                                {{ form.is_active.label }}
+                            </label>
+                        </div>
+                        {% if form.is_active.errors %}
+                            <div class="error-message">{{ form.is_active.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+        <a href="{% if company %}{% url 'Hr:companies:detail' company.pk %}{% else %}{% url 'Hr:companies:list' %}{% endif %}" class="btn btn-secondary">
+            <i class="fas fa-times me-2"></i>
+            إلغاء
+        </a>
+        <button type="submit" form="company-form" class="btn btn-primary">
+            <i class="fas fa-save me-2"></i>
+            {% if company %}تحديث البيانات{% else %}حفظ الشركة{% endif %}
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Logo preview functionality
+    const logoInput = document.getElementById('{{ form.logo.id_for_label }}');
+    const logoPreview = document.getElementById('logo-preview');
+    const logoPlaceholder = document.getElementById('logo-placeholder');
+    
+    if (logoInput) {
+        logoInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    if (logoPreview) {
+                        logoPreview.src = e.target.result;
+                    } else {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'logo-preview';
+                        img.id = 'logo-preview';
+                        logoPlaceholder.style.display = 'none';
+                        logoPlaceholder.parentNode.appendChild(img);
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+    
+    // Color preview functionality
+    const primaryColorInput = document.getElementById('{{ form.primary_color.id_for_label }}');
+    const primaryColorPreview = document.getElementById('primary-color-preview');
+    const secondaryColorInput = document.getElementById('{{ form.secondary_color.id_for_label }}');
+    const secondaryColorPreview = document.getElementById('secondary-color-preview');
+    
+    function updateColorPreview(input, preview) {
+        if (input && preview) {
+            preview.style.backgroundColor = input.value;
+            input.addEventListener('input', function() {
+                preview.style.backgroundColor = this.value;
+            });
+        }
+    }
+    
+    updateColorPreview(primaryColorInput, primaryColorPreview);
+    updateColorPreview(secondaryColorInput, secondaryColorPreview);
+    
+    // Form submission
+    const form = document.querySelector('form');
+    if (form) {
+        form.id = 'company-form';
+    }
+});
+</script>
+{% endblock %}

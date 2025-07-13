@@ -27,18 +27,32 @@ class LegacyDepartment(models.Model):
 
 
 class Job(models.Model):
-    """Legacy Job model"""
-    jop_code = models.IntegerField(primary_key=True, verbose_name=_("رمز الوظيفة"))
-    jop_name = models.CharField(max_length=250, verbose_name=_("اسم الوظيفة"))
-    is_active = models.BooleanField(default=True, verbose_name=_("نشط"))
-    note = models.TextField(null=True, blank=True, verbose_name=_("ملاحظات"))
+    """Legacy Job model - matches actual Tbl_Jop table structure"""
+    jop_code = models.IntegerField(
+        db_column='Jop_Code',
+        primary_key=True,
+        verbose_name=_("رمز الوظيفة")
+    )
+    jop_name = models.CharField(
+        db_column='Jop_Name',
+        max_length=50,
+        verbose_name=_("اسم الوظيفة")
+    )
+    department = models.ForeignKey(
+        'LegacyDepartment',
+        db_column='Dept_Code',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name=_("القسم")
+    )
 
     def __str__(self):
         return self.jop_name or ''
 
     class Meta:
         managed = True
-        db_table = 'Tbl_Job'
+        db_table = 'Tbl_Jop'
         verbose_name = _("الوظيفة")
         verbose_name_plural = _("الوظائف")
 

@@ -8,26 +8,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="ElDawliya HR - Modern Human Resources Management System">
     <meta name="author" content="ElDawliya Systems">
+    <meta name="theme-color" content="#2563eb">
     <title>{% block title %}نظام إدارة الموارد البشرية - الدولية{% endblock %}</title>
 
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
+    <link rel="apple-touch-icon" href="{% static 'images/apple-touch-icon.png' %}">
 
     <!-- Google Fonts - Cairo Primary -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&family=Tajawal:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Bootstrap 5 RTL CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    {% if text_direction == 'rtl' %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    {% else %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    {% endif %}
 
     <!-- Font Awesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <!-- Chart.js for Dashboard Analytics -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <!-- Modern Design System -->
+    <!-- ElDawliya Design System -->
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
 
     <!-- HR Module Specific Styles -->
@@ -46,16 +52,19 @@
         </div>
     </div>
 
+    <!-- Modern App Container -->
     <div class="app-container">
         <!-- Mobile Menu Overlay -->
         <div class="mobile-overlay" id="mobileOverlay"></div>
 
-        <!-- Sidebar Navigation -->
+        <!-- Enhanced Sidebar Navigation -->
         <aside class="sidebar" id="sidebar">
-            <!-- Brand Section -->
+            <!-- Modern Brand Section -->
             <div class="sidebar-brand">
                 <div class="sidebar-brand-icon">
-                    <i class="fas fa-building text-primary"></i>
+                    <div class="brand-logo">
+                        <i class="fas fa-building"></i>
+                    </div>
                 </div>
                 <div class="sidebar-brand-text">
                     <h1 class="sidebar-brand-title">الدولية</h1>
@@ -66,14 +75,22 @@
                 </button>
             </div>
 
-            <!-- User Profile Section -->
+            <!-- Enhanced User Profile Section -->
             <div class="sidebar-user-profile">
                 <div class="user-avatar">
-                    <i class="fas fa-user-circle"></i>
+                    <div class="avatar-circle">
+                        {% if user.profile.photo %}
+                            <img src="{{ user.profile.photo.url }}" alt="{{ user.get_full_name }}" class="avatar-img">
+                        {% else %}
+                            <span class="avatar-initials">{{ user.get_full_name.0|default:user.username.0|upper }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="user-status-indicator"></div>
                 </div>
                 <div class="user-info">
                     <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
                     <div class="user-role">مدير الموارد البشرية</div>
+                    <div class="user-status">متصل الآن</div>
                 </div>
             </div>
 
@@ -320,51 +337,64 @@
             </div>
         </aside>
 
-        <!-- Main Content Area -->
+        <!-- Enhanced Main Content Area -->
         <div class="main-content">
-            <!-- Top Navigation Bar -->
+            <!-- Modern Top Navigation Bar -->
             <nav class="navbar">
                 <div class="navbar-left">
                     <button class="mobile-menu-toggle" id="mobileMenuToggle">
                         <i class="fas fa-bars"></i>
                     </button>
                     <div class="navbar-title-section">
-                        <h1 class="navbar-title">{% block page_title %}نظام الموارد البشرية{% endblock %}</h1>
-                        <p class="navbar-subtitle">{% block page_subtitle %}إدارة شاملة للموارد البشرية{% endblock %}</p>
+                        <div class="page-header">
+                            <h1 class="navbar-title">{% block page_title %}نظام الموارد البشرية{% endblock %}</h1>
+                            <p class="navbar-subtitle">{% block page_subtitle %}إدارة شاملة للموارد البشرية{% endblock %}</p>
+                        </div>
                     </div>
                 </div>
 
                 <div class="navbar-right">
+                    <!-- Search Bar -->
+                    <div class="navbar-search d-none d-md-flex">
+                        <div class="search-container">
+                            <i class="fas fa-search search-icon"></i>
+                            <input type="text" class="search-input" placeholder="البحث في النظام..." id="globalSearch">
+                        </div>
+                    </div>
+
                     <!-- Notifications -->
                     <div class="navbar-notifications">
-                        <button class="btn btn-link position-relative" id="notificationsToggle">
+                        <button class="navbar-action-btn" id="notificationsToggle" title="الإشعارات">
                             <i class="fas fa-bell"></i>
-                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                3
-                                <span class="visually-hidden">إشعارات جديدة</span>
-                            </span>
+                            <span class="notification-badge">3</span>
                         </button>
                     </div>
 
                     <!-- Theme Toggle -->
-                    <button id="themeToggle" class="btn btn-link theme-toggle" title="تبديل الوضع الليلي/النهاري">
+                    <button id="themeToggle" class="navbar-action-btn" title="تبديل الوضع الليلي/النهاري">
                         <i id="themeIcon" class="fas fa-moon"></i>
                     </button>
 
                     <!-- User Dropdown -->
                     <div class="dropdown">
-                        <button class="btn btn-link dropdown-toggle navbar-user" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <button class="navbar-user-btn" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
                             <div class="navbar-user-avatar">
-                                {{ request.user.get_full_name.0|default:request.user.username.0|upper }}
+                                {% if request.user.profile.photo %}
+                                    <img src="{{ request.user.profile.photo.url }}" alt="{{ request.user.get_full_name }}" class="user-avatar-img">
+                                {% else %}
+                                    <span class="user-avatar-text">{{ request.user.get_full_name.0|default:request.user.username.0|upper }}</span>
+                                {% endif %}
                             </div>
                             <div class="navbar-user-info d-none d-md-block">
                                 <div class="navbar-user-name">{{ request.user.get_full_name|default:request.user.username }}</div>
                                 <div class="navbar-user-role">مدير الموارد البشرية</div>
                             </div>
+                            <i class="fas fa-chevron-down user-dropdown-arrow"></i>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i>الملف الشخصي</a></li>
                             <li><a class="dropdown-item" href="#"><i class="fas fa-cog me-2"></i>الإعدادات</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-question-circle me-2"></i>المساعدة</a></li>
                             <li><hr class="dropdown-divider"></li>
                             <li><a class="dropdown-item text-danger" href="{% url 'accounts:logout' %}"><i class="fas fa-sign-out-alt me-2"></i>تسجيل الخروج</a></li>
                         </ul>
@@ -372,23 +402,51 @@
                 </div>
             </nav>
 
-            <!-- Breadcrumb Navigation -->
+            <!-- Enhanced Breadcrumb Navigation -->
             <nav aria-label="breadcrumb" class="breadcrumb-nav">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item"><a href="{% url 'Hr:dashboard' %}"><i class="fas fa-home"></i> الرئيسية</a></li>
-                    {% block breadcrumb %}{% endblock %}
-                </ol>
+                <div class="breadcrumb-container">
+                    <ol class="breadcrumb">
+                        <li class="breadcrumb-item">
+                            <a href="{% url 'Hr:dashboard' %}" class="breadcrumb-link">
+                                <i class="fas fa-home"></i>
+                                <span>الرئيسية</span>
+                            </a>
+                        </li>
+                        {% block breadcrumb %}{% endblock %}
+                    </ol>
+                    <div class="breadcrumb-actions">
+                        {% block breadcrumb_actions %}{% endblock %}
+                    </div>
+                </div>
             </nav>
 
-            <!-- Content Container -->
+            <!-- Enhanced Content Container -->
             <div class="content-container">
-                {% block content %}{% endblock %}
+                <!-- Flash Messages -->
+                {% if messages %}
+                <div class="messages-container">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        <div class="alert-content">
+                            <i class="alert-icon fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+                            <span class="alert-message">{{ message }}</span>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="إغلاق"></button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Main Content -->
+                <div class="page-content">
+                    {% block content %}{% endblock %}
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Bootstrap 5 JavaScript Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
     <!-- Component Library JavaScript -->
     <script src="{% static 'js/components.js' %}"></script>
@@ -399,14 +457,31 @@
     <!-- Modern Base Template JavaScript -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize modern HR system
+            initializeHRSystem();
+
             // Theme Management
+            initializeThemeSystem();
+
+            // Navigation Management
+            initializeNavigation();
+
+            // Search Functionality
+            initializeGlobalSearch();
+
+            // Notifications
+            initializeNotifications();
+        });
+
+        // Theme Management System
+        function initializeThemeSystem() {
             const themeToggle = document.getElementById('themeToggle');
             const themeIcon = document.getElementById('themeIcon');
             const sidebarThemeToggle = document.getElementById('sidebarThemeToggle');
             const htmlElement = document.documentElement;
 
             // Load saved theme
-            const savedTheme = localStorage.getItem('theme') || 'light';
+            const savedTheme = localStorage.getItem('hr-theme') || 'light';
             htmlElement.setAttribute('data-theme', savedTheme);
             updateThemeIcon(savedTheme);
 
@@ -418,8 +493,14 @@
                         const newTheme = currentTheme === 'light' ? 'dark' : 'light';
 
                         htmlElement.setAttribute('data-theme', newTheme);
-                        localStorage.setItem('theme', newTheme);
+                        localStorage.setItem('hr-theme', newTheme);
                         updateThemeIcon(newTheme);
+
+                        // Animate theme transition
+                        document.body.style.transition = 'background-color 0.3s ease, color 0.3s ease';
+                        setTimeout(() => {
+                            document.body.style.transition = '';
+                        }, 300);
                     });
                 }
             });
@@ -428,7 +509,10 @@
                 const iconClass = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
                 const iconText = theme === 'dark' ? 'الوضع النهاري' : 'الوضع الليلي';
 
-                if (themeIcon) themeIcon.className = iconClass;
+                if (themeIcon) {
+                    themeIcon.className = iconClass;
+                    themeIcon.parentElement.title = iconText;
+                }
                 if (sidebarThemeToggle) {
                     const icon = sidebarThemeToggle.querySelector('i');
                     const text = sidebarThemeToggle.querySelector('span');
@@ -436,8 +520,10 @@
                     if (text) text.textContent = iconText;
                 }
             }
+        }
 
-            // Mobile Navigation
+        // Navigation Management System
+        function initializeNavigation() {
             const mobileMenuToggle = document.getElementById('mobileMenuToggle');
             const sidebarClose = document.getElementById('sidebarClose');
             const sidebar = document.getElementById('sidebar');
@@ -447,6 +533,9 @@
                 sidebar.classList.toggle('show');
                 mobileOverlay.classList.toggle('show');
                 document.body.classList.toggle('sidebar-open');
+
+                // Add smooth animation
+                sidebar.style.transition = 'transform 0.3s ease-in-out';
             }
 
             function closeSidebar() {
@@ -455,6 +544,7 @@
                 document.body.classList.remove('sidebar-open');
             }
 
+            // Event listeners
             if (mobileMenuToggle) {
                 mobileMenuToggle.addEventListener('click', toggleSidebar);
             }
@@ -467,7 +557,7 @@
                 mobileOverlay.addEventListener('click', closeSidebar);
             }
 
-            // Submenu Toggle
+            // Enhanced Submenu Toggle
             const submenuToggles = document.querySelectorAll('.submenu-toggle');
             submenuToggles.forEach(toggle => {
                 toggle.addEventListener('click', function(e) {
@@ -480,33 +570,84 @@
                         submenu.classList.toggle('show');
                         arrow.classList.toggle('rotated');
                         parentItem.classList.toggle('expanded');
+
+                        // Smooth animation
+                        submenu.style.transition = 'max-height 0.3s ease-in-out';
                     }
                 });
             });
+        }
 
+        // Global Search System
+        function initializeGlobalSearch() {
+            const searchInput = document.getElementById('globalSearch');
+            if (searchInput) {
+                let searchTimeout;
+
+                searchInput.addEventListener('input', function() {
+                    clearTimeout(searchTimeout);
+                    const query = this.value.trim();
+
+                    if (query.length >= 2) {
+                        searchTimeout = setTimeout(() => {
+                            performGlobalSearch(query);
+                        }, 300);
+                    }
+                });
+            }
+        }
+
+        function performGlobalSearch(query) {
+            // Implement global search functionality
+            console.log('Searching for:', query);
+            // Add AJAX call to search endpoint
+        }
+
+        // Notifications System
+        function initializeNotifications() {
+            const notificationsToggle = document.getElementById('notificationsToggle');
+            if (notificationsToggle) {
+                notificationsToggle.addEventListener('click', function() {
+                    toggleNotificationPanel();
+                });
+            }
+        }
+
+        function toggleNotificationPanel() {
+            // Implement notification panel toggle
+            console.log('Notifications panel toggled');
+        }
+
+        // HR System Initialization
+        function initializeHRSystem() {
             // Loading Overlay Management
             window.showLoading = function() {
-                document.getElementById('loadingOverlay').classList.remove('d-none');
+                const overlay = document.getElementById('loadingOverlay');
+                if (overlay) overlay.classList.remove('d-none');
             };
 
             window.hideLoading = function() {
-                document.getElementById('loadingOverlay').classList.add('d-none');
+                const overlay = document.getElementById('loadingOverlay');
+                if (overlay) overlay.classList.add('d-none');
             };
 
             // Auto-hide loading on page load
             setTimeout(() => {
-                hideLoading();
+                if (window.hideLoading) hideLoading();
             }, 500);
 
-            // Notifications Toggle
-            const notificationsToggle = document.getElementById('notificationsToggle');
-            if (notificationsToggle) {
-                notificationsToggle.addEventListener('click', function() {
-                    // Add notification panel toggle logic here
-                    console.log('Notifications clicked');
-                });
-            }
-        });
+            // Initialize tooltips
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+
+            // Initialize popovers
+            const popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'));
+            popoverTriggerList.map(function (popoverTriggerEl) {
+                return new bootstrap.Popover(popoverTriggerEl);
+            });
+        }
     </script>
 
     {% block extra_js %}{% endblock %}
