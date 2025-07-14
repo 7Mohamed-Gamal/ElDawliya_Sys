@@ -26,7 +26,7 @@ class HrJob(models.Model):
         return self.jop_name or ''
 
     class Meta:
-        managed = True
+        managed = False  # Changed to False to avoid conflicts with legacy Job model
         db_table = 'Tbl_Jop'
         verbose_name = _("الوظيفة")
         verbose_name_plural = _("الوظائف")

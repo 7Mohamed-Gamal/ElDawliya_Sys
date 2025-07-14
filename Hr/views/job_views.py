@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 
-from Hr.models.job_models import HrJob as Job
+from Hr.models.legacy.legacy_models import Job
 # Temporarily disabled due to form conflicts
 # from Hr.forms.employee_forms import JobForm
 
