@@ -3,6 +3,7 @@ Branch Models for HRMS
 Handles branch/location information for multi-location companies
 """
 
+import uuid
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator
@@ -14,6 +15,14 @@ class Branch(models.Model):
     Branch model for managing company locations/branches
     Each branch can have its own departments and employees
     """
+    
+    # Unique Identifier
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        verbose_name=_("المعرف الفريد")
+    )
     
     # Relationship to Company
     company = models.ForeignKey(

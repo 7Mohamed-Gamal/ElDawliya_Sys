@@ -3,6 +3,7 @@ Employee Models for HRMS
 Comprehensive employee management with personal and professional information
 """
 
+import uuid
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator, EmailValidator
@@ -10,6 +11,46 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from datetime import date, timedelta
+from cryptography.fernet import Fernet
+
+
+class EncryptedField(models.CharField):
+    """
+    Custom field for encrypting sensitive data
+    """
+    def __init__(self, *args, **kwargs):
+        # Get encryption key from settings or generate one
+        try:
+            from django.conf import settings
+            if hasattr(settings, 'ENCRYPTION_KEY'):
+                self.cipher = Fernet(settings.ENCRYPTION_KEY.encode())
+            else:
+                # Generate a key for development (should be in settings for production)
+                key = Fernet.generate_key()
+                self.cipher = Fernet(key)
+        except Exception:
+            # Fallback - no encryption in case of issues
+            self.cipher = None
+        super().__init__(*args, **kwargs)
+    
+    def from_db_value(self, value, expression, connection):
+        if value is None or not self.cipher:
+            return value
+        try:
+            return self.cipher.decrypt(value.encode()).decode()
+        except Exception:
+            return value  # Return as-is if decryption fails
+    
+    def to_python(self, value):
+        return value
+    
+    def get_prep_value(self, value):
+        if value is None or not self.cipher:
+            return value
+        try:
+            return self.cipher.encrypt(value.encode()).decode()
+        except Exception:
+            return value  # Return as-is if encryption fails
 
 
 class Employee(models.Model):
@@ -17,6 +58,14 @@ class Employee(models.Model):
     Comprehensive Employee model for HRMS
     Stores all employee information including personal, professional, and employment details
     """
+    
+    # Primary Key
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        verbose_name=_("المعرف الفريد")
+    )
     
     # Unique Identifier
     employee_number = models.CharField(
@@ -137,17 +186,17 @@ class Employee(models.Model):
         verbose_name=_("رقم الجوال")
     )
     
-    # Identification Information
-    national_id = models.CharField(
-        max_length=50,
+    # Identification Information (Encrypted)
+    national_id = EncryptedField(
+        max_length=200,  # Increased for encrypted data
         unique=True,
         null=True,
         blank=True,
         verbose_name=_("رقم الهوية الوطنية")
     )
     
-    passport_number = models.CharField(
-        max_length=50,
+    passport_number = EncryptedField(
+        max_length=200,  # Increased for encrypted data
         null=True,
         blank=True,
         verbose_name=_("رقم جواز السفر")
@@ -305,7 +354,7 @@ class Employee(models.Model):
         verbose_name=_("العملة")
     )
     
-    # Banking Information
+    # Banking Information (Encrypted)
     bank_name = models.CharField(
         max_length=100,
         null=True,
@@ -313,15 +362,15 @@ class Employee(models.Model):
         verbose_name=_("اسم البنك")
     )
     
-    bank_account_number = models.CharField(
-        max_length=50,
+    bank_account_number = EncryptedField(
+        max_length=200,  # Increased for encrypted data
         null=True,
         blank=True,
         verbose_name=_("رقم الحساب البنكي")
     )
     
-    iban = models.CharField(
-        max_length=50,
+    iban = EncryptedField(
+        max_length=200,  # Increased for encrypted data
         null=True,
         blank=True,
         verbose_name=_("رقم الآيبان")

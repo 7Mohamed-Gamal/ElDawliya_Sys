@@ -174,13 +174,13 @@ class OfficialHoliday(models.Model):
         verbose_name_plural = _("العطل الرسمية")
 
 
-class PayrollPeriod(models.Model):
+class LegacyPayrollPeriod(models.Model):
     """Legacy Payroll Period model"""
     period = models.CharField(max_length=50, verbose_name=_("الفترة"))
     status = models.CharField(max_length=50, verbose_name=_("الحالة"))
     total_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0, verbose_name=_("إجمالي المبلغ"))
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='created_payroll_periods', verbose_name=_("أنشئ بواسطة"))
-    approved_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_payroll_periods', verbose_name=_("اعتمد بواسطة"))
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, related_name='created_legacy_payroll_periods', verbose_name=_("أنشئ بواسطة"))
+    approved_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_legacy_payroll_periods', verbose_name=_("اعتمد بواسطة"))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_("تاريخ الإنشاء"))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_("تاريخ التحديث"))
 
@@ -190,13 +190,13 @@ class PayrollPeriod(models.Model):
     class Meta:
         managed = True
         db_table = 'Tbl_Payroll_Period'
-        verbose_name = _("فترة الرواتب")
-        verbose_name_plural = _("فترات الرواتب")
+        verbose_name = _("فترة الرواتب القديمة")
+        verbose_name_plural = _("فترات الرواتب القديمة")
 
 
 class PayrollEntry(models.Model):
     """Legacy Payroll Entry model"""
-    period = models.ForeignKey(PayrollPeriod, on_delete=models.CASCADE, verbose_name=_("الفترة"))
+    period = models.ForeignKey(LegacyPayrollPeriod, on_delete=models.CASCADE, verbose_name=_("الفترة"))
     employee = models.ForeignKey('Hr.Employee', on_delete=models.CASCADE, verbose_name=_("الموظف"))
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("إجمالي المبلغ"))
     status = models.CharField(max_length=50, verbose_name=_("الحالة"))

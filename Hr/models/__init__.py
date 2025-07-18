@@ -14,11 +14,9 @@ from Hr.models.employee.employee_emergency_contact_models import EmployeeEmergen
 from Hr.models.employee.employee_training_models import EmployeeTraining
 
 # Attendance & Time Management Models
-from Hr.models.attendance.work_shift_models import WorkShift
-from Hr.models.attendance.attendance_machine_models import AttendanceMachine
-from Hr.models.attendance.attendance_record_models import AttendanceRecord
-from Hr.models.attendance.attendance_summary_models import AttendanceSummary
-from Hr.models.attendance.employee_shift_assignment_models import EmployeeShiftAssignment
+from Hr.models.attendance.work_shift_models import WorkShift, ShiftAssignment
+from Hr.models.attendance.attendance_machine_models import AttendanceMachine, MachineUser
+from Hr.models.attendance.attendance_record_models import AttendanceRecord, AttendanceSummary
 
 # Leave Management Models
 from Hr.models.leave.leave_type_models import LeaveType
@@ -28,9 +26,9 @@ from Hr.models.leave.leave_balance_models import LeaveBalance
 
 # Payroll Management Models
 from Hr.models.payroll.salary_component_models import SalaryComponent
+from Hr.models.payroll.payroll_period_models import PayrollPeriod
+from Hr.models.payroll.employee_salary_structure_models import EmployeeSalaryStructure, EmployeeSalaryComponent
 # TODO: Create missing payroll model files
-# from Hr.models.payroll.employee_salary_structure_models import EmployeeSalaryStructure
-# from Hr.models.payroll.payroll_period_models import PayrollPeriod
 # from Hr.models.payroll.payroll_entry_models import PayrollEntry
 # from Hr.models.payroll.tax_configuration_models import TaxConfiguration
 
@@ -73,16 +71,15 @@ __all__ = [
     'Employee', 'EmployeeDocument', 'EmployeeEmergencyContact', 'EmployeeTraining',
 
     # Attendance & Time Management Models
-    'WorkShift', 'AttendanceMachine', 'AttendanceRecord', 'AttendanceSummary',
-    'EmployeeShiftAssignment',
+    'WorkShift', 'ShiftAssignment', 'AttendanceMachine', 'MachineUser', 
+    'AttendanceRecord', 'AttendanceSummary',
 
     # Leave Management Models
     'LeaveType', 'LeavePolicy', 'LeaveRequest', 'LeaveBalance',
 
     # Payroll Management Models
-    'SalaryComponent',
+    'SalaryComponent', 'PayrollPeriod', 'EmployeeSalaryStructure', 'EmployeeSalaryComponent',
     # TODO: Add back when model files are created
-    # 'EmployeeSalaryStructure', 'PayrollPeriod',
     # 'PayrollEntry', 'TaxConfiguration',
 
     # Performance Management Models

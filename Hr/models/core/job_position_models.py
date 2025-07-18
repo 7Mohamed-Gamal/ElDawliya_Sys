@@ -3,6 +3,7 @@ Job Position Models for HRMS
 Handles job positions, roles, and career levels
 """
 
+import uuid
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator, MinValueValidator, MaxValueValidator
@@ -15,6 +16,14 @@ class JobPosition(models.Model):
     Job Position model for defining roles and positions within departments
     Includes job descriptions, requirements, salary ranges, and career levels
     """
+    
+    # Unique Identifier
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        verbose_name=_("المعرف الفريد")
+    )
     
     # Relationship to Department
     department = models.ForeignKey(

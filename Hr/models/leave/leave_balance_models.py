@@ -3,6 +3,7 @@ Leave Balance Models for HRMS
 Handles leave balance tracking, accruals, and transactions
 """
 
+import uuid
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
@@ -17,6 +18,14 @@ class LeaveBalance(models.Model):
     Leave Balance model for tracking employee leave balances
     Maintains current balance, accruals, and usage for each leave type
     """
+    
+    # Unique Identifier
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        verbose_name=_("المعرف الفريد")
+    )
     
     # Employee and Leave Type
     employee = models.ForeignKey(
@@ -366,6 +375,14 @@ class LeaveTransaction(models.Model):
     Leave Transaction model for tracking all balance changes
     Provides audit trail for leave balance modifications
     """
+    
+    # Unique Identifier
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        verbose_name=_("المعرف الفريد")
+    )
     
     leave_balance = models.ForeignKey(
         LeaveBalance,

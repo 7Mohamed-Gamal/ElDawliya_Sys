@@ -3,6 +3,7 @@ Company Models for HRMS
 Handles company-level information and settings
 """
 
+import uuid
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator
@@ -14,6 +15,14 @@ class Company(models.Model):
     Company model for multi-company HRMS support
     Stores company information, branding, and configuration
     """
+    
+    # Unique Identifier
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        verbose_name=_("المعرف الفريد")
+    )
     
     # Basic Information
     name = models.CharField(

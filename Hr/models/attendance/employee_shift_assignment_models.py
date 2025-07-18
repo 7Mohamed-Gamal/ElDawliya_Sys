@@ -3,6 +3,7 @@ Employee Shift Assignment Models for HRMS
 Handles assignment of work shifts to employees
 """
 
+import uuid
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
@@ -15,6 +16,14 @@ class EmployeeShiftAssignment(models.Model):
     Employee Shift Assignment model for assigning work shifts to employees
     Supports both permanent and temporary shift assignments
     """
+    
+    # Unique Identifier
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        verbose_name=_("المعرف الفريد")
+    )
     
     # Employee and Shift
     employee = models.ForeignKey(

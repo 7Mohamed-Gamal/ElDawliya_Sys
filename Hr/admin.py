@@ -15,8 +15,7 @@ from Hr.models import (
     Employee, EmployeeDocument, EmployeeEmergencyContact, EmployeeTraining,
 
     # Attendance & Time Management Models
-    WorkShift, AttendanceMachine, AttendanceRecord, AttendanceSummary,
-    EmployeeShiftAssignment,
+    WorkShift, ShiftAssignment, AttendanceMachine, MachineUser, AttendanceRecord, AttendanceSummary,
 
     # Leave Management Models
     LeaveType, LeavePolicy, LeaveRequest, LeaveBalance,
@@ -154,41 +153,48 @@ class SalaryComponentAdmin(admin.ModelAdmin):
 
 @admin.register(WorkShift)
 class WorkShiftAdmin(admin.ModelAdmin):
-    list_display = ['name', 'start_time', 'end_time', 'break_duration_minutes', 'is_active']
-    list_filter = ['is_active', 'shift_type']
+    list_display = ['name', 'start_time', 'end_time', 'break_duration_minutes', 'status']
+    list_filter = ['status', 'shift_type']
     search_fields = ['name', 'description']
     ordering = ['name']
 
 @admin.register(AttendanceMachine)
 class AttendanceMachineAdmin(admin.ModelAdmin):
-    list_display = ['name', 'device_id', 'location_description', 'ip_address', 'is_active']
-    list_filter = ['is_active', 'status']
-    search_fields = ['name', 'device_id', 'location_description']
+    list_display = ['name', 'serial_number', 'location', 'ip_address', 'is_active']
+    list_filter = ['is_active', 'status', 'machine_type']
+    search_fields = ['name', 'serial_number', 'location']
     ordering = ['name']
 
 @admin.register(AttendanceRecord)
 class AttendanceRecordAdmin(admin.ModelAdmin):
-    list_display = ['employee', 'machine', 'record_datetime', 'record_type']
-    list_filter = ['record_type', 'machine', 'record_datetime']
+    list_display = ['employee', 'machine', 'timestamp', 'record_type']
+    list_filter = ['record_type', 'machine', 'date']
     search_fields = ['employee__full_name', 'employee__employee_number']
-    date_hierarchy = 'record_datetime'
+    date_hierarchy = 'timestamp'
     # autocomplete_fields = ['employee', 'machine']
 
 @admin.register(AttendanceSummary)
 class AttendanceSummaryAdmin(admin.ModelAdmin):
-    list_display = ['employee', 'date', 'first_in_time', 'last_out_time', 'total_work_hours', 'status']
+    list_display = ['employee', 'date', 'check_in_time', 'check_out_time', 'total_hours', 'status']
     list_filter = ['status', 'date']
     search_fields = ['employee__full_name', 'employee__employee_number']
     date_hierarchy = 'date'
-    # autocomplete_fields = ['employee', 'work_shift']
+    # autocomplete_fields = ['employee', 'shift']
 
-@admin.register(EmployeeShiftAssignment)
-class EmployeeShiftAssignmentAdmin(admin.ModelAdmin):
-    list_display = ['employee', 'work_shift', 'start_date', 'end_date', 'status']
-    list_filter = ['work_shift', 'status']
+@admin.register(ShiftAssignment)
+class ShiftAssignmentAdmin(admin.ModelAdmin):
+    list_display = ['employee', 'shift', 'start_date', 'end_date', 'is_active']
+    list_filter = ['shift', 'assignment_type', 'is_active']
     search_fields = ['employee__full_name', 'employee__employee_number']
     date_hierarchy = 'start_date'
-    # autocomplete_fields = ['employee', 'work_shift']
+    # autocomplete_fields = ['employee', 'shift']
+
+@admin.register(MachineUser)
+class MachineUserAdmin(admin.ModelAdmin):
+    list_display = ['employee', 'machine', 'user_id', 'is_enrolled', 'is_active']
+    list_filter = ['machine', 'is_enrolled', 'is_active']
+    search_fields = ['employee__full_name', 'user_id']
+    # autocomplete_fields = ['employee', 'machine']
 
 # ==================== LEAVE MANAGEMENT MODELS ====================
 

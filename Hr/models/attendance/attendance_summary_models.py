@@ -3,6 +3,7 @@ Attendance Summary Models for HRMS
 Handles daily attendance summaries and calculations
 """
 
+import uuid
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
@@ -16,6 +17,14 @@ class AttendanceSummary(models.Model):
     Attendance Summary model for daily attendance calculations
     Aggregates attendance records into daily summaries with work hours calculation
     """
+    
+    # Unique Identifier
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        verbose_name=_("المعرف الفريد")
+    )
     
     # Employee and Date
     employee = models.ForeignKey(

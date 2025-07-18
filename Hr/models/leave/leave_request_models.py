@@ -3,6 +3,7 @@ Leave Request Models for HRMS
 Handles leave requests, approvals, and workflow management
 """
 
+import uuid
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
@@ -16,6 +17,14 @@ class LeaveRequest(models.Model):
     Leave Request model for managing employee leave applications
     Includes approval workflow, balance tracking, and status management
     """
+    
+    # Unique Identifier
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        verbose_name=_("المعرف الفريد")
+    )
     
     # Basic Information
     employee = models.ForeignKey(
@@ -497,6 +506,14 @@ class LeaveApproval(models.Model):
     """
     Leave Approval model for tracking approval workflow
     """
+    
+    # Unique Identifier
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        verbose_name=_("المعرف الفريد")
+    )
     
     leave_request = models.ForeignKey(
         LeaveRequest,

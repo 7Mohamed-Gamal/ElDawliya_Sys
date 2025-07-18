@@ -3,6 +3,7 @@ Leave Policy Models for HRMS
 Handles leave policies and rules for different employee groups
 """
 
+import uuid
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
@@ -14,6 +15,14 @@ class LeavePolicy(models.Model):
     Leave Policy model for defining leave rules for different employee groups
     Allows customization of leave entitlements based on various criteria
     """
+    
+    # Unique Identifier
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        verbose_name=_("المعرف الفريد")
+    )
     
     # Basic Information
     name = models.CharField(

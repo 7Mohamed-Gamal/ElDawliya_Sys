@@ -3,6 +3,7 @@ Leave Type Models for HRMS
 Handles different types of leaves and their configurations
 """
 
+import uuid
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
@@ -15,6 +16,14 @@ class LeaveType(models.Model):
     Leave Type model for defining different types of leaves
     Includes leave policies, accrual rules, and approval requirements
     """
+    
+    # Unique Identifier
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        verbose_name=_("المعرف الفريد")
+    )
     
     # Basic Information
     name = models.CharField(

@@ -3,6 +3,7 @@ Department Models for HRMS
 Handles department structure and hierarchy
 """
 
+import uuid
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import RegexValidator
@@ -15,6 +16,14 @@ class Department(models.Model):
     Department model for organizational structure
     Supports hierarchical department structure with parent-child relationships
     """
+    
+    # Unique Identifier
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        verbose_name=_("المعرف الفريد")
+    )
     
     # Relationship to Company and Branch
     company = models.ForeignKey(
