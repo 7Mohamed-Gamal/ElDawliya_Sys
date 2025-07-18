@@ -1,0 +1,711 @@
+{% extends 'Hr/base_hr_modern.html' %}
+{% load static %}
+
+{% block title %}تقارير الموظفين{% endblock %}
+
+{% block page_title %}تقارير الموظفين{% endblock %}
+
+{% block page_subtitle %}تقارير شاملة ومفصلة عن الموظفين والهيكل التنظيمي{% endblock %}
+
+{% block breadcrumb %}
+<nav class="breadcrumb">
+    <div class="breadcrumb-item">
+        <a href="{% url 'Hr:dashboard' %}">الرئيسية</a>
+    </div>
+    <div class="breadcrumb-item">
+        <a href="{% url 'Hr:reports:report_list' %}">التقارير</a>
+    </div>
+    <div class="breadcrumb-item active">تقارير الموظفين</div>
+</nav>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .report-filters {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: var(--space-6);
+        margin-bottom: var(--space-6);
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--neutral-200);
+    }
+    
+    .filter-section {
+        margin-bottom: var(--space-6);
+    }
+    
+    .filter-section:last-child {
+        margin-bottom: 0;
+    }
+    
+    .filter-title {
+        font-size: var(--text-lg);
+        font-weight: var(--font-semibold);
+        color: var(--secondary-800);
+        margin: 0 0 var(--space-4) 0;
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+    }
+    
+    .filter-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--space-4);
+    }
+    
+    .report-templates {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: var(--space-4);
+        margin-bottom: var(--space-8);
+    }
+    
+    .template-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: var(--space-6);
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--neutral-200);
+        transition: all var(--transition-base);
+        cursor: pointer;
+    }
+    
+    .template-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+    }
+    
+    .template-header {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+        margin-bottom: var(--space-4);
+    }
+    
+    .template-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius-lg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: var(--text-xl);
+        background: linear-gradient(135deg, var(--primary-100), var(--primary-200));
+        color: var(--primary-600);
+    }
+    
+    .template-title {
+        font-size: var(--text-lg);
+        font-weight: var(--font-semibold);
+        color: var(--secondary-800);
+        margin: 0;
+    }
+    
+    .template-description {
+        color: var(--secondary-600);
+        line-height: var(--leading-relaxed);
+        margin-bottom: var(--space-4);
+    }
+    
+    .template-features {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 var(--space-4) 0;
+    }
+    
+    .template-features li {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        padding: var(--space-1) 0;
+        font-size: var(--text-sm);
+        color: var(--secondary-600);
+    }
+    
+    .template-features li i {
+        color: var(--success-600);
+        font-size: var(--text-xs);
+    }
+    
+    .template-actions {
+        display: flex;
+        gap: var(--space-2);
+    }
+    
+    .report-preview {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: var(--space-6);
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--neutral-200);
+        margin-bottom: var(--space-6);
+    }
+    
+    .preview-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: var(--space-6);
+        flex-wrap: wrap;
+        gap: var(--space-4);
+    }
+    
+    .preview-title {
+        font-size: var(--text-xl);
+        font-weight: var(--font-semibold);
+        color: var(--secondary-800);
+        margin: 0;
+    }
+    
+    .preview-actions {
+        display: flex;
+        gap: var(--space-2);
+    }
+    
+    .report-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: var(--space-6);
+    }
+    
+    .report-table th,
+    .report-table td {
+        padding: var(--space-3) var(--space-4);
+        text-align: right;
+        border-bottom: 1px solid var(--neutral-200);
+    }
+    
+    .report-table th {
+        background-color: var(--neutral-50);
+        font-weight: var(--font-semibold);
+        color: var(--secondary-700);
+        font-size: var(--text-sm);
+    }
+    
+    .report-table tbody tr:hover {
+        background-color: var(--neutral-50);
+    }
+    
+    .report-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--space-4);
+        margin-bottom: var(--space-6);
+    }
+    
+    .summary-card {
+        background: var(--neutral-50);
+        border-radius: var(--radius-md);
+        padding: var(--space-4);
+        text-align: center;
+    }
+    
+    .summary-value {
+        font-size: var(--text-2xl);
+        font-weight: var(--font-bold);
+        color: var(--primary-600);
+        margin: 0 0 var(--space-1) 0;
+    }
+    
+    .summary-label {
+        font-size: var(--text-sm);
+        color: var(--secondary-600);
+        margin: 0;
+    }
+    
+    .chart-container {
+        background: var(--neutral-50);
+        border-radius: var(--radius-md);
+        padding: var(--space-6);
+        margin-bottom: var(--space-6);
+        text-align: center;
+    }
+    
+    .chart-placeholder {
+        height: 300px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--secondary-500);
+        border: 2px dashed var(--neutral-300);
+        border-radius: var(--radius-md);
+    }
+    
+    @media (max-width: 768px) {
+        .report-templates {
+            grid-template-columns: 1fr;
+        }
+        
+        .filter-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .preview-header {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .preview-actions {
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Report Filters -->
+<div class="report-filters">
+    <form id="reportFilters">
+        <div class="filter-section">
+            <h3 class="filter-title">
+                <i class="fas fa-filter"></i>
+                فلاتر التقرير
+            </h3>
+            <div class="filter-grid">
+                <div class="form-group">
+                    <label class="form-label">القسم</label>
+                    <select name="department" class="form-control">
+                        <option value="">جميع الأقسام</option>
+                        {% for dept in departments %}
+                        <option value="{{ dept.id }}">{{ dept.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">الفرع</label>
+                    <select name="branch" class="form-control">
+                        <option value="">جميع الفروع</option>
+                        {% for branch in branches %}
+                        <option value="{{ branch.id }}">{{ branch.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">الوظيفة</label>
+                    <select name="position" class="form-control">
+                        <option value="">جميع الوظائف</option>
+                        {% for pos in positions %}
+                        <option value="{{ pos.id }}">{{ pos.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">حالة الموظف</label>
+                    <select name="status" class="form-control">
+                        <option value="">جميع الحالات</option>
+                        <option value="active">نشط</option>
+                        <option value="inactive">غير نشط</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="filter-section">
+            <h3 class="filter-title">
+                <i class="fas fa-calendar"></i>
+                الفترة الزمنية
+            </h3>
+            <div class="filter-grid">
+                <div class="form-group">
+                    <label class="form-label">من تاريخ</label>
+                    <input type="date" name="start_date" class="form-control">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">إلى تاريخ</label>
+                    <input type="date" name="end_date" class="form-control">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">فترة سريعة</label>
+                    <select name="quick_period" class="form-control">
+                        <option value="">اختر فترة</option>
+                        <option value="this_month">هذا الشهر</option>
+                        <option value="last_month">الشهر الماضي</option>
+                        <option value="this_quarter">هذا الربع</option>
+                        <option value="this_year">هذا العام</option>
+                    </select>
+                </div>
+                
+                <div class="form-group" style="display: flex; align-items: end;">
+                    <button type="button" class="btn btn-primary" onclick="applyFilters()">
+                        <i class="fas fa-search"></i> تطبيق الفلاتر
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Report Templates -->
+<div class="report-templates">
+    <!-- Employee Summary Report -->
+    <div class="template-card" onclick="generateReport('employee_summary')">
+        <div class="template-header">
+            <div class="template-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <h3 class="template-title">تقرير ملخص الموظفين</h3>
+        </div>
+        <p class="template-description">
+            نظرة عامة شاملة على جميع الموظفين مع الإحصائيات الأساسية والتوزيع حسب الأقسام والوظائف.
+        </p>
+        <ul class="template-features">
+            <li><i class="fas fa-check"></i> إجمالي عدد الموظفين</li>
+            <li><i class="fas fa-check"></i> التوزيع حسب القسم</li>
+            <li><i class="fas fa-check"></i> التوزيع حسب الوظيفة</li>
+            <li><i class="fas fa-check"></i> إحصائيات الحالة</li>
+        </ul>
+        <div class="template-actions">
+            <button class="btn btn-primary btn-sm">إنشاء التقرير</button>
+            <button class="btn btn-ghost btn-sm">معاينة</button>
+        </div>
+    </div>
+    
+    <!-- Employee Details Report -->
+    <div class="template-card" onclick="generateReport('employee_details')">
+        <div class="template-header">
+            <div class="template-icon">
+                <i class="fas fa-address-card"></i>
+            </div>
+            <h3 class="template-title">تقرير تفاصيل الموظفين</h3>
+        </div>
+        <p class="template-description">
+            تقرير مفصل يحتوي على جميع المعلومات الشخصية والوظيفية للموظفين.
+        </p>
+        <ul class="template-features">
+            <li><i class="fas fa-check"></i> المعلومات الشخصية</li>
+            <li><i class="fas fa-check"></i> معلومات التوظيف</li>
+            <li><i class="fas fa-check"></i> تاريخ التوظيف</li>
+            <li><i class="fas fa-check"></i> معلومات الاتصال</li>
+        </ul>
+        <div class="template-actions">
+            <button class="btn btn-primary btn-sm">إنشاء التقرير</button>
+            <button class="btn btn-ghost btn-sm">معاينة</button>
+        </div>
+    </div>
+    
+    <!-- Organizational Structure Report -->
+    <div class="template-card" onclick="generateReport('org_structure')">
+        <div class="template-header">
+            <div class="template-icon">
+                <i class="fas fa-sitemap"></i>
+            </div>
+            <h3 class="template-title">تقرير الهيكل التنظيمي</h3>
+        </div>
+        <p class="template-description">
+            عرض الهيكل التنظيمي للشركة مع توزيع الموظفين على الأقسام والوظائف.
+        </p>
+        <ul class="template-features">
+            <li><i class="fas fa-check"></i> الهيكل الهرمي</li>
+            <li><i class="fas fa-check"></i> توزيع الموظفين</li>
+            <li><i class="fas fa-check"></i> المناصب الإدارية</li>
+            <li><i class="fas fa-check"></i> خريطة التنظيم</li>
+        </ul>
+        <div class="template-actions">
+            <button class="btn btn-primary btn-sm">إنشاء التقرير</button>
+            <button class="btn btn-ghost btn-sm">معاينة</button>
+        </div>
+    </div>
+    
+    <!-- New Employees Report -->
+    <div class="template-card" onclick="generateReport('new_employees')">
+        <div class="template-header">
+            <div class="template-icon">
+                <i class="fas fa-user-plus"></i>
+            </div>
+            <h3 class="template-title">تقرير الموظفين الجدد</h3>
+        </div>
+        <p class="template-description">
+            تقرير بالموظفين الجدد المنضمين خلال فترة محددة مع تفاصيل التوظيف.
+        </p>
+        <ul class="template-features">
+            <li><i class="fas fa-check"></i> الموظفين الجدد</li>
+            <li><i class="fas fa-check"></i> تواريخ التوظيف</li>
+            <li><i class="fas fa-check"></i> الأقسام المستهدفة</li>
+            <li><i class="fas fa-check"></i> إحصائيات التوظيف</li>
+        </ul>
+        <div class="template-actions">
+            <button class="btn btn-primary btn-sm">إنشاء التقرير</button>
+            <button class="btn btn-ghost btn-sm">معاينة</button>
+        </div>
+    </div>
+    
+    <!-- Employee Demographics Report -->
+    <div class="template-card" onclick="generateReport('demographics')">
+        <div class="template-header">
+            <div class="template-icon">
+                <i class="fas fa-chart-pie"></i>
+            </div>
+            <h3 class="template-title">تقرير التركيبة السكانية</h3>
+        </div>
+        <p class="template-description">
+            تحليل التركيبة السكانية للموظفين من حيث العمر والجنس والمؤهلات.
+        </p>
+        <ul class="template-features">
+            <li><i class="fas fa-check"></i> التوزيع العمري</li>
+            <li><i class="fas fa-check"></i> التوزيع حسب الجنس</li>
+            <li><i class="fas fa-check"></i> المؤهلات العلمية</li>
+            <li><i class="fas fa-check"></i> سنوات الخبرة</li>
+        </ul>
+        <div class="template-actions">
+            <button class="btn btn-primary btn-sm">إنشاء التقرير</button>
+            <button class="btn btn-ghost btn-sm">معاينة</button>
+        </div>
+    </div>
+    
+    <!-- Birthday & Anniversary Report -->
+    <div class="template-card" onclick="generateReport('birthdays_anniversaries')">
+        <div class="template-header">
+            <div class="template-icon">
+                <i class="fas fa-birthday-cake"></i>
+            </div>
+            <h3 class="template-title">تقرير أعياد الميلاد والذكريات</h3>
+        </div>
+        <p class="template-description">
+            تقرير بأعياد ميلاد الموظفين وذكريات التوظيف خلال فترة محددة.
+        </p>
+        <ul class="template-features">
+            <li><i class="fas fa-check"></i> أعياد الميلاد</li>
+            <li><i class="fas fa-check"></i> ذكريات التوظيف</li>
+            <li><i class="fas fa-check"></i> التقويم الشهري</li>
+            <li><i class="fas fa-check"></i> تذكيرات مسبقة</li>
+        </ul>
+        <div class="template-actions">
+            <button class="btn btn-primary btn-sm">إنشاء التقرير</button>
+            <button class="btn btn-ghost btn-sm">معاينة</button>
+        </div>
+    </div>
+</div>
+
+<!-- Report Preview (Hidden by default) -->
+<div class="report-preview" id="reportPreview" style="display: none;">
+    <div class="preview-header">
+        <h3 class="preview-title" id="reportTitle">معاينة التقرير</h3>
+        <div class="preview-actions">
+            <button class="btn btn-success" onclick="exportReport('pdf')">
+                <i class="fas fa-file-pdf"></i> تصدير PDF
+            </button>
+            <button class="btn btn-primary" onclick="exportReport('excel')">
+                <i class="fas fa-file-excel"></i> تصدير Excel
+            </button>
+            <button class="btn btn-ghost" onclick="hidePreview()">
+                <i class="fas fa-times"></i> إغلاق
+            </button>
+        </div>
+    </div>
+    
+    <!-- Report Summary -->
+    <div class="report-summary" id="reportSummary">
+        <!-- Summary cards will be populated by JavaScript -->
+    </div>
+    
+    <!-- Report Chart -->
+    <div class="chart-container" id="reportChart">
+        <div class="chart-placeholder">
+            <div>
+                <i class="fas fa-chart-bar" style="font-size: var(--text-4xl); margin-bottom: var(--space-4);"></i>
+                <h4 style="margin: 0 0 var(--space-2) 0;">الرسم البياني</h4>
+                <p style="margin: 0; font-size: var(--text-sm);">سيتم عرض الرسم البياني هنا</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Report Table -->
+    <div style="overflow-x: auto;">
+        <table class="report-table" id="reportTable">
+            <thead id="reportTableHead">
+                <!-- Table headers will be populated by JavaScript -->
+            </thead>
+            <tbody id="reportTableBody">
+                <!-- Table data will be populated by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Apply filters function
+    function applyFilters() {
+        const formData = new FormData(document.getElementById('reportFilters'));
+        const filters = Object.fromEntries(formData);
+        
+        console.log('Applied filters:', filters);
+        HRUtils.showNotification('تم تطبيق الفلاتر', 'success');
+        
+        // Here you would update the available reports based on filters
+    }
+    
+    // Generate report function
+    function generateReport(reportType) {
+        HRUtils.showNotification('جاري إنشاء التقرير...', 'info', 2000);
+        
+        // Get current filters
+        const formData = new FormData(document.getElementById('reportFilters'));
+        const filters = Object.fromEntries(formData);
+        
+        // Make API call to generate report
+        HRUtils.ajax('/hr/api/analytics/employee_report/', {
+            method: 'POST',
+            body: JSON.stringify({
+                report_type: reportType,
+                filters: filters
+            })
+        })
+        .then(data => {
+            HRUtils.showNotification('تم إنشاء التقرير بنجاح', 'success');
+            showReportPreview(data, reportType);
+        })
+        .catch(error => {
+            HRUtils.showNotification('حدث خطأ أثناء إنشاء التقرير', 'error');
+        });
+    }
+    
+    // Show report preview
+    function showReportPreview(data, reportType) {
+        const preview = document.getElementById('reportPreview');
+        const title = document.getElementById('reportTitle');
+        
+        // Set report title
+        const titles = {
+            'employee_summary': 'تقرير ملخص الموظفين',
+            'employee_details': 'تقرير تفاصيل الموظفين',
+            'org_structure': 'تقرير الهيكل التنظيمي',
+            'new_employees': 'تقرير الموظفين الجدد',
+            'demographics': 'تقرير التركيبة السكانية',
+            'birthdays_anniversaries': 'تقرير أعياد الميلاد والذكريات'
+        };
+        
+        title.textContent = titles[reportType] || 'تقرير الموظفين';
+        
+        // Populate summary
+        populateReportSummary(data);
+        
+        // Populate table
+        populateReportTable(data);
+        
+        // Show preview
+        preview.style.display = 'block';
+        preview.scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    // Populate report summary
+    function populateReportSummary(data) {
+        const summary = document.getElementById('reportSummary');
+        
+        // Sample summary data
+        const summaryData = [
+            { label: 'إجمالي الموظفين', value: data.total_employees || 0 },
+            { label: 'الموظفين النشطين', value: data.active_employees || 0 },
+            { label: 'الأقسام', value: data.departments_count || 0 },
+            { label: 'الوظائف', value: data.positions_count || 0 }
+        ];
+        
+        summary.innerHTML = summaryData.map(item => `
+            <div class="summary-card">
+                <h3 class="summary-value">${item.value}</h3>
+                <p class="summary-label">${item.label}</p>
+            </div>
+        `).join('');
+    }
+    
+    // Populate report table
+    function populateReportTable(data) {
+        const tableHead = document.getElementById('reportTableHead');
+        const tableBody = document.getElementById('reportTableBody');
+        
+        // Sample table headers
+        const headers = ['الاسم', 'رقم الموظف', 'القسم', 'الوظيفة', 'تاريخ التوظيف', 'الحالة'];
+        
+        tableHead.innerHTML = `
+            <tr>
+                ${headers.map(header => `<th>${header}</th>`).join('')}
+            </tr>
+        `;
+        
+        // Sample table data
+        const employees = data.employees || [];
+        
+        if (employees.length === 0) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="${headers.length}" style="text-align: center; padding: var(--space-8); color: var(--secondary-500);">
+                        لا توجد بيانات للعرض
+                    </td>
+                </tr>
+            `;
+        } else {
+            tableBody.innerHTML = employees.map(emp => `
+                <tr>
+                    <td>${emp.full_name || '-'}</td>
+                    <td>${emp.employee_number || '-'}</td>
+                    <td>${emp.department || '-'}</td>
+                    <td>${emp.position || '-'}</td>
+                    <td>${emp.hire_date || '-'}</td>
+                    <td>
+                        <span class="badge ${emp.is_active ? 'badge-success' : 'badge-error'}">
+                            ${emp.is_active ? 'نشط' : 'غير نشط'}
+                        </span>
+                    </td>
+                </tr>
+            `).join('');
+        }
+    }
+    
+    // Hide report preview
+    function hidePreview() {
+        document.getElementById('reportPreview').style.display = 'none';
+    }
+    
+    // Export report function
+    function exportReport(format) {
+        HRUtils.showNotification(`جاري تصدير التقرير بصيغة ${format.toUpperCase()}...`, 'info', 2000);
+        
+        // Here you would make an API call to export the report
+        setTimeout(() => {
+            HRUtils.showNotification(`تم تصدير التقرير بصيغة ${format.toUpperCase()} بنجاح`, 'success');
+        }, 2000);
+    }
+    
+    // Quick period selection
+    document.querySelector('select[name="quick_period"]').addEventListener('change', function() {
+        const period = this.value;
+        const startDate = document.querySelector('input[name="start_date"]');
+        const endDate = document.querySelector('input[name="end_date"]');
+        
+        const today = new Date();
+        let start, end;
+        
+        switch(period) {
+            case 'this_month':
+                start = new Date(today.getFullYear(), today.getMonth(), 1);
+                end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                break;
+            case 'last_month':
+                start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+                end = new Date(today.getFullYear(), today.getMonth(), 0);
+                break;
+            case 'this_quarter':
+                const quarter = Math.floor(today.getMonth() / 3);
+                start = new Date(today.getFullYear(), quarter * 3, 1);
+                end = new Date(today.getFullYear(), (quarter + 1) * 3, 0);
+                break;
+            case 'this_year':
+                start = new Date(today.getFullYear(), 0, 1);
+                end = new Date(today.getFullYear(), 11, 31);
+                break;
+        }
+        
+        if (start && end) {
+            startDate.value = start.toISOString().split('T')[0];
+            endDate.value = end.toISOString().split('T')[0];
+        }
+    });
+</script>
+{% endblock %}

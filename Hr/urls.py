@@ -508,4 +508,10 @@ urlpatterns = [
 
     # Update data utility
     path('update-data/', update_data, name='update_data'),
+    
+    # ==================== REPORTS & ANALYTICS ====================
+    path('reports/', include('Hr.urls.reports_urls', namespace='reports')),
+    
+    # ==================== API ENDPOINTS ====================
+    path('api/', include('Hr.api.urls', namespace='hr_api')),
 ]
