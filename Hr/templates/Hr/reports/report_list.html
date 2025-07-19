@@ -1,229 +1,268 @@
 {% extends 'Hr/base_hr_modern.html' %}
 {% load static %}
 
-{% block title %}قائمة التقارير{% endblock %}
+{% block title %}التقارير المحفوظة{% endblock %}
+{% block page_title %}التقارير المحفوظة{% endblock %}
 
-{% block page_title %}قائمة التقارير{% endblock %}
-
-{% block page_subtitle %}جميع التقارير والتحليلات المتاحة في نظام الموارد البشرية{% endblock %}
-
-{% block breadcrumb %}
-<nav class="breadcrumb">
-    <div class="breadcrumb-item">
-        <a href="{% url 'Hr:dashboard' %}">الرئيسية</a>
-    </div>
-    <div class="breadcrumb-item active">التقارير</div>
-</nav>
+{% block breadcrumb_items %}
+<div class="breadcrumb-item">
+    <a href="{% url 'Hr:analytics_dashboard' %}" class="breadcrumb-link">التحليلات والتقارير</a>
+</div>
+<div class="breadcrumb-item">
+    <span class="breadcrumb-link">التقارير المحفوظة</span>
+</div>
 {% endblock %}
 
 {% block extra_css %}
 <style>
-    .reports-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-        gap: var(--space-6);
-        margin-bottom: var(--space-8);
+    .reports-header {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: var(--space-6);
+        margin-bottom: var(--space-6);
+        box-shadow: var(--shadow-sm);
     }
     
-    .report-category {
+    .report-card {
         background: white;
         border-radius: var(--radius-lg);
         padding: var(--space-6);
         box-shadow: var(--shadow-sm);
-        border: 1px solid var(--neutral-200);
+        transition: all var(--transition-fast);
+        border-left: 4px solid var(--neutral-300);
+        margin-bottom: var(--space-4);
     }
     
-    .category-header {
+    .report-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .report-card.employee-report {
+        border-left-color: var(--primary-500);
+    }
+    
+    .report-card.attendance-report {
+        border-left-color: var(--success-500);
+    }
+    
+    .report-card.payroll-report {
+        border-left-color: var(--warning-500);
+    }
+    
+    .report-card.leave-report {
+        border-left-color: var(--error-500);
+    }
+    
+    .report-header {
         display: flex;
-        align-items: center;
-        gap: var(--space-3);
-        margin-bottom: var(--space-6);
-        padding-bottom: var(--space-4);
-        border-bottom: 1px solid var(--neutral-200);
-    }
-    
-    .category-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: var(--radius-lg);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: var(--text-xl);
-        background: linear-gradient(135deg, var(--primary-100), var(--primary-200));
-        color: var(--primary-600);
-    }
-    
-    .category-title {
-        font-size: var(--text-xl);
-        font-weight: var(--font-semibold);
-        color: var(--secondary-800);
-        margin: 0;
-    }
-    
-    .category-description {
-        font-size: var(--text-sm);
-        color: var(--secondary-600);
-        margin: var(--space-1) 0 0 0;
-    }
-    
-    .report-items {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-    
-    .report-item {
-        display: flex;
-        align-items: center;
         justify-content: space-between;
-        padding: var(--space-4);
-        border-radius: var(--radius-md);
-        margin-bottom: var(--space-2);
-        transition: all var(--transition-base);
-        cursor: pointer;
-    }
-    
-    .report-item:hover {
-        background-color: var(--neutral-50);
-        transform: translateX(-4px);
-    }
-    
-    .report-item:last-child {
-        margin-bottom: 0;
+        align-items: flex-start;
+        margin-bottom: var(--space-4);
     }
     
     .report-info {
-        display: flex;
-        align-items: center;
-        gap: var(--space-3);
         flex: 1;
     }
     
-    .report-icon {
-        width: 32px;
-        height: 32px;
-        border-radius: var(--radius-md);
+    .report-title {
+        font-size: var(--text-xl);
+        font-weight: var(--font-semibold);
+        color: var(--neutral-800);
+        margin-bottom: var(--space-2);
+    }
+    
+    .report-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--space-4);
+        color: var(--neutral-600);
+        font-size: var(--text-sm);
+        margin-bottom: var(--space-3);
+    }
+    
+    .report-meta-item {
         display: flex;
         align-items: center;
-        justify-content: center;
-        font-size: var(--text-sm);
-        background-color: var(--primary-100);
-        color: var(--primary-600);
+        gap: var(--space-1);
     }
     
-    .report-details h4 {
-        font-size: var(--text-base);
+    .report-description {
+        color: var(--neutral-600);
+        line-height: 1.5;
+        margin-bottom: var(--space-4);
+    }
+    
+    .report-type-badge {
+        padding: var(--space-1) var(--space-3);
+        border-radius: var(--radius-full);
+        font-size: var(--text-xs);
         font-weight: var(--font-medium);
-        color: var(--secondary-800);
-        margin: 0 0 var(--space-1) 0;
+        margin-bottom: var(--space-2);
     }
     
-    .report-details p {
-        font-size: var(--text-sm);
-        color: var(--secondary-600);
-        margin: 0;
-        line-height: var(--leading-relaxed);
+    .badge-employee {
+        background-color: var(--primary-100);
+        color: var(--primary-700);
+    }
+    
+    .badge-attendance {
+        background-color: var(--success-100);
+        color: var(--success-700);
+    }
+    
+    .badge-payroll {
+        background-color: var(--warning-100);
+        color: var(--warning-700);
+    }
+    
+    .badge-leave {
+        background-color: var(--error-100);
+        color: var(--error-700);
+    }
+    
+    .report-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: var(--space-4);
+        margin-bottom: var(--space-4);
+        padding: var(--space-4);
+        background-color: var(--neutral-50);
+        border-radius: var(--radius-lg);
+    }
+    
+    .stat-item {
+        text-align: center;
+    }
+    
+    .stat-value {
+        font-size: var(--text-lg);
+        font-weight: var(--font-bold);
+        color: var(--neutral-800);
+        margin-bottom: var(--space-1);
+    }
+    
+    .stat-label {
+        font-size: var(--text-xs);
+        color: var(--neutral-600);
     }
     
     .report-actions {
         display: flex;
         gap: var(--space-2);
+        justify-content: flex-end;
+    }
+    
+    .filters-section {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: var(--space-6);
+        margin-bottom: var(--space-6);
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .report-type-tabs {
+        display: flex;
+        gap: var(--space-2);
+        margin-bottom: var(--space-6);
+        border-bottom: 1px solid var(--neutral-200);
+    }
+    
+    .report-type-tab {
+        padding: var(--space-3) var(--space-4);
+        border-radius: var(--radius-md) var(--radius-md) 0 0;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        font-weight: var(--font-medium);
+        color: var(--neutral-600);
+        border-bottom: 2px solid transparent;
+    }
+    
+    .report-type-tab.active {
+        color: var(--primary-600);
+        border-bottom-color: var(--primary-600);
+        background-color: var(--primary-50);
+    }
+    
+    .report-type-tab:hover {
+        background-color: var(--neutral-50);
     }
     
     .quick-stats {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         gap: var(--space-4);
-        margin-bottom: var(--space-8);
-    }
-    
-    .stat-card {
-        background: white;
-        border-radius: var(--radius-lg);
-        padding: var(--space-6);
-        box-shadow: var(--shadow-sm);
-        border: 1px solid var(--neutral-200);
-        text-align: center;
-    }
-    
-    .stat-value {
-        font-size: var(--text-3xl);
-        font-weight: var(--font-bold);
-        color: var(--primary-600);
-        margin: 0 0 var(--space-2) 0;
-    }
-    
-    .stat-label {
-        font-size: var(--text-sm);
-        color: var(--secondary-600);
-        margin: 0;
-    }
-    
-    .recent-reports {
-        background: white;
-        border-radius: var(--radius-lg);
-        padding: var(--space-6);
-        box-shadow: var(--shadow-sm);
-        border: 1px solid var(--neutral-200);
-        margin-bottom: var(--space-8);
-    }
-    
-    .recent-reports-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
         margin-bottom: var(--space-6);
     }
     
-    .recent-reports-title {
-        font-size: var(--text-lg);
-        font-weight: var(--font-semibold);
-        color: var(--secondary-800);
-        margin: 0;
+    .quick-stat-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: var(--space-6);
+        box-shadow: var(--shadow-sm);
+        text-align: center;
     }
     
-    .recent-report-item {
+    .quick-stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius-full);
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        padding: var(--space-4);
-        border-bottom: 1px solid var(--neutral-200);
+        justify-content: center;
+        margin: 0 auto var(--space-3);
+        font-size: var(--text-xl);
     }
     
-    .recent-report-item:last-child {
-        border-bottom: none;
+    .quick-stat-value {
+        font-size: var(--text-2xl);
+        font-weight: var(--font-bold);
+        color: var(--neutral-800);
+        margin-bottom: var(--space-1);
     }
     
-    .recent-report-info {
-        display: flex;
-        align-items: center;
-        gap: var(--space-3);
-    }
-    
-    .recent-report-meta {
+    .quick-stat-label {
         font-size: var(--text-sm);
-        color: var(--secondary-500);
+        color: var(--neutral-600);
+    }
+    
+    .schedule-indicator {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        padding: var(--space-2) var(--space-3);
+        background-color: var(--primary-50);
+        color: var(--primary-700);
+        border-radius: var(--radius-full);
+        font-size: var(--text-xs);
+        font-weight: var(--font-medium);
+    }
+    
+    .schedule-indicator.active {
+        background-color: var(--success-50);
+        color: var(--success-700);
     }
     
     @media (max-width: 768px) {
-        .reports-grid {
-            grid-template-columns: 1fr;
-        }
-        
-        .quick-stats {
-            grid-template-columns: repeat(2, 1fr);
-        }
-        
-        .report-item {
+        .report-header {
             flex-direction: column;
-            align-items: flex-start;
-            gap: var(--space-3);
+            gap: var(--space-4);
         }
         
         .report-actions {
-            width: 100%;
-            justify-content: flex-end;
+            justify-content: stretch;
+        }
+        
+        .report-actions .btn {
+            flex: 1;
+        }
+        
+        .report-type-tabs {
+            flex-wrap: wrap;
+        }
+        
+        .report-stats {
+            grid-template-columns: repeat(2, 1fr);
         }
     }
 </style>
@@ -232,478 +271,699 @@
 {% block content %}
 <!-- Quick Stats -->
 <div class="quick-stats">
-    <div class="stat-card">
-        <h3 class="stat-value">{{ total_employees|default:"0" }}</h3>
-        <p class="stat-label">إجمالي الموظفين</p>
+    <div class="quick-stat-card">
+        <div class="quick-stat-icon bg-primary-100 text-primary-600">
+            <i class="fas fa-file-alt"></i>
+        </div>
+        <div class="quick-stat-value">{{ stats.total_reports }}</div>
+        <div class="quick-stat-label">إجمالي التقارير</div>
     </div>
     
-    <div class="stat-card">
-        <h3 class="stat-value">{{ total_departments|default:"0" }}</h3>
-        <p class="stat-label">الأقسام</p>
+    <div class="quick-stat-card">
+        <div class="quick-stat-icon bg-success-100 text-success-600">
+            <i class="fas fa-calendar-check"></i>
+        </div>
+        <div class="quick-stat-value">{{ stats.scheduled_reports }}</div>
+        <div class="quick-stat-label">التقارير المجدولة</div>
     </div>
     
-    <div class="stat-card">
-        <h3 class="stat-value">{{ active_employees|default:"0" }}</h3>
-        <p class="stat-label">الموظفين النشطين</p>
+    <div class="quick-stat-card">
+        <div class="quick-stat-icon bg-warning-100 text-warning-600">
+            <i class="fas fa-download"></i>
+        </div>
+        <div class="quick-stat-value">{{ stats.downloads_this_month }}</div>
+        <div class="quick-stat-label">التحميلات هذا الشهر</div>
     </div>
     
-    <div class="stat-card">
-        <h3 class="stat-value">{{ reports_generated|default:"0" }}</h3>
-        <p class="stat-label">التقارير المُنشأة</p>
+    <div class="quick-stat-card">
+        <div class="quick-stat-icon bg-error-100 text-error-600">
+            <i class="fas fa-share-alt"></i>
+        </div>
+        <div class="quick-stat-value">{{ stats.shared_reports }}</div>
+        <div class="quick-stat-label">التقارير المشتركة</div>
     </div>
 </div>
 
-<!-- Recent Reports -->
-<div class="recent-reports">
-    <div class="recent-reports-header">
-        <h3 class="recent-reports-title">التقارير الأخيرة</h3>
-        <button class="btn btn-ghost btn-sm">
-            <i class="fas fa-history"></i> عرض الكل
-        </button>
-    </div>
-    
-    <div class="recent-report-item">
-        <div class="recent-report-info">
-            <i class="fas fa-users text-primary-600"></i>
-            <div>
-                <h4 style="margin: 0; font-size: var(--text-sm); font-weight: var(--font-medium);">تقرير ملخص الموظفين</h4>
-                <p class="recent-report-meta">تم إنشاؤه منذ ساعتين</p>
+<!-- Filters Section -->
+<div class="filters-section">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+        <h2 class="text-xl font-semibold text-neutral-800">التقارير المحفوظة</h2>
+        
+        <div class="flex items-center gap-3">
+            <button class="btn btn-outline btn-sm" id="import-report">
+                <i class="fas fa-file-import ml-2"></i>
+                استيراد تقرير
+            </button>
+            <div class="dropdown">
+                <button class="btn btn-primary dropdown-toggle" data-dropdown-toggle>
+                    <i class="fas fa-plus ml-2"></i>
+                    إنشاء تقرير جديد
+                </button>
+                <div class="dropdown-menu">
+                    <a href="{% url 'Hr:employee_reports' %}" class="dropdown-item">
+                        <i class="fas fa-users ml-2"></i>
+                        تقرير الموظفين
+                    </a>
+                    <a href="{% url 'Hr:attendance_reports' %}" class="dropdown-item">
+                        <i class="fas fa-clock ml-2"></i>
+                        تقرير الحضور
+                    </a>
+                    <a href="{% url 'Hr:payroll_reports' %}" class="dropdown-item">
+                        <i class="fas fa-money-bill-wave ml-2"></i>
+                        تقرير الرواتب
+                    </a>
+                    <a href="{% url 'Hr:leave_reports' %}" class="dropdown-item">
+                        <i class="fas fa-calendar-alt ml-2"></i>
+                        تقرير الإجازات
+                    </a>
+                </div>
             </div>
         </div>
-        <button class="btn btn-ghost btn-sm">
-            <i class="fas fa-download"></i>
-        </button>
     </div>
     
-    <div class="recent-report-item">
-        <div class="recent-report-info">
-            <i class="fas fa-clock text-success-600"></i>
-            <div>
-                <h4 style="margin: 0; font-size: var(--text-sm); font-weight: var(--font-medium);">تقرير الحضور الشهري</h4>
-                <p class="recent-report-meta">تم إنشاؤه أمس</p>
-            </div>
-        </div>
-        <button class="btn btn-ghost btn-sm">
-            <i class="fas fa-download"></i>
-        </button>
+    <!-- Report Type Tabs -->
+    <div class="report-type-tabs">
+        <div class="report-type-tab active" data-type="all">جميع التقارير</div>
+        <div class="report-type-tab" data-type="employee">تقارير الموظفين</div>
+        <div class="report-type-tab" data-type="attendance">تقارير الحضور</div>
+        <div class="report-type-tab" data-type="payroll">تقارير الرواتب</div>
+        <div class="report-type-tab" data-type="leave">تقارير الإجازات</div>
     </div>
     
-    <div class="recent-report-item">
-        <div class="recent-report-info">
-            <i class="fas fa-chart-pie text-warning-600"></i>
-            <div>
-                <h4 style="margin: 0; font-size: var(--text-sm); font-weight: var(--font-medium);">تقرير التركيبة السكانية</h4>
-                <p class="recent-report-meta">تم إنشاؤه منذ 3 أيام</p>
-            </div>
+    <!-- Search and Filters -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="form-group">
+            <input type="text" id="search-reports" class="form-input" 
+                   placeholder="البحث في التقارير...">
         </div>
-        <button class="btn btn-ghost btn-sm">
-            <i class="fas fa-download"></i>
-        </button>
+        
+        <div class="form-group">
+            <select id="created-by-filter" class="form-select">
+                <option value="">جميع المنشئين</option>
+                {% for user in report_creators %}
+                    <option value="{{ user.id }}">{{ user.get_full_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <select id="date-range-filter" class="form-select">
+                <option value="">جميع التواريخ</option>
+                <option value="today">اليوم</option>
+                <option value="week">هذا الأسبوع</option>
+                <option value="month">هذا الشهر</option>
+                <option value="quarter">هذا الربع</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <select id="sort-by" class="form-select">
+                <option value="created_at">تاريخ الإنشاء</option>
+                <option value="name">الاسم</option>
+                <option value="type">النوع</option>
+                <option value="downloads">عدد التحميلات</option>
+            </select>
+        </div>
     </div>
 </div>
 
-<!-- Reports Grid -->
-<div class="reports-grid">
-    <!-- Employee Reports -->
-    <div class="report-category">
-        <div class="category-header">
-            <div class="category-icon">
-                <i class="fas fa-users"></i>
-            </div>
-            <div>
-                <h3 class="category-title">تقارير الموظفين</h3>
-                <p class="category-description">تقارير شاملة عن بيانات الموظفين والهيكل التنظيمي</p>
+<!-- Reports List -->
+<div id="reports-container">
+    {% for report in reports %}
+    <div class="report-card {{ report.type }}-report" data-report-id="{{ report.id }}" data-type="{{ report.type }}">
+        <div class="report-header">
+            <div class="report-info">
+                <div class="report-type-badge badge-{{ report.type }}">
+                    {% if report.type == 'employee' %}
+                        تقرير الموظفين
+                    {% elif report.type == 'attendance' %}
+                        تقرير الحضور
+                    {% elif report.type == 'payroll' %}
+                        تقرير الرواتب
+                    {% elif report.type == 'leave' %}
+                        تقرير الإجازات
+                    {% endif %}
+                </div>
+                
+                <h3 class="report-title">{{ report.name }}</h3>
+                
+                <div class="report-meta">
+                    <div class="report-meta-item">
+                        <i class="fas fa-user"></i>
+                        <span>{{ report.created_by.get_full_name }}</span>
+                    </div>
+                    <div class="report-meta-item">
+                        <i class="fas fa-calendar"></i>
+                        <span>{{ report.created_at|date:"Y/m/d H:i" }}</span>
+                    </div>
+                    <div class="report-meta-item">
+                        <i class="fas fa-download"></i>
+                        <span>{{ report.download_count }} تحميل</span>
+                    </div>
+                    {% if report.is_scheduled %}
+                    <div class="report-meta-item">
+                        <div class="schedule-indicator {% if report.schedule_active %}active{% endif %}">
+                            <i class="fas fa-clock"></i>
+                            <span>مجدول</span>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                {% if report.description %}
+                <div class="report-description">{{ report.description }}</div>
+                {% endif %}
             </div>
         </div>
         
-        <ul class="report-items">
-            <li class="report-item" onclick="navigateToReport('employee_summary')">
-                <div class="report-info">
-                    <div class="report-icon">
-                        <i class="fas fa-list-alt"></i>
-                    </div>
-                    <div class="report-details">
-                        <h4>تقرير ملخص الموظفين</h4>
-                        <p>نظرة عامة على جميع الموظفين مع الإحصائيات الأساسية</p>
-                    </div>
-                </div>
-                <div class="report-actions">
-                    <button class="btn btn-primary btn-sm">
-                        <i class="fas fa-play"></i> إنشاء
-                    </button>
-                </div>
-            </li>
-            
-            <li class="report-item" onclick="navigateToReport('employee_details')">
-                <div class="report-info">
-                    <div class="report-icon">
-                        <i class="fas fa-address-card"></i>
-                    </div>
-                    <div class="report-details">
-                        <h4>تقرير تفاصيل الموظفين</h4>
-                        <p>تقرير مفصل بجميع معلومات الموظفين الشخصية والوظيفية</p>
-                    </div>
-                </div>
-                <div class="report-actions">
-                    <button class="btn btn-primary btn-sm">
-                        <i class="fas fa-play"></i> إنشاء
-                    </button>
-                </div>
-            </li>
-            
-            <li class="report-item" onclick="navigateToReport('org_structure')">
-                <div class="report-info">
-                    <div class="report-icon">
-                        <i class="fas fa-sitemap"></i>
-                    </div>
-                    <div class="report-details">
-                        <h4>تقرير الهيكل التنظيمي</h4>
-                        <p>عرض الهيكل التنظيمي وتوزيع الموظفين على الأقسام</p>
-                    </div>
-                </div>
-                <div class="report-actions">
-                    <button class="btn btn-primary btn-sm">
-                        <i class="fas fa-play"></i> إنشاء
-                    </button>
-                </div>
-            </li>
-            
-            <li class="report-item" onclick="navigateToReport('new_employees')">
-                <div class="report-info">
-                    <div class="report-icon">
-                        <i class="fas fa-user-plus"></i>
-                    </div>
-                    <div class="report-details">
-                        <h4>تقرير الموظفين الجدد</h4>
-                        <p>قائمة بالموظفين الجدد المنضمين خلال فترة محددة</p>
-                    </div>
-                </div>
-                <div class="report-actions">
-                    <button class="btn btn-primary btn-sm">
-                        <i class="fas fa-play"></i> إنشاء
-                    </button>
-                </div>
-            </li>
-            
-            <li class="report-item" onclick="navigateToReport('demographics')">
-                <div class="report-info">
-                    <div class="report-icon">
-                        <i class="fas fa-chart-pie"></i>
-                    </div>
-                    <div class="report-details">
-                        <h4>تقرير التركيبة السكانية</h4>
-                        <p>تحليل التركيبة السكانية للموظفين حسب العمر والجنس والمؤهلات</p>
-                    </div>
-                </div>
-                <div class="report-actions">
-                    <button class="btn btn-primary btn-sm">
-                        <i class="fas fa-play"></i> إنشاء
-                    </button>
-                </div>
-            </li>
-            
-            <li class="report-item" onclick="navigateToReport('birthdays_anniversaries')">
-                <div class="report-info">
-                    <div class="report-icon">
-                        <i class="fas fa-birthday-cake"></i>
-                    </div>
-                    <div class="report-details">
-                        <h4>تقرير أعياد الميلاد والذكريات</h4>
-                        <p>قائمة بأعياد ميلاد الموظفين وذكريات التوظيف</p>
-                    </div>
-                </div>
-                <div class="report-actions">
-                    <button class="btn btn-primary btn-sm">
-                        <i class="fas fa-play"></i> إنشاء
-                    </button>
-                </div>
-            </li>
-        </ul>
+        <div class="report-stats">
+            <div class="stat-item">
+                <div class="stat-value">{{ report.record_count|default:"-" }}</div>
+                <div class="stat-label">عدد السجلات</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ report.file_size|filesizeformat|default:"-" }}</div>
+                <div class="stat-label">حجم الملف</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ report.last_generated|date:"m/d"|default:"-" }}</div>
+                <div class="stat-label">آخر إنتاج</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ report.execution_time|default:"-" }}s</div>
+                <div class="stat-label">وقت التنفيذ</div>
+            </div>
+        </div>
+        
+        <div class="report-actions">
+            <button class="btn btn-primary btn-sm" onclick="generateReport('{{ report.id }}')">
+                <i class="fas fa-play"></i>
+                تشغيل
+            </button>
+            <button class="btn btn-secondary btn-sm" onclick="viewReport('{{ report.id }}')">
+                <i class="fas fa-eye"></i>
+                عرض
+            </button>
+            <button class="btn btn-outline btn-sm" onclick="downloadReport('{{ report.id }}')">
+                <i class="fas fa-download"></i>
+                تحميل
+            </button>
+            <button class="btn btn-warning btn-sm" onclick="editReport('{{ report.id }}')">
+                <i class="fas fa-edit"></i>
+                تعديل
+            </button>
+            <button class="btn btn-error btn-sm" onclick="deleteReport('{{ report.id }}')">
+                <i class="fas fa-trash"></i>
+                حذف
+            </button>
+        </div>
     </div>
-    
-    <!-- Attendance Reports -->
-    <div class="report-category">
-        <div class="category-header">
-            <div class="category-icon">
-                <i class="fas fa-clock"></i>
-            </div>
-            <div>
-                <h3 class="category-title">تقارير الحضور</h3>
-                <p class="category-description">تقارير وتحليلات الحضور والغياب والمواعيد</p>
-            </div>
+    {% empty %}
+    <div class="text-center py-12">
+        <i class="fas fa-file-alt text-6xl text-neutral-300 mb-4 block"></i>
+        <h3 class="text-lg font-semibold text-neutral-600 mb-2">لا توجد تقارير محفوظة</h3>
+        <p class="text-neutral-500 mb-4">ابدأ بإنشاء تقاريرك الأولى</p>
+        <div class="flex justify-center gap-3">
+            <a href="{% url 'Hr:employee_reports' %}" class="btn btn-primary">
+                <i class="fas fa-users ml-2"></i>
+                تقرير الموظفين
+            </a>
+            <a href="{% url 'Hr:attendance_reports' %}" class="btn btn-success">
+                <i class="fas fa-clock ml-2"></i>
+                تقرير الحضور
+            </a>
         </div>
-        
-        <ul class="report-items">
-            <li class="report-item" onclick="navigateToReport('attendance_summary')">
-                <div class="report-info">
-                    <div class="report-icon">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <div class="report-details">
-                        <h4>تقرير ملخص الحضور</h4>
-                        <p>إحصائيات الحضور والغياب للموظفين خلال فترة محددة</p>
-                    </div>
-                </div>
-                <div class="report-actions">
-                    <button class="btn btn-primary btn-sm">
-                        <i class="fas fa-play"></i> إنشاء
-                    </button>
-                </div>
-            </li>
-            
-            <li class="report-item" onclick="navigateToReport('attendance_details')">
-                <div class="report-info">
-                    <div class="report-icon">
-                        <i class="fas fa-calendar-check"></i>
-                    </div>
-                    <div class="report-details">
-                        <h4>تقرير تفاصيل الحضور</h4>
-                        <p>تفاصيل دقيقة لحضور وانصراف كل موظف</p>
-                    </div>
-                </div>
-                <div class="report-actions">
-                    <button class="btn btn-primary btn-sm">
-                        <i class="fas fa-play"></i> إنشاء
-                    </button>
-                </div>
-            </li>
-            
-            <li class="report-item" onclick="navigateToReport('late_arrivals')">
-                <div class="report-info">
-                    <div class="report-icon">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <div class="report-details">
-                        <h4>تقرير التأخير</h4>
-                        <p>قائمة بحالات التأخير وإحصائياتها</p>
-                    </div>
-                </div>
-                <div class="report-actions">
-                    <button class="btn btn-primary btn-sm">
-                        <i class="fas fa-play"></i> إنشاء
-                    </button>
-                </div>
-            </li>
-            
-            <li class="report-item" onclick="navigateToReport('overtime')">
-                <div class="report-info">
-                    <div class="report-icon">
-                        <i class="fas fa-business-time"></i>
-                    </div>
-                    <div class="report-details">
-                        <h4>تقرير العمل الإضافي</h4>
-                        <p>ساعات العمل الإضافي للموظفين</p>
-                    </div>
-                </div>
-                <div class="report-actions">
-                    <button class="btn btn-primary btn-sm">
-                        <i class="fas fa-play"></i> إنشاء
-                    </button>
-                </div>
-            </li>
-        </ul>
     </div>
-    
-    <!-- Payroll Reports -->
-    <div class="report-category">
-        <div class="category-header">
-            <div class="category-icon">
-                <i class="fas fa-money-bill-wave"></i>
-            </div>
-            <div>
-                <h3 class="category-title">تقارير الرواتب</h3>
-                <p class="category-description">تقارير الرواتب والمكافآت والخصومات</p>
-            </div>
+    {% endfor %}
+</div><!-- Re
+port Details Modal -->
+<div class="modal-backdrop hidden" id="report-details-modal">
+    <div class="modal modal-lg">
+        <div class="modal-header">
+            <h3 class="modal-title" id="report-details-title">تفاصيل التقرير</h3>
+            <button type="button" class="modal-close" data-modal-close>&times;</button>
         </div>
-        
-        <ul class="report-items">
-            <li class="report-item" onclick="navigateToReport('payroll_summary')">
-                <div class="report-info">
-                    <div class="report-icon">
-                        <i class="fas fa-calculator"></i>
-                    </div>
-                    <div class="report-details">
-                        <h4>تقرير ملخص الرواتب</h4>
-                        <p>ملخص شامل لرواتب الموظفين والتكاليف</p>
-                    </div>
-                </div>
-                <div class="report-actions">
-                    <button class="btn btn-primary btn-sm">
-                        <i class="fas fa-play"></i> إنشاء
-                    </button>
-                </div>
-            </li>
-            
-            <li class="report-item" onclick="navigateToReport('salary_analysis')">
-                <div class="report-info">
-                    <div class="report-icon">
-                        <i class="fas fa-chart-bar"></i>
-                    </div>
-                    <div class="report-details">
-                        <h4>تحليل الرواتب</h4>
-                        <p>تحليل توزيع الرواتب حسب الأقسام والوظائف</p>
-                    </div>
-                </div>
-                <div class="report-actions">
-                    <button class="btn btn-primary btn-sm">
-                        <i class="fas fa-play"></i> إنشاء
-                    </button>
-                </div>
-            </li>
-            
-            <li class="report-item" onclick="navigateToReport('deductions')">
-                <div class="report-info">
-                    <div class="report-icon">
-                        <i class="fas fa-minus-circle"></i>
-                    </div>
-                    <div class="report-details">
-                        <h4>تقرير الخصومات</h4>
-                        <p>تفاصيل الخصومات المطبقة على الموظفين</p>
-                    </div>
-                </div>
-                <div class="report-actions">
-                    <button class="btn btn-primary btn-sm">
-                        <i class="fas fa-play"></i> إنشاء
-                    </button>
-                </div>
-            </li>
-            
-            <li class="report-item" onclick="navigateToReport('bonuses')">
-                <div class="report-info">
-                    <div class="report-icon">
-                        <i class="fas fa-plus-circle"></i>
-                    </div>
-                    <div class="report-details">
-                        <h4>تقرير المكافآت</h4>
-                        <p>المكافآت والعلاوات الممنوحة للموظفين</p>
-                    </div>
-                </div>
-                <div class="report-actions">
-                    <button class="btn btn-primary btn-sm">
-                        <i class="fas fa-play"></i> إنشاء
-                    </button>
-                </div>
-            </li>
-        </ul>
+        <div class="modal-body" id="report-details-content">
+            <!-- Content will be populated by JavaScript -->
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-modal-close>إغلاق</button>
+            <button type="button" class="btn btn-primary" id="regenerate-report">
+                <i class="fas fa-sync ml-2"></i>
+                إعادة إنتاج
+            </button>
+        </div>
     </div>
-    
-    <!-- Analytics & Insights -->
-    <div class="report-category">
-        <div class="category-header">
-            <div class="category-icon">
-                <i class="fas fa-chart-line"></i>
-            </div>
-            <div>
-                <h3 class="category-title">التحليلات والرؤى</h3>
-                <p class="category-description">تحليلات متقدمة ولوحات معلومات تفاعلية</p>
-            </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-backdrop hidden" id="delete-report-modal">
+    <div class="modal modal-sm">
+        <div class="modal-header">
+            <h3 class="modal-title">تأكيد الحذف</h3>
+            <button type="button" class="modal-close" data-modal-close>&times;</button>
         </div>
-        
-        <ul class="report-items">
-            <li class="report-item" onclick="navigateToAnalytics()">
-                <div class="report-info">
-                    <div class="report-icon">
-                        <i class="fas fa-tachometer-alt"></i>
-                    </div>
-                    <div class="report-details">
-                        <h4>لوحة التحليلات</h4>
-                        <p>لوحة معلومات تفاعلية مع المؤشرات الرئيسية</p>
-                    </div>
-                </div>
-                <div class="report-actions">
-                    <button class="btn btn-primary btn-sm">
-                        <i class="fas fa-external-link-alt"></i> فتح
-                    </button>
-                </div>
-            </li>
-            
-            <li class="report-item" onclick="navigateToReport('performance_metrics')">
-                <div class="report-info">
-                    <div class="report-icon">
-                        <i class="fas fa-trophy"></i>
-                    </div>
-                    <div class="report-details">
-                        <h4>مؤشرات الأداء</h4>
-                        <p>مؤشرات الأداء الرئيسية للموارد البشرية</p>
-                    </div>
-                </div>
-                <div class="report-actions">
-                    <button class="btn btn-primary btn-sm">
-                        <i class="fas fa-play"></i> إنشاء
-                    </button>
-                </div>
-            </li>
-            
-            <li class="report-item" onclick="navigateToReport('trends_analysis')">
-                <div class="report-info">
-                    <div class="report-icon">
-                        <i class="fas fa-trending-up"></i>
-                    </div>
-                    <div class="report-details">
-                        <h4>تحليل الاتجاهات</h4>
-                        <p>تحليل الاتجاهات والتوقعات المستقبلية</p>
-                    </div>
-                </div>
-                <div class="report-actions">
-                    <button class="btn btn-primary btn-sm">
-                        <i class="fas fa-play"></i> إنشاء
-                    </button>
-                </div>
-            </li>
-        </ul>
+        <div class="modal-body">
+            <p>هل أنت متأكد من حذف هذا التقرير؟</p>
+            <p class="text-sm text-neutral-600 mt-2">سيتم حذف التقرير وجميع الملفات المرتبطة به نهائياً.</p>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-modal-close>إلغاء</button>
+            <button type="button" class="btn btn-error" id="confirm-delete-report">حذف</button>
+        </div>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    function navigateToReport(reportType) {
-        // Navigate to employee reports page with the specific report type
-        const url = "{% url 'Hr:reports:employee_reports' %}";
-        window.location.href = `${url}?report_type=${reportType}`;
-    }
+document.addEventListener('DOMContentLoaded', function() {
+    let currentReportType = 'all';
+    let reportToDelete = null;
     
-    function navigateToAnalytics() {
-        // Navigate to analytics dashboard
-        const url = "{% url 'Hr:reports:analytics_dashboard' %}";
-        window.location.href = url;
-    }
-    
-    // Add click handlers for report items
-    document.addEventListener('DOMContentLoaded', function() {
-        // Add hover effects and interactions
-        const reportItems = document.querySelectorAll('.report-item');
-        
-        reportItems.forEach(item => {
-            item.addEventListener('mouseenter', function() {
-                this.style.transform = 'translateX(-4px)';
-            });
+    // Report type tabs functionality
+    const reportTypeTabs = document.querySelectorAll('.report-type-tab');
+    reportTypeTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const type = this.getAttribute('data-type');
             
-            item.addEventListener('mouseleave', function() {
-                this.style.transform = 'translateX(0)';
-            });
-        });
-        
-        // Handle report generation buttons
-        const generateButtons = document.querySelectorAll('.report-actions .btn-primary');
-        
-        generateButtons.forEach(button => {
-            button.addEventListener('click', function(e) {
-                e.stopPropagation();
-                
-                // Show loading state
-                const originalText = this.innerHTML;
-                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحميل...';
-                this.disabled = true;
-                
-                // Simulate report generation
-                setTimeout(() => {
-                    this.innerHTML = originalText;
-                    this.disabled = false;
-                    HRUtils.showNotification('تم إنشاء التقرير بنجاح', 'success');
-                }, 2000);
-            });
+            // Update active tab
+            reportTypeTabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Filter reports
+            currentReportType = type;
+            filterReports();
         });
     });
+    
+    // Search and filter functionality
+    const searchInput = document.getElementById('search-reports');
+    const createdByFilter = document.getElementById('created-by-filter');
+    const dateRangeFilter = document.getElementById('date-range-filter');
+    const sortByFilter = document.getElementById('sort-by');
+    
+    searchInput.addEventListener('input', HRComponents.utils.debounce(filterReports, 300));
+    createdByFilter.addEventListener('change', filterReports);
+    dateRangeFilter.addEventListener('change', filterReports);
+    sortByFilter.addEventListener('change', sortReports);
+    
+    function filterReports() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const createdBy = createdByFilter.value;
+        const dateRange = dateRangeFilter.value;
+        
+        const reportCards = document.querySelectorAll('.report-card');
+        
+        reportCards.forEach(card => {
+            const reportName = card.querySelector('.report-title').textContent.toLowerCase();
+            const reportDescription = card.querySelector('.report-description')?.textContent.toLowerCase() || '';
+            const reportType = card.getAttribute('data-type');
+            
+            let showCard = true;
+            
+            // Filter by search term
+            if (searchTerm && !reportName.includes(searchTerm) && !reportDescription.includes(searchTerm)) {
+                showCard = false;
+            }
+            
+            // Filter by type
+            if (currentReportType !== 'all' && reportType !== currentReportType) {
+                showCard = false;
+            }
+            
+            // Additional filters would be implemented here based on data attributes
+            
+            card.style.display = showCard ? 'block' : 'none';
+        });
+    }
+    
+    function sortReports() {
+        const sortBy = sortByFilter.value;
+        const container = document.getElementById('reports-container');
+        const cards = Array.from(container.querySelectorAll('.report-card'));
+        
+        cards.sort((a, b) => {
+            let aValue, bValue;
+            
+            switch (sortBy) {
+                case 'name':
+                    aValue = a.querySelector('.report-title').textContent;
+                    bValue = b.querySelector('.report-title').textContent;
+                    break;
+                case 'type':
+                    aValue = a.getAttribute('data-type');
+                    bValue = b.getAttribute('data-type');
+                    break;
+                case 'downloads':
+                    aValue = parseInt(a.querySelector('.report-meta-item:nth-child(3) span').textContent);
+                    bValue = parseInt(b.querySelector('.report-meta-item:nth-child(3) span').textContent);
+                    break;
+                default: // created_at
+                    aValue = a.querySelector('.report-meta-item:nth-child(2) span').textContent;
+                    bValue = b.querySelector('.report-meta-item:nth-child(2) span').textContent;
+            }
+            
+            if (sortBy === 'downloads') {
+                return bValue - aValue; // Descending for numbers
+            } else {
+                return aValue.localeCompare(bValue, 'ar'); // Ascending for text
+            }
+        });
+        
+        // Re-append sorted cards
+        cards.forEach(card => container.appendChild(card));
+    }
+    
+    // Report actions
+    window.generateReport = function(reportId) {
+        showLoading();
+        
+        fetch(`{% url 'Hr:api_generate_saved_report' 0 %}`.replace('0', reportId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                HRComponents.Toast.show('تم إنتاج التقرير بنجاح', 'success');
+                
+                // Update report stats
+                const card = document.querySelector(`[data-report-id="${reportId}"]`);
+                if (card) {
+                    updateReportStats(card, data.stats);
+                }
+                
+                // Offer download
+                if (data.download_url) {
+                    setTimeout(() => {
+                        if (confirm('هل تريد تحميل التقرير الآن؟')) {
+                            window.open(data.download_url, '_blank');
+                        }
+                    }, 1000);
+                }
+            } else {
+                throw new Error(data.message || 'فشل في إنتاج التقرير');
+            }
+        })
+        .catch(error => {
+            console.error('Error generating report:', error);
+            HRComponents.Toast.show(error.message || 'فشل في إنتاج التقرير', 'error');
+        })
+        .finally(() => {
+            hideLoading();
+        });
+    };
+    
+    window.viewReport = function(reportId) {
+        showLoading();
+        
+        fetch(`{% url 'Hr:api_get_report_details' 0 %}`.replace('0', reportId))
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayReportDetails(data.report);
+                    document.getElementById('report-details-modal').classList.remove('hidden');
+                } else {
+                    throw new Error(data.message || 'فشل في تحميل تفاصيل التقرير');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading report details:', error);
+                HRComponents.Toast.show(error.message || 'فشل في تحميل تفاصيل التقرير', 'error');
+            })
+            .finally(() => {
+                hideLoading();
+            });
+    };
+    
+    function displayReportDetails(report) {
+        document.getElementById('report-details-title').textContent = report.name;
+        
+        const content = `
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-sm font-medium text-neutral-600">نوع التقرير</label>
+                        <div class="mt-1 text-neutral-800">${getReportTypeText(report.type)}</div>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-neutral-600">منشئ التقرير</label>
+                        <div class="mt-1 text-neutral-800">${report.created_by}</div>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-neutral-600">تاريخ الإنشاء</label>
+                        <div class="mt-1 text-neutral-800">${report.created_at}</div>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-neutral-600">آخر تحديث</label>
+                        <div class="mt-1 text-neutral-800">${report.last_generated || 'لم يتم إنتاجه بعد'}</div>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-sm font-medium text-neutral-600">عدد السجلات</label>
+                        <div class="mt-1 text-neutral-800">${report.record_count || '-'}</div>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-neutral-600">عدد التحميلات</label>
+                        <div class="mt-1 text-neutral-800">${report.download_count}</div>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-neutral-600">حجم الملف</label>
+                        <div class="mt-1 text-neutral-800">${report.file_size || '-'}</div>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-neutral-600">وقت التنفيذ</label>
+                        <div class="mt-1 text-neutral-800">${report.execution_time || '-'} ثانية</div>
+                    </div>
+                </div>
+            </div>
+            
+            ${report.description ? `
+            <div class="mt-6">
+                <label class="text-sm font-medium text-neutral-600">الوصف</label>
+                <div class="mt-2 p-4 bg-neutral-50 rounded-lg text-neutral-800">
+                    ${report.description}
+                </div>
+            </div>
+            ` : ''}
+            
+            ${report.filters && Object.keys(report.filters).length > 0 ? `
+            <div class="mt-6">
+                <label class="text-sm font-medium text-neutral-600">معايير التصفية</label>
+                <div class="mt-2 p-4 bg-neutral-50 rounded-lg">
+                    ${Object.entries(report.filters).map(([key, value]) => 
+                        `<div class="flex justify-between py-1">
+                            <span class="text-neutral-600">${key}:</span>
+                            <span class="text-neutral-800">${Array.isArray(value) ? value.join(', ') : value}</span>
+                        </div>`
+                    ).join('')}
+                </div>
+            </div>
+            ` : ''}
+            
+            ${report.schedule ? `
+            <div class="mt-6">
+                <label class="text-sm font-medium text-neutral-600">الجدولة</label>
+                <div class="mt-2 p-4 bg-primary-50 rounded-lg text-primary-800">
+                    <div class="flex items-center gap-2 mb-2">
+                        <i class="fas fa-clock"></i>
+                        <span class="font-medium">مجدول للتشغيل ${report.schedule.frequency}</span>
+                    </div>
+                    <div class="text-sm">
+                        آخر تشغيل: ${report.schedule.last_run || 'لم يتم التشغيل بعد'}<br>
+                        التشغيل التالي: ${report.schedule.next_run || 'غير محدد'}
+                    </div>
+                </div>
+            </div>
+            ` : ''}
+        `;
+        
+        document.getElementById('report-details-content').innerHTML = content;
+        
+        // Set regenerate button action
+        document.getElementById('regenerate-report').onclick = function() {
+            document.getElementById('report-details-modal').classList.add('hidden');
+            generateReport(report.id);
+        };
+    }
+    
+    function getReportTypeText(type) {
+        const typeMap = {
+            'employee': 'تقرير الموظفين',
+            'attendance': 'تقرير الحضور',
+            'payroll': 'تقرير الرواتب',
+            'leave': 'تقرير الإجازات'
+        };
+        return typeMap[type] || type;
+    }
+    
+    window.downloadReport = function(reportId) {
+        showLoading();
+        
+        fetch(`{% url 'Hr:api_download_report' 0 %}`.replace('0', reportId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.blob();
+            } else {
+                throw new Error('فشل في تحميل التقرير');
+            }
+        })
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `report-${reportId}-${new Date().toISOString().split('T')[0]}.xlsx`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            HRComponents.Toast.show('تم تحميل التقرير بنجاح', 'success');
+            
+            // Update download count
+            const card = document.querySelector(`[data-report-id="${reportId}"]`);
+            if (card) {
+                const downloadElement = card.querySelector('.report-meta-item:nth-child(3) span');
+                const currentCount = parseInt(downloadElement.textContent);
+                downloadElement.textContent = `${currentCount + 1} تحميل`;
+            }
+        })
+        .catch(error => {
+            console.error('Error downloading report:', error);
+            HRComponents.Toast.show('فشل في تحميل التقرير', 'error');
+        })
+        .finally(() => {
+            hideLoading();
+        });
+    };
+    
+    window.editReport = function(reportId) {
+        // Redirect to appropriate report editor based on type
+        const card = document.querySelector(`[data-report-id="${reportId}"]`);
+        const reportType = card.getAttribute('data-type');
+        
+        const editUrls = {
+            'employee': '{% url "Hr:employee_reports" %}',
+            'attendance': '{% url "Hr:attendance_reports" %}',
+            'payroll': '{% url "Hr:payroll_reports" %}',
+            'leave': '{% url "Hr:leave_reports" %}'
+        };
+        
+        if (editUrls[reportType]) {
+            window.location.href = `${editUrls[reportType]}?edit=${reportId}`;
+        } else {
+            HRComponents.Toast.show('لا يمكن تعديل هذا النوع من التقارير', 'error');
+        }
+    };
+    
+    window.deleteReport = function(reportId) {
+        reportToDelete = reportId;
+        document.getElementById('delete-report-modal').classList.remove('hidden');
+    };
+    
+    // Confirm delete
+    document.getElementById('confirm-delete-report').addEventListener('click', function() {
+        if (!reportToDelete) return;
+        
+        showLoading();
+        
+        fetch(`{% url 'Hr:api_delete_report' 0 %}`.replace('0', reportToDelete), {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                HRComponents.Toast.show('تم حذف التقرير بنجاح', 'success');
+                document.getElementById('delete-report-modal').classList.add('hidden');
+                
+                // Remove card from list
+                const card = document.querySelector(`[data-report-id="${reportToDelete}"]`);
+                if (card) {
+                    card.remove();
+                }
+                
+                reportToDelete = null;
+            } else {
+                throw new Error(data.message || 'فشل في حذف التقرير');
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting report:', error);
+            HRComponents.Toast.show(error.message || 'فشل في حذف التقرير', 'error');
+        })
+        .finally(() => {
+            hideLoading();
+        });
+    });
+    
+    function updateReportStats(card, stats) {
+        const statItems = card.querySelectorAll('.stat-value');
+        if (statItems[0]) statItems[0].textContent = stats.record_count || '-';
+        if (statItems[1]) statItems[1].textContent = stats.file_size || '-';
+        if (statItems[2]) statItems[2].textContent = stats.last_generated || '-';
+        if (statItems[3]) statItems[3].textContent = (stats.execution_time || '-') + 's';
+    }
+    
+    // Import report functionality
+    document.getElementById('import-report').addEventListener('click', function() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json,.xml';
+        input.onchange = function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                importReport(file);
+            }
+        };
+        input.click();
+    });
+    
+    function importReport(file) {
+        const formData = new FormData();
+        formData.append('report_file', file);
+        
+        showLoading();
+        
+        fetch('{% url "Hr:api_import_report" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                HRComponents.Toast.show('تم استيراد التقرير بنجاح', 'success');
+                
+                // Reload page after short delay
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                throw new Error(data.message || 'فشل في استيراد التقرير');
+            }
+        })
+        .catch(error => {
+            console.error('Error importing report:', error);
+            HRComponents.Toast.show(error.message || 'فشل في استيراد التقرير', 'error');
+        })
+        .finally(() => {
+            hideLoading();
+        });
+    }
+});
 </script>
 {% endblock %}

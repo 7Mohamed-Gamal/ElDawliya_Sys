@@ -1,0 +1,1116 @@
+{% extends 'Hr/base_hr_modern.html' %}
+{% load static %}
+
+{% block title %}أرصدة الإجازات{% endblock %}
+{% block page_title %}أرصدة الإجازات{% endblock %}
+
+{% block breadcrumb_items %}
+<div class="breadcrumb-item">
+    <a href="{% url 'Hr:leaves_dashboard' %}" class="breadcrumb-link">الإجازات</a>
+</div>
+<div class="breadcrumb-item">
+    <span class="breadcrumb-link">أرصدة الإجازات</span>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .balance-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: var(--space-6);
+        box-shadow: var(--shadow-sm);
+        transition: all var(--transition-fast);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .balance-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .balance-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+    }
+    
+    .employee-header {
+        display: flex;
+        align-items: center;
+        gap: var(--space-4);
+        margin-bottom: var(--space-6);
+    }
+    
+    .employee-avatar {
+        width: 64px;
+        height: 64px;
+        border-radius: var(--radius-full);
+        background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: var(--text-xl);
+        font-weight: var(--font-bold);
+    }
+    
+    .employee-info h3 {
+        font-size: var(--text-xl);
+        font-weight: var(--font-semibold);
+        color: var(--neutral-800);
+        margin-bottom: var(--space-1);
+    }
+    
+    .employee-meta {
+        color: var(--neutral-600);
+        font-size: var(--text-sm);
+    }
+    
+    .leave-types-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--space-4);
+        margin-bottom: var(--space-6);
+    }
+    
+    .leave-type-item {
+        background-color: var(--neutral-50);
+        border-radius: var(--radius-lg);
+        padding: var(--space-4);
+        text-align: center;
+        position: relative;
+    }
+    
+    .leave-type-name {
+        font-weight: var(--font-medium);
+        color: var(--neutral-800);
+        margin-bottom: var(--space-3);
+    }
+    
+    .balance-progress {
+        position: relative;
+        width: 80px;
+        height: 80px;
+        margin: 0 auto var(--space-3);
+    }
+    
+    .progress-circle {
+        width: 100%;
+        height: 100%;
+        transform: rotate(-90deg);
+    }
+    
+    .progress-circle-bg {
+        fill: none;
+        stroke: var(--neutral-200);
+        stroke-width: 8;
+    }
+    
+    .progress-circle-fill {
+        fill: none;
+        stroke-width: 8;
+        stroke-linecap: round;
+        transition: stroke-dasharray var(--transition-slow);
+    }
+    
+    .progress-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+    }
+    
+    .progress-value {
+        font-size: var(--text-lg);
+        font-weight: var(--font-bold);
+        color: var(--neutral-800);
+    }
+    
+    .progress-label {
+        font-size: var(--text-xs);
+        color: var(--neutral-600);
+    }
+    
+    .balance-details {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-2);
+        font-size: var(--text-sm);
+    }
+    
+    .balance-detail {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: var(--space-2);
+        border-radius: var(--radius-md);
+    }
+    
+    .balance-detail.available {
+        background-color: var(--success-50);
+        color: var(--success-700);
+    }
+    
+    .balance-detail.used {
+        background-color: var(--warning-50);
+        color: var(--warning-700);
+    }
+    
+    .balance-detail.pending {
+        background-color: var(--primary-50);
+        color: var(--primary-700);
+    }
+    
+    .balance-detail.expired {
+        background-color: var(--error-50);
+        color: var(--error-700);
+    }
+    
+    .summary-section {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: var(--space-6);
+        margin-bottom: var(--space-6);
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: var(--space-6);
+    }
+    
+    .summary-chart {
+        text-align: center;
+    }
+    
+    .chart-container {
+        width: 200px;
+        height: 200px;
+        margin: 0 auto var(--space-4);
+        position: relative;
+    }
+    
+    .chart-legend {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: var(--space-3);
+    }
+    
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: var(--space-2);
+        font-size: var(--text-sm);
+    }
+    
+    .legend-color {
+        width: 12px;
+        height: 12px;
+        border-radius: var(--radius-full);
+    }
+    
+    .filters-section {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: var(--space-6);
+        margin-bottom: var(--space-6);
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .balance-actions {
+        display: flex;
+        gap: var(--space-2);
+        justify-content: flex-end;
+        margin-top: var(--space-4);
+    }
+    
+    @media (max-width: 768px) {
+        .leave-types-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .summary-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .balance-details {
+            grid-template-columns: 1fr;
+        }
+        
+        .balance-actions {
+            justify-content: stretch;
+        }
+        
+        .balance-actions .btn {
+            flex: 1;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Summary Section -->
+<div class="summary-section">
+    <h2 class="text-xl font-semibold text-neutral-800 mb-6">ملخص أرصدة الإجازات</h2>
+    
+    <div class="summary-grid">
+        <div class="summary-chart">
+            <h3 class="text-lg font-medium text-neutral-700 mb-4">توزيع الإجازات حسب النوع</h3>
+            <div class="chart-container">
+                <canvas id="leave-types-chart"></canvas>
+            </div>
+            <div class="chart-legend" id="types-legend">
+                <!-- Will be populated by JavaScript -->
+            </div>
+        </div>
+        
+        <div class="summary-chart">
+            <h3 class="text-lg font-medium text-neutral-700 mb-4">استخدام الإجازات الشهري</h3>
+            <div class="chart-container">
+                <canvas id="monthly-usage-chart"></canvas>
+            </div>
+        </div>
+        
+        <div class="summary-chart">
+            <h3 class="text-lg font-medium text-neutral-700 mb-4">حالة الأرصدة</h3>
+            <div class="chart-container">
+                <canvas id="balance-status-chart"></canvas>
+            </div>
+            <div class="chart-legend" id="status-legend">
+                <div class="legend-item">
+                    <div class="legend-color bg-success-500"></div>
+                    <span>متاح</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color bg-warning-500"></div>
+                    <span>مستخدم</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color bg-primary-500"></div>
+                    <span>معلق</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color bg-error-500"></div>
+                    <span>منتهي الصلاحية</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters Section -->
+<div class="filters-section">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+        <h2 class="text-xl font-semibold text-neutral-800">أرصدة الموظفين</h2>
+        
+        <div class="flex items-center gap-3">
+            <button class="btn btn-outline btn-sm" id="export-balances">
+                <i class="fas fa-file-export ml-2"></i>
+                تصدير
+            </button>
+            <button class="btn btn-secondary btn-sm" id="bulk-update">
+                <i class="fas fa-edit ml-2"></i>
+                تحديث جماعي
+            </button>
+            <button class="btn btn-primary" onclick="showAdjustBalanceModal()">
+                <i class="fas fa-plus ml-2"></i>
+                تعديل رصيد
+            </button>
+        </div>
+    </div>
+    
+    <!-- Search and Filters -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="form-group">
+            <input type="text" id="search-employees" class="form-input" 
+                   placeholder="البحث عن موظف...">
+        </div>
+        
+        <div class="form-group">
+            <select id="department-filter" class="form-select">
+                <option value="">جميع الأقسام</option>
+                {% for department in departments %}
+                    <option value="{{ department.id }}">{{ department.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <select id="leave-type-filter" class="form-select">
+                <option value="">جميع أنواع الإجازات</option>
+                {% for leave_type in leave_types %}
+                    <option value="{{ leave_type.id }}">{{ leave_type.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <select id="balance-status-filter" class="form-select">
+                <option value="">جميع الحالات</option>
+                <option value="low">رصيد منخفض</option>
+                <option value="normal">رصيد طبيعي</option>
+                <option value="high">رصيد مرتفع</option>
+                <option value="expired">منتهي الصلاحية</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Employee Balances Grid -->
+<div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6" id="balances-grid">
+    {% for employee_balance in employee_balances %}
+    <div class="balance-card" data-employee-id="{{ employee_balance.employee.id }}">
+        <div class="employee-header">
+            <div class="employee-avatar">
+                {% if employee_balance.employee.profile_picture %}
+                    <img src="{{ employee_balance.employee.profile_picture.url }}" alt="{{ employee_balance.employee.full_name }}" 
+                         class="w-full h-full object-cover rounded-full">
+                {% else %}
+                    {{ employee_balance.employee.first_name|first }}{{ employee_balance.employee.last_name|first }}
+                {% endif %}
+            </div>
+            <div class="employee-info">
+                <h3>{{ employee_balance.employee.full_name }}</h3>
+                <div class="employee-meta">
+                    {{ employee_balance.employee.employee_number }} • {{ employee_balance.employee.department.name|default:"بدون قسم" }}
+                </div>
+            </div>
+        </div>
+        
+        <div class="leave-types-grid">
+            {% for balance in employee_balance.balances %}
+            <div class="leave-type-item">
+                <div class="leave-type-name">{{ balance.leave_type.name }}</div>
+                
+                <div class="balance-progress">
+                    <svg class="progress-circle" viewBox="0 0 100 100">
+                        <circle class="progress-circle-bg" cx="50" cy="50" r="40"></circle>
+                        <circle class="progress-circle-fill" cx="50" cy="50" r="40"
+                                stroke="{% if balance.usage_percentage <= 50 %}var(--success-500){% elif balance.usage_percentage <= 80 %}var(--warning-500){% else %}var(--error-500){% endif %}"
+                                stroke-dasharray="{{ balance.usage_percentage|floatformat:0 }}, 100"
+                                stroke-dashoffset="0"></circle>
+                    </svg>
+                    <div class="progress-text">
+                        <div class="progress-value">{{ balance.available_days }}</div>
+                        <div class="progress-label">متاح</div>
+                    </div>
+                </div>
+                
+                <div class="balance-details">
+                    <div class="balance-detail available">
+                        <span>متاح</span>
+                        <span>{{ balance.available_days }}</span>
+                    </div>
+                    <div class="balance-detail used">
+                        <span>مستخدم</span>
+                        <span>{{ balance.used_days }}</span>
+                    </div>
+                    <div class="balance-detail pending">
+                        <span>معلق</span>
+                        <span>{{ balance.pending_days }}</span>
+                    </div>
+                    <div class="balance-detail">
+                        <span>الإجمالي</span>
+                        <span>{{ balance.annual_entitlement }}</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="balance-actions">
+            <button class="btn btn-secondary btn-sm" onclick="viewBalanceHistory('{{ employee_balance.employee.id }}')">
+                <i class="fas fa-history"></i>
+                التاريخ
+            </button>
+            <button class="btn btn-primary btn-sm" onclick="adjustEmployeeBalance('{{ employee_balance.employee.id }}')">
+                <i class="fas fa-edit"></i>
+                تعديل
+            </button>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-span-full text-center py-12">
+        <i class="fas fa-calendar-times text-6xl text-neutral-300 mb-4 block"></i>
+        <h3 class="text-lg font-semibold text-neutral-600 mb-2">لا توجد أرصدة إجازات</h3>
+        <p class="text-neutral-500 mb-4">لم يتم العثور على أرصدة إجازات تطابق المعايير المحددة</p>
+        <button class="btn btn-primary" onclick="showAdjustBalanceModal()">
+            <i class="fas fa-plus ml-2"></i>
+            إضافة رصيد إجازة
+        </button>
+    </div>
+    {% endfor %}
+</div><!
+-- Adjust Balance Modal -->
+<div class="modal-backdrop hidden" id="adjust-balance-modal">
+    <div class="modal modal-lg">
+        <div class="modal-header">
+            <h3 class="modal-title">تعديل رصيد الإجازة</h3>
+            <button type="button" class="modal-close" data-modal-close>&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="adjust-balance-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="adjust-employee" class="form-label required">الموظف</label>
+                        <select id="adjust-employee" name="employee_id" class="form-select" required>
+                            <option value="">اختر الموظف</option>
+                            {% for employee in employees %}
+                                <option value="{{ employee.id }}">{{ employee.full_name }} ({{ employee.employee_number }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="adjust-leave-type" class="form-label required">نوع الإجازة</label>
+                        <select id="adjust-leave-type" name="leave_type_id" class="form-select" required>
+                            <option value="">اختر نوع الإجازة</option>
+                            {% for leave_type in leave_types %}
+                                <option value="{{ leave_type.id }}">{{ leave_type.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">الرصيد الحالي</label>
+                    <div class="bg-neutral-50 border border-neutral-200 rounded-lg p-4" id="current-balance-display">
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <strong>المتاح:</strong> <span id="current-available">-</span> يوم
+                            </div>
+                            <div>
+                                <strong>المستخدم:</strong> <span id="current-used">-</span> يوم
+                            </div>
+                            <div>
+                                <strong>المعلق:</strong> <span id="current-pending">-</span> يوم
+                            </div>
+                            <div>
+                                <strong>الإجمالي:</strong> <span id="current-total">-</span> يوم
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="adjustment-type" class="form-label required">نوع التعديل</label>
+                        <select id="adjustment-type" name="adjustment_type" class="form-select" required>
+                            <option value="">اختر نوع التعديل</option>
+                            <option value="add">إضافة أيام</option>
+                            <option value="deduct">خصم أيام</option>
+                            <option value="set">تحديد الرصيد</option>
+                            <option value="reset">إعادة تعيين</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="adjustment-days" class="form-label required">عدد الأيام</label>
+                        <input type="number" id="adjustment-days" name="adjustment_days" 
+                               class="form-input" required min="0" step="0.5">
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="adjustment-reason" class="form-label required">سبب التعديل</label>
+                    <textarea id="adjustment-reason" name="reason" class="form-textarea" rows="3" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="effective-date" class="form-label">تاريخ السريان</label>
+                    <input type="date" id="effective-date" name="effective_date" class="form-input">
+                </div>
+                
+                <div class="alert alert-warning" id="adjustment-preview" style="display: none;">
+                    <div class="alert-title">معاينة التعديل</div>
+                    <div id="preview-content"></div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-modal-close>إلغاء</button>
+            <button type="button" class="btn btn-primary" id="save-adjustment">حفظ التعديل</button>
+        </div>
+    </div>
+</div>
+
+<!-- Balance History Modal -->
+<div class="modal-backdrop hidden" id="balance-history-modal">
+    <div class="modal modal-lg">
+        <div class="modal-header">
+            <h3 class="modal-title" id="history-modal-title">تاريخ أرصدة الإجازات</h3>
+            <button type="button" class="modal-close" data-modal-close>&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="table-container">
+                <table class="table" id="balance-history-table">
+                    <thead>
+                        <tr>
+                            <th>التاريخ</th>
+                            <th>نوع الإجازة</th>
+                            <th>نوع العملية</th>
+                            <th>الأيام</th>
+                            <th>الرصيد بعد العملية</th>
+                            <th>السبب</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-modal-close>إغلاق</button>
+            <button type="button" class="btn btn-outline" id="export-history">
+                <i class="fas fa-file-export ml-2"></i>
+                تصدير التاريخ
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Update Modal -->
+<div class="modal-backdrop hidden" id="bulk-update-modal">
+    <div class="modal modal-lg">
+        <div class="modal-header">
+            <h3 class="modal-title">تحديث جماعي للأرصدة</h3>
+            <button type="button" class="modal-close" data-modal-close>&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="bulk-update-form">
+                <div class="form-group">
+                    <label for="bulk-department" class="form-label">القسم</label>
+                    <select id="bulk-department" name="department_id" class="form-select">
+                        <option value="">جميع الأقسام</option>
+                        {% for department in departments %}
+                            <option value="{{ department.id }}">{{ department.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="bulk-leave-type" class="form-label required">نوع الإجازة</label>
+                        <select id="bulk-leave-type" name="leave_type_id" class="form-select" required>
+                            <option value="">اختر نوع الإجازة</option>
+                            {% for leave_type in leave_types %}
+                                <option value="{{ leave_type.id }}">{{ leave_type.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="bulk-operation" class="form-label required">العملية</label>
+                        <select id="bulk-operation" name="operation" class="form-select" required>
+                            <option value="">اختر العملية</option>
+                            <option value="add">إضافة أيام</option>
+                            <option value="deduct">خصم أيام</option>
+                            <option value="set">تحديد الرصيد</option>
+                            <option value="reset_annual">إعادة تعيين سنوي</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="bulk-days" class="form-label required">عدد الأيام</label>
+                    <input type="number" id="bulk-days" name="days" class="form-input" required min="0" step="0.5">
+                </div>
+                
+                <div class="form-group">
+                    <label for="bulk-reason" class="form-label required">سبب التحديث</label>
+                    <textarea id="bulk-reason" name="reason" class="form-textarea" rows="3" required></textarea>
+                </div>
+                
+                <div class="alert alert-primary">
+                    <div class="alert-title">معلومات مهمة</div>
+                    <ul class="mt-2 text-sm">
+                        <li>• سيتم تطبيق التحديث على جميع الموظفين المطابقين للمعايير</li>
+                        <li>• سيتم إنشاء سجل تاريخي لكل تعديل</li>
+                        <li>• لا يمكن التراجع عن هذه العملية</li>
+                    </ul>
+                </div>
+                
+                <div class="form-group">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="confirm-bulk-update" class="form-checkbox" required>
+                        <label for="confirm-bulk-update" class="mr-2">أؤكد أنني أريد تطبيق هذا التحديث الجماعي</label>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-modal-close>إلغاء</button>
+            <button type="button" class="btn btn-warning" id="execute-bulk-update">تنفيذ التحديث</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize charts
+    initializeCharts();
+    
+    // Search and filter functionality
+    const searchInput = document.getElementById('search-employees');
+    const departmentFilter = document.getElementById('department-filter');
+    const leaveTypeFilter = document.getElementById('leave-type-filter');
+    const balanceStatusFilter = document.getElementById('balance-status-filter');
+    
+    searchInput.addEventListener('input', HRComponents.utils.debounce(filterBalances, 300));
+    departmentFilter.addEventListener('change', filterBalances);
+    leaveTypeFilter.addEventListener('change', filterBalances);
+    balanceStatusFilter.addEventListener('change', filterBalances);
+    
+    function filterBalances() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const department = departmentFilter.value;
+        const leaveType = leaveTypeFilter.value;
+        const status = balanceStatusFilter.value;
+        
+        const balanceCards = document.querySelectorAll('.balance-card');
+        
+        balanceCards.forEach(card => {
+            const employeeName = card.querySelector('.employee-info h3').textContent.toLowerCase();
+            const employeeNumber = card.querySelector('.employee-meta').textContent.toLowerCase();
+            
+            let showCard = true;
+            
+            // Filter by search term
+            if (searchTerm && !employeeName.includes(searchTerm) && !employeeNumber.includes(searchTerm)) {
+                showCard = false;
+            }
+            
+            // Additional filters would be implemented here based on data attributes
+            
+            card.style.display = showCard ? 'block' : 'none';
+        });
+    }
+    
+    function initializeCharts() {
+        // Chart.js configuration with RTL support
+        Chart.defaults.font.family = "'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+        Chart.defaults.color = '#64748b';
+        
+        // Leave Types Distribution Chart
+        const typesCtx = document.getElementById('leave-types-chart').getContext('2d');
+        const typesChart = new Chart(typesCtx, {
+            type: 'doughnut',
+            data: {
+                labels: {{ leave_types_data.labels|safe }},
+                datasets: [{
+                    data: {{ leave_types_data.values|safe }},
+                    backgroundColor: [
+                        '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        rtl: true,
+                        textDirection: 'rtl'
+                    }
+                }
+            }
+        });
+        
+        // Monthly Usage Chart
+        const monthlyCtx = document.getElementById('monthly-usage-chart').getContext('2d');
+        const monthlyChart = new Chart(monthlyCtx, {
+            type: 'line',
+            data: {
+                labels: {{ monthly_usage_data.labels|safe }},
+                datasets: [{
+                    label: 'أيام الإجازة المستخدمة',
+                    data: {{ monthly_usage_data.values|safe }},
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        rtl: true,
+                        textDirection: 'rtl'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Balance Status Chart
+        const statusCtx = document.getElementById('balance-status-chart').getContext('2d');
+        const statusChart = new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['متاح', 'مستخدم', 'معلق', 'منتهي الصلاحية'],
+                datasets: [{
+                    data: {{ balance_status_data.values|safe }},
+                    backgroundColor: ['#10b981', '#f59e0b', '#3b82f6', '#ef4444'],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        rtl: true,
+                        textDirection: 'rtl'
+                    }
+                }
+            }
+        });
+        
+        // Update legends
+        updateChartLegend('types-legend', typesChart);
+    }
+    
+    function updateChartLegend(legendId, chart) {
+        const legend = document.getElementById(legendId);
+        if (!legend) return;
+        
+        const legendItems = chart.data.labels.map((label, index) => {
+            const color = chart.data.datasets[0].backgroundColor[index];
+            return `
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: ${color}"></div>
+                    <span>${label}</span>
+                </div>
+            `;
+        }).join('');
+        
+        legend.innerHTML = legendItems;
+    }
+    
+    // Adjust balance modal
+    window.showAdjustBalanceModal = function() {
+        document.getElementById('adjust-balance-form').reset();
+        document.getElementById('adjust-balance-modal').classList.remove('hidden');
+        
+        // Set effective date to today
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('effective-date').value = today;
+    };
+    
+    window.adjustEmployeeBalance = function(employeeId) {
+        document.getElementById('adjust-employee').value = employeeId;
+        showAdjustBalanceModal();
+        loadCurrentBalance();
+    };
+    
+    // Load current balance when employee or leave type changes
+    document.getElementById('adjust-employee').addEventListener('change', loadCurrentBalance);
+    document.getElementById('adjust-leave-type').addEventListener('change', loadCurrentBalance);
+    
+    function loadCurrentBalance() {
+        const employeeId = document.getElementById('adjust-employee').value;
+        const leaveTypeId = document.getElementById('adjust-leave-type').value;
+        
+        if (!employeeId || !leaveTypeId) {
+            resetBalanceDisplay();
+            return;
+        }
+        
+        fetch(`{% url 'Hr:api_get_employee_leave_balance' 0 %}`.replace('0', employeeId) + `?leave_type_id=${leaveTypeId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateBalanceDisplay(data.balance);
+                } else {
+                    resetBalanceDisplay();
+                }
+            })
+            .catch(error => {
+                console.error('Error loading balance:', error);
+                resetBalanceDisplay();
+            });
+    }
+    
+    function updateBalanceDisplay(balance) {
+        document.getElementById('current-available').textContent = balance.available_days;
+        document.getElementById('current-used').textContent = balance.used_days;
+        document.getElementById('current-pending').textContent = balance.pending_days;
+        document.getElementById('current-total').textContent = balance.annual_entitlement;
+    }
+    
+    function resetBalanceDisplay() {
+        document.getElementById('current-available').textContent = '-';
+        document.getElementById('current-used').textContent = '-';
+        document.getElementById('current-pending').textContent = '-';
+        document.getElementById('current-total').textContent = '-';
+    }
+    
+    // Adjustment preview
+    document.getElementById('adjustment-type').addEventListener('change', updateAdjustmentPreview);
+    document.getElementById('adjustment-days').addEventListener('input', updateAdjustmentPreview);
+    
+    function updateAdjustmentPreview() {
+        const type = document.getElementById('adjustment-type').value;
+        const days = parseFloat(document.getElementById('adjustment-days').value) || 0;
+        const currentAvailable = parseFloat(document.getElementById('current-available').textContent) || 0;
+        
+        if (!type || days <= 0) {
+            document.getElementById('adjustment-preview').style.display = 'none';
+            return;
+        }
+        
+        let newBalance = currentAvailable;
+        let operation = '';
+        
+        switch (type) {
+            case 'add':
+                newBalance += days;
+                operation = `إضافة ${days} يوم`;
+                break;
+            case 'deduct':
+                newBalance -= days;
+                operation = `خصم ${days} يوم`;
+                break;
+            case 'set':
+                newBalance = days;
+                operation = `تحديد الرصيد إلى ${days} يوم`;
+                break;
+            case 'reset':
+                newBalance = days;
+                operation = `إعادة تعيين الرصيد إلى ${days} يوم`;
+                break;
+        }
+        
+        const previewContent = `
+            <div class="grid grid-cols-2 gap-4 text-sm">
+                <div><strong>العملية:</strong> ${operation}</div>
+                <div><strong>الرصيد الحالي:</strong> ${currentAvailable} يوم</div>
+                <div><strong>الرصيد الجديد:</strong> ${newBalance} يوم</div>
+                <div><strong>التغيير:</strong> ${newBalance - currentAvailable > 0 ? '+' : ''}${newBalance - currentAvailable} يوم</div>
+            </div>
+        `;
+        
+        document.getElementById('preview-content').innerHTML = previewContent;
+        document.getElementById('adjustment-preview').style.display = 'block';
+    }
+    
+    // Save adjustment
+    document.getElementById('save-adjustment').addEventListener('click', function() {
+        const form = document.getElementById('adjust-balance-form');
+        const formData = new FormData(form);
+        
+        // Validate form
+        const employeeId = formData.get('employee_id');
+        const leaveTypeId = formData.get('leave_type_id');
+        const adjustmentType = formData.get('adjustment_type');
+        const adjustmentDays = formData.get('adjustment_days');
+        const reason = formData.get('reason');
+        
+        if (!employeeId || !leaveTypeId || !adjustmentType || !adjustmentDays || !reason) {
+            HRComponents.Toast.show('يرجى ملء جميع الحقول المطلوبة', 'error');
+            return;
+        }
+        
+        showLoading();
+        
+        fetch('{% url "Hr:api_adjust_leave_balance" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                HRComponents.Toast.show('تم تعديل الرصيد بنجاح', 'success');
+                document.getElementById('adjust-balance-modal').classList.add('hidden');
+                
+                // Reload page after short delay
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                throw new Error(data.message || 'فشل في تعديل الرصيد');
+            }
+        })
+        .catch(error => {
+            console.error('Error adjusting balance:', error);
+            HRComponents.Toast.show(error.message || 'فشل في تعديل الرصيد', 'error');
+        })
+        .finally(() => {
+            hideLoading();
+        });
+    });
+    
+    // View balance history
+    window.viewBalanceHistory = function(employeeId) {
+        showLoading();
+        
+        fetch(`{% url 'Hr:api_get_balance_history' 0 %}`.replace('0', employeeId))
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    renderBalanceHistory(data.history, data.employee_name);
+                    document.getElementById('balance-history-modal').classList.remove('hidden');
+                } else {
+                    throw new Error(data.message || 'فشل في تحميل تاريخ الأرصدة');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading balance history:', error);
+                HRComponents.Toast.show(error.message || 'فشل في تحميل تاريخ الأرصدة', 'error');
+            })
+            .finally(() => {
+                hideLoading();
+            });
+    };
+    
+    function renderBalanceHistory(history, employeeName) {
+        document.getElementById('history-modal-title').textContent = `تاريخ أرصدة الإجازات - ${employeeName}`;
+        
+        const tbody = document.querySelector('#balance-history-table tbody');
+        tbody.innerHTML = history.map(record => `
+            <tr>
+                <td>${record.date}</td>
+                <td>${record.leave_type}</td>
+                <td>
+                    <span class="badge badge-${getOperationBadgeClass(record.operation)}">
+                        ${record.operation_display}
+                    </span>
+                </td>
+                <td class="text-right">${record.days > 0 ? '+' : ''}${record.days}</td>
+                <td class="text-right">${record.balance_after}</td>
+                <td>${record.reason}</td>
+            </tr>
+        `).join('');
+    }
+    
+    function getOperationBadgeClass(operation) {
+        const classMap = {
+            'add': 'success',
+            'deduct': 'warning',
+            'used': 'error',
+            'set': 'primary',
+            'reset': 'secondary'
+        };
+        return classMap[operation] || 'neutral';
+    }
+    
+    // Bulk update
+    document.getElementById('bulk-update').addEventListener('click', function() {
+        document.getElementById('bulk-update-form').reset();
+        document.getElementById('bulk-update-modal').classList.remove('hidden');
+    });
+    
+    document.getElementById('execute-bulk-update').addEventListener('click', function() {
+        const form = document.getElementById('bulk-update-form');
+        const formData = new FormData(form);
+        
+        // Validate form
+        const leaveTypeId = formData.get('leave_type_id');
+        const operation = formData.get('operation');
+        const days = formData.get('days');
+        const reason = formData.get('reason');
+        const confirmed = document.getElementById('confirm-bulk-update').checked;
+        
+        if (!leaveTypeId || !operation || !days || !reason || !confirmed) {
+            HRComponents.Toast.show('يرجى ملء جميع الحقول المطلوبة والتأكيد', 'error');
+            return;
+        }
+        
+        showLoading();
+        
+        fetch('{% url "Hr:api_bulk_update_balances" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                HRComponents.Toast.show(`تم تحديث ${data.updated_count} رصيد بنجاح`, 'success');
+                document.getElementById('bulk-update-modal').classList.add('hidden');
+                
+                // Reload page after short delay
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                throw new Error(data.message || 'فشل في التحديث الجماعي');
+            }
+        })
+        .catch(error => {
+            console.error('Error bulk updating:', error);
+            HRComponents.Toast.show(error.message || 'فشل في التحديث الجماعي', 'error');
+        })
+        .finally(() => {
+            hideLoading();
+        });
+    });
+    
+    // Export functions
+    document.getElementById('export-balances').addEventListener('click', function() {
+        const params = new URLSearchParams({
+            search: searchInput.value,
+            department: departmentFilter.value,
+            leave_type: leaveTypeFilter.value,
+            status: balanceStatusFilter.value
+        });
+        
+        window.open(`{% url 'Hr:export_leave_balances' %}?${params.toString()}`, '_blank');
+    });
+    
+    document.getElementById('export-history').addEventListener('click', function() {
+        // This would export the currently viewed employee's history
+        const employeeId = document.querySelector('.balance-card[style*="block"]')?.getAttribute('data-employee-id');
+        if (employeeId) {
+            window.open(`{% url 'Hr:export_balance_history' 0 %}`.replace('0', employeeId), '_blank');
+        }
+    });
+});
+</script>
+{% endblock %}

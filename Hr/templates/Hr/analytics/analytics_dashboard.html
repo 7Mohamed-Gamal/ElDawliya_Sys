@@ -2,45 +2,57 @@
 {% load static %}
 
 {% block title %}لوحة التحكم التحليلية{% endblock %}
-
 {% block page_title %}لوحة التحكم التحليلية{% endblock %}
 
-{% block page_subtitle %}مؤشرات الأداء الرئيسية وتحليلات الموارد البشرية{% endblock %}
-
-{% block breadcrumb %}
-<nav class="breadcrumb">
-    <div class="breadcrumb-item">
-        <a href="{% url 'Hr:dashboard' %}">الرئيسية</a>
-    </div>
-    <div class="breadcrumb-item active">التحليلات</div>
-</nav>
+{% block breadcrumb_items %}
+<div class="breadcrumb-item">
+    <span class="breadcrumb-link">التحليلات والتقارير</span>
+</div>
 {% endblock %}
 
 {% block extra_css %}
 <style>
     .analytics-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
+        background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
+        color: white;
+        border-radius: var(--radius-lg);
+        padding: var(--space-8);
         margin-bottom: var(--space-6);
-        flex-wrap: wrap;
-        gap: var(--space-4);
+        position: relative;
+        overflow: hidden;
     }
     
-    .date-range-picker {
-        display: flex;
-        align-items: center;
-        gap: var(--space-3);
-        background: white;
-        padding: var(--space-3);
-        border-radius: var(--radius-lg);
-        border: 1px solid var(--neutral-200);
+    .analytics-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 200px;
+        height: 200px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        transform: translate(50%, -50%);
+    }
+    
+    .analytics-title {
+        font-size: var(--text-3xl);
+        font-weight: var(--font-bold);
+        margin-bottom: var(--space-2);
+        position: relative;
+        z-index: 1;
+    }
+    
+    .analytics-subtitle {
+        opacity: 0.9;
+        font-size: var(--text-lg);
+        position: relative;
+        z-index: 1;
     }
     
     .kpi-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: var(--space-4);
+        gap: var(--space-6);
         margin-bottom: var(--space-8);
     }
     
@@ -49,250 +61,136 @@
         border-radius: var(--radius-lg);
         padding: var(--space-6);
         box-shadow: var(--shadow-sm);
-        border: 1px solid var(--neutral-200);
+        transition: all var(--transition-fast);
         position: relative;
         overflow: hidden;
-        transition: all var(--transition-base);
     }
     
     .kpi-card:hover {
-        box-shadow: var(--shadow-md);
-        transform: translateY(-2px);
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-lg);
     }
     
     .kpi-card::before {
         content: '';
         position: absolute;
         top: 0;
-        right: 0;
-        width: 100px;
-        height: 100px;
-        opacity: 0.1;
-        border-radius: 50%;
-        transform: translate(30%, -30%);
-    }
-    
-    .kpi-card.employees::before {
+        left: 0;
+        width: 4px;
+        height: 100%;
         background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
-    }
-    
-    .kpi-card.attendance::before {
-        background: linear-gradient(135deg, var(--success-500), var(--success-600));
-    }
-    
-    .kpi-card.payroll::before {
-        background: linear-gradient(135deg, var(--warning-500), var(--warning-600));
-    }
-    
-    .kpi-card.performance::before {
-        background: linear-gradient(135deg, var(--secondary-500), var(--secondary-600));
     }
     
     .kpi-header {
         display: flex;
-        align-items: center;
         justify-content: space-between;
+        align-items: flex-start;
         margin-bottom: var(--space-4);
     }
     
     .kpi-icon {
         width: 56px;
         height: 56px;
-        border-radius: var(--radius-xl);
+        border-radius: var(--radius-lg);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: var(--text-xl);
-        position: relative;
-        z-index: 1;
-    }
-    
-    .kpi-icon.employees {
-        background: linear-gradient(135deg, var(--primary-100), var(--primary-200));
-        color: var(--primary-600);
-    }
-    
-    .kpi-icon.attendance {
-        background: linear-gradient(135deg, var(--success-100), var(--success-200));
-        color: var(--success-600);
-    }
-    
-    .kpi-icon.payroll {
-        background: linear-gradient(135deg, var(--warning-100), var(--warning-200));
-        color: var(--warning-600);
-    }
-    
-    .kpi-icon.performance {
-        background: linear-gradient(135deg, var(--secondary-100), var(--secondary-200));
-        color: var(--secondary-600);
-    }
-    
-    .kpi-trend {
-        display: flex;
-        align-items: center;
-        gap: var(--space-1);
-        font-size: var(--text-xs);
-        font-weight: var(--font-medium);
-        padding: var(--space-1) var(--space-2);
-        border-radius: var(--radius-full);
-    }
-    
-    .kpi-trend.up {
-        background-color: var(--success-100);
-        color: var(--success-700);
-    }
-    
-    .kpi-trend.down {
-        background-color: var(--error-100);
-        color: var(--error-700);
-    }
-    
-    .kpi-trend.stable {
-        background-color: var(--neutral-100);
-        color: var(--neutral-700);
+        font-size: var(--text-2xl);
+        margin-bottom: var(--space-4);
     }
     
     .kpi-value {
         font-size: var(--text-4xl);
         font-weight: var(--font-bold);
-        color: var(--secondary-800);
-        margin: 0 0 var(--space-2) 0;
-        position: relative;
-        z-index: 1;
+        color: var(--neutral-800);
+        margin-bottom: var(--space-2);
+        line-height: 1;
     }
     
     .kpi-label {
-        font-size: var(--text-base);
-        font-weight: var(--font-medium);
-        color: var(--secondary-700);
-        margin: 0 0 var(--space-3) 0;
+        color: var(--neutral-600);
+        font-size: var(--text-sm);
+        margin-bottom: var(--space-3);
     }
     
-    .kpi-details {
+    .kpi-trend {
         display: flex;
         align-items: center;
-        justify-content: space-between;
+        gap: var(--space-2);
         font-size: var(--text-sm);
-        color: var(--secondary-600);
     }
     
-    .charts-grid {
-        display: grid;
-        grid-template-columns: 2fr 1fr;
-        gap: var(--space-6);
-        margin-bottom: var(--space-8);
+    .trend-positive {
+        color: var(--success-600);
     }
     
-    .chart-container {
+    .trend-negative {
+        color: var(--error-600);
+    }
+    
+    .trend-neutral {
+        color: var(--neutral-600);
+    }
+    
+    .chart-section {
         background: white;
         border-radius: var(--radius-lg);
         padding: var(--space-6);
         box-shadow: var(--shadow-sm);
-        border: 1px solid var(--neutral-200);
+        margin-bottom: var(--space-6);
     }
     
     .chart-header {
         display: flex;
-        align-items: center;
         justify-content: space-between;
+        align-items: center;
         margin-bottom: var(--space-6);
-        flex-wrap: wrap;
-        gap: var(--space-3);
     }
     
     .chart-title {
         font-size: var(--text-xl);
         font-weight: var(--font-semibold);
-        color: var(--secondary-800);
-        margin: 0;
+        color: var(--neutral-800);
     }
     
     .chart-filters {
         display: flex;
+        gap: var(--space-3);
+        align-items: center;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 400px;
+        margin-bottom: var(--space-4);
+    }
+    
+    .chart-legend {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: var(--space-4);
+        margin-top: var(--space-4);
+    }
+    
+    .legend-item {
+        display: flex;
         align-items: center;
         gap: var(--space-2);
-    }
-    
-    .filter-btn {
-        padding: var(--space-2) var(--space-4);
-        border: 1px solid var(--neutral-300);
-        background: white;
-        border-radius: var(--radius-md);
         font-size: var(--text-sm);
-        cursor: pointer;
-        transition: all var(--transition-fast);
     }
     
-    .filter-btn.active {
-        background-color: var(--primary-600);
-        color: white;
-        border-color: var(--primary-600);
-    }
-    
-    .filter-btn:hover:not(.active) {
-        background-color: var(--neutral-50);
-        border-color: var(--neutral-400);
-    }
-    
-    .chart-placeholder {
-        height: 350px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: var(--neutral-50);
-        border-radius: var(--radius-md);
-        border: 2px dashed var(--neutral-300);
-        color: var(--secondary-500);
-        text-align: center;
-    }
-    
-    .department-breakdown {
-        display: flex;
-        flex-direction: column;
-        gap: var(--space-4);
-    }
-    
-    .department-item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: var(--space-4);
-        background: var(--neutral-50);
-        border-radius: var(--radius-md);
-        transition: all var(--transition-fast);
-    }
-    
-    .department-item:hover {
-        background: var(--neutral-100);
-    }
-    
-    .department-info {
-        display: flex;
-        align-items: center;
-        gap: var(--space-3);
-    }
-    
-    .department-color {
+    .legend-color {
         width: 12px;
         height: 12px;
         border-radius: var(--radius-full);
     }
     
-    .department-name {
-        font-weight: var(--font-medium);
-        color: var(--secondary-700);
-    }
-    
-    .department-count {
-        font-weight: var(--font-semibold);
-        color: var(--secondary-800);
-    }
-    
     .insights-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
         gap: var(--space-6);
-        margin-bottom: var(--space-8);
+        margin-bottom: var(--space-6);
     }
     
     .insight-card {
@@ -300,7 +198,6 @@
         border-radius: var(--radius-lg);
         padding: var(--space-6);
         box-shadow: var(--shadow-sm);
-        border: 1px solid var(--neutral-200);
     }
     
     .insight-header {
@@ -313,30 +210,28 @@
     .insight-icon {
         width: 40px;
         height: 40px;
-        border-radius: var(--radius-lg);
+        border-radius: var(--radius-full);
         display: flex;
         align-items: center;
         justify-content: center;
-        background: var(--primary-100);
-        color: var(--primary-600);
+        font-size: var(--text-lg);
     }
     
     .insight-title {
         font-size: var(--text-lg);
         font-weight: var(--font-semibold);
-        color: var(--secondary-800);
-        margin: 0;
+        color: var(--neutral-800);
     }
     
     .insight-content {
-        color: var(--secondary-600);
-        line-height: var(--leading-relaxed);
+        color: var(--neutral-600);
+        line-height: 1.6;
     }
     
     .insight-metric {
         display: flex;
-        align-items: center;
         justify-content: space-between;
+        align-items: center;
         padding: var(--space-3) 0;
         border-bottom: 1px solid var(--neutral-100);
     }
@@ -346,46 +241,111 @@
     }
     
     .metric-label {
-        color: var(--secondary-600);
+        color: var(--neutral-600);
         font-size: var(--text-sm);
     }
     
     .metric-value {
         font-weight: var(--font-semibold);
-        color: var(--secondary-800);
+        color: var(--neutral-800);
+    }
+    
+    .quick-actions {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: var(--space-6);
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .actions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--space-4);
+    }
+    
+    .action-card {
+        padding: var(--space-4);
+        border: 2px solid var(--neutral-200);
+        border-radius: var(--radius-lg);
+        text-align: center;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+    }
+    
+    .action-card:hover {
+        border-color: var(--primary-300);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .action-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius-full);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto var(--space-3);
+        font-size: var(--text-xl);
+    }
+    
+    .action-title {
+        font-weight: var(--font-medium);
+        color: var(--neutral-800);
+        margin-bottom: var(--space-1);
+    }
+    
+    .action-description {
+        font-size: var(--text-sm);
+        color: var(--neutral-600);
+    }
+    
+    .time-filter-tabs {
+        display: flex;
+        background-color: var(--neutral-100);
+        border-radius: var(--radius-lg);
+        padding: var(--space-1);
+    }
+    
+    .time-filter-tab {
+        flex: 1;
+        padding: var(--space-2) var(--space-4);
+        text-align: center;
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        font-size: var(--text-sm);
+        font-weight: var(--font-medium);
+        color: var(--neutral-600);
+    }
+    
+    .time-filter-tab.active {
+        background-color: white;
+        color: var(--primary-600);
+        box-shadow: var(--shadow-sm);
     }
     
     @media (max-width: 768px) {
-        .charts-grid {
-            grid-template-columns: 1fr;
-        }
-        
         .kpi-grid {
             grid-template-columns: repeat(2, 1fr);
         }
         
-        .analytics-header {
-            flex-direction: column;
-            align-items: stretch;
-        }
-        
         .chart-header {
             flex-direction: column;
+            gap: var(--space-4);
             align-items: stretch;
         }
         
         .chart-filters {
             justify-content: center;
         }
-    }
-    
-    @media (max-width: 576px) {
-        .kpi-grid {
-            grid-template-columns: 1fr;
-        }
         
         .insights-grid {
             grid-template-columns: 1fr;
+        }
+        
+        .actions-grid {
+            grid-template-columns: repeat(2, 1fr);
         }
     }
 </style>
@@ -394,331 +354,757 @@
 {% block content %}
 <!-- Analytics Header -->
 <div class="analytics-header">
-    <div>
-        <h2 style="margin: 0; font-size: var(--text-2xl); font-weight: var(--font-bold); color: var(--secondary-800);">
-            نظرة عامة على الأداء
-        </h2>
-        <p style="margin: var(--space-2) 0 0 0; color: var(--secondary-600);">
-            آخر تحديث: {{ last_updated|date:"Y/m/d H:i" }}
-        </p>
-    </div>
-    
-    <div class="date-range-picker">
-        <label style="font-size: var(--text-sm); color: var(--secondary-600);">الفترة:</label>
-        <select id="dateRange" class="form-control" style="min-width: 150px;">
-            <option value="7">آخر 7 أيام</option>
-            <option value="30" selected>آخر 30 يوم</option>
-            <option value="90">آخر 3 أشهر</option>
-            <option value="365">آخر سنة</option>
-        </select>
-        <button class="btn btn-primary btn-sm">
-            <i class="fas fa-sync-alt"></i> تحديث
-        </button>
+    <h1 class="analytics-title">لوحة التحكم التحليلية</h1>
+    <p class="analytics-subtitle">نظرة شاملة على مؤشرات الأداء الرئيسية وتحليلات الموارد البشرية</p>
+</div>
+
+<!-- Time Filter -->
+<div class="flex justify-center mb-6">
+    <div class="time-filter-tabs">
+        <div class="time-filter-tab active" data-period="7">آخر 7 أيام</div>
+        <div class="time-filter-tab" data-period="30">آخر 30 يوم</div>
+        <div class="time-filter-tab" data-period="90">آخر 3 أشهر</div>
+        <div class="time-filter-tab" data-period="365">آخر سنة</div>
     </div>
 </div>
 
-<!-- Key Performance Indicators -->
+<!-- KPI Cards -->
 <div class="kpi-grid">
-    <!-- Total Employees KPI -->
-    <div class="kpi-card employees">
-        <div class="kpi-header">
-            <div class="kpi-icon employees">
-                <i class="fas fa-users"></i>
-            </div>
-            <div class="kpi-trend up">
-                <i class="fas fa-arrow-up"></i>
-                <span>+5.2%</span>
-            </div>
+    <div class="kpi-card">
+        <div class="kpi-icon bg-primary-100 text-primary-600">
+            <i class="fas fa-users"></i>
         </div>
-        <h3 class="kpi-value">{{ analytics.total_employees|default:0 }}</h3>
-        <p class="kpi-label">إجمالي الموظفين</p>
-        <div class="kpi-details">
-            <span>نشط: {{ analytics.active_employees|default:0 }}</span>
-            <span>جديد هذا الشهر: {{ analytics.new_employees|default:0 }}</span>
+        <div class="kpi-value" id="total-employees">{{ kpis.total_employees }}</div>
+        <div class="kpi-label">إجمالي الموظفين</div>
+        <div class="kpi-trend trend-positive">
+            <i class="fas fa-arrow-up"></i>
+            <span>+{{ kpis.employees_growth }}% من الشهر الماضي</span>
         </div>
     </div>
     
-    <!-- Attendance Rate KPI -->
-    <div class="kpi-card attendance">
-        <div class="kpi-header">
-            <div class="kpi-icon attendance">
-                <i class="fas fa-calendar-check"></i>
-            </div>
-            <div class="kpi-trend up">
-                <i class="fas fa-arrow-up"></i>
-                <span>+2.1%</span>
-            </div>
+    <div class="kpi-card">
+        <div class="kpi-icon bg-success-100 text-success-600">
+            <i class="fas fa-user-check"></i>
         </div>
-        <h3 class="kpi-value">{{ analytics.attendance_rate|default:0 }}%</h3>
-        <p class="kpi-label">معدل الحضور</p>
-        <div class="kpi-details">
-            <span>حاضر اليوم: {{ analytics.present_today|default:0 }}</span>
-            <span>متوسط الشهر: {{ analytics.monthly_avg|default:0 }}%</span>
+        <div class="kpi-value" id="attendance-rate">{{ kpis.attendance_rate|floatformat:1 }}%</div>
+        <div class="kpi-label">معدل الحضور</div>
+        <div class="kpi-trend {% if kpis.attendance_trend >= 0 %}trend-positive{% else %}trend-negative{% endif %}">
+            <i class="fas fa-arrow-{% if kpis.attendance_trend >= 0 %}up{% else %}down{% endif %}"></i>
+            <span>{{ kpis.attendance_trend|floatformat:1 }}% من الأسبوع الماضي</span>
         </div>
     </div>
     
-    <!-- Payroll Cost KPI -->
-    <div class="kpi-card payroll">
-        <div class="kpi-header">
-            <div class="kpi-icon payroll">
-                <i class="fas fa-money-bill-wave"></i>
-            </div>
-            <div class="kpi-trend stable">
-                <i class="fas fa-minus"></i>
-                <span>0.0%</span>
-            </div>
+    <div class="kpi-card">
+        <div class="kpi-icon bg-warning-100 text-warning-600">
+            <i class="fas fa-calendar-times"></i>
         </div>
-        <h3 class="kpi-value">{{ analytics.total_payroll|default:0|floatformat:0 }}</h3>
-        <p class="kpi-label">إجمالي الرواتب (ريال)</p>
-        <div class="kpi-details">
-            <span>هذا الشهر: {{ analytics.monthly_payroll|default:0|floatformat:0 }}</span>
-            <span>متوسط الراتب: {{ analytics.avg_salary|default:0|floatformat:0 }}</span>
+        <div class="kpi-value" id="leave-requests">{{ kpis.pending_leave_requests }}</div>
+        <div class="kpi-label">طلبات الإجازة المعلقة</div>
+        <div class="kpi-trend trend-neutral">
+            <i class="fas fa-minus"></i>
+            <span>{{ kpis.total_leave_requests }} إجمالي الطلبات</span>
         </div>
     </div>
     
-    <!-- Performance Score KPI -->
-    <div class="kpi-card performance">
-        <div class="kpi-header">
-            <div class="kpi-icon performance">
-                <i class="fas fa-chart-line"></i>
-            </div>
-            <div class="kpi-trend up">
-                <i class="fas fa-arrow-up"></i>
-                <span>+3.5%</span>
-            </div>
+    <div class="kpi-card">
+        <div class="kpi-icon bg-error-100 text-error-600">
+            <i class="fas fa-exclamation-triangle"></i>
         </div>
-        <h3 class="kpi-value">{{ analytics.performance_score|default:0 }}%</h3>
-        <p class="kpi-label">مؤشر الأداء العام</p>
-        <div class="kpi-details">
-            <span>تحسن: +3.5%</span>
-            <span>الهدف: 85%</span>
+        <div class="kpi-value" id="turnover-rate">{{ kpis.turnover_rate|floatformat:1 }}%</div>
+        <div class="kpi-label">معدل دوران الموظفين</div>
+        <div class="kpi-trend {% if kpis.turnover_trend <= 0 %}trend-positive{% else %}trend-negative{% endif %}">
+            <i class="fas fa-arrow-{% if kpis.turnover_trend <= 0 %}down{% else %}up{% endif %}"></i>
+            <span>{{ kpis.turnover_trend|floatformat:1 }}% من الربع الماضي</span>
+        </div>
+    </div>
+    
+    <div class="kpi-card">
+        <div class="kpi-icon bg-purple-100 text-purple-600">
+            <i class="fas fa-money-bill-wave"></i>
+        </div>
+        <div class="kpi-value" id="avg-salary">{{ kpis.avg_salary|floatformat:0 }}</div>
+        <div class="kpi-label">متوسط الراتب (ريال)</div>
+        <div class="kpi-trend trend-positive">
+            <i class="fas fa-arrow-up"></i>
+            <span>+{{ kpis.salary_growth|floatformat:1 }}% من السنة الماضية</span>
+        </div>
+    </div>
+    
+    <div class="kpi-card">
+        <div class="kpi-icon bg-indigo-100 text-indigo-600">
+            <i class="fas fa-clock"></i>
+        </div>
+        <div class="kpi-value" id="avg-working-hours">{{ kpis.avg_working_hours|floatformat:1 }}</div>
+        <div class="kpi-label">متوسط ساعات العمل اليومية</div>
+        <div class="kpi-trend trend-neutral">
+            <i class="fas fa-minus"></i>
+            <span>{{ kpis.overtime_hours|floatformat:1 }} ساعة إضافية</span>
         </div>
     </div>
 </div>
 
 <!-- Charts Section -->
-<div class="charts-grid">
-    <!-- Main Chart -->
-    <div class="chart-container">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <!-- Employee Growth Chart -->
+    <div class="chart-section">
         <div class="chart-header">
-            <h3 class="chart-title">اتجاهات الموظفين والحضور</h3>
+            <h3 class="chart-title">نمو الموظفين</h3>
             <div class="chart-filters">
-                <button class="filter-btn active" data-chart="employees">الموظفين</button>
-                <button class="filter-btn" data-chart="attendance">الحضور</button>
-                <button class="filter-btn" data-chart="payroll">الرواتب</button>
+                <select id="growth-department" class="form-select form-select-sm">
+                    <option value="">جميع الأقسام</option>
+                    {% for department in departments %}
+                        <option value="{{ department.id }}">{{ department.name }}</option>
+                    {% endfor %}
+                </select>
             </div>
         </div>
-        <div class="chart-placeholder">
-            <div>
-                <i class="fas fa-chart-area" style="font-size: var(--text-5xl); margin-bottom: var(--space-4);"></i>
-                <h4 style="margin: 0 0 var(--space-2) 0;">الرسم البياني التفاعلي</h4>
-                <p style="margin: 0; font-size: var(--text-sm);">سيتم عرض الرسم البياني هنا</p>
-                <p style="margin: var(--space-2) 0 0 0; font-size: var(--text-xs);">يتطلب تكامل مكتبة Chart.js</p>
-            </div>
+        <div class="chart-container">
+            <canvas id="employee-growth-chart"></canvas>
         </div>
     </div>
     
-    <!-- Department Breakdown -->
-    <div class="chart-container">
+    <!-- Department Distribution Chart -->
+    <div class="chart-section">
         <div class="chart-header">
             <h3 class="chart-title">توزيع الموظفين حسب القسم</h3>
         </div>
-        <div class="department-breakdown">
-            {% for dept in department_stats %}
-            <div class="department-item">
-                <div class="department-info">
-                    <div class="department-color" style="background-color: {{ dept.color|default:'#3B82F6' }};"></div>
-                    <span class="department-name">{{ dept.name }}</span>
-                </div>
-                <span class="department-count">{{ dept.employee_count }}</span>
-            </div>
-            {% empty %}
-            <div style="text-align: center; padding: var(--space-8); color: var(--secondary-500);">
-                <i class="fas fa-building" style="font-size: var(--text-3xl); margin-bottom: var(--space-4);"></i>
-                <p>لا توجد بيانات أقسام</p>
-            </div>
-            {% endfor %}
+        <div class="chart-container">
+            <canvas id="department-distribution-chart"></canvas>
+        </div>
+        <div class="chart-legend" id="department-legend">
+            <!-- Will be populated by JavaScript -->
         </div>
     </div>
 </div>
 
-<!-- Insights Section -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <!-- Attendance Trends Chart -->
+    <div class="chart-section">
+        <div class="chart-header">
+            <h3 class="chart-title">اتجاهات الحضور</h3>
+            <div class="chart-filters">
+                <select id="attendance-view" class="form-select form-select-sm">
+                    <option value="daily">يومي</option>
+                    <option value="weekly" selected>أسبوعي</option>
+                    <option value="monthly">شهري</option>
+                </select>
+            </div>
+        </div>
+        <div class="chart-container">
+            <canvas id="attendance-trends-chart"></canvas>
+        </div>
+    </div>
+    
+    <!-- Leave Usage Chart -->
+    <div class="chart-section">
+        <div class="chart-header">
+            <h3 class="chart-title">استخدام الإجازات</h3>
+        </div>
+        <div class="chart-container">
+            <canvas id="leave-usage-chart"></canvas>
+        </div>
+        <div class="chart-legend" id="leave-legend">
+            <!-- Will be populated by JavaScript -->
+        </div>
+    </div>
+</div>
+
+<!-- Salary Analysis Chart -->
+<div class="chart-section mb-6">
+    <div class="chart-header">
+        <h3 class="chart-title">تحليل الرواتب</h3>
+        <div class="chart-filters">
+            <select id="salary-analysis-type" class="form-select form-select-sm">
+                <option value="department">حسب القسم</option>
+                <option value="position">حسب المنصب</option>
+                <option value="experience">حسب سنوات الخبرة</option>
+            </select>
+        </div>
+    </div>
+    <div class="chart-container">
+        <canvas id="salary-analysis-chart"></canvas>
+    </div>
+</div><!-- I
+nsights Section -->
 <div class="insights-grid">
     <!-- HR Insights -->
     <div class="insight-card">
         <div class="insight-header">
-            <div class="insight-icon">
+            <div class="insight-icon bg-primary-100 text-primary-600">
                 <i class="fas fa-lightbulb"></i>
             </div>
             <h3 class="insight-title">رؤى الموارد البشرية</h3>
         </div>
         <div class="insight-content">
             <div class="insight-metric">
-                <span class="metric-label">معدل دوران الموظفين</span>
-                <span class="metric-value">{{ insights.turnover_rate|default:0 }}%</span>
+                <span class="metric-label">أعلى قسم في الحضور</span>
+                <span class="metric-value">{{ insights.top_attendance_department }}</span>
             </div>
             <div class="insight-metric">
-                <span class="metric-label">متوسط سنوات الخدمة</span>
-                <span class="metric-value">{{ insights.avg_tenure|default:0 }} سنة</span>
+                <span class="metric-label">أكثر نوع إجازة طلباً</span>
+                <span class="metric-value">{{ insights.most_requested_leave_type }}</span>
             </div>
             <div class="insight-metric">
-                <span class="metric-label">معدل الرضا الوظيفي</span>
-                <span class="metric-value">{{ insights.satisfaction_rate|default:0 }}%</span>
+                <span class="metric-label">متوسط مدة الإجازة</span>
+                <span class="metric-value">{{ insights.avg_leave_duration|floatformat:1 }} يوم</span>
+            </div>
+            <div class="insight-metric">
+                <span class="metric-label">الموظفون الجدد هذا الشهر</span>
+                <span class="metric-value">{{ insights.new_employees_this_month }}</span>
             </div>
         </div>
     </div>
     
-    <!-- Attendance Insights -->
+    <!-- Performance Insights -->
     <div class="insight-card">
         <div class="insight-header">
-            <div class="insight-icon">
-                <i class="fas fa-clock"></i>
+            <div class="insight-icon bg-success-100 text-success-600">
+                <i class="fas fa-chart-line"></i>
             </div>
-            <h3 class="insight-title">تحليل الحضور</h3>
+            <h3 class="insight-title">مؤشرات الأداء</h3>
         </div>
         <div class="insight-content">
             <div class="insight-metric">
-                <span class="metric-label">متوسط ساعات العمل اليومية</span>
-                <span class="metric-value">{{ insights.avg_daily_hours|default:0 }} ساعة</span>
+                <span class="metric-label">معدل الحضور المستهدف</span>
+                <span class="metric-value">95%</span>
             </div>
             <div class="insight-metric">
-                <span class="metric-label">معدل التأخير</span>
-                <span class="metric-value">{{ insights.late_rate|default:0 }}%</span>
+                <span class="metric-label">معدل الحضور الحالي</span>
+                <span class="metric-value {% if kpis.attendance_rate >= 95 %}text-success-600{% elif kpis.attendance_rate >= 85 %}text-warning-600{% else %}text-error-600{% endif %}">
+                    {{ kpis.attendance_rate|floatformat:1 }}%
+                </span>
             </div>
             <div class="insight-metric">
-                <span class="metric-label">الوقت الإضافي الشهري</span>
-                <span class="metric-value">{{ insights.overtime_hours|default:0 }} ساعة</span>
+                <span class="metric-label">الهدف من معدل الدوران</span>
+                <span class="metric-value">< 10%</span>
+            </div>
+            <div class="insight-metric">
+                <span class="metric-label">معدل الدوران الحالي</span>
+                <span class="metric-value {% if kpis.turnover_rate <= 10 %}text-success-600{% elif kpis.turnover_rate <= 15 %}text-warning-600{% else %}text-error-600{% endif %}">
+                    {{ kpis.turnover_rate|floatformat:1 }}%
+                </span>
             </div>
         </div>
     </div>
     
-    <!-- Financial Insights -->
+    <!-- Alerts & Recommendations -->
     <div class="insight-card">
         <div class="insight-header">
-            <div class="insight-icon">
-                <i class="fas fa-chart-pie"></i>
+            <div class="insight-icon bg-warning-100 text-warning-600">
+                <i class="fas fa-exclamation-circle"></i>
             </div>
-            <h3 class="insight-title">التحليل المالي</h3>
+            <h3 class="insight-title">تنبيهات وتوصيات</h3>
         </div>
         <div class="insight-content">
-            <div class="insight-metric">
-                <span class="metric-label">تكلفة الموظف الشهرية</span>
-                <span class="metric-value">{{ insights.cost_per_employee|default:0|floatformat:0 }} ريال</span>
-            </div>
-            <div class="insight-metric">
-                <span class="metric-label">نمو كتلة الأجور</span>
-                <span class="metric-value">+{{ insights.payroll_growth|default:0 }}%</span>
-            </div>
-            <div class="insight-metric">
-                <span class="metric-label">نسبة البدلات</span>
-                <span class="metric-value">{{ insights.allowances_ratio|default:0 }}%</span>
+            <div class="space-y-3">
+                {% for alert in alerts %}
+                <div class="p-3 rounded-lg {% if alert.type == 'warning' %}bg-warning-50 text-warning-700{% elif alert.type == 'error' %}bg-error-50 text-error-700{% else %}bg-primary-50 text-primary-700{% endif %}">
+                    <div class="flex items-start gap-2">
+                        <i class="fas fa-{% if alert.type == 'warning' %}exclamation-triangle{% elif alert.type == 'error' %}times-circle{% else %}info-circle{% endif %} mt-1"></i>
+                        <div>
+                            <div class="font-medium">{{ alert.title }}</div>
+                            <div class="text-sm mt-1">{{ alert.message }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-neutral-500 py-4">
+                    <i class="fas fa-check-circle text-2xl mb-2 block text-success-500"></i>
+                    <p>لا توجد تنبيهات حالياً</p>
+                </div>
+                {% endfor %}
             </div>
         </div>
     </div>
 </div>
 
 <!-- Quick Actions -->
-<div class="card">
-    <div class="card-header">
-        <h3 class="card-title">إجراءات سريعة</h3>
-    </div>
-    <div class="card-body">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <a href="{% url 'Hr:reports:report_list' %}" class="btn btn-outline btn-lg">
-                <i class="fas fa-file-alt"></i>
-                <span>إنشاء تقرير</span>
-            </a>
-            <a href="{% url 'Hr:employees:export' %}" class="btn btn-outline btn-lg">
-                <i class="fas fa-download"></i>
-                <span>تصدير البيانات</span>
-            </a>
-            <button class="btn btn-outline btn-lg" onclick="refreshAnalytics()">
-                <i class="fas fa-sync-alt"></i>
-                <span>تحديث البيانات</span>
-            </button>
-            <button class="btn btn-outline btn-lg" onclick="scheduleReport()">
-                <i class="fas fa-calendar-plus"></i>
-                <span>جدولة تقرير</span>
-            </button>
+<div class="quick-actions">
+    <h3 class="text-xl font-semibold text-neutral-800 mb-6">إجراءات سريعة</h3>
+    
+    <div class="actions-grid">
+        <div class="action-card" onclick="window.location.href='{% url \"Hr:employee_reports\" %}'">
+            <div class="action-icon bg-primary-100 text-primary-600">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="action-title">تقارير الموظفين</div>
+            <div class="action-description">إنشاء تقارير شاملة عن الموظفين</div>
+        </div>
+        
+        <div class="action-card" onclick="window.location.href='{% url \"Hr:attendance_reports\" %}'">
+            <div class="action-icon bg-success-100 text-success-600">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="action-title">تقارير الحضور</div>
+            <div class="action-description">تحليل بيانات الحضور والغياب</div>
+        </div>
+        
+        <div class="action-card" onclick="window.location.href='{% url \"Hr:payroll_reports\" %}'">
+            <div class="action-icon bg-warning-100 text-warning-600">
+                <i class="fas fa-money-bill-wave"></i>
+            </div>
+            <div class="action-title">تقارير الرواتب</div>
+            <div class="action-description">تحليل تكاليف الرواتب والمزايا</div>
+        </div>
+        
+        <div class="action-card" onclick="window.location.href='{% url \"Hr:leave_reports\" %}'">
+            <div class="action-icon bg-error-100 text-error-600">
+                <i class="fas fa-calendar-alt"></i>
+            </div>
+            <div class="action-title">تقارير الإجازات</div>
+            <div class="action-description">تحليل استخدام الإجازات والأرصدة</div>
+        </div>
+        
+        <div class="action-card" onclick="exportDashboard()">
+            <div class="action-icon bg-purple-100 text-purple-600">
+                <i class="fas fa-file-export"></i>
+            </div>
+            <div class="action-title">تصدير التقرير</div>
+            <div class="action-description">تصدير لوحة التحكم كـ PDF</div>
+        </div>
+        
+        <div class="action-card" onclick="scheduledReports()">
+            <div class="action-icon bg-indigo-100 text-indigo-600">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="action-title">التقارير المجدولة</div>
+            <div class="action-description">إعداد تقارير دورية تلقائية</div>
         </div>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
-    // Chart filter functionality
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            // Remove active class from all buttons
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            // Add active class to clicked button
+document.addEventListener('DOMContentLoaded', function() {
+    let currentPeriod = 7;
+    let charts = {};
+    
+    // Initialize charts
+    initializeCharts();
+    
+    // Time filter tabs
+    const timeFilterTabs = document.querySelectorAll('.time-filter-tab');
+    timeFilterTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            timeFilterTabs.forEach(t => t.classList.remove('active'));
             this.classList.add('active');
             
-            // Update chart based on selection
-            const chartType = this.dataset.chart;
-            updateChart(chartType);
+            currentPeriod = parseInt(this.getAttribute('data-period'));
+            refreshAllData();
         });
     });
     
-    // Date range change handler
-    document.getElementById('dateRange').addEventListener('change', function() {
-        const days = this.value;
-        refreshAnalytics(days);
-    });
+    // Chart filter listeners
+    document.getElementById('growth-department').addEventListener('change', refreshEmployeeGrowthChart);
+    document.getElementById('attendance-view').addEventListener('change', refreshAttendanceChart);
+    document.getElementById('salary-analysis-type').addEventListener('change', refreshSalaryChart);
     
-    // Update chart function
-    function updateChart(type) {
-        console.log('Updating chart for:', type);
-        // Here you would update the chart based on the selected type
-        // This would integrate with Chart.js or similar library
+    function initializeCharts() {
+        // Chart.js configuration with RTL support
+        Chart.defaults.font.family = "'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+        Chart.defaults.color = '#64748b';
+        
+        // Employee Growth Chart
+        const growthCtx = document.getElementById('employee-growth-chart').getContext('2d');
+        charts.employeeGrowth = new Chart(growthCtx, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'عدد الموظفين',
+                    data: [],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.3,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        rtl: true,
+                        textDirection: 'rtl'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Department Distribution Chart
+        const deptCtx = document.getElementById('department-distribution-chart').getContext('2d');
+        charts.departmentDistribution = new Chart(deptCtx, {
+            type: 'doughnut',
+            data: {
+                labels: [],
+                datasets: [{
+                    data: [],
+                    backgroundColor: [
+                        '#3b82f6', '#10b981', '#f59e0b', '#ef4444', 
+                        '#8b5cf6', '#06b6d4', '#84cc16', '#f97316'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        rtl: true,
+                        textDirection: 'rtl'
+                    }
+                }
+            }
+        });
+        
+        // Attendance Trends Chart
+        const attendanceCtx = document.getElementById('attendance-trends-chart').getContext('2d');
+        charts.attendanceTrends = new Chart(attendanceCtx, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [
+                    {
+                        label: 'الحضور',
+                        data: [],
+                        backgroundColor: '#10b981',
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'التأخير',
+                        data: [],
+                        backgroundColor: '#f59e0b',
+                        borderRadius: 4
+                    },
+                    {
+                        label: 'الغياب',
+                        data: [],
+                        backgroundColor: '#ef4444',
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        align: 'end',
+                        rtl: true
+                    },
+                    tooltip: {
+                        rtl: true,
+                        textDirection: 'rtl'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        stacked: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        }
+                    },
+                    x: {
+                        stacked: true,
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Leave Usage Chart
+        const leaveCtx = document.getElementById('leave-usage-chart').getContext('2d');
+        charts.leaveUsage = new Chart(leaveCtx, {
+            type: 'pie',
+            data: {
+                labels: [],
+                datasets: [{
+                    data: [],
+                    backgroundColor: [
+                        '#3b82f6', '#10b981', '#f59e0b', '#ef4444', 
+                        '#8b5cf6', '#06b6d4'
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        rtl: true,
+                        textDirection: 'rtl'
+                    }
+                }
+            }
+        });
+        
+        // Salary Analysis Chart
+        const salaryCtx = document.getElementById('salary-analysis-chart').getContext('2d');
+        charts.salaryAnalysis = new Chart(salaryCtx, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [{
+                    label: 'متوسط الراتب',
+                    data: [],
+                    backgroundColor: '#8b5cf6',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        rtl: true,
+                        textDirection: 'rtl',
+                        callbacks: {
+                            label: function(context) {
+                                return context.parsed.y.toLocaleString('ar-SA') + ' ريال';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(0, 0, 0, 0.05)'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString('ar-SA') + ' ريال';
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Load initial data
+        refreshAllData();
     }
     
-    // Refresh analytics data
-    function refreshAnalytics(days = 30) {
-        HRUtils.showNotification('جاري تحديث البيانات...', 'info', 2000);
+    function refreshAllData() {
+        refreshKPIs();
+        refreshEmployeeGrowthChart();
+        refreshDepartmentChart();
+        refreshAttendanceChart();
+        refreshLeaveChart();
+        refreshSalaryChart();
+    }
+    
+    function refreshKPIs() {
+        fetch(`{% url 'Hr:api_get_kpis' %}?period=${currentPeriod}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updateKPIs(data.kpis);
+                }
+            })
+            .catch(error => {
+                console.error('Error refreshing KPIs:', error);
+            });
+    }
+    
+    function updateKPIs(kpis) {
+        document.getElementById('total-employees').textContent = kpis.total_employees;
+        document.getElementById('attendance-rate').textContent = kpis.attendance_rate.toFixed(1) + '%';
+        document.getElementById('leave-requests').textContent = kpis.pending_leave_requests;
+        document.getElementById('turnover-rate').textContent = kpis.turnover_rate.toFixed(1) + '%';
+        document.getElementById('avg-salary').textContent = kpis.avg_salary.toLocaleString('ar-SA');
+        document.getElementById('avg-working-hours').textContent = kpis.avg_working_hours.toFixed(1);
+    }
+    
+    function refreshEmployeeGrowthChart() {
+        const departmentId = document.getElementById('growth-department').value;
         
-        // Make API call to refresh data
-        HRUtils.ajax('/hr/api/analytics/dashboard/', {
-            method: 'GET',
+        fetch(`{% url 'Hr:api_get_employee_growth_data' %}?period=${currentPeriod}&department=${departmentId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    charts.employeeGrowth.data.labels = data.labels;
+                    charts.employeeGrowth.data.datasets[0].data = data.values;
+                    charts.employeeGrowth.update();
+                }
+            })
+            .catch(error => {
+                console.error('Error refreshing employee growth chart:', error);
+            });
+    }
+    
+    function refreshDepartmentChart() {
+        fetch(`{% url 'Hr:api_get_department_distribution' %}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    charts.departmentDistribution.data.labels = data.labels;
+                    charts.departmentDistribution.data.datasets[0].data = data.values;
+                    charts.departmentDistribution.update();
+                    
+                    updateChartLegend('department-legend', data.labels, data.values, charts.departmentDistribution.data.datasets[0].backgroundColor);
+                }
+            })
+            .catch(error => {
+                console.error('Error refreshing department chart:', error);
+            });
+    }
+    
+    function refreshAttendanceChart() {
+        const view = document.getElementById('attendance-view').value;
+        
+        fetch(`{% url 'Hr:api_get_attendance_trends' %}?period=${currentPeriod}&view=${view}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    charts.attendanceTrends.data.labels = data.labels;
+                    charts.attendanceTrends.data.datasets[0].data = data.present;
+                    charts.attendanceTrends.data.datasets[1].data = data.late;
+                    charts.attendanceTrends.data.datasets[2].data = data.absent;
+                    charts.attendanceTrends.update();
+                }
+            })
+            .catch(error => {
+                console.error('Error refreshing attendance chart:', error);
+            });
+    }
+    
+    function refreshLeaveChart() {
+        fetch(`{% url 'Hr:api_get_leave_usage_data' %}?period=${currentPeriod}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    charts.leaveUsage.data.labels = data.labels;
+                    charts.leaveUsage.data.datasets[0].data = data.values;
+                    charts.leaveUsage.update();
+                    
+                    updateChartLegend('leave-legend', data.labels, data.values, charts.leaveUsage.data.datasets[0].backgroundColor);
+                }
+            })
+            .catch(error => {
+                console.error('Error refreshing leave chart:', error);
+            });
+    }
+    
+    function refreshSalaryChart() {
+        const analysisType = document.getElementById('salary-analysis-type').value;
+        
+        fetch(`{% url 'Hr:api_get_salary_analysis' %}?type=${analysisType}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    charts.salaryAnalysis.data.labels = data.labels;
+                    charts.salaryAnalysis.data.datasets[0].data = data.values;
+                    charts.salaryAnalysis.update();
+                }
+            })
+            .catch(error => {
+                console.error('Error refreshing salary chart:', error);
+            });
+    }
+    
+    function updateChartLegend(legendId, labels, values, colors) {
+        const legend = document.getElementById(legendId);
+        if (!legend) return;
+        
+        const total = values.reduce((sum, value) => sum + value, 0);
+        
+        const legendItems = labels.map((label, index) => {
+            const percentage = total > 0 ? ((values[index] / total) * 100).toFixed(1) : 0;
+            return `
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: ${colors[index]}"></div>
+                    <span>${label} (${percentage}%)</span>
+                </div>
+            `;
+        }).join('');
+        
+        legend.innerHTML = legendItems;
+    }
+    
+    // Quick actions
+    window.exportDashboard = function() {
+        showLoading();
+        
+        fetch('{% url "Hr:api_export_dashboard" %}', {
+            method: 'POST',
             headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({
+                period: currentPeriod,
+                include_charts: true
+            })
         })
-        .then(data => {
-            HRUtils.showNotification('تم تحديث البيانات بنجاح', 'success');
-            // Update the dashboard with new data
-            updateDashboard(data);
+        .then(response => response.blob())
+        .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `hr-analytics-dashboard-${new Date().toISOString().split('T')[0]}.pdf`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+            
+            HRComponents.Toast.show('تم تصدير التقرير بنجاح', 'success');
         })
         .catch(error => {
-            HRUtils.showNotification('حدث خطأ أثناء تحديث البيانات', 'error');
+            console.error('Error exporting dashboard:', error);
+            HRComponents.Toast.show('فشل في تصدير التقرير', 'error');
+        })
+        .finally(() => {
+            hideLoading();
         });
-    }
+    };
     
-    // Update dashboard with new data
-    function updateDashboard(data) {
-        // Update KPI values
-        if (data.analytics) {
-            // Update each KPI card with new values
-            console.log('Updating dashboard with:', data);
-        }
-    }
-    
-    // Schedule report function
-    function scheduleReport() {
-        HRUtils.showNotification('سيتم إضافة وظيفة جدولة التقارير قريباً', 'info');
-    }
-    
-    // Auto-refresh every 10 minutes
-    setInterval(function() {
-        refreshAnalytics();
-    }, 10 * 60 * 1000);
-    
-    // Initialize tooltips for KPI cards
-    document.querySelectorAll('.kpi-card').forEach(card => {
-        card.addEventListener('mouseenter', function() {
-            // Add hover effects or show additional info
-        });
-    });
+    window.scheduledReports = function() {
+        // This would open a modal for scheduling reports
+        HRComponents.Toast.show('ميزة التقارير المجدولة قيد التطوير', 'info');
+    };
+});
 </script>
 {% endblock %}

@@ -1,0 +1,1190 @@
+{% extends 'Hr/base_hr_modern.html' %}
+{% load static %}
+
+{% block title %}طلبات الإجازات{% endblock %}
+{% block page_title %}طلبات الإجازات{% endblock %}
+
+{% block breadcrumb_items %}
+<div class="breadcrumb-item">
+    <a href="{% url 'Hr:leaves_dashboard' %}" class="breadcrumb-link">الإجازات</a>
+</div>
+<div class="breadcrumb-item">
+    <span class="breadcrumb-link">طلبات الإجازات</span>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .leave-request-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: var(--space-6);
+        box-shadow: var(--shadow-sm);
+        transition: all var(--transition-fast);
+        border-left: 4px solid var(--neutral-300);
+        margin-bottom: var(--space-4);
+    }
+    
+    .leave-request-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .leave-request-card.pending {
+        border-left-color: var(--warning-500);
+    }
+    
+    .leave-request-card.approved {
+        border-left-color: var(--success-500);
+    }
+    
+    .leave-request-card.rejected {
+        border-left-color: var(--error-500);
+    }
+    
+    .leave-request-card.cancelled {
+        border-left-color: var(--neutral-400);
+        opacity: 0.7;
+    }
+    
+    .request-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: var(--space-4);
+    }
+    
+    .employee-info {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+    }
+    
+    .employee-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius-full);
+        background-color: var(--primary-100);
+        color: var(--primary-600);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: var(--font-semibold);
+    }
+    
+    .employee-details h4 {
+        font-weight: var(--font-semibold);
+        color: var(--neutral-800);
+        margin-bottom: var(--space-1);
+    }
+    
+    .employee-meta {
+        font-size: var(--text-sm);
+        color: var(--neutral-600);
+    }
+    
+    .request-status {
+        padding: var(--space-2) var(--space-4);
+        border-radius: var(--radius-full);
+        font-size: var(--text-sm);
+        font-weight: var(--font-medium);
+        text-align: center;
+        min-width: 100px;
+    }
+    
+    .status-pending {
+        background-color: var(--warning-100);
+        color: var(--warning-700);
+    }
+    
+    .status-approved {
+        background-color: var(--success-100);
+        color: var(--success-700);
+    }
+    
+    .status-rejected {
+        background-color: var(--error-100);
+        color: var(--error-700);
+    }
+    
+    .status-cancelled {
+        background-color: var(--neutral-200);
+        color: var(--neutral-700);
+    }
+    
+    .leave-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: var(--space-4);
+        margin-bottom: var(--space-4);
+    }
+    
+    .leave-detail {
+        text-align: center;
+        padding: var(--space-3);
+        background-color: var(--neutral-50);
+        border-radius: var(--radius-md);
+    }
+    
+    .leave-detail-label {
+        font-size: var(--text-xs);
+        color: var(--neutral-600);
+        margin-bottom: var(--space-1);
+    }
+    
+    .leave-detail-value {
+        font-weight: var(--font-semibold);
+        color: var(--neutral-800);
+    }
+    
+    .leave-reason {
+        background-color: var(--neutral-50);
+        border-radius: var(--radius-md);
+        padding: var(--space-4);
+        margin-bottom: var(--space-4);
+    }
+    
+    .leave-reason-title {
+        font-size: var(--text-sm);
+        font-weight: var(--font-medium);
+        color: var(--neutral-700);
+        margin-bottom: var(--space-2);
+    }
+    
+    .leave-reason-text {
+        color: var(--neutral-600);
+        line-height: 1.5;
+    }
+    
+    .workflow-timeline {
+        margin-bottom: var(--space-4);
+    }
+    
+    .timeline-item {
+        display: flex;
+        align-items: center;
+        gap: var(--space-3);
+        padding: var(--space-2) 0;
+        position: relative;
+    }
+    
+    .timeline-item:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        left: 12px;
+        top: 32px;
+        width: 2px;
+        height: calc(100% - 8px);
+        background-color: var(--neutral-200);
+    }
+    
+    .timeline-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: var(--radius-full);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: var(--text-xs);
+        z-index: 1;
+        background-color: white;
+    }
+    
+    .timeline-icon.completed {
+        background-color: var(--success-600);
+        color: white;
+    }
+    
+    .timeline-icon.current {
+        background-color: var(--warning-600);
+        color: white;
+    }
+    
+    .timeline-icon.pending {
+        background-color: var(--neutral-300);
+        color: var(--neutral-600);
+    }
+    
+    .timeline-content {
+        flex: 1;
+    }
+    
+    .timeline-title {
+        font-weight: var(--font-medium);
+        color: var(--neutral-800);
+        margin-bottom: var(--space-1);
+    }
+    
+    .timeline-meta {
+        font-size: var(--text-sm);
+        color: var(--neutral-600);
+    }
+    
+    .request-actions {
+        display: flex;
+        gap: var(--space-2);
+        justify-content: flex-end;
+    }
+    
+    .filters-section {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: var(--space-6);
+        margin-bottom: var(--space-6);
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .status-tabs {
+        display: flex;
+        gap: var(--space-2);
+        margin-bottom: var(--space-6);
+        border-bottom: 1px solid var(--neutral-200);
+    }
+    
+    .status-tab {
+        padding: var(--space-3) var(--space-4);
+        border-radius: var(--radius-md) var(--radius-md) 0 0;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        font-weight: var(--font-medium);
+        color: var(--neutral-600);
+        border-bottom: 2px solid transparent;
+    }
+    
+    .status-tab.active {
+        color: var(--primary-600);
+        border-bottom-color: var(--primary-600);
+        background-color: var(--primary-50);
+    }
+    
+    .status-tab:hover {
+        background-color: var(--neutral-50);
+    }
+    
+    .quick-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--space-4);
+        margin-bottom: var(--space-6);
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        padding: var(--space-6);
+        box-shadow: var(--shadow-sm);
+        text-align: center;
+    }
+    
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: var(--radius-full);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto var(--space-3);
+        font-size: var(--text-xl);
+    }
+    
+    .stat-value {
+        font-size: var(--text-2xl);
+        font-weight: var(--font-bold);
+        color: var(--neutral-800);
+        margin-bottom: var(--space-1);
+    }
+    
+    .stat-label {
+        font-size: var(--text-sm);
+        color: var(--neutral-600);
+    }
+    
+    @media (max-width: 768px) {
+        .leave-details {
+            grid-template-columns: repeat(2, 1fr);
+        }
+        
+        .request-actions {
+            justify-content: stretch;
+        }
+        
+        .request-actions .btn {
+            flex: 1;
+        }
+        
+        .status-tabs {
+            flex-wrap: wrap;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Quick Stats -->
+<div class="quick-stats">
+    <div class="stat-card">
+        <div class="stat-icon bg-warning-100 text-warning-600">
+            <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-value">{{ stats.pending_requests }}</div>
+        <div class="stat-label">طلبات معلقة</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon bg-success-100 text-success-600">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-value">{{ stats.approved_requests }}</div>
+        <div class="stat-label">طلبات موافق عليها</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon bg-error-100 text-error-600">
+            <i class="fas fa-times-circle"></i>
+        </div>
+        <div class="stat-value">{{ stats.rejected_requests }}</div>
+        <div class="stat-label">طلبات مرفوضة</div>
+    </div>
+    
+    <div class="stat-card">
+        <div class="stat-icon bg-primary-100 text-primary-600">
+            <i class="fas fa-calendar-alt"></i>
+        </div>
+        <div class="stat-value">{{ stats.total_days }}</div>
+        <div class="stat-label">إجمالي أيام الإجازة</div>
+    </div>
+</div>
+
+<!-- Filters Section -->
+<div class="filters-section">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+        <h2 class="text-xl font-semibold text-neutral-800">إدارة طلبات الإجازات</h2>
+        
+        <div class="flex items-center gap-3">
+            <button class="btn btn-outline btn-sm" id="export-requests">
+                <i class="fas fa-file-export ml-2"></i>
+                تصدير
+            </button>
+            <button class="btn btn-primary" onclick="showNewRequestModal()">
+                <i class="fas fa-plus ml-2"></i>
+                طلب إجازة جديد
+            </button>
+        </div>
+    </div>
+    
+    <!-- Status Tabs -->
+    <div class="status-tabs">
+        <div class="status-tab active" data-status="all">الكل</div>
+        <div class="status-tab" data-status="pending">معلقة</div>
+        <div class="status-tab" data-status="approved">موافق عليها</div>
+        <div class="status-tab" data-status="rejected">مرفوضة</div>
+        <div class="status-tab" data-status="cancelled">ملغاة</div>
+    </div>
+    
+    <!-- Search and Filters -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="form-group">
+            <input type="text" id="search-requests" class="form-input" 
+                   placeholder="البحث عن موظف...">
+        </div>
+        
+        <div class="form-group">
+            <select id="leave-type-filter" class="form-select">
+                <option value="">جميع أنواع الإجازات</option>
+                {% for leave_type in leave_types %}
+                    <option value="{{ leave_type.id }}">{{ leave_type.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <select id="department-filter" class="form-select">
+                <option value="">جميع الأقسام</option>
+                {% for department in departments %}
+                    <option value="{{ department.id }}">{{ department.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <input type="date" id="date-filter" class="form-input" 
+                   placeholder="تاريخ البداية">
+        </div>
+    </div>
+</div>
+
+<!-- Leave Requests List -->
+<div id="requests-container">
+    {% for request in leave_requests %}
+    <div class="leave-request-card {{ request.status }}" data-request-id="{{ request.id }}" data-status="{{ request.status }}">
+        <div class="request-header">
+            <div class="employee-info">
+                <div class="employee-avatar">
+                    {% if request.employee.profile_picture %}
+                        <img src="{{ request.employee.profile_picture.url }}" alt="{{ request.employee.full_name }}" 
+                             class="w-full h-full object-cover rounded-full">
+                    {% else %}
+                        {{ request.employee.first_name|first }}{{ request.employee.last_name|first }}
+                    {% endif %}
+                </div>
+                <div class="employee-details">
+                    <h4>{{ request.employee.full_name }}</h4>
+                    <div class="employee-meta">
+                        {{ request.employee.employee_number }} • {{ request.employee.department.name|default:"بدون قسم" }}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="request-status status-{{ request.status }}">
+                {% if request.status == 'pending' %}
+                    معلق
+                {% elif request.status == 'approved' %}
+                    موافق عليه
+                {% elif request.status == 'rejected' %}
+                    مرفوض
+                {% elif request.status == 'cancelled' %}
+                    ملغي
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="leave-details">
+            <div class="leave-detail">
+                <div class="leave-detail-label">نوع الإجازة</div>
+                <div class="leave-detail-value">{{ request.leave_type.name }}</div>
+            </div>
+            <div class="leave-detail">
+                <div class="leave-detail-label">تاريخ البداية</div>
+                <div class="leave-detail-value">{{ request.start_date|date:"Y/m/d" }}</div>
+            </div>
+            <div class="leave-detail">
+                <div class="leave-detail-label">تاريخ النهاية</div>
+                <div class="leave-detail-value">{{ request.end_date|date:"Y/m/d" }}</div>
+            </div>
+            <div class="leave-detail">
+                <div class="leave-detail-label">عدد الأيام</div>
+                <div class="leave-detail-value">{{ request.total_days }} يوم</div>
+            </div>
+            <div class="leave-detail">
+                <div class="leave-detail-label">تاريخ الطلب</div>
+                <div class="leave-detail-value">{{ request.created_at|date:"Y/m/d" }}</div>
+            </div>
+        </div>
+        
+        {% if request.reason %}
+        <div class="leave-reason">
+            <div class="leave-reason-title">سبب الإجازة</div>
+            <div class="leave-reason-text">{{ request.reason }}</div>
+        </div>
+        {% endif %}
+        
+        <!-- Workflow Timeline -->
+        <div class="workflow-timeline">
+            <div class="timeline-item">
+                <div class="timeline-icon completed">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <div class="timeline-content">
+                    <div class="timeline-title">تم إنشاء الطلب</div>
+                    <div class="timeline-meta">{{ request.created_at|date:"Y/m/d H:i" }} بواسطة {{ request.employee.full_name }}</div>
+                </div>
+            </div>
+            
+            {% if request.reviewed_by %}
+            <div class="timeline-item">
+                <div class="timeline-icon {% if request.status == 'approved' %}completed{% elif request.status == 'rejected' %}completed{% else %}current{% endif %}">
+                    <i class="fas fa-{% if request.status == 'approved' %}check{% elif request.status == 'rejected' %}times{% else %}eye{% endif %}"></i>
+                </div>
+                <div class="timeline-content">
+                    <div class="timeline-title">
+                        {% if request.status == 'approved' %}
+                            تمت الموافقة على الطلب
+                        {% elif request.status == 'rejected' %}
+                            تم رفض الطلب
+                        {% else %}
+                            قيد المراجعة
+                        {% endif %}
+                    </div>
+                    <div class="timeline-meta">
+                        {% if request.reviewed_at %}
+                            {{ request.reviewed_at|date:"Y/m/d H:i" }} بواسطة {{ request.reviewed_by.get_full_name }}
+                        {% else %}
+                            بواسطة {{ request.reviewed_by.get_full_name }}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="timeline-item">
+                <div class="timeline-icon current">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="timeline-content">
+                    <div class="timeline-title">في انتظار المراجعة</div>
+                    <div class="timeline-meta">سيتم مراجعة الطلب من قبل المدير المباشر</div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        {% if request.review_notes %}
+        <div class="leave-reason">
+            <div class="leave-reason-title">ملاحظات المراجعة</div>
+            <div class="leave-reason-text">{{ request.review_notes }}</div>
+        </div>
+        {% endif %}
+        
+        <div class="request-actions">
+            {% if request.status == 'pending' %}
+                <button class="btn btn-success btn-sm" onclick="approveRequest('{{ request.id }}')">
+                    <i class="fas fa-check"></i>
+                    موافقة
+                </button>
+                <button class="btn btn-error btn-sm" onclick="rejectRequest('{{ request.id }}')">
+                    <i class="fas fa-times"></i>
+                    رفض
+                </button>
+            {% endif %}
+            
+            <button class="btn btn-primary btn-sm" onclick="viewRequestDetails('{{ request.id }}')">
+                <i class="fas fa-eye"></i>
+                التفاصيل
+            </button>
+            
+            {% if request.status == 'pending' and request.employee == user.employee %}
+                <button class="btn btn-warning btn-sm" onclick="editRequest('{{ request.id }}')">
+                    <i class="fas fa-edit"></i>
+                    تعديل
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="cancelRequest('{{ request.id }}')">
+                    <i class="fas fa-ban"></i>
+                    إلغاء
+                </button>
+            {% endif %}
+        </div>
+    </div>
+    {% empty %}
+    <div class="text-center py-12">
+        <i class="fas fa-calendar-times text-6xl text-neutral-300 mb-4 block"></i>
+        <h3 class="text-lg font-semibold text-neutral-600 mb-2">لا توجد طلبات إجازة</h3>
+        <p class="text-neutral-500 mb-4">لم يتم العثور على طلبات إجازة تطابق المعايير المحددة</p>
+        <button class="btn btn-primary" onclick="showNewRequestModal()">
+            <i class="fas fa-plus ml-2"></i>
+            إنشاء طلب إجازة جديد
+        </button>
+    </div>
+    {% endfor %}
+</div><!
+-- New Leave Request Modal -->
+<div class="modal-backdrop hidden" id="new-request-modal">
+    <div class="modal modal-lg">
+        <div class="modal-header">
+            <h3 class="modal-title">طلب إجازة جديد</h3>
+            <button type="button" class="modal-close" data-modal-close>&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="leave-request-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="request-employee" class="form-label required">الموظف</label>
+                        <select id="request-employee" name="employee_id" class="form-select" required>
+                            <option value="">اختر الموظف</option>
+                            {% for employee in employees %}
+                                <option value="{{ employee.id }}" {% if employee == user.employee %}selected{% endif %}>
+                                    {{ employee.full_name }} ({{ employee.employee_number }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="request-leave-type" class="form-label required">نوع الإجازة</label>
+                        <select id="request-leave-type" name="leave_type_id" class="form-select" required>
+                            <option value="">اختر نوع الإجازة</option>
+                            {% for leave_type in leave_types %}
+                                <option value="{{ leave_type.id }}" data-max-days="{{ leave_type.max_days_per_year }}" 
+                                        data-requires-approval="{{ leave_type.requires_approval|yesno:'true,false' }}">
+                                    {{ leave_type.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="request-start-date" class="form-label required">تاريخ البداية</label>
+                        <input type="date" id="request-start-date" name="start_date" class="form-input" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="request-end-date" class="form-label required">تاريخ النهاية</label>
+                        <input type="date" id="request-end-date" name="end_date" class="form-input" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">عدد الأيام المحسوب</label>
+                    <div class="bg-neutral-50 border border-neutral-200 rounded-lg p-4">
+                        <div class="flex justify-between items-center">
+                            <span>إجمالي الأيام:</span>
+                            <span id="calculated-days" class="font-semibold">0 يوم</span>
+                        </div>
+                        <div class="flex justify-between items-center mt-2">
+                            <span>أيام العمل:</span>
+                            <span id="working-days" class="font-semibold">0 يوم</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="request-reason" class="form-label required">سبب الإجازة</label>
+                    <textarea id="request-reason" name="reason" class="form-textarea" rows="4" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="request-replacement" class="form-label">الموظف البديل</label>
+                    <select id="request-replacement" name="replacement_employee_id" class="form-select">
+                        <option value="">اختر الموظف البديل (اختياري)</option>
+                        {% for employee in employees %}
+                            <option value="{{ employee.id }}">{{ employee.full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="request-contact" class="form-label">معلومات الاتصال أثناء الإجازة</label>
+                    <input type="text" id="request-contact" name="emergency_contact" class="form-input" 
+                           placeholder="رقم الهاتف أو البريد الإلكتروني">
+                </div>
+                
+                <div class="alert alert-primary" id="leave-balance-info" style="display: none;">
+                    <div class="alert-title">معلومات الرصيد</div>
+                    <div id="balance-details"></div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-modal-close>إلغاء</button>
+            <button type="button" class="btn btn-primary" id="submit-request">إرسال الطلب</button>
+        </div>
+    </div>
+</div>
+
+<!-- Request Details Modal -->
+<div class="modal-backdrop hidden" id="request-details-modal">
+    <div class="modal modal-lg">
+        <div class="modal-header">
+            <h3 class="modal-title" id="details-modal-title">تفاصيل طلب الإجازة</h3>
+            <button type="button" class="modal-close" data-modal-close>&times;</button>
+        </div>
+        <div class="modal-body" id="request-details-content">
+            <!-- Content will be populated by JavaScript -->
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-modal-close>إغلاق</button>
+        </div>
+    </div>
+</div>
+
+<!-- Approval/Rejection Modal -->
+<div class="modal-backdrop hidden" id="review-modal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 class="modal-title" id="review-modal-title">مراجعة طلب الإجازة</h3>
+            <button type="button" class="modal-close" data-modal-close>&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="review-form">
+                <input type="hidden" id="review-request-id" name="request_id">
+                <input type="hidden" id="review-action" name="action">
+                
+                <div class="form-group">
+                    <label for="review-notes" class="form-label required">ملاحظات المراجعة</label>
+                    <textarea id="review-notes" name="review_notes" class="form-textarea" rows="4" required></textarea>
+                </div>
+                
+                <div class="alert alert-warning" id="approval-warning" style="display: none;">
+                    <div class="alert-title">تنبيه</div>
+                    <p>سيتم خصم أيام الإجازة من رصيد الموظف عند الموافقة على الطلب.</p>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-modal-close>إلغاء</button>
+            <button type="button" class="btn btn-primary" id="confirm-review">تأكيد</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Status tabs functionality
+    const statusTabs = document.querySelectorAll('.status-tab');
+    let currentStatus = 'all';
+    
+    statusTabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const status = this.getAttribute('data-status');
+            
+            // Update active tab
+            statusTabs.forEach(t => t.classList.remove('active'));
+            this.classList.add('active');
+            
+            // Filter requests
+            currentStatus = status;
+            filterRequests();
+        });
+    });
+    
+    // Search and filter functionality
+    const searchInput = document.getElementById('search-requests');
+    const leaveTypeFilter = document.getElementById('leave-type-filter');
+    const departmentFilter = document.getElementById('department-filter');
+    const dateFilter = document.getElementById('date-filter');
+    
+    searchInput.addEventListener('input', HRComponents.utils.debounce(filterRequests, 300));
+    leaveTypeFilter.addEventListener('change', filterRequests);
+    departmentFilter.addEventListener('change', filterRequests);
+    dateFilter.addEventListener('change', filterRequests);
+    
+    function filterRequests() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const leaveType = leaveTypeFilter.value;
+        const department = departmentFilter.value;
+        const date = dateFilter.value;
+        
+        const requestCards = document.querySelectorAll('.leave-request-card');
+        
+        requestCards.forEach(card => {
+            const employeeName = card.querySelector('.employee-details h4').textContent.toLowerCase();
+            const employeeNumber = card.querySelector('.employee-meta').textContent.toLowerCase();
+            const cardStatus = card.getAttribute('data-status');
+            const cardLeaveType = card.querySelector('.leave-detail-value').textContent;
+            
+            let showCard = true;
+            
+            // Filter by search term
+            if (searchTerm && !employeeName.includes(searchTerm) && !employeeNumber.includes(searchTerm)) {
+                showCard = false;
+            }
+            
+            // Filter by status
+            if (currentStatus !== 'all' && cardStatus !== currentStatus) {
+                showCard = false;
+            }
+            
+            // Filter by leave type
+            if (leaveType && !cardLeaveType.includes(leaveType)) {
+                showCard = false;
+            }
+            
+            // Filter by department
+            if (department) {
+                // This would need additional data attributes on cards
+                // For now, we'll skip this filter
+            }
+            
+            card.style.display = showCard ? 'block' : 'none';
+        });
+    }
+    
+    // New request modal
+    window.showNewRequestModal = function() {
+        document.getElementById('leave-request-form').reset();
+        document.getElementById('new-request-modal').classList.remove('hidden');
+        
+        // Set minimum date to today
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('request-start-date').min = today;
+        document.getElementById('request-end-date').min = today;
+    };
+    
+    // Date calculation
+    document.getElementById('request-start-date').addEventListener('change', calculateLeaveDays);
+    document.getElementById('request-end-date').addEventListener('change', calculateLeaveDays);
+    
+    function calculateLeaveDays() {
+        const startDate = document.getElementById('request-start-date').value;
+        const endDate = document.getElementById('request-end-date').value;
+        
+        if (startDate && endDate) {
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            
+            if (end >= start) {
+                const totalDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+                const workingDays = calculateWorkingDays(start, end);
+                
+                document.getElementById('calculated-days').textContent = `${totalDays} يوم`;
+                document.getElementById('working-days').textContent = `${workingDays} يوم`;
+                
+                // Update end date minimum
+                document.getElementById('request-end-date').min = startDate;
+            }
+        }
+    }
+    
+    function calculateWorkingDays(startDate, endDate) {
+        let count = 0;
+        const current = new Date(startDate);
+        
+        while (current <= endDate) {
+            const dayOfWeek = current.getDay();
+            // Assuming Friday (5) and Saturday (6) are weekends
+            if (dayOfWeek !== 5 && dayOfWeek !== 6) {
+                count++;
+            }
+            current.setDate(current.getDate() + 1);
+        }
+        
+        return count;
+    }
+    
+    // Employee selection change
+    document.getElementById('request-employee').addEventListener('change', function() {
+        const employeeId = this.value;
+        if (employeeId) {
+            loadEmployeeLeaveBalance(employeeId);
+        }
+    });
+    
+    // Leave type selection change
+    document.getElementById('request-leave-type').addEventListener('change', function() {
+        const employeeId = document.getElementById('request-employee').value;
+        if (employeeId) {
+            loadEmployeeLeaveBalance(employeeId);
+        }
+    });
+    
+    function loadEmployeeLeaveBalance(employeeId) {
+        const leaveTypeId = document.getElementById('request-leave-type').value;
+        
+        if (!leaveTypeId) return;
+        
+        fetch(`{% url 'Hr:api_get_employee_leave_balance' 0 %}`.replace('0', employeeId) + `?leave_type_id=${leaveTypeId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const balanceInfo = document.getElementById('leave-balance-info');
+                    const balanceDetails = document.getElementById('balance-details');
+                    
+                    balanceDetails.innerHTML = `
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <strong>الرصيد المتاح:</strong> ${data.balance.available_days} يوم
+                            </div>
+                            <div>
+                                <strong>المستخدم هذا العام:</strong> ${data.balance.used_days} يوم
+                            </div>
+                            <div>
+                                <strong>الحد الأقصى السنوي:</strong> ${data.balance.annual_entitlement} يوم
+                            </div>
+                            <div>
+                                <strong>الطلبات المعلقة:</strong> ${data.balance.pending_days} يوم
+                            </div>
+                        </div>
+                    `;
+                    
+                    balanceInfo.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading leave balance:', error);
+            });
+    }
+    
+    // Submit new request
+    document.getElementById('submit-request').addEventListener('click', function() {
+        const form = document.getElementById('leave-request-form');
+        const formData = new FormData(form);
+        
+        // Validate form
+        const employeeId = formData.get('employee_id');
+        const leaveTypeId = formData.get('leave_type_id');
+        const startDate = formData.get('start_date');
+        const endDate = formData.get('end_date');
+        const reason = formData.get('reason');
+        
+        if (!employeeId || !leaveTypeId || !startDate || !endDate || !reason) {
+            HRComponents.Toast.show('يرجى ملء جميع الحقول المطلوبة', 'error');
+            return;
+        }
+        
+        // Validate date range
+        if (new Date(endDate) < new Date(startDate)) {
+            HRComponents.Toast.show('تاريخ النهاية يجب أن يكون بعد تاريخ البداية', 'error');
+            return;
+        }
+        
+        showLoading();
+        
+        fetch('{% url "Hr:api_create_leave_request" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                HRComponents.Toast.show('تم إرسال طلب الإجازة بنجاح', 'success');
+                document.getElementById('new-request-modal').classList.add('hidden');
+                
+                // Reload page after short delay
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                throw new Error(data.message || 'فشل في إرسال طلب الإجازة');
+            }
+        })
+        .catch(error => {
+            console.error('Error submitting request:', error);
+            HRComponents.Toast.show(error.message || 'فشل في إرسال طلب الإجازة', 'error');
+        })
+        .finally(() => {
+            hideLoading();
+        });
+    });
+    
+    // Request actions
+    window.viewRequestDetails = function(requestId) {
+        showLoading();
+        
+        fetch(`{% url 'Hr:api_get_leave_request_details' 0 %}`.replace('0', requestId))
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    renderRequestDetails(data.request);
+                    document.getElementById('request-details-modal').classList.remove('hidden');
+                } else {
+                    throw new Error(data.message || 'فشل في تحميل تفاصيل الطلب');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading request details:', error);
+                HRComponents.Toast.show(error.message || 'فشل في تحميل تفاصيل الطلب', 'error');
+            })
+            .finally(() => {
+                hideLoading();
+            });
+    };
+    
+    function renderRequestDetails(request) {
+        document.getElementById('details-modal-title').textContent = `تفاصيل طلب إجازة ${request.employee.full_name}`;
+        
+        const content = `
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-sm font-medium text-neutral-600">الموظف</label>
+                        <div class="mt-1 text-neutral-800">${request.employee.full_name}</div>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-neutral-600">نوع الإجازة</label>
+                        <div class="mt-1 text-neutral-800">${request.leave_type.name}</div>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-neutral-600">تاريخ البداية</label>
+                        <div class="mt-1 text-neutral-800">${request.start_date}</div>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-neutral-600">تاريخ النهاية</label>
+                        <div class="mt-1 text-neutral-800">${request.end_date}</div>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-sm font-medium text-neutral-600">عدد الأيام</label>
+                        <div class="mt-1 text-neutral-800">${request.total_days} يوم</div>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-neutral-600">الحالة</label>
+                        <div class="mt-1">
+                            <span class="request-status status-${request.status}">
+                                ${getStatusText(request.status)}
+                            </span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-neutral-600">تاريخ الطلب</label>
+                        <div class="mt-1 text-neutral-800">${request.created_at}</div>
+                    </div>
+                    ${request.replacement_employee ? `
+                    <div>
+                        <label class="text-sm font-medium text-neutral-600">الموظف البديل</label>
+                        <div class="mt-1 text-neutral-800">${request.replacement_employee.full_name}</div>
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+            
+            <div class="mt-6">
+                <label class="text-sm font-medium text-neutral-600">سبب الإجازة</label>
+                <div class="mt-2 p-4 bg-neutral-50 rounded-lg text-neutral-800">
+                    ${request.reason}
+                </div>
+            </div>
+            
+            ${request.review_notes ? `
+            <div class="mt-6">
+                <label class="text-sm font-medium text-neutral-600">ملاحظات المراجعة</label>
+                <div class="mt-2 p-4 bg-neutral-50 rounded-lg text-neutral-800">
+                    ${request.review_notes}
+                </div>
+            </div>
+            ` : ''}
+            
+            ${request.emergency_contact ? `
+            <div class="mt-6">
+                <label class="text-sm font-medium text-neutral-600">معلومات الاتصال</label>
+                <div class="mt-1 text-neutral-800">${request.emergency_contact}</div>
+            </div>
+            ` : ''}
+        `;
+        
+        document.getElementById('request-details-content').innerHTML = content;
+    }
+    
+    function getStatusText(status) {
+        const statusMap = {
+            'pending': 'معلق',
+            'approved': 'موافق عليه',
+            'rejected': 'مرفوض',
+            'cancelled': 'ملغي'
+        };
+        return statusMap[status] || status;
+    }
+    
+    // Approve request
+    window.approveRequest = function(requestId) {
+        document.getElementById('review-modal-title').textContent = 'الموافقة على طلب الإجازة';
+        document.getElementById('review-request-id').value = requestId;
+        document.getElementById('review-action').value = 'approve';
+        document.getElementById('review-notes').value = '';
+        document.getElementById('approval-warning').style.display = 'block';
+        document.getElementById('confirm-review').textContent = 'موافقة';
+        document.getElementById('confirm-review').className = 'btn btn-success';
+        document.getElementById('review-modal').classList.remove('hidden');
+    };
+    
+    // Reject request
+    window.rejectRequest = function(requestId) {
+        document.getElementById('review-modal-title').textContent = 'رفض طلب الإجازة';
+        document.getElementById('review-request-id').value = requestId;
+        document.getElementById('review-action').value = 'reject';
+        document.getElementById('review-notes').value = '';
+        document.getElementById('approval-warning').style.display = 'none';
+        document.getElementById('confirm-review').textContent = 'رفض';
+        document.getElementById('confirm-review').className = 'btn btn-error';
+        document.getElementById('review-modal').classList.remove('hidden');
+    };
+    
+    // Confirm review
+    document.getElementById('confirm-review').addEventListener('click', function() {
+        const form = document.getElementById('review-form');
+        const formData = new FormData(form);
+        
+        const notes = formData.get('review_notes');
+        if (!notes.trim()) {
+            HRComponents.Toast.show('يرجى إدخال ملاحظات المراجعة', 'error');
+            return;
+        }
+        
+        showLoading();
+        
+        fetch('{% url "Hr:api_review_leave_request" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const action = formData.get('action');
+                const message = action === 'approve' ? 'تمت الموافقة على الطلب' : 'تم رفض الطلب';
+                HRComponents.Toast.show(message, 'success');
+                document.getElementById('review-modal').classList.add('hidden');
+                
+                // Reload page after short delay
+                setTimeout(() => {
+                    location.reload();
+                }, 1500);
+            } else {
+                throw new Error(data.message || 'فشل في مراجعة الطلب');
+            }
+        })
+        .catch(error => {
+            console.error('Error reviewing request:', error);
+            HRComponents.Toast.show(error.message || 'فشل في مراجعة الطلب', 'error');
+        })
+        .finally(() => {
+            hideLoading();
+        });
+    });
+    
+    // Cancel request
+    window.cancelRequest = function(requestId) {
+        if (confirm('هل أنت متأكد من إلغاء طلب الإجازة؟')) {
+            showLoading();
+            
+            fetch(`{% url 'Hr:api_cancel_leave_request' 0 %}`.replace('0', requestId), {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    HRComponents.Toast.show('تم إلغاء طلب الإجازة', 'success');
+                    
+                    // Update card status
+                    const card = document.querySelector(`[data-request-id="${requestId}"]`);
+                    if (card) {
+                        card.classList.remove('pending');
+                        card.classList.add('cancelled');
+                        card.querySelector('.request-status').textContent = 'ملغي';
+                        card.querySelector('.request-status').className = 'request-status status-cancelled';
+                        card.querySelector('.request-actions').innerHTML = `
+                            <button class="btn btn-primary btn-sm" onclick="viewRequestDetails('${requestId}')">
+                                <i class="fas fa-eye"></i>
+                                التفاصيل
+                            </button>
+                        `;
+                    }
+                } else {
+                    throw new Error(data.message || 'فشل في إلغاء الطلب');
+                }
+            })
+            .catch(error => {
+                console.error('Error cancelling request:', error);
+                HRComponents.Toast.show(error.message || 'فشل في إلغاء الطلب', 'error');
+            })
+            .finally(() => {
+                hideLoading();
+            });
+        }
+    };
+    
+    // Export requests
+    document.getElementById('export-requests').addEventListener('click', function() {
+        const params = new URLSearchParams({
+            status: currentStatus,
+            search: searchInput.value,
+            leave_type: leaveTypeFilter.value,
+            department: departmentFilter.value,
+            date: dateFilter.value
+        });
+        
+        window.open(`{% url 'Hr:export_leave_requests' %}?${params.toString()}`, '_blank');
+    });
+});
+</script>
+{% endblock %}
