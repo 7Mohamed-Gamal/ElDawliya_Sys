@@ -1,659 +1,470 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" data-theme="light">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     
-    <title>{% block title %}نظام الموارد البشرية{% endblock %} - نظام الدولية</title>
+    <title>{% block title %}نظام الموارد البشرية - الدولية{% endblock %}</title>
     
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="{% load static %}{% static 'Hr/images/favicon.ico' %}">
     
-    <!-- Fonts -->
+    <!-- CSS Files -->
+    {% load static %}
+    
+    <!-- Bootstrap RTL -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    
+    <!-- Cairo Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Icons -->
+    <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- CSS -->
-    {% load static %}
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- HR Design System -->
     <link rel="stylesheet" href="{% static 'Hr/css/hr-design-system.css' %}">
     <link rel="stylesheet" href="{% static 'Hr/css/hr-components.css' %}">
     
-    <!-- Additional CSS -->
+    <!-- Custom CSS -->
     {% block extra_css %}{% endblock %}
     
     <!-- CSRF Token -->
-    {% csrf_token %}
+    <meta name="csrf-token" content="{{ csrf_token }}">
     
     <style>
-        /* Layout Styles */
-        .app-layout {
-            display: flex;
-            min-height: 100vh;
-            background-color: var(--neutral-50);
-        }
-        
-        .sidebar {
-            width: 280px;
-            background: linear-gradient(135deg, var(--primary-700) 0%, var(--primary-800) 100%);
-            color: white;
-            transition: all var(--transition-base);
-            position: fixed;
-            height: 100vh;
-            overflow-y: auto;
-            z-index: var(--z-fixed);
-        }
-        
-        .sidebar.collapsed {
-            width: 80px;
-        }
-        
-        .sidebar-header {
-            padding: var(--space-6) var(--space-4);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex;
-            align-items: center;
-            gap: var(--space-3);
-        }
-        
-        .sidebar-logo {
-            width: 40px;
-            height: 40px;
-            background-color: white;
-            border-radius: var(--radius-lg);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: var(--primary-600);
-            font-size: var(--text-xl);
-            font-weight: var(--font-bold);
-        }
-        
-        .sidebar-title {
-            font-size: var(--text-lg);
-            font-weight: var(--font-semibold);
-            white-space: nowrap;
-            opacity: 1;
-            transition: opacity var(--transition-base);
-        }
-        
-        .sidebar.collapsed .sidebar-title {
-            opacity: 0;
-        }
-        
-        .sidebar-nav {
-            padding: var(--space-4) 0;
-        }
-        
-        .nav-section {
-            margin-bottom: var(--space-6);
-        }
-        
-        .nav-section-title {
-            padding: 0 var(--space-4);
-            font-size: var(--text-xs);
-            font-weight: var(--font-semibold);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: rgba(255, 255, 255, 0.7);
-            margin-bottom: var(--space-2);
-            transition: opacity var(--transition-base);
-        }
-        
-        .sidebar.collapsed .nav-section-title {
-            opacity: 0;
-        }
-        
-        .nav-item {
-            margin-bottom: var(--space-1);
-        }
-        
-        .nav-link {
-            display: flex;
-            align-items: center;
-            gap: var(--space-3);
-            padding: var(--space-3) var(--space-4);
-            color: rgba(255, 255, 255, 0.9);
-            text-decoration: none;
-            border-radius: 0;
-            transition: all var(--transition-fast);
-            position: relative;
-        }
-        
-        .nav-link:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-            color: white;
-        }
-        
-        .nav-link.active {
-            background-color: rgba(255, 255, 255, 0.15);
-            color: white;
-            border-right: 3px solid white;
-        }
-        
-        .nav-link i {
-            width: 20px;
-            text-align: center;
-            font-size: var(--text-base);
-        }
-        
-        .nav-link-text {
-            white-space: nowrap;
-            opacity: 1;
-            transition: opacity var(--transition-base);
-        }
-        
-        .sidebar.collapsed .nav-link-text {
-            opacity: 0;
-        }
-        
-        .nav-dropdown {
-            position: relative;
-        }
-        
-        .nav-dropdown-toggle::after {
-            content: '\f107';
-            font-family: 'Font Awesome 6 Free';
-            font-weight: 900;
-            margin-right: auto;
-            transition: transform var(--transition-fast);
-        }
-        
-        .nav-dropdown.open .nav-dropdown-toggle::after {
-            transform: rotate(180deg);
-        }
-        
-        .nav-dropdown-menu {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height var(--transition-base);
-            background-color: rgba(0, 0, 0, 0.1);
-        }
-        
-        .nav-dropdown.open .nav-dropdown-menu {
-            max-height: 500px;
-        }
-        
-        .nav-dropdown-item {
-            padding-right: var(--space-12);
+        /* Additional inline styles for immediate loading */
+        body {
+            font-family: 'Cairo', sans-serif;
+            background-color: var(--bg-secondary);
         }
         
         .main-content {
-            flex: 1;
             margin-right: 280px;
-            transition: margin-right var(--transition-base);
-            display: flex;
-            flex-direction: column;
-        }
-        
-        .sidebar.collapsed + .main-content {
-            margin-right: 80px;
-        }
-        
-        .topbar {
-            background-color: white;
-            border-bottom: 1px solid var(--neutral-200);
-            padding: var(--space-4) var(--space-6);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: var(--z-sticky);
-        }
-        
-        .topbar-left {
-            display: flex;
-            align-items: center;
-            gap: var(--space-4);
-        }
-        
-        .sidebar-toggle {
-            background: none;
-            border: none;
-            color: var(--secondary-600);
-            font-size: var(--text-lg);
-            cursor: pointer;
-            padding: var(--space-2);
-            border-radius: var(--radius-md);
-            transition: all var(--transition-fast);
-        }
-        
-        .sidebar-toggle:hover {
-            background-color: var(--neutral-100);
-            color: var(--primary-600);
-        }
-        
-        .breadcrumb-container {
-            display: flex;
-            align-items: center;
-            gap: var(--space-2);
-        }
-        
-        .topbar-right {
-            display: flex;
-            align-items: center;
-            gap: var(--space-4);
-        }
-        
-        .search-box {
-            position: relative;
-            width: 300px;
-        }
-        
-        .search-input {
-            width: 100%;
-            padding: var(--space-2) var(--space-4) var(--space-2) var(--space-10);
-            border: 1px solid var(--neutral-300);
-            border-radius: var(--radius-full);
-            font-size: var(--text-sm);
-            transition: all var(--transition-fast);
-        }
-        
-        .search-input:focus {
-            outline: none;
-            border-color: var(--primary-500);
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-        }
-        
-        .search-icon {
-            position: absolute;
-            right: var(--space-3);
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--secondary-400);
-        }
-        
-        .notifications {
-            position: relative;
-        }
-        
-        .notification-btn {
-            background: none;
-            border: none;
-            color: var(--secondary-600);
-            font-size: var(--text-lg);
-            cursor: pointer;
-            padding: var(--space-2);
-            border-radius: var(--radius-md);
-            position: relative;
-            transition: all var(--transition-fast);
-        }
-        
-        .notification-btn:hover {
-            background-color: var(--neutral-100);
-            color: var(--primary-600);
-        }
-        
-        .notification-badge {
-            position: absolute;
-            top: 0;
-            left: 0;
-            background-color: var(--error-500);
-            color: white;
-            font-size: var(--text-xs);
-            padding: 2px 6px;
-            border-radius: var(--radius-full);
-            min-width: 18px;
-            text-align: center;
-        }
-        
-        .user-menu {
-            position: relative;
-        }
-        
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: var(--radius-full);
-            background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: var(--font-semibold);
-            cursor: pointer;
-            transition: all var(--transition-fast);
-        }
-        
-        .user-avatar:hover {
-            transform: scale(1.05);
-        }
-        
-        .page-content {
-            flex: 1;
+            margin-top: 70px;
             padding: var(--space-6);
-            overflow-y: auto;
+            min-height: calc(100vh - 70px);
+            transition: margin-right var(--transition-normal);
         }
         
-        .page-header {
-            margin-bottom: var(--space-6);
+        .hr-sidebar.collapsed ~ .main-content {
+            margin-right: 0;
         }
         
-        .page-title {
-            font-size: var(--text-3xl);
-            font-weight: var(--font-bold);
-            color: var(--secondary-800);
-            margin: 0 0 var(--space-2) 0;
-        }
-        
-        .page-subtitle {
-            font-size: var(--text-base);
-            color: var(--secondary-600);
-            margin: 0;
-        }
-        
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(100%);
-            }
-            
-            .sidebar.mobile-open {
-                transform: translateX(0);
-            }
-            
+        @media (max-width: 1024px) {
             .main-content {
                 margin-right: 0;
-            }
-            
-            .search-box {
-                width: 200px;
-            }
-        }
-        
-        @media (max-width: 576px) {
-            .topbar {
-                padding: var(--space-3) var(--space-4);
-            }
-            
-            .search-box {
-                display: none;
-            }
-            
-            .page-content {
-                padding: var(--space-4);
-            }
-            
-            .page-title {
-                font-size: var(--text-2xl);
             }
         }
     </style>
 </head>
-<body>
-    <div class="app-layout">
-        <!-- Sidebar -->
-        <nav class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <div class="sidebar-logo">
-                    <i class="fas fa-building"></i>
-                </div>
-                <div class="sidebar-title">نظام الدولية</div>
-            </div>
-            
-            <div class="sidebar-nav">
-                <!-- Dashboard Section -->
-                <div class="nav-section">
-                    <div class="nav-section-title">الرئيسية</div>
-                    <div class="nav-item">
-                        <a href="{% url 'Hr:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-                            <i class="fas fa-tachometer-alt"></i>
-                            <span class="nav-link-text">لوحة التحكم</span>
-                        </a>
-                    </div>
-                </div>
-                
-                <!-- Employees Section -->
-                <div class="nav-section">
-                    <div class="nav-section-title">إدارة الموظفين</div>
-                    <div class="nav-item nav-dropdown">
-                        <a href="#" class="nav-link nav-dropdown-toggle">
-                            <i class="fas fa-users"></i>
-                            <span class="nav-link-text">الموظفين</span>
-                        </a>
-                        <div class="nav-dropdown-menu">
-                            <a href="{% url 'Hr:employees:list' %}" class="nav-link nav-dropdown-item">
-                                <span class="nav-link-text">قائمة الموظفين</span>
-                            </a>
-                            <a href="{% url 'Hr:employees:create' %}" class="nav-link nav-dropdown-item">
-                                <span class="nav-link-text">إضافة موظف</span>
-                            </a>
-                        </div>
-                    </div>
-                    
-                    <div class="nav-item nav-dropdown">
-                        <a href="#" class="nav-link nav-dropdown-toggle">
-                            <i class="fas fa-sitemap"></i>
-                            <span class="nav-link-text">الهيكل التنظيمي</span>
-                        </a>
-                        <div class="nav-dropdown-menu">
-                            <a href="{% url 'Hr:departments:department_list' %}" class="nav-link nav-dropdown-item">
-                                <span class="nav-link-text">الأقسام</span>
-                            </a>
-                            <a href="{% url 'Hr:jobs:job_list' %}" class="nav-link nav-dropdown-item">
-                                <span class="nav-link-text">الوظائف</span>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Attendance Section -->
-                <div class="nav-section">
-                    <div class="nav-section-title">الحضور والانصراف</div>
-                    <div class="nav-item nav-dropdown">
-                        <a href="#" class="nav-link nav-dropdown-toggle">
-                            <i class="fas fa-clock"></i>
-                            <span class="nav-link-text">الحضور</span>
-                        </a>
-                        <div class="nav-dropdown-menu">
-                            <a href="{% url 'Hr:attendance:attendance_record_list' %}" class="nav-link nav-dropdown-item">
-                                <span class="nav-link-text">سجلات الحضور</span>
-                            </a>
-                            <a href="{% url 'Hr:attendance:attendance_summary_list' %}" class="nav-link nav-dropdown-item">
-                                <span class="nav-link-text">ملخص الحضور</span>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Payroll Section -->
-                <div class="nav-section">
-                    <div class="nav-section-title">الرواتب</div>
-                    <div class="nav-item nav-dropdown">
-                        <a href="#" class="nav-link nav-dropdown-toggle">
-                            <i class="fas fa-money-bill-wave"></i>
-                            <span class="nav-link-text">إدارة الرواتب</span>
-                        </a>
-                        <div class="nav-dropdown-menu">
-                            <a href="{% url 'Hr:salaries:salary_item_list' %}" class="nav-link nav-dropdown-item">
-                                <span class="nav-link-text">مكونات الراتب</span>
-                            </a>
-                            <a href="{% url 'Hr:salaries:payroll_calculate' %}" class="nav-link nav-dropdown-item">
-                                <span class="nav-link-text">حساب الرواتب</span>
-                            </a>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Reports Section -->
-                <div class="nav-section">
-                    <div class="nav-section-title">التقارير</div>
-                    <div class="nav-item">
-                        <a href="{% url 'Hr:reports:report_list' %}" class="nav-link">
-                            <i class="fas fa-chart-bar"></i>
-                            <span class="nav-link-text">التقارير</span>
-                        </a>
-                    </div>
-                    <div class="nav-item">
-                        <a href="{% url 'Hr:analytics:analytics_dashboard' %}" class="nav-link">
-                            <i class="fas fa-analytics"></i>
-                            <span class="nav-link-text">التحليلات</span>
-                        </a>
-                    </div>
-                </div>
-                
-                <!-- Settings Section -->
-                <div class="nav-section">
-                    <div class="nav-section-title">الإعدادات</div>
-                    <div class="nav-item">
-                        <a href="#" class="nav-link">
-                            <i class="fas fa-cog"></i>
-                            <span class="nav-link-text">إعدادات النظام</span>
-                        </a>
-                    </div>
+<body data-theme="light">
+    
+    <!-- Sidebar Navigation -->
+    <nav class="hr-sidebar" id="hrSidebar">
+        <!-- Sidebar Header -->
+        <div class="hr-sidebar-header">
+            <div class="hr-sidebar-logo">
+                <img src="{% static 'Hr/images/logo.png' %}" alt="شعار الشركة" onerror="this.style.display='none'">
+                <div>
+                    <h1 class="hr-sidebar-title">نظام الموارد البشرية</h1>
+                    <small class="text-muted">الدولية للأنظمة</small>
                 </div>
             </div>
-        </nav>
+        </div>
         
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Top Bar -->
-            <header class="topbar">
-                <div class="topbar-left">
-                    <button class="sidebar-toggle" id="sidebarToggle">
-                        <i class="fas fa-bars"></i>
-                    </button>
-                    
-                    <div class="breadcrumb-container">
-                        {% block breadcrumb %}
-                        <nav class="breadcrumb">
-                            <div class="breadcrumb-item">
-                                <a href="{% url 'Hr:dashboard' %}">الرئيسية</a>
-                            </div>
-                            <div class="breadcrumb-item active">
-                                {% block page_title %}لوحة التحكم{% endblock %}
-                            </div>
-                        </nav>
-                        {% endblock %}
-                    </div>
+        <!-- Sidebar Navigation -->
+        <div class="hr-sidebar-nav">
+            <!-- Dashboard Section -->
+            <div class="hr-nav-section">
+                <div class="hr-nav-section-title">لوحة التحكم</div>
+                <div class="hr-nav-item">
+                    <a href="{% url 'Hr:dashboard' %}" class="hr-nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                        <i class="fas fa-tachometer-alt hr-nav-icon"></i>
+                        <span class="hr-nav-text">الرئيسية</span>
+                    </a>
                 </div>
-                
-                <div class="topbar-right">
-                    <!-- Search -->
-                    <div class="search-box">
-                        <input type="text" class="search-input" placeholder="البحث...">
-                        <i class="fas fa-search search-icon"></i>
-                    </div>
-                    
-                    <!-- Notifications -->
-                    <div class="notifications">
-                        <button class="notification-btn" data-toggle="dropdown">
-                            <i class="fas fa-bell"></i>
-                            <span class="notification-badge">3</span>
-                        </button>
-                    </div>
-                    
-                    <!-- Theme Toggle -->
-                    <button class="notification-btn" data-toggle="theme" title="تبديل المظهر">
-                        <i class="fas fa-moon"></i>
-                    </button>
-                    
-                    <!-- User Menu -->
-                    <div class="user-menu dropdown">
-                        <div class="user-avatar" data-toggle="dropdown">
-                            {{ user.first_name.0|default:"م" }}{{ user.last_name.0|default:"" }}
-                        </div>
-                        <div class="dropdown-menu">
-                            <a href="#" class="dropdown-item">
-                                <i class="fas fa-user"></i> الملف الشخصي
-                            </a>
-                            <a href="#" class="dropdown-item">
-                                <i class="fas fa-cog"></i> الإعدادات
-                            </a>
-                            <div class="dropdown-divider"></div>
-                            <a href="{% url 'accounts:logout' %}" class="dropdown-item">
-                                <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
-                            </a>
-                        </div>
-                    </div>
+                <div class="hr-nav-item">
+                    <a href="{% url 'Hr:analytics' %}" class="hr-nav-link {% if request.resolver_match.url_name == 'analytics' %}active{% endif %}">
+                        <i class="fas fa-chart-line hr-nav-icon"></i>
+                        <span class="hr-nav-text">التحليلات</span>
+                    </a>
                 </div>
-            </header>
+            </div>
             
-            <!-- Page Content -->
-            <div class="page-content">
-                {% block page_header %}
-                <div class="page-header">
-                    <h1 class="page-title">{% block page_title %}لوحة التحكم{% endblock %}</h1>
-                    {% block page_subtitle %}
-                    <p class="page-subtitle">مرحباً بك في نظام إدارة الموارد البشرية</p>
-                    {% endblock %}
+            <!-- Employees Section -->
+            <div class="hr-nav-section">
+                <div class="hr-nav-section-title">إدارة الموظفين</div>
+                <div class="hr-nav-item">
+                    <a href="#" class="hr-nav-link">
+                        <i class="fas fa-users hr-nav-icon"></i>
+                        <span class="hr-nav-text">الموظفين</span>
+                        <i class="fas fa-chevron-left hr-nav-arrow"></i>
+                    </a>
+                    <div class="hr-nav-submenu">
+                        <a href="{% url 'Hr:employee_list' %}" class="hr-nav-link">
+                            <span class="hr-nav-text">قائمة الموظفين</span>
+                        </a>
+                        <a href="{% url 'Hr:employee_add' %}" class="hr-nav-link">
+                            <span class="hr-nav-text">إضافة موظف</span>
+                        </a>
+                        <a href="{% url 'Hr:employee_search' %}" class="hr-nav-link">
+                            <span class="hr-nav-text">البحث المتقدم</span>
+                        </a>
+                    </div>
                 </div>
-                {% endblock %}
+                <div class="hr-nav-item">
+                    <a href="#" class="hr-nav-link">
+                        <i class="fas fa-sitemap hr-nav-icon"></i>
+                        <span class="hr-nav-text">الهيكل التنظيمي</span>
+                        <i class="fas fa-chevron-left hr-nav-arrow"></i>
+                    </a>
+                    <div class="hr-nav-submenu">
+                        <a href="{% url 'Hr:department_list' %}" class="hr-nav-link">
+                            <span class="hr-nav-text">الأقسام</span>
+                        </a>
+                        <a href="{% url 'Hr:job_position_list' %}" class="hr-nav-link">
+                            <span class="hr-nav-text">المناصب</span>
+                        </a>
+                        <a href="{% url 'Hr:branch_list' %}" class="hr-nav-link">
+                            <span class="hr-nav-text">الفروع</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Attendance Section -->
+            <div class="hr-nav-section">
+                <div class="hr-nav-section-title">الحضور والانصراف</div>
+                <div class="hr-nav-item">
+                    <a href="{% url 'Hr:attendance_dashboard' %}" class="hr-nav-link {% if 'attendance' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-clock hr-nav-icon"></i>
+                        <span class="hr-nav-text">لوحة الحضور</span>
+                    </a>
+                </div>
+                <div class="hr-nav-item">
+                    <a href="#" class="hr-nav-link">
+                        <i class="fas fa-calendar-check hr-nav-icon"></i>
+                        <span class="hr-nav-text">سجلات الحضور</span>
+                        <i class="fas fa-chevron-left hr-nav-arrow"></i>
+                    </a>
+                    <div class="hr-nav-submenu">
+                        <a href="{% url 'Hr:attendance_records' %}" class="hr-nav-link">
+                            <span class="hr-nav-text">السجلات اليومية</span>
+                        </a>
+                        <a href="{% url 'Hr:attendance_monthly' %}" class="hr-nav-link">
+                            <span class="hr-nav-text">التقارير الشهرية</span>
+                        </a>
+                        <a href="{% url 'Hr:attendance_exceptions' %}" class="hr-nav-link">
+                            <span class="hr-nav-text">الاستثناءات</span>
+                        </a>
+                    </div>
+                </div>
+                <div class="hr-nav-item">
+                    <a href="{% url 'Hr:work_shifts' %}" class="hr-nav-link">
+                        <i class="fas fa-business-time hr-nav-icon"></i>
+                        <span class="hr-nav-text">الورديات</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Payroll Section -->
+            <div class="hr-nav-section">
+                <div class="hr-nav-section-title">الرواتب والمستحقات</div>
+                <div class="hr-nav-item">
+                    <a href="#" class="hr-nav-link">
+                        <i class="fas fa-money-bill-wave hr-nav-icon"></i>
+                        <span class="hr-nav-text">الرواتب</span>
+                        <i class="fas fa-chevron-left hr-nav-arrow"></i>
+                    </a>
+                    <div class="hr-nav-submenu">
+                        <a href="{% url 'Hr:payroll_periods' %}" class="hr-nav-link">
+                            <span class="hr-nav-text">فترات الرواتب</span>
+                        </a>
+                        <a href="{% url 'Hr:payroll_calculation' %}" class="hr-nav-link">
+                            <span class="hr-nav-text">حساب الرواتب</span>
+                        </a>
+                        <a href="{% url 'Hr:payroll_reports' %}" class="hr-nav-link">
+                            <span class="hr-nav-text">كشوف الرواتب</span>
+                        </a>
+                    </div>
+                </div>
+                <div class="hr-nav-item">
+                    <a href="{% url 'Hr:salary_components' %}" class="hr-nav-link">
+                        <i class="fas fa-cogs hr-nav-icon"></i>
+                        <span class="hr-nav-text">مكونات الراتب</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Leave Section -->
+            <div class="hr-nav-section">
+                <div class="hr-nav-section-title">الإجازات والأذونات</div>
+                <div class="hr-nav-item">
+                    <a href="#" class="hr-nav-link">
+                        <i class="fas fa-calendar-alt hr-nav-icon"></i>
+                        <span class="hr-nav-text">الإجازات</span>
+                        <i class="fas fa-chevron-left hr-nav-arrow"></i>
+                    </a>
+                    <div class="hr-nav-submenu">
+                        <a href="{% url 'Hr:leave_requests' %}" class="hr-nav-link">
+                            <span class="hr-nav-text">طلبات الإجازة</span>
+                        </a>
+                        <a href="{% url 'Hr:leave_calendar' %}" class="hr-nav-link">
+                            <span class="hr-nav-text">تقويم الإجازات</span>
+                        </a>
+                        <a href="{% url 'Hr:leave_balances' %}" class="hr-nav-link">
+                            <span class="hr-nav-text">أرصدة الإجازات</span>
+                        </a>
+                    </div>
+                </div>
+                <div class="hr-nav-item">
+                    <a href="{% url 'Hr:leave_types' %}" class="hr-nav-link">
+                        <i class="fas fa-list hr-nav-icon"></i>
+                        <span class="hr-nav-text">أنواع الإجازات</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Reports Section -->
+            <div class="hr-nav-section">
+                <div class="hr-nav-section-title">التقارير</div>
+                <div class="hr-nav-item">
+                    <a href="{% url 'Hr:reports_dashboard' %}" class="hr-nav-link">
+                        <i class="fas fa-chart-bar hr-nav-icon"></i>
+                        <span class="hr-nav-text">لوحة التقارير</span>
+                    </a>
+                </div>
+                <div class="hr-nav-item">
+                    <a href="#" class="hr-nav-link">
+                        <i class="fas fa-file-alt hr-nav-icon"></i>
+                        <span class="hr-nav-text">التقارير المخصصة</span>
+                        <i class="fas fa-chevron-left hr-nav-arrow"></i>
+                    </a>
+                    <div class="hr-nav-submenu">
+                        <a href="{% url 'Hr:employee_reports' %}" class="hr-nav-link">
+                            <span class="hr-nav-text">تقارير الموظفين</span>
+                        </a>
+                        <a href="{% url 'Hr:attendance_reports' %}" class="hr-nav-link">
+                            <span class="hr-nav-text">تقارير الحضور</span>
+                        </a>
+                        <a href="{% url 'Hr:payroll_reports' %}" class="hr-nav-link">
+                            <span class="hr-nav-text">تقارير الرواتب</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Settings Section -->
+            <div class="hr-nav-section">
+                <div class="hr-nav-section-title">الإعدادات</div>
+                <div class="hr-nav-item">
+                    <a href="{% url 'Hr:settings' %}" class="hr-nav-link">
+                        <i class="fas fa-cog hr-nav-icon"></i>
+                        <span class="hr-nav-text">إعدادات النظام</span>
+                    </a>
+                </div>
+                <div class="hr-nav-item">
+                    <a href="{% url 'Hr:user_management' %}" class="hr-nav-link">
+                        <i class="fas fa-users-cog hr-nav-icon"></i>
+                        <span class="hr-nav-text">إدارة المستخدمين</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Top Navigation Bar -->
+    <header class="hr-topbar">
+        <div class="hr-topbar-left">
+            <!-- Sidebar Toggle (Mobile) -->
+            <button class="hr-sidebar-toggle" type="button">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <!-- Breadcrumb -->
+            <nav class="hr-breadcrumb">
+                <div class="hr-breadcrumb-item">
+                    <i class="fas fa-home"></i>
+                    <span>الرئيسية</span>
+                </div>
+                {% block breadcrumb %}{% endblock %}
+            </nav>
+        </div>
+        
+        <div class="hr-topbar-right">
+            <!-- Search Box -->
+            <div class="hr-search-box">
+                <input type="text" class="hr-search-input" placeholder="البحث في النظام...">
+                <i class="fas fa-search hr-search-icon"></i>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="hr-topbar-actions">
+                <!-- Notifications -->
+                <button class="hr-action-btn" type="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-bell"></i>
+                    <span class="hr-badge badge-danger">3</span>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end">
+                    <h6 class="dropdown-header">الإشعارات</h6>
+                    <a class="dropdown-item" href="#">
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-user-plus text-success"></i>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <div class="fw-bold">موظف جديد</div>
+                                <div class="text-muted small">تم إضافة أحمد محمد</div>
+                            </div>
+                        </div>
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item text-center" href="{% url 'Hr:notifications' %}">
+                        عرض جميع الإشعارات
+                    </a>
+                </div>
                 
                 <!-- Messages -->
-                {% if messages %}
-                <div class="messages">
-                    {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} alert-dismissible">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-dismiss="alert"></button>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% endif %}
+                <button class="hr-action-btn" type="button">
+                    <i class="fas fa-envelope"></i>
+                    <span class="hr-badge badge-primary">2</span>
+                </button>
                 
-                <!-- Main Content -->
-                {% block content %}
+                <!-- Theme Toggle -->
+                <button class="hr-action-btn theme-toggle" type="button" title="تغيير الثيم">
+                    <i class="fas fa-moon"></i>
+                </button>
+                
+                <!-- User Menu -->
+                <div class="hr-user-menu dropdown">
+                    <img src="{% static 'Hr/images/default-avatar.png' %}" alt="صورة المستخدم" 
+                         class="hr-user-avatar" data-bs-toggle="dropdown">
+                    <div class="dropdown-menu dropdown-menu-end">
+                        <div class="dropdown-header">
+                            <div class="fw-bold">{{ user.get_full_name|default:user.username }}</div>
+                            <div class="text-muted small">{{ user.email }}</div>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="{% url 'Hr:profile' %}">
+                            <i class="fas fa-user me-2"></i>
+                            الملف الشخصي
+                        </a>
+                        <a class="dropdown-item" href="{% url 'Hr:settings' %}">
+                            <i class="fas fa-cog me-2"></i>
+                            الإعدادات
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="{% url 'accounts:logout' %}">
+                            <i class="fas fa-sign-out-alt me-2"></i>
+                            تسجيل الخروج
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    
+    <!-- Main Content Area -->
+    <main class="main-content">
+        <!-- Page Header -->
+        {% block page_header %}
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="h3 mb-1">{% block page_title %}لوحة التحكم{% endblock %}</h1>
+                <p class="text-muted mb-0">{% block page_description %}مرحباً بك في نظام الموارد البشرية{% endblock %}</p>
+            </div>
+            <div>
+                {% block page_actions %}{% endblock %}
+            </div>
+        </div>
+        {% endblock %}
+        
+        <!-- Alert Messages -->
+        {% if messages %}
+        <div class="alert-container mb-4">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        <!-- Page Content -->
+        {% block content %}
+        <div class="row">
+            <div class="col-12">
                 <div class="card">
                     <div class="card-body">
-                        <p>مرحباً بك في نظام إدارة الموارد البشرية الحديث</p>
+                        <p>مرحباً بك في نظام الموارد البشرية الجديد!</p>
                     </div>
                 </div>
-                {% endblock %}
             </div>
-        </main>
+        </div>
+        {% endblock %}
+    </main>
+    
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="position-fixed top-0 start-0 w-100 h-100 d-none" 
+         style="background: rgba(255,255,255,0.8); z-index: 9999;">
+        <div class="d-flex justify-content-center align-items-center h-100">
+            <div class="hr-spinner"></div>
+        </div>
     </div>
     
-    <!-- JavaScript -->
+    <!-- Notification Container -->
+    <div id="notification-container" class="position-fixed top-0 end-0 p-3" style="z-index: 9999;"></div>
+    
+    <!-- JavaScript Files -->
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- HR Components JS -->
     <script src="{% static 'Hr/js/hr-components.js' %}"></script>
     
-    <script>
-        // Sidebar toggle functionality
-        document.getElementById('sidebarToggle').addEventListener('click', function() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('collapsed');
-        });
-        
-        // Navigation dropdown functionality
-        document.querySelectorAll('.nav-dropdown-toggle').forEach(toggle => {
-            toggle.addEventListener('click', function(e) {
-                e.preventDefault();
-                const dropdown = this.closest('.nav-dropdown');
-                dropdown.classList.toggle('open');
-            });
-        });
-        
-        // Mobile sidebar toggle
-        function toggleMobileSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('mobile-open');
-        }
-        
-        // Close mobile sidebar when clicking outside
-        document.addEventListener('click', function(e) {
-            const sidebar = document.getElementById('sidebar');
-            const toggle = document.getElementById('sidebarToggle');
-            
-            if (window.innerWidth <= 768 && 
-                !sidebar.contains(e.target) && 
-                !toggle.contains(e.target) && 
-                sidebar.classList.contains('mobile-open')) {
-                sidebar.classList.remove('mobile-open');
-            }
-        });
-        
-        // Update sidebar toggle for mobile
-        if (window.innerWidth <= 768) {
-            document.getElementById('sidebarToggle').addEventListener('click', toggleMobileSidebar);
-        }
-    </script>
-    
-    <!-- Additional JavaScript -->
+    <!-- Custom JavaScript -->
     {% block extra_js %}{% endblock %}
+    
+    <!-- Page-specific JavaScript -->
+    <script>
+        // Initialize page-specific functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set active navigation item based on current URL
+            const currentPath = window.location.pathname;
+            const navLinks = document.querySelectorAll('.hr-nav-link');
+            
+            navLinks.forEach(link => {
+                if (link.getAttribute('href') === currentPath) {
+                    link.classList.add('active');
+                    
+                    // Expand parent submenu if exists
+                    const parentItem = link.closest('.hr-nav-item');
+                    if (parentItem && parentItem.querySelector('.hr-nav-submenu')) {
+                        parentItem.classList.add('expanded');
+                    }
+                }
+            });
+            
+            // Auto-hide alerts after 5 seconds
+            setTimeout(() => {
+                document.querySelectorAll('.alert').forEach(alert => {
+                    if (alert.classList.contains('show')) {
+                        alert.classList.remove('show');
+                        setTimeout(() => alert.remove(), 150);
+                    }
+                });
+            }, 5000);
+            
+            {% block page_js %}{% endblock %}
+        });
+    </script>
 </body>
 </html>

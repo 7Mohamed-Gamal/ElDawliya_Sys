@@ -1,306 +1,306 @@
 {% extends 'Hr/base_hr_modern.html' %}
 {% load static %}
 
-{% block title %}قائمة الموظفين{% endblock %}
+{% block title %}قائمة الموظفين - نظام الموارد البشرية{% endblock %}
 
 {% block page_title %}قائمة الموظفين{% endblock %}
-
-{% block page_subtitle %}إدارة وعرض جميع الموظفين في النظام{% endblock %}
+{% block page_description %}إدارة وعرض جميع الموظفين في النظام{% endblock %}
 
 {% block breadcrumb %}
-<nav class="breadcrumb">
-    <div class="breadcrumb-item">
-        <a href="{% url 'Hr:dashboard' %}">الرئيسية</a>
-    </div>
-    <div class="breadcrumb-item">
-        <a href="#">الموظفين</a>
-    </div>
-    <div class="breadcrumb-item active">قائمة الموظفين</div>
-</nav>
+<div class="hr-breadcrumb-item">
+    <span class="hr-breadcrumb-separator">/</span>
+    <span>إدارة الموظفين</span>
+</div>
+<div class="hr-breadcrumb-item">
+    <span class="hr-breadcrumb-separator">/</span>
+    <span>قائمة الموظفين</span>
+</div>
+{% endblock %}
+
+{% block page_actions %}
+<div class="d-flex gap-2">
+    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-target="#importModal">
+        <i class="fas fa-file-import me-2"></i>
+        استيراد
+    </button>
+    <button type="button" class="btn btn-outline-secondary" onclick="exportEmployees()">
+        <i class="fas fa-file-export me-2"></i>
+        تصدير
+    </button>
+    <a href="{% url 'Hr:employee_add' %}" class="btn btn-primary">
+        <i class="fas fa-plus me-2"></i>
+        إضافة موظف جديد
+    </a>
+</div>
 {% endblock %}
 
 {% block extra_css %}
 <style>
-    .employee-filters {
-        background: white;
-        border-radius: var(--radius-lg);
-        padding: var(--space-6);
-        margin-bottom: var(--space-6);
-        box-shadow: var(--shadow-sm);
-        border: 1px solid var(--neutral-200);
-    }
-    
-    .filter-row {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: var(--space-4);
-        align-items: end;
-    }
-    
-    .employee-stats {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: var(--space-4);
-        margin-bottom: var(--space-6);
-    }
-    
-    .stat-card {
-        background: white;
-        border-radius: var(--radius-lg);
-        padding: var(--space-6);
-        box-shadow: var(--shadow-sm);
-        border: 1px solid var(--neutral-200);
-        transition: all var(--transition-base);
-    }
-    
-    .stat-card:hover {
-        box-shadow: var(--shadow-md);
-        transform: translateY(-2px);
-    }
-    
-    .stat-icon {
-        width: 48px;
-        height: 48px;
-        border-radius: var(--radius-lg);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: var(--text-xl);
-        margin-bottom: var(--space-3);
-    }
-    
-    .stat-icon.primary {
-        background-color: var(--primary-100);
-        color: var(--primary-600);
-    }
-    
-    .stat-icon.success {
-        background-color: var(--success-100);
-        color: var(--success-600);
-    }
-    
-    .stat-icon.warning {
-        background-color: var(--warning-100);
-        color: var(--warning-600);
-    }
-    
-    .stat-icon.secondary {
-        background-color: var(--secondary-100);
-        color: var(--secondary-600);
-    }
-    
-    .stat-number {
-        font-size: var(--text-3xl);
-        font-weight: var(--font-bold);
-        color: var(--secondary-800);
-        margin: 0;
-    }
-    
-    .stat-label {
-        font-size: var(--text-sm);
-        color: var(--secondary-600);
-        margin: 0;
-    }
-    
-    .employee-table-container {
-        background: white;
-        border-radius: var(--radius-lg);
-        box-shadow: var(--shadow-sm);
-        border: 1px solid var(--neutral-200);
-        overflow: hidden;
-    }
-    
-    .table-header {
-        padding: var(--space-6);
-        border-bottom: 1px solid var(--neutral-200);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: var(--space-4);
-    }
-    
-    .table-title {
-        font-size: var(--text-lg);
-        font-weight: var(--font-semibold);
-        color: var(--secondary-800);
-        margin: 0;
-    }
-    
-    .table-actions {
-        display: flex;
-        align-items: center;
-        gap: var(--space-3);
-    }
-    
-    .search-container {
-        position: relative;
-        min-width: 250px;
-    }
-    
-    .search-input {
-        width: 100%;
-        padding: var(--space-2) var(--space-4) var(--space-2) var(--space-10);
-        border: 1px solid var(--neutral-300);
-        border-radius: var(--radius-md);
-        font-size: var(--text-sm);
-    }
-    
-    .search-icon {
-        position: absolute;
-        right: var(--space-3);
-        top: 50%;
-        transform: translateY(-50%);
-        color: var(--secondary-400);
-    }
-    
-    .employee-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-    
-    .employee-table th,
-    .employee-table td {
-        padding: var(--space-4);
-        text-align: right;
-        border-bottom: 1px solid var(--neutral-200);
-    }
-    
-    .employee-table th {
-        background-color: var(--neutral-50);
-        font-weight: var(--font-semibold);
-        color: var(--secondary-700);
-        font-size: var(--text-sm);
-        position: sticky;
-        top: 0;
-    }
-    
-    .employee-table tbody tr {
-        transition: all var(--transition-fast);
-    }
-    
-    .employee-table tbody tr:hover {
-        background-color: var(--neutral-50);
-    }
-    
     .employee-avatar {
         width: 40px;
         height: 40px;
-        border-radius: var(--radius-full);
-        background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-weight: var(--font-semibold);
-        font-size: var(--text-sm);
+        border-radius: 50%;
+        object-fit: cover;
     }
     
     .employee-info {
         display: flex;
         align-items: center;
-        gap: var(--space-3);
+        gap: 12px;
     }
     
-    .employee-details h4 {
-        font-size: var(--text-base);
-        font-weight: var(--font-medium);
-        color: var(--secondary-800);
-        margin: 0 0 var(--space-1) 0;
-    }
-    
-    .employee-details p {
-        font-size: var(--text-sm);
-        color: var(--secondary-600);
+    .employee-details h6 {
         margin: 0;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+    
+    .employee-details small {
+        color: var(--text-muted);
     }
     
     .status-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: var(--space-1);
-        padding: var(--space-1) var(--space-3);
-        border-radius: var(--radius-full);
-        font-size: var(--text-xs);
-        font-weight: var(--font-medium);
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        font-weight: 500;
     }
     
-    .status-badge.active {
-        background-color: var(--success-100);
-        color: var(--success-700);
-    }
-    
-    .status-badge.inactive {
-        background-color: var(--error-100);
-        color: var(--error-700);
-    }
-    
-    .status-badge.pending {
-        background-color: var(--warning-100);
-        color: var(--warning-700);
-    }
-    
-    .action-buttons {
+    .table-actions {
         display: flex;
-        align-items: center;
-        gap: var(--space-2);
+        gap: 0.5rem;
+        justify-content: center;
     }
     
-    .btn-icon {
+    .action-btn {
         width: 32px;
         height: 32px;
-        padding: 0;
+        border-radius: 6px;
+        border: none;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: var(--radius-md);
-        font-size: var(--text-sm);
+        transition: all 0.2s;
     }
     
-    .pagination-container {
-        padding: var(--space-6);
-        border-top: 1px solid var(--neutral-200);
-        display: flex;
-        align-items: center;
-        justify-content: between;
-        flex-wrap: wrap;
-        gap: var(--space-4);
+    .action-btn:hover {
+        transform: translateY(-1px);
     }
     
-    .pagination-info {
-        font-size: var(--text-sm);
-        color: var(--secondary-600);
+    .filters-card {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: var(--space-4);
+        margin-bottom: var(--space-6);
     }
     
-    .bulk-actions {
-        display: none;
-        align-items: center;
-        gap: var(--space-3);
-        padding: var(--space-4) var(--space-6);
-        background-color: var(--primary-50);
-        border-bottom: 1px solid var(--primary-200);
+    .stats-row {
+        background: var(--bg-primary);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: var(--space-4);
+        margin-bottom: var(--space-6);
     }
     
-    .bulk-actions.show {
-        display: flex;
+    .stat-item {
+        text-align: center;
+        padding: var(--space-3);
     }
     
-    .bulk-actions-text {
-        font-size: var(--text-sm);
-        color: var(--primary-700);
-        font-weight: var(--font-medium);
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary-color);
+        margin: 0;
     }
     
-    @media (max-width: 768px) {
-        .employee-stats {
-            grid-template-columns: repeat(2, 1fr);
-        }
-        
-        .filter-row {
-            grid-template-columns: 1fr;
-        }
-        
-        .table-header {
+    .stat-label {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        margin: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Statistics Row -->
+<div class="stats-row">
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stat-item">
+                <h3 class="stat-number" id="totalEmployees">{{ total_employees|default:0 }}</h3>
+                <p class="stat-label">إجمالي الموظفين</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-item">
+                <h3 class="stat-number text-success" id="activeEmployees">{{ active_employees|default:0 }}</h3>
+                <p class="stat-label">الموظفين النشطين</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-item">
+                <h3 class="stat-number text-warning" id="newHires">{{ new_hires|default:0 }}</h3>
+                <p class="stat-label">التعيينات الجديدة</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-item">
+                <h3 class="stat-number text-info" id="departments">{{ departments_count|default:0 }}</h3>
+                <p class="stat-label">عدد الأقسام</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters Card -->
+<div class="filters-card">
+    <form method="get" id="filtersForm">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">البحث</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" name="search" 
+                           value="{{ request.GET.search }}" placeholder="اسم الموظف أو رقم الموظف">
+                    <button class="btn btn-outline-secondary" type="submit">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">القسم</label>
+                <select class="form-select" name="department">
+                    <option value="">جميع الأقسام</option>
+                    {% for department in departments %}
+                    <option value="{{ department.id }}" 
+                            {% if request.GET.department == department.id|stringformat:"s" %}selected{% endif %}>
+                        {{ department.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">الفرع</label>
+                <select class="form-select" name="branch">
+                    <option value="">جميع الفروع</option>
+                    {% for branch in branches %}
+                    <option value="{{ branch.id }}" 
+                            {% if request.GET.branch == branch.id|stringformat:"s" %}selected{% endif %}>
+                        {{ branch.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">الحالة</label>
+                <select class="form-select" name="status">
+                    <option value="">جميع الحالات</option>
+                    <option value="active" {% if request.GET.status == 'active' %}selected{% endif %}>نشط</option>
+                    <option value="inactive" {% if request.GET.status == 'inactive' %}selected{% endif %}>غير نشط</option>
+                    <option value="terminated" {% if request.GET.status == 'terminated' %}selected{% endif %}>منتهي الخدمة</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">نوع التوظيف</label>
+                <select class="form-select" name="employment_type">
+                    <option value="">جميع الأنواع</option>
+                    <option value="full_time" {% if request.GET.employment_type == 'full_time' %}selected{% endif %}>دوام كامل</option>
+                    <option value="part_time" {% if request.GET.employment_type == 'part_time' %}selected{% endif %}>دوام جزئي</option>
+                    <option value="contract" {% if request.GET.employment_type == 'contract' %}selected{% endif %}>عقد</option>
+                </select>
+            </div>
+            <div class="col-md-1">
+                <label class="form-label">&nbsp;</label>
+                <div class="d-flex gap-1">
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="fas fa-filter"></i>
+                    </button>
+                    <a href="{% url 'Hr:employee_list' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-times"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Employees Table -->
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">
+                <i class="fas fa-users me-2"></i>
+                قائمة الموظفين
+                <span class="badge bg-primary ms-2">{{ employees.count }}</span>
+            </h5>
+            <div class="d-flex gap-2">
+                <div class="btn-group" role="group">
+                    <input type="radio" class="btn-check" name="viewType" id="tableView" checked>
+                    <label class="btn btn-outline-secondary btn-sm" for="tableView">
+                        <i class="fas fa-table"></i>
+                    </label>
+                    <input type="radio" class="btn-check" name="viewType" id="cardView">
+                    <label class="btn btn-outline-secondary btn-sm" for="cardView">
+                        <i class="fas fa-th-large"></i>
+                    </label>
+                </div>
+                <select class="form-select form-select-sm" style="width: auto;" onchange="changePageSize(this.value)">
+                    <option value="10" {% if request.GET.page_size == '10' %}selected{% endif %}>10 لكل صفحة</option>
+                    <option value="25" {% if request.GET.page_size == '25' %}selected{% endif %}>25 لكل صفحة</option>
+                    <option value="50" {% if request.GET.page_size == '50' %}selected{% endif %}>50 لكل صفحة</option>
+                    <option value="100" {% if request.GET.page_size == '100' %}selected{% endif %}>100 لكل صفحة</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card-body p-0">
+        <!-- Table View -->
+        <div id="tableViewContent">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>
+                                <input type="checkbox" class="form-check-input" id="selectAll">
+                            </th>
+                            <th>الموظف</th>
+                            <th>رقم الموظف</th>
+                            <th>القسم</th>
+                            <th>المنصب</th>
+                            <th>تاريخ التوظيف</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for employee in employees %}
+                        <tr>
+                            <td>
+                                <input type="checkbox" class="form-check-input employee-checkbox" 
+                                       value="{{ employee.id }}">
+                            </td>
+                            <td>
+                                <div class="employee-info">
+                                    <img src="{{ employee.profile_picture.url|default:'/static/Hr/images/default-avatar.png' }}" 
+                                         alt="{{ employee.full_name }}" class="employee-avatar">
+                                    <div class="employee-details">
+                                        <h6>{{ employee.full_name }}</h6>
+                                        <small>{{ employee.email|default:'-' }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark">{{ employee.employee_number }}</span>
+                            </td>
+                            <td>{{ employee.department.name|default:'-' }}</td>
+                            <td>{{ employee.job_position.title|default:'-' }}</td>
+                            <td>{{ employee.hire_date|date:"Y/m/d" }}</td>
+                            <td>
+                                {% if employee.status == 'active' %}
+                                    <span class="status-badge bg-success text-white">نشط</span>
+                                {% elif employee.status == '
             flex-direction: column;
             align-items: stretch;
         }

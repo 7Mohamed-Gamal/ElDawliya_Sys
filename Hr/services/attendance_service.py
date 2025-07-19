@@ -31,23 +31,400 @@ class AttendanceService:
     """Service class for attendance management operations"""
     
     @staticmethod
-    def get_attendance_record_by_id(record_id: uuid.UUID) -> Optional[AttendanceRecord]:
-        """Retrieve an attendance record by ID
-        
-        Args:
-            record_id: UUID of the attendance record
-            
-        Returns:
-            AttendanceRecord object if found, None otherwise
+    def record_attendance(employee_id, attendance_date=None, check_in_time=None, 
+                         check_out_time=None, machine_id=None, notes=None):
+        """
+        تسجيل حضور موظف
         """
         try:
-            return AttendanceRecord.objects.get(id=record_id)
-        except AttendanceRecord.DoesNotExist:
-            logger.warning(f"Attendance record with ID {record_id} not found")
+            with transaction.atomic():
+                if not attendance_date:
+                    attendance_date = date.today()
+                
+                employee = Employee.objects.get(id=employee_id)
+                
+                # التحقق من وجود سجل حضور لنفس اليوم
+                existing_record = AttendanceRecord.objects.filter(
+                    employee=employee,
+                    date=attendance_date
+                ).first()
+                
+                if existing_record:
+                    # تحديث السجل الموجود
+                    if check_in_time and not existing_record.check_in_time:
+                        existing_record.check_in_time = check_in_time
+                    if check_out_time:
+                        existing_record.check_out_time = check_out_time
+                    
+                    # حساب ساعات العمل
+                    if existing_record.check_in_time and existing_record.check_out_time:
+                        existing_record.total_hours = AttendanceService.calculate_work_hours(
+                            existing_record.check_in_time,
+                            existing_record.check_out_time
+                        )
+                    
+                    existing_record.save()
+                    logger.info(f"تم تحديث سجل الحضور للموظف {employee.full_name} في {attendance_date}")
+                    return existing_record
+                else:
+                    # إنشاء سجل جديد
+                    attendance_record = AttendanceRecord.objects.create(
+                        employee=employee,
+                        date=attendance_date,
+                        check_in_time=check_in_time,
+                        check_out_time=check_out_time,
+                        machine_id=machine_id,
+                        notes=notes
+                    )
+                    
+                    # حساب ساعات العمل
+                    if check_in_time and check_out_time:
+                        attendance_record.total_hours = AttendanceService.calculate_work_hours(
+                            check_in_time, check_out_time
+                        )
+                        attendance_record.save()
+                    
+                    logger.info(f"تم تسجيل حضور جديد للموظف {employee.full_name} في {attendance_date}")
+                    return attendance_record
+                    
+        except Employee.DoesNotExist:
+            logger.error(f"الموظف غير موجود: {employee_id}")
+            raise ValueError("الموظف غير موجود")
+        except Exception as e:
+            logger.error(f"خطأ في تسجيل الحضور: {str(e)}")
+            raise
+    
+    @staticmethod
+    def calculate_work_hours(check_in_time, check_out_time):
+        """
+        حساب ساعات العمل بين وقت الدخول والخروج
+        """
+        if not check_in_time or not check_out_time:
+            return 0
+        
+        # تحويل الأوقات إلى datetime إذا لزم الأمر
+        if isinstance(check_in_time, time):
+            check_in_datetime = datetime.combine(date.today(), check_in_time)
+        else:
+            check_in_datetime = check_in_time
+            
+        if isinstance(check_out_time, time):
+            check_out_datetime = datetime.combine(date.today(), check_out_time)
+        else:
+            check_out_datetime = check_out_time
+        
+        # إذا كان وقت الخروج في اليوم التالي
+        if check_out_datetime < check_in_datetime:
+            check_out_datetime += timedelta(days=1)
+        
+        work_duration = check_out_datetime - check_in_datetime
+        return round(work_duration.total_seconds() / 3600, 2)  # تحويل إلى ساعات
+    
+    @staticmethod
+    def get_employee_attendance_records(employee_id, start_date=None, end_date=None):
+        """
+        الحصول على سجلات حضور موظف في فترة معينة
+        """
+        try:
+            employee = Employee.objects.get(id=employee_id)
+            
+            queryset = AttendanceRecord.objects.filter(employee=employee)
+            
+            if start_date:
+                queryset = queryset.filter(date__gte=start_date)
+            
+            if end_date:
+                queryset = queryset.filter(date__lte=end_date)
+            
+            return queryset.order_by('-date')
+            
+        except Employee.DoesNotExist:
+            logger.error(f"الموظف غير موجود: {employee_id}")
+            return AttendanceRecord.objects.none()
+    
+    @staticmethod
+    def get_daily_attendance_summary(attendance_date=None):
+        """
+        الحصول على ملخص الحضور اليومي
+        """
+        if not attendance_date:
+            attendance_date = date.today()
+        
+        records = AttendanceRecord.objects.filter(date=attendance_date)
+        
+        summary = {
+            'date': attendance_date,
+            'total_employees': records.count(),
+            'present_employees': records.filter(check_in_time__isnull=False).count(),
+            'absent_employees': 0,  # سيتم حسابه بناءً على إجمالي الموظفين النشطين
+            'late_arrivals': records.filter(is_late=True).count(),
+            'early_departures': records.filter(is_early_departure=True).count(),
+            'overtime_hours': records.aggregate(
+                total_overtime=Sum('overtime_hours')
+            )['total_overtime'] or 0,
+            'total_work_hours': records.aggregate(
+                total_hours=Sum('total_hours')
+            )['total_hours'] or 0,
+        }
+        
+        # حساب الموظفين الغائبين
+        total_active_employees = Employee.objects.filter(status='active').count()
+        summary['absent_employees'] = total_active_employees - summary['present_employees']
+        
+        return summary
+    
+    @staticmethod
+    def get_monthly_attendance_summary(employee_id, year, month):
+        """
+        الحصول على ملخص الحضور الشهري لموظف
+        """
+        try:
+            employee = Employee.objects.get(id=employee_id)
+            
+            records = AttendanceRecord.objects.filter(
+                employee=employee,
+                date__year=year,
+                date__month=month
+            )
+            
+            summary = {
+                'employee': employee,
+                'year': year,
+                'month': month,
+                'total_days': records.count(),
+                'present_days': records.filter(check_in_time__isnull=False).count(),
+                'absent_days': 0,  # سيتم حسابه
+                'late_days': records.filter(is_late=True).count(),
+                'early_departure_days': records.filter(is_early_departure=True).count(),
+                'total_work_hours': records.aggregate(
+                    total=Sum('total_hours')
+                )['total'] or 0,
+                'total_overtime_hours': records.aggregate(
+                    total=Sum('overtime_hours')
+                )['total'] or 0,
+                'average_daily_hours': 0,
+            }
+            
+            # حساب أيام العمل في الشهر
+            from calendar import monthrange
+            _, days_in_month = monthrange(year, month)
+            working_days = days_in_month  # يمكن تحسينه لاستبعاد العطل
+            
+            summary['absent_days'] = working_days - summary['present_days']
+            
+            if summary['present_days'] > 0:
+                summary['average_daily_hours'] = round(
+                    summary['total_work_hours'] / summary['present_days'], 2
+                )
+            
+            return summary
+            
+        except Employee.DoesNotExist:
+            logger.error(f"الموظف غير موجود: {employee_id}")
             return None
     
     @staticmethod
-    def get_employee_attendance_records(employee_id: uuid.UUID, 
+    def calculate_overtime(employee_id, attendance_date, check_in_time, check_out_time):
+        """
+        حساب ساعات العمل الإضافي
+        """
+        try:
+            employee = Employee.objects.get(id=employee_id)
+            
+            # الحصول على وردية العمل للموظف
+            work_shift = WorkShift.objects.filter(
+                employees=employee,
+                is_active=True
+            ).first()
+            
+            if not work_shift:
+                # استخدام الوردية الافتراضية
+                standard_hours = 8
+                standard_start = time(9, 0)
+                standard_end = time(17, 0)
+            else:
+                standard_hours = work_shift.hours_per_day
+                standard_start = work_shift.start_time
+                standard_end = work_shift.end_time
+            
+            # حساب ساعات العمل الفعلية
+            actual_hours = AttendanceService.calculate_work_hours(check_in_time, check_out_time)
+            
+            # حساب العمل الإضافي
+            overtime_hours = max(0, actual_hours - standard_hours)
+            
+            return {
+                'standard_hours': standard_hours,
+                'actual_hours': actual_hours,
+                'overtime_hours': overtime_hours,
+                'is_overtime': overtime_hours > 0
+            }
+            
+        except Employee.DoesNotExist:
+            logger.error(f"الموظف غير موجود: {employee_id}")
+            return None
+    
+    @staticmethod
+    def check_late_arrival(employee_id, check_in_time, attendance_date=None):
+        """
+        التحقق من التأخير في الحضور
+        """
+        try:
+            employee = Employee.objects.get(id=employee_id)
+            
+            # الحصول على وردية العمل
+            work_shift = WorkShift.objects.filter(
+                employees=employee,
+                is_active=True
+            ).first()
+            
+            if not work_shift:
+                # استخدام الوقت الافتراضي
+                standard_start_time = time(9, 0)
+                grace_period = 15  # 15 دقيقة تسامح
+            else:
+                standard_start_time = work_shift.start_time
+                grace_period = work_shift.late_tolerance_minutes or 15
+            
+            # تحويل وقت الحضور إلى time إذا لزم الأمر
+            if isinstance(check_in_time, datetime):
+                check_in_time = check_in_time.time()
+            
+            # حساب الحد الأقصى للوقت المسموح
+            grace_time = (datetime.combine(date.today(), standard_start_time) + 
+                         timedelta(minutes=grace_period)).time()
+            
+            is_late = check_in_time > grace_time
+            
+            if is_late:
+                # حساب دقائق التأخير
+                late_minutes = (datetime.combine(date.today(), check_in_time) - 
+                               datetime.combine(date.today(), standard_start_time)).total_seconds() / 60
+            else:
+                late_minutes = 0
+            
+            return {
+                'is_late': is_late,
+                'late_minutes': int(late_minutes),
+                'standard_start_time': standard_start_time,
+                'grace_period': grace_period
+            }
+            
+        except Employee.DoesNotExist:
+            logger.error(f"الموظف غير موجود: {employee_id}")
+            return None
+    
+    @staticmethod
+    def sync_attendance_from_machine(machine_id, start_date=None, end_date=None):
+        """
+        مزامنة بيانات الحضور من جهاز الحضور
+        """
+        try:
+            machine = AttendanceMachine.objects.get(id=machine_id)
+            
+            if not machine.is_active:
+                logger.warning(f"جهاز الحضور غير نشط: {machine.name}")
+                return {'success': False, 'message': 'جهاز الحضور غير نشط'}
+            
+            # هنا سيتم تنفيذ منطق المزامنة مع الجهاز
+            # يعتمد على نوع الجهاز (ZKTeco, etc.)
+            
+            sync_result = {
+                'success': True,
+                'machine': machine.name,
+                'records_synced': 0,
+                'errors': []
+            }
+            
+            logger.info(f"تمت مزامنة الحضور من الجهاز: {machine.name}")
+            return sync_result
+            
+        except AttendanceMachine.DoesNotExist:
+            logger.error(f"جهاز الحضور غير موجود: {machine_id}")
+            return {'success': False, 'message': 'جهاز الحضور غير موجود'}
+    
+    @staticmethod
+    def generate_attendance_report(start_date, end_date, employee_ids=None, department_ids=None):
+        """
+        إنتاج تقرير الحضور
+        """
+        queryset = AttendanceRecord.objects.filter(
+            date__range=[start_date, end_date]
+        ).select_related('employee', 'employee__department')
+        
+        if employee_ids:
+            queryset = queryset.filter(employee_id__in=employee_ids)
+        
+        if department_ids:
+            queryset = queryset.filter(employee__department_id__in=department_ids)
+        
+        # تجميع البيانات
+        report_data = []
+        for record in queryset:
+            report_data.append({
+                'employee_number': record.employee.employee_number,
+                'employee_name': record.employee.full_name,
+                'department': record.employee.department.name if record.employee.department else '',
+                'date': record.date,
+                'check_in_time': record.check_in_time,
+                'check_out_time': record.check_out_time,
+                'total_hours': record.total_hours,
+                'overtime_hours': record.overtime_hours,
+                'is_late': record.is_late,
+                'is_early_departure': record.is_early_departure,
+                'status': 'حاضر' if record.check_in_time else 'غائب'
+            })
+        
+        return {
+            'period': f"{start_date} إلى {end_date}",
+            'total_records': len(report_data),
+            'data': report_data
+        }
+    
+    @staticmethod
+    def get_attendance_statistics(start_date=None, end_date=None):
+        """
+        الحصول على إحصائيات الحضور
+        """
+        if not start_date:
+            start_date = date.today() - timedelta(days=30)
+        if not end_date:
+            end_date = date.today()
+        
+        records = AttendanceRecord.objects.filter(
+            date__range=[start_date, end_date]
+        )
+        
+        stats = {
+            'period': f"{start_date} إلى {end_date}",
+            'total_records': records.count(),
+            'present_records': records.filter(check_in_time__isnull=False).count(),
+            'absent_records': records.filter(check_in_time__isnull=True).count(),
+            'late_arrivals': records.filter(is_late=True).count(),
+            'early_departures': records.filter(is_early_departure=True).count(),
+            'total_work_hours': records.aggregate(
+                total=Sum('total_hours')
+            )['total'] or 0,
+            'total_overtime_hours': records.aggregate(
+                total=Sum('overtime_hours')
+            )['total'] or 0,
+            'average_daily_hours': 0,
+        }
+        
+        if stats['present_records'] > 0:
+            stats['average_daily_hours'] = round(
+                stats['total_work_hours'] / stats['present_records'], 2
+            )
+        
+        # إحصائيات حسب القسم
+        stats['by_department'] = records.values(
+            'employee__department__name'
+        ).annotate(
+            count=Count('id'),
+            total_hours=Sum('total_hours')
+        ).order_by('-count')
+        
+        return stats 
                                       start_date: date = None, 
                                       end_date: date = None) -> List[AttendanceRecord]:
         """Get attendance records for an employee within a date range

@@ -34,13 +34,23 @@ class EmployeeService:
         try:
             with transaction.atomic():
                 # التحقق من عدم تكرار رقم الموظف
-                if Employee.objects.filter(employee_number=employee_data.get('employee_number')).exists():
+                employee_number = employee_data.get('employee_number')
+                if employee_number and Employee.objects.filter(employee_number=employee_number).exists():
                     raise ValidationError("رقم الموظف موجود مسبقاً")
                 
                 # التحقق من عدم تكرار رقم الهوية
                 national_id = employee_data.get('national_id')
                 if national_id and Employee.objects.filter(national_id=national_id).exists():
                     raise ValidationError("رقم الهوية موجود مسبقاً")
+                
+                # التحقق من عدم تكرار البريد الإلكتروني
+                email = employee_data.get('email')
+                if email and Employee.objects.filter(email=email).exists():
+                    raise ValidationError("البريد الإلكتروني موجود مسبقاً")
+                
+                # إضافة معلومات الإنشاء
+                if created_by:
+                    employee_data['created_by'] = created_by
                 
                 # إنشاء الموظف
                 employee = Employee.objects.create(**employee_data)
@@ -55,7 +65,7 @@ class EmployeeService:
     @staticmethod
     def update_employee(employee_id, employee_data, updated_by=None):
         """
-        تحديث بيانات الموظف
+        تحديث بيانات موظف
         """
         try:
             with transaction.atomic():
@@ -63,17 +73,21 @@ class EmployeeService:
                 
                 # التحقق من عدم تكرار رقم الموظف (إذا تم تغييره)
                 new_employee_number = employee_data.get('employee_number')
-                if (new_employee_number and 
-                    new_employee_number != employee.employee_number and
+                if (new_employee_number and new_employee_number != employee.employee_number and
                     Employee.objects.filter(employee_number=new_employee_number).exists()):
                     raise ValidationError("رقم الموظف موجود مسبقاً")
                 
                 # التحقق من عدم تكرار رقم الهوية (إذا تم تغييره)
                 new_national_id = employee_data.get('national_id')
-                if (new_national_id and 
-                    new_national_id != employee.national_id and
+                if (new_national_id and new_national_id != employee.national_id and
                     Employee.objects.filter(national_id=new_national_id).exists()):
                     raise ValidationError("رقم الهوية موجود مسبقاً")
+                
+                # التحقق من عدم تكرار البريد الإلكتروني (إذا تم تغييره)
+                new_email = employee_data.get('email')
+                if (new_email and new_email != employee.email and
+                    Employee.objects.filter(email=new_email).exists()):
+                    raise ValidationError("البريد الإلكتروني موجود مسبقاً")
                 
                 # تحديث البيانات
                 for field, value in employee_data.items():
@@ -82,7 +96,7 @@ class EmployeeService:
                 
                 employee.save()
                 
-                logger.info(f"تم تحديث بيانات الموظف: {employee.full_name}")
+                logger.info(f"تم تحديث بيانات الموظف: {employee.full_name} ({employee.employee_number})")
                 return employee
                 
         except Employee.DoesNotExist:
@@ -92,21 +106,202 @@ class EmployeeService:
             raise
     
     @staticmethod
-    def deactivate_employee(employee_id, termination_date=None, termination_reason=None, terminated_by=None):
+    def get_employee_by_id(employee_id):
         """
-        إلغاء تفعيل الموظف (إنهاء الخدمة)
+        الحصول على موظف بالمعرف
+        """
+        try:
+            return Employee.objects.select_related(
+                'company', 'branch', 'department', 'job_position', 'manager'
+            ).get(id=employee_id)
+        except Employee.DoesNotExist:
+            return None
+    
+    @staticmethod
+    def get_employee_by_number(employee_number):
+        """
+        الحصول على موظف برقم الموظف
+        """
+        try:
+            return Employee.objects.select_related(
+                'company', 'branch', 'department', 'job_position', 'manager'
+            ).get(employee_number=employee_number)
+        except Employee.DoesNotExist:
+            return None
+    
+    @staticmethod
+    def search_employees(search_term, company_id=None, department_id=None, status=None):
+        """
+        البحث عن الموظفين
+        """
+        queryset = Employee.objects.select_related(
+            'company', 'branch', 'department', 'job_position', 'manager'
+        )
+        
+        # تطبيق الفلاتر
+        if company_id:
+            queryset = queryset.filter(company_id=company_id)
+        
+        if department_id:
+            queryset = queryset.filter(department_id=department_id)
+        
+        if status:
+            queryset = queryset.filter(status=status)
+        
+        # البحث النصي
+        if search_term:
+            queryset = queryset.filter(
+                Q(first_name__icontains=search_term) |
+                Q(middle_name__icontains=search_term) |
+                Q(last_name__icontains=search_term) |
+                Q(full_name__icontains=search_term) |
+                Q(employee_number__icontains=search_term) |
+                Q(email__icontains=search_term) |
+                Q(national_id__icontains=search_term)
+            )
+        
+        return queryset.order_by('employee_number')
+    
+    @staticmethod
+    def get_employees_by_department(department_id, include_subdepartments=False):
+        """
+        الحصول على موظفي قسم معين
+        """
+        queryset = Employee.objects.filter(
+            department_id=department_id,
+            status='active'
+        ).select_related('job_position', 'manager')
+        
+        if include_subdepartments:
+            # إضافة موظفي الأقسام الفرعية
+            department = Department.objects.get(id=department_id)
+            sub_departments = department.get_all_children()
+            sub_dept_ids = [dept.id for dept in sub_departments]
+            
+            if sub_dept_ids:
+                queryset = queryset | Employee.objects.filter(
+                    department_id__in=sub_dept_ids,
+                    status='active'
+                ).select_related('job_position', 'manager')
+        
+        return queryset.order_by('employee_number')
+    
+    @staticmethod
+    def get_employee_hierarchy(employee_id):
+        """
+        الحصول على الهيكل التنظيمي للموظف (المدير والمرؤوسين)
+        """
+        try:
+            employee = Employee.objects.get(id=employee_id)
+            
+            # الحصول على المدير المباشر
+            manager = employee.manager
+            
+            # الحصول على المرؤوسين المباشرين
+            direct_reports = employee.get_direct_reports()
+            
+            # الحصول على جميع المرؤوسين
+            all_subordinates = employee.get_all_subordinates()
+            
+            return {
+                'employee': employee,
+                'manager': manager,
+                'direct_reports': direct_reports,
+                'all_subordinates': all_subordinates,
+                'reports_count': len(direct_reports),
+                'subordinates_count': len(all_subordinates)
+            }
+            
+        except Employee.DoesNotExist:
+            return None
+    
+    @staticmethod
+    def calculate_service_years(employee_id):
+        """
+        حساب سنوات الخدمة للموظف
+        """
+        try:
+            employee = Employee.objects.get(id=employee_id)
+            return employee.years_of_service
+        except Employee.DoesNotExist:
+            return None
+    
+    @staticmethod
+    def get_employees_statistics(company_id=None):
+        """
+        الحصول على إحصائيات الموظفين
+        """
+        queryset = Employee.objects.all()
+        
+        if company_id:
+            queryset = queryset.filter(company_id=company_id)
+        
+        # إحصائيات عامة
+        total_employees = queryset.count()
+        active_employees = queryset.filter(status='active').count()
+        inactive_employees = queryset.filter(status='inactive').count()
+        on_leave_employees = queryset.filter(status='on_leave').count()
+        
+        # إحصائيات حسب الجنس
+        male_employees = queryset.filter(gender='male').count()
+        female_employees = queryset.filter(gender='female').count()
+        
+        # إحصائيات حسب نوع التوظيف
+        full_time = queryset.filter(employment_type='full_time').count()
+        part_time = queryset.filter(employment_type='part_time').count()
+        contract = queryset.filter(employment_type='contract').count()
+        
+        # متوسط سنوات الخدمة
+        today = date.today()
+        employees_with_hire_date = queryset.filter(hire_date__isnull=False)
+        
+        if employees_with_hire_date.exists():
+            total_service_years = sum([
+                (today - emp.hire_date).days / 365.25
+                for emp in employees_with_hire_date
+            ])
+            avg_service_years = total_service_years / employees_with_hire_date.count()
+        else:
+            avg_service_years = 0
+        
+        return {
+            'total_employees': total_employees,
+            'active_employees': active_employees,
+            'inactive_employees': inactive_employees,
+            'on_leave_employees': on_leave_employees,
+            'male_employees': male_employees,
+            'female_employees': female_employees,
+            'full_time_employees': full_time,
+            'part_time_employees': part_time,
+            'contract_employees': contract,
+            'average_service_years': round(avg_service_years, 2)
+        }
+    
+    @staticmethod
+    def terminate_employee(employee_id, termination_date=None, reason=None, terminated_by=None):
+        """
+        إنهاء خدمة موظف
         """
         try:
             with transaction.atomic():
                 employee = Employee.objects.get(id=employee_id)
                 
-                employee.employment_status = 'terminated'
+                if employee.status == 'terminated':
+                    raise ValidationError("الموظف منتهي الخدمة مسبقاً")
+                
+                # تحديث حالة الموظف
+                employee.status = 'terminated'
                 employee.termination_date = termination_date or date.today()
-                employee.termination_reason = termination_reason
-                employee.is_active = False
+                
+                # إضافة ملاحظة عن سبب الإنهاء
+                if reason:
+                    current_notes = employee.notes or ""
+                    termination_note = f"\nتم إنهاء الخدمة في {employee.termination_date}: {reason}"
+                    employee.notes = current_notes + termination_note
+                
                 employee.save()
                 
-                logger.info(f"تم إنهاء خدمة الموظف: {employee.full_name}")
+                logger.info(f"تم إنهاء خدمة الموظف: {employee.full_name} ({employee.employee_number})")
                 return employee
                 
         except Employee.DoesNotExist:
@@ -116,144 +311,74 @@ class EmployeeService:
             raise
     
     @staticmethod
-    def calculate_service_years(employee):
+    def reactivate_employee(employee_id, reactivated_by=None):
         """
-        حساب سنوات الخدمة للموظف
+        إعادة تفعيل موظف
         """
-        if not employee.hire_date:
-            return 0
-        
-        end_date = employee.termination_date or date.today()
-        service_period = end_date - employee.hire_date
-        return round(service_period.days / 365.25, 2)
+        try:
+            with transaction.atomic():
+                employee = Employee.objects.get(id=employee_id)
+                
+                if employee.status == 'active':
+                    raise ValidationError("الموظف نشط بالفعل")
+                
+                # تحديث حالة الموظف
+                employee.status = 'active'
+                employee.termination_date = None
+                
+                # إضافة ملاحظة عن إعادة التفعيل
+                current_notes = employee.notes or ""
+                reactivation_note = f"\nتم إعادة تفعيل الموظف في {date.today()}"
+                employee.notes = current_notes + reactivation_note
+                
+                employee.save()
+                
+                logger.info(f"تم إعادة تفعيل الموظف: {employee.full_name} ({employee.employee_number})")
+                return employee
+                
+        except Employee.DoesNotExist:
+            raise ValidationError("الموظف غير موجود")
+        except Exception as e:
+            logger.error(f"خطأ في إعادة تفعيل الموظف: {str(e)}")
+            raise
     
     @staticmethod
-    def calculate_age(employee):
+    def export_employees_data(company_id=None, department_id=None, format='csv'):
         """
-        حساب عمر الموظف
+        تصدير بيانات الموظفين
         """
-        if not employee.date_of_birth:
-            return None
-        
-        today = date.today()
-        age = today.year - employee.date_of_birth.year
-        
-        # تعديل العمر إذا لم يحن عيد الميلاد بعد
-        if today.month < employee.date_of_birth.month or \
-           (today.month == employee.date_of_birth.month and today.day < employee.date_of_birth.day):
-            age -= 1
-        
-        return age
-    
-    @staticmethod
-    def get_employees_by_department(department_id, include_inactive=False):
-        """
-        الحصول على موظفي قسم معين
-        """
-        queryset = Employee.objects.filter(department_id=department_id)
-        
-        if not include_inactive:
-            queryset = queryset.filter(is_active=True)
-        
-        return queryset.select_related('department', 'job_position', 'manager')
-    
-    @staticmethod
-    def get_employees_by_branch(branch_id, include_inactive=False):
-        """
-        الحصول على موظفي فرع معين
-        """
-        queryset = Employee.objects.filter(branch_id=branch_id)
-        
-        if not include_inactive:
-            queryset = queryset.filter(is_active=True)
-        
-        return queryset.select_related('branch', 'department', 'job_position')
-    
-    @staticmethod
-    def search_employees(search_term, filters=None):
-        """
-        البحث في الموظفين
-        """
-        queryset = Employee.objects.all()
-        
-        if search_term:
-            queryset = queryset.filter(
-                Q(employee_number__icontains=search_term) |
-                Q(full_name__icontains=search_term) |
-                Q(first_name__icontains=search_term) |
-                Q(last_name__icontains=search_term) |
-                Q(email__icontains=search_term) |
-                Q(national_id__icontains=search_term)
-            )
-        
-        if filters:
-            if filters.get('department'):
-                queryset = queryset.filter(department_id=filters['department'])
-            
-            if filters.get('job_position'):
-                queryset = queryset.filter(job_position_id=filters['job_position'])
-            
-            if filters.get('employment_type'):
-                queryset = queryset.filter(employment_type=filters['employment_type'])
-            
-            if filters.get('status'):
-                queryset = queryset.filter(employment_status=filters['status'])
-            
-            if filters.get('hire_date_from'):
-                queryset = queryset.filter(hire_date__gte=filters['hire_date_from'])
-            
-            if filters.get('hire_date_to'):
-                queryset = queryset.filter(hire_date__lte=filters['hire_date_to'])
-        
-        return queryset.select_related('department', 'job_position', 'branch')
-    
-    @staticmethod
-    def get_employee_statistics():
-        """
-        الحصول على إحصائيات الموظفين
-        """
-        total_employees = Employee.objects.filter(is_active=True).count()
-        
-        stats = {
-            'total_employees': total_employees,
-            'by_department': Employee.objects.filter(is_active=True)
-                .values('department__name')
-                .annotate(count=Count('id'))
-                .order_by('-count'),
-            
-            'by_employment_type': Employee.objects.filter(is_active=True)
-                .values('employment_type')
-                .annotate(count=Count('id')),
-            
-            'by_gender': Employee.objects.filter(is_active=True)
-                .values('gender')
-                .annotate(count=Count('id')),
-            
-            'new_hires_this_month': Employee.objects.filter(
-                hire_date__year=date.today().year,
-                hire_date__month=date.today().month,
-                is_active=True
-            ).count(),
-            
-            'probation_employees': Employee.objects.filter(
-                employment_status='probation',
-                is_active=True
-            ).count(),
-        }
-        
-        # حساب متوسط العمر
-        employees_with_birth_date = Employee.objects.filter(
-            is_active=True,
-            date_of_birth__isnull=False
+        queryset = Employee.objects.select_related(
+            'company', 'branch', 'department', 'job_position'
         )
         
-        if employees_with_birth_date.exists():
-            total_age = sum(EmployeeService.calculate_age(emp) for emp in employees_with_birth_date)
-            stats['average_age'] = round(total_age / employees_with_birth_date.count(), 1)
-        else:
-            stats['average_age'] = 0
+        # تطبيق الفلاتر
+        if company_id:
+            queryset = queryset.filter(company_id=company_id)
         
-        return stats
+        if department_id:
+            queryset = queryset.filter(department_id=department_id)
+        
+        # إعداد البيانات للتصدير
+        export_data = []
+        for employee in queryset:
+            export_data.append({
+                'employee_number': employee.employee_number,
+                'full_name': employee.full_name,
+                'email': employee.email,
+                'phone': employee.phone,
+                'mobile': employee.mobile,
+                'company': employee.company.name if employee.company else '',
+                'branch': employee.branch.name if employee.branch else '',
+                'department': employee.department.name if employee.department else '',
+                'job_position': employee.job_position.title if employee.job_position else '',
+                'hire_date': employee.hire_date,
+                'employment_type': employee.get_employment_type_display(),
+                'status': employee.get_status_display(),
+                'basic_salary': employee.basic_salary,
+                'years_of_service': employee.years_of_service,
+            })
+        
+        return export_data
     
     @staticmethod
     def get_upcoming_birthdays(days_ahead=30):
@@ -264,15 +389,15 @@ class EmployeeService:
         end_date = today + timedelta(days=days_ahead)
         
         employees = Employee.objects.filter(
-            is_active=True,
-            date_of_birth__isnull=False
+            status='active',
+            birth_date__isnull=False
         )
         
         upcoming_birthdays = []
         
         for employee in employees:
             # حساب عيد الميلاد لهذا العام
-            birthday_this_year = employee.date_of_birth.replace(year=today.year)
+            birthday_this_year = employee.birth_date.replace(year=today.year)
             
             # إذا فات عيد الميلاد هذا العام، احسب للعام القادم
             if birthday_this_year < today:
@@ -285,7 +410,7 @@ class EmployeeService:
                     'employee': employee,
                     'birthday': birthday_this_year,
                     'days_until': days_until,
-                    'age_turning': today.year - employee.date_of_birth.year
+                    'age_turning': today.year - employee.birth_date.year
                 })
         
         return sorted(upcoming_birthdays, key=lambda x: x['days_until'])
@@ -299,7 +424,7 @@ class EmployeeService:
         end_date = today + timedelta(days=days_ahead)
         
         employees = Employee.objects.filter(
-            is_active=True,
+            status='active',
             hire_date__isnull=False
         )
         
@@ -326,23 +451,6 @@ class EmployeeService:
                 })
         
         return sorted(anniversaries, key=lambda x: x['days_until'])
-    
-    @staticmethod
-    def export_employee_data(employee_ids=None, format='csv'):
-        """
-        تصدير بيانات الموظفين
-        """
-        queryset = Employee.objects.all()
-        
-        if employee_ids:
-            queryset = queryset.filter(id__in=employee_ids)
-        
-        queryset = queryset.select_related('department', 'job_position', 'branch')
-        
-        # سيتم تنفيذ منطق التصدير هنا
-        # يمكن استخدام pandas أو csv module
-        
-        return queryset
     
     @staticmethod
     def bulk_update_employees(employee_updates, updated_by=None):
