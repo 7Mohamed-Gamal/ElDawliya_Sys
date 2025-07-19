@@ -2,424 +2,643 @@
 {% load static %}
 
 {% block title %}{{ employee.full_name }} - تفاصيل الموظف{% endblock %}
+{% block page_title %}تفاصيل الموظف{% endblock %}
 
-{% block page_title %}{{ employee.full_name }}{% endblock %}
-
-{% block page_subtitle %}تفاصيل الموظف رقم {{ employee.employee_number }}{% endblock %}
-
-{% block breadcrumb %}
-<nav class="breadcrumb">
-    <div class="breadcrumb-item">
-        <a href="{% url 'Hr:dashboard' %}">الرئيسية</a>
-    </div>
-    <div class="breadcrumb-item">
-        <a href="{% url 'Hr:employees:list' %}">الموظفين</a>
-    </div>
-    <div class="breadcrumb-item active">{{ employee.full_name }}</div>
-</nav>
+{% block breadcrumb_items %}
+<div class="breadcrumb-item">
+    <a href="{% url 'Hr:employee_list' %}" class="breadcrumb-link">الموظفون</a>
+</div>
+<div class="breadcrumb-item">
+    <span class="breadcrumb-link">{{ employee.full_name }}</span>
+</div>
 {% endblock %}
 
 {% block extra_css %}
 <style>
     .employee-header {
-        background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);
+        background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
         color: white;
-        border-radius: var(--radius-lg);
         padding: var(--space-8);
+        border-radius: var(--radius-lg);
         margin-bottom: var(--space-6);
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .employee-header::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        right: 0;
-        width: 200px;
-        height: 200px;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 50%;
-        transform: translate(50%, -50%);
-    }
-    
-    .employee-profile {
-        display: flex;
-        align-items: center;
-        gap: var(--space-6);
-        position: relative;
-        z-index: 1;
     }
     
     .employee-avatar-large {
         width: 120px;
         height: 120px;
-        border-radius: var(--radius-2xl);
-        background: rgba(255, 255, 255, 0.2);
+        border-radius: var(--radius-full);
+        border: 4px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.1);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: var(--text-4xl);
+        font-size: 3rem;
         font-weight: var(--font-bold);
-        border: 4px solid rgba(255, 255, 255, 0.3);
     }
     
-    .employee-info h1 {
-        font-size: var(--text-3xl);
-        font-weight: var(--font-bold);
-        margin: 0 0 var(--space-2) 0;
-    }
-    
-    .employee-meta {
+    .tabs {
         display: flex;
-        align-items: center;
-        gap: var(--space-4);
-        margin-bottom: var(--space-4);
-        flex-wrap: wrap;
+        border-bottom: 2px solid var(--neutral-200);
+        margin-bottom: var(--space-6);
+        overflow-x: auto;
     }
     
-    .meta-item {
-        display: flex;
-        align-items: center;
-        gap: var(--space-2);
-        font-size: var(--text-sm);
-        opacity: 0.9;
+    .tab {
+        padding: var(--space-4) var(--space-6);
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        transition: all var(--transition-fast);
+        white-space: nowrap;
+        color: var(--neutral-600);
     }
     
-    .employee-actions {
-        display: flex;
-        align-items: center;
-        gap: var(--space-3);
-        margin-top: var(--space-4);
-    }
-    
-    .btn-white {
-        background-color: white;
+    .tab:hover {
         color: var(--primary-600);
-        border-color: white;
+        background-color: var(--primary-50);
     }
     
-    .btn-white:hover {
-        background-color: var(--neutral-100);
-        color: var(--primary-700);
+    .tab.active {
+        color: var(--primary-600);
+        border-bottom-color: var(--primary-600);
+        background-color: var(--primary-50);
+    }
+    
+    .tab-content {
+        display: none;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+    
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: var(--space-4);
+    }
+    
+    .info-item {
+        padding: var(--space-4);
+        background: var(--neutral-50);
+        border-radius: var(--radius-md);
+    }
+    
+    .info-label {
+        font-size: var(--text-sm);
+        color: var(--neutral-600);
+        margin-bottom: var(--space-1);
+    }
+    
+    .info-value {
+        font-weight: var(--font-medium);
+        color: var(--neutral-800);
     }
 </style>
-{% endblock %}{
-% block content %}
+{% endblock %}{% b
+lock content %}
 <!-- Employee Header -->
 <div class="employee-header">
-    <div class="employee-profile">
+    <div class="flex flex-col md:flex-row items-center gap-6">
+        <!-- Avatar -->
         <div class="employee-avatar-large">
-            {{ employee.full_name.0|default:"م" }}
+            {% if employee.profile_picture %}
+                <img src="{{ employee.profile_picture.url }}" alt="{{ employee.full_name }}" 
+                     class="w-full h-full object-cover rounded-full">
+            {% else %}
+                {{ employee.first_name|first }}{{ employee.last_name|first }}
+            {% endif %}
         </div>
-        <div class="employee-info">
-            <h1>{{ employee.full_name }}</h1>
-            <div class="employee-meta">
-                <div class="meta-item">
-                    <i class="fas fa-id-badge"></i>
-                    <span>{{ employee.employee_number }}</span>
+        
+        <!-- Basic Info -->
+        <div class="flex-1 text-center md:text-right">
+            <h1 class="text-3xl font-bold mb-2">{{ employee.full_name }}</h1>
+            <p class="text-xl opacity-90 mb-2">{{ employee.employee_number }}</p>
+            
+            {% if employee.job_position %}
+                <p class="text-lg opacity-80 mb-2">{{ employee.job_position.title }}</p>
+            {% endif %}
+            
+            {% if employee.department %}
+                <p class="opacity-70">{{ employee.department.name }}</p>
+            {% endif %}
+            
+            <!-- Status Badge -->
+            <div class="mt-4">
+                {% if employee.status == 'active' %}
+                    <span class="badge badge-success badge-lg">نشط</span>
+                {% elif employee.status == 'inactive' %}
+                    <span class="badge badge-secondary badge-lg">غير نشط</span>
+                {% elif employee.status == 'on_leave' %}
+                    <span class="badge badge-warning badge-lg">في إجازة</span>
+                {% elif employee.status == 'terminated' %}
+                    <span class="badge badge-error badge-lg">منتهي الخدمة</span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="flex flex-col gap-2">
+            <a href="{% url 'Hr:employee_edit' employee.id %}" class="btn btn-secondary">
+                <i class="fas fa-edit ml-2"></i>
+                تعديل البيانات
+            </a>
+            <button class="btn btn-outline" onclick="printEmployee()">
+                <i class="fas fa-print ml-2"></i>
+                طباعة
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs Navigation -->
+<div class="tabs">
+    <div class="tab active" data-tab="personal">
+        <i class="fas fa-user ml-2"></i>
+        البيانات الشخصية
+    </div>
+    <div class="tab" data-tab="employment">
+        <i class="fas fa-briefcase ml-2"></i>
+        بيانات التوظيف
+    </div>
+    <div class="tab" data-tab="attendance">
+        <i class="fas fa-clock ml-2"></i>
+        الحضور والانصراف
+    </div>
+    <div class="tab" data-tab="leaves">
+        <i class="fas fa-calendar-times ml-2"></i>
+        الإجازات
+    </div>
+    <div class="tab" data-tab="payroll">
+        <i class="fas fa-money-bill-wave ml-2"></i>
+        الرواتب
+    </div>
+    <div class="tab" data-tab="documents">
+        <i class="fas fa-file-alt ml-2"></i>
+        المستندات
+    </div>
+</div><!
+-- Personal Information Tab -->
+<div class="tab-content active" id="personal-tab">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">البيانات الشخصية</h3>
+        </div>
+        <div class="card-body">
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">الاسم الكامل</div>
+                    <div class="info-value">{{ employee.full_name }}</div>
                 </div>
-                <div class="meta-item">
-                    <i class="fas fa-building"></i>
-                    <span>{{ employee.department.name|default:"غير محدد" }}</span>
+                
+                <div class="info-item">
+                    <div class="info-label">الاسم بالإنجليزية</div>
+                    <div class="info-value">{{ employee.full_name_english|default:"-" }}</div>
                 </div>
-                <div class="meta-item">
-                    <i class="fas fa-briefcase"></i>
-                    <span>{{ employee.position.name|default:"غير محدد" }}</span>
+                
+                <div class="info-item">
+                    <div class="info-label">تاريخ الميلاد</div>
+                    <div class="info-value">
+                        {% if employee.birth_date %}
+                            {{ employee.birth_date|date:"Y/m/d" }}
+                            <span class="text-sm text-neutral-500">({{ employee.age }} سنة)</span>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </div>
                 </div>
-                <div class="meta-item">
-                    <i class="fas fa-calendar"></i>
-                    <span>{{ employee.hire_date|date:"Y/m/d"|default:"غير محدد" }}</span>
+                
+                <div class="info-item">
+                    <div class="info-label">الجنس</div>
+                    <div class="info-value">{{ employee.get_gender_display|default:"-" }}</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">الحالة الاجتماعية</div>
+                    <div class="info-value">{{ employee.get_marital_status_display|default:"-" }}</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">الجنسية</div>
+                    <div class="info-value">{{ employee.nationality|default:"-" }}</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">رقم الهوية</div>
+                    <div class="info-value">{{ employee.national_id|default:"-" }}</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">رقم جواز السفر</div>
+                    <div class="info-value">{{ employee.passport_number|default:"-" }}</div>
                 </div>
             </div>
-            <div class="employee-actions">
-                <a href="{% url 'Hr:employees:edit' employee.id %}" class="btn btn-white">
-                    <i class="fas fa-edit"></i> تعديل
-                </a>
-                <button class="btn btn-outline" style="border-color: rgba(255,255,255,0.5); color: white;">
-                    <i class="fas fa-print"></i> طباعة
-                </button>
-                <button class="btn btn-outline" style="border-color: rgba(255,255,255,0.5); color: white;">
-                    <i class="fas fa-download"></i> تصدير
-                </button>
+        </div>
+    </div>
+    
+    <!-- Contact Information -->
+    <div class="card mt-6">
+        <div class="card-header">
+            <h3 class="card-title">معلومات الاتصال</h3>
+        </div>
+        <div class="card-body">
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">البريد الإلكتروني</div>
+                    <div class="info-value">
+                        {% if employee.email %}
+                            <a href="mailto:{{ employee.email }}" class="text-primary-600">{{ employee.email }}</a>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">رقم الهاتف</div>
+                    <div class="info-value">
+                        {% if employee.phone %}
+                            <a href="tel:{{ employee.phone }}" class="text-primary-600">{{ employee.phone }}</a>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">رقم الجوال</div>
+                    <div class="info-value">
+                        {% if employee.mobile %}
+                            <a href="tel:{{ employee.mobile }}" class="text-primary-600">{{ employee.mobile }}</a>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">العنوان</div>
+                    <div class="info-value">{{ employee.address|default:"-" }}</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">المدينة</div>
+                    <div class="info-value">{{ employee.city|default:"-" }}</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">الدولة</div>
+                    <div class="info-value">{{ employee.country|default:"-" }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div><!--
+ Employment Information Tab -->
+<div class="tab-content" id="employment-tab">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">بيانات التوظيف</h3>
+        </div>
+        <div class="card-body">
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-label">رقم الموظف</div>
+                    <div class="info-value">{{ employee.employee_number }}</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">تاريخ التوظيف</div>
+                    <div class="info-value">
+                        {{ employee.hire_date|date:"Y/m/d" }}
+                        <span class="text-sm text-neutral-500">({{ employee.years_of_service }} سنة خدمة)</span>
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">الوظيفة</div>
+                    <div class="info-value">{{ employee.job_position.title|default:"-" }}</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">القسم</div>
+                    <div class="info-value">{{ employee.department.name|default:"-" }}</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">الفرع</div>
+                    <div class="info-value">{{ employee.branch.name|default:"-" }}</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">المدير المباشر</div>
+                    <div class="info-value">
+                        {% if employee.manager %}
+                            <a href="{% url 'Hr:employee_detail' employee.manager.id %}" class="text-primary-600">
+                                {{ employee.manager.full_name }}
+                            </a>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">نوع التوظيف</div>
+                    <div class="info-value">{{ employee.get_employment_type_display }}</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">الحالة</div>
+                    <div class="info-value">{{ employee.get_status_display }}</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">الراتب الأساسي</div>
+                    <div class="info-value">
+                        {% if employee.basic_salary %}
+                            {{ employee.basic_salary|floatformat:2 }} {{ employee.currency }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Employee Details Tabs -->
-<div class="card">
-    <div class="card-header">
-        <nav class="nav nav-tabs">
-            <div class="nav-item">
-                <a href="#personal" class="nav-link active" data-toggle="tab">المعلومات الشخصية</a>
+<!-- Attendance Tab -->
+<div class="tab-content" id="attendance-tab">
+    <div class="card">
+        <div class="card-header">
+            <div class="flex justify-between items-center">
+                <h3 class="card-title">سجل الحضور والانصراف</h3>
+                <a href="{% url 'Hr:employee_attendance' employee.id %}" class="btn btn-primary btn-sm">
+                    عرض التفاصيل
+                </a>
             </div>
-            <div class="nav-item">
-                <a href="#employment" class="nav-link" data-toggle="tab">معلومات التوظيف</a>
-            </div>
-            <div class="nav-item">
-                <a href="#attendance" class="nav-link" data-toggle="tab">الحضور</a>
-            </div>
-            <div class="nav-item">
-                <a href="#salary" class="nav-link" data-toggle="tab">الراتب</a>
-            </div>
-            <div class="nav-item">
-                <a href="#documents" class="nav-link" data-toggle="tab">المستندات</a>
-            </div>
-        </nav>
-    </div>
-    
-    <div class="card-body">
-        <div class="tab-content">
-            <!-- Personal Information Tab -->
-            <div class="tab-pane active" id="personal">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="form-group">
-                        <label class="form-label">الاسم الكامل</label>
-                        <div class="form-control-static">{{ employee.full_name }}</div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">البريد الإلكتروني</label>
-                        <div class="form-control-static">{{ employee.email|default:"غير محدد" }}</div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">رقم الهاتف</label>
-                        <div class="form-control-static">{{ employee.phone|default:"غير محدد" }}</div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">الهاتف المحمول</label>
-                        <div class="form-control-static">{{ employee.mobile|default:"غير محدد" }}</div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">رقم الهوية الوطنية</label>
-                        <div class="form-control-static">{{ employee.national_id|default:"غير محدد" }}</div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">تاريخ الميلاد</label>
-                        <div class="form-control-static">{{ employee.birth_date|date:"Y/m/d"|default:"غير محدد" }}</div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">الجنس</label>
-                        <div class="form-control-static">
-                            {% if employee.gender == 'male' %}ذكر
-                            {% elif employee.gender == 'female' %}أنثى
-                            {% else %}غير محدد{% endif %}
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">الحالة الاجتماعية</label>
-                        <div class="form-control-static">{{ employee.marital_status|default:"غير محدد" }}</div>
-                    </div>
-                    
-                    <div class="form-group col-span-2">
-                        <label class="form-label">العنوان</label>
-                        <div class="form-control-static">{{ employee.address|default:"غير محدد" }}</div>
-                    </div>
+        </div>
+        <div class="card-body">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="stat-card text-center">
+                    <div class="text-2xl font-bold text-success-600">{{ attendance_stats.present_days }}</div>
+                    <div class="text-sm text-neutral-600">أيام الحضور</div>
+                </div>
+                <div class="stat-card text-center">
+                    <div class="text-2xl font-bold text-warning-600">{{ attendance_stats.late_days }}</div>
+                    <div class="text-sm text-neutral-600">أيام التأخير</div>
+                </div>
+                <div class="stat-card text-center">
+                    <div class="text-2xl font-bold text-error-600">{{ attendance_stats.absent_days }}</div>
+                    <div class="text-sm text-neutral-600">أيام الغياب</div>
                 </div>
             </div>
             
-            <!-- Employment Information Tab -->
-            <div class="tab-pane" id="employment">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="form-group">
-                        <label class="form-label">رقم الموظف</label>
-                        <div class="form-control-static">{{ employee.employee_number }}</div>
+            <!-- Recent Attendance -->
+            <h4 class="font-semibold mb-4">آخر سجلات الحضور</h4>
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>التاريخ</th>
+                            <th>وقت الحضور</th>
+                            <th>وقت الانصراف</th>
+                            <th>إجمالي الساعات</th>
+                            <th>الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in recent_attendance %}
+                        <tr>
+                            <td>{{ record.date|date:"Y/m/d" }}</td>
+                            <td>{{ record.check_in_time|time:"H:i"|default:"-" }}</td>
+                            <td>{{ record.check_out_time|time:"H:i"|default:"-" }}</td>
+                            <td>{{ record.total_hours|default:"-" }}</td>
+                            <td>
+                                {% if record.is_late %}
+                                    <span class="badge badge-warning">متأخر</span>
+                                {% elif record.is_early_departure %}
+                                    <span class="badge badge-error">انصراف مبكر</span>
+                                {% else %}
+                                    <span class="badge badge-success">عادي</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-neutral-500">لا توجد سجلات حضور</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div><
+!-- Leaves Tab -->
+<div class="tab-content" id="leaves-tab">
+    <div class="card">
+        <div class="card-header">
+            <div class="flex justify-between items-center">
+                <h3 class="card-title">الإجازات</h3>
+                <a href="{% url 'Hr:employee_leaves' employee.id %}" class="btn btn-primary btn-sm">
+                    عرض جميع الإجازات
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- Leave Balances -->
+            <h4 class="font-semibold mb-4">أرصدة الإجازات</h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                {% for balance in leave_balances %}
+                <div class="info-item">
+                    <div class="info-label">{{ balance.leave_type.name }}</div>
+                    <div class="info-value">
+                        {{ balance.balance }} من {{ balance.allocated }} يوم
+                        <div class="w-full bg-neutral-200 rounded-full h-2 mt-1">
+                            <div class="bg-primary-600 h-2 rounded-full" 
+                                 style="width: {{ balance.usage_percentage }}%"></div>
+                        </div>
                     </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">تاريخ التوظيف</label>
-                        <div class="form-control-static">{{ employee.hire_date|date:"Y/m/d"|default:"غير محدد" }}</div>
+                </div>
+                {% empty %}
+                <div class="col-span-full text-center text-neutral-500">لا توجد أرصدة إجازات</div>
+                {% endfor %}
+            </div>
+            
+            <!-- Recent Leave Requests -->
+            <h4 class="font-semibold mb-4">آخر طلبات الإجازات</h4>
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>نوع الإجازة</th>
+                            <th>من تاريخ</th>
+                            <th>إلى تاريخ</th>
+                            <th>عدد الأيام</th>
+                            <th>الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for leave in recent_leaves %}
+                        <tr>
+                            <td>{{ leave.leave_type.name }}</td>
+                            <td>{{ leave.start_date|date:"Y/m/d" }}</td>
+                            <td>{{ leave.end_date|date:"Y/m/d" }}</td>
+                            <td>{{ leave.days }}</td>
+                            <td>
+                                {% if leave.status == 'approved' %}
+                                    <span class="badge badge-success">معتمدة</span>
+                                {% elif leave.status == 'pending' %}
+                                    <span class="badge badge-warning">قيد المراجعة</span>
+                                {% elif leave.status == 'rejected' %}
+                                    <span class="badge badge-error">مرفوضة</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center text-neutral-500">لا توجد طلبات إجازات</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payroll Tab -->
+<div class="tab-content" id="payroll-tab">
+    <div class="card">
+        <div class="card-header">
+            <div class="flex justify-between items-center">
+                <h3 class="card-title">الرواتب</h3>
+                <a href="{% url 'Hr:employee_payroll' employee.id %}" class="btn btn-primary btn-sm">
+                    عرض كشوف الرواتب
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <!-- Salary Summary -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="stat-card text-center">
+                    <div class="text-2xl font-bold text-primary-600">
+                        {{ payroll_stats.avg_gross_salary|floatformat:2 }}
                     </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">القسم</label>
-                        <div class="form-control-static">{{ employee.department.name|default:"غير محدد" }}</div>
+                    <div class="text-sm text-neutral-600">متوسط الراتب الإجمالي</div>
+                </div>
+                <div class="stat-card text-center">
+                    <div class="text-2xl font-bold text-success-600">
+                        {{ payroll_stats.avg_net_salary|floatformat:2 }}
                     </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">الوظيفة</label>
-                        <div class="form-control-static">{{ employee.position.name|default:"غير محدد" }}</div>
+                    <div class="text-sm text-neutral-600">متوسط الراتب الصافي</div>
+                </div>
+                <div class="stat-card text-center">
+                    <div class="text-2xl font-bold text-warning-600">
+                        {{ payroll_stats.total_deductions|floatformat:2 }}
                     </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">نوع العقد</label>
-                        <div class="form-control-static">{{ employee.contract_type|default:"غير محدد" }}</div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">حالة التوظيف</label>
-                        <div class="form-control-static">
-                            {% if employee.is_active %}
-                            <span class="badge badge-success">نشط</span>
+                    <div class="text-sm text-neutral-600">إجمالي الخصومات</div>
+                </div>
+            </div>
+            
+            <!-- Recent Payroll -->
+            <h4 class="font-semibold mb-4">آخر كشوف الرواتب</h4>
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>الفترة</th>
+                            <th>الراتب الأساسي</th>
+                            <th>الإجمالي</th>
+                            <th>الخصومات</th>
+                            <th>الصافي</th>
+                            <th>الحالة</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for payroll in recent_payroll %}
+                        <tr>
+                            <td>{{ payroll.payroll_period.name }}</td>
+                            <td>{{ payroll.basic_salary|floatformat:2 }}</td>
+                            <td>{{ payroll.gross_salary|floatformat:2 }}</td>
+                            <td>{{ payroll.total_deductions|floatformat:2 }}</td>
+                            <td>{{ payroll.net_salary|floatformat:2 }}</td>
+                            <td>
+                                {% if payroll.status == 'paid' %}
+                                    <span class="badge badge-success">مدفوع</span>
+                                {% elif payroll.status == 'pending' %}
+                                    <span class="badge badge-warning">قيد المعالجة</span>
+                                {% elif payroll.status == 'draft' %}
+                                    <span class="badge badge-secondary">مسودة</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-neutral-500">لا توجد كشوف رواتب</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div><!-
+- Documents Tab -->
+<div class="tab-content" id="documents-tab">
+    <div class="card">
+        <div class="card-header">
+            <div class="flex justify-between items-center">
+                <h3 class="card-title">المستندات</h3>
+                <button class="btn btn-primary btn-sm" onclick="uploadDocument()">
+                    <i class="fas fa-upload ml-2"></i>
+                    رفع مستند
+                </button>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% for document in employee_documents %}
+                <div class="card card-bordered">
+                    <div class="card-body text-center">
+                        <div class="text-4xl text-primary-600 mb-3">
+                            {% if document.file_type == 'pdf' %}
+                                <i class="fas fa-file-pdf"></i>
+                            {% elif document.file_type == 'image' %}
+                                <i class="fas fa-file-image"></i>
+                            {% elif document.file_type == 'word' %}
+                                <i class="fas fa-file-word"></i>
                             {% else %}
-                            <span class="badge badge-error">غير نشط</span>
+                                <i class="fas fa-file"></i>
                             {% endif %}
                         </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Attendance Tab -->
-            <div class="tab-pane" id="attendance">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-                    <div class="stat-card">
-                        <div class="stat-icon success">
-                            <i class="fas fa-calendar-check"></i>
+                        <h4 class="font-semibold mb-2">{{ document.document_type }}</h4>
+                        <p class="text-sm text-neutral-600 mb-3">{{ document.description|default:"" }}</p>
+                        <div class="flex justify-center gap-2">
+                            <a href="{{ document.file.url }}" target="_blank" class="btn btn-primary btn-xs">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{{ document.file.url }}" download class="btn btn-secondary btn-xs">
+                                <i class="fas fa-download"></i>
+                            </a>
+                            <button class="btn btn-error btn-xs" onclick="deleteDocument('{{ document.id }}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
                         </div>
-                        <h3 class="stat-number">{{ attendance_stats.present_days|default:0 }}</h3>
-                        <p class="stat-label">أيام الحضور هذا الشهر</p>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-icon warning">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                        <h3 class="stat-number">{{ attendance_stats.late_days|default:0 }}</h3>
-                        <p class="stat-label">أيام التأخير</p>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-icon primary">
-                            <i class="fas fa-percentage"></i>
-                        </div>
-                        <h3 class="stat-number">{{ attendance_stats.attendance_rate|default:0 }}%</h3>
-                        <p class="stat-label">معدل الحضور</p>
                     </div>
                 </div>
-                
-                <!-- Recent Attendance Records -->
-                <h3 class="text-lg font-semibold mb-4">سجلات الحضور الأخيرة</h3>
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>التاريخ</th>
-                                <th>وقت الحضور</th>
-                                <th>وقت الانصراف</th>
-                                <th>ساعات العمل</th>
-                                <th>الحالة</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for record in recent_attendance %}
-                            <tr>
-                                <td>{{ record.date|date:"Y/m/d" }}</td>
-                                <td>{{ record.check_in_time|time:"H:i"|default:"-" }}</td>
-                                <td>{{ record.check_out_time|time:"H:i"|default:"-" }}</td>
-                                <td>{{ record.worked_hours|default:"-" }}</td>
-                                <td>
-                                    {% if record.check_in_time %}
-                                    <span class="badge badge-success">حضر</span>
-                                    {% else %}
-                                    <span class="badge badge-error">غاب</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="5" class="text-center">لا توجد سجلات حضور</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <!-- Salary Tab -->
-            <div class="tab-pane" id="salary">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="form-group">
-                        <label class="form-label">الراتب الأساسي</label>
-                        <div class="form-control-static">{{ employee.basic_salary|default:"غير محدد" }} ريال</div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">إجمالي الراتب</label>
-                        <div class="form-control-static">{{ employee.total_salary|default:"غير محدد" }} ريال</div>
-                    </div>
-                </div>
-                
-                <!-- Salary History -->
-                <h3 class="text-lg font-semibold mb-4 mt-6">تاريخ الرواتب</h3>
-                <div class="table-responsive">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>الشهر</th>
-                                <th>الراتب الأساسي</th>
-                                <th>البدلات</th>
-                                <th>الخصومات</th>
-                                <th>صافي الراتب</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for salary in salary_history %}
-                            <tr>
-                                <td>{{ salary.month }}</td>
-                                <td>{{ salary.basic_salary }} ريال</td>
-                                <td>{{ salary.allowances }} ريال</td>
-                                <td>{{ salary.deductions }} ريال</td>
-                                <td>{{ salary.net_salary }} ريال</td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="5" class="text-center">لا توجد سجلات رواتب</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <!-- Documents Tab -->
-            <div class="tab-pane" id="documents">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold">المستندات</h3>
-                    <button class="btn btn-primary">
-                        <i class="fas fa-plus"></i> إضافة مستند
+                {% empty %}
+                <div class="col-span-full text-center py-8">
+                    <i class="fas fa-file-alt text-6xl text-neutral-300 mb-4"></i>
+                    <h3 class="text-lg font-semibold text-neutral-600 mb-2">لا توجد مستندات</h3>
+                    <p class="text-neutral-500 mb-4">ابدأ برفع المستندات الخاصة بالموظف</p>
+                    <button class="btn btn-primary" onclick="uploadDocument()">
+                        <i class="fas fa-upload ml-2"></i>
+                        رفع أول مستند
                     </button>
                 </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {% for document in employee_documents %}
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="flex items-center gap-3 mb-3">
-                                <div class="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
-                                    <i class="fas fa-file-alt text-primary-600"></i>
-                                </div>
-                                <div>
-                                    <h4 class="font-medium">{{ document.name }}</h4>
-                                    <p class="text-sm text-secondary-600">{{ document.type }}</p>
-                                </div>
-                            </div>
-                            <div class="flex justify-between items-center">
-                                <span class="text-xs text-secondary-500">{{ document.uploaded_at|date:"Y/m/d" }}</span>
-                                <div class="flex gap-2">
-                                    <button class="btn btn-sm btn-ghost">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-ghost">
-                                        <i class="fas fa-download"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {% empty %}
-                    <div class="col-span-full text-center py-8">
-                        <i class="fas fa-folder-open text-4xl text-secondary-400 mb-4"></i>
-                        <p class="text-secondary-600">لا توجد مستندات</p>
-                    </div>
-                    {% endfor %}
-                </div>
+                {% endfor %}
             </div>
         </div>
     </div>
@@ -428,11 +647,112 @@
 
 {% block extra_js %}
 <script>
-    // Tab functionality is handled by hr-components.js
+document.addEventListener('DOMContentLoaded', function() {
+    // Tab functionality
+    const tabs = document.querySelectorAll('.tab');
+    const tabContents = document.querySelectorAll('.tab-content');
     
-    // Add any specific functionality for employee detail page
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initialize any charts or additional components here
+    tabs.forEach(tab => {
+        tab.addEventListener('click', function() {
+            const targetTab = this.getAttribute('data-tab');
+            
+            // Remove active class from all tabs and contents
+            tabs.forEach(t => t.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+            
+            // Add active class to clicked tab and corresponding content
+            this.classList.add('active');
+            document.getElementById(targetTab + '-tab').classList.add('active');
+        });
     });
+});
+
+// Print employee details
+function printEmployee() {
+    window.print();
+}
+
+// Upload document
+function uploadDocument() {
+    // Create file input
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.pdf,.doc,.docx,.jpg,.jpeg,.png';
+    input.multiple = true;
+    
+    input.onchange = function(e) {
+        const files = e.target.files;
+        if (files.length > 0) {
+            uploadFiles(files);
+        }
+    };
+    
+    input.click();
+}
+
+function uploadFiles(files) {
+    const formData = new FormData();
+    
+    for (let i = 0; i < files.length; i++) {
+        formData.append('files[]', files[i]);
+    }
+    
+    formData.append('employee_id', '{{ employee.id }}');
+    
+    showLoading();
+    
+    fetch('{% url "Hr:employee_document_upload" employee.id %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            HRComponents.Toast.show('تم رفع المستندات بنجاح', 'success');
+            location.reload(); // Reload to show new documents
+        } else {
+            HRComponents.Toast.show(data.message || 'فشل في رفع المستندات', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Upload error:', error);
+        HRComponents.Toast.show('حدث خطأ أثناء رفع المستندات', 'error');
+    })
+    .finally(() => {
+        hideLoading();
+    });
+}
+
+// Delete document
+function deleteDocument(documentId) {
+    if (confirm('هل أنت متأكد من حذف هذا المستند؟')) {
+        showLoading();
+        
+        fetch(`{% url "Hr:employee_document_delete" "PLACEHOLDER" %}`.replace('PLACEHOLDER', documentId), {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                HRComponents.Toast.show('تم حذف المستند بنجاح', 'success');
+                location.reload();
+            } else {
+                throw new Error('Delete failed');
+            }
+        })
+        .catch(error => {
+            console.error('Delete error:', error);
+            HRComponents.Toast.show('فشل في حذف المستند', 'error');
+        })
+        .finally(() => {
+            hideLoading();
+        });
+    }
+}
 </script>
 {% endblock %}

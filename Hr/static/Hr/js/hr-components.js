@@ -1,722 +1,829 @@
 /**
  * HR Components JavaScript
- * مكونات نظام الموارد البشرية التفاعلية
+ * Interactive components for HR management system
  */
 
-// ========== Global Variables - المتغيرات العامة ==========
-const HRSystem = {
-    config: {
-        apiBaseUrl: '/hr/api/',
-        csrfToken: document.querySelector('[name=csrfmiddlewaretoken]')?.value || '',
-        language: 'ar',
-        dateFormat: 'YYYY-MM-DD',
-        timeFormat: 'HH:mm:ss'
-    },
-    
-    // Cache for storing data
-    cache: new Map(),
-    
-    // Event listeners registry
-    listeners: new Map(),
-    
-    // Current user data
-    user: null,
-    
-    // Theme settings
-    theme: localStorage.getItem('hr-theme') || 'light'
-};
+(function() {
+    'use strict';
 
-// ========== Utility Functions - الدوال المساعدة ==========
+    // Utility functions
+    const utils = {
+        // Get element by selector
+        $(selector) {
+            return document.querySelector(selector);
+        },
 
-/**
- * Make API request with proper headers
- * إجراء طلب API مع الرؤوس المناسبة
- */
-HRSystem.api = {
-    async request(url, options = {}) {
-        const defaultOptions = {
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': HRSystem.config.csrfToken,
-                'Accept': 'application/json'
-            }
-        };
-        
-        const mergedOptions = {
-            ...defaultOptions,
-            ...options,
-            headers: { ...defaultOptions.headers, ...options.headers }
-        };
-        
-        try {
-            const response = await fetch(HRSystem.config.apiBaseUrl + url, mergedOptions);
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            const contentType = response.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) {
-                return await response.json();
-            }
-            
-            return await response.text();
-        } catch (error) {
-            console.error('API Request Error:', error);
-            throw error;
-        }
-    },
-    
-    async get(url) {
-        return this.request(url, { method: 'GET' });
-    },
-    
-    async post(url, data) {
-        return this.request(url, {
-            method: 'POST',
-            body: JSON.stringify(data)
-        });
-    },
-    
-    async put(url, data) {
-        return this.request(url, {
-            method: 'PUT',
-            body: JSON.stringify(data)
-        });
-    },
-    
-    async delete(url) {
-        return this.request(url, { method: 'DELETE' });
-    }
-};
+        // Get all elements by selector
+        $$(selector) {
+            return document.querySelectorAll(selector);
+        },
 
-/**
- * Utility functions
- * الدوال المساعدة
- */
-HRSystem.utils = {
-    // Format date according to locale
-    formatDate(date, format = HRSystem.config.dateFormat) {
-        if (!date) return '';
-        const d = new Date(date);
-        return d.toLocaleDateString('ar-SA');
-    },
-    
-    // Format time
-    formatTime(time, format = HRSystem.config.timeFormat) {
-        if (!time) return '';
-        const t = new Date(`2000-01-01T${time}`);
-        return t.toLocaleTimeString('ar-SA', { hour12: false });
-    },
-    
-    // Format currency
-    formatCurrency(amount, currency = 'SAR') {
-        if (amount === null || amount === undefined) return '';
-        return new Intl.NumberFormat('ar-SA', {
-            style: 'currency',
-            currency: currency
-        }).format(amount);
-    },
-    
-    // Format number
-    formatNumber(number) {
-        if (number === null || number === undefined) return '';
-        return new Intl.NumberFormat('ar-SA').format(number);
-    },
-    
-    // Debounce function
-    debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
+        // Add event listener
+        on(element, event, handler) {
+            if (typeof element === 'string') {
+                element = this.$(element);
+            }
+            if (element) {
+                element.addEventListener(event, handler);
+            }
+        },
+
+        // Remove class from element
+        removeClass(element, className) {
+            if (typeof element === 'string') {
+                element = this.$(element);
+            }
+            if (element) {
+                element.classList.remove(className);
+            }
+        },
+
+        // Add class to element
+        addClass(element, className) {
+            if (typeof element === 'string') {
+                element = this.$(element);
+            }
+            if (element) {
+                element.classList.add(className);
+            }
+        },
+
+        // Toggle class on element
+        toggleClass(element, className) {
+            if (typeof element === 'string') {
+                element = this.$(element);
+            }
+            if (element) {
+                element.classList.toggle(className);
+            }
+        },
+
+        // Check if element has class
+        hasClass(element, className) {
+            if (typeof element === 'string') {
+                element = this.$(element);
+            }
+            return element ? element.classList.contains(className) : false;
+        },
+
+        // Create element
+        createElement(tag, attributes = {}, content = '') {
+            const element = document.createElement(tag);
+            
+            Object.keys(attributes).forEach(key => {
+                if (key === 'className') {
+                    element.className = attributes[key];
+                } else {
+                    element.setAttribute(key, attributes[key]);
+                }
+            });
+            
+            if (content) {
+                element.innerHTML = content;
+            }
+            
+            return element;
+        },
+
+        // Show element
+        show(element) {
+            if (typeof element === 'string') {
+                element = this.$(element);
+            }
+            if (element) {
+                element.style.display = '';
+                this.removeClass(element, 'hidden');
+            }
+        },
+
+        // Hide element
+        hide(element) {
+            if (typeof element === 'string') {
+                element = this.$(element);
+            }
+            if (element) {
+                this.addClass(element, 'hidden');
+            }
+        },
+
+        // Debounce function
+        debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
                 clearTimeout(timeout);
-                func(...args);
+                timeout = setTimeout(later, wait);
             };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    },
-    
-    // Generate UUID
-    generateUUID() {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-            const r = Math.random() * 16 | 0;
-            const v = c == 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
-        });
-    },
-    
-    // Show notification
-    showNotification(message, type = 'info', duration = 5000) {
-        const notification = document.createElement('div');
-        notification.className = `alert alert-${type} hr-notification`;
-        notification.innerHTML = `
-            <div class="d-flex align-items-center">
-                <span class="flex-grow-1">${message}</span>
-                <button type="button" class="btn-close" onclick="this.parentElement.parentElement.remove()"></button>
-            </div>
-        `;
-        
-        // Add to notification container or create one
-        let container = document.getElementById('notification-container');
-        if (!container) {
-            container = document.createElement('div');
-            container.id = 'notification-container';
-            container.className = 'position-fixed top-0 end-0 p-3';
-            container.style.zIndex = '9999';
-            document.body.appendChild(container);
-        }
-        
-        container.appendChild(notification);
-        
-        // Auto remove after duration
-        if (duration > 0) {
-            setTimeout(() => {
-                if (notification.parentElement) {
-                    notification.remove();
-                }
-            }, duration);
-        }
-    },
-    
-    // Show loading spinner
-    showLoading(element) {
-        const spinner = document.createElement('div');
-        spinner.className = 'hr-loading';
-        spinner.innerHTML = '<div class="hr-spinner"></div>';
-        element.appendChild(spinner);
-        return spinner;
-    },
-    
-    // Hide loading spinner
-    hideLoading(spinner) {
-        if (spinner && spinner.parentElement) {
-            spinner.remove();
-        }
-    }
-};
+        },
 
-// ========== Navigation Components - مكونات التنقل ==========
+        // Format date
+        formatDate(date, locale = 'ar-EG') {
+            return new Intl.DateTimeFormat(locale).format(new Date(date));
+        },
 
-/**
- * Sidebar Navigation
- * التنقل الجانبي
- */
-HRSystem.sidebar = {
-    init() {
-        this.bindEvents();
-        this.loadState();
-    },
-    
-    bindEvents() {
-        // Toggle sidebar
-        document.addEventListener('click', (e) => {
-            if (e.target.matches('.hr-sidebar-toggle')) {
-                this.toggle();
-            }
-        });
-        
-        // Handle nav item clicks
-        document.addEventListener('click', (e) => {
-            if (e.target.matches('.hr-nav-link')) {
-                this.handleNavClick(e);
-            }
-        });
-        
-        // Handle submenu toggles
-        document.addEventListener('click', (e) => {
-            if (e.target.matches('.hr-nav-arrow') || e.target.closest('.hr-nav-arrow')) {
-                e.preventDefault();
-                this.toggleSubmenu(e.target.closest('.hr-nav-item'));
-            }
-        });
-    },
-    
-    toggle() {
-        const sidebar = document.querySelector('.hr-sidebar');
-        if (sidebar) {
-            sidebar.classList.toggle('collapsed');
-            this.saveState();
+        // Format number
+        formatNumber(number, locale = 'ar-EG') {
+            return new Intl.NumberFormat(locale).format(number);
         }
-    },
-    
-    handleNavClick(e) {
-        // Remove active class from all nav links
-        document.querySelectorAll('.hr-nav-link').forEach(link => {
-            link.classList.remove('active');
-        });
-        
-        // Add active class to clicked link
-        e.target.classList.add('active');
-        
-        // Update breadcrumb
-        this.updateBreadcrumb(e.target);
-    },
-    
-    toggleSubmenu(navItem) {
-        navItem.classList.toggle('expanded');
-    },
-    
-    updateBreadcrumb(activeLink) {
-        const breadcrumb = document.querySelector('.hr-breadcrumb');
-        if (!breadcrumb) return;
-        
-        const linkText = activeLink.querySelector('.hr-nav-text')?.textContent || '';
-        const parentSection = activeLink.closest('.hr-nav-section')?.querySelector('.hr-nav-section-title')?.textContent || '';
-        
-        breadcrumb.innerHTML = `
-            <div class="hr-breadcrumb-item">
-                <span>الرئيسية</span>
-            </div>
-            ${parentSection ? `
-                <div class="hr-breadcrumb-item">
-                    <span class="hr-breadcrumb-separator">/</span>
-                    <span>${parentSection}</span>
-                </div>
-            ` : ''}
-            <div class="hr-breadcrumb-item">
-                <span class="hr-breadcrumb-separator">/</span>
-                <span>${linkText}</span>
-            </div>
-        `;
-    },
-    
-    saveState() {
-        const sidebar = document.querySelector('.hr-sidebar');
-        if (sidebar) {
-            localStorage.setItem('hr-sidebar-collapsed', sidebar.classList.contains('collapsed'));
-        }
-    },
-    
-    loadState() {
-        const isCollapsed = localStorage.getItem('hr-sidebar-collapsed') === 'true';
-        const sidebar = document.querySelector('.hr-sidebar');
-        if (sidebar && isCollapsed) {
-            sidebar.classList.add('collapsed');
-        }
-    }
-};
+    };
 
-// ========== Search Component - مكون البحث ==========
-
-HRSystem.search = {
-    init() {
-        this.bindEvents();
-    },
-    
-    bindEvents() {
-        const searchInput = document.querySelector('.hr-search-input');
-        if (searchInput) {
-            searchInput.addEventListener('input', HRSystem.utils.debounce((e) => {
-                this.performSearch(e.target.value);
-            }, 300));
-        }
-    },
-    
-    async performSearch(query) {
-        if (query.length < 2) return;
-        
-        try {
-            const results = await HRSystem.api.get(`search/?q=${encodeURIComponent(query)}`);
-            this.displayResults(results);
-        } catch (error) {
-            console.error('Search error:', error);
-        }
-    },
-    
-    displayResults(results) {
-        // Implementation for displaying search results
-        console.log('Search results:', results);
-    }
-};
-
-// ========== Data Table Component - مكون جدول البيانات ==========
-
-HRSystem.dataTable = {
-    init(tableId, options = {}) {
-        const table = document.getElementById(tableId);
-        if (!table) return;
-        
-        const config = {
-            apiUrl: '',
-            columns: [],
-            pageSize: 10,
-            sortable: true,
-            filterable: true,
-            searchable: true,
-            ...options
-        };
-        
-        this.setupTable(table, config);
-    },
-    
-    setupTable(table, config) {
-        // Add table wrapper classes
-        table.classList.add('hr-table');
-        
-        // Setup pagination
-        if (config.pageSize) {
-            this.setupPagination(table, config);
-        }
-        
-        // Setup sorting
-        if (config.sortable) {
-            this.setupSorting(table, config);
-        }
-        
-        // Setup filtering
-        if (config.filterable) {
-            this.setupFiltering(table, config);
-        }
-        
-        // Load initial data
-        if (config.apiUrl) {
-            this.loadData(table, config);
-        }
-    },
-    
-    async loadData(table, config, params = {}) {
-        const loading = HRSystem.utils.showLoading(table.parentElement);
-        
-        try {
-            const queryString = new URLSearchParams(params).toString();
-            const url = config.apiUrl + (queryString ? `?${queryString}` : '');
-            const data = await HRSystem.api.get(url);
+    // Modal Component
+    class Modal {
+        constructor(element) {
+            this.element = typeof element === 'string' ? utils.$(element) : element;
+            this.backdrop = null;
+            this.isOpen = false;
             
-            this.renderData(table, data, config);
-        } catch (error) {
-            console.error('Error loading table data:', error);
-            HRSystem.utils.showNotification('حدث خطأ في تحميل البيانات', 'danger');
-        } finally {
-            HRSystem.utils.hideLoading(loading);
+            this.init();
         }
-    },
-    
-    renderData(table, data, config) {
-        const tbody = table.querySelector('tbody');
-        if (!tbody) return;
-        
-        tbody.innerHTML = '';
-        
-        if (data.results && data.results.length > 0) {
-            data.results.forEach(row => {
-                const tr = document.createElement('tr');
-                
-                config.columns.forEach(column => {
-                    const td = document.createElement('td');
-                    
-                    if (column.render) {
-                        td.innerHTML = column.render(row[column.field], row);
-                    } else {
-                        td.textContent = row[column.field] || '';
+
+        init() {
+            if (!this.element) return;
+
+            // Find close buttons
+            const closeButtons = this.element.querySelectorAll('[data-modal-close]');
+            closeButtons.forEach(btn => {
+                utils.on(btn, 'click', () => this.close());
+            });
+
+            // Close on backdrop click
+            utils.on(this.element, 'click', (e) => {
+                if (e.target === this.element) {
+                    this.close();
+                }
+            });
+
+            // Close on escape key
+            utils.on(document, 'keydown', (e) => {
+                if (e.key === 'Escape' && this.isOpen) {
+                    this.close();
+                }
+            });
+        }
+
+        open() {
+            if (this.isOpen) return;
+
+            this.isOpen = true;
+            utils.show(this.element);
+            utils.addClass(document.body, 'modal-open');
+            
+            // Focus first focusable element
+            const focusable = this.element.querySelector('input, button, select, textarea, [tabindex]:not([tabindex="-1"])');
+            if (focusable) {
+                focusable.focus();
+            }
+
+            // Trigger event
+            this.element.dispatchEvent(new CustomEvent('modal:open'));
+        }
+
+        close() {
+            if (!this.isOpen) return;
+
+            this.isOpen = false;
+            utils.hide(this.element);
+            utils.removeClass(document.body, 'modal-open');
+
+            // Trigger event
+            this.element.dispatchEvent(new CustomEvent('modal:close'));
+        }
+
+        static init() {
+            // Initialize all modals
+            utils.$$('.modal-backdrop').forEach(modal => {
+                new Modal(modal);
+            });
+
+            // Handle modal triggers
+            utils.$$('[data-modal-target]').forEach(trigger => {
+                utils.on(trigger, 'click', (e) => {
+                    e.preventDefault();
+                    const targetId = trigger.getAttribute('data-modal-target');
+                    const modal = utils.$(targetId);
+                    if (modal && modal.modalInstance) {
+                        modal.modalInstance.open();
                     }
-                    
-                    tr.appendChild(td);
                 });
-                
-                tbody.appendChild(tr);
             });
-        } else {
-            const tr = document.createElement('tr');
-            const td = document.createElement('td');
-            td.colSpan = config.columns.length;
-            td.textContent = 'لا توجد بيانات';
-            td.className = 'text-center text-muted';
-            tr.appendChild(td);
-            tbody.appendChild(tr);
         }
-        
-        // Update pagination
-        this.updatePagination(table, data, config);
-    },
-    
-    setupPagination(table, config) {
-        // Implementation for pagination setup
-    },
-    
-    setupSorting(table, config) {
-        // Implementation for sorting setup
-    },
-    
-    setupFiltering(table, config) {
-        // Implementation for filtering setup
-    },
-    
-    updatePagination(table, data, config) {
-        // Implementation for pagination update
     }
-};
 
-// ========== Form Components - مكونات النماذج ==========
+    // Dropdown Component
+    class Dropdown {
+        constructor(element) {
+            this.element = typeof element === 'string' ? utils.$(element) : element;
+            this.trigger = this.element.querySelector('[data-dropdown-trigger]');
+            this.menu = this.element.querySelector('.dropdown-menu');
+            this.isOpen = false;
+            
+            this.init();
+        }
 
-HRSystem.forms = {
-    init() {
-        this.bindEvents();
-        this.setupValidation();
-    },
-    
-    bindEvents() {
-        // Handle form submissions
-        document.addEventListener('submit', (e) => {
-            if (e.target.matches('.hr-form')) {
-                this.handleSubmit(e);
-            }
-        });
-        
-        // Handle file uploads
-        document.addEventListener('change', (e) => {
-            if (e.target.matches('.hr-file-upload-input')) {
-                this.handleFileUpload(e);
-            }
-        });
-        
-        // Handle drag and drop
-        document.addEventListener('dragover', (e) => {
-            if (e.target.closest('.hr-file-upload')) {
+        init() {
+            if (!this.element || !this.trigger || !this.menu) return;
+
+            // Toggle on trigger click
+            utils.on(this.trigger, 'click', (e) => {
                 e.preventDefault();
-                e.target.closest('.hr-file-upload').classList.add('dragover');
+                e.stopPropagation();
+                this.toggle();
+            });
+
+            // Close on outside click
+            utils.on(document, 'click', (e) => {
+                if (!this.element.contains(e.target) && this.isOpen) {
+                    this.close();
+                }
+            });
+
+            // Close on escape key
+            utils.on(document, 'keydown', (e) => {
+                if (e.key === 'Escape' && this.isOpen) {
+                    this.close();
+                }
+            });
+
+            // Handle item clicks
+            const items = this.menu.querySelectorAll('.dropdown-item');
+            items.forEach(item => {
+                utils.on(item, 'click', () => {
+                    this.close();
+                });
+            });
+        }
+
+        open() {
+            if (this.isOpen) return;
+
+            this.isOpen = true;
+            utils.addClass(this.element, 'active');
+            
+            // Position menu
+            this.positionMenu();
+
+            // Trigger event
+            this.element.dispatchEvent(new CustomEvent('dropdown:open'));
+        }
+
+        close() {
+            if (!this.isOpen) return;
+
+            this.isOpen = false;
+            utils.removeClass(this.element, 'active');
+
+            // Trigger event
+            this.element.dispatchEvent(new CustomEvent('dropdown:close'));
+        }
+
+        toggle() {
+            if (this.isOpen) {
+                this.close();
+            } else {
+                this.open();
             }
-        });
-        
-        document.addEventListener('dragleave', (e) => {
-            if (e.target.closest('.hr-file-upload')) {
-                e.target.closest('.hr-file-upload').classList.remove('dragover');
+        }
+
+        positionMenu() {
+            const rect = this.trigger.getBoundingClientRect();
+            const menuRect = this.menu.getBoundingClientRect();
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+
+            // Reset position
+            this.menu.style.left = '';
+            this.menu.style.right = '';
+            this.menu.style.top = '';
+            this.menu.style.bottom = '';
+
+            // Check if menu fits on the right
+            if (rect.right + menuRect.width > viewportWidth) {
+                this.menu.style.right = '0';
+            } else {
+                this.menu.style.left = '0';
             }
-        });
-        
-        document.addEventListener('drop', (e) => {
-            const uploadArea = e.target.closest('.hr-file-upload');
-            if (uploadArea) {
-                e.preventDefault();
-                uploadArea.classList.remove('dragover');
+
+            // Check if menu fits below
+            if (rect.bottom + menuRect.height > viewportHeight) {
+                this.menu.style.bottom = '100%';
+                this.menu.style.top = 'auto';
+            }
+        }
+
+        static init() {
+            utils.$$('.dropdown').forEach(dropdown => {
+                new Dropdown(dropdown);
+            });
+        }
+    }
+
+    // Alert Component
+    class Alert {
+        constructor(element) {
+            this.element = typeof element === 'string' ? utils.$(element) : element;
+            this.closeButton = this.element.querySelector('.alert-close');
+            
+            this.init();
+        }
+
+        init() {
+            if (!this.element) return;
+
+            if (this.closeButton) {
+                utils.on(this.closeButton, 'click', () => this.close());
+            }
+
+            // Auto-dismiss after timeout
+            const timeout = this.element.getAttribute('data-timeout');
+            if (timeout) {
+                setTimeout(() => this.close(), parseInt(timeout));
+            }
+        }
+
+        close() {
+            this.element.style.opacity = '0';
+            this.element.style.transform = 'translateY(-10px)';
+            
+            setTimeout(() => {
+                this.element.remove();
+            }, 300);
+
+            // Trigger event
+            this.element.dispatchEvent(new CustomEvent('alert:close'));
+        }
+
+        static show(message, type = 'primary', timeout = 5000) {
+            const alertContainer = utils.$('#alert-container') || document.body;
+            
+            const alert = utils.createElement('div', {
+                className: `alert alert-${type} alert-dismissible`,
+                'data-timeout': timeout
+            }, `
+                <div class="alert-title">${message}</div>
+                <button type="button" class="alert-close">&times;</button>
+            `);
+
+            alertContainer.appendChild(alert);
+            new Alert(alert);
+
+            return alert;
+        }
+
+        static init() {
+            utils.$$('.alert-dismissible').forEach(alert => {
+                new Alert(alert);
+            });
+        }
+    }
+
+    // Form Validation
+    class FormValidator {
+        constructor(form) {
+            this.form = typeof form === 'string' ? utils.$(form) : form;
+            this.rules = {};
+            this.errors = {};
+            
+            this.init();
+        }
+
+        init() {
+            if (!this.form) return;
+
+            // Parse validation rules from data attributes
+            const inputs = this.form.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                const rules = this.parseRules(input);
+                if (Object.keys(rules).length > 0) {
+                    this.rules[input.name] = rules;
+                }
+
+                // Real-time validation
+                utils.on(input, 'blur', () => this.validateField(input));
+                utils.on(input, 'input', utils.debounce(() => this.validateField(input), 300));
+            });
+
+            // Form submission
+            utils.on(this.form, 'submit', (e) => {
+                if (!this.validate()) {
+                    e.preventDefault();
+                }
+            });
+        }
+
+        parseRules(input) {
+            const rules = {};
+            
+            if (input.hasAttribute('required')) {
+                rules.required = true;
+            }
+            
+            if (input.hasAttribute('data-min-length')) {
+                rules.minLength = parseInt(input.getAttribute('data-min-length'));
+            }
+            
+            if (input.hasAttribute('data-max-length')) {
+                rules.maxLength = parseInt(input.getAttribute('data-max-length'));
+            }
+            
+            if (input.type === 'email') {
+                rules.email = true;
+            }
+            
+            if (input.hasAttribute('data-pattern')) {
+                rules.pattern = new RegExp(input.getAttribute('data-pattern'));
+            }
+
+            return rules;
+        }
+
+        validateField(input) {
+            const rules = this.rules[input.name];
+            if (!rules) return true;
+
+            const value = input.value.trim();
+            const errors = [];
+
+            // Required validation
+            if (rules.required && !value) {
+                errors.push('هذا الحقل مطلوب');
+            }
+
+            // Min length validation
+            if (rules.minLength && value.length < rules.minLength) {
+                errors.push(`يجب أن يكون الحد الأدنى ${rules.minLength} أحرف`);
+            }
+
+            // Max length validation
+            if (rules.maxLength && value.length > rules.maxLength) {
+                errors.push(`يجب أن يكون الحد الأقصى ${rules.maxLength} أحرف`);
+            }
+
+            // Email validation
+            if (rules.email && value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+                errors.push('يرجى إدخال بريد إلكتروني صحيح');
+            }
+
+            // Pattern validation
+            if (rules.pattern && value && !rules.pattern.test(value)) {
+                errors.push('تنسيق غير صحيح');
+            }
+
+            // Update UI
+            this.updateFieldUI(input, errors);
+
+            // Store errors
+            if (errors.length > 0) {
+                this.errors[input.name] = errors;
+                return false;
+            } else {
+                delete this.errors[input.name];
+                return true;
+            }
+        }
+
+        updateFieldUI(input, errors) {
+            const formGroup = input.closest('.form-group');
+            if (!formGroup) return;
+
+            // Remove existing error classes and messages
+            utils.removeClass(input, 'error');
+            const existingError = formGroup.querySelector('.form-error');
+            if (existingError) {
+                existingError.remove();
+            }
+
+            // Add error state if there are errors
+            if (errors.length > 0) {
+                utils.addClass(input, 'error');
                 
-                const files = e.dataTransfer.files;
-                const input = uploadArea.querySelector('.hr-file-upload-input');
-                if (input && files.length > 0) {
-                    input.files = files;
-                    this.handleFileUpload({ target: input });
+                const errorElement = utils.createElement('div', {
+                    className: 'form-error'
+                }, errors[0]);
+                
+                formGroup.appendChild(errorElement);
+            }
+        }
+
+        validate() {
+            const inputs = this.form.querySelectorAll('input, select, textarea');
+            let isValid = true;
+
+            inputs.forEach(input => {
+                if (!this.validateField(input)) {
+                    isValid = false;
+                }
+            });
+
+            return isValid;
+        }
+
+        static init() {
+            utils.$$('form[data-validate]').forEach(form => {
+                new FormValidator(form);
+            });
+        }
+    }
+
+    // Table Component
+    class DataTable {
+        constructor(element, options = {}) {
+            this.element = typeof element === 'string' ? utils.$(element) : element;
+            this.options = {
+                sortable: true,
+                searchable: true,
+                pagination: true,
+                pageSize: 10,
+                ...options
+            };
+            
+            this.data = [];
+            this.filteredData = [];
+            this.currentPage = 1;
+            this.sortColumn = null;
+            this.sortDirection = 'asc';
+            
+            this.init();
+        }
+
+        init() {
+            if (!this.element) return;
+
+            this.parseData();
+            this.setupSearch();
+            this.setupSort();
+            this.setupPagination();
+            this.render();
+        }
+
+        parseData() {
+            const rows = this.element.querySelectorAll('tbody tr');
+            this.data = Array.from(rows).map(row => {
+                const cells = row.querySelectorAll('td');
+                return Array.from(cells).map(cell => cell.textContent.trim());
+            });
+            this.filteredData = [...this.data];
+        }
+
+        setupSearch() {
+            if (!this.options.searchable) return;
+
+            const searchInput = utils.$(`#${this.element.id}-search`);
+            if (searchInput) {
+                utils.on(searchInput, 'input', utils.debounce((e) => {
+                    this.search(e.target.value);
+                }, 300));
+            }
+        }
+
+        setupSort() {
+            if (!this.options.sortable) return;
+
+            const headers = this.element.querySelectorAll('th[data-sortable]');
+            headers.forEach((header, index) => {
+                utils.addClass(header, 'sortable');
+                utils.on(header, 'click', () => this.sort(index));
+            });
+        }
+
+        setupPagination() {
+            if (!this.options.pagination) return;
+
+            const paginationContainer = utils.$(`#${this.element.id}-pagination`);
+            if (paginationContainer) {
+                this.paginationContainer = paginationContainer;
+            }
+        }
+
+        search(query) {
+            if (!query) {
+                this.filteredData = [...this.data];
+            } else {
+                this.filteredData = this.data.filter(row => 
+                    row.some(cell => 
+                        cell.toLowerCase().includes(query.toLowerCase())
+                    )
+                );
+            }
+            
+            this.currentPage = 1;
+            this.render();
+        }
+
+        sort(columnIndex) {
+            if (this.sortColumn === columnIndex) {
+                this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                this.sortColumn = columnIndex;
+                this.sortDirection = 'asc';
+            }
+
+            this.filteredData.sort((a, b) => {
+                const aVal = a[columnIndex];
+                const bVal = b[columnIndex];
+                
+                // Try to parse as numbers
+                const aNum = parseFloat(aVal);
+                const bNum = parseFloat(bVal);
+                
+                let comparison = 0;
+                if (!isNaN(aNum) && !isNaN(bNum)) {
+                    comparison = aNum - bNum;
+                } else {
+                    comparison = aVal.localeCompare(bVal, 'ar');
+                }
+                
+                return this.sortDirection === 'asc' ? comparison : -comparison;
+            });
+
+            this.render();
+        }
+
+        render() {
+            const tbody = this.element.querySelector('tbody');
+            if (!tbody) return;
+
+            // Calculate pagination
+            const totalPages = Math.ceil(this.filteredData.length / this.options.pageSize);
+            const startIndex = (this.currentPage - 1) * this.options.pageSize;
+            const endIndex = startIndex + this.options.pageSize;
+            const pageData = this.filteredData.slice(startIndex, endIndex);
+
+            // Render rows
+            tbody.innerHTML = '';
+            pageData.forEach(rowData => {
+                const row = utils.createElement('tr');
+                rowData.forEach(cellData => {
+                    const cell = utils.createElement('td', {}, cellData);
+                    row.appendChild(cell);
+                });
+                tbody.appendChild(row);
+            });
+
+            // Update pagination
+            if (this.paginationContainer) {
+                this.renderPagination(totalPages);
+            }
+
+            // Update sort indicators
+            this.updateSortIndicators();
+        }
+
+        renderPagination(totalPages) {
+            if (totalPages <= 1) {
+                this.paginationContainer.innerHTML = '';
+                return;
+            }
+
+            let paginationHTML = '<ul class="pagination">';
+            
+            // Previous button
+            paginationHTML += `
+                <li class="pagination-item">
+                    <a href="#" class="pagination-link ${this.currentPage === 1 ? 'disabled' : ''}" 
+                       data-page="${this.currentPage - 1}">السابق</a>
+                </li>
+            `;
+
+            // Page numbers
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= this.currentPage - 2 && i <= this.currentPage + 2)) {
+                    paginationHTML += `
+                        <li class="pagination-item">
+                            <a href="#" class="pagination-link ${i === this.currentPage ? 'active' : ''}" 
+                               data-page="${i}">${i}</a>
+                        </li>
+                    `;
+                } else if (i === this.currentPage - 3 || i === this.currentPage + 3) {
+                    paginationHTML += '<li class="pagination-item"><span>...</span></li>';
                 }
             }
-        });
-    },
-    
-    async handleSubmit(e) {
-        e.preventDefault();
-        
-        const form = e.target;
-        const formData = new FormData(form);
-        const data = Object.fromEntries(formData.entries());
-        
-        // Show loading state
-        const submitBtn = form.querySelector('[type="submit"]');
-        const originalText = submitBtn.textContent;
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<div class="hr-spinner" style="width: 16px; height: 16px;"></div> جاري الحفظ...';
-        
-        try {
-            const method = form.method.toUpperCase();
-            const url = form.action.replace(window.location.origin, '').replace('/hr/', '');
-            
-            let response;
-            if (method === 'POST') {
-                response = await HRSystem.api.post(url, data);
-            } else if (method === 'PUT') {
-                response = await HRSystem.api.put(url, data);
-            }
-            
-            HRSystem.utils.showNotification('تم الحفظ بنجاح', 'success');
-            
-            // Redirect if specified
-            const redirectUrl = form.dataset.redirect;
-            if (redirectUrl) {
-                window.location.href = redirectUrl;
-            }
-            
-        } catch (error) {
-            console.error('Form submission error:', error);
-            HRSystem.utils.showNotification('حدث خطأ في الحفظ', 'danger');
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.textContent = originalText;
-        }
-    },
-    
-    handleFileUpload(e) {
-        const input = e.target;
-        const files = input.files;
-        
-        if (files.length > 0) {
-            const uploadArea = input.closest('.hr-file-upload');
-            const textElement = uploadArea.querySelector('.hr-file-upload-text');
-            
-            if (files.length === 1) {
-                textElement.textContent = `تم اختيار: ${files[0].name}`;
-            } else {
-                textElement.textContent = `تم اختيار ${files.length} ملفات`;
-            }
-        }
-    },
-    
-    setupValidation() {
-        // Add real-time validation
-        document.addEventListener('blur', (e) => {
-            if (e.target.matches('.hr-form-control[required]')) {
-                this.validateField(e.target);
-            }
-        });
-    },
-    
-    validateField(field) {
-        const isValid = field.checkValidity();
-        
-        field.classList.remove('is-valid', 'is-invalid');
-        
-        if (isValid) {
-            field.classList.add('is-valid');
-        } else {
-            field.classList.add('is-invalid');
-        }
-        
-        return isValid;
-    }
-};
 
-// ========== Modal Components - مكونات النوافذ المنبثقة ==========
+            // Next button
+            paginationHTML += `
+                <li class="pagination-item">
+                    <a href="#" class="pagination-link ${this.currentPage === totalPages ? 'disabled' : ''}" 
+                       data-page="${this.currentPage + 1}">التالي</a>
+                </li>
+            `;
 
-HRSystem.modal = {
-    show(modalId, options = {}) {
-        const modal = document.getElementById(modalId);
-        if (!modal) return;
-        
-        const backdrop = modal.querySelector('.hr-modal-backdrop') || this.createBackdrop(modal);
-        
-        // Show backdrop and modal
-        backdrop.classList.add('show');
-        modal.classList.add('show');
-        
-        // Bind close events
-        this.bindCloseEvents(modal);
-        
-        // Focus management
-        modal.focus();
-        
-        // Callback
-        if (options.onShow) {
-            options.onShow(modal);
-        }
-    },
-    
-    hide(modalId) {
-        const modal = document.getElementById(modalId);
-        if (!modal) return;
-        
-        const backdrop = modal.querySelector('.hr-modal-backdrop');
-        
-        // Hide modal and backdrop
-        modal.classList.remove('show');
-        if (backdrop) {
-            backdrop.classList.remove('show');
-        }
-        
-        // Remove after animation
-        setTimeout(() => {
-            if (backdrop && backdrop.parentElement) {
-                backdrop.remove();
-            }
-        }, 300);
-    },
-    
-    createBackdrop(modal) {
-        const backdrop = document.createElement('div');
-        backdrop.className = 'hr-modal-backdrop';
-        document.body.appendChild(backdrop);
-        return backdrop;
-    },
-    
-    bindCloseEvents(modal) {
-        // Close on backdrop click
-        const backdrop = modal.querySelector('.hr-modal-backdrop');
-        if (backdrop) {
-            backdrop.addEventListener('click', () => {
-                this.hide(modal.id);
+            paginationHTML += '</ul>';
+            this.paginationContainer.innerHTML = paginationHTML;
+
+            // Add click handlers
+            const links = this.paginationContainer.querySelectorAll('.pagination-link:not(.disabled)');
+            links.forEach(link => {
+                utils.on(link, 'click', (e) => {
+                    e.preventDefault();
+                    const page = parseInt(link.getAttribute('data-page'));
+                    if (page >= 1 && page <= totalPages) {
+                        this.currentPage = page;
+                        this.render();
+                    }
+                });
             });
         }
-        
-        // Close on close button click
-        const closeBtn = modal.querySelector('.hr-modal-close');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', () => {
-                this.hide(modal.id);
+
+        updateSortIndicators() {
+            const headers = this.element.querySelectorAll('th[data-sortable]');
+            headers.forEach((header, index) => {
+                header.classList.remove('sort-asc', 'sort-desc');
+                if (index === this.sortColumn) {
+                    header.classList.add(`sort-${this.sortDirection}`);
+                }
             });
         }
-        
-        // Close on escape key
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && modal.classList.contains('show')) {
-                this.hide(modal.id);
-            }
-        });
-    }
-};
 
-// ========== Theme Management - إدارة الثيمات ==========
-
-HRSystem.theme = {
-    init() {
-        this.applyTheme(HRSystem.theme);
-        this.bindEvents();
-    },
-    
-    bindEvents() {
-        document.addEventListener('click', (e) => {
-            if (e.target.matches('.theme-toggle')) {
-                this.toggle();
-            }
-        });
-    },
-    
-    toggle() {
-        const newTheme = HRSystem.theme === 'light' ? 'dark' : 'light';
-        this.setTheme(newTheme);
-    },
-    
-    setTheme(theme) {
-        HRSystem.theme = theme;
-        this.applyTheme(theme);
-        localStorage.setItem('hr-theme', theme);
-    },
-    
-    applyTheme(theme) {
-        document.documentElement.setAttribute('data-theme', theme);
-    }
-};
-
-// ========== Initialization - التهيئة ==========
-
-document.addEventListener('DOMContentLoaded', () => {
-    // Initialize all components
-    HRSystem.sidebar.init();
-    HRSystem.search.init();
-    HRSystem.forms.init();
-    HRSystem.theme.init();
-    
-    // Initialize data tables
-    document.querySelectorAll('[data-hr-table]').forEach(table => {
-        const config = JSON.parse(table.dataset.hrTable || '{}');
-        HRSystem.dataTable.init(table.id, config);
-    });
-    
-    // Initialize modals
-    document.addEventListener('click', (e) => {
-        if (e.target.matches('[data-hr-modal]')) {
-            e.preventDefault();
-            const modalId = e.target.dataset.hrModal;
-            HRSystem.modal.show(modalId);
+        static init() {
+            utils.$$('table[data-table]').forEach(table => {
+                const options = JSON.parse(table.getAttribute('data-table') || '{}');
+                new DataTable(table, options);
+            });
         }
-    });
-    
-    console.log('HR System initialized successfully');
-});
+    }
 
-// Export for global access
-window.HRSystem = HRSystem;
+    // Toast Notifications
+    class Toast {
+        static show(message, type = 'success', duration = 5000) {
+            const toastContainer = utils.$('#toast-container') || this.createContainer();
+            
+            const toast = utils.createElement('div', {
+                className: `alert alert-${type} toast-notification`,
+                style: 'margin-bottom: 10px; opacity: 0; transform: translateX(100%); transition: all 0.3s ease;'
+            }, `
+                <div>${message}</div>
+                <button type="button" class="alert-close">&times;</button>
+            `);
+
+            toastContainer.appendChild(toast);
+
+            // Animate in
+            setTimeout(() => {
+                toast.style.opacity = '1';
+                toast.style.transform = 'translateX(0)';
+            }, 10);
+
+            // Auto remove
+            setTimeout(() => {
+                this.remove(toast);
+            }, duration);
+
+            // Manual close
+            const closeBtn = toast.querySelector('.alert-close');
+            utils.on(closeBtn, 'click', () => this.remove(toast));
+
+            return toast;
+        }
+
+        static remove(toast) {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(100%)';
+            
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 300);
+        }
+
+        static createContainer() {
+            const container = utils.createElement('div', {
+                id: 'toast-container',
+                style: 'position: fixed; top: 20px; left: 20px; z-index: 9999; max-width: 400px;'
+            });
+            
+            document.body.appendChild(container);
+            return container;
+        }
+    }
+
+    // Initialize all components when DOM is ready
+    function init() {
+        Modal.init();
+        Dropdown.init();
+        Alert.init();
+        FormValidator.init();
+        DataTable.init();
+    }
+
+    // Auto-initialize when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
+
+    // Expose components globally
+    window.HRComponents = {
+        Modal,
+        Dropdown,
+        Alert,
+        FormValidator,
+        DataTable,
+        Toast,
+        utils
+    };
+
+})();
