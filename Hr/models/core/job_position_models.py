@@ -11,6 +11,118 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 
 
+class JobLevel(models.Model):
+    """
+    Job Level model for defining career levels and grades
+    Provides a hierarchical structure for job positions
+    """
+    
+    # Unique Identifier
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        verbose_name=_("المعرف الفريد")
+    )
+    
+    # Basic Information
+    name = models.CharField(
+        max_length=100,
+        verbose_name=_("اسم المستوى الوظيفي")
+    )
+    
+    name_en = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+        verbose_name=_("الاسم بالإنجليزية")
+    )
+    
+    code = models.CharField(
+        max_length=20,
+        unique=True,
+        verbose_name=_("كود المستوى")
+    )
+    
+    # Hierarchical Level
+    level_order = models.PositiveIntegerField(
+        default=0,
+        verbose_name=_("ترتيب المستوى"),
+        help_text=_("ترتيب المستوى في الهيكل التنظيمي (الأقل هو الأعلى)")
+    )
+    
+    # Description
+    description = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=_("وصف المستوى")
+    )
+    
+    # Salary Range
+    min_salary = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("الحد الأدنى للراتب")
+    )
+    
+    max_salary = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("الحد الأقصى للراتب")
+    )
+    
+    # Status
+    is_active = models.BooleanField(
+        default=True,
+        verbose_name=_("نشط")
+    )
+    
+    # Metadata
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name=_("تاريخ الإنشاء")
+    )
+    
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name=_("تاريخ التحديث")
+    )
+    
+    class Meta:
+        verbose_name = _("مستوى وظيفي")
+        verbose_name_plural = _("مستويات وظيفية")
+        ordering = ['level_order', 'name']
+        indexes = [
+            models.Index(fields=['code']),
+            models.Index(fields=['level_order']),
+            models.Index(fields=['is_active']),
+        ]
+    
+    def __str__(self):
+        return self.name
+    
+    def clean(self):
+        """Validate job level data"""
+        super().clean()
+        
+        # Validate salary range
+        if self.min_salary and self.max_salary:
+            if self.min_salary > self.max_salary:
+                raise ValidationError(_("الحد الأدنى للراتب لا يمكن أن يكون أكبر من الحد الأقصى"))
+    
+    def save(self, *args, **kwargs):
+        """Override save to auto-generate code if not provided"""
+        if not self.code:
+            level_count = JobLevel.objects.count()
+            self.code = f"JL{level_count + 1:03d}"
+        
+        super().save(*args, **kwargs)
+
+
 class JobPosition(models.Model):
     """
     Job Position model for defining roles and positions within departments

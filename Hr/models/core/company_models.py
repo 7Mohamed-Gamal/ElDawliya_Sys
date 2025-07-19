@@ -1,19 +1,20 @@
 """
-Company Models for HRMS
-Handles company-level information and settings
+Company and Branch Models for HRMS
+Handles company structure, branches, and organizational hierarchy
 """
 
 import uuid
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from django.core.validators import RegexValidator
+from django.core.validators import RegexValidator, EmailValidator
 from django.conf import settings
+from django.core.exceptions import ValidationError
 
 
 class Company(models.Model):
     """
-    Company model for multi-company HRMS support
-    Stores company information, branding, and configuration
+    Company model for managing multiple companies within the system
+    Supports multi-tenant architecture with complete company information
     """
     
     # Unique Identifier
@@ -27,73 +28,61 @@ class Company(models.Model):
     # Basic Information
     name = models.CharField(
         max_length=200,
-        verbose_name=_("اسم الشركة"),
-        help_text=_("الاسم التجاري للشركة")
+        verbose_name=_("اسم الشركة")
     )
     
-    legal_name = models.CharField(
+    name_english = models.CharField(
         max_length=200,
         null=True,
         blank=True,
-        verbose_name=_("الاسم القانوني"),
-        help_text=_("الاسم القانوني المسجل للشركة")
+        verbose_name=_("الاسم بالإنجليزية")
     )
     
-    # Registration Information
-    tax_id = models.CharField(
-        max_length=50,
+    code = models.CharField(
+        max_length=20,
         unique=True,
-        null=True,
-        blank=True,
-        verbose_name=_("الرقم الضريبي"),
+        verbose_name=_("كود الشركة"),
         validators=[
             RegexValidator(
-                regex=r'^[0-9A-Za-z\-]+$',
-                message=_("الرقم الضريبي يجب أن يحتوي على أرقام وحروف فقط")
+                regex=r'^[A-Z0-9\-]+$',
+                message=_("كود الشركة يجب أن يحتوي على أحرف كبيرة وأرقام فقط")
             )
         ]
     )
     
-    registration_number = models.CharField(
+    # Legal Information
+    commercial_register = models.CharField(
+        max_length=50,
+        unique=True,
+        verbose_name=_("رقم السجل التجاري")
+    )
+    
+    tax_number = models.CharField(
+        max_length=50,
+        unique=True,
+        verbose_name=_("الرقم الضريبي")
+    )
+    
+    vat_number = models.CharField(
         max_length=50,
         null=True,
         blank=True,
-        verbose_name=_("رقم السجل التجاري"),
-        help_text=_("رقم السجل التجاري للشركة")
+        verbose_name=_("رقم ضريبة القيمة المضافة")
     )
     
     # Contact Information
-    email = models.EmailField(
-        null=True,
-        blank=True,
-        verbose_name=_("البريد الإلكتروني")
-    )
-    
-    phone = models.CharField(
-        max_length=20,
-        null=True,
-        blank=True,
-        verbose_name=_("رقم الهاتف")
-    )
-    
-    website = models.URLField(
-        null=True,
-        blank=True,
-        verbose_name=_("الموقع الإلكتروني")
-    )
-    
-    # Address Information
     address = models.TextField(
-        null=True,
-        blank=True,
         verbose_name=_("العنوان")
     )
     
     city = models.CharField(
         max_length=100,
-        null=True,
-        blank=True,
         verbose_name=_("المدينة")
+    )
+    
+    state = models.CharField(
+        max_length=100,
+        verbose_name=_("المحافظة/الولاية")
     )
     
     country = models.CharField(
@@ -109,7 +98,36 @@ class Company(models.Model):
         verbose_name=_("الرمز البريدي")
     )
     
-    # Branding
+    phone = models.CharField(
+        max_length=20,
+        verbose_name=_("رقم الهاتف"),
+        validators=[
+            RegexValidator(
+                regex=r'^\+?1?\d{9,15}$',
+                message=_("رقم الهاتف يجب أن يكون صالحاً")
+            )
+        ]
+    )
+    
+    fax = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True,
+        verbose_name=_("رقم الفاكس")
+    )
+    
+    email = models.EmailField(
+        verbose_name=_("البريد الإلكتروني"),
+        validators=[EmailValidator()]
+    )
+    
+    website = models.URLField(
+        null=True,
+        blank=True,
+        verbose_name=_("الموقع الإلكتروني")
+    )
+    
+    # Company Logo and Branding
     logo = models.ImageField(
         upload_to='company_logos/',
         null=True,
@@ -117,26 +135,27 @@ class Company(models.Model):
         verbose_name=_("شعار الشركة")
     )
     
-    primary_color = models.CharField(
-        max_length=7,
-        default="#007bff",
-        verbose_name=_("اللون الأساسي"),
-        help_text=_("اللون الأساسي لواجهة النظام (Hex Color)")
-    )
-    
-    secondary_color = models.CharField(
-        max_length=7,
-        default="#6c757d",
-        verbose_name=_("اللون الثانوي"),
-        help_text=_("اللون الثانوي لواجهة النظام (Hex Color)")
-    )
-    
     # Business Information
+    BUSINESS_TYPES = [
+        ('corporation', _('شركة مساهمة')),
+        ('llc', _('شركة ذات مسؤولية محدودة')),
+        ('partnership', _('شراكة')),
+        ('sole_proprietorship', _('مؤسسة فردية')),
+        ('government', _('جهة حكومية')),
+        ('ngo', _('منظمة غير ربحية')),
+        ('other', _('أخرى')),
+    ]
+    
+    business_type = models.CharField(
+        max_length=30,
+        choices=BUSINESS_TYPES,
+        default='llc',
+        verbose_name=_("نوع النشاط التجاري")
+    )
+    
     industry = models.CharField(
         max_length=100,
-        null=True,
-        blank=True,
-        verbose_name=_("نوع النشاط")
+        verbose_name=_("القطاع/الصناعة")
     )
     
     established_date = models.DateField(
@@ -145,24 +164,20 @@ class Company(models.Model):
         verbose_name=_("تاريخ التأسيس")
     )
     
-    employee_count = models.PositiveIntegerField(
-        default=0,
-        verbose_name=_("عدد الموظفين"),
-        help_text=_("العدد التقريبي للموظفين")
-    )
+    # Financial Information
+    CURRENCIES = [
+        ('EGP', _('جنيه مصري')),
+        ('SAR', _('ريال سعودي')),
+        ('AED', _('درهم إماراتي')),
+        ('USD', _('دولار أمريكي')),
+        ('EUR', _('يورو')),
+    ]
     
-    # System Configuration
-    timezone = models.CharField(
-        max_length=50,
-        default="Africa/Cairo",
-        verbose_name=_("المنطقة الزمنية")
-    )
-    
-    currency = models.CharField(
+    default_currency = models.CharField(
         max_length=3,
-        default="EGP",
-        verbose_name=_("العملة"),
-        help_text=_("رمز العملة (ISO 4217)")
+        choices=CURRENCIES,
+        default='EGP',
+        verbose_name=_("العملة الافتراضية")
     )
     
     fiscal_year_start = models.DateField(
@@ -171,25 +186,17 @@ class Company(models.Model):
         verbose_name=_("بداية السنة المالية")
     )
     
-    # HR Settings (stored as JSON)
-    hr_settings = models.JSONField(
-        default=dict,
-        verbose_name=_("إعدادات الموارد البشرية"),
-        help_text=_("إعدادات خاصة بنظام الموارد البشرية")
+    # System Settings
+    timezone = models.CharField(
+        max_length=50,
+        default='Africa/Cairo',
+        verbose_name=_("المنطقة الزمنية")
     )
     
-    # Payroll Settings
-    payroll_settings = models.JSONField(
-        default=dict,
-        verbose_name=_("إعدادات الرواتب"),
-        help_text=_("إعدادات خاصة بنظام الرواتب")
-    )
-    
-    # Leave Settings
-    leave_settings = models.JSONField(
-        default=dict,
-        verbose_name=_("إعدادات الإجازات"),
-        help_text=_("إعدادات خاصة بنظام الإجازات")
+    language = models.CharField(
+        max_length=10,
+        default='ar',
+        verbose_name=_("اللغة الافتراضية")
     )
     
     # Status and Metadata
@@ -223,68 +230,48 @@ class Company(models.Model):
         db_table = 'hrms_company'
         ordering = ['name']
         indexes = [
-            models.Index(fields=['name']),
-            models.Index(fields=['tax_id']),
+            models.Index(fields=['code']),
+            models.Index(fields=['commercial_register']),
+            models.Index(fields=['tax_number']),
             models.Index(fields=['is_active']),
         ]
     
     def __str__(self):
         return self.name
     
-    def get_active_employees_count(self):
-        """Get count of active employees in this company"""
-        return self.employees.filter(status='active').count()
+    def clean(self):
+        """Validate company data"""
+        super().clean()
+        
+        # Ensure code is uppercase
+        if self.code:
+            self.code = self.code.upper()
     
-    def get_departments_count(self):
-        """Get count of departments in this company"""
-        return self.departments.filter(is_active=True).count()
+    def get_total_employees(self):
+        """Get total number of active employees across all branches"""
+        return sum(branch.get_total_employees() for branch in self.branches.filter(is_active=True))
     
-    def get_branches_count(self):
-        """Get count of branches in this company"""
-        return self.branches.filter(is_active=True).count()
-    
-    @property
-    def full_address(self):
-        """Get formatted full address"""
-        address_parts = []
-        if self.address:
-            address_parts.append(self.address)
-        if self.city:
-            address_parts.append(self.city)
-        if self.country:
-            address_parts.append(self.country)
-        if self.postal_code:
-            address_parts.append(self.postal_code)
-        return ", ".join(address_parts)
+    def get_total_departments(self):
+        """Get total number of departments across all branches"""
+        return sum(branch.departments.filter(is_active=True).count() for branch in self.branches.filter(is_active=True))
     
     def save(self, *args, **kwargs):
-        """Override save to set default settings"""
-        if not self.hr_settings:
-            self.hr_settings = {
-                'working_hours_per_day': 8,
-                'working_days_per_week': 5,
-                'probation_period_days': 90,
-                'notice_period_days': 30,
-                'overtime_rate': 1.5,
-                'weekend_days': [5, 6],  # Friday and Saturday
-            }
-        
-        if not self.payroll_settings:
-            self.payroll_settings = {
-                'pay_frequency': 'monthly',
-                'pay_day': 1,  # 1st of each month
-                'tax_calculation_method': 'progressive',
-                'social_insurance_rate': 0.14,
-                'health_insurance_rate': 0.01,
-            }
-        
-        if not self.leave_settings:
-            self.leave_settings = {
-                'annual_leave_days': 21,
-                'sick_leave_days': 30,
-                'maternity_leave_days': 90,
-                'paternity_leave_days': 3,
-                'carry_forward_limit': 7,
-            }
+        """Override save to auto-generate code if not provided"""
+        if not self.code:
+            # Generate code from company name
+            name_parts = self.name.split()
+            if len(name_parts) >= 2:
+                self.code = ''.join([part[:2].upper() for part in name_parts[:3]])
+            else:
+                self.code = self.name[:4].upper()
+            
+            # Ensure uniqueness
+            counter = 1
+            original_code = self.code
+            while Company.objects.filter(code=self.code).exists():
+                self.code = f"{original_code}{counter:02d}"
+                counter += 1
         
         super().save(*args, **kwargs)
+
+

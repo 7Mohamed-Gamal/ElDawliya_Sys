@@ -1,32 +1,5 @@
-from django.db import models
-from django.utils.translation import gettext_lazy as _
-from Hr.models import Department
+# This file has been moved to legacy/legacy_models.py
+# to avoid conflicts with the new JobPosition model in core/job_position_models.py
 
-class HrJob(models.Model):
-    jop_code = models.IntegerField(  # اسم الحقل: jop_code (بالإنجليزية o)
-        db_column='Jop_Code', 
-        primary_key=True,
-        verbose_name=_("رمز الوظيفة")
-    )
-    jop_name = models.CharField(
-        db_column='Jop_Name',
-        max_length=50,
-        verbose_name=_("اسم الوظيفة")
-    )
-    department = models.ForeignKey(
-        Department,
-        db_column='Dept_Code',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        verbose_name=_("القسم")
-    )
-
-    def __str__(self):
-        return self.jop_name or ''
-
-    class Meta:
-        managed = False  # Changed to False to avoid conflicts with legacy Job model
-        db_table = 'Tbl_Jop'
-        verbose_name = _("الوظيفة")
-        verbose_name_plural = _("الوظائف")
+# The HrJob model has been moved to legacy/legacy_models.py
+# This file is kept for backward compatibility but should not be used for new code

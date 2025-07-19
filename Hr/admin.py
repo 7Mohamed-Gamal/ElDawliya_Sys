@@ -9,35 +9,37 @@ admin.site.index_title = _('لوحة تحكم الموارد البشرية')
 # استيراد النماذج المتاحة فقط
 from Hr.models import (
     # Core Organizational Models
-    Company, Branch, Department, JobPosition,
+    Company, Branch, Department, JobPosition, JobLevel,
 
     # Employee Management Models
-    Employee, EmployeeDocument, EmployeeEmergencyContact, EmployeeTraining,
+    Employee, EmployeeDocument, EmployeeContact, EmployeeEducation,
+    EmployeeExperience, EmployeeFamily, EmployeeBank,
 
     # Attendance & Time Management Models
     WorkShift, ShiftAssignment, AttendanceMachine, MachineUser, AttendanceRecord, AttendanceSummary,
 
     # Leave Management Models
-    LeaveType, LeavePolicy, LeaveRequest, LeaveBalance,
+    LeaveType, LeavePolicy, LeaveRequest, LeaveApproval, LeaveBalance, LeaveTransaction,
 
     # Payroll Management Models
-    SalaryComponent,
+    SalaryComponent, PayrollPeriod, EmployeeSalaryStructure, EmployeeSalaryComponent,
+    PayrollEntry, PayrollDetail, PayrollDetailHistory,
 
-    # TODO: Import legacy models when they are created
-    # Department, Job, JobInsurance, Car, Employee,
-    # SalaryItem, EmployeeSalaryItem, PayrollPeriod, PayrollEntry, PayrollItemDetail,
-    # AttendanceRule, EmployeeAttendanceRule, OfficialHoliday, AttendanceMachine,
-    # AttendanceRecord, AttendanceSummary, PickupPoint, EmployeeTask, EmployeeNote,
-    # EmployeeFile, HrTask, LeaveType, EmployeeLeave, EmployeeEvaluation
+    # Legacy Models
+    Job, JobInsurance, Car, HrJob, LegacyDepartment,
+    LegacyPayrollEntry, PayrollItemDetail, SalaryItem, EmployeeSalaryItem,
+    AttendanceRule, EmployeeAttendanceRule, OfficialHoliday,
+    PickupPoint, EmployeeNote, EmployeeNoteHistory, EmployeeFile, 
+    HrTask, EmployeeLeave, EmployeeEvaluation
 )
 
 # ==================== CORE ORGANIZATIONAL MODELS ====================
 
 @admin.register(Company)
 class CompanyAdmin(admin.ModelAdmin):
-    list_display = ['name', 'tax_id', 'is_active', 'created_at']
+    list_display = ['name', 'tax_number', 'is_active', 'created_at']
     list_filter = ['is_active', 'created_at']
-    search_fields = ['name', 'tax_id', 'legal_name']
+    search_fields = ['name', 'tax_number', 'commercial_register']
     ordering = ['name']
 
 @admin.register(Branch)
@@ -99,18 +101,18 @@ class EmployeeDocumentAdmin(admin.ModelAdmin):
     search_fields = ['employee__full_name', 'title']
     # autocomplete_fields = ['employee']
 
-@admin.register(EmployeeEmergencyContact)
-class EmployeeEmergencyContactAdmin(admin.ModelAdmin):
-    list_display = ['employee', 'full_name', 'relationship', 'primary_phone', 'is_primary']
-    list_filter = ['relationship', 'is_primary']
-    search_fields = ['employee__full_name', 'full_name', 'primary_phone']
+@admin.register(EmployeeContact)
+class EmployeeContactAdmin(admin.ModelAdmin):
+    list_display = ['employee', 'contact_type', 'is_primary', 'phone', 'email']
+    list_filter = ['contact_type', 'is_primary']
+    search_fields = ['employee__full_name', 'phone', 'email']
     # autocomplete_fields = ['employee']
 
-@admin.register(EmployeeTraining)
-class EmployeeTrainingAdmin(admin.ModelAdmin):
-    list_display = ['employee', 'title', 'training_type', 'start_date', 'end_date', 'status']
-    list_filter = ['training_type', 'status']
-    search_fields = ['employee__full_name', 'title']
+@admin.register(EmployeeEducation)
+class EmployeeEducationAdmin(admin.ModelAdmin):
+    list_display = ['employee', 'degree_name', 'institution_name', 'start_date', 'end_date', 'is_verified']
+    list_filter = ['education_type', 'is_verified']
+    search_fields = ['employee__full_name', 'degree_name', 'institution_name']
     # autocomplete_fields = ['employee']
     date_hierarchy = 'start_date'
 

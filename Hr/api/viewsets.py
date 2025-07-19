@@ -29,7 +29,8 @@ from Hr.models.attendance.attendance_record_models import AttendanceRecord
 from Hr.models.attendance.work_shift_models import WorkShift
 from Hr.models.attendance.attendance_machine_models import AttendanceMachine
 from Hr.models.payroll.payroll_period_models import PayrollPeriod
-from Hr.models.payroll.employee_salary_structure_models import EmployeeSalaryStructure, SalaryComponent
+from Hr.models.payroll.employee_salary_structure_models import EmployeeSalaryStructure
+from Hr.models.payroll.salary_component_models import SalaryComponent
 
 from Hr.services import (
     EmployeeService, CompanyService, BranchService, DepartmentService, 

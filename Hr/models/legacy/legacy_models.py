@@ -194,7 +194,7 @@ class LegacyPayrollPeriod(models.Model):
         verbose_name_plural = _("فترات الرواتب القديمة")
 
 
-class PayrollEntry(models.Model):
+class LegacyPayrollEntry(models.Model):
     """Legacy Payroll Entry model"""
     period = models.ForeignKey(LegacyPayrollPeriod, on_delete=models.CASCADE, verbose_name=_("الفترة"))
     employee = models.ForeignKey('Hr.Employee', on_delete=models.CASCADE, verbose_name=_("الموظف"))
@@ -205,13 +205,13 @@ class PayrollEntry(models.Model):
     class Meta:
         managed = True
         db_table = 'Tbl_Payroll_Entry'
-        verbose_name = _("قيد الراتب")
-        verbose_name_plural = _("قيود الرواتب")
+        verbose_name = _("قيد الراتب (قديم)")
+        verbose_name_plural = _("قيود الرواتب (قديمة)")
 
 
 class PayrollItemDetail(models.Model):
     """Legacy Payroll Item Detail model"""
-    payroll_entry = models.ForeignKey(PayrollEntry, on_delete=models.CASCADE, verbose_name=_("قيد الراتب"))
+    payroll_entry = models.ForeignKey(LegacyPayrollEntry, on_delete=models.CASCADE, verbose_name=_("قيد الراتب"))
     salary_item = models.ForeignKey(SalaryItem, on_delete=models.CASCADE, verbose_name=_("بند الراتب"))
     amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("المبلغ"))
 
@@ -365,5 +365,36 @@ class EmployeeEvaluation(models.Model):
         verbose_name = _("تقييم الموظف")
         verbose_name_plural = _("تقييمات الموظفين")
 
+
+# HrJob model moved from job_models.py
+class HrJob(models.Model):
+    """Legacy HrJob model - matches Tbl_Jop table structure with original field names"""
+    jop_code = models.IntegerField(  # اسم الحقل: jop_code (بالإنجليزية o)
+        db_column='Jop_Code', 
+        primary_key=True,
+        verbose_name=_("رمز الوظيفة")
+    )
+    jop_name = models.CharField(
+        db_column='Jop_Name',
+        max_length=50,
+        verbose_name=_("اسم الوظيفة")
+    )
+    department = models.ForeignKey(
+        LegacyDepartment,
+        db_column='Dept_Code',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name=_("القسم")
+    )
+
+    def __str__(self):
+        return self.jop_name or ''
+
+    class Meta:
+        managed = True  # Changed to True to manage this model in the legacy namespace
+        db_table = 'Tbl_Jop'
+        verbose_name = _("الوظيفة (قديم)")
+        verbose_name_plural = _("الوظائف (قديمة)")
 
 # Note: All employee references now point to Hr.Employee model

@@ -5,13 +5,16 @@ from django.utils.translation import gettext_lazy as _
 from Hr.models.core.company_models import Company
 from Hr.models.core.branch_models import Branch
 from Hr.models.core.department_models import Department
-from Hr.models.core.job_position_models import JobPosition
+from Hr.models.core.job_position_models import JobPosition, JobLevel
 
 # Employee Management Models
 from Hr.models.employee.employee_models import Employee
 from Hr.models.employee.employee_document_models import EmployeeDocument
-from Hr.models.employee.employee_emergency_contact_models import EmployeeEmergencyContact
-from Hr.models.employee.employee_training_models import EmployeeTraining
+from Hr.models.employee.employee_contact_models import EmployeeContact
+from Hr.models.employee.employee_education_models import EmployeeEducation
+from Hr.models.employee.employee_experience_models import EmployeeExperience
+from Hr.models.employee.employee_family_models import EmployeeFamily
+from Hr.models.employee.employee_bank_models import EmployeeBank
 
 # Attendance & Time Management Models
 from Hr.models.attendance.work_shift_models import WorkShift, ShiftAssignment
@@ -21,16 +24,15 @@ from Hr.models.attendance.attendance_record_models import AttendanceRecord, Atte
 # Leave Management Models
 from Hr.models.leave.leave_type_models import LeaveType
 from Hr.models.leave.leave_policy_models import LeavePolicy
-from Hr.models.leave.leave_request_models import LeaveRequest
-from Hr.models.leave.leave_balance_models import LeaveBalance
+from Hr.models.leave.leave_request_models import LeaveRequest, LeaveApproval
+from Hr.models.leave.leave_balance_models import LeaveBalance, LeaveTransaction
 
 # Payroll Management Models
 from Hr.models.payroll.salary_component_models import SalaryComponent
 from Hr.models.payroll.payroll_period_models import PayrollPeriod
 from Hr.models.payroll.employee_salary_structure_models import EmployeeSalaryStructure, EmployeeSalaryComponent
-# TODO: Create missing payroll model files
-# from Hr.models.payroll.payroll_entry_models import PayrollEntry
-# from Hr.models.payroll.tax_configuration_models import TaxConfiguration
+from Hr.models.payroll.payroll_entry_models import PayrollEntry
+from Hr.models.payroll.payroll_detail_models import PayrollDetail, PayrollDetailHistory
 
 # Performance Management Models
 # TODO: Create missing performance model files
@@ -49,13 +51,11 @@ from Hr.models.payroll.employee_salary_structure_models import EmployeeSalaryStr
 
 # Legacy Models (for backward compatibility)
 from Hr.models.legacy.legacy_models import (
-    Job, JobInsurance, Car
-    # TODO: Add back when other legacy model files are created
-    # SalaryItem, EmployeeSalaryItem,
-    # AttendanceRule, EmployeeAttendanceRule, OfficialHoliday,
-    # PayrollItemDetail, PickupPoint, EmployeeNote,
-    # EmployeeNoteHistory, EmployeeFile, HrTask, EmployeeLeave,
-    # EmployeeEvaluation
+    Job, JobInsurance, Car, HrJob, LegacyDepartment,
+    LegacyPayrollEntry, PayrollItemDetail, SalaryItem, EmployeeSalaryItem,
+    AttendanceRule, EmployeeAttendanceRule, OfficialHoliday,
+    PickupPoint, EmployeeNote, EmployeeNoteHistory, EmployeeFile, 
+    HrTask, EmployeeLeave, EmployeeEvaluation
 )
 
 # Import task models (avoiding conflicts with legacy models)
@@ -65,22 +65,23 @@ from Hr.models.legacy.legacy_models import (
 # Export all models
 __all__ = [
     # Core Organizational Models
-    'Company', 'Branch', 'Department', 'JobPosition',
+    'Company', 'Branch', 'Department', 'JobPosition', 'JobLevel',
 
     # Employee Management Models
-    'Employee', 'EmployeeDocument', 'EmployeeEmergencyContact', 'EmployeeTraining',
+    'Employee', 'EmployeeDocument', 'EmployeeContact', 'EmployeeEducation',
+    'EmployeeExperience', 'EmployeeFamily', 'EmployeeBank',
 
     # Attendance & Time Management Models
     'WorkShift', 'ShiftAssignment', 'AttendanceMachine', 'MachineUser', 
     'AttendanceRecord', 'AttendanceSummary',
 
     # Leave Management Models
-    'LeaveType', 'LeavePolicy', 'LeaveRequest', 'LeaveBalance',
+    'LeaveType', 'LeavePolicy', 'LeaveRequest', 'LeaveApproval', 
+    'LeaveBalance', 'LeaveTransaction',
 
     # Payroll Management Models
     'SalaryComponent', 'PayrollPeriod', 'EmployeeSalaryStructure', 'EmployeeSalaryComponent',
-    # TODO: Add back when model files are created
-    # 'PayrollEntry', 'TaxConfiguration',
+    'PayrollEntry', 'PayrollDetail', 'PayrollDetailHistory',
 
     # Performance Management Models
     # TODO: Add back when model files are created
@@ -95,15 +96,12 @@ __all__ = [
     # 'HRNotification',
 
     # Legacy Models (backward compatibility)
-    'Job', 'JobInsurance', 'Car',
+    'Job', 'JobInsurance', 'Car', 'HrJob', 'LegacyDepartment',
+    'LegacyPayrollEntry', 'PayrollItemDetail', 'SalaryItem', 'EmployeeSalaryItem',
+    'AttendanceRule', 'EmployeeAttendanceRule', 'OfficialHoliday',
+    'PickupPoint', 'EmployeeNote', 'EmployeeNoteHistory', 'EmployeeFile', 
+    'HrTask', 'EmployeeLeave', 'EmployeeEvaluation'
 
     # Task Models - temporarily disabled due to conflicts
-    # 'EmployeeTask', 'TaskStep',
-
-    # TODO: Add back when other legacy model files are created
-    # 'SalaryItem', 'EmployeeSalaryItem',
-    # 'AttendanceRule', 'EmployeeAttendanceRule', 'OfficialHoliday',
-    # 'PayrollItemDetail', 'PickupPoint', 'EmployeeNote',
-    # 'EmployeeNoteHistory', 'EmployeeFile', 'HrTask', 'EmployeeLeave',
-    # 'EmployeeEvaluation'
+    # 'EmployeeTask', 'TaskStep'
 ]

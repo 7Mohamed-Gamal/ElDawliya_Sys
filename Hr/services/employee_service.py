@@ -14,7 +14,8 @@ import logging
 
 from Hr.models import (
     Employee, Company, Branch, Department, JobPosition,
-    EmployeeDocument, EmployeeEmergencyContact, EmployeeTraining
+    EmployeeDocument, 
+    # EmployeeEmergencyContact, EmployeeTraining  # Temporarily commented out
 )
 
 logger = logging.getLogger(__name__)

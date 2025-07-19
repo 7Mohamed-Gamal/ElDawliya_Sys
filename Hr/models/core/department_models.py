@@ -1,6 +1,6 @@
 """
 Department Models for HRMS
-Handles department structure and hierarchy
+Handles organizational departments with hierarchical structure
 """
 
 import uuid
@@ -13,8 +13,8 @@ from django.core.exceptions import ValidationError
 
 class Department(models.Model):
     """
-    Department model for organizational structure
-    Supports hierarchical department structure with parent-child relationships
+    Department model for managing organizational structure
+    Supports hierarchical departments with parent-child relationships
     """
     
     # Unique Identifier
@@ -25,31 +25,12 @@ class Department(models.Model):
         verbose_name=_("المعرف الفريد")
     )
     
-    # Relationship to Company and Branch
-    company = models.ForeignKey(
-        'Company',
-        on_delete=models.CASCADE,
-        related_name='departments',
-        verbose_name=_("الشركة")
-    )
-    
+    # Relationship to Branch
     branch = models.ForeignKey(
         'Branch',
         on_delete=models.CASCADE,
         related_name='departments',
-        null=True,
-        blank=True,
         verbose_name=_("الفرع")
-    )
-    
-    # Hierarchical Structure
-    parent_department = models.ForeignKey(
-        'self',
-        on_delete=models.CASCADE,
-        null=True,
-        blank=True,
-        related_name='sub_departments',
-        verbose_name=_("القسم الأب")
     )
     
     # Basic Information
@@ -58,11 +39,16 @@ class Department(models.Model):
         verbose_name=_("اسم القسم")
     )
     
+    name_english = models.CharField(
+        max_length=200,
+        null=True,
+        blank=True,
+        verbose_name=_("الاسم بالإنجليزية")
+    )
+    
     code = models.CharField(
         max_length=20,
-        unique=True,
         verbose_name=_("كود القسم"),
-        help_text=_("كود فريد للقسم"),
         validators=[
             RegexValidator(
                 regex=r'^[A-Z0-9\-]+$',
@@ -77,18 +63,34 @@ class Department(models.Model):
         verbose_name=_("وصف القسم")
     )
     
+    # Hierarchical Structure
+    parent = models.ForeignKey(
+        'self',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='sub_departments',
+        verbose_name=_("القسم الأب")
+    )
+    
+    level = models.PositiveIntegerField(
+        default=0,
+        verbose_name=_("مستوى القسم"),
+        help_text=_("مستوى القسم في الهيكل التنظيمي")
+    )
+    
     # Management
     manager = models.ForeignKey(
-        'Hr.Employee',
+        'Employee',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name='managed_departments',
         verbose_name=_("مدير القسم")
     )
-
+    
     assistant_manager = models.ForeignKey(
-        'Hr.Employee',
+        'Employee',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -96,50 +98,44 @@ class Department(models.Model):
         verbose_name=_("مساعد مدير القسم")
     )
     
-    # Contact Information
-    email = models.EmailField(
-        null=True,
-        blank=True,
-        verbose_name=_("البريد الإلكتروني")
+    # Department Type and Function
+    DEPARTMENT_TYPES = [
+        ('administrative', _('إداري')),
+        ('operational', _('تشغيلي')),
+        ('support', _('دعم')),
+        ('technical', _('تقني')),
+        ('sales', _('مبيعات')),
+        ('marketing', _('تسويق')),
+        ('finance', _('مالي')),
+        ('hr', _('موارد بشرية')),
+        ('it', _('تكنولوجيا المعلومات')),
+        ('legal', _('قانوني')),
+        ('procurement', _('مشتريات')),
+        ('quality', _('جودة')),
+        ('research', _('بحث وتطوير')),
+        ('production', _('إنتاج')),
+        ('logistics', _('لوجستيات')),
+        ('customer_service', _('خدمة العملاء')),
+        ('other', _('أخرى')),
+    ]
+    
+    department_type = models.CharField(
+        max_length=20,
+        choices=DEPARTMENT_TYPES,
+        default='administrative',
+        verbose_name=_("نوع القسم")
     )
     
-    phone = models.CharField(
+    # Budget and Cost Center
+    cost_center_code = models.CharField(
         max_length=20,
         null=True,
         blank=True,
-        verbose_name=_("رقم الهاتف")
+        unique=True,
+        verbose_name=_("كود مركز التكلفة")
     )
     
-    extension = models.CharField(
-        max_length=10,
-        null=True,
-        blank=True,
-        verbose_name=_("رقم التحويلة")
-    )
-    
-    # Location Information
-    floor = models.CharField(
-        max_length=20,
-        null=True,
-        blank=True,
-        verbose_name=_("الطابق")
-    )
-    
-    room_number = models.CharField(
-        max_length=20,
-        null=True,
-        blank=True,
-        verbose_name=_("رقم المكتب")
-    )
-    
-    location_notes = models.TextField(
-        null=True,
-        blank=True,
-        verbose_name=_("ملاحظات الموقع")
-    )
-    
-    # Financial Information
-    budget = models.DecimalField(
+    annual_budget = models.DecimalField(
         max_digits=15,
         decimal_places=2,
         null=True,
@@ -147,60 +143,46 @@ class Department(models.Model):
         verbose_name=_("الميزانية السنوية")
     )
     
-    cost_center_code = models.CharField(
+    # Location and Physical Information
+    location = models.CharField(
+        max_length=200,
+        null=True,
+        blank=True,
+        verbose_name=_("الموقع")
+    )
+    
+    floor = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        verbose_name=_("الطابق")
+    )
+    
+    extension = models.CharField(
         max_length=20,
         null=True,
         blank=True,
-        verbose_name=_("كود مركز التكلفة")
+        verbose_name=_("رقم التحويلة")
     )
     
-    # Operational Information
-    employee_capacity = models.PositiveIntegerField(
-        null=True,
-        blank=True,
-        verbose_name=_("السعة القصوى للموظفين")
+    # Department Goals and KPIs
+    objectives = models.JSONField(
+        default=list,
+        verbose_name=_("أهداف القسم"),
+        help_text=_("الأهداف الاستراتيجية للقسم")
     )
     
-    working_hours_start = models.TimeField(
-        null=True,
-        blank=True,
-        verbose_name=_("بداية ساعات العمل")
+    kpis = models.JSONField(
+        default=list,
+        verbose_name=_("مؤشرات الأداء الرئيسية"),
+        help_text=_("مؤشرات الأداء الرئيسية للقسم")
     )
     
-    working_hours_end = models.TimeField(
-        null=True,
-        blank=True,
-        verbose_name=_("نهاية ساعات العمل")
-    )
-    
-    # Department Type and Category
-    DEPARTMENT_TYPES = [
-        ('operational', _('تشغيلي')),
-        ('administrative', _('إداري')),
-        ('support', _('دعم')),
-        ('technical', _('تقني')),
-        ('sales', _('مبيعات')),
-        ('finance', _('مالي')),
-        ('hr', _('موارد بشرية')),
-        ('it', _('تكنولوجيا المعلومات')),
-        ('marketing', _('تسويق')),
-        ('production', _('إنتاج')),
-        ('quality', _('جودة')),
-        ('research', _('بحث وتطوير')),
-    ]
-    
-    department_type = models.CharField(
-        max_length=20,
-        choices=DEPARTMENT_TYPES,
-        default='operational',
-        verbose_name=_("نوع القسم")
-    )
-    
-    # Department Level in Hierarchy
-    level = models.PositiveIntegerField(
-        default=1,
-        verbose_name=_("مستوى القسم"),
-        help_text=_("مستوى القسم في الهيكل التنظيمي")
+    # Working Conditions
+    working_hours = models.JSONField(
+        default=dict,
+        verbose_name=_("ساعات العمل"),
+        help_text=_("ساعات العمل الخاصة بالقسم")
     )
     
     # Department Settings
@@ -210,23 +192,28 @@ class Department(models.Model):
         help_text=_("إعدادات خاصة بالقسم")
     )
     
-    # Goals and KPIs
-    annual_goals = models.JSONField(
-        default=list,
-        verbose_name=_("الأهداف السنوية"),
-        help_text=_("قائمة بالأهداف السنوية للقسم")
+    # Capacity and Headcount
+    max_employees = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name=_("العدد الأقصى للموظفين")
     )
     
-    kpis = models.JSONField(
-        default=list,
-        verbose_name=_("مؤشرات الأداء الرئيسية"),
-        help_text=_("مؤشرات الأداء الرئيسية للقسم")
+    current_employees = models.PositiveIntegerField(
+        default=0,
+        verbose_name=_("العدد الحالي للموظفين")
     )
     
     # Status and Metadata
     is_active = models.BooleanField(
         default=True,
         verbose_name=_("نشط")
+    )
+    
+    is_profit_center = models.BooleanField(
+        default=False,
+        verbose_name=_("مركز ربح"),
+        help_text=_("هل هذا القسم مركز ربح؟")
     )
     
     established_date = models.DateField(
@@ -258,101 +245,165 @@ class Department(models.Model):
         verbose_name = _("قسم")
         verbose_name_plural = _("الأقسام")
         db_table = 'hrms_department'
-        ordering = ['company', 'level', 'name']
-        unique_together = [['company', 'code']]
+        ordering = ['branch', 'level', 'name']
+        unique_together = [['branch', 'code']]
         indexes = [
-            models.Index(fields=['company', 'name']),
-            models.Index(fields=['code']),
-            models.Index(fields=['is_active']),
-            models.Index(fields=['department_type']),
+            models.Index(fields=['branch', 'code']),
+            models.Index(fields=['parent']),
             models.Index(fields=['level']),
+            models.Index(fields=['department_type']),
+            models.Index(fields=['is_active']),
+            models.Index(fields=['cost_center_code']),
         ]
     
     def __str__(self):
-        if self.parent_department:
-            return f"{self.parent_department.name} > {self.name}"
-        return self.name
+        return f"{self.name} - {self.branch.name}"
     
     def clean(self):
         """Validate department data"""
         super().clean()
         
-        # Prevent circular references in parent-child relationships
-        if self.parent_department:
-            if self.parent_department == self:
-                raise ValidationError(_("القسم لا يمكن أن يكون أب لنفسه"))
+        # Ensure code is uppercase
+        if self.code:
+            self.code = self.code.upper()
+        
+        # Prevent circular parent relationships
+        if self.parent:
+            if self.parent == self:
+                raise ValidationError(_("القسم لا يمكن أن يكون أباً لنفسه"))
             
             # Check for circular reference
-            parent = self.parent_department
+            parent = self.parent
             while parent:
                 if parent == self:
-                    raise ValidationError(_("لا يمكن إنشاء مرجع دائري في هيكل الأقسام"))
-                parent = parent.parent_department
+                    raise ValidationError(_("لا يمكن إنشاء علاقة دائرية في هيكل الأقسام"))
+                parent = parent.parent
         
-        # Validate branch belongs to same company
-        if self.branch and self.branch.company != self.company:
-            raise ValidationError(_("الفرع يجب أن ينتمي لنفس الشركة"))
-    
-    def get_active_employees_count(self):
-        """Get count of active employees in this department"""
-        return self.employees.filter(status='active').count()
-    
-    def get_sub_departments_count(self):
-        """Get count of sub-departments"""
-        return self.sub_departments.filter(is_active=True).count()
-    
-    def get_all_sub_departments(self):
-        """Get all sub-departments recursively"""
-        sub_departments = []
-        for sub_dept in self.sub_departments.filter(is_active=True):
-            sub_departments.append(sub_dept)
-            sub_departments.extend(sub_dept.get_all_sub_departments())
-        return sub_departments
-    
-    def get_department_hierarchy(self):
-        """Get full department hierarchy path"""
-        hierarchy = [self.name]
-        parent = self.parent_department
-        while parent:
-            hierarchy.insert(0, parent.name)
-            parent = parent.parent_department
-        return " > ".join(hierarchy)
-    
-    @property
-    def full_location(self):
-        """Get formatted full location"""
-        location_parts = []
-        if self.branch:
-            location_parts.append(self.branch.name)
-        if self.floor:
-            location_parts.append(f"الطابق {self.floor}")
-        if self.room_number:
-            location_parts.append(f"مكتب {self.room_number}")
-        return ", ".join(location_parts)
+        # Validate employee count
+        if self.max_employees and self.current_employees > self.max_employees:
+            raise ValidationError(_("العدد الحالي للموظفين لا يمكن أن يتجاوز العدد الأقصى"))
     
     def save(self, *args, **kwargs):
-        """Override save to set level and default settings"""
-        # Calculate department level
-        if self.parent_department:
-            self.level = self.parent_department.level + 1
+        """Override save to set level and auto-generate code"""
+        # Set department level based on parent
+        if self.parent:
+            self.level = self.parent.level + 1
         else:
-            self.level = 1
-        
-        # Set default department settings
-        if not self.department_settings:
-            self.department_settings = {
-                'allow_overtime': True,
-                'require_manager_approval_for_leave': True,
-                'max_leave_days_without_approval': 3,
-                'performance_review_frequency': 'annual',
-                'budget_tracking_enabled': True,
-                'goal_tracking_enabled': True,
-            }
+            self.level = 0
         
         # Auto-generate code if not provided
         if not self.code:
-            company_code = self.company.name[:2].upper()
-            dept_count = Department.objects.filter(company=self.company).count()
-            self.code = f"{company_code}-DEPT{dept_count + 1:03d}"
+            branch_code = self.branch.code
+            dept_count = Department.objects.filter(branch=self.branch).count()
+            self.code = f"{branch_code}-DEPT{dept_count + 1:03d}"
+        
+        # Set default settings
+        if not self.department_settings:
+            self.department_settings = {
+                'allow_overtime': True,
+                'require_approval_for_leave': True,
+                'default_work_hours': 8,
+                'break_duration_minutes': 60,
+                'flexible_hours': False,
+            }
+        
+        # Update current employee count
+        if self.pk:
+            self.current_employees = self.employees.filter(is_active=True).count()
         
         super().save(*args, **kwargs)
+    
+    def get_full_path(self):
+        """Get full hierarchical path of the department"""
+        path = [self.name]
+        parent = self.parent
+        while parent:
+            path.insert(0, parent.name)
+            parent = parent.parent
+        return ' > '.join(path)
+    
+    def get_all_children(self):
+        """Get all child departments recursively"""
+        children = list(self.sub_departments.filter(is_active=True))
+        for child in list(children):
+            children.extend(child.get_all_children())
+        return children
+    
+    def get_all_employees(self):
+        """Get all employees in this department and its sub-departments"""
+        from .employee_models import Employee
+        
+        # Get direct employees
+        employees = list(self.employees.filter(is_active=True))
+        
+        # Get employees from sub-departments
+        for sub_dept in self.sub_departments.filter(is_active=True):
+            employees.extend(sub_dept.get_all_employees())
+        
+        return employees
+    
+    def get_total_employees_count(self):
+        """Get total count of employees including sub-departments"""
+        return len(self.get_all_employees())
+    
+    def get_available_positions(self):
+        """Get number of available positions"""
+        if self.max_employees:
+            return self.max_employees - self.current_employees
+        return None
+    
+    def is_position_available(self):
+        """Check if department has available positions"""
+        available = self.get_available_positions()
+        return available is None or available > 0
+    
+    def get_department_hierarchy(self):
+        """Get department hierarchy as a tree structure"""
+        def build_tree(dept):
+            return {
+                'id': str(dept.id),
+                'name': dept.name,
+                'code': dept.code,
+                'level': dept.level,
+                'employee_count': dept.current_employees,
+                'children': [build_tree(child) for child in dept.sub_departments.filter(is_active=True)]
+            }
+        
+        return build_tree(self)
+    
+    @property
+    def budget_utilization(self):
+        """Calculate budget utilization percentage"""
+        if not self.annual_budget:
+            return None
+        
+        # This would typically calculate actual spending vs budget
+        # For now, return a placeholder
+        return 0.0
+    
+    @property
+    def is_over_capacity(self):
+        """Check if department is over capacity"""
+        if not self.max_employees:
+            return False
+        return self.current_employees > self.max_employees
+    
+    def get_manager_hierarchy(self):
+        """Get management hierarchy for this department"""
+        hierarchy = []
+        
+        if self.manager:
+            hierarchy.append({
+                'level': 'manager',
+                'title': _('مدير القسم'),
+                'employee': self.manager
+            })
+        
+        if self.assistant_manager:
+            hierarchy.append({
+                'level': 'assistant_manager',
+                'title': _('مساعد مدير القسم'),
+                'employee': self.assistant_manager
+            })
+        
+        return hierarchy
