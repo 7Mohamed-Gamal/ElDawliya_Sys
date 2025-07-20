@@ -598,7 +598,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='hrattendancerecord',
             name='machine',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='records', to='Hr.hrattendancemachine', verbose_name='الماكينة'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='records', to='Hr.HrAttendanceMachine', verbose_name='الماكينة'),
         ),
         migrations.AddField(
             model_name='hrattendancesummary',
@@ -608,7 +608,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='hremployeeattendancerule',
             name='attendance_rule',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='employees', to='Hr.hrattendancerule', verbose_name='قاعدة الحضور'),
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='employees', to='Hr.HrAttendanceRule', verbose_name='قاعدة الحضور'),
         ),
         migrations.AddField(
             model_name='hremployeeattendancerule',

@@ -186,26 +186,25 @@ class Migration(migrations.Migration):
                 'ordering': ['employee', 'relationship', 'first_name'],
             },
         ),
-        # COMMENTED OUT - EmployeeSalaryComponent depends on non-existent Hr.salarycomponent table
-        # migrations.CreateModel(
-        #     name='EmployeeSalaryComponent',
-        #     fields=[
-        #         ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False, verbose_name='المعرف الفريد')),
-        #         ('amount', models.DecimalField(decimal_places=2, max_digits=12, verbose_name='المبلغ')),
-        #         ('override_calculation', models.BooleanField(default=False, verbose_name='تجاوز الحساب التلقائي')),
-        #         ('custom_formula', models.TextField(blank=True, null=True, verbose_name='معادلة مخصصة')),
-        #         ('conditions', models.JSONField(default=dict, help_text='شروط خاصة لهذا المكون', verbose_name='الشروط')),
-        #         ('is_active', models.BooleanField(default=True, verbose_name='نشط')),
-        #         ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')),
-        #         ('updated_at', models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')),
-        #     ],
-        #     options={
-        #         'verbose_name': 'مكون راتب موظف',
-        #         'verbose_name_plural': 'مكونات رواتب الموظفين',
-        #         'db_table': 'hrms_employee_salary_component',
-        #         'ordering': ['salary_component__display_order'],
-        #     },
-        # ),
+        migrations.CreateModel(
+            name='EmployeeSalaryComponent',
+            fields=[
+                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False, verbose_name='المعرف الفريد')),
+                ('amount', models.DecimalField(decimal_places=2, max_digits=12, verbose_name='المبلغ')),
+                ('override_calculation', models.BooleanField(default=False, verbose_name='تجاوز الحساب التلقائي')),
+                ('custom_formula', models.TextField(blank=True, null=True, verbose_name='معادلة مخصصة')),
+                ('conditions', models.JSONField(default=dict, help_text='شروط خاصة لهذا المكون', verbose_name='الشروط')),
+                ('is_active', models.BooleanField(default=True, verbose_name='نشط')),
+                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')),
+                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')),
+            ],
+            options={
+                'verbose_name': 'مكون راتب موظف',
+                'verbose_name_plural': 'مكونات رواتب الموظفين',
+                'db_table': 'hrms_employee_salary_component',
+                'ordering': ['salary_component__display_order'],
+            },
+        ),
         migrations.CreateModel(
             name='EmployeeSalaryStructure',
             fields=[
@@ -298,178 +297,152 @@ class Migration(migrations.Migration):
                 'managed': True,
             },
         ),
-        # COMMENTED OUT - PayrollDetail depends on non-existent Hr.salarycomponent table
-        # migrations.CreateModel(
-        #     name='PayrollDetail',
-        #     fields=[
-        #         ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False, verbose_name='المعرف الفريد')),
-        #         ('amount', models.DecimalField(decimal_places=2, max_digits=12, verbose_name='المبلغ')),
-        #         ('is_prorated', models.BooleanField(default=False, verbose_name='محسوب نسبياً')),
-        #         ('proration_factor', models.DecimalField(decimal_places=4, default=1.0, max_digits=5, verbose_name='معامل الحساب النسبي')),
-        #         ('original_amount', models.DecimalField(blank=True, decimal_places=2, help_text='المبلغ قبل الحساب النسبي', max_digits=12, null=True, verbose_name='المبلغ الأصلي')),
-        #         ('calculation_basis', models.DecimalField(blank=True, decimal_places=2, max_digits=12, null=True, verbose_name='أساس الحساب')),
-        #         ('calculation_method', models.CharField(blank=True, max_length=20, null=True, verbose_name='طريقة الحساب')),
-        #         ('formula_used', models.TextField(blank=True, null=True, verbose_name='المعادلة المستخدمة')),
-        #         ('is_manually_adjusted', models.BooleanField(default=False, verbose_name='معدل يدوياً')),
-        #         ('adjustment_reason', models.CharField(blank=True, max_length=200, null=True, verbose_name='سبب التعديل')),
-        #         ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')),
-        #         ('updated_at', models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')),
-        #     ],
-        #     options={
-        #         'verbose_name': 'تفاصيل الراتب',
-        #         'verbose_name_plural': 'تفاصيل الرواتب',
-        #         'db_table': 'hrms_payroll_detail',
-        #         'ordering': ['salary_component__display_order'],
-        #     },
-        # ),
-        # COMMENTED OUT - PayrollDetailHistory depends on PayrollDetail which was commented out
-        # migrations.CreateModel(
-        #     name='PayrollDetailHistory',
-        #     fields=[
-        #         ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False, verbose_name='المعرف الفريد')),
-        #         ('previous_amount', models.DecimalField(decimal_places=2, max_digits=12, verbose_name='المبلغ السابق')),
-        #         ('new_amount', models.DecimalField(decimal_places=2, max_digits=12, verbose_name='المبلغ الجديد')),
-        #         ('change_reason', models.CharField(max_length=200, verbose_name='سبب التغيير')),
-        #         ('changed_at', models.DateTimeField(auto_now_add=True, verbose_name='تاريخ التغيير')),
-        #     ],
-        #     options={
-        #         'verbose_name': 'سجل تغييرات تفاصيل الراتب',
-        #         'verbose_name_plural': 'سجلات تغييرات تفاصيل الرواتب',
-        #         'db_table': 'hrms_payroll_detail_history',
-        #         'ordering': ['-changed_at'],
-        #     },
+        migrations.CreateModel(
+            name='PayrollDetail',
+            fields=[
+                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False, verbose_name='المعرف الفريد')),
+                ('amount', models.DecimalField(decimal_places=2, max_digits=12, verbose_name='المبلغ')),
+                ('is_prorated', models.BooleanField(default=False, verbose_name='محسوب نسبياً')),
+                ('proration_factor', models.DecimalField(decimal_places=4, default=1.0, max_digits=5, verbose_name='معامل الحساب النسبي')),
+                ('original_amount', models.DecimalField(blank=True, decimal_places=2, help_text='المبلغ قبل الحساب النسبي', max_digits=12, null=True, verbose_name='المبلغ الأصلي')),
+                ('calculation_basis', models.DecimalField(blank=True, decimal_places=2, max_digits=12, null=True, verbose_name='أساس الحساب')),
+                ('calculation_method', models.CharField(blank=True, max_length=20, null=True, verbose_name='طريقة الحساب')),
+                ('formula_used', models.TextField(blank=True, null=True, verbose_name='المعادلة المستخدمة')),
+                ('is_manually_adjusted', models.BooleanField(default=False, verbose_name='معدل يدوياً')),
+                ('adjustment_reason', models.CharField(blank=True, max_length=200, null=True, verbose_name='سبب التعديل')),
+                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')),
+                ('updated_at', models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')),
+            ],
+            options={
+                'verbose_name': 'تفاصيل الراتب',
+                'verbose_name_plural': 'تفاصيل الرواتب',
+                'db_table': 'hrms_payroll_detail',
+                'ordering': ['salary_component__display_order'],
+            },
+        ),
+        migrations.CreateModel(
+            name='PayrollDetailHistory',
+            fields=[
+                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False, verbose_name='المعرف الفريد')),
+                ('previous_amount', models.DecimalField(decimal_places=2, max_digits=12, verbose_name='المبلغ السابق')),
+                ('new_amount', models.DecimalField(decimal_places=2, max_digits=12, verbose_name='المبلغ الجديد')),
+                ('change_reason', models.CharField(max_length=200, verbose_name='سبب التغيير')),
+                ('changed_at', models.DateTimeField(auto_now_add=True, verbose_name='تاريخ التغيير')),
+            ],
+            options={
+                'verbose_name': 'سجل تغييرات تفاصيل الراتب',
+                'verbose_name_plural': 'سجلات تغييرات تفاصيل الرواتب',
+                'db_table': 'hrms_payroll_detail_history',
+                'ordering': ['-changed_at'],
+            },
+        ),
+        # COMMENTED OUT - Table hrms_employee_emergency_contact does not exist
+        # migrations.AlterUniqueTogether(
+        #     name='employeeemergencycontact',
+        #     unique_together=None,
         # ),
         # COMMENTED OUT - Table hrms_employee_emergency_contact does not exist
-        # COMMENTED OUT - Model "employeeemergencycontact" table does not exist
-        # # migrations.AlterUniqueTogether(
-        # #     name='employeeemergencycontact',
-        # #     unique_together=None,
-        # # ),
-        # COMMENTED OUT - Table hrms_employee_emergency_contact does not exist
-        # COMMENTED OUT - Model "employeeemergencycontact" table does not exist
-        # # migrations.RemoveField(
-        # #     model_name='employeeemergencycontact',
-        # #     name='created_by',
-        # # ),
-        # COMMENTED OUT - Model "employeeemergencycontact" table does not exist
-        # # migrations.RemoveField(
-        # #     model_name='employeeemergencycontact',
-        # #     name='employee',
-        # # ),
+        # migrations.RemoveField(
+        #     model_name='employeeemergencycontact',
+        #     name='created_by',
+        # ),
+        # migrations.RemoveField(
+        #     model_name='employeeemergencycontact',
+        #     name='employee',
+        # ),
         # COMMENTED OUT - Table hrms_employee_training does not exist
-        # COMMENTED OUT - Model "employeetraining" table does not exist
-        # # migrations.RemoveField(
-        # #     model_name='employeetraining',
-        # #     name='approved_by',
-        # # ),
-        # COMMENTED OUT - Model "employeetraining" table does not exist
-        # # migrations.RemoveField(
-        # #     model_name='employeetraining',
-        # #     name='created_by',
-        # # ),
-        # COMMENTED OUT - Model "employeetraining" table does not exist
-        # # migrations.RemoveField(
-        # #     model_name='employeetraining',
-        # #     name='employee',
-        # # ),
-        # COMMENTED OUT - Model "hrattendancerecord" table does not exist
         # migrations.RemoveField(
-        # model_name='hrattendancerecord',
-        # name='machine',
+        #     model_name='employeetraining',
+        #     name='approved_by',
         # ),
-        # COMMENTED OUT - Model "hrattendancerecord" table does not exist
         # migrations.RemoveField(
-        # model_name='hrattendancerecord',
-        # name='employee',
+        #     model_name='employeetraining',
+        #     name='created_by',
         # ),
-        # COMMENTED OUT - Model "hremployeeattendancerule" table does not exist
         # migrations.RemoveField(
-        # model_name='hremployeeattendancerule',
-        # name='attendance_rule',
+        #     model_name='employeetraining',
+        #     name='employee',
+        # ),
+        migrations.RemoveField(
+            model_name='hrattendancerecord',
+            name='machine',
+        ),
+        migrations.RemoveField(
+            model_name='hrattendancerecord',
+            name='employee',
+        ),
+        migrations.RemoveField(
+            model_name='hremployeeattendancerule',
+            name='attendance_rule',
+        ),
+        # COMMENTED OUT - Table hrattendancesummary does not exist (table is Hr_AttendanceSummary)
+        # migrations.AlterUniqueTogether(
+        #     name='hrattendancesummary',
+        #     unique_together=None,
         # ),
         # COMMENTED OUT - Table hrattendancesummary does not exist (table is Hr_AttendanceSummary)
-        # COMMENTED OUT - Model "hrattendancesummary" table does not exist
-        # # migrations.AlterUniqueTogether(
-        # #     name='hrattendancesummary',
-        # #     unique_together=None,
-        # # ),
-        # COMMENTED OUT - Table hrattendancesummary does not exist (table is Hr_AttendanceSummary)
-        # COMMENTED OUT - Model "hrattendancesummary" table does not exist
-        # # migrations.RemoveField(
-        # #     model_name='hrattendancesummary',
-        # #     name='employee',
-        # # ),
+        # migrations.RemoveField(
+        #     model_name='hrattendancesummary',
+        #     name='employee',
+        # ),
         # COMMENTED OUT - Table hrpickuppoint does not exist (table is Hr_PickupPoint)
-        # COMMENTED OUT - Model "hrpickuppoint" table does not exist
-        # # migrations.RemoveField(
-        # #     model_name='hrpickuppoint',
-        # #     name='car',
-        # # ),
+        # migrations.RemoveField(
+        #     model_name='hrpickuppoint',
+        #     name='car',
+        # ),
         # COMMENTED OUT - Table hremployeeattendancerule does not exist (table is Hr_EmployeeAttendanceRule)
-        # COMMENTED OUT - Model "hremployeeattendancerule" table does not exist
-        # # migrations.RemoveField(
-        # #     model_name='hremployeeattendancerule',
-        # #     name='employee',
-        # # ),
+        # migrations.RemoveField(
+        #     model_name='hremployeeattendancerule',
+        #     name='employee',
+        # ),
         # COMMENTED OUT - Table naming mismatch (actual table is Hr_employeenote, not Hr_hremployeenote)
-        # COMMENTED OUT - Model "hremployeenote" table does not exist
-        # # migrations.RemoveField(
-        # #     model_name='hremployeenote',
-        # #     name='created_by',
-        # # ),
-        # COMMENTED OUT - Model "hremployeenote" table does not exist
-        # # migrations.RemoveField(
-        # #     model_name='hremployeenote',
-        # #     name='employee',
-        # # ),
-        # COMMENTED OUT - Model "hremployeenote" table does not exist
-        # # migrations.RemoveField(
-        # #     model_name='hremployeenote',
-        # #     name='last_modified_by',
-        # # ),
-        # COMMENTED OUT - Model "hremployeenotehistory" table does not exist
-        # # migrations.RemoveField(
-        # #     model_name='hremployeenotehistory',
-        # #     name='note',
-        # # ),
-        # COMMENTED OUT - Model "hremployeenotehistory" table does not exist
-        # # migrations.RemoveField(
-        # #     model_name='hremployeenotehistory',
-        # #     name='changed_by',
-        # # ),
+        # migrations.RemoveField(
+        #     model_name='hremployeenote',
+        #     name='created_by',
+        # ),
+        # migrations.RemoveField(
+        #     model_name='hremployeenote',
+        #     name='employee',
+        # ),
+        # migrations.RemoveField(
+        #     model_name='hremployeenote',
+        #     name='last_modified_by',
+        # ),
+        # migrations.RemoveField(
+        #     model_name='hremployeenotehistory',
+        #     name='note',
+        # ),
+        # migrations.RemoveField(
+        #     model_name='hremployeenotehistory',
+        #     name='changed_by',
+        # ),
         # COMMENTED OUT - Table naming mismatch (actual table is Hr_employeetask, not Hr_hremployeetask)
-        # COMMENTED OUT - Model "hremployeetask" table does not exist
-        # # migrations.RemoveField(
-        # #     model_name='hremployeetask',
-        # #     name='assigned_by',
-        # # ),
-        # COMMENTED OUT - Model "hremployeetask" table does not exist
-        # # migrations.RemoveField(
-        # #     model_name='hremployeetask',
-        # #     name='employee',
-        # # ),
-        # COMMENTED OUT - Model "hrofficialholiday" table does not exist
-        # migrations.DeleteModel(
-        # name='HrOfficialHoliday',
-        # ),
-        # COMMENTED OUT - Model "hrtasknew" table does not exist
         # migrations.RemoveField(
-        # model_name='hrtasknew',
-        # name='assigned_to',
+        #     model_name='hremployeetask',
+        #     name='assigned_by',
         # ),
-        # COMMENTED OUT - Model "hrtasknew" table does not exist
         # migrations.RemoveField(
-        # model_name='hrtasknew',
-        # name='created_by',
+        #     model_name='hremployeetask',
+        #     name='employee',
         # ),
+        migrations.DeleteModel(
+            name='HrOfficialHoliday',
+        ),
+        migrations.RemoveField(
+            model_name='hrtasknew',
+            name='assigned_to',
+        ),
+        migrations.RemoveField(
+            model_name='hrtasknew',
+            name='created_by',
+        ),
         migrations.RemoveField(
             model_name='taskstep',
             name='created_by',
         ),
-        # COMMENTED OUT - Model "legacyemployee" table does not exist
-        # migrations.DeleteModel(
-        # name='LegacyEmployee',
-        # ),
+        migrations.DeleteModel(
+            name='LegacyEmployee',
+        ),
         migrations.AlterModelOptions(
             name='payrollentry',
             options={'ordering': ['payroll_period', 'employee__employee_number'], 'verbose_name': 'قيد راتب', 'verbose_name_plural': 'قيود الرواتب'},
@@ -478,16 +451,14 @@ class Migration(migrations.Migration):
             name='payrollperiod',
             options={'ordering': ['-start_date', '-created_at'], 'verbose_name': 'فترة راتب', 'verbose_name_plural': 'فترات الرواتب'},
         ),
-        # MOVED - AlterUniqueTogether for payrollentry moved after payroll_period field is added
-        # migrations.AlterUniqueTogether(
-        #     name='payrollentry',
-        #     unique_together={('payroll_period', 'employee')},
-        # ),
-        # MOVED - AlterUniqueTogether for payrollperiod moved after start_date, end_date, period_type fields are added
-        # migrations.AlterUniqueTogether(
-        #     name='payrollperiod',
-        #     unique_together={('start_date', 'end_date', 'period_type')},
-        # ),
+        migrations.AlterUniqueTogether(
+            name='payrollentry',
+            unique_together={('payroll_period', 'employee')},
+        ),
+        migrations.AlterUniqueTogether(
+            name='payrollperiod',
+            unique_together={('start_date', 'end_date', 'period_type')},
+        ),
         migrations.AddField(
             model_name='payrollentry',
             name='absent_days',
@@ -506,7 +477,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='payrollentry',
             name='basic_salary',
-            field=models.DecimalField(decimal_places=2, default=0, max_digits=12, verbose_name='الراتب الأساسي'),
+            field=models.DecimalField(decimal_places=2, default=django.utils.timezone.now, max_digits=12, verbose_name='الراتب الأساسي'),
             preserve_default=False,
         ),
         migrations.AddField(
@@ -557,15 +528,9 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='payrollentry',
             name='payroll_period',
-            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.CASCADE, related_name='payroll_entries', to='Hr.payrollperiod', verbose_name='فترة الراتب'),
+            field=models.ForeignKey(default=django.utils.timezone.now, on_delete=django.db.models.deletion.CASCADE, related_name='payroll_entries', to='Hr.payrollperiod', verbose_name='فترة الراتب'),
             preserve_default=False,
         ),
-        # COMMENTED OUT - AlterUniqueTogether for payrollentry causes column name mismatch
-        # The existing table has employee_id and period_id, but migration expects payroll_period and employee
-        # migrations.AlterUniqueTogether(
-        #     name='payrollentry',
-        #     unique_together={('payroll_period', 'employee')},
-        # ),
         migrations.AddField(
             model_name='payrollentry',
             name='present_days',
@@ -615,7 +580,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='payrollperiod',
             name='name',
-            field=models.CharField(default='فترة راتب', help_text='مثال: راتب يناير 2024', max_length=100, verbose_name='اسم الفترة'),
+            field=models.CharField(default=django.utils.timezone.now, help_text='مثال: راتب يناير 2024', max_length=100, verbose_name='اسم الفترة'),
             preserve_default=False,
         ),
         migrations.AddField(
@@ -650,11 +615,6 @@ class Migration(migrations.Migration):
             field=models.DateField(default=django.utils.timezone.now, help_text='تاريخ بداية فترة الراتب', verbose_name='تاريخ البداية'),
             preserve_default=False,
         ),
-        # MOVED HERE - AlterUniqueTogether for payrollperiod after all required fields are added
-        migrations.AlterUniqueTogether(
-            name='payrollperiod',
-            unique_together={('start_date', 'end_date', 'period_type')},
-        ),
         migrations.AddField(
             model_name='payrollperiod',
             name='total_allowances',
@@ -685,12 +645,11 @@ class Migration(migrations.Migration):
             name='employee',
             field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='payroll_entries', to='Hr.employee', verbose_name='الموظف'),
         ),
-        # COMMENTED OUT - MSSQL backend doesn't support altering from BigAutoField to UUIDField
-        # migrations.AlterField(
-        #     model_name='payrollentry',
-        #     name='id',
-        #     field=models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False, verbose_name='المعرف الفريد'),
-        # ),
+        migrations.AlterField(
+            model_name='payrollentry',
+            name='id',
+            field=models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False, verbose_name='المعرف الفريد'),
+        ),
         migrations.AlterField(
             model_name='payrollentry',
             name='status',
@@ -701,53 +660,46 @@ class Migration(migrations.Migration):
             name='approved_by',
             field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='approved_payroll_periods', to=settings.AUTH_USER_MODEL, verbose_name='وافق عليه'),
         ),
-        # COMMENTED OUT - created_by_id field already exists with foreign key constraint
-        # MSSQL doesn't allow default constraint on existing NOT NULL foreign key field
-        # migrations.AlterField(
-        #     model_name='payrollperiod',
-        #     name='created_by',
-        #     field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.PROTECT, related_name='created_payroll_periods', to=settings.AUTH_USER_MODEL, verbose_name='أنشئ بواسطة'),
-        #     preserve_default=False,
-        # ),
-        # COMMENTED OUT - MSSQL backend doesn't support altering from BigAutoField to UUIDField
-        # migrations.AlterField(
-        #     model_name='payrollperiod',
-        #     name='id',
-        #     field=models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False, verbose_name='المعرف'),
-        # ),
+        migrations.AlterField(
+            model_name='payrollperiod',
+            name='created_by',
+            field=models.ForeignKey(default=django.utils.timezone.now, on_delete=django.db.models.deletion.PROTECT, related_name='created_payroll_periods', to=settings.AUTH_USER_MODEL, verbose_name='أنشئ بواسطة'),
+            preserve_default=False,
+        ),
+        migrations.AlterField(
+            model_name='payrollperiod',
+            name='id',
+            field=models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False, verbose_name='المعرف'),
+        ),
         migrations.AlterField(
             model_name='payrollperiod',
             name='status',
             field=models.CharField(choices=[('draft', 'مسودة'), ('active', 'نشط'), ('processing', 'قيد المعالجة'), ('completed', 'مكتمل'), ('closed', 'مغلق'), ('cancelled', 'ملغي')], default='draft', max_length=20, verbose_name='الحالة'),
         ),
-        # COMMENTED OUT - Index creation on fields that may not exist or be added properly
-        # Some fields like start_date, end_date, period_type, is_active may not exist in current table
-        # migrations.AddIndex(
-        #     model_name='payrollperiod',
-        #     index=models.Index(fields=['start_date', 'end_date'], name='Hr_payrollp_start_d_1ff43f_idx'),
-        # ),
-        # migrations.AddIndex(
-        #     model_name='payrollperiod',
-        #     index=models.Index(fields=['status'], name='Hr_payrollp_status_6601ac_idx'),
-        # ),
-        # migrations.AddIndex(
-        #     model_name='payrollperiod',
-        #     index=models.Index(fields=['period_type'], name='Hr_payrollp_period__2cc7ee_idx'),
-        # ),
-        # migrations.AddIndex(
-        #     model_name='payrollperiod',
-        #     index=models.Index(fields=['is_active'], name='Hr_payrollp_is_acti_3ea6db_idx'),
-        # ),
-        # COMMENTED OUT - Table renaming conflicts with existing tables
-        # Hr_PayrollEntry and Hr_PayrollPeriod already exist
-        # migrations.AlterModelTable(
-        #     name='payrollentry',
-        #     table='hrms_payroll_entry',
-        # ),
-        # migrations.AlterModelTable(
-        #     name='payrollperiod',
-        #     table=None,
-        # ),
+        migrations.AddIndex(
+            model_name='payrollperiod',
+            index=models.Index(fields=['start_date', 'end_date'], name='Hr_payrollp_start_d_1ff43f_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='payrollperiod',
+            index=models.Index(fields=['status'], name='Hr_payrollp_status_6601ac_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='payrollperiod',
+            index=models.Index(fields=['period_type'], name='Hr_payrollp_period__2cc7ee_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='payrollperiod',
+            index=models.Index(fields=['is_active'], name='Hr_payrollp_is_acti_3ea6db_idx'),
+        ),
+        migrations.AlterModelTable(
+            name='payrollentry',
+            table='hrms_payroll_entry',
+        ),
+        migrations.AlterModelTable(
+            name='payrollperiod',
+            table=None,
+        ),
         migrations.AddField(
             model_name='employeebank',
             name='created_by',
@@ -813,12 +765,11 @@ class Migration(migrations.Migration):
             name='employee',
             field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='family_members', to='Hr.employee', verbose_name='الموظف'),
         ),
-        # COMMENTED OUT - EmployeeSalaryComponent model was commented out
-        # migrations.AddField(
-        #     model_name='employeesalarycomponent',
-        #     name='salary_component',
-        #     field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='employee_assignments', to='Hr.salarycomponent', verbose_name='مكون الراتب'),
-        # ),
+        migrations.AddField(
+            model_name='employeesalarycomponent',
+            name='salary_component',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='employee_assignments', to='Hr.salarycomponent', verbose_name='مكون الراتب'),
+        ),
         migrations.AddField(
             model_name='employeesalarystructure',
             name='approved_by',
@@ -834,32 +785,29 @@ class Migration(migrations.Migration):
             name='employee',
             field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='salary_structures', to='Hr.employee', verbose_name='الموظف'),
         ),
-        # COMMENTED OUT - EmployeeSalaryComponent model was commented out
-        # migrations.AddField(
-        #     model_name='employeesalarycomponent',
-        #     name='salary_structure',
-        #     field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='salary_components', to='Hr.employeesalarystructure', verbose_name='هيكل الراتب'),
-        # ),
+        migrations.AddField(
+            model_name='employeesalarycomponent',
+            name='salary_structure',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='salary_components', to='Hr.employeesalarystructure', verbose_name='هيكل الراتب'),
+        ),
         migrations.AddField(
             model_name='payrollentry',
             name='salary_structure',
-            field=models.ForeignKey(default=1, on_delete=django.db.models.deletion.PROTECT, related_name='payroll_entries', to='Hr.employeesalarystructure', verbose_name='هيكل الراتب'),
+            field=models.ForeignKey(default=django.utils.timezone.now, on_delete=django.db.models.deletion.PROTECT, related_name='payroll_entries', to='Hr.employeesalarystructure', verbose_name='هيكل الراتب'),
             preserve_default=False,
         ),
-        # COMMENTED OUT - Index creation on fields that don't exist in current table structure
-        # Current table has employee_id, period_id, but migration expects payroll_period, employee
-        # migrations.AddIndex(
-        #     model_name='payrollentry',
-        #     index=models.Index(fields=['payroll_period', 'employee'], name='hrms_payrol_payroll_4e901d_idx'),
-        # ),
-        # migrations.AddIndex(
-        #     model_name='payrollentry',
-        #     index=models.Index(fields=['status'], name='hrms_payrol_status_77cc30_idx'),
-        # ),
-        # migrations.AddIndex(
-        #     model_name='payrollentry',
-        #     index=models.Index(fields=['payment_date'], name='hrms_payrol_payment_53b6ef_idx'),
-        # ),
+        migrations.AddIndex(
+            model_name='payrollentry',
+            index=models.Index(fields=['payroll_period', 'employee'], name='hrms_payrol_payroll_4e901d_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='payrollentry',
+            index=models.Index(fields=['status'], name='hrms_payrol_status_77cc30_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='payrollentry',
+            index=models.Index(fields=['payment_date'], name='hrms_payrol_payment_53b6ef_idx'),
+        ),
         migrations.AddField(
             model_name='hrjob',
             name='department',
@@ -902,102 +850,89 @@ class Migration(migrations.Migration):
             name='period',
             field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='Hr.legacypayrollperiod', verbose_name='الفترة'),
         ),
-        # COMMENTED OUT - PayrollDetail and PayrollDetailHistory models were commented out
-        # migrations.AddField(
-        #     model_name='payrolldetail',
-        #     name='adjusted_by',
-        #     field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='adjusted_payroll_details', to=settings.AUTH_USER_MODEL, verbose_name='عدل بواسطة'),
-        # ),
-        # migrations.AddField(
-        #     model_name='payrolldetail',
-        #     name='payroll_entry',
-        #     field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='payroll_details', to='Hr.payrollentry', verbose_name='قيد الراتب'),
-        # ),
-        # migrations.AddField(
-        #     model_name='payrolldetail',
-        #     name='salary_component',
-        #     field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='payroll_details', to='Hr.salarycomponent', verbose_name='مكون الراتب'),
-        # ),
-        # migrations.AddField(
-        #     model_name='payrolldetailhistory',
-        #     name='changed_by',
-        #     field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='payroll_detail_changes', to=settings.AUTH_USER_MODEL, verbose_name='غير بواسطة'),
-        # ),
-        # migrations.AddField(
-        #     model_name='payrolldetailhistory',
-        #     name='payroll_detail',
-        #     field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='history', to='Hr.payrolldetail', verbose_name='تفاصيل الراتب'),
-        # ),
-        # COMMENTED OUT - Model "employeeemergencycontact" table does not exist
-        # migrations.DeleteModel(
-        # name='EmployeeEmergencyContact',
-        # ),
-        # COMMENTED OUT - Model "employeetraining" table does not exist
-        # migrations.DeleteModel(
-        # name='EmployeeTraining',
-        # ),
+        migrations.AddField(
+            model_name='payrolldetail',
+            name='adjusted_by',
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='adjusted_payroll_details', to=settings.AUTH_USER_MODEL, verbose_name='عدل بواسطة'),
+        ),
+        migrations.AddField(
+            model_name='payrolldetail',
+            name='payroll_entry',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='payroll_details', to='Hr.payrollentry', verbose_name='قيد الراتب'),
+        ),
+        migrations.AddField(
+            model_name='payrolldetail',
+            name='salary_component',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.PROTECT, related_name='payroll_details', to='Hr.salarycomponent', verbose_name='مكون الراتب'),
+        ),
+        migrations.AddField(
+            model_name='payrolldetailhistory',
+            name='changed_by',
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='payroll_detail_changes', to=settings.AUTH_USER_MODEL, verbose_name='غير بواسطة'),
+        ),
+        migrations.AddField(
+            model_name='payrolldetailhistory',
+            name='payroll_detail',
+            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='history', to='Hr.payrolldetail', verbose_name='تفاصيل الراتب'),
+        ),
+        migrations.DeleteModel(
+            name='EmployeeEmergencyContact',
+        ),
+        migrations.DeleteModel(
+            name='EmployeeTraining',
+        ),
         migrations.DeleteModel(
             name='HrAttendanceMachine',
         ),
-        # COMMENTED OUT - Model "hrattendancerecord" table does not exist
-        # migrations.DeleteModel(
-        # name='HrAttendanceRecord',
-        # ),
+        migrations.DeleteModel(
+            name='HrAttendanceRecord',
+        ),
         migrations.DeleteModel(
             name='HrAttendanceRule',
         ),
-        # COMMENTED OUT - Model "hrattendancesummary" table does not exist
-        # migrations.DeleteModel(
-        # name='HrAttendanceSummary',
-        # ),
-        # COMMENTED OUT - Table Hr_Car does not exist
-        # migrations.DeleteModel(
-        #     name='HrCar',
-        # ),
-        # COMMENTED OUT - Model "hrpickuppoint" table does not exist
-        # migrations.DeleteModel(
-        # name='HrPickupPoint',
-        # ),
-        # COMMENTED OUT - Model "hremployeeattendancerule" table does not exist
-        # migrations.DeleteModel(
-        # name='HrEmployeeAttendanceRule',
-        # ),
-        # COMMENTED OUT - Model "hremployeenote" table does not exist
-        # migrations.DeleteModel(
-        # name='HrEmployeeNote',
-        # ),
-        # COMMENTED OUT - Model "hremployeenotehistory" table does not exist
-        # migrations.DeleteModel(
-        # name='HrEmployeeNoteHistory',
-        # ),
-        # COMMENTED OUT - Model "hremployeetask" table does not exist
-        # migrations.DeleteModel(
-        # name='HrEmployeeTask',
-        # ),
-        # COMMENTED OUT - Model "hrtasknew" table does not exist
-        # migrations.DeleteModel(
-        # name='HrTaskNew',
-        # ),
+        migrations.DeleteModel(
+            name='HrAttendanceSummary',
+        ),
+        migrations.DeleteModel(
+            name='HrCar',
+        ),
+        migrations.DeleteModel(
+            name='HrPickupPoint',
+        ),
+        migrations.DeleteModel(
+            name='HrEmployeeAttendanceRule',
+        ),
+        migrations.DeleteModel(
+            name='HrEmployeeNote',
+        ),
+        migrations.DeleteModel(
+            name='HrEmployeeNoteHistory',
+        ),
+        migrations.DeleteModel(
+            name='HrEmployeeTask',
+        ),
+        migrations.DeleteModel(
+            name='HrTaskNew',
+        ),
         migrations.DeleteModel(
             name='TaskStep',
         ),
-        # COMMENTED OUT - Field name mismatch (database has period_id, not period)
-        # migrations.RemoveField(
-        #     model_name='payrollentry',
-        #     name='period',
-        # ),
-        # migrations.RemoveField(
-        #     model_name='payrollentry',
-        #     name='total_amount',
-        # ),
-        # migrations.RemoveField(
-        #     model_name='payrollperiod',
-        #     name='period',
-        # ),
-        # migrations.RemoveField(
-        #     model_name='payrollperiod',
-        #     name='total_amount',
-        # ),
+        migrations.RemoveField(
+            model_name='payrollentry',
+            name='period',
+        ),
+        migrations.RemoveField(
+            model_name='payrollentry',
+            name='total_amount',
+        ),
+        migrations.RemoveField(
+            model_name='payrollperiod',
+            name='period',
+        ),
+        migrations.RemoveField(
+            model_name='payrollperiod',
+            name='total_amount',
+        ),
         migrations.AddIndex(
             model_name='employeebank',
             index=models.Index(fields=['employee', 'account_type'], name='hrms_employ_employe_68916b_idx'),
@@ -1070,34 +1005,32 @@ class Migration(migrations.Migration):
             model_name='employeesalarystructure',
             index=models.Index(fields=['is_current'], name='hrms_employ_is_curr_c7e44f_idx'),
         ),
-        # COMMENTED OUT - EmployeeSalaryComponent model was commented out
-        # migrations.AddIndex(
-        #     model_name='employeesalarycomponent',
-        #     index=models.Index(fields=['salary_structure'], name='hrms_employ_salary__683f72_idx'),
-        # ),
-        # migrations.AddIndex(
-        #     model_name='employeesalarycomponent',
-        #     index=models.Index(fields=['salary_component'], name='hrms_employ_salary__a29c51_idx'),
-        # ),
-        # migrations.AddIndex(
-        #     model_name='employeesalarycomponent',
-        #     index=models.Index(fields=['is_active'], name='hrms_employ_is_acti_e3cee7_idx'),
-        # ),
-        # migrations.AlterUniqueTogether(
-        #     name='employeesalarycomponent',
-        #     unique_together={('salary_structure', 'salary_component')},
-        # ),
-        # COMMENTED OUT - PayrollDetail model was commented out
-        # migrations.AddIndex(
-        #     model_name='payrolldetail',
-        #     index=models.Index(fields=['payroll_entry'], name='hrms_payrol_payroll_293638_idx'),
-        # ),
-        # migrations.AddIndex(
-        #     model_name='payrolldetail',
-        #     index=models.Index(fields=['salary_component'], name='hrms_payrol_salary__0465b5_idx'),
-        # ),
-        # migrations.AlterUniqueTogether(
-        #     name='payrolldetail',
-        #     unique_together={('payroll_entry', 'salary_component')},
-        # ),
+        migrations.AddIndex(
+            model_name='employeesalarycomponent',
+            index=models.Index(fields=['salary_structure'], name='hrms_employ_salary__683f72_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='employeesalarycomponent',
+            index=models.Index(fields=['salary_component'], name='hrms_employ_salary__a29c51_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='employeesalarycomponent',
+            index=models.Index(fields=['is_active'], name='hrms_employ_is_acti_e3cee7_idx'),
+        ),
+        migrations.AlterUniqueTogether(
+            name='employeesalarycomponent',
+            unique_together={('salary_structure', 'salary_component')},
+        ),
+        migrations.AddIndex(
+            model_name='payrolldetail',
+            index=models.Index(fields=['payroll_entry'], name='hrms_payrol_payroll_293638_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='payrolldetail',
+            index=models.Index(fields=['salary_component'], name='hrms_payrol_salary__0465b5_idx'),
+        ),
+        migrations.AlterUniqueTogether(
+            name='payrolldetail',
+            unique_together={('payroll_entry', 'salary_component')},
+        ),
     ]
