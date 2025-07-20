@@ -6,7 +6,7 @@ from django.db.models import F
 
 # استيراد النماذج من التطبيقات الأخرى
 from Hr.models.task_models import EmployeeTask, TaskStep
-from Hr.models.employee_model import Employee
+from Hr.models.legacy_employee import LegacyEmployee as Employee
 from Hr.models.leave_models import EmployeeLeave
 from Hr.models.car_models import Car
 from meetings.models import Meeting, Attendee

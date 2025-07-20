@@ -61,9 +61,9 @@ def test_hr_models():
     try:
         # Test model imports
         from Hr.models import Employee, Department, Job
-        from Hr.models.employee_model import Employee as EmployeeModel
-        from Hr.models.department_models import Department as DepartmentModel
-        from Hr.models.job_models import Job as JobModel
+        from Hr.models.legacy_employee import LegacyEmployee as EmployeeModel
+        from Hr.models.legacy.legacy_models import LegacyDepartment as DepartmentModel
+        from Hr.models.legacy.legacy_models import Job as JobModel
         
         print("  ✅ All HR models imported successfully")
         

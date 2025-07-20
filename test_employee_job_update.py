@@ -15,8 +15,8 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ElDawliya_Sys.settings')
 django.setup()
 
-from Hr.models.employee_model import Employee
-from Hr.models.job_models import Job
+from Hr.models.legacy_employee import LegacyEmployee as Employee
+from Hr.models.legacy.legacy_models import Job
 from Hr.forms.employee_forms import EmployeeForm
 
 

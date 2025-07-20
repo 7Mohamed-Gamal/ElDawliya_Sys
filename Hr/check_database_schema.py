@@ -110,8 +110,7 @@ def main():
     print("-" * 30)
     
     try:
-        from Hr.models.legacy.legacy_models import Job as LegacyJob
-        from Hr.models.job_models import HrJob
+        from Hr.models.legacy.legacy_models import Job as LegacyJob, HrJob
         
         print(f"  Legacy Job model:")
         print(f"    Table: {LegacyJob._meta.db_table}")

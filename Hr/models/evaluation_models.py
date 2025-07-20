@@ -1,6 +1,6 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from Hr.models.employee_model import Employee
+from Hr.models.legacy_employee import LegacyEmployee as Employee
 
 class EmployeeEvaluation(models.Model):
     """

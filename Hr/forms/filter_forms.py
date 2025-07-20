@@ -1,6 +1,6 @@
 from django import forms
 from Hr.models.leave_models import LeaveType
-from Hr.models.employee_model import Employee
+from Hr.models.legacy_employee import LegacyEmployee as Employee
 
 class LeaveFilterForm(forms.Form):
     employee = forms.ModelChoiceField(
