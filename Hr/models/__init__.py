@@ -31,18 +31,32 @@ from Hr.models.attendance_models import (
     HrOfficialHoliday as LegacyOfficialHoliday
 )
 
-# Leave Management Models
+# Leave Management Models (Modern - for new development)
 from Hr.models.leave.leave_type_models import LeaveType
 from Hr.models.leave.leave_policy_models import LeavePolicy
 from Hr.models.leave.leave_request_models import LeaveRequest, LeaveApproval
 from Hr.models.leave.leave_balance_models import LeaveBalance, LeaveTransaction
 
-# Payroll Management Models
+# Legacy Leave Models (Currently used by some views)
+from Hr.models.leave_models import (
+    HrLeaveType as LegacyLeaveType,
+    HrEmployeeLeave as LegacyEmployeeLeave
+)
+
+# Payroll Management Models (Modern - for new development)
 from Hr.models.payroll.salary_component_models import SalaryComponent
 from Hr.models.payroll.payroll_period_models import PayrollPeriod
 from Hr.models.payroll.employee_salary_structure_models import EmployeeSalaryStructure, EmployeeSalaryComponent
 from Hr.models.payroll.payroll_entry_models import PayrollEntry
 from Hr.models.payroll.payroll_detail_models import PayrollDetail, PayrollDetailHistory
+
+# Legacy Salary/Payroll Models (Currently used by working views)
+from Hr.models.salary_models import (
+    HrSalaryItem as LegacySalaryItem,
+    HrEmployeeSalaryItem as LegacyEmployeeSalaryItem,
+    HrPayrollPeriod as LegacyPayrollPeriod,
+    PayrollEntry as LegacyPayrollEntry
+)
 
 # Performance Management Models
 # TODO: Create missing performance model files
@@ -89,13 +103,19 @@ __all__ = [
     'LegacyAttendanceRule', 'LegacyAttendanceRecord', 'LegacyAttendanceSummary',
     'LegacyAttendanceMachine', 'LegacyEmployeeAttendanceRule', 'LegacyOfficialHoliday',
 
-    # Leave Management Models
-    'LeaveType', 'LeavePolicy', 'LeaveRequest', 'LeaveApproval', 
+    # Leave Management Models (Modern)
+    'LeaveType', 'LeavePolicy', 'LeaveRequest', 'LeaveApproval',
     'LeaveBalance', 'LeaveTransaction',
 
-    # Payroll Management Models
+    # Legacy Leave Models (Currently used)
+    'LegacyLeaveType', 'LegacyEmployeeLeave',
+
+    # Payroll Management Models (Modern)
     'SalaryComponent', 'PayrollPeriod', 'EmployeeSalaryStructure', 'EmployeeSalaryComponent',
     'PayrollEntry', 'PayrollDetail', 'PayrollDetailHistory',
+
+    # Legacy Salary/Payroll Models (Currently used)
+    'LegacySalaryItem', 'LegacyEmployeeSalaryItem', 'LegacyPayrollPeriod', 'LegacyPayrollEntry',
 
     # Performance Management Models
     # TODO: Add back when model files are created

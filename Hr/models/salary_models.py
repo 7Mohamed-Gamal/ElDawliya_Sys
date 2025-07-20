@@ -1,3 +1,7 @@
+# This file contains legacy salary/payroll models that are currently being used by working views
+# These models will be gradually migrated to the modern organized structure in Hr/models/payroll/
+# For now, they remain here to maintain compatibility with existing functionality
+
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinValueValidator
