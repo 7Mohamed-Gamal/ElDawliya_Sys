@@ -393,7 +393,7 @@ class HrJob(models.Model):
 
     class Meta:
         managed = True  # Changed to True to manage this model in the legacy namespace
-        db_table = 'Tbl_Jop'
+        db_table = 'Tbl_Legacy_Jop'
         verbose_name = _("الوظيفة (قديم)")
         verbose_name_plural = _("الوظائف (قديمة)")
 
