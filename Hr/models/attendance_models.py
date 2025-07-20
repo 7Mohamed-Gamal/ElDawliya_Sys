@@ -1,7 +1,11 @@
+# This file contains legacy attendance models that are currently being used by the working views
+# These models will be gradually migrated to the modern organized structure in Hr/models/attendance/
+# For now, they remain here to maintain compatibility with existing functionality
+
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 import json
-from Hr.models import Employee
+from Hr.models.legacy_employee import LegacyEmployee as Employee
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 class HrAttendanceRule(models.Model):

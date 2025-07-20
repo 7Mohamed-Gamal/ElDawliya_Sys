@@ -1,6 +1,10 @@
+# This file contains legacy leave models that are currently being used by some views
+# These models will be gradually migrated to the modern organized structure in Hr/models/leave/
+# For now, they remain here to maintain compatibility with existing functionality
+
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from Hr.models import Employee
+from Hr.models.legacy_employee import LegacyEmployee as Employee
 
 class HrLeaveType(models.Model):
     """

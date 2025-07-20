@@ -16,10 +16,20 @@ from Hr.models.employee.employee_experience_models import EmployeeExperience
 from Hr.models.employee.employee_family_models import EmployeeFamily
 from Hr.models.employee.employee_bank_models import EmployeeBank
 
-# Attendance & Time Management Models
+# Attendance & Time Management Models (Modern - for new development)
 from Hr.models.attendance.work_shift_models import WorkShift, ShiftAssignment
 from Hr.models.attendance.attendance_machine_models import AttendanceMachine, MachineUser
 from Hr.models.attendance.attendance_record_models import AttendanceRecord, AttendanceSummary
+
+# Legacy Attendance Models (Currently used by working views)
+from Hr.models.attendance_models import (
+    HrAttendanceRule as LegacyAttendanceRule,
+    HrAttendanceRecord as LegacyAttendanceRecord,
+    HrAttendanceSummary as LegacyAttendanceSummary,
+    HrAttendanceMachine as LegacyAttendanceMachine,
+    HrEmployeeAttendanceRule as LegacyEmployeeAttendanceRule,
+    HrOfficialHoliday as LegacyOfficialHoliday
+)
 
 # Leave Management Models
 from Hr.models.leave.leave_type_models import LeaveType
@@ -71,9 +81,13 @@ __all__ = [
     'Employee', 'EmployeeDocument', 'EmployeeContact', 'EmployeeEducation',
     'EmployeeExperience', 'EmployeeFamily', 'EmployeeBank',
 
-    # Attendance & Time Management Models
-    'WorkShift', 'ShiftAssignment', 'AttendanceMachine', 'MachineUser', 
+    # Attendance & Time Management Models (Modern)
+    'WorkShift', 'ShiftAssignment', 'AttendanceMachine', 'MachineUser',
     'AttendanceRecord', 'AttendanceSummary',
+
+    # Legacy Attendance Models (Currently used)
+    'LegacyAttendanceRule', 'LegacyAttendanceRecord', 'LegacyAttendanceSummary',
+    'LegacyAttendanceMachine', 'LegacyEmployeeAttendanceRule', 'LegacyOfficialHoliday',
 
     # Leave Management Models
     'LeaveType', 'LeavePolicy', 'LeaveRequest', 'LeaveApproval', 
