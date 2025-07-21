@@ -58,21 +58,30 @@ from .views.attendance_views import (
     test_zk_connection, fetch_zk_records_ajax, save_zk_records_to_db
 )
 
-# New HRMS views (using placeholders for development)
+# New HRMS views - temporarily disabled due to form conflicts
+# TODO: Fix form imports and re-enable
+COMPANY_VIEWS_AVAILABLE = False
+
+# Import placeholder views for features not yet implemented
 from .views.core.placeholder_views import (
-    # Company views
-    company_list, company_create, company_detail, company_edit, company_delete,
-    company_toggle_status, company_dashboard, company_export, company_search_ajax, company_stats_ajax,
-    # Branch views
-    branch_list, branch_create, branch_detail, branch_edit, branch_delete,
-    branch_toggle_status, branches_by_company, branch_search_ajax,
-    # Department views
-    department_list, department_create, department_detail, department_edit, department_delete,
-    department_hierarchy, departments_by_branch, department_search_ajax,
-    # Job position views
+    # Department views (still using placeholders)
+    department_list as department_list_new, department_create as department_create_new,
+    department_detail as department_detail_new, department_edit as department_edit_new,
+    department_delete as department_delete_new, department_hierarchy, departments_by_branch,
+    department_search_ajax,
+    # Job position views (still using placeholders)
     job_position_list, job_position_create, job_position_detail, job_position_edit, job_position_delete,
     positions_by_department, job_position_search_ajax
 )
+
+# If company views are not available, use placeholders
+if not COMPANY_VIEWS_AVAILABLE:
+    from .views.core.placeholder_views import (
+        company_list, company_create, company_detail, company_edit, company_delete,
+        company_toggle_status, company_dashboard, company_export, company_search_ajax, company_stats_ajax,
+        branch_list, branch_create, branch_detail, branch_edit, branch_delete,
+        branch_toggle_status, branches_by_company, branch_search_ajax,
+    )
 
 # Create a simple placeholder function
 def placeholder_view(request, *args, **kwargs):
@@ -85,9 +94,7 @@ class PlaceholderModule:
         # Return the placeholder function for any attribute
         return placeholder_view
 
-company_views = PlaceholderModule()
-branch_views = PlaceholderModule()
-department_views_new = PlaceholderModule()
+# Placeholder modules for features still under development
 job_position_views = PlaceholderModule()
 leave_type_views = PlaceholderModule()
 
@@ -308,40 +315,40 @@ attendance_patterns = [
 
 # Company patterns
 company_patterns = [
-    path('', company_views.company_list, name='list'),
-    path('create/', company_views.company_create, name='create'),
-    path('<int:company_id>/', company_views.company_detail, name='detail'),
-    path('<int:company_id>/edit/', company_views.company_edit, name='edit'),
-    path('<int:company_id>/delete/', company_views.company_delete, name='delete'),
-    path('<int:company_id>/toggle-status/', company_views.company_toggle_status, name='toggle_status'),
-    path('<int:company_id>/dashboard/', company_views.company_dashboard, name='dashboard'),
-    path('export/', company_views.company_export, name='export'),
-    path('ajax/search/', company_views.company_search_ajax, name='search_ajax'),
-    path('<int:company_id>/ajax/stats/', company_views.company_stats_ajax, name='stats_ajax'),
+    path('', company_list, name='list'),
+    path('create/', company_create, name='create'),
+    path('<int:company_id>/', company_detail, name='detail'),
+    path('<int:company_id>/edit/', company_edit, name='edit'),
+    path('<int:company_id>/delete/', company_delete, name='delete'),
+    path('<int:company_id>/toggle-status/', company_toggle_status, name='toggle_status'),
+    path('<int:company_id>/dashboard/', company_dashboard, name='dashboard'),
+    path('export/', company_export, name='export'),
+    path('ajax/search/', company_search_ajax, name='search_ajax'),
+    path('<int:company_id>/ajax/stats/', company_stats_ajax, name='stats_ajax'),
 ]
 
 # Branch patterns
 branch_patterns = [
-    path('', branch_views.branch_list, name='list'),
-    path('create/', branch_views.branch_create, name='create'),
-    path('<int:branch_id>/', branch_views.branch_detail, name='detail'),
-    path('<int:branch_id>/edit/', branch_views.branch_edit, name='edit'),
-    path('<int:branch_id>/delete/', branch_views.branch_delete, name='delete'),
-    path('<int:branch_id>/toggle-status/', branch_views.branch_toggle_status, name='toggle_status'),
-    path('by-company/<int:company_id>/', branch_views.branches_by_company, name='by_company'),
-    path('ajax/search/', branch_views.branch_search_ajax, name='search_ajax'),
+    path('', branch_list, name='list'),
+    path('create/', branch_create, name='create'),
+    path('<int:branch_id>/', branch_detail, name='detail'),
+    path('<int:branch_id>/edit/', branch_edit, name='edit'),
+    path('<int:branch_id>/delete/', branch_delete, name='delete'),
+    path('<int:branch_id>/toggle-status/', branch_toggle_status, name='toggle_status'),
+    path('by-company/<int:company_id>/', branches_by_company, name='by_company'),
+    path('ajax/search/', branch_search_ajax, name='search_ajax'),
 ]
 
 # Enhanced Department patterns
 department_new_patterns = [
-    path('', department_views_new.department_list, name='list'),
-    path('create/', department_views_new.department_create, name='create'),
-    path('<int:department_id>/', department_views_new.department_detail, name='detail'),
-    path('<int:department_id>/edit/', department_views_new.department_edit, name='edit'),
-    path('<int:department_id>/delete/', department_views_new.department_delete, name='delete'),
-    path('<int:department_id>/hierarchy/', department_views_new.department_hierarchy, name='hierarchy'),
-    path('by-branch/<int:branch_id>/', department_views_new.departments_by_branch, name='by_branch'),
-    path('ajax/search/', department_views_new.department_search_ajax, name='search_ajax'),
+    path('', department_list_new, name='list'),
+    path('create/', department_create_new, name='create'),
+    path('<int:department_id>/', department_detail_new, name='detail'),
+    path('<int:department_id>/edit/', department_edit_new, name='edit'),
+    path('<int:department_id>/delete/', department_delete_new, name='delete'),
+    path('<int:department_id>/hierarchy/', department_hierarchy, name='hierarchy'),
+    path('by-branch/<int:branch_id>/', departments_by_branch, name='by_branch'),
+    path('ajax/search/', department_search_ajax, name='search_ajax'),
 ]
 
 # Job Position patterns
