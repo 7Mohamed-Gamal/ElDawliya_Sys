@@ -424,8 +424,11 @@ class AttendanceService:
             total_hours=Sum('total_hours')
         ).order_by('-count')
         
-        return stats 
-                                      start_date: date = None, 
+        return stats
+
+    def get_employee_attendance_records(self,
+                                      employee_id: str,
+                                      start_date: date = None,
                                       end_date: date = None) -> List[AttendanceRecord]:
         """Get attendance records for an employee within a date range
         

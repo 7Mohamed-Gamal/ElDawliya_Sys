@@ -143,7 +143,7 @@ except ImportError:
 try:
     from .views.payroll import (
         salary_component_views, employee_salary_structure_views, payroll_period_views_new,
-        payroll_entry_views_new, tax_configuration_views
+        payroll_entry_views_new, payroll_calculation_views, tax_configuration_views
     )
 except ImportError:
     # Keep the placeholder modules if import fails
@@ -155,6 +155,8 @@ except ImportError:
         payroll_period_views_new = PlaceholderModule()
     if 'payroll_entry_views_new' not in globals():
         payroll_entry_views_new = PlaceholderModule()
+    if 'payroll_calculation_views' not in globals():
+        payroll_calculation_views = PlaceholderModule()
     if 'tax_configuration_views' not in globals():
         tax_configuration_views = PlaceholderModule()
 
@@ -429,6 +431,50 @@ salary_component_patterns = [
     path('<int:component_id>/toggle-status/', salary_component_views.component_toggle_status, name='toggle_status'),
 ]
 
+# Employee Salary Structure patterns
+employee_salary_structure_patterns = [
+    path('', employee_salary_structure_views.structure_list, name='list'),
+    path('create/', employee_salary_structure_views.structure_create, name='create'),
+    path('<int:structure_id>/', employee_salary_structure_views.structure_detail, name='detail'),
+    path('<int:structure_id>/edit/', employee_salary_structure_views.structure_edit, name='edit'),
+    path('<int:structure_id>/delete/', employee_salary_structure_views.structure_delete, name='delete'),
+    path('<int:structure_id>/activate/', employee_salary_structure_views.structure_activate, name='activate'),
+    path('<int:structure_id>/copy/', employee_salary_structure_views.structure_copy, name='copy'),
+]
+
+# Payroll Period patterns (New)
+payroll_period_new_patterns = [
+    path('', payroll_period_views_new.period_list, name='list'),
+    path('create/', payroll_period_views_new.period_create, name='create'),
+    path('<int:period_id>/', payroll_period_views_new.period_detail, name='detail'),
+    path('<int:period_id>/edit/', payroll_period_views_new.period_edit, name='edit'),
+    path('<int:period_id>/delete/', payroll_period_views_new.period_delete, name='delete'),
+    path('<int:period_id>/close/', payroll_period_views_new.period_close, name='close'),
+    path('<int:period_id>/reopen/', payroll_period_views_new.period_reopen, name='reopen'),
+    path('<int:period_id>/summary/', payroll_period_views_new.period_summary_ajax, name='summary_ajax'),
+]
+
+# Payroll Entry patterns (New)
+payroll_entry_new_patterns = [
+    path('', payroll_entry_views_new.entry_list, name='list'),
+    path('create/', payroll_entry_views_new.entry_create, name='create'),
+    path('<int:entry_id>/', payroll_entry_views_new.entry_detail, name='detail'),
+    path('<int:entry_id>/edit/', payroll_entry_views_new.entry_edit, name='edit'),
+    path('<int:entry_id>/approve/', payroll_entry_views_new.entry_approve, name='approve'),
+    path('<int:entry_id>/reject/', payroll_entry_views_new.entry_reject, name='reject'),
+    path('<int:entry_id>/mark-paid/', payroll_entry_views_new.entry_mark_paid, name='mark_paid'),
+    path('bulk-approve/', payroll_entry_views_new.bulk_approve_entries, name='bulk_approve'),
+]
+
+# Payroll Calculation patterns
+payroll_calculation_patterns = [
+    path('', payroll_calculation_views.payroll_calculation_dashboard, name='dashboard'),
+    path('wizard/', payroll_calculation_views.payroll_calculation_wizard, name='wizard'),
+    path('preview/', payroll_calculation_views.payroll_calculation_preview, name='preview'),
+    path('status/<int:period_id>/', payroll_calculation_views.payroll_calculation_status, name='status'),
+    path('recalculate/<int:entry_id>/', payroll_calculation_views.recalculate_payroll_entry, name='recalculate'),
+]
+
 # Employee Document patterns
 employee_document_patterns = [
     path('', employee_document_views.document_list, name='list'),
@@ -495,6 +541,10 @@ urlpatterns = [
 
     # ==================== PAYROLL MANAGEMENT ====================
     path('salary-components/', include((salary_component_patterns, app_name), namespace='salary_components')),
+    path('employee-salary-structures/', include((employee_salary_structure_patterns, app_name), namespace='employee_salary_structures')),
+    path('payroll-periods-new/', include((payroll_period_new_patterns, app_name), namespace='payroll_periods_new')),
+    path('payroll-entries-new/', include((payroll_entry_new_patterns, app_name), namespace='payroll_entries_new')),
+    path('payroll-calculation/', include((payroll_calculation_patterns, app_name), namespace='payroll_calculation')),
     path('salaries/', include((salary_patterns, app_name), namespace='salaries')),
 
     # ==================== LEGACY MODULES (for backward compatibility) ====================

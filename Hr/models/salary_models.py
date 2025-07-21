@@ -71,7 +71,7 @@ class HrEmployeeSalaryItem(models.Model):
     employee = models.ForeignKey(
         'Employee',
         on_delete=models.CASCADE,
-        related_name='salary_items',
+        related_name='legacy_salary_items',
         verbose_name=_('الموظف')
     )
     salary_item = models.ForeignKey(
@@ -142,13 +142,13 @@ class HrPayrollPeriod(models.Model):
     created_by = models.ForeignKey(
         'accounts.Users_Login_New',
         on_delete=models.PROTECT,
-        related_name='created_payroll_periods',
+        related_name='legacy_created_payroll_periods',
         verbose_name=_('تم الإنشاء بواسطة')
     )
     approved_by = models.ForeignKey(
         'accounts.Users_Login_New',
         on_delete=models.PROTECT,
-        related_name='approved_payroll_periods',
+        related_name='legacy_approved_payroll_periods',
         null=True,
         blank=True,
         verbose_name=_('تم الاعتماد بواسطة')
@@ -189,7 +189,7 @@ class HrPayrollEntry(models.Model):
     employee = models.ForeignKey(
         'Employee',
         on_delete=models.PROTECT,
-        related_name='payroll_entries',
+        related_name='legacy_payroll_entries',
         verbose_name=_('الموظف')
     )
     total_amount = models.DecimalField(

@@ -26,12 +26,11 @@ class SalaryComponentForm(forms.ModelForm):
     class Meta:
         model = SalaryComponent
         fields = [
-            'company', 'name', 'code', 'component_type', 'calculation_method',
-            'default_value', 'is_taxable', 'affects_overtime', 'description',
-            'formula', 'is_active'
+            'name', 'code', 'component_type', 'category', 'calculation_method',
+            'fixed_amount', 'percentage_value', 'is_taxable', 'description',
+            'calculation_formula', 'is_active'
         ]
         widgets = {
-            'company': forms.Select(attrs={'class': 'form-select'}),
             'name': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': _('اسم مكون الراتب'),
@@ -43,25 +42,32 @@ class SalaryComponentForm(forms.ModelForm):
                 'maxlength': '20'
             }),
             'component_type': forms.Select(attrs={'class': 'form-select'}),
+            'category': forms.Select(attrs={'class': 'form-select'}),
             'calculation_method': forms.Select(attrs={'class': 'form-select'}),
-            'default_value': forms.NumberInput(attrs={
+            'fixed_amount': forms.NumberInput(attrs={
                 'class': 'form-control',
-                'placeholder': _('القيمة الافتراضية'),
+                'placeholder': _('المبلغ الثابت'),
                 'step': '0.01',
                 'min': '0'
             }),
+            'percentage_value': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': _('النسبة المئوية'),
+                'step': '0.01',
+                'min': '0',
+                'max': '100'
+            }),
             'is_taxable': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'affects_overtime': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'description': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 3,
                 'placeholder': _('وصف المكون'),
                 'dir': 'rtl'
             }),
-            'formula': forms.Textarea(attrs={
+            'calculation_formula': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 2,
-                'placeholder': _('المعادلة (للحساب التلقائي)'),
+                'placeholder': _('معادلة الحساب (للحساب التلقائي)'),
                 'dir': 'ltr'
             }),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'})
@@ -137,39 +143,32 @@ class EmployeeSalaryStructureForm(forms.ModelForm):
     class Meta:
         model = EmployeeSalaryStructure
         fields = [
-            'employee', 'salary_component', 'amount', 'percentage',
-            'effective_date', 'end_date', 'notes'
+            'employee', 'structure_name', 'basic_salary', 'currency',
+            'effective_from', 'effective_to', 'is_active'
         ]
         widgets = {
             'employee': forms.Select(attrs={'class': 'form-select'}),
-            'salary_component': forms.Select(attrs={'class': 'form-select'}),
-            'amount': forms.NumberInput(attrs={
+            'structure_name': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': _('المبلغ'),
+                'placeholder': _('اسم هيكل الراتب'),
+                'dir': 'rtl'
+            }),
+            'basic_salary': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': _('الراتب الأساسي'),
                 'step': '0.01',
                 'min': '0'
             }),
-            'percentage': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'placeholder': _('النسبة المئوية'),
-                'step': '0.01',
-                'min': '0',
-                'max': '100'
-            }),
-            'effective_date': forms.DateInput(attrs={
+            'currency': forms.Select(attrs={'class': 'form-select'}),
+            'effective_from': forms.DateInput(attrs={
                 'class': 'form-control',
                 'type': 'date'
             }),
-            'end_date': forms.DateInput(attrs={
+            'effective_to': forms.DateInput(attrs={
                 'class': 'form-control',
                 'type': 'date'
             }),
-            'notes': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 3,
-                'placeholder': _('ملاحظات'),
-                'dir': 'rtl'
-            })
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'})
         }
 
     def __init__(self, *args, **kwargs):
@@ -232,15 +231,15 @@ class PayrollPeriodForm(forms.ModelForm):
     class Meta:
         model = PayrollPeriod
         fields = [
-            'company', 'name', 'start_date', 'end_date', 'pay_date', 'notes'
+            'name', 'period_type', 'start_date', 'end_date', 'pay_date', 'notes'
         ]
         widgets = {
-            'company': forms.Select(attrs={'class': 'form-select'}),
             'name': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': _('اسم فترة الراتب'),
                 'dir': 'rtl'
             }),
+            'period_type': forms.Select(attrs={'class': 'form-select'}),
             'start_date': forms.DateInput(attrs={
                 'class': 'form-control',
                 'type': 'date'
@@ -315,10 +314,9 @@ class PayrollEntryForm(forms.ModelForm):
     class Meta:
         model = PayrollEntry
         fields = [
-            'payroll_period', 'employee', 'basic_salary', 'total_allowances',
-            'total_bonuses', 'overtime_amount', 'total_deductions',
-            'tax_amount', 'insurance_amount', 'working_days', 'present_days',
-            'absent_days', 'leave_days', 'overtime_hours', 'notes'
+            'payroll_period', 'employee', 'basic_salary', 'total_earnings',
+            'total_deductions', 'working_days', 'present_days',
+            'absent_days', 'leave_days', 'overtime_hours', 'calculation_notes'
         ]
         widgets = {
             'payroll_period': forms.Select(attrs={'class': 'form-select'}),
@@ -328,17 +326,7 @@ class PayrollEntryForm(forms.ModelForm):
                 'step': '0.01',
                 'min': '0'
             }),
-            'total_allowances': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'step': '0.01',
-                'min': '0'
-            }),
-            'total_bonuses': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'step': '0.01',
-                'min': '0'
-            }),
-            'overtime_amount': forms.NumberInput(attrs={
+            'total_earnings': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
                 'min': '0'
@@ -348,16 +336,7 @@ class PayrollEntryForm(forms.ModelForm):
                 'step': '0.01',
                 'min': '0'
             }),
-            'tax_amount': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'step': '0.01',
-                'min': '0'
-            }),
-            'insurance_amount': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'step': '0.01',
-                'min': '0'
-            }),
+
             'working_days': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'min': '0',
@@ -383,10 +362,10 @@ class PayrollEntryForm(forms.ModelForm):
                 'step': '0.5',
                 'min': '0'
             }),
-            'notes': forms.Textarea(attrs={
+            'calculation_notes': forms.Textarea(attrs={
                 'class': 'form-control',
                 'rows': 3,
-                'placeholder': _('ملاحظات'),
+                'placeholder': _('ملاحظات الحساب'),
                 'dir': 'rtl'
             })
         }

@@ -196,7 +196,7 @@ def employee_list(request):
 
     # الموظفين حسب القسم
     employees_by_department = Department.objects.annotate(
-        count=Count('employees')
+        count=Count('legacy_employees')
     ).filter(count__gt=0)
 
     context = {

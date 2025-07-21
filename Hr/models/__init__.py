@@ -55,7 +55,7 @@ from Hr.models.salary_models import (
     HrSalaryItem as LegacySalaryItem,
     HrEmployeeSalaryItem as LegacyEmployeeSalaryItem,
     HrPayrollPeriod as LegacyPayrollPeriod,
-    PayrollEntry as LegacyPayrollEntry
+    HrPayrollEntry as LegacyPayrollEntry
 )
 
 # Performance Management Models

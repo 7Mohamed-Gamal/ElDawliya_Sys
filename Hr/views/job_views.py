@@ -19,8 +19,8 @@ from Hr.decorators import hr_module_permission_required
 @hr_module_permission_required('jobs', 'view')
 def job_list(request):
     """عرض قائمة الوظائف"""
-    # Import Employee model
-    from Hr.models.employee_model import Employee
+    # Import LegacyEmployee model (has jop_code and emp_id fields)
+    from Hr.models.legacy_employee import LegacyEmployee as Employee
     from django.db.models import Count
 
     # Get all jobs
@@ -93,7 +93,7 @@ def job_detail(request, jop_code):
     job = get_object_or_404(Job, jop_code=jop_code)
 
     # Get employees with this job code
-    from Hr.models.employee_model import Employee
+    from Hr.models.legacy_employee import LegacyEmployee as Employee
     employees = Employee.objects.filter(jop_code=jop_code)
 
     context = {
@@ -133,8 +133,8 @@ def job_delete(request, jop_code):
     """حذف وظيفة"""
     job = get_object_or_404(Job, jop_code=jop_code)
 
-    # Import Employee model
-    from Hr.models.employee_model import Employee
+    # Import LegacyEmployee model (has jop_code field)
+    from Hr.models.legacy_employee import LegacyEmployee as Employee
 
     if request.method == 'POST':
         # Check if there are any employees with this job

@@ -160,44 +160,33 @@ class EmployeeForm(forms.ModelForm):
             except Job.DoesNotExist:
                 pass
 
-        # Split fields into fieldsets for display
+        # Split fields into fieldsets for display (only include fields that exist in the model)
         self.fieldsets = [
             (_('المعلومات الأساسية'), [
                 'emp_id', 'emp_first_name', 'emp_second_name', 'emp_full_name',
-                'working_condition', 'insurance_status', 'national_id',
-                'date_birth', 'emp_date_hiring', 'dept_name', 'jop_code', 'department'
+                'working_condition', 'insurance_status'
             ]),
             (_('معلومات الهوية'), [
-                'national_id', 'date_birth', 'place_birth',
-                'emp_nationality', 'emp_marital_status','emp_type','people_with_special_needs',
-                'emp_address', 'governorate'
-            ]),
-            (_('بيانات الاتصال'), [
-                'emp_phone1', 'emp_phone2'
+                'national_id', 'date_birth'
             ]),
             (_('معلومات العمل'), [
-                'working_condition', 'department',
-                'jop_name', 'emp_date_hiring'  # Removed jop_code
-            ]),
-            (_('معلومات السيارة'), [
-                'emp_car','shift_type'
+                'working_condition', 'department', 'dept_name', 'jop_code', 'emp_date_hiring'
             ]),
             (_('معلومات التأمين'), [
-                'insurance_status', 'insurance_salary', 'health_card'
+                'insurance_status'
             ]),
             (_('مصوغات التعيين'), [
-                'military_service_certificate', 'emp_image'
+                'emp_image'
             ]),
         ]
 
-        # Set default values for new instances
+        # Set default values for new instances (only for fields that exist in the form)
         if not instance:
-            self.fields['working_condition'].initial = 'سارى'
-            self.fields['emp_type'].initial = 'ذكر'
-            self.fields['emp_marital_status'].initial = 'أعزب'
-            self.fields['insurance_status'].initial = 'غير مؤمن عليه'
-            self.fields['health_card'].initial = 'غير موجوده'
-            self.fields['shift_type'].initial = 'صباحي'
+            # Only set initial values for fields that are actually in the form
+            if 'working_condition' in self.fields:
+                self.fields['working_condition'].initial = 'سارى'
+            if 'insurance_status' in self.fields:
+                self.fields['insurance_status'].initial = 'غير مؤمن عليه'
 
     def clean(self):
         cleaned_data = super().clean()
