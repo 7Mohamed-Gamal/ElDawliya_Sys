@@ -1,235 +1,65 @@
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 
-# تخصيص موقع الإدارة
 admin.site.site_header = _('نظام الدولية للموارد البشرية')
 admin.site.site_title = _('إدارة الموارد البشرية')
 admin.site.index_title = _('لوحة تحكم الموارد البشرية')
 
-# استيراد النماذج المتاحة فقط
-from Hr.models import (
-    # Core Organizational Models
-    Company, Branch, Department, JobPosition, JobLevel,
+from Hr.models.core import Company, Branch, Department, JobPosition
+from Hr.models.employee import Employee
+from Hr.models.leave import LeaveType, LeaveRequest
+from Hr.models.payroll import SalaryComponent
 
-    # Employee Management Models
-    Employee, EmployeeDocument, EmployeeContact, EmployeeEducation,
-    EmployeeExperience, EmployeeFamily, EmployeeBank,
-
-    # Attendance & Time Management Models
-    WorkShift, ShiftAssignment, AttendanceMachine, MachineUser, AttendanceRecord, AttendanceSummary,
-
-    # Leave Management Models
-    LeaveType, LeavePolicy, LeaveRequest, LeaveApproval, LeaveBalance, LeaveTransaction,
-
-    # Payroll Management Models
-    SalaryComponent, PayrollPeriod, EmployeeSalaryStructure, EmployeeSalaryComponent,
-    PayrollEntry, PayrollDetail, PayrollDetailHistory,
-
-    # Legacy Models
-    Job, JobInsurance, Car, HrJob, LegacyDepartment,
-    LegacyPayrollEntry, PayrollItemDetail, SalaryItem, EmployeeSalaryItem,
-    AttendanceRule, EmployeeAttendanceRule, OfficialHoliday,
-    PickupPoint, EmployeeNote, EmployeeNoteHistory, EmployeeFile, 
-    HrTask, EmployeeLeave, EmployeeEvaluation
-)
-
-# ==================== CORE ORGANIZATIONAL MODELS ====================
-
+# Core Models
 @admin.register(Company)
 class CompanyAdmin(admin.ModelAdmin):
-    list_display = ['name', 'tax_number', 'is_active', 'created_at']
-    list_filter = ['is_active', 'created_at']
-    search_fields = ['name', 'tax_number', 'commercial_register']
-    ordering = ['name']
+    list_display = ['name', 'tax_id', 'registration_number', 'is_active']
+    list_filter = ['is_active']
+    search_fields = ['name', 'tax_id', 'registration_number']
 
 @admin.register(Branch)
 class BranchAdmin(admin.ModelAdmin):
     list_display = ['name', 'code', 'company', 'is_active']
     list_filter = ['company', 'is_active']
     search_fields = ['name', 'code']
-    ordering = ['company', 'name']
 
 @admin.register(Department)
 class DepartmentAdmin(admin.ModelAdmin):
-    list_display = ['name', 'code', 'branch', 'manager', 'is_active']
-    list_filter = ['branch', 'is_active']
+    list_display = ['name', 'code', 'company', 'manager', 'is_active']
+    list_filter = ['company', 'is_active']
     search_fields = ['name', 'code']
-    ordering = ['branch', 'name']
 
 @admin.register(JobPosition)
 class JobPositionAdmin(admin.ModelAdmin):
-    list_display = ['title', 'code', 'department', 'level', 'is_active']
-    list_filter = ['department', 'level', 'is_active']
+    list_display = ['title', 'code', 'department', 'is_active']
+    list_filter = ['department', 'is_active']
     search_fields = ['title', 'code']
-    ordering = ['department', 'title']
 
-# ==================== EMPLOYEE MANAGEMENT MODELS ====================
-
+# Employee Models
 @admin.register(Employee)
 class EmployeeAdmin(admin.ModelAdmin):
-    list_display = ['employee_number', 'full_name', 'department', 'job_position', 'status', 'hire_date']
-    list_filter = ['status', 'department', 'job_position', 'employment_type']
-    search_fields = ['employee_number', 'full_name', 'first_name', 'last_name', 'national_id', 'email']
-    date_hierarchy = 'hire_date'
-    # TODO: Re-enable autocomplete_fields when all models are properly registered
-    # autocomplete_fields = ['company', 'branch', 'department', 'job_position', 'manager']
-    fieldsets = (
-        (_('البيانات الأساسية'), {
-            'fields': ('employee_number', 'first_name', 'middle_name', 'last_name', 'full_name', 'full_name_english')
-        }),
-        (_('المعلومات التنظيمية'), {
-            'fields': ('company', 'branch', 'department', 'job_position', 'manager')
-        }),
-        (_('بيانات الاتصال'), {
-            'fields': ('email', 'personal_email', 'phone', 'mobile', 'address')
-        }),
-        (_('البيانات الشخصية'), {
-            'fields': ('national_id', 'passport_number', 'date_of_birth', 'place_of_birth', 'gender', 'marital_status', 'nationality')
-        }),
-        (_('بيانات التوظيف'), {
-            'fields': ('hire_date', 'employment_type', 'employment_status', 'probation_end_date', 'contract_end_date')
-        }),
-        (_('معلومات الراتب'), {
-            'fields': ('basic_salary', 'currency')
-        }),
-    )
+    list_display = ['employee_id', 'full_name', 'department', 'position', 'status']
+    list_filter = ['status', 'department', 'position']
+    search_fields = ['employee_id', 'first_name', 'last_name', 'national_id']
+    date_hierarchy = 'join_date'
 
-@admin.register(EmployeeDocument)
-class EmployeeDocumentAdmin(admin.ModelAdmin):
-    list_display = ['employee', 'document_type', 'title', 'status', 'expiry_date']
-    list_filter = ['document_type', 'status']
-    search_fields = ['employee__full_name', 'title']
-    # autocomplete_fields = ['employee']
-
-@admin.register(EmployeeContact)
-class EmployeeContactAdmin(admin.ModelAdmin):
-    list_display = ['employee', 'contact_type', 'is_primary', 'phone', 'email']
-    list_filter = ['contact_type', 'is_primary']
-    search_fields = ['employee__full_name', 'phone', 'email']
-    # autocomplete_fields = ['employee']
-
-@admin.register(EmployeeEducation)
-class EmployeeEducationAdmin(admin.ModelAdmin):
-    list_display = ['employee', 'degree_name', 'institution_name', 'start_date', 'end_date', 'is_verified']
-    list_filter = ['education_type', 'is_verified']
-    search_fields = ['employee__full_name', 'degree_name', 'institution_name']
-    # autocomplete_fields = ['employee']
-    date_hierarchy = 'start_date'
-
-# ==================== PAYROLL MANAGEMENT MODELS ====================
-
+# Payroll Models
 @admin.register(SalaryComponent)
 class SalaryComponentAdmin(admin.ModelAdmin):
-    list_display = ['name', 'code', 'component_type', 'category', 'calculation_method', 'is_active']
-    list_filter = ['component_type', 'category', 'calculation_method', 'is_active', 'frequency']
-    search_fields = ['name', 'code', 'description']
-    ordering = ['display_order', 'name']
-    fieldsets = (
-        (_('المعلومات الأساسية'), {
-            'fields': ('name', 'code', 'description', 'component_type', 'category')
-        }),
-        (_('طريقة الحساب'), {
-            'fields': ('calculation_method', 'fixed_amount', 'percentage_value', 'percentage_basis', 'basis_component', 'calculation_formula')
-        }),
-        (_('الحدود والقيود'), {
-            'fields': ('minimum_amount', 'maximum_amount')
-        }),
-        (_('الإعدادات'), {
-            'fields': ('is_taxable', 'is_insurance_applicable', 'affects_overtime', 'frequency')
-        }),
-        (_('العرض والتقارير'), {
-            'fields': ('display_order', 'show_in_payslip', 'show_in_summary')
-        }),
-        (_('الحالة'), {
-            'fields': ('is_active', 'is_system_component')
-        }),
-    )
+    list_display = ['name', 'code', 'component_type', 'is_active']
+    list_filter = ['component_type', 'is_active']
+    search_fields = ['name', 'code']
 
-# TODO: Add admin registrations for other payroll models when they are created
-# @admin.register(EmployeeSalaryStructure)
-# @admin.register(PayrollPeriod)
-# @admin.register(PayrollEntry)
-# @admin.register(TaxConfiguration)
-
-# ==================== ATTENDANCE & TIME MANAGEMENT MODELS ====================
-
-@admin.register(WorkShift)
-class WorkShiftAdmin(admin.ModelAdmin):
-    list_display = ['name', 'start_time', 'end_time', 'break_duration_minutes', 'status']
-    list_filter = ['status', 'shift_type']
-    search_fields = ['name', 'description']
-    ordering = ['name']
-
-@admin.register(AttendanceMachine)
-class AttendanceMachineAdmin(admin.ModelAdmin):
-    list_display = ['name', 'serial_number', 'location', 'ip_address', 'is_active']
-    list_filter = ['is_active', 'status', 'machine_type']
-    search_fields = ['name', 'serial_number', 'location']
-    ordering = ['name']
-
-@admin.register(AttendanceRecord)
-class AttendanceRecordAdmin(admin.ModelAdmin):
-    list_display = ['employee', 'machine', 'timestamp', 'record_type']
-    list_filter = ['record_type', 'machine', 'date']
-    search_fields = ['employee__full_name', 'employee__employee_number']
-    date_hierarchy = 'timestamp'
-    # autocomplete_fields = ['employee', 'machine']
-
-@admin.register(AttendanceSummary)
-class AttendanceSummaryAdmin(admin.ModelAdmin):
-    list_display = ['employee', 'date', 'check_in_time', 'check_out_time', 'total_hours', 'status']
-    list_filter = ['status', 'date']
-    search_fields = ['employee__full_name', 'employee__employee_number']
-    date_hierarchy = 'date'
-    # autocomplete_fields = ['employee', 'shift']
-
-@admin.register(ShiftAssignment)
-class ShiftAssignmentAdmin(admin.ModelAdmin):
-    list_display = ['employee', 'shift', 'start_date', 'end_date', 'is_active']
-    list_filter = ['shift', 'assignment_type', 'is_active']
-    search_fields = ['employee__full_name', 'employee__employee_number']
-    date_hierarchy = 'start_date'
-    # autocomplete_fields = ['employee', 'shift']
-
-@admin.register(MachineUser)
-class MachineUserAdmin(admin.ModelAdmin):
-    list_display = ['employee', 'machine', 'user_id', 'is_enrolled', 'is_active']
-    list_filter = ['machine', 'is_enrolled', 'is_active']
-    search_fields = ['employee__full_name', 'user_id']
-    # autocomplete_fields = ['employee', 'machine']
-
-# ==================== LEAVE MANAGEMENT MODELS ====================
-
+# Leave Models
 @admin.register(LeaveType)
 class LeaveTypeAdmin(admin.ModelAdmin):
-    list_display = ['name', 'code', 'max_days_per_year', 'is_paid', 'is_active']
-    list_filter = ['is_paid', 'is_active', 'requires_approval']
-    search_fields = ['name', 'code', 'description']
-    ordering = ['name']
-
-@admin.register(LeavePolicy)
-class LeavePolicyAdmin(admin.ModelAdmin):
-    list_display = ['name', 'employment_types', 'calendar_year_type', 'is_active']
-    list_filter = ['employment_types', 'is_active']
-    search_fields = ['name', 'description']
-    # autocomplete_fields = ['company', 'branches', 'departments']
+    list_display = ['name', 'code', 'is_paid', 'is_active']
+    list_filter = ['is_paid', 'is_active']
+    search_fields = ['name', 'code']
 
 @admin.register(LeaveRequest)
 class LeaveRequestAdmin(admin.ModelAdmin):
-    list_display = ['employee', 'leave_type', 'start_date', 'end_date', 'duration_days', 'status']
-    list_filter = ['leave_type', 'status', 'start_date']
-    search_fields = ['employee__full_name', 'employee__employee_number', 'reason']
+    list_display = ['employee', 'leave_type', 'start_date', 'end_date', 'status']
+    list_filter = ['leave_type', 'status']
+    search_fields = ['employee__full_name']
     date_hierarchy = 'start_date'
-    # autocomplete_fields = ['employee', 'leave_type', 'approved_by']
-    readonly_fields = ['duration_days', 'created_at', 'updated_at']
-
-@admin.register(LeaveBalance)
-class LeaveBalanceAdmin(admin.ModelAdmin):
-    list_display = ['employee', 'leave_type', 'balance_year', 'accrued_balance', 'used_balance', 'calculate_available_balance']
-    list_filter = ['leave_type', 'balance_year']
-    search_fields = ['employee__full_name', 'employee__employee_number']
-    # autocomplete_fields = ['employee', 'leave_type']
-    readonly_fields = ['calculate_available_balance']
-
-# TODO: Add admin registrations for other models when they are created
-# Legacy models, performance models, document models, notification models, etc.
