@@ -301,15 +301,11 @@ class EmployeeSalaryComponent(models.Model):
         return f"{self.salary_structure.employee.full_name} - {self.salary_component.name}"
     
     def calculate_amount(self, payroll_period=None, base_values=None):
-        """Calculate component amount"""
+        """استدعاء خدمة الرواتب لحساب قيمة مكون الراتب لهذا الموظف والفترة"""
+        from Hr.services.payroll_service import PayrollService
         if self.override_calculation:
             return self.amount
-        
-        return self.salary_component.calculate_amount(
-            self.salary_structure.employee,
-            payroll_period,
-            base_values
-        )
+        return PayrollService.calculate_employee_salary_component_amount(self, payroll_period, base_values)
     
     def save(self, *args, **kwargs):
         """Override save to recalculate structure totals"""

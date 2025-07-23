@@ -1,6 +1,6 @@
 """
-Employee Models for HRMS
-Handles all employee information and sensitive data
+نماذج الموظفين لنظام إدارة الموارد البشرية (HRMS)
+تتعامل مع جميع بيانات الموظفين والمعلومات الحساسة مع التشفير المناسب
 """
 
 from django.db import models
@@ -17,8 +17,7 @@ from datetime import date
 
 class Employee(models.Model):
     """
-    Main employee model containing sensitive and personal information
-    with proper encryption for sensitive fields
+    نموذج الموظف الرئيسي يحتوي على جميع المعلومات الشخصية والمالية مع تشفير الحقول الحساسة.
     """
     
     # Gender Choices
@@ -229,7 +228,7 @@ class Employee(models.Model):
 
     @property  
     def full_name(self):
-        """Returns the employee's full name"""
+        """إرجاع الاسم الكامل للموظف (الاسم الأول + الأوسط + الأخير)"""
         names = [self.first_name]
         if self.middle_name:
             names.append(self.middle_name)
@@ -237,7 +236,7 @@ class Employee(models.Model):
         return ' '.join(names)
 
     def save(self, *args, **kwargs):
-        """Override save to encrypt sensitive fields and generate IDs"""
+        """تجاوز الحفظ لتوليد رقم الموظف وتشفير الحقول الحساسة تلقائيًا"""
         if not self.employee_id:
             # Generate employee ID using company code and sequence
             company_code = self.company.name[:3].upper()
@@ -259,7 +258,7 @@ class Employee(models.Model):
 
     @property
     def _sensitive_fields(self):
-        """List of fields that should be encrypted"""
+        """قائمة الحقول التي يجب تشفيرها تلقائيًا عند الحفظ"""
         return [
             'private_email',
             'mobile_phone',
@@ -270,12 +269,12 @@ class Employee(models.Model):
         ]
 
     def verify_sensitive_data(self, field_name, value):
-        """Verify encrypted sensitive data"""
+        """التحقق من صحة البيانات الحساسة المشفرة (مثل البريد أو الهوية)"""
         encrypted = getattr(self, field_name)
         return check_password(value, encrypted)
 
     def get_age(self):
-        """Calculate employee age"""
+        """حساب عمر الموظف بناءً على تاريخ الميلاد"""
         today = date.today()
         return today.year - self.date_of_birth.year - (
             (today.month, today.day) < 

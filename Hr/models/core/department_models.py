@@ -1,6 +1,6 @@
 """
-Department Models for HRMS
-Handles organizational departments structure
+نماذج الأقسام لنظام إدارة الموارد البشرية (HRMS)
+تتعامل مع الهيكل التنظيمي للأقسام والفروع
 """
 
 import uuid
@@ -11,8 +11,7 @@ from django.conf import settings
 
 class Department(models.Model):
     """
-    Department model representing organizational units
-    with hierarchical structure
+    نموذج القسم التنظيمي يمثل وحدة تنظيمية مع دعم الهيكل الهرمي
     """
     
     # Unique Identifier
@@ -119,11 +118,12 @@ class Department(models.Model):
         ]
     
     def __str__(self):
+        """إرجاع اسم القسم مع الشركة والفرع (إن وجد)"""
         branch_name = f" - {self.branch.name}" if self.branch else ""
         return f"{self.company.name}{branch_name} - {self.name}"
     
     def save(self, *args, **kwargs):
-        """Override save to set default settings"""
+        """تجاوز الحفظ لتوليد كود القسم وتعيين الإعدادات الافتراضية"""
         if not self.department_settings:
             self.department_settings = {
                 'approval_required': True,

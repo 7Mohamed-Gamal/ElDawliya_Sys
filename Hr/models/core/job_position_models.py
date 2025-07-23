@@ -1,6 +1,6 @@
 """
-Job Position Models for HRMS
-Handles job positions, roles, and career levels
+نماذج الوظائف والمستويات الوظيفية لنظام إدارة الموارد البشرية (HRMS)
+تتعامل مع تعريف الوظائف، الأدوار، والمسارات المهنية
 """
 
 import uuid
@@ -13,8 +13,7 @@ from django.core.exceptions import ValidationError
 
 class JobLevel(models.Model):
     """
-    Job Level model for defining career levels and grades
-    Provides a hierarchical structure for job positions
+    نموذج مستوى وظيفي لتعريف الدرجات والمسارات المهنية
     """
     
     # Unique Identifier
@@ -125,8 +124,7 @@ class JobLevel(models.Model):
 
 class JobPosition(models.Model):
     """
-    Job Position model for defining roles and positions within departments
-    Includes job descriptions, requirements, salary ranges, and career levels
+    نموذج الوظيفة لتعريف الدور الوظيفي والمتطلبات والمسؤوليات
     """
     
     # Unique Identifier
@@ -405,10 +403,11 @@ class JobPosition(models.Model):
         ]
     
     def __str__(self):
+        """إرجاع المسمى الوظيفي مع اسم القسم"""
         return f"{self.title} - {self.department.name}"
     
     def clean(self):
-        """Validate job position data"""
+        """التحقق من صحة بيانات الوظيفة (الرواتب، سنوات الخبرة، العدد)"""
         super().clean()
         
         # Validate salary range
@@ -426,20 +425,20 @@ class JobPosition(models.Model):
             raise ValidationError(_("العدد الحالي للموظفين لا يمكن أن يتجاوز العدد الأقصى"))
     
     def get_current_employees(self):
-        """Get current employees in this position"""
+        """الحصول على الموظفين الحاليين في هذه الوظيفة"""
         return self.employees.filter(status='active')
     
     def get_available_positions(self):
-        """Get number of available positions"""
+        """الحصول على عدد الوظائف الشاغرة"""
         return self.max_headcount - self.current_headcount
     
     def is_position_available(self):
-        """Check if position is available for new hire"""
+        """التحقق من توفر وظيفة شاغرة"""
         return self.get_available_positions() > 0
     
     @property
     def salary_range_display(self):
-        """Get formatted salary range"""
+        """عرض نطاق الراتب بشكل منسق"""
         if self.min_salary and self.max_salary:
             return f"{self.min_salary:,.2f} - {self.max_salary:,.2f} {self.currency}"
         elif self.min_salary:
@@ -449,7 +448,7 @@ class JobPosition(models.Model):
         return _("غير محدد")
     
     def save(self, *args, **kwargs):
-        """Override save to set default settings and update headcount"""
+        """تجاوز الحفظ لتوليد كود الوظيفة وتعيين الإعدادات الافتراضية وتحديث العدد الحالي"""
         # Set default job settings
         if not self.job_settings:
             self.job_settings = {

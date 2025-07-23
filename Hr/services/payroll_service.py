@@ -313,6 +313,122 @@ class PayrollService:
             }
     
     @staticmethod
+    def calculate_salary_component_amount(component, employee, payroll_period, base_values=None):
+        """
+        حساب قيمة مكون الراتب لموظف معين وفترة معينة
+        Calculate the amount for a salary component for a specific employee and payroll period
+        """
+        from decimal import Decimal
+        if base_values is None:
+            base_values = {}
+        amount = Decimal('0')
+        method = getattr(component, 'calculation_method', None)
+        if method == 'fixed':
+            amount = getattr(component, 'fixed_amount', Decimal('0')) or Decimal('0')
+        elif method == 'percentage':
+            basis_value = PayrollService._get_basis_value(component, employee, payroll_period, base_values)
+            percentage_value = getattr(component, 'percentage_value', None)
+            if basis_value and percentage_value:
+                amount = basis_value * (percentage_value / 100)
+        elif method == 'formula':
+            amount = PayrollService._calculate_formula_amount(component, employee, payroll_period, base_values)
+        elif method == 'attendance_based':
+            amount = PayrollService._calculate_attendance_based_amount(component, employee, payroll_period)
+        elif method == 'slab':
+            amount = PayrollService._calculate_slab_amount(component, employee, payroll_period, base_values)
+        # Apply limits
+        min_amt = getattr(component, 'minimum_amount', None)
+        max_amt = getattr(component, 'maximum_amount', None)
+        if min_amt and amount < min_amt:
+            amount = min_amt
+        if max_amt and amount > max_amt:
+            amount = max_amt
+        return amount
+
+    @staticmethod
+    def calculate_employee_salary_component_amount(employee_salary_component, payroll_period=None, base_values=None):
+        """
+        حساب قيمة مكون راتب موظف (من خلال مكون الراتب المرتبط)
+        Calculate the amount for an employee salary component (delegates to salary component)
+        """
+        if employee_salary_component.override_calculation:
+            return employee_salary_component.amount
+        return PayrollService.calculate_salary_component_amount(
+            employee_salary_component.salary_component,
+            employee_salary_component.salary_structure.employee,
+            payroll_period,
+            base_values
+        )
+
+    @staticmethod
+    def _get_basis_value(component, employee, payroll_period, base_values):
+        """
+        جلب قيمة الأساس لحساب النسبة
+        Get the basis value for percentage calculation
+        """
+        from decimal import Decimal
+        basis = getattr(component, 'percentage_basis', None)
+        if basis == 'basic_salary':
+            return getattr(employee, 'basic_salary', Decimal('0')) or Decimal('0')
+        elif basis == 'gross_salary':
+            return base_values.get('gross_salary', Decimal('0'))
+        elif basis == 'total_earnings':
+            return base_values.get('total_earnings', Decimal('0'))
+        elif basis == 'specific_component' and getattr(component, 'basis_component', None):
+            return base_values.get(f"component_{component.basis_component.code}", Decimal('0'))
+        elif basis == 'attendance_days':
+            return Decimal(str(base_values.get('attendance_days', 0)))
+        elif basis == 'working_hours':
+            return Decimal(str(base_values.get('working_hours', 0)))
+        return Decimal('0')
+
+    @staticmethod
+    def _calculate_formula_amount(component, employee, payroll_period, base_values):
+        """
+        حساب قيمة المكون بناءً على معادلة
+        Calculate amount using formula (placeholder, needs real implementation)
+        """
+        from decimal import Decimal
+        try:
+            formula = getattr(component, 'calculation_formula', None)
+            # TODO: implement formula evaluation logic
+            return Decimal('0')
+        except:
+            return Decimal('0')
+
+    @staticmethod
+    def _calculate_attendance_based_amount(component, employee, payroll_period):
+        """
+        حساب قيمة المكون بناءً على الحضور
+        Calculate amount based on attendance (placeholder)
+        """
+        from decimal import Decimal
+        # TODO: implement attendance-based calculation
+        return Decimal('0')
+
+    @staticmethod
+    def _calculate_slab_amount(component, employee, payroll_period, base_values):
+        """
+        حساب قيمة المكون بطريقة الشرائح
+        Calculate amount using slab method
+        """
+        from decimal import Decimal
+        slabs = getattr(component, 'slabs', [])
+        if not slabs:
+            return Decimal('0')
+        basis_value = PayrollService._get_basis_value(component, employee, payroll_period, base_values)
+        total_amount = Decimal('0')
+        for slab in slabs:
+            slab_min = Decimal(str(slab.get('min', 0)))
+            slab_max = Decimal(str(slab.get('max', float('inf'))))
+            slab_rate = Decimal(str(slab.get('rate', 0)))
+            if basis_value > slab_min:
+                applicable_amount = min(basis_value, slab_max) - slab_min
+                if applicable_amount > 0:
+                    total_amount += applicable_amount * (slab_rate / 100)
+        return total_amount
+    
+    @staticmethod
     def _calculate_component_amount(component: SalaryComponent, basic_salary: Decimal) -> Decimal:
         """Calculate the amount for a salary component
         
