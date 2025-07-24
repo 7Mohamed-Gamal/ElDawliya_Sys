@@ -3,6 +3,9 @@ from pathlib import Path
 from django.utils.translation import gettext_lazy as _
 import sys
 import django.db.utils
+from dotenv import load_dotenv
+
+load_dotenv()  # هذا السطر مهم جداً
 
 SERVER_IP = '192.168.1.48'
 SERVER_HOSTNAME = 'ELDAWLIYA-SYSTE'
@@ -119,6 +122,8 @@ DATABASES = {
         },
     }
 }
+
+FIELD_ENCRYPTION_KEY = os.getenv('FIELD_ENCRYPTION_KEY')
 
 # Save original settings
 DEFAULT_DB = DATABASES['default'].copy()

@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% load static i18n %}
+
+{% block title %}{% trans "دليل المستخدم - نظام الموارد البشرية" %}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .guide-sidebar {
+    background-color: #f8f9fc;
+    border-left: 1px solid #e3e6f0;
+    min-height: calc(100vh - 150px);
+  }
+
+  .guide-menu-section {
+    margin-bottom: 15px;
+  }
+
+  .guide-menu-header {
+    padding: 10px 15px;
+    font-weight: 600;
+    color: #4e73df;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: all 0.2s;
+  }
+
+  .guide-menu-header:hover {
+    background-color: rgba(78, 115, 223, 0.1);
+  }
+
+  .guide-menu-header.active {
+    background-color: rgba(78, 115, 223, 0.1);
+    color: #2e59d9;
+  }
+
+  .guide-menu-header i {
+    margin-left: 10px;
+  }
+
+  .guide-submenu {
+    padding: 0 25px;
+    list-style: none;
+  }
+
+  .guide-submenu li {
+    margin: 8px 0;
+  }
+
+  .guide-submenu a {
+    color: #5a5c69;
+    text-decoration: none;
+    display: block;
+    padding: 5px 0;
+    font-size: 0.9rem;
+    border-radius: 3px;
+    transition: all 0.2s;
+  }
+
+  .guide-submenu a:hover {
+    color: #4e73df;
+    padding-right: 5px;
+  }
+
+  .guide-submenu a.active {
+    color: #4e73df;
+    font-weight: 600;
+    padding-right: 5px;
+  }
+
+  .guide-content {
+    padding: 20px;
+  }
+
+  .guide-welcome {
+    text-align: center;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 40px 0;
+  }
+
+  .guide-welcome img {
+    max-width: 180px;
+    margin-bottom: 30px;
+  }
+
+  .guide-features {
+    margin-top: 40px;
+  }
+
+  .feature-card {
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+  }
+
+  .feature-icon {
+    height: 65px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+  }
+
+  .feature-icon i {
+    font-size: 2rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-3">
+  <div class="row">
+    <!-- القائمة الجانبية -->
+    <div class="col-lg-3">
+      <div class="guide-sidebar p-3">
+        <h4 class="mb-4">{% trans "دليل المستخدم" %}</h4>
+
+        <!-- أقسام دليل المستخدم -->
+        {% for section in guide_sections %}
+        <div class="guide-menu-section">
+          <div class="guide-menu-header {% if section.id == active_section %}active{% endif %}" data-toggle="collapse" data-target="#section-{{ section.id }}">
+            <i class="fas {{ section.icon }}"></i>
+            <span>{{ section.title }}</span>
+          </div>
+          <ul id="section-{{ section.id }}" class="guide-submenu collapse {% if section.id == active_section %}show{% endif %}">
+            {% for subsection in section.subsections %}
+            <li>
+              <a href="{% url 'hr:user_guide_section' section.id subsection.id %}" class="{% if active_section == section.id and active_subsection == subsection.id %}active{% endif %}">
+                {{ subsection.title }}
+              </a>
+            </li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- محتوى الصفحة الرئيسية -->
+    <div class="col-lg-9">
+      <div class="guide-content">
+        <div class="guide-welcome">
+          <img src="{% static 'img/hr_logo.png' %}" alt="نظام الموارد البشرية" class="mb-4">
+          <h1 class="h3 mb-3">{% trans "مرحباً بك في دليل مستخدم نظام الموارد البشرية المتكامل" %}</h1>
+          <p class="lead text-muted">{% trans "هذا الدليل سيساعدك في فهم واستخدام جميع ميزات النظام بكفاءة. اختر أحد الأقسام من القائمة الجانبية للبدء." %}</p>
+
+          <div class="row guide-features mt-5">
+            {% for section in guide_sections %}
+            <div class="col-md-4 mb-4">
+              <a href="{% url 'hr:user_guide_section' section.id section.subsections.0.id %}" class="text-decoration-none text-reset">
+                <div class="feature-card p-4">
+                  <div class="feature-icon">
+                    <i class="fas {{ section.icon }} text-{{ forloop.counter|divisibleby:3|yesno:'primary,success,info' }}"></i>
+                  </div>
+                  <h5 class="text-center">{{ section.title }}</h5>
+                  <p class="small text-muted text-center">{% trans "استكشف كيفية" %} {{ section.title|lower }}</p>
+                </div>
+              </a>
+            </div>
+            {% endfor %}
+          </div>
+
+          <div class="mt-5">
+            <div class="alert alert-info d-inline-block">
+              <i class="fas fa-info-circle mr-2"></i>
+              {% trans "هل تحتاج إلى مساعدة؟" %}
+              <a href="#" class="alert-link mr-2">{% trans "تواصل مع الدعم الفني" %}</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  // إظهار وإخفاء القوائم الفرعية عند النقر على العنوان
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.guide-menu-header').forEach(header => {
+      header.addEventListener('click', function() {
+        // إضافة/إزالة الكلاس active للعنوان المنقر عليه
+        if (!this.classList.contains('active')) {
+          document.querySelectorAll('.guide-menu-header').forEach(h => h.classList.remove('active'));
+          this.classList.add('active');
+        }
+      });
+    });
+  });
+</script>
+{% endblock %}
