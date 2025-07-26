@@ -153,9 +153,9 @@ class EmployeeForm(forms.ModelForm):
         self.fields['jop_name'].label = _('الوظيفة')
         
         # If editing existing employee, set initial job value
-        if instance and instance.jop_name:
+        if instance and instance.jop_code:
             try:
-                job = Job.objects.get(jop_name=instance.jop_name)
+                job = Job.objects.get(jop_code=instance.jop_code)
                 self.fields['jop_name'].initial = job
             except Job.DoesNotExist:
                 pass
@@ -198,11 +198,9 @@ class EmployeeForm(forms.ModelForm):
         # Handle job selection properly
         job = self.cleaned_data.get('jop_name')
         if job:
-            instance.jop_name = job.jop_name
             instance.jop_code = job.jop_code
         else:
-            # Clear job fields if no job selected
-            instance.jop_name = None
+            # Clear job field if no job selected
             instance.jop_code = None
 
         if commit:
