@@ -1,677 +1,629 @@
-"""Payroll Services Module
-
-This module provides services for payroll management, including:
-- Salary calculation and processing
-- Payroll period management
-- Employee salary structure management
-- Payroll reporting and analytics
+"""
+Payroll Service - خدمات إدارة الرواتب المتطورة
 """
 
-import uuid
-import logging
-from datetime import date, datetime, timedelta
-from decimal import Decimal
-from typing import Dict, List, Optional, Tuple, Union, Any
-
-from django.db import transaction
-from django.db.models import Q, Count, Sum, Avg, F, Value, Max
-from django.db.models.functions import Coalesce
+from django.db import transaction, models
+from django.core.exceptions import ValidationError
 from django.utils import timezone
-from django.conf import settings
+from django.core.cache import cache
+from django.db.models import Q, Count, Sum, Avg, F, Case, When
+from decimal import Decimal, ROUND_HALF_UP
+from datetime import date, datetime, timedelta
+import logging
+import json
+import calendar
+from typing import Dict, List, Optional, Tuple
 
-from Hr.models.payroll.payroll_period_models import PayrollPeriod
-from Hr.models.payroll.employee_salary_structure_models import EmployeeSalaryStructure, SalaryComponent
-from Hr.models.employee.employee_models import Employee
-from Hr.models.attendance.attendance_record_models import AttendanceRecord
-
-# Setup logger
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('hr_system')
 
 
 class PayrollService:
-    """Service class for payroll management operations"""
+    """خدمات إدارة الرواتب الشاملة"""
     
-    @staticmethod
-    def get_payroll_period_by_id(period_id: uuid.UUID) -> Optional[PayrollPeriod]:
-        """Retrieve a payroll period by ID
-        
-        Args:
-            period_id: UUID of the payroll period
-            
-        Returns:
-            PayrollPeriod object if found, None otherwise
-        """
-        try:
-            return PayrollPeriod.objects.get(id=period_id)
-        except PayrollPeriod.DoesNotExist:
-            logger.warning(f"Payroll period with ID {period_id} not found")
-            return None
+    def __init__(self):
+        self.cache_timeout = 1800  # 30 minutes
+        self.rounding_precision = Decimal('0.01')  # Round to 2 decimal places
     
-    @staticmethod
-    def get_current_payroll_period() -> Optional[PayrollPeriod]:
-        """Get the current active payroll period
-        
-        Returns:
-            PayrollPeriod object if found, None otherwise
-        """
-        try:
-            today = date.today()
-            return PayrollPeriod.objects.filter(
-                start_date__lte=today,
-                end_date__gte=today,
-                is_active=True
-            ).first()
-        except Exception as e:
-            logger.error(f"Error getting current payroll period: {str(e)}")
-            return None
+    # =============================================================================
+    # SALARY CALCULATION METHODS
+    # =============================================================================
     
-    @staticmethod
-    def get_payroll_periods(year: int = None, month: int = None) -> List[PayrollPeriod]:
-        """Get payroll periods with optional filtering
-        
-        Args:
-            year: Year to filter by (optional)
-            month: Month to filter by (optional)
-            
-        Returns:
-            List of PayrollPeriod objects
-        """
+    def calculate_employee_salary(self, employee_id: str, year: int, month: int, 
+                                include_overtime: bool = True, 
+                                include_deductions: bool = True) -> Dict:
+        """حساب راتب الموظف لشهر محدد"""
         try:
-            queryset = PayrollPeriod.objects.all()
+            from ..models import Employee, AttendanceSummary
             
-            if year:
-                queryset = queryset.filter(start_date__year=year)
+            employee = Employee.objects.select_related(
+                'company', 'branch', 'department', 'job_position'
+            ).get(id=employee_id)
             
-            if month:
-                queryset = queryset.filter(start_date__month=month)
+            # Get month date range
+            start_date = date(year, month, 1)
+            end_date = date(year, month, calendar.monthrange(year, month)[1])
             
-            return list(queryset.order_by('-start_date'))
+            # Basic salary components
+            basic_salary = employee.basic_salary
             
-        except Exception as e:
-            logger.error(f"Error retrieving payroll periods: {str(e)}")
-            return []
-    
-    @staticmethod
-    @transaction.atomic
-    def create_payroll_period(period_data: Dict) -> Tuple[PayrollPeriod, bool, str]:
-        """Create a new payroll period
-        
-        Args:
-            period_data: Dictionary with payroll period data
-            
-        Returns:
-            Tuple of (PayrollPeriod object, success boolean, message string)
-        """
-        try:
-            # Check for overlapping periods
-            start_date = period_data['start_date']
-            end_date = period_data['end_date']
-            
-            overlapping_periods = PayrollPeriod.objects.filter(
-                Q(start_date__lte=end_date, end_date__gte=start_date)
-            )
-            
-            if overlapping_periods.exists():
-                return None, False, "Payroll period overlaps with existing period"
-            
-            # Create payroll period
-            period = PayrollPeriod(**period_data)
-            period.save()
-            
-            logger.info(f"Created payroll period: {period.name}")
-            return period, True, "Payroll period created successfully"
-            
-        except Exception as e:
-            logger.error(f"Error creating payroll period: {str(e)}")
-            return None, False, f"Error creating payroll period: {str(e)}"
-    
-    @staticmethod
-    @transaction.atomic
-    def close_payroll_period(period_id: uuid.UUID) -> Tuple[bool, str]:
-        """Close a payroll period
-        
-        Args:
-            period_id: UUID of the payroll period to close
-            
-        Returns:
-            Tuple of (success boolean, message string)
-        """
-        try:
-            period = PayrollService.get_payroll_period_by_id(period_id)
-            if not period:
-                return False, f"Payroll period with ID {period_id} not found"
-            
-            if period.status == 'closed':
-                return False, "Payroll period is already closed"
-            
-            period.status = 'closed'
-            period.closed_date = timezone.now().date()
-            period.save()
-            
-            logger.info(f"Closed payroll period: {period.name}")
-            return True, "Payroll period closed successfully"
-            
-        except Exception as e:
-            logger.error(f"Error closing payroll period: {str(e)}")
-            return False, f"Error closing payroll period: {str(e)}"
-    
-    @staticmethod
-    def get_employee_salary_structure(employee_id: uuid.UUID) -> Optional[EmployeeSalaryStructure]:
-        """Get the current salary structure for an employee
-        
-        Args:
-            employee_id: UUID of the employee
-            
-        Returns:
-            EmployeeSalaryStructure object if found, None otherwise
-        """
-        try:
-            return EmployeeSalaryStructure.objects.filter(
-                employee_id=employee_id,
-                is_active=True
-            ).first()
-        except Exception as e:
-            logger.error(f"Error getting employee salary structure: {str(e)}")
-            return None
-    
-    @staticmethod
-    @transaction.atomic
-    def create_employee_salary_structure(salary_data: Dict) -> Tuple[EmployeeSalaryStructure, bool, str]:
-        """Create a new employee salary structure
-        
-        Args:
-            salary_data: Dictionary with salary structure data
-            
-        Returns:
-            Tuple of (EmployeeSalaryStructure object, success boolean, message string)
-        """
-        try:
-            # Get employee
-            try:
-                employee = Employee.objects.get(id=salary_data['employee_id'])
-            except Employee.DoesNotExist:
-                return None, False, f"Employee with ID {salary_data['employee_id']} not found"
-            
-            # Deactivate existing salary structures
-            EmployeeSalaryStructure.objects.filter(
-                employee=employee,
-                is_active=True
-            ).update(is_active=False)
-            
-            # Create new salary structure
-            salary_data['employee'] = employee
-            del salary_data['employee_id']
-            
-            salary_structure = EmployeeSalaryStructure(**salary_data)
-            salary_structure.save()
-            
-            logger.info(f"Created salary structure for employee: {employee.full_name}")
-            return salary_structure, True, "Salary structure created successfully"
-            
-        except Exception as e:
-            logger.error(f"Error creating salary structure: {str(e)}")
-            return None, False, f"Error creating salary structure: {str(e)}"
-    
-    @staticmethod
-    def calculate_employee_salary(employee_id: uuid.UUID, 
-                                period_id: uuid.UUID,
-                                include_attendance: bool = True) -> Dict:
-        """Calculate salary for an employee for a specific payroll period
-        
-        Args:
-            employee_id: UUID of the employee
-            period_id: UUID of the payroll period
-            include_attendance: Whether to include attendance-based calculations
-            
-        Returns:
-            Dictionary with salary calculation details
-        """
-        try:
-            # Get employee and salary structure
-            employee = Employee.objects.get(id=employee_id)
-            salary_structure = PayrollService.get_employee_salary_structure(employee_id)
-            period = PayrollService.get_payroll_period_by_id(period_id)
-            
-            if not salary_structure:
-                return {
-                    'error': 'No active salary structure found for employee',
-                    'employee_id': employee_id
+            # Initialize salary breakdown
+            salary_breakdown = {
+                'employee_info': {
+                    'id': employee.id,
+                    'employee_number': employee.employee_number,
+                    'name': employee.full_name,
+                    'department': employee.department.name,
+                    'position': employee.job_position.title
+                },
+                'period': {
+                    'year': year,
+                    'month': month,
+                    'start_date': start_date,
+                    'end_date': end_date,
+                    'working_days': self._get_working_days(start_date, end_date)
+                },
+                'basic_components': {
+                    'basic_salary': float(basic_salary),
+                    'housing_allowance': 0,
+                    'transportation_allowance': 0,
+                    'food_allowance': 0,
+                    'other_allowances': 0
+                },
+                'attendance_based': {
+                    'overtime_amount': 0,
+                    'late_deductions': 0,
+                    'absence_deductions': 0,
+                    'bonus_amount': 0
+                },
+                'statutory_deductions': {
+                    'social_insurance_employee': 0,
+                    'income_tax': 0,
+                    'medical_insurance': 0
+                },
+                'other_deductions': {
+                    'loan_deductions': 0,
+                    'advance_deductions': 0,
+                    'other': 0
+                },
+                'totals': {
+                    'gross_salary': 0,
+                    'total_allowances': 0,
+                    'total_deductions': 0,
+                    'net_salary': 0
                 }
-            
-            if not period:
-                return {
-                    'error': 'Payroll period not found',
-                    'period_id': period_id
-                }
-            
-            # Initialize calculation
-            calculation = {
-                'employee_id': employee_id,
-                'employee_name': employee.full_name,
-                'period_id': period_id,
-                'period_name': period.name,
-                'basic_salary': salary_structure.basic_salary,
-                'allowances': {},
-                'deductions': {},
-                'total_allowances': Decimal('0.00'),
-                'total_deductions': Decimal('0.00'),
-                'gross_salary': Decimal('0.00'),
-                'net_salary': Decimal('0.00'),
-                'worked_days': 0,
-                'total_days': 0,
-                'attendance_rate': 0.0
             }
-            
-            # Calculate attendance if requested
-            if include_attendance:
-                attendance_records = AttendanceRecord.objects.filter(
-                    employee=employee,
-                    date__gte=period.start_date,
-                    date__lte=period.end_date
-                )
-                
-                worked_days = attendance_records.filter(check_in_time__isnull=False).count()
-                total_days = (period.end_date - period.start_date).days + 1
-                
-                calculation['worked_days'] = worked_days
-                calculation['total_days'] = total_days
-                calculation['attendance_rate'] = (worked_days / total_days * 100) if total_days > 0 else 0
-                
-                # Adjust basic salary based on attendance
-                if worked_days < total_days:
-                    daily_salary = salary_structure.basic_salary / total_days
-                    calculation['basic_salary'] = daily_salary * worked_days
             
             # Calculate allowances
-            for component in salary_structure.salary_components.filter(component_type='allowance', is_active=True):
-                amount = PayrollService._calculate_component_amount(component, calculation['basic_salary'])
-                calculation['allowances'][component.name] = amount
-                calculation['total_allowances'] += amount
-            
-            # Calculate deductions
-            for component in salary_structure.salary_components.filter(component_type='deduction', is_active=True):
-                amount = PayrollService._calculate_component_amount(component, calculation['basic_salary'])
-                calculation['deductions'][component.name] = amount
-                calculation['total_deductions'] += amount
-            
-            # Calculate totals
-            calculation['gross_salary'] = calculation['basic_salary'] + calculation['total_allowances']
-            calculation['net_salary'] = calculation['gross_salary'] - calculation['total_deductions']
-            
-            return calculation
-            
-        except Employee.DoesNotExist:
-            return {
-                'error': 'Employee not found',
-                'employee_id': employee_id
-            }
-        except Exception as e:
-            logger.error(f"Error calculating employee salary: {str(e)}")
-            return {
-                'error': f"Error calculating salary: {str(e)}",
-                'employee_id': employee_id
-            }
-    
-    @staticmethod
-    def calculate_salary_component_amount(component, employee, payroll_period, base_values=None):
-        """
-        حساب قيمة مكون الراتب لموظف معين وفترة معينة
-        Calculate the amount for a salary component for a specific employee and payroll period
-        """
-        from decimal import Decimal
-        if base_values is None:
-            base_values = {}
-        amount = Decimal('0')
-        method = getattr(component, 'calculation_method', None)
-        if method == 'fixed':
-            amount = getattr(component, 'fixed_amount', Decimal('0')) or Decimal('0')
-        elif method == 'percentage':
-            basis_value = PayrollService._get_basis_value(component, employee, payroll_period, base_values)
-            percentage_value = getattr(component, 'percentage_value', None)
-            if basis_value and percentage_value:
-                amount = basis_value * (percentage_value / 100)
-        elif method == 'formula':
-            amount = PayrollService._calculate_formula_amount(component, employee, payroll_period, base_values)
-        elif method == 'attendance_based':
-            amount = PayrollService._calculate_attendance_based_amount(component, employee, payroll_period)
-        elif method == 'slab':
-            amount = PayrollService._calculate_slab_amount(component, employee, payroll_period, base_values)
-        # Apply limits
-        min_amt = getattr(component, 'minimum_amount', None)
-        max_amt = getattr(component, 'maximum_amount', None)
-        if min_amt and amount < min_amt:
-            amount = min_amt
-        if max_amt and amount > max_amt:
-            amount = max_amt
-        return amount
-
-    @staticmethod
-    def calculate_employee_salary_component_amount(employee_salary_component, payroll_period=None, base_values=None):
-        """
-        حساب قيمة مكون راتب موظف (من خلال مكون الراتب المرتبط)
-        Calculate the amount for an employee salary component (delegates to salary component)
-        """
-        if employee_salary_component.override_calculation:
-            return employee_salary_component.amount
-        return PayrollService.calculate_salary_component_amount(
-            employee_salary_component.salary_component,
-            employee_salary_component.salary_structure.employee,
-            payroll_period,
-            base_values
-        )
-
-    @staticmethod
-    def _get_basis_value(component, employee, payroll_period, base_values):
-        """
-        جلب قيمة الأساس لحساب النسبة
-        Get the basis value for percentage calculation
-        """
-        from decimal import Decimal
-        basis = getattr(component, 'percentage_basis', None)
-        if basis == 'basic_salary':
-            return getattr(employee, 'basic_salary', Decimal('0')) or Decimal('0')
-        elif basis == 'gross_salary':
-            return base_values.get('gross_salary', Decimal('0'))
-        elif basis == 'total_earnings':
-            return base_values.get('total_earnings', Decimal('0'))
-        elif basis == 'specific_component' and getattr(component, 'basis_component', None):
-            return base_values.get(f"component_{component.basis_component.code}", Decimal('0'))
-        elif basis == 'attendance_days':
-            return Decimal(str(base_values.get('attendance_days', 0)))
-        elif basis == 'working_hours':
-            return Decimal(str(base_values.get('working_hours', 0)))
-        return Decimal('0')
-
-    @staticmethod
-    def _calculate_formula_amount(component, employee, payroll_period, base_values):
-        """
-        حساب قيمة المكون بناءً على معادلة
-        Calculate amount using formula (placeholder, needs real implementation)
-        """
-        from decimal import Decimal
-        try:
-            formula = getattr(component, 'calculation_formula', None)
-            # TODO: implement formula evaluation logic
-            return Decimal('0')
-        except:
-            return Decimal('0')
-
-    @staticmethod
-    def _calculate_attendance_based_amount(component, employee, payroll_period):
-        """
-        حساب قيمة المكون بناءً على الحضور
-        Calculate amount based on attendance (placeholder)
-        """
-        from decimal import Decimal
-        # TODO: implement attendance-based calculation
-        return Decimal('0')
-
-    @staticmethod
-    def _calculate_slab_amount(component, employee, payroll_period, base_values):
-        """
-        حساب قيمة المكون بطريقة الشرائح
-        Calculate amount using slab method
-        """
-        from decimal import Decimal
-        slabs = getattr(component, 'slabs', [])
-        if not slabs:
-            return Decimal('0')
-        basis_value = PayrollService._get_basis_value(component, employee, payroll_period, base_values)
-        total_amount = Decimal('0')
-        for slab in slabs:
-            slab_min = Decimal(str(slab.get('min', 0)))
-            slab_max = Decimal(str(slab.get('max', float('inf'))))
-            slab_rate = Decimal(str(slab.get('rate', 0)))
-            if basis_value > slab_min:
-                applicable_amount = min(basis_value, slab_max) - slab_min
-                if applicable_amount > 0:
-                    total_amount += applicable_amount * (slab_rate / 100)
-        return total_amount
-    
-    @staticmethod
-    def _calculate_component_amount(component: SalaryComponent, basic_salary: Decimal) -> Decimal:
-        """Calculate the amount for a salary component
-        
-        Args:
-            component: SalaryComponent object
-            basic_salary: Basic salary amount
-            
-        Returns:
-            Calculated component amount
-        """
-        try:
-            if component.calculation_type == 'fixed':
-                return component.amount
-            elif component.calculation_type == 'percentage':
-                return (basic_salary * component.percentage) / 100
-            else:
-                return Decimal('0.00')
-        except Exception as e:
-            logger.error(f"Error calculating component amount: {str(e)}")
-            return Decimal('0.00')
-    
-    @staticmethod
-    def calculate_department_payroll(department_id: uuid.UUID, 
-                                   period_id: uuid.UUID) -> Dict:
-        """Calculate payroll for all employees in a department
-        
-        Args:
-            department_id: UUID of the department
-            period_id: UUID of the payroll period
-            
-        Returns:
-            Dictionary with department payroll summary
-        """
-        try:
-            # Get all active employees in the department
-            employees = Employee.objects.filter(
-                department_id=department_id,
-                is_active=True
+            salary_breakdown['basic_components'].update(
+                self._calculate_allowances(employee)
             )
             
-            department_summary = {
-                'department_id': department_id,
-                'period_id': period_id,
-                'total_employees': employees.count(),
-                'processed_employees': 0,
-                'total_basic_salary': Decimal('0.00'),
-                'total_allowances': Decimal('0.00'),
-                'total_deductions': Decimal('0.00'),
-                'total_gross_salary': Decimal('0.00'),
-                'total_net_salary': Decimal('0.00'),
-                'employee_calculations': []
+            # Calculate attendance-based components
+            if include_overtime:
+                attendance_data = self._get_attendance_data(employee, start_date, end_date)
+                salary_breakdown['attendance_based'].update(
+                    self._calculate_attendance_based_components(employee, attendance_data)
+                )
+            
+            # Calculate deductions
+            if include_deductions:
+                salary_breakdown['statutory_deductions'].update(
+                    self._calculate_statutory_deductions(employee, salary_breakdown)
+                )
+                salary_breakdown['other_deductions'].update(
+                    self._calculate_other_deductions(employee, year, month)
+                )
+            
+            # Calculate totals
+            salary_breakdown['totals'] = self._calculate_salary_totals(salary_breakdown)
+            
+            # Round all monetary values
+            salary_breakdown = self._round_salary_values(salary_breakdown)
+            
+            logger.info(f"Calculated salary for employee {employee.employee_number} for {year}-{month}")
+            
+            return salary_breakdown
+            
+        except Employee.DoesNotExist:
+            raise ValidationError("الموظف غير موجود")
+        except Exception as e:
+            logger.error(f"Error calculating salary for employee {employee_id}: {e}")
+            raise ValidationError(f"خطأ في حساب الراتب: {e}")
+    
+    def calculate_bulk_payroll(self, employee_ids: List[str], year: int, month: int,
+                             save_results: bool = False) -> Dict:
+        """حساب الرواتب المجمع"""
+        try:
+            from ..models import Employee, PayrollRecord
+            
+            results = {
+                'success_count': 0,
+                'error_count': 0,
+                'total_amount': Decimal('0'),
+                'employees': [],
+                'errors': [],
+                'summary': {
+                    'total_basic_salary': Decimal('0'),
+                    'total_allowances': Decimal('0'),
+                    'total_deductions': Decimal('0'),
+                    'total_net_salary': Decimal('0')
+                }
             }
             
-            for employee in employees:
-                calculation = PayrollService.calculate_employee_salary(
-                    employee.id, 
-                    period_id, 
-                    include_attendance=True
+            with transaction.atomic():
+                for employee_id in employee_ids:
+                    try:
+                        # Calculate individual salary
+                        salary_data = self.calculate_employee_salary(employee_id, year, month)
+                        
+                        # Add to results
+                        results['employees'].append(salary_data)
+                        results['success_count'] += 1
+                        
+                        # Update summary
+                        totals = salary_data['totals']
+                        results['summary']['total_basic_salary'] += Decimal(str(totals['gross_salary']))
+                        results['summary']['total_allowances'] += Decimal(str(totals['total_allowances']))
+                        results['summary']['total_deductions'] += Decimal(str(totals['total_deductions']))
+                        results['summary']['total_net_salary'] += Decimal(str(totals['net_salary']))
+                        
+                        # Save payroll record if requested
+                        if save_results:
+                            self._save_payroll_record(employee_id, year, month, salary_data)
+                        
+                    except Exception as e:
+                        results['error_count'] += 1
+                        results['errors'].append({
+                            'employee_id': employee_id,
+                            'error': str(e)
+                        })
+                        logger.error(f"Error calculating salary for employee {employee_id}: {e}")
+            
+            # Convert Decimal to float for JSON serialization
+            for key in results['summary']:
+                results['summary'][key] = float(results['summary'][key])
+            
+            logger.info(f"Bulk payroll calculation completed: {results['success_count']} success, {results['error_count']} errors")
+            
+            return results
+            
+        except Exception as e:
+            logger.error(f"Error in bulk payroll calculation: {e}")
+            raise ValidationError(f"خطأ في حساب الرواتب المجمع: {e}")
+    
+    def generate_payslip(self, employee_id: str, year: int, month: int, 
+                        format: str = 'pdf') -> bytes:
+        """إنتاج كشف راتب"""
+        try:
+            # Calculate salary
+            salary_data = self.calculate_employee_salary(employee_id, year, month)
+            
+            if format == 'pdf':
+                return self._generate_pdf_payslip(salary_data)
+            elif format == 'html':
+                return self._generate_html_payslip(salary_data)
+            else:
+                raise ValidationError("تنسيق كشف الراتب غير مدعوم")
+                
+        except Exception as e:
+            logger.error(f"Error generating payslip: {e}")
+            raise ValidationError(f"خطأ في إنتاج كشف الراتب: {e}")
+    
+    # =============================================================================
+    # PAYROLL MANAGEMENT METHODS
+    # =============================================================================
+    
+    def create_payroll_batch(self, batch_name: str, employee_ids: List[str], 
+                           year: int, month: int, created_by_id: str) -> Dict:
+        """إنشاء دفعة رواتب"""
+        try:
+            from ..models import PayrollBatch, PayrollRecord
+            
+            with transaction.atomic():
+                # Create batch
+                batch = PayrollBatch.objects.create(
+                    name=batch_name,
+                    year=year,
+                    month=month,
+                    created_by_id=created_by_id,
+                    status='draft',
+                    total_employees=len(employee_ids)
                 )
                 
-                if 'error' not in calculation:
-                    department_summary['processed_employees'] += 1
-                    department_summary['total_basic_salary'] += calculation['basic_salary']
-                    department_summary['total_allowances'] += calculation['total_allowances']
-                    department_summary['total_deductions'] += calculation['total_deductions']
-                    department_summary['total_gross_salary'] += calculation['gross_salary']
-                    department_summary['total_net_salary'] += calculation['net_salary']
+                # Calculate payroll for all employees
+                payroll_results = self.calculate_bulk_payroll(employee_ids, year, month, save_results=False)
                 
-                department_summary['employee_calculations'].append(calculation)
-            
-            return department_summary
-            
+                # Create payroll records
+                for salary_data in payroll_results['employees']:
+                    PayrollRecord.objects.create(
+                        batch=batch,
+                        employee_id=salary_data['employee_info']['id'],
+                        basic_salary=Decimal(str(salary_data['basic_components']['basic_salary'])),
+                        total_allowances=Decimal(str(salary_data['totals']['total_allowances'])),
+                        total_deductions=Decimal(str(salary_data['totals']['total_deductions'])),
+                        gross_salary=Decimal(str(salary_data['totals']['gross_salary'])),
+                        net_salary=Decimal(str(salary_data['totals']['net_salary'])),
+                        salary_data=json.dumps(salary_data),
+                        status='calculated'
+                    )
+                
+                # Update batch totals
+                batch.total_amount = Decimal(str(payroll_results['summary']['total_net_salary']))
+                batch.processed_employees = payroll_results['success_count']
+                batch.failed_employees = payroll_results['error_count']
+                batch.save()
+                
+                logger.info(f"Created payroll batch {batch_name} with {len(employee_ids)} employees")
+                
+                return {
+                    'batch_id': batch.id,
+                    'batch_name': batch.name,
+                    'total_employees': batch.total_employees,
+                    'processed_employees': batch.processed_employees,
+                    'total_amount': float(batch.total_amount),
+                    'status': batch.status
+                }
+                
         except Exception as e:
-            logger.error(f"Error calculating department payroll: {str(e)}")
+            logger.error(f"Error creating payroll batch: {e}")
+            raise ValidationError(f"خطأ في إنشاء دفعة الرواتب: {e}")
+    
+    def approve_payroll_batch(self, batch_id: str, approved_by_id: str) -> Dict:
+        """اعتماد دفعة رواتب"""
+        try:
+            from ..models import PayrollBatch
+            
+            with transaction.atomic():
+                batch = PayrollBatch.objects.get(id=batch_id)
+                
+                if batch.status != 'draft':
+                    raise ValidationError("لا يمكن اعتماد دفعة رواتب غير مسودة")
+                
+                # Update batch status
+                batch.status = 'approved'
+                batch.approved_by_id = approved_by_id
+                batch.approved_at = timezone.now()
+                batch.save()
+                
+                # Update all payroll records in batch
+                batch.payroll_records.update(
+                    status='approved',
+                    approved_at=timezone.now()
+                )
+                
+                logger.info(f"Approved payroll batch {batch.name}")
+                
+                return {
+                    'success': True,
+                    'batch_id': batch.id,
+                    'approved_at': batch.approved_at,
+                    'message': f'تم اعتماد دفعة الرواتب {batch.name}'
+                }
+                
+        except PayrollBatch.DoesNotExist:
+            raise ValidationError("دفعة الرواتب غير موجودة")
+        except Exception as e:
+            logger.error(f"Error approving payroll batch: {e}")
+            raise ValidationError(f"خطأ في اعتماد دفعة الرواتب: {e}")
+    
+    def get_payroll_summary(self, year: int, month: int = None, 
+                          department_id: str = None) -> Dict:
+        """ملخص الرواتب"""
+        try:
+            from ..models import PayrollRecord, Employee
+            
+            # Build query
+            query = Q(batch__year=year)
+            if month:
+                query &= Q(batch__month=month)
+            if department_id:
+                query &= Q(employee__department_id=department_id)
+            
+            records = PayrollRecord.objects.filter(query).select_related(
+                'employee__department', 'batch'
+            )
+            
+            # Calculate summary statistics
+            summary = records.aggregate(
+                total_employees=Count('id'),
+                total_basic_salary=Sum('basic_salary'),
+                total_allowances=Sum('total_allowances'),
+                total_deductions=Sum('total_deductions'),
+                total_gross_salary=Sum('gross_salary'),
+                total_net_salary=Sum('net_salary'),
+                avg_net_salary=Avg('net_salary')
+            )
+            
+            # Department breakdown
+            dept_breakdown = records.values(
+                'employee__department__name'
+            ).annotate(
+                employee_count=Count('id'),
+                total_amount=Sum('net_salary'),
+                avg_salary=Avg('net_salary')
+            ).order_by('-total_amount')
+            
+            # Monthly breakdown (if year only)
+            monthly_breakdown = []
+            if not month:
+                monthly_data = records.values('batch__month').annotate(
+                    employee_count=Count('id'),
+                    total_amount=Sum('net_salary')
+                ).order_by('batch__month')
+                
+                for data in monthly_data:
+                    monthly_breakdown.append({
+                        'month': data['batch__month'],
+                        'month_name': calendar.month_name[data['batch__month']],
+                        'employee_count': data['employee_count'],
+                        'total_amount': float(data['total_amount'] or 0)
+                    })
+            
+            # Convert Decimal to float
+            for key, value in summary.items():
+                if value is not None:
+                    summary[key] = float(value)
+                else:
+                    summary[key] = 0
+            
             return {
-                'error': f"Error calculating department payroll: {str(e)}",
-                'department_id': department_id
-            }
-    
-    @staticmethod
-    def get_payroll_summary(period_id: uuid.UUID) -> Dict:
-        """Get overall payroll summary for a period
-        
-        Args:
-            period_id: UUID of the payroll period
-            
-        Returns:
-            Dictionary with payroll summary
-        """
-        try:
-            period = PayrollService.get_payroll_period_by_id(period_id)
-            if not period:
-                return {'error': 'Payroll period not found'}
-            
-            # Get all active employees
-            employees = Employee.objects.filter(is_active=True)
-            
-            summary = {
-                'period_id': period_id,
-                'period_name': period.name,
-                'total_employees': employees.count(),
-                'processed_employees': 0,
-                'total_basic_salary': Decimal('0.00'),
-                'total_allowances': Decimal('0.00'),
-                'total_deductions': Decimal('0.00'),
-                'total_gross_salary': Decimal('0.00'),
-                'total_net_salary': Decimal('0.00'),
-                'department_summaries': {}
+                'period': {
+                    'year': year,
+                    'month': month,
+                    'department_id': department_id
+                },
+                'summary': summary,
+                'department_breakdown': list(dept_breakdown),
+                'monthly_breakdown': monthly_breakdown,
+                'generated_at': timezone.now()
             }
             
-            # Group employees by department
-            departments = employees.values_list('department_id', flat=True).distinct()
+        except Exception as e:
+            logger.error(f"Error getting payroll summary: {e}")
+            raise ValidationError(f"خطأ في جلب ملخص الرواتب: {e}")
+    
+    # =============================================================================
+    # CALCULATION HELPER METHODS
+    # =============================================================================
+    
+    def _calculate_allowances(self, employee) -> Dict:
+        """حساب البدلات"""
+        allowances = {
+            'housing_allowance': 0,
+            'transportation_allowance': 0,
+            'food_allowance': 0,
+            'other_allowances': 0
+        }
+        
+        # Housing allowance (25% of basic salary if eligible)
+        if hasattr(employee, 'housing_allowance') and employee.housing_allowance:
+            allowances['housing_allowance'] = float(employee.basic_salary * Decimal('0.25'))
+        
+        # Transportation allowance (fixed amount)
+        if hasattr(employee, 'transportation_allowance') and employee.transportation_allowance:
+            allowances['transportation_allowance'] = 500.0  # Fixed amount
+        
+        # Food allowance (fixed amount)
+        if hasattr(employee, 'food_allowance') and employee.food_allowance:
+            allowances['food_allowance'] = 300.0  # Fixed amount
+        
+        # Other allowances from employee record
+        if hasattr(employee, 'other_allowances') and employee.other_allowances:
+            allowances['other_allowances'] = float(employee.other_allowances)
+        
+        return allowances
+    
+    def _get_attendance_data(self, employee, start_date, end_date) -> Dict:
+        """الحصول على بيانات الحضور"""
+        try:
+            from ..models import AttendanceSummary
             
-            for dept_id in departments:
-                if dept_id:
-                    dept_summary = PayrollService.calculate_department_payroll(dept_id, period_id)
-                    summary['department_summaries'][str(dept_id)] = dept_summary
-                    
-                    if 'error' not in dept_summary:
-                        summary['processed_employees'] += dept_summary['processed_employees']
-                        summary['total_basic_salary'] += dept_summary['total_basic_salary']
-                        summary['total_allowances'] += dept_summary['total_allowances']
-                        summary['total_deductions'] += dept_summary['total_deductions']
-                        summary['total_gross_salary'] += dept_summary['total_gross_salary']
-                        summary['total_net_salary'] += dept_summary['total_net_salary']
+            summaries = AttendanceSummary.objects.filter(
+                employee=employee,
+                date__range=[start_date, end_date]
+            )
             
-            return summary
+            return {
+                'total_work_hours': float(summaries.aggregate(
+                    total=Sum('total_work_hours')
+                )['total'] or 0),
+                'overtime_hours': float(summaries.aggregate(
+                    total=Sum('overtime_hours')
+                )['total'] or 0),
+                'late_minutes': summaries.aggregate(
+                    total=Sum('late_minutes')
+                )['total'] or 0,
+                'absent_days': summaries.filter(is_absent=True).count(),
+                'present_days': summaries.filter(is_present=True).count()
+            }
+            
+        except Exception:
+            return {
+                'total_work_hours': 0,
+                'overtime_hours': 0,
+                'late_minutes': 0,
+                'absent_days': 0,
+                'present_days': 0
+            }
+    
+    def _calculate_attendance_based_components(self, employee, attendance_data) -> Dict:
+        """حساب المكونات المبنية على الحضور"""
+        components = {
+            'overtime_amount': 0,
+            'late_deductions': 0,
+            'absence_deductions': 0,
+            'bonus_amount': 0
+        }
+        
+        # Overtime calculation
+        overtime_hours = attendance_data['overtime_hours']
+        if overtime_hours > 0:
+            hourly_rate = employee.basic_salary / Decimal('30') / Decimal('8')  # Monthly to hourly
+            overtime_rate = Decimal('1.5')  # 1.5x for overtime
+            components['overtime_amount'] = float(hourly_rate * overtime_rate * Decimal(str(overtime_hours)))
+        
+        # Late deductions (deduct per minute)
+        late_minutes = attendance_data['late_minutes']
+        if late_minutes > 0:
+            minute_rate = employee.basic_salary / Decimal('30') / Decimal('8') / Decimal('60')
+            components['late_deductions'] = float(minute_rate * Decimal(str(late_minutes)))
+        
+        # Absence deductions (deduct per day)
+        absent_days = attendance_data['absent_days']
+        if absent_days > 0:
+            daily_rate = employee.basic_salary / Decimal('30')
+            components['absence_deductions'] = float(daily_rate * Decimal(str(absent_days)))
+        
+        # Perfect attendance bonus
+        if attendance_data['absent_days'] == 0 and attendance_data['late_minutes'] == 0:
+            components['bonus_amount'] = 200.0  # Fixed bonus amount
+        
+        return components
+    
+    def _calculate_statutory_deductions(self, employee, salary_breakdown) -> Dict:
+        """حساب الخصومات القانونية"""
+        deductions = {
+            'social_insurance_employee': 0,
+            'income_tax': 0,
+            'medical_insurance': 0
+        }
+        
+        gross_salary = Decimal(str(salary_breakdown['totals'].get('gross_salary', 0)))
+        if gross_salary == 0:
+            # Calculate gross salary if not already calculated
+            basic = Decimal(str(salary_breakdown['basic_components']['basic_salary']))
+            allowances = sum(Decimal(str(v)) for v in salary_breakdown['basic_components'].values() if v != basic)
+            gross_salary = basic + allowances
+        
+        # Social insurance (employee portion - 9%)
+        deductions['social_insurance_employee'] = float(gross_salary * Decimal('0.09'))
+        
+        # Medical insurance (employee portion - 2%)
+        deductions['medical_insurance'] = float(gross_salary * Decimal('0.02'))
+        
+        # Income tax (progressive rates)
+        deductions['income_tax'] = float(self._calculate_income_tax(gross_salary))
+        
+        return deductions
+    
+    def _calculate_income_tax(self, gross_salary) -> Decimal:
+        """حساب ضريبة الدخل"""
+        # Simplified progressive tax calculation
+        # This should be based on actual tax brackets
+        
+        annual_salary = gross_salary * 12
+        tax = Decimal('0')
+        
+        # Tax brackets (example)
+        if annual_salary > Decimal('600000'):  # Above 600K annually
+            tax = (annual_salary - Decimal('600000')) * Decimal('0.20')
+        elif annual_salary > Decimal('300000'):  # 300K - 600K
+            tax = (annual_salary - Decimal('300000')) * Decimal('0.15')
+        elif annual_salary > Decimal('120000'):  # 120K - 300K
+            tax = (annual_salary - Decimal('120000')) * Decimal('0.10')
+        # Below 120K is tax-free
+        
+        # Return monthly tax
+        return tax / 12
+    
+    def _calculate_other_deductions(self, employee, year, month) -> Dict:
+        """حساب الخصومات الأخرى"""
+        deductions = {
+            'loan_deductions': 0,
+            'advance_deductions': 0,
+            'other': 0
+        }
+        
+        # This would typically come from loan and advance models
+        # For now, return zeros
+        
+        return deductions
+    
+    def _calculate_salary_totals(self, salary_breakdown) -> Dict:
+        """حساب إجماليات الراتب"""
+        # Calculate gross salary
+        basic_total = sum(salary_breakdown['basic_components'].values())
+        attendance_earnings = (
+            salary_breakdown['attendance_based']['overtime_amount'] +
+            salary_breakdown['attendance_based']['bonus_amount']
+        )
+        gross_salary = basic_total + attendance_earnings
+        
+        # Calculate total allowances
+        total_allowances = sum([
+            salary_breakdown['basic_components']['housing_allowance'],
+            salary_breakdown['basic_components']['transportation_allowance'],
+            salary_breakdown['basic_components']['food_allowance'],
+            salary_breakdown['basic_components']['other_allowances']
+        ])
+        
+        # Calculate total deductions
+        total_deductions = (
+            sum(salary_breakdown['statutory_deductions'].values()) +
+            sum(salary_breakdown['other_deductions'].values()) +
+            salary_breakdown['attendance_based']['late_deductions'] +
+            salary_breakdown['attendance_based']['absence_deductions']
+        )
+        
+        # Calculate net salary
+        net_salary = gross_salary - total_deductions
+        
+        return {
+            'gross_salary': gross_salary,
+            'total_allowances': total_allowances,
+            'total_deductions': total_deductions,
+            'net_salary': net_salary
+        }
+    
+    def _round_salary_values(self, salary_breakdown) -> Dict:
+        """تقريب قيم الراتب"""
+        def round_dict_values(d):
+            for key, value in d.items():
+                if isinstance(value, (int, float)):
+                    d[key] = float(Decimal(str(value)).quantize(self.rounding_precision, rounding=ROUND_HALF_UP))
+                elif isinstance(value, dict):
+                    d[key] = round_dict_values(value)
+            return d
+        
+        return round_dict_values(salary_breakdown)
+    
+    def _get_working_days(self, start_date, end_date) -> int:
+        """حساب أيام العمل في الفترة"""
+        working_days = 0
+        current_date = start_date
+        
+        while current_date <= end_date:
+            # Skip Fridays and Saturdays (weekend)
+            if current_date.weekday() not in [4, 5]:  # Friday=4, Saturday=5
+                working_days += 1
+            current_date += timedelta(days=1)
+        
+        return working_days
+    
+    def _save_payroll_record(self, employee_id, year, month, salary_data):
+        """حفظ سجل الراتب"""
+        try:
+            from ..models import PayrollRecord
+            
+            # This would save the payroll record to database
+            # Implementation depends on your PayrollRecord model
+            pass
             
         except Exception as e:
-            logger.error(f"Error getting payroll summary: {str(e)}")
-            return {'error': f"Error getting payroll summary: {str(e)}"}
-
-
-class SalaryComponentService:
-    """Service class for salary component management operations"""
+            logger.error(f"Error saving payroll record: {e}")
     
-    @staticmethod
-    def get_component_by_id(component_id: uuid.UUID) -> Optional[SalaryComponent]:
-        """Retrieve a salary component by ID
-        
-        Args:
-            component_id: UUID of the salary component
-            
-        Returns:
-            SalaryComponent object if found, None otherwise
-        """
-        try:
-            return SalaryComponent.objects.get(id=component_id)
-        except SalaryComponent.DoesNotExist:
-            logger.warning(f"Salary component with ID {component_id} not found")
-            return None
+    # =============================================================================
+    # REPORT GENERATION METHODS
+    # =============================================================================
     
-    @staticmethod
-    def get_all_components() -> List[SalaryComponent]:
-        """Get all salary components
-        
-        Returns:
-            List of SalaryComponent objects
-        """
-        return list(SalaryComponent.objects.all().order_by('component_type', 'name'))
+    def _generate_pdf_payslip(self, salary_data) -> bytes:
+        """إنتاج كشف راتب PDF"""
+        # This would use a PDF library like ReportLab
+        # For now, return empty bytes
+        return b''
     
-    @staticmethod
-    def get_active_components() -> List[SalaryComponent]:
-        """Get all active salary components
-        
-        Returns:
-            List of active SalaryComponent objects
-        """
-        return list(SalaryComponent.objects.filter(is_active=True).order_by('component_type', 'name'))
-    
-    @staticmethod
-    def get_components_by_type(component_type: str) -> List[SalaryComponent]:
-        """Get salary components by type
-        
-        Args:
-            component_type: Type of components ('allowance' or 'deduction')
-            
-        Returns:
-            List of SalaryComponent objects
-        """
-        return list(SalaryComponent.objects.filter(
-            component_type=component_type,
-            is_active=True
-        ).order_by('name'))
-    
-    @staticmethod
-    @transaction.atomic
-    def create_component(component_data: Dict) -> Tuple[SalaryComponent, bool, str]:
-        """Create a new salary component
-        
-        Args:
-            component_data: Dictionary with salary component data
-            
-        Returns:
-            Tuple of (SalaryComponent object, success boolean, message string)
-        """
-        try:
-            # Check if component with same name already exists
-            if SalaryComponent.objects.filter(name=component_data['name']).exists():
-                return None, False, f"Salary component with name {component_data['name']} already exists"
-            
-            # Create salary component
-            component = SalaryComponent(**component_data)
-            component.save()
-            
-            logger.info(f"Created salary component: {component.name}")
-            return component, True, "Salary component created successfully"
-            
-        except Exception as e:
-            logger.error(f"Error creating salary component: {str(e)}")
-            return None, False, f"Error creating salary component: {str(e)}"
-    
-    @staticmethod
-    @transaction.atomic
-    def update_component(component_id: uuid.UUID, component_data: Dict) -> Tuple[SalaryComponent, bool, str]:
-        """Update an existing salary component
-        
-        Args:
-            component_id: UUID of the salary component to update
-            component_data: Dictionary with updated salary component data
-            
-        Returns:
-            Tuple of (SalaryComponent object, success boolean, message string)
-        """
-        try:
-            component = SalaryComponentService.get_component_by_id(component_id)
-            if not component:
-                return None, False, f"Salary component with ID {component_id} not found"
-            
-            # Check if name is being changed and already exists
-            if 'name' in component_data and component_data['name'] != component.name:
-                if SalaryComponent.objects.filter(name=component_data['name']).exists():
-                    return None, False, f"Salary component with name {component_data['name']} already exists"
-            
-            # Update salary component fields
-            for key, value in component_data.items():
-                setattr(component, key, value)
-            
-            component.save()
-            
-            logger.info(f"Updated salary component: {component.name}")
-            return component, True, "Salary component updated successfully"
-            
-        except Exception as e:
-            logger.error(f"Error updating salary component: {str(e)}")
-            return None, False, f"Error updating salary component: {str(e)}"
+    def _generate_html_payslip(self, salary_data) -> str:
+        """إنتاج كشف راتب HTML"""
+        # This would generate HTML payslip
+        # For now, return empty string
+        return ''

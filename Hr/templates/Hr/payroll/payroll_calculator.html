@@ -1,0 +1,1478 @@
+{% extends 'Hr/base_hr_modern.html' %}
+{% load static %}
+{% block title %}حساب الرواتب - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Payroll Calculator Styles */
+.payroll-calculator {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.calculator-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-6);
+    padding: var(--spacing-4);
+    background: linear-gradient(135deg, var(--success-color), #059669);
+    border-radius: var(--radius-lg);
+    color: var(--white);
+}
+
+.header-info h1 {
+    margin-bottom: var(--spacing-1);
+    color: var(--white);
+}
+
+.header-meta {
+    opacity: 0.9;
+    font-size: var(--text-sm);
+}
+
+.header-actions {
+    display: flex;
+    gap: var(--spacing-2);
+}
+
+.header-action-btn {
+    padding: var(--spacing-2) var(--spacing-4);
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: var(--white);
+    border-radius: var(--radius);
+    text-decoration: none;
+    transition: all var(--transition-fast);
+    font-size: var(--text-sm);
+}
+
+.header-action-btn:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+    color: var(--white);
+    transform: translateY(-1px);
+}
+
+.calculator-layout {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: var(--spacing-6);
+}
+
+.calculator-main {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-6);
+}
+
+.calculator-sidebar {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-6);
+    height: fit-content;
+    position: sticky;
+    top: var(--spacing-4);
+}
+
+.employee-selector {
+    margin-bottom: var(--spacing-6);
+}
+
+.selector-title {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-3);
+}
+
+.employee-search {
+    position: relative;
+    margin-bottom: var(--spacing-3);
+}
+
+.search-input {
+    width: 100%;
+    padding: var(--spacing-3);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    font-size: var(--text-sm);
+}
+
+.search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 100;
+    display: none;
+}
+
+.search-results.show {
+    display: block;
+}
+
+.search-result-item {
+    padding: var(--spacing-3);
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.search-result-item:hover {
+    background-color: var(--bg-secondary);
+}
+
+.search-result-item:last-child {
+    border-bottom: none;
+}
+
+.selected-employee {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+    padding: var(--spacing-3);
+    background-color: var(--bg-secondary);
+    border-radius: var(--radius);
+}
+
+.employee-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-full);
+    background-color: var(--bg-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.employee-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.employee-info {
+    flex: 1;
+}
+
+.employee-name {
+    font-weight: 500;
+    margin-bottom: var(--spacing-1);
+}
+
+.employee-details {
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+}
+
+.payroll-form {
+    margin-bottom: var(--spacing-6);
+}
+
+.form-section {
+    margin-bottom: var(--spacing-6);
+    padding: var(--spacing-4);
+    background-color: var(--bg-secondary);
+    border-radius: var(--radius);
+}
+
+.section-title {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-4);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+}
+
+.section-icon {
+    width: 24px;
+    height: 24px;
+    background-color: var(--primary-color);
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+    font-size: var(--text-sm);
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-4);
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+}
+
+.form-label {
+    font-weight: 500;
+    color: var(--text-primary);
+    font-size: var(--text-sm);
+}
+
+.form-input {
+    padding: var(--spacing-3);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    font-size: var(--text-sm);
+    transition: border-color var(--transition-fast);
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgb(37 99 235 / 0.2);
+}
+
+.input-group {
+    display: flex;
+    align-items: center;
+}
+
+.input-addon {
+    padding: var(--spacing-3);
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-left: none;
+    border-radius: 0 var(--radius) var(--radius) 0;
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+}
+
+.input-group .form-input {
+    border-radius: var(--radius) 0 0 var(--radius);
+}
+
+.dynamic-items {
+    margin-top: var(--spacing-4);
+}
+
+.dynamic-item {
+    display: flex;
+    gap: var(--spacing-3);
+    align-items: end;
+    margin-bottom: var(--spacing-3);
+    padding: var(--spacing-3);
+    background-color: var(--bg-primary);
+    border-radius: var(--radius);
+}
+
+.dynamic-item .form-group {
+    flex: 1;
+}
+
+.remove-btn {
+    width: 40px;
+    height: 40px;
+    background-color: var(--danger-color);
+    color: var(--white);
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+}
+
+.remove-btn:hover {
+    background-color: #dc2626;
+    transform: scale(1.05);
+}
+
+.add-item-btn {
+    padding: var(--spacing-2) var(--spacing-4);
+    background-color: var(--primary-color);
+    color: var(--white);
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: var(--text-sm);
+    transition: all var(--transition-fast);
+}
+
+.add-item-btn:hover {
+    background-color: var(--primary-dark);
+}
+
+.calculation-actions {
+    display: flex;
+    gap: var(--spacing-3);
+    justify-content: center;
+    margin-top: var(--spacing-6);
+}
+
+.calc-btn {
+    padding: var(--spacing-3) var(--spacing-6);
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-weight: 500;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+}
+
+.calc-btn.primary {
+    background-color: var(--success-color);
+    color: var(--white);
+}
+
+.calc-btn.primary:hover {
+    background-color: #059669;
+    transform: translateY(-1px);
+}
+
+.calc-btn.secondary {
+    background-color: var(--bg-secondary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+}
+
+.calc-btn.secondary:hover {
+    background-color: var(--bg-primary);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+/* Sidebar Styles */
+.payroll-summary {
+    margin-bottom: var(--spacing-6);
+}
+
+.summary-title {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-4);
+    text-align: center;
+}
+
+.summary-card {
+    background-color: var(--bg-secondary);
+    border-radius: var(--radius);
+    padding: var(--spacing-4);
+    margin-bottom: var(--spacing-4);
+}
+
+.summary-section {
+    margin-bottom: var(--spacing-4);
+}
+
+.summary-section:last-child {
+    margin-bottom: 0;
+}
+
+.summary-section-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-2);
+    font-size: var(--text-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-2) 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.summary-item:last-child {
+    border-bottom: none;
+}
+
+.summary-label {
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+}
+
+.summary-value {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-family: monospace;
+}
+
+.summary-value.positive {
+    color: var(--success-color);
+}
+
+.summary-value.negative {
+    color: var(--danger-color);
+}
+
+.total-section {
+    border-top: 2px solid var(--border-color);
+    padding-top: var(--spacing-3);
+    margin-top: var(--spacing-3);
+}
+
+.total-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-2) 0;
+    font-size: var(--text-lg);
+    font-weight: 700;
+}
+
+.total-label {
+    color: var(--text-primary);
+}
+
+.total-value {
+    color: var(--success-color);
+    font-family: monospace;
+}
+
+.payroll-actions {
+    margin-top: var(--spacing-4);
+}
+
+.action-btn {
+    width: 100%;
+    padding: var(--spacing-3);
+    margin-bottom: var(--spacing-2);
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-primary);
+    color: var(--text-secondary);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-size: var(--text-sm);
+    text-align: center;
+}
+
+.action-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.action-btn.primary {
+    background-color: var(--primary-color);
+    color: var(--white);
+    border-color: var(--primary-color);
+}
+
+.action-btn.primary:hover {
+    background-color: var(--primary-dark);
+}
+
+.action-btn.success {
+    background-color: var(--success-color);
+    color: var(--white);
+    border-color: var(--success-color);
+}
+
+.action-btn.success:hover {
+    background-color: #059669;
+}
+
+.calculation-history {
+    margin-top: var(--spacing-6);
+}
+
+.history-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-3);
+}
+
+.history-item {
+    padding: var(--spacing-3);
+    background-color: var(--bg-secondary);
+    border-radius: var(--radius);
+    margin-bottom: var(--spacing-2);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.history-item:hover {
+    background-color: var(--bg-primary);
+    box-shadow: var(--shadow-sm);
+}
+
+.history-date {
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+    margin-bottom: var(--spacing-1);
+}
+
+.history-amount {
+    font-weight: 600;
+    color: var(--success-color);
+    font-family: monospace;
+}
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-lg);
+    z-index: 1000;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--border-color);
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+    .calculator-layout {
+        grid-template-columns: 1fr;
+    }
+    
+    .calculator-header {
+        flex-direction: column;
+        gap: var(--spacing-3);
+        text-align: center;
+    }
+    
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .calculation-actions {
+        flex-direction: column;
+    }
+    
+    .dynamic-item {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb">
+    <li class="breadcrumb-item">
+        <a href="{% url 'Hr:dashboard' %}">
+            <i class="fas fa-home"></i>
+            الرئيسية
+        </a>
+    </li>
+    <li class="breadcrumb-item active">حساب الرواتب</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="payroll-calculator">
+        <!-- Calculator Header -->
+        <div class="calculator-header">
+            <div class="header-info">
+                <h1>حاسبة الرواتب</h1>
+                <div class="header-meta">
+                    <i class="fas fa-calculator mr-2"></i>
+                    حساب الراتب الشامل مع جميع المكونات والخصومات
+                </div>
+            </div>
+            <div class="header-actions">
+                <a href="{% url 'Hr:payroll_components' %}" class="header-action-btn">
+                    <i class="fas fa-cog mr-2"></i>
+                    إعدادات المكونات
+                </a>
+                <a href="{% url 'Hr:payroll_history' %}" class="header-action-btn">
+                    <i class="fas fa-history mr-2"></i>
+                    سجل الرواتب
+                </a>
+                <button class="header-action-btn" onclick="exportCalculation()">
+                    <i class="fas fa-download mr-2"></i>
+                    تصدير
+                </button>
+            </div>
+        </div>
+
+        <!-- Calculator Layout -->
+        <div class="calculator-layout">
+            <!-- Main Calculator -->
+            <div class="calculator-main">
+                <!-- Employee Selector -->
+                <div class="employee-selector">
+                    <div class="selector-title">اختيار الموظف</div>
+                    <div class="employee-search">
+                        <input type="text" class="search-input" id="employeeSearch" placeholder="البحث عن موظف...">
+                        <div class="search-results" id="searchResults"></div>
+                    </div>
+                    <div class="selected-employee" id="selectedEmployee" style="display: none;">
+                        <div class="employee-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="employee-info">
+                            <div class="employee-name"></div>
+                            <div class="employee-details"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payroll Form -->
+                <form class="payroll-form" id="payrollForm">
+                    <!-- Basic Salary Section -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <div class="section-icon">💰</div>
+                            الراتب الأساسي
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">الراتب الأساسي</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-input" id="basicSalary" step="0.01" min="0">
+                                    <div class="input-addon">ريال</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">عدد أيام العمل</label>
+                                <input type="number" class="form-input" id="workDays" value="30" min="1" max="31">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">أيام الحضور الفعلي</label>
+                                <input type="number" class="form-input" id="actualDays" min="0" max="31">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Allowances Section -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <div class="section-icon">➕</div>
+                            البدلات والحوافز
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">بدل السكن</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-input" id="housingAllowance" step="0.01" min="0">
+                                    <div class="input-addon">ريال</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">بدل المواصلات</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-input" id="transportAllowance" step="0.01" min="0">
+                                    <div class="input-addon">ريال</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">بدل الطعام</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-input" id="foodAllowance" step="0.01" min="0">
+                                    <div class="input-addon">ريال</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Dynamic Allowances -->
+                        <div class="dynamic-items" id="dynamicAllowances">
+                            <button type="button" class="add-item-btn" onclick="addAllowance()">
+                                <i class="fas fa-plus mr-2"></i>
+                                إضافة بدل إضافي
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Overtime Section -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <div class="section-icon">⏰</div>
+                            الوقت الإضافي
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">ساعات الوقت الإضافي</label>
+                                <input type="number" class="form-input" id="overtimeHours" step="0.5" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">معدل الساعة الإضافية</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-input" id="overtimeRate" step="0.01" min="0">
+                                    <div class="input-addon">ريال</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">نوع الوقت الإضافي</label>
+                                <select class="form-input" id="overtimeType">
+                                    <option value="normal">عادي (1.5x)</option>
+                                    <option value="weekend">نهاية الأسبوع (2x)</option>
+                                    <option value="holiday">عطلة رسمية (3x)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Deductions Section -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <div class="section-icon">➖</div>
+                            الخصومات
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">التأمينات الاجتماعية</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-input" id="socialInsurance" step="0.01" min="0">
+                                    <div class="input-addon">ريال</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">ضريبة الدخل</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-input" id="incomeTax" step="0.01" min="0">
+                                    <div class="input-addon">ريال</div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">خصم الغياب</label>
+                                <div class="input-group">
+                                    <input type="number" class="form-input" id="absenceDeduction" step="0.01" min="0">
+                                    <div class="input-addon">ريال</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Dynamic Deductions -->
+                        <div class="dynamic-items" id="dynamicDeductions">
+                            <button type="button" class="add-item-btn" onclick="addDeduction()">
+                                <i class="fas fa-plus mr-2"></i>
+                                إضافة خصم إضافي
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Calculation Actions -->
+                    <div class="calculation-actions">
+                        <button type="button" class="calc-btn primary" onclick="calculatePayroll()">
+                            <i class="fas fa-calculator"></i>
+                            حساب الراتب
+                        </button>
+                        <button type="button" class="calc-btn secondary" onclick="resetForm()">
+                            <i class="fas fa-undo"></i>
+                            إعادة تعيين
+                        </button>
+                        <button type="button" class="calc-btn secondary" onclick="saveTemplate()">
+                            <i class="fas fa-save"></i>
+                            حفظ كقالب
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Loading Overlay -->
+                <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="calculator-sidebar">
+                <!-- Payroll Summary -->
+                <div class="payroll-summary">
+                    <div class="summary-title">ملخص الراتب</div>
+                    <div class="summary-card">
+                        <div class="summary-section">
+                            <div class="summary-section-title">الإجمالي</div>
+                            <div class="summary-item">
+                                <span class="summary-label">الراتب الأساسي</span>
+                                <span class="summary-value" id="summaryBasic">0.00</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">البدلات</span>
+                                <span class="summary-value positive" id="summaryAllowances">0.00</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">الوقت الإضافي</span>
+                                <span class="summary-value positive" id="summaryOvertime">0.00</span>
+                            </div>
+                        </div>
+                        
+                        <div class="summary-section">
+                            <div class="summary-section-title">الخصومات</div>
+                            <div class="summary-item">
+                                <span class="summary-label">التأمينات</span>
+                                <span class="summary-value negative" id="summaryInsurance">0.00</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">الضرائب</span>
+                                <span class="summary-value negative" id="summaryTax">0.00</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">خصومات أخرى</span>
+                                <span class="summary-value negative" id="summaryOtherDeductions">0.00</span>
+                            </div>
+                        </div>
+                        
+                        <div class="total-section">
+                            <div class="total-item">
+                                <span class="total-label">صافي الراتب</span>
+                                <span class="total-value" id="netSalary">0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="payroll-actions">
+                    <button class="action-btn success" onclick="generatePayslip()" disabled id="generateBtn">
+                        <i class="fas fa-file-invoice mr-2"></i>
+                        إنتاج كشف الراتب
+                    </button>
+                    <button class="action-btn primary" onclick="savePayroll()" disabled id="saveBtn">
+                        <i class="fas fa-save mr-2"></i>
+                        حفظ الراتب
+                    </button>
+                    <button class="action-btn" onclick="previewPayslip()" disabled id="previewBtn">
+                        <i class="fas fa-eye mr-2"></i>
+                        معاينة كشف الراتب
+                    </button>
+                    <button class="action-btn" onclick="sendPayslip()" disabled id="sendBtn">
+                        <i class="fas fa-envelope mr-2"></i>
+                        إرسال للموظف
+                    </button>
+                </div>
+
+                <!-- Calculation History -->
+                <div class="calculation-history">
+                    <div class="history-title">العمليات الحديثة</div>
+                    <div id="calculationHistory">
+                        <!-- History items will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+class PayrollCalculator {
+    constructor() {
+        this.selectedEmployee = null;
+        this.calculationResult = null;
+        this.allowanceCounter = 0;
+        this.deductionCounter = 0;
+        this.init();
+    }
+
+    init() {
+        this.setupEventListeners();
+        this.loadCalculationHistory();
+    }
+
+    setupEventListeners() {
+        // Employee search
+        document.getElementById('employeeSearch').addEventListener('input', (e) => {
+            this.searchEmployees(e.target.value);
+        });
+
+        // Form inputs for real-time calculation
+        const inputs = document.querySelectorAll('.form-input');
+        inputs.forEach(input => {
+            input.addEventListener('input', () => {
+                if (this.selectedEmployee) {
+                    this.calculatePayroll();
+                }
+            });
+        });
+
+        // Auto-calculate overtime rate based on basic salary
+        document.getElementById('basicSalary').addEventListener('input', () => {
+            this.calculateOvertimeRate();
+        });
+
+        // Auto-calculate social insurance
+        document.getElementById('basicSalary').addEventListener('input', () => {
+            this.calculateSocialInsurance();
+        });
+    }
+
+    async searchEmployees(query) {
+        if (query.length < 2) {
+            document.getElementById('searchResults').classList.remove('show');
+            return;
+        }
+
+        try {
+            const response = await fetch(`{% url 'Hr:search_employees' %}?q=${encodeURIComponent(query)}`);
+            const employees = await response.json();
+            
+            this.displaySearchResults(employees);
+        } catch (error) {
+            console.error('Error searching employees:', error);
+        }
+    }
+
+    displaySearchResults(employees) {
+        const resultsContainer = document.getElementById('searchResults');
+        
+        if (employees.length === 0) {
+            resultsContainer.innerHTML = '<div class="search-result-item">لا توجد نتائج</div>';
+        } else {
+            resultsContainer.innerHTML = employees.map(emp => `
+                <div class="search-result-item" onclick="payrollCalculator.selectEmployee(${emp.id}, '${emp.full_name}', '${emp.department}', '${emp.job_position}', ${emp.basic_salary}, '${emp.photo || ''}')">
+                    <div class="employee-name">${emp.full_name}</div>
+                    <div class="employee-details">${emp.department} - ${emp.job_position}</div>
+                </div>
+            `).join('');
+        }
+        
+        resultsContainer.classList.add('show');
+    }
+
+    selectEmployee(id, name, department, jobPosition, basicSalary, photo) {
+        this.selectedEmployee = {
+            id: id,
+            name: name,
+            department: department,
+            jobPosition: jobPosition,
+            basicSalary: basicSalary,
+            photo: photo
+        };
+
+        // Update UI
+        const selectedDiv = document.getElementById('selectedEmployee');
+        const avatar = selectedDiv.querySelector('.employee-avatar');
+        const nameDiv = selectedDiv.querySelector('.employee-name');
+        const detailsDiv = selectedDiv.querySelector('.employee-details');
+
+        if (photo) {
+            avatar.innerHTML = `<img src="${photo}" alt="${name}">`;
+        } else {
+            avatar.innerHTML = '<i class="fas fa-user"></i>';
+        }
+
+        nameDiv.textContent = name;
+        detailsDiv.textContent = `${department} - ${jobPosition}`;
+
+        selectedDiv.style.display = 'flex';
+        document.getElementById('searchResults').classList.remove('show');
+        document.getElementById('employeeSearch').value = name;
+
+        // Pre-fill basic salary
+        document.getElementById('basicSalary').value = basicSalary;
+        
+        // Load employee's default values
+        this.loadEmployeeDefaults();
+        
+        // Calculate initial payroll
+        this.calculatePayroll();
+    }
+
+    async loadEmployeeDefaults() {
+        if (!this.selectedEmployee) return;
+
+        try {
+            const response = await fetch(`{% url 'Hr:employee_payroll_defaults' 0 %}`.replace('0', this.selectedEmployee.id));
+            const defaults = await response.json();
+
+            // Fill form with defaults
+            Object.keys(defaults).forEach(key => {
+                const element = document.getElementById(key);
+                if (element) {
+                    element.value = defaults[key];
+                }
+            });
+        } catch (error) {
+            console.error('Error loading employee defaults:', error);
+        }
+    }
+
+    calculateOvertimeRate() {
+        const basicSalary = parseFloat(document.getElementById('basicSalary').value) || 0;
+        const workDays = parseFloat(document.getElementById('workDays').value) || 30;
+        const workHours = 8; // Standard work hours per day
+        
+        const hourlyRate = basicSalary / (workDays * workHours);
+        const overtimeRate = hourlyRate * 1.5; // Standard overtime multiplier
+        
+        document.getElementById('overtimeRate').value = overtimeRate.toFixed(2);
+    }
+
+    calculateSocialInsurance() {
+        const basicSalary = parseFloat(document.getElementById('basicSalary').value) || 0;
+        const insuranceRate = 0.10; // 10% for employee contribution
+        const maxInsurable = 45000; // Maximum insurable salary
+        
+        const insurableAmount = Math.min(basicSalary, maxInsurable);
+        const insuranceAmount = insurableAmount * insuranceRate;
+        
+        document.getElementById('socialInsurance').value = insuranceAmount.toFixed(2);
+    }
+
+    addAllowance() {
+        this.allowanceCounter++;
+        const container = document.getElementById('dynamicAllowances');
+        const newItem = document.createElement('div');
+        newItem.className = 'dynamic-item';
+        newItem.innerHTML = `
+            <div class="form-group">
+                <label class="form-label">اسم البدل</label>
+                <input type="text" class="form-input" name="allowance_name_${this.allowanceCounter}" placeholder="مثل: بدل الهاتف">
+            </div>
+            <div class="form-group">
+                <label class="form-label">المبلغ</label>
+                <div class="input-group">
+                    <input type="number" class="form-input allowance-amount" name="allowance_amount_${this.allowanceCounter}" step="0.01" min="0">
+                    <div class="input-addon">ريال</div>
+                </div>
+            </div>
+            <button type="button" class="remove-btn" onclick="this.parentElement.remove(); payrollCalculator.calculatePayroll();">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        
+        container.insertBefore(newItem, container.lastElementChild);
+        
+        // Add event listener for real-time calculation
+        newItem.querySelector('.allowance-amount').addEventListener('input', () => {
+            this.calculatePayroll();
+        });
+    }
+
+    addDeduction() {
+        this.deductionCounter++;
+        const container = document.getElementById('dynamicDeductions');
+        const newItem = document.createElement('div');
+        newItem.className = 'dynamic-item';
+        newItem.innerHTML = `
+            <div class="form-group">
+                <label class="form-label">اسم الخصم</label>
+                <input type="text" class="form-input" name="deduction_name_${this.deductionCounter}" placeholder="مثل: قرض شخصي">
+            </div>
+            <div class="form-group">
+                <label class="form-label">المبلغ</label>
+                <div class="input-group">
+                    <input type="number" class="form-input deduction-amount" name="deduction_amount_${this.deductionCounter}" step="0.01" min="0">
+                    <div class="input-addon">ريال</div>
+                </div>
+            </div>
+            <button type="button" class="remove-btn" onclick="this.parentElement.remove(); payrollCalculator.calculatePayroll();">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        
+        container.insertBefore(newItem, container.lastElementChild);
+        
+        // Add event listener for real-time calculation
+        newItem.querySelector('.deduction-amount').addEventListener('input', () => {
+            this.calculatePayroll();
+        });
+    }
+
+    calculatePayroll() {
+        if (!this.selectedEmployee) {
+            hrDesignSystem.showAlert('يرجى اختيار موظف أولاً', 'warning');
+            return;
+        }
+
+        // Show loading
+        document.getElementById('loadingOverlay').style.display = 'flex';
+
+        // Collect form data
+        const formData = this.collectFormData();
+        
+        // Perform calculations
+        setTimeout(() => {
+            const result = this.performCalculations(formData);
+            this.updateSummary(result);
+            this.calculationResult = result;
+            
+            // Enable action buttons
+            this.enableActionButtons();
+            
+            // Hide loading
+            document.getElementById('loadingOverlay').style.display = 'none';
+            
+            // Add to history
+            this.addToHistory(result);
+        }, 500);
+    }
+
+    collectFormData() {
+        const data = {
+            employee_id: this.selectedEmployee.id,
+            basic_salary: parseFloat(document.getElementById('basicSalary').value) || 0,
+            work_days: parseFloat(document.getElementById('workDays').value) || 30,
+            actual_days: parseFloat(document.getElementById('actualDays').value) || 30,
+            housing_allowance: parseFloat(document.getElementById('housingAllowance').value) || 0,
+            transport_allowance: parseFloat(document.getElementById('transportAllowance').value) || 0,
+            food_allowance: parseFloat(document.getElementById('foodAllowance').value) || 0,
+            overtime_hours: parseFloat(document.getElementById('overtimeHours').value) || 0,
+            overtime_rate: parseFloat(document.getElementById('overtimeRate').value) || 0,
+            overtime_type: document.getElementById('overtimeType').value,
+            social_insurance: parseFloat(document.getElementById('socialInsurance').value) || 0,
+            income_tax: parseFloat(document.getElementById('incomeTax').value) || 0,
+            absence_deduction: parseFloat(document.getElementById('absenceDeduction').value) || 0,
+            additional_allowances: [],
+            additional_deductions: []
+        };
+
+        // Collect dynamic allowances
+        document.querySelectorAll('.allowance-amount').forEach((input, index) => {
+            if (input.value) {
+                const nameInput = input.closest('.dynamic-item').querySelector('input[name^="allowance_name_"]');
+                data.additional_allowances.push({
+                    name: nameInput.value || `بدل إضافي ${index + 1}`,
+                    amount: parseFloat(input.value)
+                });
+            }
+        });
+
+        // Collect dynamic deductions
+        document.querySelectorAll('.deduction-amount').forEach((input, index) => {
+            if (input.value) {
+                const nameInput = input.closest('.dynamic-item').querySelector('input[name^="deduction_name_"]');
+                data.additional_deductions.push({
+                    name: nameInput.value || `خصم إضافي ${index + 1}`,
+                    amount: parseFloat(input.value)
+                });
+            }
+        });
+
+        return data;
+    }
+
+    performCalculations(data) {
+        // Calculate prorated basic salary
+        const proratedBasic = (data.basic_salary / data.work_days) * data.actual_days;
+        
+        // Calculate total allowances
+        const fixedAllowances = data.housing_allowance + data.transport_allowance + data.food_allowance;
+        const additionalAllowancesTotal = data.additional_allowances.reduce((sum, allowance) => sum + allowance.amount, 0);
+        const totalAllowances = fixedAllowances + additionalAllowancesTotal;
+        
+        // Calculate overtime
+        const overtimeMultiplier = this.getOvertimeMultiplier(data.overtime_type);
+        const overtimeAmount = data.overtime_hours * data.overtime_rate * overtimeMultiplier;
+        
+        // Calculate total earnings
+        const totalEarnings = proratedBasic + totalAllowances + overtimeAmount;
+        
+        // Calculate total deductions
+        const fixedDeductions = data.social_insurance + data.income_tax + data.absence_deduction;
+        const additionalDeductionsTotal = data.additional_deductions.reduce((sum, deduction) => sum + deduction.amount, 0);
+        const totalDeductions = fixedDeductions + additionalDeductionsTotal;
+        
+        // Calculate net salary
+        const netSalary = totalEarnings - totalDeductions;
+        
+        return {
+            employee: this.selectedEmployee,
+            basic_salary: proratedBasic,
+            allowances: {
+                housing: data.housing_allowance,
+                transport: data.transport_allowance,
+                food: data.food_allowance,
+                additional: data.additional_allowances,
+                total: totalAllowances
+            },
+            overtime: {
+                hours: data.overtime_hours,
+                rate: data.overtime_rate,
+                multiplier: overtimeMultiplier,
+                amount: overtimeAmount
+            },
+            deductions: {
+                social_insurance: data.social_insurance,
+                income_tax: data.income_tax,
+                absence: data.absence_deduction,
+                additional: data.additional_deductions,
+                total: totalDeductions
+            },
+            totals: {
+                earnings: totalEarnings,
+                deductions: totalDeductions,
+                net_salary: netSalary
+            },
+            calculation_date: new Date().toISOString()
+        };
+    }
+
+    getOvertimeMultiplier(type) {
+        const multipliers = {
+            'normal': 1.5,
+            'weekend': 2.0,
+            'holiday': 3.0
+        };
+        return multipliers[type] || 1.5;
+    }
+
+    updateSummary(result) {
+        document.getElementById('summaryBasic').textContent = this.formatCurrency(result.basic_salary);
+        document.getElementById('summaryAllowances').textContent = this.formatCurrency(result.allowances.total);
+        document.getElementById('summaryOvertime').textContent = this.formatCurrency(result.overtime.amount);
+        document.getElementById('summaryInsurance').textContent = this.formatCurrency(result.deductions.social_insurance);
+        document.getElementById('summaryTax').textContent = this.formatCurrency(result.deductions.income_tax);
+        document.getElementById('summaryOtherDeductions').textContent = this.formatCurrency(result.deductions.total - result.deductions.social_insurance - result.deductions.income_tax);
+        document.getElementById('netSalary').textContent = this.formatCurrency(result.totals.net_salary);
+    }
+
+    formatCurrency(amount) {
+        return new Intl.NumberFormat('ar-SA', {
+            style: 'currency',
+            currency: 'SAR',
+            minimumFractionDigits: 2
+        }).format(amount);
+    }
+
+    enableActionButtons() {
+        document.getElementById('generateBtn').disabled = false;
+        document.getElementById('saveBtn').disabled = false;
+        document.getElementById('previewBtn').disabled = false;
+        document.getElementById('sendBtn').disabled = false;
+    }
+
+    addToHistory(result) {
+        const historyContainer = document.getElementById('calculationHistory');
+        const historyItem = document.createElement('div');
+        historyItem.className = 'history-item';
+        historyItem.innerHTML = `
+            <div class="history-date">${new Date().toLocaleDateString('ar-SA')}</div>
+            <div class="history-amount">${this.formatCurrency(result.totals.net_salary)}</div>
+        `;
+        
+        historyItem.onclick = () => {
+            this.loadCalculationFromHistory(result);
+        };
+        
+        historyContainer.insertBefore(historyItem, historyContainer.firstChild);
+        
+        // Keep only last 5 items
+        while (historyContainer.children.length > 5) {
+            historyContainer.removeChild(historyContainer.lastChild);
+        }
+    }
+
+    loadCalculationFromHistory(result) {
+        // This would load a previous calculation
+        this.calculationResult = result;
+        this.updateSummary(result);
+        this.enableActionButtons();
+    }
+
+    async loadCalculationHistory() {
+        try {
+            const response = await fetch('{% url "Hr:payroll_calculation_history" %}');
+            const history = await response.json();
+            
+            const container = document.getElementById('calculationHistory');
+            container.innerHTML = history.map(item => `
+                <div class="history-item" onclick="payrollCalculator.loadCalculationFromHistory(${JSON.stringify(item).replace(/"/g, '&quot;')})">
+                    <div class="history-date">${new Date(item.date).toLocaleDateString('ar-SA')}</div>
+                    <div class="history-amount">${this.formatCurrency(item.net_salary)}</div>
+                </div>
+            `).join('');
+        } catch (error) {
+            console.error('Error loading calculation history:', error);
+        }
+    }
+
+    resetForm() {
+        if (confirm('هل أنت متأكد من إعادة تعيين النموذج؟')) {
+            document.getElementById('payrollForm').reset();
+            document.getElementById('selectedEmployee').style.display = 'none';
+            document.getElementById('employeeSearch').value = '';
+            this.selectedEmployee = null;
+            this.calculationResult = null;
+            
+            // Reset summary
+            document.querySelectorAll('.summary-value, .total-value').forEach(el => {
+                el.textContent = '0.00';
+            });
+            
+            // Disable action buttons
+            document.getElementById('generateBtn').disabled = true;
+            document.getElementById('saveBtn').disabled = true;
+            document.getElementById('previewBtn').disabled = true;
+            document.getElementById('sendBtn').disabled = true;
+            
+            // Clear dynamic items
+            document.getElementById('dynamicAllowances').innerHTML = '<button type="button" class="add-item-btn" onclick="addAllowance()"><i class="fas fa-plus mr-2"></i>إضافة بدل إضافي</button>';
+            document.getElementById('dynamicDeductions').innerHTML = '<button type="button" class="add-item-btn" onclick="addDeduction()"><i class="fas fa-plus mr-2"></i>إضافة خصم إضافي</button>';
+        }
+    }
+
+    async saveTemplate() {
+        if (!this.calculationResult) {
+            hrDesignSystem.showAlert('يرجى حساب الراتب أولاً', 'warning');
+            return;
+        }
+
+        const templateName = prompt('اسم القالب:');
+        if (!templateName) return;
+
+        try {
+            const response = await fetch('{% url "Hr:save_payroll_template" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                },
+                body: JSON.stringify({
+                    name: templateName,
+                    data: this.collectFormData()
+                })
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                hrDesignSystem.showAlert('تم حفظ القالب بنجاح', 'success');
+            } else {
+                hrDesignSystem.showAlert('حدث خطأ في حفظ القالب', 'danger');
+            }
+        } catch (error) {
+            console.error('Error saving template:', error);
+            hrDesignSystem.showAlert('حدث خطأ في حفظ القالب', 'danger');
+        }
+    }
+}
+
+// Global functions
+function generatePayslip() {
+    if (!payrollCalculator.calculationResult) {
+        hrDesignSystem.showAlert('يرجى حساب الراتب أولاً', 'warning');
+        return;
+    }
+    
+    window.open(`{% url 'Hr:generate_payslip' %}?employee_id=${payrollCalculator.selectedEmployee.id}`, '_blank');
+}
+
+function savePayroll() {
+    if (!payrollCalculator.calculationResult) {
+        hrDesignSystem.showAlert('يرجى حساب الراتب أولاً', 'warning');
+        return;
+    }
+    
+    fetch('{% url "Hr:save_payroll" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+        body: JSON.stringify(payrollCalculator.calculationResult)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            hrDesignSystem.showAlert('تم حفظ الراتب بنجاح', 'success');
+        } else {
+            hrDesignSystem.showAlert('حدث خطأ في حفظ الراتب', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error saving payroll:', error);
+        hrDesignSystem.showAlert('حدث خطأ في حفظ الراتب', 'danger');
+    });
+}
+
+function previewPayslip() {
+    if (!payrollCalculator.calculationResult) {
+        hrDesignSystem.showAlert('يرجى حساب الراتب أولاً', 'warning');
+        return;
+    }
+    
+    // This would show a modal with payslip preview
+    hrDesignSystem.showAlert('معاينة كشف الراتب قيد التطوير', 'info');
+}
+
+function sendPayslip() {
+    if (!payrollCalculator.calculationResult) {
+        hrDesignSystem.showAlert('يرجى حساب الراتب أولاً', 'warning');
+        return;
+    }
+    
+    if (confirm('هل تريد إرسال كشف الراتب للموظف؟')) {
+        fetch('{% url "Hr:send_payslip" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            },
+            body: JSON.stringify({
+                employee_id: payrollCalculator.selectedEmployee.id,
+                payroll_data: payrollCalculator.calculationResult
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                hrDesignSystem.showAlert('تم إرسال كشف الراتب بنجاح', 'success');
+            } else {
+                hrDesignSystem.showAlert('حدث خطأ في إرسال كشف الراتب', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error sending payslip:', error);
+            hrDesignSystem.showAlert('حدث خطأ في إرسال كشف الراتب', 'danger');
+        });
+    }
+}
+
+function exportCalculation() {
+    if (!payrollCalculator.calculationResult) {
+        hrDesignSystem.showAlert('يرجى حساب الراتب أولاً', 'warning');
+        return;
+    }
+    
+    window.open(`{% url 'Hr:export_payroll_calculation' %}?employee_id=${payrollCalculator.selectedEmployee.id}`, '_blank');
+}
+
+function addAllowance() {
+    payrollCalculator.addAllowance();
+}
+
+function addDeduction() {
+    payrollCalculator.addDeduction();
+}
+
+function calculatePayroll() {
+    payrollCalculator.calculatePayroll();
+}
+
+function resetForm() {
+    payrollCalculator.resetForm();
+}
+
+function saveTemplate() {
+    payrollCalculator.saveTemplate();
+}
+
+// Initialize
+let payrollCalculator;
+document.addEventListener('DOMContentLoaded', function() {
+    payrollCalculator = new PayrollCalculator();
+});
+</script>
+{% endblock %}

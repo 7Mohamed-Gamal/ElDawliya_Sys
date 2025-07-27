@@ -1,0 +1,803 @@
+{% extends 'Hr/base_hr_modern.html' %}
+{% load static %}
+
+{% block title %}ملفات الموظف - {{ employee.full_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* File Management Styles */
+.files-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.file-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--spacing-4);
+}
+
+.file-card {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: all var(--transition-normal);
+    position: relative;
+}
+
+.file-card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+}
+
+.file-card.expired {
+    border-color: var(--danger-color);
+    background-color: rgb(239 68 68 / 0.02);
+}
+
+.file-card.expiring-soon {
+    border-color: var(--warning-color);
+    background-color: rgb(245 158 11 / 0.02);
+}
+
+.file-preview {
+    height: 160px;
+    background-color: var(--bg-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.file-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.file-preview .file-icon {
+    font-size: 3rem;
+    color: var(--text-muted);
+}
+
+.file-preview.pdf .file-icon { color: var(--danger-color); }
+.file-preview.doc .file-icon { color: var(--primary-color); }
+.file-preview.image .file-icon { color: var(--success-color); }
+.file-preview.excel .file-icon { color: var(--success-color); }
+
+.file-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.file-card:hover .file-overlay {
+    opacity: 1;
+}
+
+.file-actions {
+    display: flex;
+    gap: var(--spacing-2);
+}
+
+.file-action-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    background-color: rgba(255, 255, 255, 0.9);
+    color: var(--text-primary);
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+}
+
+.file-action-btn:hover {
+    background-color: var(--white);
+    transform: scale(1.1);
+}
+
+.file-info {
+    padding: var(--spacing-4);
+}
+
+.file-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-2);
+    font-size: var(--text-base);
+    line-height: 1.4;
+}
+
+.file-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-2);
+    margin-bottom: var(--spacing-3);
+}
+
+.file-meta-item {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-1);
+}
+
+.file-description {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-3);
+    line-height: 1.4;
+}
+
+.file-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-2);
+}
+
+.file-badge {
+    font-size: var(--text-xs);
+    padding: var(--spacing-1) var(--spacing-2);
+    border-radius: var(--radius-full);
+    font-weight: 500;
+}
+
+.badge-confidential {
+    background-color: rgb(239 68 68 / 0.1);
+    color: var(--danger-color);
+}
+
+.badge-expired {
+    background-color: var(--danger-color);
+    color: var(--white);
+}
+
+.badge-expiring {
+    background-color: var(--warning-color);
+    color: var(--white);
+}
+
+.badge-type {
+    background-color: var(--bg-secondary);
+    color: var(--text-muted);
+}
+
+.files-toolbar {
+    background-color: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-4);
+    margin-bottom: var(--spacing-6);
+}
+
+.toolbar-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--spacing-4);
+    margin-bottom: var(--spacing-4);
+}
+
+.toolbar-row:last-child {
+    margin-bottom: 0;
+}
+
+.search-filters {
+    display: flex;
+    gap: var(--spacing-3);
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+}
+
+.filter-label {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.view-toggle {
+    display: flex;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.view-toggle-btn {
+    padding: var(--spacing-2) var(--spacing-3);
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    color: var(--text-muted);
+}
+
+.view-toggle-btn.active {
+    background-color: var(--primary-color);
+    color: var(--white);
+}
+
+.files-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: var(--spacing-4);
+    margin-bottom: var(--spacing-6);
+}
+
+.stat-card {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-4);
+    text-align: center;
+}
+
+.stat-value {
+    font-size: var(--text-2xl);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-1);
+}
+
+.stat-label {
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+}
+
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-12);
+    color: var(--text-muted);
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: var(--spacing-4);
+}
+
+.list-view .file-grid {
+    display: block;
+}
+
+.list-view .file-card {
+    display: flex;
+    margin-bottom: var(--spacing-3);
+    border-radius: var(--radius);
+}
+
+.list-view .file-preview {
+    width: 80px;
+    height: 80px;
+    flex-shrink: 0;
+}
+
+.list-view .file-info {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.list-view .file-details {
+    flex: 1;
+}
+
+.list-view .file-actions-list {
+    display: flex;
+    gap: var(--spacing-2);
+    align-items: center;
+}
+
+@media (max-width: 768px) {
+    .toolbar-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .search-filters {
+        justify-content: center;
+    }
+    
+    .files-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .file-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container files-container">
+    <!-- Page Header -->
+    <div class="page-header mb-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-semibold mb-2">ملفات الموظف</h1>
+                <p class="text-muted">{{ employee.full_name }} - {{ employee.employee_number }}</p>
+            </div>
+            <div class="flex gap-2">
+                <a href="{% url 'Hr:employee_detail' employee.id %}" class="btn btn-secondary">
+                    <i class="fas fa-user mr-2"></i>
+                    الملف الشخصي
+                </a>
+                <a href="{% url 'Hr:file_upload' employee.id %}" class="btn btn-primary">
+                    <i class="fas fa-plus mr-2"></i>
+                    رفع ملف جديد
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Files Statistics -->
+    <div class="files-stats">
+        <div class="stat-card">
+            <div class="stat-value">{{ files.count }}</div>
+            <div class="stat-label">إجمالي الملفات</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value text-success">{{ active_files_count }}</div>
+            <div class="stat-label">ملفات نشطة</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value text-warning">{{ expiring_files_count }}</div>
+            <div class="stat-label">تنتهي قريباً</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value text-danger">{{ expired_files_count }}</div>
+            <div class="stat-label">منتهية الصلاحية</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">{{ total_size_mb }} MB</div>
+            <div class="stat-label">الحجم الإجمالي</div>
+        </div>
+    </div>
+
+    <!-- Files Toolbar -->
+    <div class="files-toolbar">
+        <div class="toolbar-row">
+            <div class="search-filters">
+                <div class="filter-group">
+                    <label class="filter-label">البحث:</label>
+                    <input type="text" 
+                           class="form-control" 
+                           placeholder="البحث في الملفات..." 
+                           id="fileSearch"
+                           style="width: 200px;">
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label">النوع:</label>
+                    <select class="form-control" id="fileTypeFilter" style="width: 150px;">
+                        <option value="">جميع الأنواع</option>
+                        <option value="id_copy">صورة الهوية</option>
+                        <option value="passport">جواز السفر</option>
+                        <option value="contract">عقد العمل</option>
+                        <option value="cv">السيرة الذاتية</option>
+                        <option value="certificate">شهادة</option>
+                        <option value="medical">تقرير طبي</option>
+                        <option value="insurance">وثيقة تأمين</option>
+                        <option value="other">أخرى</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label">الحالة:</label>
+                    <select class="form-control" id="statusFilter" style="width: 120px;">
+                        <option value="">جميع الحالات</option>
+                        <option value="active">نشط</option>
+                        <option value="expiring">ينتهي قريباً</option>
+                        <option value="expired">منتهي الصلاحية</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="view-toggle">
+                <button class="view-toggle-btn active" data-view="grid" onclick="switchView('grid')">
+                    <i class="fas fa-th"></i>
+                </button>
+                <button class="view-toggle-btn" data-view="list" onclick="switchView('list')">
+                    <i class="fas fa-list"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="toolbar-row">
+            <div class="flex gap-2">
+                <button class="btn btn-sm btn-outline" onclick="selectAllFiles()">
+                    <i class="fas fa-check-square mr-2"></i>
+                    تحديد الكل
+                </button>
+                <button class="btn btn-sm btn-outline" onclick="downloadSelected()" id="downloadBtn" disabled>
+                    <i class="fas fa-download mr-2"></i>
+                    تحميل المحدد
+                </button>
+                <button class="btn btn-sm btn-outline text-danger" onclick="deleteSelected()" id="deleteBtn" disabled>
+                    <i class="fas fa-trash mr-2"></i>
+                    حذف المحدد
+                </button>
+            </div>
+            
+            <div class="flex gap-2">
+                <button class="btn btn-sm btn-secondary" onclick="exportFilesList()">
+                    <i class="fas fa-file-export mr-2"></i>
+                    تصدير القائمة
+                </button>
+                <button class="btn btn-sm btn-secondary" onclick="refreshFiles()">
+                    <i class="fas fa-sync mr-2"></i>
+                    تحديث
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Files Grid/List -->
+    <div class="files-view" id="filesView">
+        {% if files %}
+        <div class="file-grid" id="fileGrid">
+            {% for file in files %}
+            <div class="file-card {% if file.is_expired %}expired{% elif file.is_expiring_soon %}expiring-soon{% endif %}" 
+                 data-file-id="{{ file.id }}"
+                 data-file-type="{{ file.file_type }}"
+                 data-file-name="{{ file.file_name }}"
+                 data-status="{% if file.is_expired %}expired{% elif file.is_expiring_soon %}expiring{% else %}active{% endif %}">
+                
+                <!-- File Preview -->
+                <div class="file-preview {{ file.file_type_class }}">
+                    {% if file.is_image %}
+                        <img src="{{ file.file.url }}" alt="{{ file.file_name }}" loading="lazy">
+                    {% else %}
+                        <i class="file-icon {{ file.file_icon }}"></i>
+                    {% endif %}
+                    
+                    <!-- Overlay Actions -->
+                    <div class="file-overlay">
+                        <div class="file-actions">
+                            <button class="file-action-btn" onclick="previewFile('{{ file.id }}')" title="معاينة">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="file-action-btn" onclick="downloadFile('{{ file.id }}')" title="تحميل">
+                                <i class="fas fa-download"></i>
+                            </button>
+                            <button class="file-action-btn" onclick="editFile('{{ file.id }}')" title="تعديل">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            {% if perms.Hr.delete_employeefile %}
+                            <button class="file-action-btn" onclick="deleteFile('{{ file.id }}')" title="حذف">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Selection Checkbox -->
+                    <div style="position: absolute; top: 8px; right: 8px;">
+                        <input type="checkbox" class="file-checkbox" value="{{ file.id }}" onchange="updateSelectionButtons()">
+                    </div>
+                </div>
+                
+                <!-- File Info -->
+                <div class="file-info">
+                    <div class="file-title">{{ file.title|default:file.file_name }}</div>
+                    
+                    <div class="file-meta">
+                        <div class="file-meta-item">
+                            <i class="fas fa-calendar"></i>
+                            {{ file.upload_date|date:"Y/m/d" }}
+                        </div>
+                        <div class="file-meta-item">
+                            <i class="fas fa-hdd"></i>
+                            {{ file.file_size_mb }} MB
+                        </div>
+                        {% if file.expiry_date %}
+                        <div class="file-meta-item">
+                            <i class="fas fa-clock"></i>
+                            ينتهي: {{ file.expiry_date|date:"Y/m/d" }}
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if file.description %}
+                    <div class="file-description">{{ file.description|truncatechars:100 }}</div>
+                    {% endif %}
+                    
+                    <div class="file-badges">
+                        <span class="file-badge badge-type">{{ file.get_file_type_display }}</span>
+                        {% if file.is_confidential %}
+                        <span class="file-badge badge-confidential">
+                            <i class="fas fa-lock mr-1"></i>سري
+                        </span>
+                        {% endif %}
+                        {% if file.is_expired %}
+                        <span class="file-badge badge-expired">منتهي الصلاحية</span>
+                        {% elif file.is_expiring_soon %}
+                        <span class="file-badge badge-expiring">ينتهي قريباً</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-folder-open"></i>
+            </div>
+            <h3 class="text-lg font-semibold mb-2">لا توجد ملفات</h3>
+            <p class="mb-4">لم يتم رفع أي ملفات لهذا الموظف بعد</p>
+            <a href="{% url 'Hr:file_upload' employee.id %}" class="btn btn-primary">
+                <i class="fas fa-plus mr-2"></i>
+                رفع أول ملف
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- File Preview Modal -->
+<div class="modal" id="filePreviewModal">
+    <div class="modal-backdrop" onclick="hrDesignSystem.closeModal(document.getElementById('filePreviewModal'))"></div>
+    <div class="modal-dialog xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="previewTitle">معاينة الملف</h4>
+                <button type="button" class="modal-close" onclick="hrDesignSystem.closeModal(document.getElementById('filePreviewModal'))">×</button>
+            </div>
+            <div class="modal-body" id="previewContent">
+                <!-- Preview content will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="hrDesignSystem.closeModal(document.getElementById('filePreviewModal'))">إغلاق</button>
+                <button type="button" class="btn btn-primary" id="downloadPreviewBtn">
+                    <i class="fas fa-download mr-2"></i>
+                    تحميل
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+class FileManager {
+    constructor() {
+        this.selectedFiles = [];
+        this.currentView = 'grid';
+        this.initializeEventListeners();
+    }
+    
+    initializeEventListeners() {
+        // Search functionality
+        document.getElementById('fileSearch').addEventListener('input', this.handleSearch.bind(this));
+        
+        // Filter functionality
+        document.getElementById('fileTypeFilter').addEventListener('change', this.handleFilter.bind(this));
+        document.getElementById('statusFilter').addEventListener('change', this.handleFilter.bind(this));
+    }
+    
+    handleSearch(e) {
+        const searchTerm = e.target.value.toLowerCase();
+        const fileCards = document.querySelectorAll('.file-card');
+        
+        fileCards.forEach(card => {
+            const fileName = card.dataset.fileName.toLowerCase();
+            const fileType = card.querySelector('.file-title').textContent.toLowerCase();
+            const description = card.querySelector('.file-description')?.textContent.toLowerCase() || '';
+            
+            const matches = fileName.includes(searchTerm) || 
+                          fileType.includes(searchTerm) || 
+                          description.includes(searchTerm);
+            
+            card.style.display = matches ? '' : 'none';
+        });
+    }
+    
+    handleFilter() {
+        const typeFilter = document.getElementById('fileTypeFilter').value;
+        const statusFilter = document.getElementById('statusFilter').value;
+        const fileCards = document.querySelectorAll('.file-card');
+        
+        fileCards.forEach(card => {
+            const fileType = card.dataset.fileType;
+            const fileStatus = card.dataset.status;
+            
+            const typeMatch = !typeFilter || fileType === typeFilter;
+            const statusMatch = !statusFilter || fileStatus === statusFilter;
+            
+            card.style.display = (typeMatch && statusMatch) ? '' : 'none';
+        });
+    }
+}
+
+// Initialize file manager
+let fileManager;
+document.addEventListener('DOMContentLoaded', function() {
+    fileManager = new FileManager();
+});
+
+// View switching
+function switchView(view) {
+    const filesView = document.getElementById('filesView');
+    const toggleBtns = document.querySelectorAll('.view-toggle-btn');
+    
+    // Update active button
+    toggleBtns.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.view === view);
+    });
+    
+    // Update view class
+    filesView.className = view === 'list' ? 'files-view list-view' : 'files-view';
+    fileManager.currentView = view;
+}
+
+// File selection
+function updateSelectionButtons() {
+    const checkboxes = document.querySelectorAll('.file-checkbox:checked');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const deleteBtn = document.getElementById('deleteBtn');
+    
+    const hasSelection = checkboxes.length > 0;
+    downloadBtn.disabled = !hasSelection;
+    deleteBtn.disabled = !hasSelection;
+    
+    fileManager.selectedFiles = Array.from(checkboxes).map(cb => cb.value);
+}
+
+function selectAllFiles() {
+    const checkboxes = document.querySelectorAll('.file-checkbox');
+    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+    
+    checkboxes.forEach(cb => {
+        cb.checked = !allChecked;
+    });
+    
+    updateSelectionButtons();
+}
+
+// File actions
+async function previewFile(fileId) {
+    try {
+        const response = await fetch(`/Hr/files/${fileId}/preview/`);
+        const data = await response.json();
+        
+        document.getElementById('previewTitle').textContent = data.title;
+        document.getElementById('previewContent').innerHTML = data.content;
+        document.getElementById('downloadPreviewBtn').onclick = () => downloadFile(fileId);
+        
+        hrDesignSystem.openModal('filePreviewModal');
+    } catch (error) {
+        hrDesignSystem.showAlert('خطأ في معاينة الملف', 'danger');
+    }
+}
+
+function downloadFile(fileId) {
+    window.open(`/Hr/files/${fileId}/download/`, '_blank');
+}
+
+function editFile(fileId) {
+    window.location.href = `/Hr/files/${fileId}/edit/`;
+}
+
+async function deleteFile(fileId) {
+    if (!confirm('هل أنت متأكد من حذف هذا الملف؟')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/Hr/files/${fileId}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            }
+        });
+        
+        if (response.ok) {
+            document.querySelector(`[data-file-id="${fileId}"]`).remove();
+            hrDesignSystem.showAlert('تم حذف الملف بنجاح', 'success');
+        } else {
+            throw new Error('Delete failed');
+        }
+    } catch (error) {
+        hrDesignSystem.showAlert('خطأ في حذف الملف', 'danger');
+    }
+}
+
+// Bulk actions
+function downloadSelected() {
+    if (fileManager.selectedFiles.length === 0) {
+        hrDesignSystem.showAlert('يرجى تحديد ملفات للتحميل', 'warning');
+        return;
+    }
+    
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/Hr/files/download-multiple/';
+    
+    const csrfToken = document.createElement('input');
+    csrfToken.type = 'hidden';
+    csrfToken.name = 'csrfmiddlewaretoken';
+    csrfToken.value = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    form.appendChild(csrfToken);
+    
+    fileManager.selectedFiles.forEach(fileId => {
+        const input = document.createElement('input');
+        input.type = 'hidden';
+        input.name = 'file_ids';
+        input.value = fileId;
+        form.appendChild(input);
+    });
+    
+    document.body.appendChild(form);
+    form.submit();
+    document.body.removeChild(form);
+}
+
+async function deleteSelected() {
+    if (fileManager.selectedFiles.length === 0) {
+        hrDesignSystem.showAlert('يرجى تحديد ملفات للحذف', 'warning');
+        return;
+    }
+    
+    if (!confirm(`هل أنت متأكد من حذف ${fileManager.selectedFiles.length} ملف؟`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('/Hr/files/delete-multiple/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            },
+            body: JSON.stringify({
+                file_ids: fileManager.selectedFiles
+            })
+        });
+        
+        if (response.ok) {
+            fileManager.selectedFiles.forEach(fileId => {
+                document.querySelector(`[data-file-id="${fileId}"]`).remove();
+            });
+            
+            fileManager.selectedFiles = [];
+            updateSelectionButtons();
+            hrDesignSystem.showAlert('تم حذف الملفات بنجاح', 'success');
+        } else {
+            throw new Error('Delete failed');
+        }
+    } catch (error) {
+        hrDesignSystem.showAlert('خطأ في حذف الملفات', 'danger');
+    }
+}
+
+// Utility functions
+function exportFilesList() {
+    window.open(`/Hr/employees/{{ employee.id }}/files/export/`, '_blank');
+}
+
+function refreshFiles() {
+    window.location.reload();
+}
+</script>
+{% endblock %}

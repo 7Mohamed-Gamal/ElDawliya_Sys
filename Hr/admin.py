@@ -197,3 +197,13 @@ class EmployeeSalaryStructureAdmin(admin.ModelAdmin):
     list_filter = ['is_active', 'is_current']
     search_fields = ['employee__full_name', 'structure_name']
     date_hierarchy = 'effective_from'
+
+# =============================================================================
+# IMPORT ENHANCED ADMIN CONFIGURATIONS
+# =============================================================================
+
+# Import enhanced admin configurations
+try:
+    from .admin_enhanced import *
+except ImportError:
+    pass  # Enhanced admin not available

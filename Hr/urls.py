@@ -570,6 +570,15 @@ urlpatterns = [
     # Temporarily disabled due to package structure issues
     # path('reports/', include('Hr.urls.reports_urls', namespace='reports')),
     
+    # ==================== NOTIFICATIONS ====================
+    path('notifications/', include('Hr.urls.notification_urls', namespace='notifications')),
+    
+    # ==================== ADVANCED SEARCH ====================
+    path('search/', include('Hr.urls.search_urls', namespace='search')),
+    
+    # ==================== EXTERNAL INTEGRATIONS ====================
+    path('integrations/', include('Hr.urls.integration_urls', namespace='integrations')),
+    
     # ==================== API ENDPOINTS ====================
     # path('api/', include('Hr.api.urls', namespace='hr_api')),  # Temporarily commented out
 ]

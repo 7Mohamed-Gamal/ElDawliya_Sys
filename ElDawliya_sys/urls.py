@@ -43,6 +43,7 @@ urlpatterns = [
     path('cars/', include('cars.urls')),  # مسارات تطبيق السيارات
     path('core/', include('core.urls')),  # مسارات النظام الأساسي
     path('api/v1/', include('api.urls')),  # مسارات API
+    path('api/hr/', include('Hr.api.urls')),  # مسارات API الموارد البشرية
     path('api/global-search/', global_search_api, name='global_search_api'),  # Global search API endpoint
     path('', lambda request: redirect('accounts:login'), name='home'),  # إعادة توجيه الصفحة الرئيسية إلى صفحة الحسابات
 ]

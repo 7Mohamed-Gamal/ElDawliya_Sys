@@ -1,597 +1,643 @@
-"""Leave Services Module
-
-This module provides services for leave management, including:
-- Leave request processing and approval workflow
-- Leave balance calculation and tracking
-- Leave type management
-- Leave reporting and analytics
+"""
+Leave Service - خدمات إدارة الإجازات المتقدمة
 """
 
-import uuid
-import logging
-from datetime import date, datetime, timedelta
-from decimal import Decimal
-from typing import Dict, List, Optional, Tuple, Union, Any
-
-from django.db import transaction
-from django.db.models import Q, Count, Sum, Avg, F, Value, Max
-from django.db.models.functions import Coalesce
+from django.db import transaction, models
+from django.core.exceptions import ValidationError
 from django.utils import timezone
-from django.conf import settings
-from django.contrib.auth import get_user_model
+from django.core.cache import cache
+from django.db.models import Q, Count, Sum, Avg, F, Case, When
+from decimal import Decimal
+from datetime import date, datetime, timedelta
+import logging
+import json
+import calendar
+from typing import Dict, List, Optional, Tuple
 
-from Hr.models.employee.employee_models import Employee
-
-# Setup logger
-logger = logging.getLogger(__name__)
-User = get_user_model()
+logger = logging.getLogger('hr_system')
 
 
 class LeaveService:
-    """Service class for leave management operations"""
+    """خدمات إدارة الإجازات الشاملة"""
     
-    @staticmethod
-    def get_leave_types() -> List[Dict]:
-        """Get all available leave types
-        
-        Returns:
-            List of leave type dictionaries
-        """
-        # This is a placeholder - in a real implementation, you would have a LeaveType model
-        return [
-            {
-                'id': 'annual',
-                'name': 'Annual Leave',
-                'name_ar': 'إجازة سنوية',
-                'max_days_per_year': 30,
-                'carry_forward': True,
-                'requires_approval': True,
-                'is_paid': True
-            },
-            {
-                'id': 'sick',
-                'name': 'Sick Leave',
-                'name_ar': 'إجازة مرضية',
-                'max_days_per_year': 15,
-                'carry_forward': False,
-                'requires_approval': False,
-                'is_paid': True
-            },
-            {
-                'id': 'emergency',
-                'name': 'Emergency Leave',
-                'name_ar': 'إجازة طارئة',
-                'max_days_per_year': 5,
-                'carry_forward': False,
-                'requires_approval': True,
-                'is_paid': False
-            },
-            {
-                'id': 'maternity',
-                'name': 'Maternity Leave',
-                'name_ar': 'إجازة أمومة',
-                'max_days_per_year': 90,
-                'carry_forward': False,
-                'requires_approval': True,
-                'is_paid': True
-            },
-            {
-                'id': 'paternity',
-                'name': 'Paternity Leave',
-                'name_ar': 'إجازة أبوة',
-                'max_days_per_year': 7,
-                'carry_forward': False,
-                'requires_approval': True,
-                'is_paid': True
-            }
-        ]
+    def __init__(self):
+        self.cache_timeout = 1800  # 30 minutes
     
-    @staticmethod
-    def get_leave_type_by_id(leave_type_id: str) -> Optional[Dict]:
-        """Get a specific leave type by ID
-        
-        Args:
-            leave_type_id: ID of the leave type
-            
-        Returns:
-            Leave type dictionary if found, None otherwise
-        """
-        leave_types = LeaveService.get_leave_types()
-        return next((lt for lt in leave_types if lt['id'] == leave_type_id), None)
+    # =============================================================================
+    # LEAVE REQUEST METHODS
+    # =============================================================================
     
-    @staticmethod
-    def calculate_employee_leave_balance(employee_id: uuid.UUID, 
-                                       leave_type_id: str,
-                                       year: int = None) -> Dict:
-        """Calculate leave balance for an employee
-        
-        Args:
-            employee_id: UUID of the employee
-            leave_type_id: ID of the leave type
-            year: Year to calculate for (defaults to current year)
-            
-        Returns:
-            Dictionary with leave balance information
-        """
+    def create_leave_request(self, employee_id: str, leave_type_id: str, 
+                           start_date: date, end_date: date, 
+                           reason: str = None, attachment_file=None) -> Dict:
+        """إنشاء طلب إجازة"""
         try:
-            # Get employee
-            try:
+            from ..models import Employee, LeaveType, LeaveRequest
+            
+            with transaction.atomic():
                 employee = Employee.objects.get(id=employee_id)
-            except Employee.DoesNotExist:
-                return {'error': f'Employee with ID {employee_id} not found'}
-            
-            # Get leave type
-            leave_type = LeaveService.get_leave_type_by_id(leave_type_id)
-            if not leave_type:
-                return {'error': f'Leave type {leave_type_id} not found'}
-            
-            if not year:
-                year = date.today().year
-            
-            # Calculate entitlement based on employment date and leave type
-            entitlement = LeaveService._calculate_leave_entitlement(employee, leave_type, year)
-            
-            # Calculate used leave (placeholder - would query actual leave records)
-            used_days = LeaveService._calculate_used_leave(employee_id, leave_type_id, year)
-            
-            # Calculate carry forward from previous year
-            carry_forward = 0
-            if leave_type['carry_forward'] and year > employee.hire_date.year:
-                carry_forward = LeaveService._calculate_carry_forward(employee_id, leave_type_id, year - 1)
-            
-            # Calculate available balance
-            total_entitlement = entitlement + carry_forward
-            available_balance = total_entitlement - used_days
-            
-            return {
-                'employee_id': employee_id,
-                'employee_name': employee.full_name,
-                'leave_type_id': leave_type_id,
-                'leave_type_name': leave_type['name'],
-                'year': year,
-                'entitlement': entitlement,
-                'carry_forward': carry_forward,
-                'total_entitlement': total_entitlement,
-                'used_days': used_days,
-                'available_balance': available_balance,
-                'pending_requests': 0  # Placeholder
-            }
-            
-        except Exception as e:
-            logger.error(f"Error calculating leave balance: {str(e)}")
-            return {'error': f'Error calculating leave balance: {str(e)}'}
-    
-    @staticmethod
-    def _calculate_leave_entitlement(employee: Employee, leave_type: Dict, year: int) -> int:
-        """Calculate leave entitlement for an employee
-        
-        Args:
-            employee: Employee object
-            leave_type: Leave type dictionary
-            year: Year to calculate for
-            
-        Returns:
-            Number of entitled leave days
-        """
-        try:
-            # If employee was hired in the current year, calculate pro-rata
-            if employee.hire_date.year == year:
-                months_worked = 12 - employee.hire_date.month + 1
-                pro_rata_entitlement = (leave_type['max_days_per_year'] * months_worked) / 12
-                return int(pro_rata_entitlement)
-            else:
-                return leave_type['max_days_per_year']
+                leave_type = LeaveType.objects.get(id=leave_type_id)
                 
-        except Exception as e:
-            logger.error(f"Error calculating leave entitlement: {str(e)}")
-            return 0
-    
-    @staticmethod
-    def _calculate_used_leave(employee_id: uuid.UUID, leave_type_id: str, year: int) -> int:
-        """Calculate used leave days for an employee
-        
-        Args:
-            employee_id: UUID of the employee
-            leave_type_id: ID of the leave type
-            year: Year to calculate for
-            
-        Returns:
-            Number of used leave days
-        """
-        # Placeholder implementation - would query actual leave records
-        # In a real implementation, you would have a LeaveRequest model
-        return 0
-    
-    @staticmethod
-    def _calculate_carry_forward(employee_id: uuid.UUID, leave_type_id: str, year: int) -> int:
-        """Calculate carry forward leave days from previous year
-        
-        Args:
-            employee_id: UUID of the employee
-            leave_type_id: ID of the leave type
-            year: Previous year to calculate carry forward from
-            
-        Returns:
-            Number of carry forward leave days
-        """
-        # Placeholder implementation - would calculate based on previous year's balance
-        return 0
-    
-    @staticmethod
-    def get_employee_leave_summary(employee_id: uuid.UUID, year: int = None) -> Dict:
-        """Get comprehensive leave summary for an employee
-        
-        Args:
-            employee_id: UUID of the employee
-            year: Year to get summary for (defaults to current year)
-            
-        Returns:
-            Dictionary with complete leave summary
-        """
-        try:
-            if not year:
-                year = date.today().year
-            
-            # Get employee
-            try:
-                employee = Employee.objects.get(id=employee_id)
-            except Employee.DoesNotExist:
-                return {'error': f'Employee with ID {employee_id} not found'}
-            
-            summary = {
-                'employee_id': employee_id,
-                'employee_name': employee.full_name,
-                'year': year,
-                'leave_balances': {},
-                'total_entitlement': 0,
-                'total_used': 0,
-                'total_available': 0
-            }
-            
-            # Calculate balance for each leave type
-            for leave_type in LeaveService.get_leave_types():
-                balance = LeaveService.calculate_employee_leave_balance(
-                    employee_id, 
-                    leave_type['id'], 
-                    year
+                # Validate leave request
+                validation_result = self._validate_leave_request(
+                    employee, leave_type, start_date, end_date
                 )
                 
-                if 'error' not in balance:
-                    summary['leave_balances'][leave_type['id']] = balance
-                    summary['total_entitlement'] += balance['total_entitlement']
-                    summary['total_used'] += balance['used_days']
-                    summary['total_available'] += balance['available_balance']
-            
-            return summary
-            
+                if not validation_result['is_valid']:
+                    raise ValidationError(validation_result['errors'])
+                
+                # Calculate leave days
+                leave_days = self._calculate_leave_days(start_date, end_date, leave_type)
+                
+                # Check leave balance
+                balance_check = self._check_leave_balance(employee, leave_type, leave_days)
+                if not balance_check['sufficient']:
+                    raise ValidationError(f"رصيد الإجازة غير كافي. الرصيد المتاح: {balance_check['available_days']} يوم")
+                
+                # Create leave request
+                leave_request = LeaveRequest.objects.create(
+                    employee=employee,
+                    leave_type=leave_type,
+                    start_date=start_date,
+                    end_date=end_date,
+                    days_requested=leave_days,
+                    reason=reason,
+                    status='pending',
+                    requested_at=timezone.now()
+                )
+                
+                # Handle attachment if provided
+                if attachment_file:
+                    # Save attachment logic here
+                    pass
+                
+                # Send notification to manager
+                self._send_leave_request_notification(leave_request)
+                
+                logger.info(f"Created leave request {leave_request.id} for employee {employee.employee_number}")
+                
+                return {
+                    'success': True,
+                    'request_id': leave_request.id,
+                    'days_requested': leave_days,
+                    'status': leave_request.status,
+                    'message': 'تم إنشاء طلب الإجازة بنجاح'
+                }
+                
+        except (Employee.DoesNotExist, LeaveType.DoesNotExist):
+            raise ValidationError("الموظف أو نوع الإجازة غير موجود")
         except Exception as e:
-            logger.error(f"Error getting employee leave summary: {str(e)}")
-            return {'error': f'Error getting employee leave summary: {str(e)}'}
+            logger.error(f"Error creating leave request: {e}")
+            raise ValidationError(f"خطأ في إنشاء طلب الإجازة: {e}")
     
-    @staticmethod
-    def validate_leave_request(employee_id: uuid.UUID, 
-                             leave_type_id: str,
-                             start_date: date,
-                             end_date: date,
-                             days_requested: int = None) -> Dict:
-        """Validate a leave request
-        
-        Args:
-            employee_id: UUID of the employee
-            leave_type_id: ID of the leave type
-            start_date: Start date of leave
-            end_date: End date of leave
-            days_requested: Number of days requested (optional, calculated if not provided)
-            
-        Returns:
-            Dictionary with validation results
-        """
+    def approve_leave_request(self, request_id: str, approved_by_id: str, 
+                            comments: str = None, approved_days: int = None) -> Dict:
+        """الموافقة على طلب إجازة"""
         try:
-            validation_result = {
-                'is_valid': True,
-                'errors': [],
-                'warnings': []
+            from ..models import LeaveRequest, LeaveBalance
+            
+            with transaction.atomic():
+                leave_request = LeaveRequest.objects.select_related(
+                    'employee', 'leave_type'
+                ).get(id=request_id)
+                
+                if leave_request.status != 'pending':
+                    raise ValidationError("لا يمكن الموافقة على طلب إجازة غير معلق")
+                
+                # Use approved days or original requested days
+                final_days = approved_days or leave_request.days_requested
+                
+                # Update leave request
+                leave_request.status = 'approved'
+                leave_request.approved_by_id = approved_by_id
+                leave_request.approved_at = timezone.now()
+                leave_request.approved_days = final_days
+                leave_request.approval_comments = comments
+                leave_request.save()
+                
+                # Update leave balance
+                self._update_leave_balance(
+                    leave_request.employee, 
+                    leave_request.leave_type, 
+                    -final_days,
+                    f"إجازة معتمدة - طلب رقم {leave_request.id}"
+                )
+                
+                # Send notification to employee
+                self._send_leave_approval_notification(leave_request)
+                
+                logger.info(f"Approved leave request {request_id} for {final_days} days")
+                
+                return {
+                    'success': True,
+                    'request_id': request_id,
+                    'approved_days': final_days,
+                    'message': 'تم اعتماد طلب الإجازة بنجاح'
+                }
+                
+        except LeaveRequest.DoesNotExist:
+            raise ValidationError("طلب الإجازة غير موجود")
+        except Exception as e:
+            logger.error(f"Error approving leave request: {e}")
+            raise ValidationError(f"خطأ في اعتماد طلب الإجازة: {e}")
+    
+    def reject_leave_request(self, request_id: str, rejected_by_id: str, 
+                           rejection_reason: str) -> Dict:
+        """رفض طلب إجازة"""
+        try:
+            from ..models import LeaveRequest
+            
+            leave_request = LeaveRequest.objects.get(id=request_id)
+            
+            if leave_request.status != 'pending':
+                raise ValidationError("لا يمكن رفض طلب إجازة غير معلق")
+            
+            # Update leave request
+            leave_request.status = 'rejected'
+            leave_request.rejected_by_id = rejected_by_id
+            leave_request.rejected_at = timezone.now()
+            leave_request.rejection_reason = rejection_reason
+            leave_request.save()
+            
+            # Send notification to employee
+            self._send_leave_rejection_notification(leave_request)
+            
+            logger.info(f"Rejected leave request {request_id}")
+            
+            return {
+                'success': True,
+                'request_id': request_id,
+                'message': 'تم رفض طلب الإجازة'
             }
             
-            # Get employee
-            try:
+        except LeaveRequest.DoesNotExist:
+            raise ValidationError("طلب الإجازة غير موجود")
+        except Exception as e:
+            logger.error(f"Error rejecting leave request: {e}")
+            raise ValidationError(f"خطأ في رفض طلب الإجازة: {e}")
+    
+    # =============================================================================
+    # LEAVE BALANCE METHODS
+    # =============================================================================
+    
+    def get_employee_leave_balance(self, employee_id: str, year: int = None) -> Dict:
+        """الحصول على رصيد إجازات الموظف"""
+        try:
+            from ..models import Employee, LeaveBalance, LeaveType
+            
+            if year is None:
+                year = date.today().year
+            
+            employee = Employee.objects.get(id=employee_id)
+            
+            # Get all leave types
+            leave_types = LeaveType.objects.filter(is_active=True)
+            
+            balances = []
+            for leave_type in leave_types:
+                balance, created = LeaveBalance.objects.get_or_create(
+                    employee=employee,
+                    leave_type=leave_type,
+                    year=year,
+                    defaults={
+                        'allocated_days': leave_type.default_days,
+                        'used_days': 0,
+                        'remaining_days': leave_type.default_days
+                    }
+                )
+                
+                balances.append({
+                    'leave_type_id': leave_type.id,
+                    'leave_type_name': leave_type.name,
+                    'allocated_days': balance.allocated_days,
+                    'used_days': balance.used_days,
+                    'remaining_days': balance.remaining_days,
+                    'pending_days': self._get_pending_leave_days(employee, leave_type, year),
+                    'available_days': balance.remaining_days - self._get_pending_leave_days(employee, leave_type, year)
+                })
+            
+            return {
+                'employee': {
+                    'id': employee.id,
+                    'name': employee.full_name,
+                    'employee_number': employee.employee_number
+                },
+                'year': year,
+                'balances': balances,
+                'generated_at': timezone.now()
+            }
+            
+        except Employee.DoesNotExist:
+            raise ValidationError("الموظف غير موجود")
+        except Exception as e:
+            logger.error(f"Error getting leave balance: {e}")
+            raise ValidationError(f"خطأ في جلب رصيد الإجازات: {e}")
+    
+    def allocate_annual_leave(self, employee_id: str, year: int, 
+                            leave_allocations: Dict[str, int]) -> Dict:
+        """تخصيص الإجازات السنوية"""
+        try:
+            from ..models import Employee, LeaveBalance, LeaveType
+            
+            with transaction.atomic():
                 employee = Employee.objects.get(id=employee_id)
-            except Employee.DoesNotExist:
-                validation_result['is_valid'] = False
-                validation_result['errors'].append(f'Employee with ID {employee_id} not found')
-                return validation_result
-            
-            # Get leave type
-            leave_type = LeaveService.get_leave_type_by_id(leave_type_id)
-            if not leave_type:
-                validation_result['is_valid'] = False
-                validation_result['errors'].append(f'Leave type {leave_type_id} not found')
-                return validation_result
-            
-            # Validate dates
-            if start_date > end_date:
-                validation_result['is_valid'] = False
-                validation_result['errors'].append('Start date cannot be after end date')
-            
-            if start_date < date.today():
-                validation_result['warnings'].append('Leave request is for a past date')
-            
-            # Calculate days if not provided
-            if not days_requested:
-                days_requested = (end_date - start_date).days + 1
-            
-            # Check leave balance
-            balance = LeaveService.calculate_employee_leave_balance(
-                employee_id, 
-                leave_type_id, 
-                start_date.year
-            )
-            
-            if 'error' not in balance:
-                if days_requested > balance['available_balance']:
-                    validation_result['is_valid'] = False
-                    validation_result['errors'].append(
-                        f'Insufficient leave balance. Available: {balance["available_balance"]}, Requested: {days_requested}'
+                
+                allocated_types = []
+                for leave_type_id, days in leave_allocations.items():
+                    leave_type = LeaveType.objects.get(id=leave_type_id)
+                    
+                    balance, created = LeaveBalance.objects.get_or_create(
+                        employee=employee,
+                        leave_type=leave_type,
+                        year=year,
+                        defaults={
+                            'allocated_days': days,
+                            'used_days': 0,
+                            'remaining_days': days
+                        }
                     )
-            
-            # Check for overlapping leave requests (placeholder)
-            # In a real implementation, you would check against existing leave requests
-            
-            # Check minimum notice period (placeholder)
-            notice_days = (start_date - date.today()).days
-            if notice_days < 1 and leave_type['requires_approval']:
-                validation_result['warnings'].append('Leave request has insufficient notice period')
-            
-            return validation_result
-            
+                    
+                    if not created:
+                        # Update existing balance
+                        balance.allocated_days = days
+                        balance.remaining_days = days - balance.used_days
+                        balance.save()
+                    
+                    allocated_types.append({
+                        'leave_type': leave_type.name,
+                        'allocated_days': days
+                    })
+                
+                logger.info(f"Allocated annual leave for employee {employee.employee_number} for year {year}")
+                
+                return {
+                    'success': True,
+                    'employee_id': employee_id,
+                    'year': year,
+                    'allocated_types': allocated_types,
+                    'message': 'تم تخصيص الإجازات السنوية بنجاح'
+                }
+                
+        except (Employee.DoesNotExist, LeaveType.DoesNotExist):
+            raise ValidationError("الموظف أو نوع الإجازة غير موجود")
         except Exception as e:
-            logger.error(f"Error validating leave request: {str(e)}")
-            return {
-                'is_valid': False,
-                'errors': [f'Error validating leave request: {str(e)}'],
-                'warnings': []
-            }
+            logger.error(f"Error allocating annual leave: {e}")
+            raise ValidationError(f"خطأ في تخصيص الإجازات السنوية: {e}")
     
-    @staticmethod
-    def get_department_leave_summary(department_id: uuid.UUID, 
-                                   start_date: date = None,
-                                   end_date: date = None) -> Dict:
-        """Get leave summary for a department
-        
-        Args:
-            department_id: UUID of the department
-            start_date: Start date for the summary (optional)
-            end_date: End date for the summary (optional)
-            
-        Returns:
-            Dictionary with department leave summary
-        """
+    def bulk_allocate_leave(self, employee_ids: List[str], year: int, 
+                          leave_type_id: str, days: int) -> Dict:
+        """تخصيص مجمع للإجازات"""
         try:
-            if not start_date:
-                start_date = date(date.today().year, 1, 1)
-            if not end_date:
-                end_date = date(date.today().year, 12, 31)
+            from ..models import Employee, LeaveBalance, LeaveType
             
-            # Get all employees in the department
-            employees = Employee.objects.filter(
-                department_id=department_id,
-                is_active=True
+            leave_type = LeaveType.objects.get(id=leave_type_id)
+            
+            results = {
+                'success_count': 0,
+                'error_count': 0,
+                'errors': []
+            }
+            
+            with transaction.atomic():
+                for employee_id in employee_ids:
+                    try:
+                        employee = Employee.objects.get(id=employee_id)
+                        
+                        balance, created = LeaveBalance.objects.get_or_create(
+                            employee=employee,
+                            leave_type=leave_type,
+                            year=year,
+                            defaults={
+                                'allocated_days': days,
+                                'used_days': 0,
+                                'remaining_days': days
+                            }
+                        )
+                        
+                        if not created:
+                            balance.allocated_days = days
+                            balance.remaining_days = days - balance.used_days
+                            balance.save()
+                        
+                        results['success_count'] += 1
+                        
+                    except Employee.DoesNotExist:
+                        results['error_count'] += 1
+                        results['errors'].append(f"الموظف {employee_id} غير موجود")
+                    except Exception as e:
+                        results['error_count'] += 1
+                        results['errors'].append(f"خطأ في الموظف {employee_id}: {e}")
+            
+            logger.info(f"Bulk leave allocation completed: {results['success_count']} success, {results['error_count']} errors")
+            
+            return results
+            
+        except LeaveType.DoesNotExist:
+            raise ValidationError("نوع الإجازة غير موجود")
+        except Exception as e:
+            logger.error(f"Error in bulk leave allocation: {e}")
+            raise ValidationError(f"خطأ في التخصيص المجمع للإجازات: {e}")
+    
+    # =============================================================================
+    # LEAVE REPORTING METHODS
+    # =============================================================================
+    
+    def get_leave_report(self, start_date: date, end_date: date, 
+                        department_id: str = None, leave_type_id: str = None) -> Dict:
+        """تقرير الإجازات"""
+        try:
+            from ..models import LeaveRequest, Employee, Department, LeaveType
+            
+            # Build query
+            query = Q(start_date__lte=end_date, end_date__gte=start_date, status='approved')
+            
+            if department_id:
+                query &= Q(employee__department_id=department_id)
+            if leave_type_id:
+                query &= Q(leave_type_id=leave_type_id)
+            
+            leave_requests = LeaveRequest.objects.filter(query).select_related(
+                'employee__department', 'leave_type'
             )
             
-            summary = {
-                'department_id': department_id,
-                'period_start': start_date,
-                'period_end': end_date,
-                'total_employees': employees.count(),
-                'employee_summaries': [],
-                'leave_type_totals': {},
-                'overall_totals': {
-                    'total_entitlement': 0,
-                    'total_used': 0,
-                    'total_available': 0
-                }
+            # Calculate statistics
+            total_requests = leave_requests.count()
+            total_days = leave_requests.aggregate(
+                total=Sum('approved_days')
+            )['total'] or 0
+            
+            # By department
+            by_department = leave_requests.values(
+                'employee__department__name'
+            ).annotate(
+                request_count=Count('id'),
+                total_days=Sum('approved_days')
+            ).order_by('-total_days')
+            
+            # By leave type
+            by_leave_type = leave_requests.values(
+                'leave_type__name'
+            ).annotate(
+                request_count=Count('id'),
+                total_days=Sum('approved_days')
+            ).order_by('-total_days')
+            
+            # By month
+            monthly_data = leave_requests.extra(
+                select={'month': "MONTH(start_date)"}
+            ).values('month').annotate(
+                request_count=Count('id'),
+                total_days=Sum('approved_days')
+            ).order_by('month')
+            
+            # Top employees by leave days
+            top_employees = leave_requests.values(
+                'employee__full_name', 'employee__employee_number'
+            ).annotate(
+                total_days=Sum('approved_days')
+            ).order_by('-total_days')[:10]
+            
+            return {
+                'period': {
+                    'start_date': start_date,
+                    'end_date': end_date,
+                    'department_id': department_id,
+                    'leave_type_id': leave_type_id
+                },
+                'summary': {
+                    'total_requests': total_requests,
+                    'total_days': total_days,
+                    'average_days_per_request': round(total_days / total_requests, 2) if total_requests > 0 else 0
+                },
+                'by_department': list(by_department),
+                'by_leave_type': list(by_leave_type),
+                'monthly_data': list(monthly_data),
+                'top_employees': list(top_employees),
+                'generated_at': timezone.now()
             }
-            
-            # Get summary for each employee
-            for employee in employees:
-                employee_summary = LeaveService.get_employee_leave_summary(
-                    employee.id, 
-                    start_date.year
-                )
-                
-                if 'error' not in employee_summary:
-                    summary['employee_summaries'].append(employee_summary)
-                    summary['overall_totals']['total_entitlement'] += employee_summary['total_entitlement']
-                    summary['overall_totals']['total_used'] += employee_summary['total_used']
-                    summary['overall_totals']['total_available'] += employee_summary['total_available']
-            
-            # Calculate totals by leave type
-            for leave_type in LeaveService.get_leave_types():
-                leave_type_total = {
-                    'total_entitlement': 0,
-                    'total_used': 0,
-                    'total_available': 0
-                }
-                
-                for emp_summary in summary['employee_summaries']:
-                    if leave_type['id'] in emp_summary['leave_balances']:
-                        balance = emp_summary['leave_balances'][leave_type['id']]
-                        leave_type_total['total_entitlement'] += balance['total_entitlement']
-                        leave_type_total['total_used'] += balance['used_days']
-                        leave_type_total['total_available'] += balance['available_balance']
-                
-                summary['leave_type_totals'][leave_type['id']] = leave_type_total
-            
-            return summary
             
         except Exception as e:
-            logger.error(f"Error getting department leave summary: {str(e)}")
-            return {'error': f'Error getting department leave summary: {str(e)}'}
+            logger.error(f"Error generating leave report: {e}")
+            raise ValidationError(f"خطأ في إنتاج تقرير الإجازات: {e}")
     
-    @staticmethod
-    def get_leave_calendar(department_id: uuid.UUID = None,
-                          start_date: date = None,
-                          end_date: date = None) -> Dict:
-        """Get leave calendar showing who is on leave when
-        
-        Args:
-            department_id: UUID of the department (optional, all departments if not provided)
-            start_date: Start date for the calendar (optional)
-            end_date: End date for the calendar (optional)
-            
-        Returns:
-            Dictionary with leave calendar data
-        """
+    def get_leave_calendar(self, year: int, month: int, 
+                          department_id: str = None) -> Dict:
+        """تقويم الإجازات"""
         try:
-            if not start_date:
-                start_date = date.today()
-            if not end_date:
-                end_date = start_date + timedelta(days=30)
+            from ..models import LeaveRequest
             
-            # Get employees
+            # Get month date range
+            start_date = date(year, month, 1)
+            end_date = date(year, month, calendar.monthrange(year, month)[1])
+            
+            # Build query
+            query = Q(
+                start_date__lte=end_date,
+                end_date__gte=start_date,
+                status='approved'
+            )
+            
             if department_id:
-                employees = Employee.objects.filter(
-                    department_id=department_id,
-                    is_active=True
-                )
-            else:
-                employees = Employee.objects.filter(is_active=True)
+                query &= Q(employee__department_id=department_id)
             
-            calendar_data = {
-                'start_date': start_date,
-                'end_date': end_date,
-                'department_id': department_id,
-                'daily_leave_data': {},
-                'employee_leave_periods': []
-            }
+            leave_requests = LeaveRequest.objects.filter(query).select_related(
+                'employee', 'leave_type'
+            )
             
-            # Initialize daily data
+            # Build calendar data
+            calendar_data = {}
             current_date = start_date
+            
             while current_date <= end_date:
-                calendar_data['daily_leave_data'][current_date.isoformat()] = {
+                calendar_data[current_date.isoformat()] = {
                     'date': current_date,
                     'employees_on_leave': [],
-                    'total_on_leave': 0
+                    'total_employees': 0
                 }
                 current_date += timedelta(days=1)
             
-            # Placeholder for actual leave data
-            # In a real implementation, you would query leave requests and populate the calendar
+            # Populate calendar with leave data
+            for leave_request in leave_requests:
+                current_date = max(leave_request.start_date, start_date)
+                end_leave_date = min(leave_request.end_date, end_date)
+                
+                while current_date <= end_leave_date:
+                    date_key = current_date.isoformat()
+                    if date_key in calendar_data:
+                        calendar_data[date_key]['employees_on_leave'].append({
+                            'employee_id': leave_request.employee.id,
+                            'employee_name': leave_request.employee.full_name,
+                            'employee_number': leave_request.employee.employee_number,
+                            'leave_type': leave_request.leave_type.name,
+                            'leave_type_color': leave_request.leave_type.color or '#007bff'
+                        })
+                        calendar_data[date_key]['total_employees'] += 1
+                    
+                    current_date += timedelta(days=1)
             
-            return calendar_data
-            
-        except Exception as e:
-            logger.error(f"Error getting leave calendar: {str(e)}")
-            return {'error': f'Error getting leave calendar: {str(e)}'}
-    
-    @staticmethod
-    def generate_leave_report(report_type: str, 
-                            filters: Dict = None) -> Dict:
-        """Generate various leave reports
-        
-        Args:
-            report_type: Type of report ('balance', 'usage', 'trends', 'compliance')
-            filters: Dictionary with filter parameters
-            
-        Returns:
-            Dictionary with report data
-        """
-        try:
-            if not filters:
-                filters = {}
-            
-            report_data = {
-                'report_type': report_type,
-                'generated_at': timezone.now(),
-                'filters': filters,
-                'data': {}
+            return {
+                'year': year,
+                'month': month,
+                'month_name': calendar.month_name[month],
+                'department_id': department_id,
+                'calendar_data': calendar_data,
+                'generated_at': timezone.now()
             }
             
-            if report_type == 'balance':
-                # Leave balance report
-                report_data['data'] = LeaveService._generate_balance_report(filters)
-            elif report_type == 'usage':
-                # Leave usage report
-                report_data['data'] = LeaveService._generate_usage_report(filters)
-            elif report_type == 'trends':
-                # Leave trends report
-                report_data['data'] = LeaveService._generate_trends_report(filters)
-            elif report_type == 'compliance':
-                # Leave compliance report
-                report_data['data'] = LeaveService._generate_compliance_report(filters)
-            else:
-                report_data['error'] = f'Unknown report type: {report_type}'
-            
-            return report_data
-            
         except Exception as e:
-            logger.error(f"Error generating leave report: {str(e)}")
-            return {'error': f'Error generating leave report: {str(e)}'}
+            logger.error(f"Error generating leave calendar: {e}")
+            raise ValidationError(f"خطأ في إنتاج تقويم الإجازات: {e}")
     
-    @staticmethod
-    def _generate_balance_report(filters: Dict) -> Dict:
-        """Generate leave balance report
+    # =============================================================================
+    # HELPER METHODS
+    # =============================================================================
+    
+    def _validate_leave_request(self, employee, leave_type, start_date, end_date) -> Dict:
+        """التحقق من صحة طلب الإجازة"""
+        errors = []
         
-        Args:
-            filters: Filter parameters
-            
-        Returns:
-            Dictionary with balance report data
-        """
-        # Placeholder implementation
+        # Check date validity
+        if start_date > end_date:
+            errors.append("تاريخ البداية يجب أن يكون قبل تاريخ النهاية")
+        
+        if start_date < date.today():
+            errors.append("لا يمكن طلب إجازة في الماضي")
+        
+        # Check minimum notice period
+        if leave_type.requires_approval and leave_type.min_notice_days:
+            notice_date = date.today() + timedelta(days=leave_type.min_notice_days)
+            if start_date < notice_date:
+                errors.append(f"يجب تقديم الطلب قبل {leave_type.min_notice_days} يوم على الأقل")
+        
+        # Check maximum consecutive days
+        if leave_type.max_consecutive_days:
+            requested_days = (end_date - start_date).days + 1
+            if requested_days > leave_type.max_consecutive_days:
+                errors.append(f"الحد الأقصى للأيام المتتالية هو {leave_type.max_consecutive_days} يوم")
+        
+        # Check for overlapping requests
+        from ..models import LeaveRequest
+        overlapping = LeaveRequest.objects.filter(
+            employee=employee,
+            start_date__lte=end_date,
+            end_date__gte=start_date,
+            status__in=['pending', 'approved']
+        ).exists()
+        
+        if overlapping:
+            errors.append("يوجد طلب إجازة متداخل في نفس الفترة")
+        
         return {
-            'title': 'Leave Balance Report',
-            'summary': 'Employee leave balances by type',
-            'data': []
+            'is_valid': len(errors) == 0,
+            'errors': errors
         }
     
-    @staticmethod
-    def _generate_usage_report(filters: Dict) -> Dict:
-        """Generate leave usage report
-        
-        Args:
-            filters: Filter parameters
-            
-        Returns:
-            Dictionary with usage report data
-        """
-        # Placeholder implementation
-        return {
-            'title': 'Leave Usage Report',
-            'summary': 'Leave usage patterns and statistics',
-            'data': []
-        }
+    def _calculate_leave_days(self, start_date, end_date, leave_type) -> int:
+        """حساب أيام الإجازة"""
+        if leave_type.exclude_weekends:
+            # Count only working days (exclude weekends)
+            days = 0
+            current_date = start_date
+            while current_date <= end_date:
+                if current_date.weekday() < 5:  # Monday to Friday
+                    days += 1
+                current_date += timedelta(days=1)
+            return days
+        else:
+            # Count all days
+            return (end_date - start_date).days + 1
     
-    @staticmethod
-    def _generate_trends_report(filters: Dict) -> Dict:
-        """Generate leave trends report
-        
-        Args:
-            filters: Filter parameters
+    def _check_leave_balance(self, employee, leave_type, requested_days) -> Dict:
+        """فحص رصيد الإجازة"""
+        try:
+            from ..models import LeaveBalance
             
-        Returns:
-            Dictionary with trends report data
-        """
-        # Placeholder implementation
-        return {
-            'title': 'Leave Trends Report',
-            'summary': 'Leave usage trends over time',
-            'data': []
-        }
+            year = date.today().year
+            balance = LeaveBalance.objects.get(
+                employee=employee,
+                leave_type=leave_type,
+                year=year
+            )
+            
+            # Consider pending requests
+            pending_days = self._get_pending_leave_days(employee, leave_type, year)
+            available_days = balance.remaining_days - pending_days
+            
+            return {
+                'sufficient': available_days >= requested_days,
+                'available_days': available_days,
+                'requested_days': requested_days
+            }
+            
+        except LeaveBalance.DoesNotExist:
+            # No balance record, assume no days available
+            return {
+                'sufficient': False,
+                'available_days': 0,
+                'requested_days': requested_days
+            }
     
-    @staticmethod
-    def _generate_compliance_report(filters: Dict) -> Dict:
-        """Generate leave compliance report
+    def _get_pending_leave_days(self, employee, leave_type, year) -> int:
+        """الحصول على أيام الإجازة المعلقة"""
+        from ..models import LeaveRequest
         
-        Args:
-            filters: Filter parameters
-            
-        Returns:
-            Dictionary with compliance report data
-        """
-        # Placeholder implementation
-        return {
-            'title': 'Leave Compliance Report',
-            'summary': 'Leave policy compliance and violations',
-            'data': []
-        }
+        pending_requests = LeaveRequest.objects.filter(
+            employee=employee,
+            leave_type=leave_type,
+            status='pending',
+            start_date__year=year
+        )
+        
+        return pending_requests.aggregate(
+            total=Sum('days_requested')
+        )['total'] or 0
+    
+    def _update_leave_balance(self, employee, leave_type, days_change, description):
+        """تحديث رصيد الإجازة"""
+        from ..models import LeaveBalance, LeaveBalanceTransaction
+        
+        year = date.today().year
+        balance, created = LeaveBalance.objects.get_or_create(
+            employee=employee,
+            leave_type=leave_type,
+            year=year,
+            defaults={
+                'allocated_days': leave_type.default_days,
+                'used_days': 0,
+                'remaining_days': leave_type.default_days
+            }
+        )
+        
+        # Update balance
+        if days_change < 0:  # Using leave days
+            balance.used_days += abs(days_change)
+            balance.remaining_days -= abs(days_change)
+        else:  # Adding leave days
+            balance.remaining_days += days_change
+        
+        balance.save()
+        
+        # Create transaction record
+        LeaveBalanceTransaction.objects.create(
+            balance=balance,
+            transaction_type='deduction' if days_change < 0 else 'addition',
+            days=abs(days_change),
+            description=description,
+            created_at=timezone.now()
+        )
+    
+    def _send_leave_request_notification(self, leave_request):
+        """إرسال إشعار طلب الإجازة"""
+        # This would send notification to manager
+        # Implementation depends on your notification system
+        pass
+    
+    def _send_leave_approval_notification(self, leave_request):
+        """إرسال إشعار الموافقة على الإجازة"""
+        # This would send notification to employee
+        pass
+    
+    def _send_leave_rejection_notification(self, leave_request):
+        """إرسال إشعار رفض الإجازة"""
+        # This would send notification to employee
+        pass

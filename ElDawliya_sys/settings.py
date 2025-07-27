@@ -40,6 +40,13 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'drf_yasg',
+    # Advanced Features
+    'channels',
+    'django_celery_beat',
+    'django_celery_results',
+    'django_extensions',
+    'storages',
+    'django_cleanup',
     # Core apps
     'core.apps.CoreConfig',
     'api.apps.ApiConfig',  # API application
@@ -387,6 +394,111 @@ SWAGGER_SETTINGS = {
     'DEFAULT_MODEL_RENDERING': 'example'
 }
 
+# Redis Configuration
+REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
+
+# Caching Configuration
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'unique-snowflake',
+    }
+}
+
+# Redis Cache (disabled for now)
+# CACHES = {
+#     'default': {
+#         'BACKEND': 'django_redis.cache.RedisCache',
+#         'LOCATION': REDIS_URL,
+#         'OPTIONS': {
+#             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+#             'SERIALIZER': 'django_redis.serializers.json.JSONSerializer',
+#             'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
+#         },
+#         'KEY_PREFIX': 'hr_system',
+#         'TIMEOUT': 300,  # 5 minutes default
+#     }
+# }
+
+# Session Configuration
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'default'
+
+# Celery Configuration
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/1')
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/1')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_ENABLE_UTC = True
+
+# Celery Beat Configuration
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
+
+# Channels Configuration (WebSocket)
+ASGI_APPLICATION = 'ElDawliya_sys.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [REDIS_URL],
+        },
+    },
+}
+
+# File Storage Configuration
+if not DEBUG:
+    # Production file storage (can be configured for AWS S3, etc.)
+    DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# File Upload Settings
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024  # 10MB
+FILE_UPLOAD_PERMISSIONS = 0o644
+
+# HR System Specific Settings
+HR_SETTINGS = {
+    'EMPLOYEE_NUMBER_PREFIX': 'EMP',
+    'EMPLOYEE_NUMBER_LENGTH': 6,
+    'DEFAULT_WORK_HOURS_PER_DAY': 8,
+    'DEFAULT_WORK_DAYS_PER_WEEK': 5,
+    'OVERTIME_THRESHOLD_MINUTES': 30,
+    'LATE_THRESHOLD_MINUTES': 15,
+    'DOCUMENT_EXPIRY_WARNING_DAYS': 30,
+    'LEAVE_BALANCE_CALCULATION_METHOD': 'monthly',  # monthly, yearly
+    'PAYROLL_CALCULATION_METHOD': 'monthly',
+    'ATTENDANCE_SYNC_INTERVAL_MINUTES': 15,
+}
+
+# Notification Settings
+NOTIFICATIONS_SETTINGS = {
+    'EMAIL_NOTIFICATIONS': True,
+    'SMS_NOTIFICATIONS': False,  # Can be enabled later
+    'PUSH_NOTIFICATIONS': True,
+    'DEFAULT_NOTIFICATION_METHODS': ['email', 'in_app'],
+}
+
+# Security Settings for HR System
+HR_SECURITY_SETTINGS = {
+    'REQUIRE_2FA_FOR_SENSITIVE_OPERATIONS': False,  # Can be enabled
+    'LOG_ALL_HR_OPERATIONS': True,
+    'ENCRYPT_SENSITIVE_FIELDS': True,
+    'PASSWORD_RESET_TIMEOUT_DAYS': 1,
+    'SESSION_TIMEOUT_MINUTES': 480,  # 8 hours
+}
+
+# Email Configuration (for notifications)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@eldawliya.com')
+
 # Logging Configuration
 LOGGING = {
     'version': 1,
@@ -398,6 +510,10 @@ LOGGING = {
         },
         'simple': {
             'format': '{levelname} {message}',
+            'style': '{',
+        },
+        'hr_audit': {
+            'format': '{asctime} - {name} - {levelname} - {message}',
             'style': '{',
         },
     },
@@ -413,6 +529,14 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
         },
+        'hr_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': 'hr_system.log',
+            'maxBytes': 1024*1024*10,  # 10MB
+            'backupCount': 5,
+            'formatter': 'hr_audit',
+        },
     },
     'loggers': {
         'api': {
@@ -423,6 +547,16 @@ LOGGING = {
         'django': {
             'handlers': ['console'],
             'level': 'INFO',
+        },
+        'hr_system': {
+            'handlers': ['hr_file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'celery': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propagate': True,
         },
     },
 }

@@ -1077,3 +1077,411 @@ class HRAuditLog(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.get_action_display()} - {self.model_name} - {self.timestamp}"
+
+# =============================================================================
+# NEW ENHANCED MODELS - Added directly
+# =============================================================================
+
+class EmployeeEducation(models.Model):
+    """نموذج المؤهلات الدراسية للموظف"""
+    
+    DEGREE_CHOICES = [
+        ('elementary', _('ابتدائية')),
+        ('intermediate', _('متوسطة')),
+        ('high_school', _('ثانوية عامة')),
+        ('diploma', _('دبلوم')),
+        ('bachelor', _('بكالوريوس')),
+        ('master', _('ماجستير')),
+        ('phd', _('دكتوراه')),
+        ('certificate', _('شهادة مهنية')),
+        ('training', _('دورة تدريبية')),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='education_records', verbose_name=_('الموظف'))
+    
+    # Education Details
+    degree_type = models.CharField(max_length=20, choices=DEGREE_CHOICES, verbose_name=_('نوع الشهادة'))
+    major = models.CharField(max_length=200, verbose_name=_('التخصص'))
+    institution = models.CharField(max_length=200, verbose_name=_('الجامعة/المؤسسة'))
+    graduation_year = models.PositiveIntegerField(verbose_name=_('سنة التخرج'))
+    grade = models.CharField(max_length=10, blank=True, null=True, verbose_name=_('المعدل/الدرجة'))
+    country = models.CharField(max_length=100, verbose_name=_('الدولة'))
+    
+    # Verification
+    is_verified = models.BooleanField(default=False, verbose_name=_('تم التحقق'))
+    certificate_file = models.FileField(upload_to='education/certificates/', blank=True, null=True, verbose_name=_('ملف الشهادة'))
+    
+    # Status and Timestamps
+    is_active = models.BooleanField(default=True, verbose_name=_('نشط'))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('تاريخ الإنشاء'))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_('تاريخ التحديث'))
+
+    class Meta:
+        verbose_name = _('مؤهل دراسي')
+        verbose_name_plural = _('المؤهلات الدراسية')
+        ordering = ['-graduation_year', 'degree_type']
+
+    def __str__(self):
+        return f"{self.employee.full_name} - {self.get_degree_type_display()} - {self.major}"
+
+
+class EmployeeInsurance(models.Model):
+    """نموذج تأمينات الموظف"""
+    
+    INSURANCE_TYPE_CHOICES = [
+        ('social', _('تأمين اجتماعي')),
+        ('medical', _('تأمين صحي')),
+        ('life', _('تأمين على الحياة')),
+        ('disability', _('تأمين ضد العجز')),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='insurance_records', verbose_name=_('الموظف'))
+    
+    # Insurance Details
+    insurance_type = models.CharField(max_length=20, choices=INSURANCE_TYPE_CHOICES, verbose_name=_('نوع التأمين'))
+    policy_number = models.CharField(max_length=100, verbose_name=_('رقم البوليصة'))
+    provider = models.CharField(max_length=200, verbose_name=_('مقدم التأمين'))
+    
+    # Dates
+    start_date = models.DateField(verbose_name=_('تاريخ البداية'))
+    end_date = models.DateField(blank=True, null=True, verbose_name=_('تاريخ النهاية'))
+    
+    # Financial Information
+    premium_amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_('قسط التأمين'))
+    coverage_amount = models.DecimalField(max_digits=12, decimal_places=2, verbose_name=_('مبلغ التغطية'))
+    employee_contribution = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name=_('مساهمة الموظف'))
+    employer_contribution = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name=_('مساهمة صاحب العمل'))
+    
+    # Status
+    is_active = models.BooleanField(default=True, verbose_name=_('نشط'))
+    
+    # Files
+    policy_document = models.FileField(upload_to='insurance/policies/', blank=True, null=True, verbose_name=_('وثيقة التأمين'))
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('تاريخ الإنشاء'))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_('تاريخ التحديث'))
+
+    class Meta:
+        verbose_name = _('تأمين موظف')
+        verbose_name_plural = _('تأمينات الموظفين')
+        ordering = ['employee', 'insurance_type', '-start_date']
+
+    def __str__(self):
+        return f"{self.employee.full_name} - {self.get_insurance_type_display()}"
+
+
+class EmployeeVehicle(models.Model):
+    """نموذج سيارات الموظفين"""
+    
+    VEHICLE_TYPE_CHOICES = [
+        ('company', _('سيارة الشركة')),
+        ('personal', _('سيارة شخصية')),
+        ('allowance', _('بدل سيارة')),
+        ('rental', _('سيارة مستأجرة')),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='vehicle_records', verbose_name=_('الموظف'))
+    
+    # Vehicle Information
+    vehicle_type = models.CharField(max_length=20, choices=VEHICLE_TYPE_CHOICES, verbose_name=_('نوع السيارة'))
+    make = models.CharField(max_length=100, verbose_name=_('الماركة'))
+    model = models.CharField(max_length=100, verbose_name=_('الموديل'))
+    year = models.PositiveIntegerField(verbose_name=_('سنة الصنع'))
+    license_plate = models.CharField(max_length=20, unique=True, verbose_name=_('رقم اللوحة'))
+    color = models.CharField(max_length=50, blank=True, null=True, verbose_name=_('اللون'))
+    
+    # Assignment Information
+    assigned_date = models.DateField(verbose_name=_('تاريخ التخصيص'))
+    return_date = models.DateField(blank=True, null=True, verbose_name=_('تاريخ الإرجاع'))
+    
+    # Financial Information
+    monthly_allowance = models.DecimalField(max_digits=10, decimal_places=2, default=0, verbose_name=_('البدل الشهري'))
+    
+    # Legal Information
+    insurance_expiry = models.DateField(verbose_name=_('تاريخ انتهاء التأمين'))
+    registration_expiry = models.DateField(verbose_name=_('تاريخ انتهاء الاستمارة'))
+    
+    # Status
+    is_active = models.BooleanField(default=True, verbose_name=_('نشط'))
+    
+    # Additional Information
+    notes = models.TextField(blank=True, null=True, verbose_name=_('ملاحظات'))
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('تاريخ الإنشاء'))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_('تاريخ التحديث'))
+
+    class Meta:
+        verbose_name = _('سيارة موظف')
+        verbose_name_plural = _('سيارات الموظفين')
+        ordering = ['employee', '-assigned_date']
+
+    def __str__(self):
+        return f"{self.employee.full_name} - {self.make} {self.model} ({self.license_plate})"# ========
+# =============================================================================
+# LEAVE MANAGEMENT MODELS - نماذج إدارة الإجازات
+# =============================================================================
+
+class LeaveType(models.Model):
+    """نموذج أنواع الإجازات"""
+    
+    LEAVE_CATEGORY_CHOICES = [
+        ('annual', _('إجازة سنوية')),
+        ('sick', _('إجازة مرضية')),
+        ('maternity', _('إجازة أمومة')),
+        ('paternity', _('إجازة أبوة')),
+        ('emergency', _('إجازة طارئة')),
+        ('study', _('إجازة دراسية')),
+        ('pilgrimage', _('إجازة حج')),
+        ('unpaid', _('إجازة بدون راتب')),
+        ('compensatory', _('إجازة تعويضية')),
+        ('other', _('أخرى')),
+    ]
+    
+    ACCRUAL_METHOD_CHOICES = [
+        ('monthly', _('شهرياً')),
+        ('yearly', _('سنوياً')),
+        ('fixed', _('ثابت')),
+        ('none', _('لا يوجد')),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='leave_types', verbose_name=_('الشركة'))
+    
+    # Basic Information
+    name = models.CharField(max_length=100, verbose_name=_('اسم نوع الإجازة'))
+    name_english = models.CharField(max_length=100, blank=True, null=True, verbose_name=_('الاسم بالإنجليزية'))
+    code = models.CharField(max_length=20, verbose_name=_('كود نوع الإجازة'))
+    category = models.CharField(max_length=20, choices=LEAVE_CATEGORY_CHOICES, verbose_name=_('فئة الإجازة'))
+    description = models.TextField(blank=True, null=True, verbose_name=_('الوصف'))
+    color = models.CharField(max_length=7, default='#007bff', verbose_name=_('لون العرض'))
+    
+    # Leave Rules
+    default_days = models.PositiveIntegerField(default=0, verbose_name=_('الأيام الافتراضية'))
+    max_days_per_year = models.PositiveIntegerField(blank=True, null=True, verbose_name=_('الحد الأقصى سنوياً'))
+    max_consecutive_days = models.PositiveIntegerField(blank=True, null=True, verbose_name=_('الحد الأقصى متتالي'))
+    min_notice_days = models.PositiveIntegerField(default=0, verbose_name=_('الحد الأدنى للإشعار المسبق'))
+    
+    # Accrual Settings
+    accrual_method = models.CharField(max_length=20, choices=ACCRUAL_METHOD_CHOICES, default='yearly', verbose_name=_('طريقة الاستحقاق'))
+    accrual_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name=_('معدل الاستحقاق'))
+    
+    # Carryover Settings
+    allow_carryover = models.BooleanField(default=False, verbose_name=_('السماح بالترحيل'))
+    max_carryover_days = models.PositiveIntegerField(blank=True, null=True, verbose_name=_('الحد الأقصى للترحيل'))
+    carryover_expiry_months = models.PositiveIntegerField(blank=True, null=True, verbose_name=_('انتهاء الترحيل (شهور)'))
+    
+    # Approval Settings
+    requires_approval = models.BooleanField(default=True, verbose_name=_('يتطلب موافقة'))
+    approval_levels = models.PositiveIntegerField(default=1, verbose_name=_('مستويات الموافقة'))
+    auto_approve_days = models.PositiveIntegerField(blank=True, null=True, verbose_name=_('الموافقة التلقائية للأيام'))
+    
+    # Calculation Settings
+    exclude_weekends = models.BooleanField(default=True, verbose_name=_('استبعاد عطل نهاية الأسبوع'))
+    exclude_holidays = models.BooleanField(default=True, verbose_name=_('استبعاد العطل الرسمية'))
+    is_paid = models.BooleanField(default=True, verbose_name=_('مدفوعة الأجر'))
+    
+    # Gender and Employment Type Restrictions
+    gender_restriction = models.CharField(
+        max_length=10, 
+        choices=[('male', _('ذكور فقط')), ('female', _('إناث فقط')), ('all', _('الجميع'))],
+        default='all',
+        verbose_name=_('قيود الجنس')
+    )
+    employment_type_restriction = models.CharField(
+        max_length=20,
+        choices=[('permanent', _('دائم فقط')), ('contract', _('تعاقد فقط')), ('all', _('الجميع'))],
+        default='all',
+        verbose_name=_('قيود نوع التوظيف')
+    )
+    
+    # Service Requirements
+    min_service_months = models.PositiveIntegerField(default=0, verbose_name=_('الحد الأدنى لشهور الخدمة'))
+    
+    # Status and Timestamps
+    is_active = models.BooleanField(default=True, verbose_name=_('نشط'))
+    effective_from = models.DateField(default=timezone.now, verbose_name=_('ساري من'))
+    effective_to = models.DateField(blank=True, null=True, verbose_name=_('ساري حتى'))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('تاريخ الإنشاء'))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_('تاريخ التحديث'))
+    
+    class Meta:
+        verbose_name = _('نوع الإجازة')
+        verbose_name_plural = _('أنواع الإجازات')
+        unique_together = ['company', 'code']
+        ordering = ['company', 'name']
+        indexes = [
+            models.Index(fields=['company', 'code']),
+            models.Index(fields=['category']),
+            models.Index(fields=['is_active']),
+        ]
+    
+    def __str__(self):
+        return f"{self.company.name} - {self.name}"
+
+
+class LeaveRequest(models.Model):
+    """نموذج طلب الإجازة"""
+    
+    STATUS_CHOICES = [
+        ('draft', _('مسودة')),
+        ('pending', _('معلق')),
+        ('approved', _('معتمد')),
+        ('rejected', _('مرفوض')),
+        ('cancelled', _('ملغي')),
+        ('expired', _('منتهي الصلاحية')),
+    ]
+    
+    PRIORITY_CHOICES = [
+        ('low', _('منخفضة')),
+        ('normal', _('عادية')),
+        ('high', _('عالية')),
+        ('urgent', _('عاجلة')),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='leave_requests', verbose_name=_('الموظف'))
+    leave_type = models.ForeignKey(LeaveType, on_delete=models.CASCADE, related_name='requests', verbose_name=_('نوع الإجازة'))
+    
+    # Request Information
+    start_date = models.DateField(verbose_name=_('تاريخ البداية'))
+    end_date = models.DateField(verbose_name=_('تاريخ النهاية'))
+    days_requested = models.DecimalField(max_digits=6, decimal_places=2, verbose_name=_('الأيام المطلوبة'))
+    reason = models.TextField(blank=True, null=True, verbose_name=_('السبب'))
+    priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default='normal', verbose_name=_('الأولوية'))
+    
+    # Status and Workflow
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft', verbose_name=_('الحالة'))
+    
+    # Request Timestamps
+    requested_at = models.DateTimeField(auto_now_add=True, verbose_name=_('تاريخ الطلب'))
+    submitted_at = models.DateTimeField(blank=True, null=True, verbose_name=_('تاريخ التقديم'))
+    
+    # Approval Information
+    approved_by = models.ForeignKey('accounts.Users_Login_New', on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_leave_requests', verbose_name=_('معتمد بواسطة'))
+    approved_at = models.DateTimeField(blank=True, null=True, verbose_name=_('تاريخ الاعتماد'))
+    approved_days = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True, verbose_name=_('الأيام المعتمدة'))
+    approval_comments = models.TextField(blank=True, null=True, verbose_name=_('تعليقات الاعتماد'))
+    
+    # Rejection Information
+    rejected_by = models.ForeignKey('accounts.Users_Login_New', on_delete=models.SET_NULL, null=True, blank=True, related_name='rejected_leave_requests', verbose_name=_('مرفوض بواسطة'))
+    rejected_at = models.DateTimeField(blank=True, null=True, verbose_name=_('تاريخ الرفض'))
+    rejection_reason = models.TextField(blank=True, null=True, verbose_name=_('سبب الرفض'))
+    
+    # System Information
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('تاريخ الإنشاء'))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_('تاريخ التحديث'))
+    
+    class Meta:
+        verbose_name = _('طلب الإجازة')
+        verbose_name_plural = _('طلبات الإجازات')
+        ordering = ['-requested_at']
+        indexes = [
+            models.Index(fields=['employee', 'status']),
+            models.Index(fields=['leave_type', 'status']),
+            models.Index(fields=['start_date', 'end_date']),
+            models.Index(fields=['status', 'requested_at']),
+        ]
+    
+    def __str__(self):
+        return f"{self.employee.full_name} - {self.leave_type.name} - {self.start_date} to {self.end_date}"
+
+
+class LeaveBalance(models.Model):
+    """نموذج رصيد الإجازات"""
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='leave_balances', verbose_name=_('الموظف'))
+    leave_type = models.ForeignKey(LeaveType, on_delete=models.CASCADE, related_name='balances', verbose_name=_('نوع الإجازة'))
+    year = models.PositiveIntegerField(verbose_name=_('السنة'))
+    
+    # Balance Information
+    allocated_days = models.DecimalField(max_digits=6, decimal_places=2, default=0, verbose_name=_('الأيام المخصصة'))
+    used_days = models.DecimalField(max_digits=6, decimal_places=2, default=0, verbose_name=_('الأيام المستخدمة'))
+    remaining_days = models.DecimalField(max_digits=6, decimal_places=2, default=0, verbose_name=_('الأيام المتبقية'))
+    
+    # Status and Timestamps
+    is_active = models.BooleanField(default=True, verbose_name=_('نشط'))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('تاريخ الإنشاء'))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_('تاريخ التحديث'))
+    
+    class Meta:
+        verbose_name = _('رصيد الإجازة')
+        verbose_name_plural = _('أرصدة الإجازات')
+        unique_together = ['employee', 'leave_type', 'year']
+        ordering = ['employee', 'leave_type', '-year']
+        indexes = [
+            models.Index(fields=['employee', 'year']),
+            models.Index(fields=['leave_type', 'year']),
+            models.Index(fields=['is_active']),
+        ]
+    
+    def __str__(self):
+        return f"{self.employee.full_name} - {self.leave_type.name} - {self.year}"
+
+# =============================================================================
+# IMPORT PAYROLL MODELS
+# =============================================================================
+# Payroll models will be added here when created
+
+# =============================================================================
+# IMPORT SHIFT ASSIGNMENT MODEL
+# =============================================================================
+class EmployeeShiftAssignment(models.Model):
+    """نموذج تعيين الموظف للوردية"""
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='shift_assignments', verbose_name=_('الموظف'))
+    shift = models.ForeignKey('WorkShiftEnhanced', on_delete=models.CASCADE, related_name='employee_assignments', verbose_name=_('الوردية'))
+    
+    # Assignment Period
+    start_date = models.DateField(verbose_name=_('تاريخ البداية'))
+    end_date = models.DateField(blank=True, null=True, verbose_name=_('تاريخ النهاية'))
+    
+    # Assignment Details
+    is_permanent = models.BooleanField(default=False, verbose_name=_('دائم'))
+    is_active = models.BooleanField(default=True, verbose_name=_('نشط'))
+    notes = models.TextField(blank=True, null=True, verbose_name=_('ملاحظات'))
+    
+    # Assignment Authority
+    assigned_by = models.ForeignKey('accounts.Users_Login_New', on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('معين بواسطة'))
+    assigned_at = models.DateTimeField(auto_now_add=True, verbose_name=_('تاريخ التعيين'))
+    
+    # System Information
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('تاريخ الإنشاء'))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_('تاريخ التحديث'))
+    
+    class Meta:
+        verbose_name = _('تعيين وردية الموظف')
+        verbose_name_plural = _('تعيينات ورديات الموظفين')
+        ordering = ['-start_date']
+        indexes = [
+            models.Index(fields=['employee', 'start_date']),
+            models.Index(fields=['shift', 'start_date']),
+            models.Index(fields=['is_active']),
+        ]
+    
+    def __str__(self):
+        return f"{self.employee.full_name} - {self.shift.name} - {self.start_date}"
+    
+    @property
+    def is_current(self):
+        """هل التعيين جاري حالياً"""
+        today = date.today()
+        return (self.is_active and 
+                self.start_date <= today and 
+                (self.end_date is None or self.end_date >= today))
+    
+    def clean(self):
+        """التحقق من صحة البيانات"""
+        if self.start_date and self.end_date:
+            if self.start_date > self.end_date:
+                raise ValidationError("تاريخ البداية يجب أن يكون قبل تاريخ النهاية")
+    
+    def save(self, *args, **kwargs):
+        self.clean()
+        super().save(*args, **kwargs)

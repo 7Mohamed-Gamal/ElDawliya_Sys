@@ -1,0 +1,1281 @@
+{% extends 'Hr/base_hr_modern.html' %}
+{% load static %}
+{% block title %}إدارة الورديات - {{ block.super }}{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Shift Management Styles */
+.shift-management {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.management-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-6);
+    padding: var(--spacing-4);
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    border-radius: var(--radius-lg);
+    color: var(--white);
+}
+
+.header-info h1 {
+    margin-bottom: var(--spacing-1);
+    color: var(--white);
+}
+
+.header-meta {
+    opacity: 0.9;
+    font-size: var(--text-sm);
+}
+
+.header-actions {
+    display: flex;
+    gap: var(--spacing-2);
+}
+
+.header-action-btn {
+    padding: var(--spacing-2) var(--spacing-4);
+    background-color: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: var(--white);
+    border-radius: var(--radius);
+    text-decoration: none;
+    transition: all var(--transition-fast);
+    font-size: var(--text-sm);
+}
+
+.header-action-btn:hover {
+    background-color: rgba(255, 255, 255, 0.3);
+    color: var(--white);
+    transform: translateY(-1px);
+}
+
+.management-tabs {
+    display: flex;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--spacing-6);
+    overflow: hidden;
+}
+
+.tab-btn {
+    flex: 1;
+    padding: var(--spacing-4);
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-weight: 500;
+    color: var(--text-secondary);
+    border-right: 1px solid var(--border-color);
+}
+
+.tab-btn:last-child {
+    border-right: none;
+}
+
+.tab-btn.active {
+    background-color: var(--primary-color);
+    color: var(--white);
+}
+
+.tab-btn:hover:not(.active) {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+/* Shifts Overview */
+.shifts-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-4);
+    margin-bottom: var(--spacing-6);
+}
+
+.shift-card {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-6);
+    transition: all var(--transition-fast);
+    position: relative;
+    overflow: hidden;
+}
+
+.shift-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.shift-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
+}
+
+.shift-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-4);
+}
+
+.shift-name {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.shift-status {
+    padding: var(--spacing-1) var(--spacing-2);
+    border-radius: var(--radius);
+    font-size: var(--text-xs);
+    font-weight: 500;
+}
+
+.shift-status.active {
+    background-color: rgb(34 197 94 / 0.1);
+    color: var(--success-color);
+}
+
+.shift-status.inactive {
+    background-color: rgb(107 114 128 / 0.1);
+    color: var(--text-muted);
+}
+
+.shift-time {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-2);
+    margin-bottom: var(--spacing-3);
+    font-family: monospace;
+    font-size: var(--text-lg);
+    color: var(--text-primary);
+}
+
+.shift-details {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--spacing-3);
+    margin-bottom: var(--spacing-4);
+}
+
+.detail-item {
+    text-align: center;
+}
+
+.detail-value {
+    font-size: var(--text-xl);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-1);
+}
+
+.detail-label {
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+}
+
+.shift-employees {
+    margin-bottom: var(--spacing-4);
+}
+
+.employees-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-2);
+}
+
+.employees-title {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.employees-count {
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+}
+
+.employees-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-2);
+}
+
+.employee-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-full);
+    background-color: var(--bg-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+}
+
+.employee-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.employee-avatar.more {
+    background-color: var(--primary-color);
+    color: var(--white);
+    font-size: var(--text-xs);
+    font-weight: 500;
+}
+
+.shift-actions {
+    display: flex;
+    gap: var(--spacing-2);
+}
+
+.shift-action-btn {
+    flex: 1;
+    padding: var(--spacing-2);
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-primary);
+    color: var(--text-secondary);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-size: var(--text-sm);
+}
+
+.shift-action-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.shift-action-btn.primary {
+    background-color: var(--primary-color);
+    color: var(--white);
+    border-color: var(--primary-color);
+}
+
+.shift-action-btn.primary:hover {
+    background-color: var(--primary-dark);
+}
+
+/* Calendar View */
+.calendar-container {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-4);
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.calendar-title {
+    font-size: var(--text-lg);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.calendar-nav {
+    display: flex;
+    gap: var(--spacing-2);
+}
+
+.calendar-nav-btn {
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-primary);
+    color: var(--text-secondary);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.calendar-nav-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+}
+
+.calendar-day-header {
+    padding: var(--spacing-3);
+    background-color: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+    text-align: center;
+    font-weight: 500;
+    color: var(--text-primary);
+    font-size: var(--text-sm);
+}
+
+.calendar-day {
+    min-height: 120px;
+    border-bottom: 1px solid var(--border-color);
+    border-left: 1px solid var(--border-color);
+    padding: var(--spacing-2);
+    position: relative;
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+}
+
+.calendar-day:hover {
+    background-color: var(--bg-secondary);
+}
+
+.calendar-day.other-month {
+    background-color: var(--bg-secondary);
+    color: var(--text-muted);
+}
+
+.calendar-day.today {
+    background-color: rgb(37 99 235 / 0.1);
+}
+
+.day-number {
+    font-weight: 500;
+    margin-bottom: var(--spacing-2);
+}
+
+.day-shifts {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-1);
+}
+
+.shift-item {
+    padding: var(--spacing-1) var(--spacing-2);
+    border-radius: var(--radius);
+    font-size: var(--text-xs);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.shift-item.morning {
+    background-color: rgb(245 158 11 / 0.2);
+    color: var(--warning-color);
+}
+
+.shift-item.afternoon {
+    background-color: rgb(34 197 94 / 0.2);
+    color: var(--success-color);
+}
+
+.shift-item.night {
+    background-color: rgb(99 102 241 / 0.2);
+    color: var(--indigo-color);
+}
+
+.shift-item:hover {
+    transform: scale(1.05);
+}
+
+/* Employee Assignment */
+.assignment-container {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: var(--spacing-6);
+}
+
+.assignment-main {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-6);
+}
+
+.assignment-sidebar {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-6);
+}
+
+.assignment-form {
+    margin-bottom: var(--spacing-6);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-4);
+    margin-bottom: var(--spacing-4);
+}
+
+.assignments-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.assignments-table th {
+    background-color: var(--bg-secondary);
+    padding: var(--spacing-3);
+    text-align: right;
+    font-weight: 600;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.assignments-table td {
+    padding: var(--spacing-3);
+    border-bottom: 1px solid var(--border-color);
+    vertical-align: middle;
+}
+
+.assignments-table tr:hover {
+    background-color: var(--bg-secondary);
+}
+
+.assignment-employee {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-3);
+}
+
+.assignment-shift-badge {
+    padding: var(--spacing-1) var(--spacing-2);
+    border-radius: var(--radius);
+    font-size: var(--text-xs);
+    font-weight: 500;
+}
+
+.assignment-actions {
+    display: flex;
+    gap: var(--spacing-1);
+}
+
+.assignment-action-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+    font-size: var(--text-sm);
+}
+
+.assignment-action-btn.edit {
+    background-color: rgb(245 158 11 / 0.1);
+    color: var(--warning-color);
+}
+
+.assignment-action-btn.delete {
+    background-color: rgb(239 68 68 / 0.1);
+    color: var(--danger-color);
+}
+
+.assignment-action-btn:hover {
+    transform: scale(1.1);
+}
+
+.quick-assign {
+    margin-bottom: var(--spacing-4);
+}
+
+.quick-assign-title {
+    font-weight: 600;
+    margin-bottom: var(--spacing-3);
+}
+
+.quick-assign-options {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-2);
+}
+
+.quick-assign-btn {
+    padding: var(--spacing-2) var(--spacing-3);
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-primary);
+    color: var(--text-secondary);
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-size: var(--text-sm);
+    text-align: right;
+}
+
+.quick-assign-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.assignment-stats {
+    margin-bottom: var(--spacing-4);
+}
+
+.stats-title {
+    font-weight: 600;
+    margin-bottom: var(--spacing-3);
+}
+
+.stat-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-2);
+    margin-bottom: var(--spacing-2);
+    background-color: var(--bg-secondary);
+    border-radius: var(--radius);
+}
+
+.stat-label {
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+}
+
+.stat-value {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+@media (max-width: 768px) {
+    .management-header {
+        flex-direction: column;
+        gap: var(--spacing-3);
+        text-align: center;
+    }
+    
+    .management-tabs {
+        flex-direction: column;
+    }
+    
+    .tab-btn {
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .tab-btn:last-child {
+        border-bottom: none;
+    }
+    
+    .shifts-overview {
+        grid-template-columns: 1fr;
+    }
+    
+    .assignment-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .calendar-grid {
+        font-size: var(--text-sm);
+    }
+    
+    .calendar-day {
+        min-height: 80px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block breadcrumb %}
+<ol class="breadcrumb">
+    <li class="breadcrumb-item">
+        <a href="{% url 'Hr:dashboard' %}">
+            <i class="fas fa-home"></i>
+            الرئيسية
+        </a>
+    </li>
+    <li class="breadcrumb-item">
+        <a href="{% url 'Hr:attendance_dashboard' %}">لوحة تحكم الحضور</a>
+    </li>
+    <li class="breadcrumb-item active">إدارة الورديات</li>
+</ol>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="shift-management">
+        <!-- Management Header -->
+        <div class="management-header">
+            <div class="header-info">
+                <h1>إدارة الورديات والمناوبات</h1>
+                <div class="header-meta">
+                    <i class="fas fa-calendar-alt mr-2"></i>
+                    تنظيم وإدارة ورديات العمل والمناوبات
+                </div>
+            </div>
+            <div class="header-actions">
+                <a href="{% url 'Hr:create_shift' %}" class="header-action-btn">
+                    <i class="fas fa-plus mr-2"></i>
+                    إضافة وردية جديدة
+                </a>
+                <a href="{% url 'Hr:shift_templates' %}" class="header-action-btn">
+                    <i class="fas fa-copy mr-2"></i>
+                    قوالب الورديات
+                </a>
+                <a href="{% url 'Hr:shift_reports' %}" class="header-action-btn">
+                    <i class="fas fa-chart-bar mr-2"></i>
+                    تقارير الورديات
+                </a>
+            </div>
+        </div>
+
+        <!-- Management Tabs -->
+        <div class="management-tabs">
+            <button class="tab-btn active" data-tab="overview">
+                <i class="fas fa-th-large mr-2"></i>
+                نظرة عامة
+            </button>
+            <button class="tab-btn" data-tab="calendar">
+                <i class="fas fa-calendar mr-2"></i>
+                التقويم
+            </button>
+            <button class="tab-btn" data-tab="assignments">
+                <i class="fas fa-users mr-2"></i>
+                تعيين الموظفين
+            </button>
+            <button class="tab-btn" data-tab="conflicts">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                التضارب
+            </button>
+        </div>
+
+        <!-- Overview Tab -->
+        <div class="tab-content active" id="overview">
+            <div class="shifts-overview">
+                {% for shift in shifts %}
+                <div class="shift-card">
+                    <div class="shift-header">
+                        <div class="shift-name">{{ shift.name }}</div>
+                        <div class="shift-status {{ shift.status }}">
+                            {% if shift.is_active %}نشط{% else %}غير نشط{% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="shift-time">
+                        <i class="fas fa-clock mr-2"></i>
+                        {{ shift.start_time|date:"H:i" }} - {{ shift.end_time|date:"H:i" }}
+                    </div>
+                    
+                    <div class="shift-details">
+                        <div class="detail-item">
+                            <div class="detail-value">{{ shift.duration_hours }}h</div>
+                            <div class="detail-label">مدة الوردية</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-value">{{ shift.break_duration }}m</div>
+                            <div class="detail-label">فترة الراحة</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-value">{{ shift.assigned_employees_count }}</div>
+                            <div class="detail-label">الموظفين المعينين</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-value">{{ shift.working_days_count }}</div>
+                            <div class="detail-label">أيام العمل</div>
+                        </div>
+                    </div>
+                    
+                    <div class="shift-employees">
+                        <div class="employees-header">
+                            <div class="employees-title">الموظفين المعينين</div>
+                            <div class="employees-count">{{ shift.assigned_employees_count }} موظف</div>
+                        </div>
+                        <div class="employees-list">
+                            {% for employee in shift.assigned_employees|slice:":5" %}
+                            <div class="employee-avatar" title="{{ employee.full_name }}">
+                                {% if employee.photo %}
+                                    <img src="{{ employee.photo.url }}" alt="{{ employee.full_name }}">
+                                {% else %}
+                                    <i class="fas fa-user"></i>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                            {% if shift.assigned_employees_count > 5 %}
+                            <div class="employee-avatar more">
+                                +{{ shift.assigned_employees_count|add:"-5" }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="shift-actions">
+                        <button class="shift-action-btn primary" onclick="viewShiftDetails({{ shift.id }})">
+                            <i class="fas fa-eye mr-1"></i>
+                            عرض
+                        </button>
+                        <button class="shift-action-btn" onclick="editShift({{ shift.id }})">
+                            <i class="fas fa-edit mr-1"></i>
+                            تعديل
+                        </button>
+                        <button class="shift-action-btn" onclick="assignEmployees({{ shift.id }})">
+                            <i class="fas fa-users mr-1"></i>
+                            تعيين
+                        </button>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">🕐</div>
+                    <div class="empty-state-title">لا توجد ورديات</div>
+                    <div class="empty-state-description">لم يتم إنشاء أي ورديات بعد</div>
+                    <a href="{% url 'Hr:create_shift' %}" class="btn btn-primary">
+                        <i class="fas fa-plus mr-2"></i>
+                        إضافة وردية جديدة
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Calendar Tab -->
+        <div class="tab-content" id="calendar">
+            <div class="calendar-container">
+                <div class="calendar-header">
+                    <div class="calendar-title" id="calendarTitle">{{ current_month|date:"F Y" }}</div>
+                    <div class="calendar-nav">
+                        <button class="calendar-nav-btn" onclick="previousMonth()">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                        <button class="calendar-nav-btn" onclick="nextMonth()">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="calendar-nav-btn" onclick="goToToday()">
+                            اليوم
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="calendar-grid">
+                    <!-- Day Headers -->
+                    <div class="calendar-day-header">الأحد</div>
+                    <div class="calendar-day-header">الاثنين</div>
+                    <div class="calendar-day-header">الثلاثاء</div>
+                    <div class="calendar-day-header">الأربعاء</div>
+                    <div class="calendar-day-header">الخميس</div>
+                    <div class="calendar-day-header">الجمعة</div>
+                    <div class="calendar-day-header">السبت</div>
+                    
+                    <!-- Calendar Days -->
+                    <div id="calendarDays">
+                        {% for day in calendar_days %}
+                        <div class="calendar-day {% if day.is_other_month %}other-month{% endif %} {% if day.is_today %}today{% endif %}" 
+                             data-date="{{ day.date|date:'Y-m-d' }}" onclick="selectDay('{{ day.date|date:'Y-m-d' }}')">
+                            <div class="day-number">{{ day.date.day }}</div>
+                            <div class="day-shifts">
+                                {% for shift in day.shifts %}
+                                <div class="shift-item {{ shift.type }}" onclick="viewShiftAssignment({{ shift.id }}, '{{ day.date|date:'Y-m-d' }}')">
+                                    {{ shift.name }} ({{ shift.employee_count }})
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assignments Tab -->
+        <div class="tab-content" id="assignments">
+            <div class="assignment-container">
+                <div class="assignment-main">
+                    <h3>تعيين الموظفين للورديات</h3>
+                    
+                    <div class="assignment-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">الموظف</label>
+                                <select class="form-control" id="assignEmployee">
+                                    <option value="">اختر الموظف</option>
+                                    {% for employee in available_employees %}
+                                    <option value="{{ employee.id }}">{{ employee.full_name }} - {{ employee.department.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">الوردية</label>
+                                <select class="form-control" id="assignShift">
+                                    <option value="">اختر الوردية</option>
+                                    {% for shift in shifts %}
+                                    <option value="{{ shift.id }}">{{ shift.name }} ({{ shift.start_time|date:"H:i" }} - {{ shift.end_time|date:"H:i" }})</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">من تاريخ</label>
+                                <input type="date" class="form-control" id="assignFromDate">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">إلى تاريخ</label>
+                                <input type="date" class="form-control" id="assignToDate">
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn-primary" onclick="assignEmployeeToShift()">
+                                <i class="fas fa-plus mr-2"></i>
+                                تعيين الموظف
+                            </button>
+                            <button class="btn btn-outline" onclick="clearAssignmentForm()">
+                                <i class="fas fa-times mr-2"></i>
+                                مسح
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="assignments-table-container">
+                        <table class="assignments-table">
+                            <thead>
+                                <tr>
+                                    <th>الموظف</th>
+                                    <th>الوردية</th>
+                                    <th>من تاريخ</th>
+                                    <th>إلى تاريخ</th>
+                                    <th>الحالة</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for assignment in assignments %}
+                                <tr>
+                                    <td>
+                                        <div class="assignment-employee">
+                                            <div class="employee-avatar">
+                                                {% if assignment.employee.photo %}
+                                                    <img src="{{ assignment.employee.photo.url }}" alt="{{ assignment.employee.full_name }}">
+                                                {% else %}
+                                                    <i class="fas fa-user"></i>
+                                                {% endif %}
+                                            </div>
+                                            <div>
+                                                <div class="employee-name">{{ assignment.employee.full_name }}</div>
+                                                <div class="employee-department">{{ assignment.employee.department.name }}</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="assignment-shift-badge {{ assignment.shift.type }}">
+                                            {{ assignment.shift.name }}
+                                        </div>
+                                    </td>
+                                    <td>{{ assignment.start_date|date:"Y/m/d" }}</td>
+                                    <td>{{ assignment.end_date|date:"Y/m/d" }}</td>
+                                    <td>
+                                        <span class="status-badge {{ assignment.status }}">{{ assignment.get_status_display }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="assignment-actions">
+                                            <button class="assignment-action-btn edit" onclick="editAssignment({{ assignment.id }})" title="تعديل">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="assignment-action-btn delete" onclick="deleteAssignment({{ assignment.id }})" title="حذف">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted">لا توجد تعيينات</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="assignment-sidebar">
+                    <div class="quick-assign">
+                        <div class="quick-assign-title">تعيين سريع</div>
+                        <div class="quick-assign-options">
+                            <button class="quick-assign-btn" onclick="assignAllToDayShift()">
+                                تعيين الكل للوردية النهارية
+                            </button>
+                            <button class="quick-assign-btn" onclick="assignByDepartment()">
+                                تعيين حسب القسم
+                            </button>
+                            <button class="quick-assign-btn" onclick="copyPreviousWeek()">
+                                نسخ الأسبوع السابق
+                            </button>
+                            <button class="quick-assign-btn" onclick="autoAssign()">
+                                تعيين تلقائي
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="assignment-stats">
+                        <div class="stats-title">إحصائيات التعيين</div>
+                        <div class="stat-item">
+                            <span class="stat-label">إجمالي التعيينات</span>
+                            <span class="stat-value">{{ assignment_stats.total }}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">التعيينات النشطة</span>
+                            <span class="stat-value">{{ assignment_stats.active }}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">الموظفين المعينين</span>
+                            <span class="stat-value">{{ assignment_stats.assigned_employees }}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">الموظفين غير المعينين</span>
+                            <span class="stat-value">{{ assignment_stats.unassigned_employees }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Conflicts Tab -->
+        <div class="tab-content" id="conflicts">
+            <div class="conflicts-container">
+                <h3>تضارب الورديات</h3>
+                
+                {% if conflicts %}
+                <div class="conflicts-list">
+                    {% for conflict in conflicts %}
+                    <div class="conflict-item">
+                        <div class="conflict-header">
+                            <div class="conflict-type">{{ conflict.get_type_display }}</div>
+                            <div class="conflict-severity {{ conflict.severity }}">{{ conflict.get_severity_display }}</div>
+                        </div>
+                        <div class="conflict-details">
+                            <div class="conflict-employee">
+                                <strong>الموظف:</strong> {{ conflict.employee.full_name }}
+                            </div>
+                            <div class="conflict-description">
+                                {{ conflict.description }}
+                            </div>
+                            <div class="conflict-date">
+                                <strong>التاريخ:</strong> {{ conflict.date|date:"Y/m/d" }}
+                            </div>
+                        </div>
+                        <div class="conflict-actions">
+                            <button class="btn btn-sm btn-primary" onclick="resolveConflict({{ conflict.id }})">
+                                حل التضارب
+                            </button>
+                            <button class="btn btn-sm btn-outline" onclick="ignoreConflict({{ conflict.id }})">
+                                تجاهل
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">✅</div>
+                    <div class="empty-state-title">لا توجد تضارب</div>
+                    <div class="empty-state-description">جميع الورديات منظمة بشكل صحيح</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+class ShiftManagement {
+    constructor() {
+        this.currentMonth = new Date();
+        this.selectedDate = null;
+        this.init();
+    }
+
+    init() {
+        this.setupTabs();
+        this.setupCalendar();
+        this.setupEventListeners();
+    }
+
+    setupTabs() {
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                this.switchTab(e.target.dataset.tab);
+            });
+        });
+    }
+
+    switchTab(tabName) {
+        // Update tab buttons
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === tabName);
+        });
+
+        // Update tab content
+        document.querySelectorAll('.tab-content').forEach(content => {
+            content.classList.toggle('active', content.id === tabName);
+        });
+
+        // Load tab-specific data
+        this.loadTabData(tabName);
+    }
+
+    setupCalendar() {
+        this.renderCalendar();
+    }
+
+    setupEventListeners() {
+        // Assignment form
+        document.getElementById('assignEmployee')?.addEventListener('change', () => {
+            this.updateAvailableShifts();
+        });
+    }
+
+    renderCalendar() {
+        // Calendar rendering logic would go here
+        // This would typically involve AJAX calls to get shift data for the month
+    }
+
+    loadTabData(tabName) {
+        switch (tabName) {
+            case 'calendar':
+                this.loadCalendarData();
+                break;
+            case 'assignments':
+                this.loadAssignmentData();
+                break;
+            case 'conflicts':
+                this.loadConflictData();
+                break;
+        }
+    }
+
+    async loadCalendarData() {
+        try {
+            const response = await fetch(`{% url 'Hr:shift_calendar_data' %}?month=${this.currentMonth.getMonth() + 1}&year=${this.currentMonth.getFullYear()}`);
+            const data = await response.json();
+            this.updateCalendarDisplay(data);
+        } catch (error) {
+            console.error('Error loading calendar data:', error);
+        }
+    }
+
+    async loadAssignmentData() {
+        // Load assignment data
+    }
+
+    async loadConflictData() {
+        // Load conflict data
+    }
+
+    updateCalendarDisplay(data) {
+        // Update calendar with shift data
+    }
+
+    updateAvailableShifts() {
+        const employeeId = document.getElementById('assignEmployee').value;
+        if (!employeeId) return;
+
+        // Fetch available shifts for selected employee
+        fetch(`{% url 'Hr:available_shifts' %}?employee_id=${employeeId}`)
+            .then(response => response.json())
+            .then(data => {
+                const shiftSelect = document.getElementById('assignShift');
+                shiftSelect.innerHTML = '<option value="">اختر الوردية</option>';
+                data.shifts.forEach(shift => {
+                    const option = document.createElement('option');
+                    option.value = shift.id;
+                    option.textContent = `${shift.name} (${shift.start_time} - ${shift.end_time})`;
+                    shiftSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading available shifts:', error);
+            });
+    }
+}
+
+// Global functions
+function viewShiftDetails(shiftId) {
+    window.open(`{% url 'Hr:shift_detail' 0 %}`.replace('0', shiftId), '_blank');
+}
+
+function editShift(shiftId) {
+    window.location.href = `{% url 'Hr:edit_shift' 0 %}`.replace('0', shiftId);
+}
+
+function assignEmployees(shiftId) {
+    // Switch to assignments tab and pre-select shift
+    shiftManagement.switchTab('assignments');
+    document.getElementById('assignShift').value = shiftId;
+}
+
+function previousMonth() {
+    shiftManagement.currentMonth.setMonth(shiftManagement.currentMonth.getMonth() - 1);
+    shiftManagement.renderCalendar();
+}
+
+function nextMonth() {
+    shiftManagement.currentMonth.setMonth(shiftManagement.currentMonth.getMonth() + 1);
+    shiftManagement.renderCalendar();
+}
+
+function goToToday() {
+    shiftManagement.currentMonth = new Date();
+    shiftManagement.renderCalendar();
+}
+
+function selectDay(date) {
+    shiftManagement.selectedDate = date;
+    // Highlight selected day and show day details
+}
+
+function viewShiftAssignment(shiftId, date) {
+    window.open(`{% url 'Hr:shift_assignment_detail' 0 %}`.replace('0', shiftId) + `?date=${date}`, '_blank');
+}
+
+function assignEmployeeToShift() {
+    const employeeId = document.getElementById('assignEmployee').value;
+    const shiftId = document.getElementById('assignShift').value;
+    const fromDate = document.getElementById('assignFromDate').value;
+    const toDate = document.getElementById('assignToDate').value;
+
+    if (!employeeId || !shiftId || !fromDate || !toDate) {
+        hrDesignSystem.showAlert('يرجى ملء جميع الحقول المطلوبة', 'warning');
+        return;
+    }
+
+    const data = {
+        employee_id: employeeId,
+        shift_id: shiftId,
+        start_date: fromDate,
+        end_date: toDate
+    };
+
+    fetch('{% url "Hr:assign_employee_to_shift" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            hrDesignSystem.showAlert('تم تعيين الموظف بنجاح', 'success');
+            location.reload();
+        } else {
+            hrDesignSystem.showAlert(data.message || 'حدث خطأ في التعيين', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        hrDesignSystem.showAlert('حدث خطأ في التعيين', 'danger');
+    });
+}
+
+function clearAssignmentForm() {
+    document.getElementById('assignEmployee').value = '';
+    document.getElementById('assignShift').value = '';
+    document.getElementById('assignFromDate').value = '';
+    document.getElementById('assignToDate').value = '';
+}
+
+function editAssignment(assignmentId) {
+    window.location.href = `{% url 'Hr:edit_assignment' 0 %}`.replace('0', assignmentId);
+}
+
+function deleteAssignment(assignmentId) {
+    if (confirm('هل أنت متأكد من حذف هذا التعيين؟')) {
+        fetch(`{% url 'Hr:delete_assignment' 0 %}`.replace('0', assignmentId), {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                hrDesignSystem.showAlert('تم حذف التعيين بنجاح', 'success');
+                location.reload();
+            } else {
+                hrDesignSystem.showAlert('حدث خطأ في حذف التعيين', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            hrDesignSystem.showAlert('حدث خطأ في حذف التعيين', 'danger');
+        });
+    }
+}
+
+function assignAllToDayShift() {
+    if (confirm('هل تريد تعيين جميع الموظفين للوردية النهارية؟')) {
+        // Implementation for bulk assignment
+    }
+}
+
+function assignByDepartment() {
+    // Show modal for department-based assignment
+}
+
+function copyPreviousWeek() {
+    if (confirm('هل تريد نسخ تعيينات الأسبوع السابق؟')) {
+        // Implementation for copying previous week assignments
+    }
+}
+
+function autoAssign() {
+    if (confirm('هل تريد التعيين التلقائي للموظفين؟')) {
+        // Implementation for automatic assignment
+    }
+}
+
+function resolveConflict(conflictId) {
+    window.location.href = `{% url 'Hr:resolve_conflict' 0 %}`.replace('0', conflictId);
+}
+
+function ignoreConflict(conflictId) {
+    if (confirm('هل تريد تجاهل هذا التضارب؟')) {
+        fetch(`{% url 'Hr:ignore_conflict' 0 %}`.replace('0', conflictId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                hrDesignSystem.showAlert('تم تجاهل التضارب', 'success');
+                location.reload();
+            } else {
+                hrDesignSystem.showAlert('حدث خطأ', 'danger');
+            }
+        });
+    }
+}
+
+// Initialize
+let shiftManagement;
+document.addEventListener('DOMContentLoaded', function() {
+    shiftManagement = new ShiftManagement();
+});
+</script>
+{% endblock %}
