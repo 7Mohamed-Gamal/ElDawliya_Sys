@@ -393,8 +393,7 @@ class NotificationService:
             'total_days': (today - hire_date).days
         }
 
-c
-lass AdvancedNotificationService:
+class AdvancedNotificationService:
     """خدمة الإشعارات المتقدمة"""
     
     def __init__(self):

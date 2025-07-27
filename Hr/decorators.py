@@ -441,3 +441,11 @@ reports_export_required = hr_permission_required('reports_export')
 # Admin permissions
 hr_settings_required = hr_permission_required('hr_settings_manage')
 user_management_required = hr_permission_required('user_management')
+
+# Module-specific permissions (for backward compatibility)
+def hr_module_permission_required(module, action):
+    """
+    Decorator للتحقق من صلاحيات الوحدة (للتوافق مع النسخة القديمة)
+    """
+    permission_codename = f'{module}_{action}'
+    return hr_permission_required(permission_codename)

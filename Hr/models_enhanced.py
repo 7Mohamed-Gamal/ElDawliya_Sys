@@ -107,8 +107,7 @@ class Company(models.Model):
         if self.working_hours_per_day > 24:
             raise ValidationError(_('ساعات العمل لا يمكن أن تزيد عن 24 ساعة'))
 
-class 
-Branch(models.Model):
+class Branch(models.Model):
     """نموذج الفرع المحسن"""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name='branches', verbose_name=_('الشركة'))
@@ -331,8 +330,7 @@ class JobPosition(models.Model):
         self.current_positions = self.employees.filter(is_active=True).count()
         self.is_vacant = self.available_positions > 0
         self.save(update_fields=['current_positions', 'is_vacant'])
-# =======
-======================================================================
+# ======================================================================
 # EMPLOYEE MANAGEMENT - Enhanced Employee Model
 # =============================================================================
 
@@ -532,8 +530,9 @@ class Employee(models.Model):
         else:
             new_number = 1
         
-        return f"{prefix}{str(new_number).zfill(length)}"# ===
-==========================================================================
+        return f"{prefix}{str(new_number).zfill(length)}"
+
+# ==========================================================================
 # EXTENDED EMPLOYEE MODELS - Education, Insurance, Vehicles, Files
 # =============================================================================
 
@@ -709,8 +708,10 @@ class EmployeeInsurance(models.Model):
         if self.end_date and self.start_date > self.end_date:
             raise ValidationError(_('تاريخ البداية لا يمكن أن يكون أكبر من تاريخ النهاية'))
         if self.employee_contribution + self.employer_contribution != self.premium_amount:
-            raise ValidationError(_('مجموع مساهمة الموظف وصاحب العمل يجب أن يساوي قسط التأمين'))c
-lass EmployeeVehicle(models.Model):
+            raise ValidationError(_('مجموع مساهمة الموظف وصاحب العمل يجب أن يساوي قسط التأمين'))
+
+
+class EmployeeVehicle(models.Model):
     """نموذج سيارات الموظفين"""
     
     VEHICLE_TYPE_CHOICES = [
