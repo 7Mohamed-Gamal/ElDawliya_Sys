@@ -107,7 +107,7 @@ def notification_center(request):
 
 
 @login_required
-@require_http_methods([\"POST\"])
+@require_http_methods(["POST"])
 def mark_notification_read(request, notification_id):
     """تحديد الإشعار كمقروء"""
     
@@ -127,7 +127,7 @@ def mark_notification_read(request, notification_id):
 
 
 @login_required
-@require_http_methods([\"POST\"])
+@require_http_methods(["POST"])
 def mark_all_notifications_read(request):
     """تحديد جميع الإشعارات كمقروءة"""
     
@@ -149,7 +149,7 @@ def mark_all_notifications_read(request):
 
 
 @login_required
-@require_http_methods([\"DELETE\"])
+@require_http_methods(["DELETE"])
 def delete_notification(request, notification_id):
     """حذف الإشعار"""
     
@@ -205,7 +205,7 @@ def check_new_notifications(request):
 
 
 @login_required
-@require_http_methods([\"GET\", \"POST\"])
+@require_http_methods(["GET", "POST"])
 def notification_preferences(request):
     """إعدادات الإشعارات"""
     
@@ -430,7 +430,7 @@ def notification_analytics(request):
 
 
 @login_required
-@require_http_methods([\"POST\"])
+@require_http_methods(["POST"])
 def send_test_notification(request):
     """إرسال إشعار تجريبي"""
     

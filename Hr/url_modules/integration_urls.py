@@ -1,1 +1,36 @@
-\"\"\"\nروابط التكامل مع الأنظمة الخارجية\n\"\"\"\n\nfrom django.urls import path\nfrom ..views import integration_views\n\napp_name = 'integrations'\n\nurlpatterns = [\n    # لوحة التحكم\n    path('', integration_views.integration_dashboard, name='dashboard'),\n    \n    # الأنظمة الخارجية\n    path('systems/', integration_views.external_systems_list, name='systems_list'),\n    path('systems/create/', integration_views.create_external_system, name='create_system'),\n    path('systems/<uuid:system_id>/test/', integration_views.test_system_connection, name='test_connection'),\n    path('systems/<uuid:system_id>/sync/', integration_views.sync_system, name='sync_system'),\n    path('systems/<uuid:system_id>/mappings/', integration_views.integration_mappings, name='integration_mappings'),\n    path('systems/status/', integration_views.systems_status, name='systems_status'),\n    \n    # مهام المزامنة\n    path('jobs/', integration_views.sync_jobs_list, name='jobs_list'),\n    path('jobs/create/', integration_views.create_sync_job, name='create_job'),\n    path('jobs/<uuid:job_id>/details/', integration_views.job_details, name='job_details'),\n    path('jobs/<uuid:job_id>/start/', integration_views.start_job, name='start_job'),\n    path('jobs/<uuid:job_id>/cancel/', integration_views.cancel_job, name='cancel_job'),\n    path('jobs/running/', integration_views.running_jobs, name='running_jobs'),\n    \n    # مفاتيح API\n    path('api-keys/', integration_views.api_keys_list, name='api_keys_list'),\n    path('api-keys/create/', integration_views.create_api_key, name='create_api_key'),\n    \n    # Webhooks\n    path('webhook/<uuid:system_id>/', integration_views.webhook_receiver, name='webhook_receiver'),\n]"
+"""
+روابط التكامل مع الأنظمة الخارجية
+"""
+
+from django.urls import path
+from ..views import integration_views
+
+app_name = 'integrations'
+
+urlpatterns = [
+    # لوحة التحكم
+    path('', integration_views.integration_dashboard, name='dashboard'),
+
+    # الأنظمة الخارجية
+    path('systems/', integration_views.external_systems_list, name='systems_list'),
+    path('systems/create/', integration_views.create_external_system, name='create_system'),
+    path('systems/<uuid:system_id>/test/', integration_views.test_system_connection, name='test_connection'),
+    path('systems/<uuid:system_id>/sync/', integration_views.sync_system, name='sync_system'),
+    path('systems/<uuid:system_id>/mappings/', integration_views.integration_mappings, name='integration_mappings'),
+    path('systems/status/', integration_views.systems_status, name='systems_status'),
+
+    # مهام المزامنة
+    path('jobs/', integration_views.sync_jobs_list, name='jobs_list'),
+    path('jobs/create/', integration_views.create_sync_job, name='create_job'),
+    path('jobs/<uuid:job_id>/details/', integration_views.job_details, name='job_details'),
+    path('jobs/<uuid:job_id>/start/', integration_views.start_job, name='start_job'),
+    path('jobs/<uuid:job_id>/cancel/', integration_views.cancel_job, name='cancel_job'),
+    path('jobs/running/', integration_views.running_jobs, name='running_jobs'),
+
+    # مفاتيح API
+    path('api-keys/', integration_views.api_keys_list, name='api_keys_list'),
+    path('api-keys/create/', integration_views.create_api_key, name='create_api_key'),
+
+    # Webhooks
+    path('webhook/<uuid:system_id>/', integration_views.webhook_receiver, name='webhook_receiver'),
+]

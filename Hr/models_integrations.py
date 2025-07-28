@@ -3,12 +3,15 @@
 """
 
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from django.core.validators import URLValidator
+from django.conf import settings
 import uuid
 import json
+
+User = get_user_model()
 
 
 class ExternalSystem(models.Model):
@@ -109,7 +112,7 @@ class ExternalSystem(models.Model):
     is_active = models.BooleanField(_('نشط'), default=True)
     
     created_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         related_name='created_external_systems',
@@ -126,8 +129,9 @@ class ExternalSystem(models.Model):
         
     def __str__(self):
         return f"{self.name} ({self.get_system_type_display()})"
-clas
-s IntegrationMapping(models.Model):
+
+
+class IntegrationMapping(models.Model):
     """خريطة التكامل بين الحقول"""
     
     MAPPING_TYPES = [
@@ -273,7 +277,7 @@ class SyncJob(models.Model):
     
     # المستخدم
     created_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         related_name='sync_jobs',
@@ -354,7 +358,7 @@ class DataImportTemplate(models.Model):
     is_active = models.BooleanField(_('نشط'), default=True)
     
     created_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         related_name='import_templates',
@@ -442,7 +446,7 @@ class ImportJob(models.Model):
     
     # المستخدم
     created_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         related_name='import_jobs',
@@ -514,7 +518,7 @@ class EmailTemplate(models.Model):
     is_active = models.BooleanField(_('نشط'), default=True)
     
     created_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         related_name='email_templates',
