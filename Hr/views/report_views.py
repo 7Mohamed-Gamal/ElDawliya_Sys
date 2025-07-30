@@ -1,1149 +1,544 @@
-from django.shortcuts import render, redirect
-from django.contrib.auth.decorators import login_required, permission_required
-from django.http import HttpResponse
-from django.db.models import Count, Sum, Avg, Q
-from django.utils import timezone
-import csv
+"""
+عروض نظام التقارير الشاملة
+"""
+
+import json
 from datetime import datetime, timedelta
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.http import JsonResponse, HttpResponse, Http404
+from django.core.paginator import Paginator
+from django.db.models import Q
+from django.utils import timezone
+from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+from django.core.files.storage import default_storage
+from django.contrib.auth import get_user_model
 
-from Hr.models import Employee
-from Hr.models.leave_models import HrEmployeeLeave as EmployeeLeave
-from Hr.models.task_models import HrEmployeeTask as EmployeeTask
-from Hr.models.hr_task_models import HrTaskNew as HrTask
-from Hr.models.salary_models import HrPayrollEntry as PayrollEntry
-from Hr.models.attendance_models import HrAttendanceRecord as AttendanceRecord, HrAttendanceSummary as AttendanceSummary
-from ..utils.permissions import require_report_permission, require_export_permission
+from ..decorators import hr_permission_required
+from ..models import Employee, Department, JobPosition
+from ..models_reports import (
+    ReportCategory, ReportTemplate, ReportInstance, 
+    ScheduledReport, ReportFavorite, ReportShare
+)
+from ..models_enhanced import LeaveType
+from ..services.report_service import report_service
 
-# Try to import xlwt but make it optional
-try:
-    import xlwt
-    XLWT_INSTALLED = True
-except ImportError:
-    XLWT_INSTALLED = False
+User = get_user_model()
 
-def export_csv(data, filename, headers, row_generator):
-    """Generic CSV export function"""
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = f'attachment; filename="{filename}.csv"'
-    writer = csv.writer(response)
-    writer.writerow(headers)
-    for item in data:
-        writer.writerow(row_generator(item))
-    return response
-
-def export_excel(data, filename, headers, row_generator):
-    """Generic Excel export function"""
-    if not XLWT_INSTALLED:
-        return HttpResponse("حزمة xlwt غير مثبتة. يُرجى تثبيت حزمة xlwt باستخدام 'pip install xlwt' ثم إعادة تشغيل الخادم.")
-
-    response = HttpResponse(content_type='application/ms-excel')
-    response['Content-Disposition'] = f'attachment; filename="{filename}.xls"'
-
-    wb = xlwt.Workbook(encoding='utf-8')
-    ws = wb.add_sheet('Sheet1')
-
-    # Sheet header
-    row_num = 0
-    font_style = xlwt.XFStyle()
-    font_style.font.bold = True
-
-    for col_num, column_title in enumerate(headers):
-        ws.write(row_num, col_num, column_title, font_style)
-
-    # Sheet body
-    font_style = xlwt.XFStyle()
-
-    for item in data:
-        row_num += 1
-        row = row_generator(item)
-        for col_num, cell_value in enumerate(row):
-            ws.write(row_num, col_num, cell_value, font_style)
-
-    wb.save(response)
-    return response
-
-def export_data(data, export_format, filename, headers, row_generator):
-    """Generic export function that handles both CSV and Excel formats"""
-    if export_format == 'excel':
-        return export_excel(data, filename, headers, row_generator)
-    elif export_format == 'csv':
-        return export_csv(data, filename, headers, row_generator)
-    else:
-        return HttpResponse("Unsupported export format")
-
-def export_employee_data(employees, export_format):
-    """Export employee data to CSV or Excel"""
-    headers = ['رقم الموظف', 'الاسم', 'القسم', 'الوظيفة', 'حالة العمل', 'تاريخ التعيين', 'حالة التأمين']
-
-    def row_generator(employee):
-        # Safely get department name
-        dept_name = ''
-        try:
-            if employee.department:
-                dept_name = employee.department.dept_name
-            # Fallback to dept_name field if department relation fails
-            elif employee.dept_name:
-                dept_name = employee.dept_name
-        except:
-            # If department relation fails, use the dept_name field
-            dept_name = employee.dept_name or ''
-
-        return [
-            employee.emp_id,
-            employee.emp_full_name or '',
-            dept_name,
-            employee.jop_name or '',
-            employee.working_condition or '',
-            employee.emp_date_hiring.strftime('%Y-%m-%d') if employee.emp_date_hiring else '',
-            employee.insurance_status or '',
-        ]
-
-    return export_data(employees, export_format, 'employees_report', headers, row_generator)
-
-def export_leave_data(leaves, export_format):
-    """Export leave data to CSV or Excel"""
-    headers = ['الموظف', 'نوع الإجازة', 'تاريخ البداية', 'تاريخ النهاية', 'عدد الأيام', 'الحالة']
-
-    def row_generator(leave):
-        return [
-            leave.employee.emp_full_name if leave.employee else '',
-            leave.leave_type.name if leave.leave_type else '',
-            leave.start_date.strftime('%Y-%m-%d') if leave.start_date else '',
-            leave.end_date.strftime('%Y-%m-%d') if leave.end_date else '',
-            leave.days_count or '',
-            leave.status or '',
-        ]
-
-    return export_data(leaves, export_format, 'leaves_report', headers, row_generator)
-
-def export_attendance_data(summaries, export_format):
-    """Export attendance data to CSV or Excel"""
-    headers = ['الموظف', 'التاريخ', 'وقت الحضور', 'وقت الانصراف', 'الحالة', 'الملاحظات']
-
-    def row_generator(summary):
-        return [
-            summary.employee.emp_full_name if summary.employee else '',
-            summary.date.strftime('%Y-%m-%d') if summary.date else '',
-            summary.check_in.strftime('%H:%M') if summary.check_in else '',
-            summary.check_out.strftime('%H:%M') if summary.check_out else '',
-            summary.status or '',
-            summary.notes or '',
-        ]
-
-    return export_data(summaries, export_format, 'attendance_report', headers, row_generator)
-
-def export_task_data(tasks, export_format):
-    """Export task data to CSV or Excel"""
-    headers = ['العنوان', 'الموظف', 'الحالة', 'الأولوية', 'تاريخ البداية', 'تاريخ الاستحقاق', 'نسبة الإنجاز']
-
-    def row_generator(task):
-        return [
-            task.title or '',
-            task.employee.emp_full_name if task.employee else '',
-            task.get_status_display() or '',
-            task.get_priority_display() or '',
-            task.start_date.strftime('%Y-%m-%d') if task.start_date else '',
-            task.due_date.strftime('%Y-%m-%d') if task.due_date else '',
-            f"{task.progress}%" if task.progress is not None else '',
-        ]
-
-    return export_data(tasks, export_format, 'tasks_report', headers, row_generator)
-
-def export_hr_task_data(tasks, export_format):
-    """Export HR task data to CSV or Excel"""
-    headers = ['العنوان', 'نوع المهمة', 'مسندة إلى', 'الحالة', 'الأولوية', 'تاريخ البداية', 'تاريخ الاستحقاق', 'نسبة الإنجاز']
-
-    def row_generator(task):
-        return [
-            task.title or '',
-            task.get_task_type_display() or '',
-            task.assigned_to.get_full_name() if task.assigned_to else '',
-            task.get_status_display() or '',
-            task.get_priority_display() or '',
-            task.start_date.strftime('%Y-%m-%d') if task.start_date else '',
-            task.due_date.strftime('%Y-%m-%d') if task.due_date else '',
-            f"{task.progress}%" if task.progress is not None else '',
-        ]
-
-    return export_data(tasks, export_format, 'hr_tasks_report', headers, row_generator)
-
-def export_payroll_data(entries, export_format):
-    """Export payroll data to CSV or Excel"""
-    headers = ['الموظف', 'فترة الراتب', 'الراتب الأساسي', 'البدلات', 'الخصومات', 'إجمالي الراتب', 'تاريخ الحساب']
-
-    def row_generator(entry):
-        return [
-            entry.employee.emp_full_name if entry.employee else '',
-            entry.payroll_period.name if entry.payroll_period else '',
-            str(entry.basic_salary) if entry.basic_salary else '0',
-            str(entry.total_allowances) if entry.total_allowances else '0',
-            str(entry.total_deductions) if entry.total_deductions else '0',
-            str(entry.total_salary) if entry.total_salary else '0',
-            entry.calculation_date.strftime('%Y-%m-%d') if entry.calculation_date else '',
-        ]
-
-    return export_data(entries, export_format, 'payroll_report', headers, row_generator)
-
-def export_insurance_data(employees, export_format):
-    """Export insurance data to CSV or Excel"""
-    headers = ['رقم الموظف', 'الاسم', 'القسم', 'الوظيفة', 'حالة التأمين', 'رقم التأمين', 'تاريخ التأمين']
-
-    def row_generator(employee):
-        # Safely get department name
-        dept_name = ''
-        try:
-            if employee.department:
-                dept_name = employee.department.dept_name
-            # Fallback to dept_name field if department relation fails
-            elif employee.dept_name:
-                dept_name = employee.dept_name
-        except:
-            # If department relation fails, use the dept_name field
-            dept_name = employee.dept_name or ''
-
-        # Handle insurance_number which might not exist
-        insurance_number = ''
-        try:
-            insurance_number = employee.insurance_number or ''
-        except AttributeError:
-            # Try number_insurance if insurance_number doesn't exist
-            insurance_number = employee.number_insurance or ''
-
-        # Handle insurance_date which might not exist
-        insurance_date = ''
-        try:
-            if hasattr(employee, 'insurance_date') and employee.insurance_date:
-                insurance_date = employee.insurance_date.strftime('%Y-%m-%d')
-            elif hasattr(employee, 'date_insurance_start') and employee.date_insurance_start:
-                insurance_date = employee.date_insurance_start.strftime('%Y-%m-%d')
-        except:
-            pass
-
-        return [
-            employee.emp_id,
-            employee.emp_full_name or '',
-            dept_name,
-            employee.jop_name or '',
-            employee.insurance_status or '',
-            insurance_number,
-            insurance_date,
-        ]
-
-    return export_data(employees, export_format, 'insurance_report', headers, row_generator)
 
 @login_required
-def report_list(request):
-    """عرض قائمة التقارير المتاحة"""
-    reports = []
-    
-    # Only show reports the user has permission to view
-    if request.user.has_perm('Hr.view_employee') or request.user.is_superuser:
-        reports.append({
-            'id': 'employees',
-            'name': 'تقرير الموظفين',
-            'description': 'تقرير تفصيلي عن بيانات الموظفين',
-            'icon': 'fas fa-users'
+@hr_permission_required('view_reports')
+def reports_dashboard(request):
+    """لوحة تحكم التقارير"""
+    try:
+        # الحصول على الفئات
+        categories = ReportCategory.objects.filter(is_active=True).order_by('order')
+        
+        # الحصول على القوالب المتاحة
+        templates = report_service.get_available_templates(request.user)
+        
+        # الحصول على التقارير الأخيرة للمستخدم
+        recent_reports = report_service.get_user_reports(request.user, limit=5)
+        
+        # الحصول على المفضلة
+        favorites = report_service.get_user_favorites(request.user)[:5]
+        
+        # إحصائيات سريعة
+        stats = {
+            'total_templates': len(templates),
+            'recent_reports_count': len(recent_reports),
+            'favorites_count': len(favorites),
+            'categories_count': categories.count(),
+        }
+        
+        context = {
+            'categories': categories,
+            'templates': templates,
+            'recent_reports': recent_reports,
+            'favorites': favorites,
+            'stats': stats,
+        }
+        
+        return render(request, 'Hr/reports/dashboard.html', context)
+    except Exception as e:
+        messages.error(request, f'خطأ في تحميل لوحة التحكم: {e}')
+        return redirect('Hr:dashboard')
+
+
+@login_required
+@hr_permission_required('view_reports')
+def report_templates(request):
+    """قائمة قوالب التقارير"""
+    try:
+        # الحصول على المعاملات
+        category_id = request.GET.get('category')
+        search = request.GET.get('search')
+        report_type = request.GET.get('type')
+        
+        # بناء الاستعلام
+        templates = report_service.get_available_templates(request.user)
+        
+        # تطبيق الفلاتر
+        if category_id:
+            templates = [t for t in templates if str(t.category.id) == category_id]
+        
+        if search:
+            templates = [t for t in templates if search.lower() in t.name.lower()]
+        
+        if report_type:
+            templates = [t for t in templates if t.report_type == report_type]
+        
+        # ترقيم الصفحات
+        paginator = Paginator(templates, 12)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        
+        # البيانات للفلاتر
+        categories = ReportCategory.objects.filter(is_active=True).order_by('order')
+        report_types = ReportTemplate.REPORT_TYPES
+        
+        context = {
+            'page_obj': page_obj,
+            'categories': categories,
+            'report_types': report_types,
+            'current_category': category_id,
+            'current_search': search,
+            'current_type': report_type,
+        }
+        
+        return render(request, 'Hr/reports/templates.html', context)
+    except Exception as e:
+        messages.error(request, f'خطأ في تحميل القوالب: {e}')
+        return redirect('Hr:reports_dashboard')
+
+
+@login_required
+@hr_permission_required('view_reports')
+def report_template_detail(request, template_id):
+    """تفاصيل قالب التقرير"""
+    try:
+        template = get_object_or_404(ReportTemplate, id=template_id, is_active=True)
+        
+        # فحص الصلاحيات
+        if not report_service._check_template_permissions(template, request.user):
+            messages.error(request, 'ليس لديك صلاحية لعرض هذا التقرير')
+            return redirect('Hr:report_templates')
+        
+        # الحصول على البيانات للفلاتر
+        filter_data = {}
+        
+        if template.report_type in ['employee', 'attendance', 'payroll', 'leave']:
+            filter_data['departments'] = Department.objects.filter(is_active=True)
+            filter_data['job_positions'] = JobPosition.objects.filter(is_active=True)
+        
+        if template.report_type == 'employee':
+            filter_data['employees'] = Employee.objects.filter(is_active=True).select_related('department')
+        
+        if template.report_type == 'leave':
+            filter_data['leave_types'] = LeaveType.objects.filter(is_active=True)
+        
+        # الحصول على التقارير الأخيرة لهذا القالب
+        recent_instances = ReportInstance.objects.filter(
+            template=template,
+            created_by=request.user
+        ).order_by('-created_at')[:5]
+        
+        context = {
+            'template': template,
+            'filter_data': filter_data,
+            'recent_instances': recent_instances,
+        }
+        
+        return render(request, 'Hr/reports/template_detail.html', context)
+    except Exception as e:
+        messages.error(request, f'خطأ في تحميل تفاصيل القالب: {e}')
+        return redirect('Hr:report_templates')
+
+
+@login_required
+@hr_permission_required('generate_reports')
+@require_http_methods(["POST"])
+def generate_report(request, template_id):
+    """إنتاج تقرير جديد"""
+    try:
+        template = get_object_or_404(ReportTemplate, id=template_id, is_active=True)
+        
+        # الحصول على المعاملات
+        parameters = {}
+        output_format = request.POST.get('output_format', 'pdf')
+        
+        # معالجة معاملات التقرير حسب النوع
+        if template.report_type in ['employee', 'attendance', 'payroll', 'leave']:
+            if request.POST.get('department_id'):
+                parameters['department_id'] = request.POST.get('department_id')
+            
+            if request.POST.get('employee_id'):
+                parameters['employee_id'] = request.POST.get('employee_id')
+            
+            if request.POST.get('search'):
+                parameters['search'] = request.POST.get('search')
+        
+        if template.report_type in ['attendance', 'leave']:
+            if request.POST.get('date_from'):
+                parameters['date_from'] = request.POST.get('date_from')
+            
+            if request.POST.get('date_to'):
+                parameters['date_to'] = request.POST.get('date_to')
+        
+        if template.report_type == 'payroll':
+            if request.POST.get('month'):
+                parameters['month'] = int(request.POST.get('month'))
+            
+            if request.POST.get('year'):
+                parameters['year'] = int(request.POST.get('year'))
+        
+        if template.report_type == 'leave':
+            if request.POST.get('leave_type_id'):
+                parameters['leave_type_id'] = request.POST.get('leave_type_id')
+            
+            if request.POST.get('status'):
+                parameters['status'] = request.POST.get('status')
+        
+        # إنتاج التقرير
+        instance = report_service.generate_report(
+            template_id=template_id,
+            user=request.user,
+            parameters=parameters,
+            output_format=output_format
+        )
+        
+        messages.success(request, 'تم إنتاج التقرير بنجاح')
+        return redirect('Hr:report_instance_detail', instance_id=instance.id)
+        
+    except Exception as e:
+        messages.error(request, f'خطأ في إنتاج التقرير: {e}')
+        return redirect('Hr:report_template_detail', template_id=template_id)
+
+
+@login_required
+@hr_permission_required('view_reports')
+def report_instance_detail(request, instance_id):
+    """تفاصيل مثيل التقرير"""
+    try:
+        instance = get_object_or_404(
+            ReportInstance, 
+            id=instance_id,
+            created_by=request.user
+        )
+        
+        context = {
+            'instance': instance,
+        }
+        
+        return render(request, 'Hr/reports/instance_detail.html', context)
+    except Exception as e:
+        messages.error(request, f'خطأ في تحميل تفاصيل التقرير: {e}')
+        return redirect('Hr:reports_dashboard')
+
+
+@login_required
+@hr_permission_required('view_reports')
+def download_report(request, instance_id):
+    """تحميل ملف التقرير"""
+    try:
+        instance = get_object_or_404(
+            ReportInstance, 
+            id=instance_id,
+            created_by=request.user,
+            status='completed'
+        )
+        
+        if not instance.file_path:
+            raise Http404("ملف التقرير غير موجود")
+        
+        # فتح الملف
+        if default_storage.exists(instance.file_path):
+            file_content = default_storage.open(instance.file_path).read()
+            
+            # تحديد نوع المحتوى
+            content_types = {
+                'pdf': 'application/pdf',
+                'excel': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'csv': 'text/csv',
+                'html': 'text/html',
+                'json': 'application/json',
+            }
+            
+            content_type = content_types.get(instance.output_format, 'application/octet-stream')
+            
+            # إنشاء الاستجابة
+            response = HttpResponse(file_content, content_type=content_type)
+            
+            # تحديد اسم الملف
+            filename = f"{instance.template.name}_{instance.created_at.strftime('%Y%m%d_%H%M')}"
+            extensions = {
+                'pdf': '.pdf',
+                'excel': '.xlsx',
+                'csv': '.csv',
+                'html': '.html',
+                'json': '.json',
+            }
+            filename += extensions.get(instance.output_format, '.txt')
+            
+            response['Content-Disposition'] = f'attachment; filename="{filename}"'
+            return response
+        else:
+            raise Http404("ملف التقرير غير موجود")
+            
+    except Exception as e:
+        messages.error(request, f'خطأ في تحميل التقرير: {e}')
+        return redirect('Hr:report_instance_detail', instance_id=instance_id)
+
+
+@login_required
+@hr_permission_required('view_reports')
+def my_reports(request):
+    """تقاريري"""
+    try:
+        # الحصول على المعاملات
+        status = request.GET.get('status')
+        template_id = request.GET.get('template')
+        date_from = request.GET.get('date_from')
+        date_to = request.GET.get('date_to')
+        
+        # بناء الاستعلام
+        instances = ReportInstance.objects.filter(
+            created_by=request.user
+        ).select_related('template').order_by('-created_at')
+        
+        # تطبيق الفلاتر
+        if status:
+            instances = instances.filter(status=status)
+        
+        if template_id:
+            instances = instances.filter(template_id=template_id)
+        
+        if date_from:
+            instances = instances.filter(created_at__date__gte=date_from)
+        
+        if date_to:
+            instances = instances.filter(created_at__date__lte=date_to)
+        
+        # ترقيم الصفحات
+        paginator = Paginator(instances, 20)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        
+        # البيانات للفلاتر
+        templates = report_service.get_available_templates(request.user)
+        status_choices = ReportInstance.STATUS_CHOICES
+        
+        context = {
+            'page_obj': page_obj,
+            'templates': templates,
+            'status_choices': status_choices,
+            'current_status': status,
+            'current_template': template_id,
+            'current_date_from': date_from,
+            'current_date_to': date_to,
+        }
+        
+        return render(request, 'Hr/reports/my_reports.html', context)
+    except Exception as e:
+        messages.error(request, f'خطأ في تحميل التقارير: {e}')
+        return redirect('Hr:reports_dashboard')
+
+
+@login_required
+@hr_permission_required('view_reports')
+def favorites(request):
+    """التقارير المفضلة"""
+    try:
+        favorites = report_service.get_user_favorites(request.user)
+        
+        context = {
+            'favorites': favorites,
+        }
+        
+        return render(request, 'Hr/reports/favorites.html', context)
+    except Exception as e:
+        messages.error(request, f'خطأ في تحميل المفضلة: {e}')
+        return redirect('Hr:reports_dashboard')
+
+
+@login_required
+@hr_permission_required('view_reports')
+@require_http_methods(["POST"])
+def add_to_favorites(request, template_id):
+    """إضافة تقرير للمفضلة"""
+    try:
+        parameters = json.loads(request.POST.get('parameters', '{}'))
+        name = request.POST.get('name')
+        
+        favorite = report_service.add_to_favorites(
+            user=request.user,
+            template_id=template_id,
+            parameters=parameters,
+            name=name
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'تم إضافة التقرير للمفضلة'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'خطأ في إضافة التقرير للمفضلة: {e}'
         })
 
-    if request.user.has_perm('Hr.view_employeeleave') or request.user.is_superuser:
-        reports.append({
-            'id': 'leaves',
-            'name': 'تقرير الإجازات',
-            'description': 'تقرير عن إجازات الموظفين',
-            'icon': 'fas fa-calendar-alt'
+
+@login_required
+@hr_permission_required('view_reports')
+@require_http_methods(["POST"])
+def remove_from_favorites(request, favorite_id):
+    """إزالة تقرير من المفضلة"""
+    try:
+        favorite = get_object_or_404(
+            ReportFavorite,
+            id=favorite_id,
+            user=request.user
+        )
+        favorite.delete()
+        
+        return JsonResponse({
+            'success': True,
+            'message': 'تم إزالة التقرير من المفضلة'
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'message': f'خطأ في إزالة التقرير من المفضلة: {e}'
         })
 
-    if request.user.has_perm('Hr.view_attendance') or request.user.is_superuser:
-        reports.append({
-            'id': 'attendance',
-            'name': 'تقرير الحضور والانصراف',
-            'description': 'تقرير عن حضور وانصراف الموظفين',
-            'icon': 'fas fa-clock'
-        })
-
-    if request.user.has_perm('Hr.view_employeetask') or request.user.is_superuser:
-        reports.append({
-            'id': 'tasks',
-            'name': 'تقرير المهام',
-            'description': 'تقرير عن مهام الموظفين',
-            'icon': 'fas fa-tasks'
-        })
-
-    if request.user.has_perm('Hr.view_hrtask') or request.user.is_superuser:
-        reports.append({
-            'id': 'hr_tasks',
-            'name': 'تقرير مهام الموارد البشرية',
-            'description': 'تقرير عن مهام قسم الموارد البشرية',
-            'icon': 'fas fa-clipboard-list'
-        })
-
-    if request.user.has_perm('Hr.view_payroll') or request.user.is_superuser:
-        reports.append({
-            'id': 'payroll',
-            'name': 'تقرير الرواتب',
-            'description': 'تقرير عن رواتب الموظفين',
-            'icon': 'fas fa-money-bill-wave'
-        })
-
-    if request.user.has_perm('Hr.view_insurance') or request.user.is_superuser:
-        reports.append({
-            'id': 'insurance',
-            'name': 'تقرير التأمينات',
-            'description': 'تقرير عن تأمينات الموظفين',
-            'icon': 'fas fa-shield-alt'
-        })
-
-    context = {
-        'reports': reports,
-        'title': 'التقارير'
-    }
-
-    return render(request, 'Hr/reports/list.html', context)
 
 @login_required
-def report_detail(request, report_type):
-    """عرض تفاصيل تقرير محدد"""
-    # Check permissions before redirecting to specific reports
-    if report_type == 'employees':
-        if not request.user.has_perm('Hr.view_employee') and not request.user.is_superuser:
-            return redirect('accounts:access_denied')
-        return employee_report(request)
-    elif report_type == 'leaves':
-        if not request.user.has_perm('Hr.view_employeeleave') and not request.user.is_superuser:
-            return redirect('accounts:access_denied')
-        return leave_report(request)
-    elif report_type == 'attendance':
-        if not request.user.has_perm('Hr.view_attendance') and not request.user.is_superuser:
-            return redirect('accounts:access_denied')
-        return attendance_report(request)
-    elif report_type == 'tasks':
-        if not request.user.has_perm('Hr.view_employeetask') and not request.user.is_superuser:
-            return redirect('accounts:access_denied')
-        return task_report(request)
-    elif report_type == 'hr_tasks':
-        if not request.user.has_perm('Hr.view_hrtask') and not request.user.is_superuser:
-            return redirect('accounts:access_denied')
-        return hr_task_report(request)
-    elif report_type == 'payroll':
-        if not request.user.has_perm('Hr.view_payroll') and not request.user.is_superuser:
-            return redirect('accounts:access_denied')
-        return payroll_report(request)
-    elif report_type == 'insurance':
-        if not request.user.has_perm('Hr.view_insurance') and not request.user.is_superuser:
-            return redirect('accounts:access_denied')
-        return insurance_report(request)
-    else:
-        return redirect('Hr:reports:list')
-
-def employee_report(request):
-    """تقرير الموظفين"""
-    # Filter parameters
-    department_id = request.GET.get('department')
-    working_condition = request.GET.get('working_condition')
-
-    # Base queryset
-    employees = Employee.objects.all()
-
-    # Apply filters
-    if department_id:
-        employees = employees.filter(department_id=department_id)
-
-    if working_condition:
-        employees = employees.filter(working_condition=working_condition)
-
-    # Export if requested
-    export_format = request.GET.get('export')
-    if export_format in ['csv', 'excel']:
-        return export_employee_data(employees, export_format)
-
-    # Prepare context for template
-    from Hr.models.department_models import Department
-
-    context = {
-        'employees': employees,
-        'departments': Department.objects.all(),
-        'employee': Employee,  # Pass the Employee model to access WORKING_CONDITION_CHOICES
-        'selected_department': department_id,
-        'selected_working_condition': working_condition,
-        'title': 'تقرير الموظفين'
-    }
-
-    return render(request, 'Hr/reports/employee_report.html', context)
-
-@login_required
-@permission_required('Hr.view_employeeleave', login_url='accounts:access_denied')
-def leave_report(request):
-    """تقرير الإجازات"""
-    # Filter parameters
-    employee_id = request.GET.get('employee')
-    leave_type_id = request.GET.get('leave_type')
-    status = request.GET.get('status')
-    date_from = request.GET.get('date_from')
-    date_to = request.GET.get('date_to')
-
-    # Base queryset
-    leaves = EmployeeLeave.objects.all()
-
-    # Apply filters
-    if employee_id:
-        leaves = leaves.filter(employee_id=employee_id)
-
-    if leave_type_id:
-        leaves = leaves.filter(leave_type_id=leave_type_id)
-
-    if status:
-        leaves = leaves.filter(status=status)
-
-    if date_from:
-        try:
-            date_from = datetime.strptime(date_from, '%Y-%m-%d').date()
-            leaves = leaves.filter(start_date__gte=date_from)
-        except ValueError:
-            pass
-
-    if date_to:
-        try:
-            date_to = datetime.strptime(date_to, '%Y-%m-%d').date()
-            leaves = leaves.filter(end_date__lte=date_to)
-        except ValueError:
-            pass
-
-    # Export if requested and user has permission
-    export_format = request.GET.get('export')
-    if export_format in ['csv', 'excel'] and (
-        request.user.has_perm('Hr.export_leave_data') or 
-        request.user.is_superuser
-    ):
-        return export_leave_data(leaves, export_format)
-
-    # Prepare context for template
-    from Hr.models.leave_models import LeaveType
-
-    context = {
-        'leaves': leaves,
-        'employees': Employee.objects.all(),
-        'leave_types': LeaveType.objects.all(),
-        'statuses': EmployeeLeave.STATUS_CHOICES,
-        'selected_employee': employee_id,
-        'selected_leave_type': leave_type_id,
-        'selected_status': status,
-        'selected_date_from': date_from,
-        'selected_date_to': date_to,
-        'title': 'تقرير الإجازات'
-    }
-
-    return render(request, 'Hr/reports/leave_report.html', context)
-
-def attendance_report(request):
-    """تقرير الحضور والانصراف"""
-    # Filter parameters
-    employee_id = request.GET.get('employee')
-    status = request.GET.get('status')
-    date_from = request.GET.get('date_from')
-    date_to = request.GET.get('date_to')
-
-    # Base queryset
-    summaries = AttendanceSummary.objects.all()
-
-    # Apply filters
-    if employee_id:
-        summaries = summaries.filter(employee_id=employee_id)
-
-    if status:
-        summaries = summaries.filter(status=status)
-
-    if date_from:
-        try:
-            date_from = datetime.strptime(date_from, '%Y-%m-%d').date()
-            summaries = summaries.filter(date__gte=date_from)
-        except ValueError:
-            pass
-
-    if date_to:
-        try:
-            date_to = datetime.strptime(date_to, '%Y-%m-%d').date()
-            summaries = summaries.filter(date__lte=date_to)
-        except ValueError:
-            pass
-
-    # Export if requested
-    export_format = request.GET.get('export')
-    if export_format in ['csv', 'excel']:
-        return export_attendance_data(summaries, export_format)
-
-    # Prepare context for template
-    context = {
-        'summaries': summaries,
-        'employees': Employee.objects.all(),
-        'statuses': AttendanceSummary.STATUS_CHOICES,
-        'selected_employee': employee_id,
-        'selected_status': status,
-        'selected_date_from': date_from,
-        'selected_date_to': date_to,
-        'title': 'تقرير الحضور والانصراف'
-    }
-
-    return render(request, 'Hr/reports/attendance_report.html', context)
-
-@login_required
-@permission_required('Hr.view_employeetask', login_url='accounts:access_denied')
-def task_report(request):
-    """تقرير المهام"""
-    # Filter parameters
-    employee_id = request.GET.get('employee')
-    status = request.GET.get('status')
-    priority = request.GET.get('priority')
-    date_from = request.GET.get('date_from')
-    date_to = request.GET.get('date_to')
-
-    # Base queryset
-    tasks = EmployeeTask.objects.all()
-
-    # Apply filters
-    if employee_id:
-        tasks = tasks.filter(employee_id=employee_id)
-
-    if status:
-        tasks = tasks.filter(status=status)
-
-    if priority:
-        tasks = tasks.filter(priority=priority)
-
-    if date_from:
-        try:
-            date_from = datetime.strptime(date_from, '%Y-%m-%d').date()
-            tasks = tasks.filter(start_date__gte=date_from)
-        except ValueError:
-            pass
-
-    if date_to:
-        try:
-            date_to = datetime.strptime(date_to, '%Y-%m-%d').date()
-            tasks = tasks.filter(due_date__lte=date_to)
-        except ValueError:
-            pass
-
-    # Export if requested and user has permission
-    export_format = request.GET.get('export')
-    if export_format in ['csv', 'excel'] and (
-        request.user.has_perm('Hr.export_task_data') or 
-        request.user.is_superuser
-    ):
-        return export_task_data(tasks, export_format)
-
-    # Prepare context for template
-    context = {
-        'tasks': tasks,
-        'employees': Employee.objects.all(),
-        'statuses': EmployeeTask.STATUS_CHOICES,
-        'priorities': EmployeeTask.PRIORITY_CHOICES,
-        'selected_employee': employee_id,
-        'selected_status': status,
-        'selected_priority': priority,
-        'selected_date_from': date_from,
-        'selected_date_to': date_to,
-        'title': 'تقرير المهام'
-    }
-
-    return render(request, 'Hr/reports/task_report.html', context)
-
-@login_required
-@permission_required('Hr.view_hrtask', login_url='accounts:access_denied')
-def hr_task_report(request):
-    """تقرير مهام الموارد البشرية"""
-    # Filter parameters
-    task_type = request.GET.get('task_type')
-    assigned_to = request.GET.get('assigned_to') 
-    status = request.GET.get('status')
-    priority = request.GET.get('priority')
-    date_from = request.GET.get('date_from')
-    date_to = request.GET.get('date_to')
-
-    # Base queryset
-    tasks = HrTask.objects.all()
-
-    # Apply filters
-    if task_type:
-        tasks = tasks.filter(task_type=task_type)
-
-    if assigned_to:
-        tasks = tasks.filter(assigned_to_id=assigned_to)
-
-    if status:
-        tasks = tasks.filter(status=status)
-
-    if priority:
-        tasks = tasks.filter(priority=priority)
-
-    if date_from:
-        try:
-            date_from = datetime.strptime(date_from, '%Y-%m-%d').date()
-            tasks = tasks.filter(start_date__gte=date_from)
-        except ValueError:
-            pass
-
-    if date_to:
-        try:
-            date_to = datetime.strptime(date_to, '%Y-%m-%d').date()
-            tasks = tasks.filter(due_date__lte=date_to)
-        except ValueError:
-            pass
-
-    # Export if requested and user has permission
-    export_format = request.GET.get('export')
-    if export_format in ['csv', 'excel'] and (
-        request.user.has_perm('Hr.export_hrtask_data') or 
-        request.user.is_superuser
-    ):
-        return export_hr_task_data(tasks, export_format)
-
-    # Prepare context for template
-    from django.contrib.auth import get_user_model
-    User = get_user_model()
-
-    context = {
-        'tasks': tasks,
-        'task_types': HrTask.TASK_TYPE_CHOICES,
-        'users': User.objects.all(),
-        'statuses': HrTask.STATUS_CHOICES,
-        'priorities': HrTask.PRIORITY_CHOICES,
-        'selected_task_type': task_type,
-        'selected_assigned_to': assigned_to,
-        'selected_status': status,
-        'selected_priority': priority,
-        'selected_date_from': date_from,
-        'selected_date_to': date_to,
-        'title': 'تقرير مهام الموارد البشرية'
-    }
-
-    return render(request, 'Hr/reports/hr_task_report.html', context)
-
-def payroll_report(request):
-    """تقرير الرواتب"""
-    # Filter parameters
-    employee_id = request.GET.get('employee')
-    period_id = request.GET.get('period')
-    date_from = request.GET.get('date_from')
-    date_to = request.GET.get('date_to')
-
-    # Base queryset
-    entries = PayrollEntry.objects.all()
-
-    # Apply filters
-    if employee_id:
-        entries = entries.filter(employee_id=employee_id)
-
-    if period_id:
-        entries = entries.filter(payroll_period_id=period_id)
-
-    if date_from:
-        try:
-            date_from = datetime.strptime(date_from, '%Y-%m-%d').date()
-            entries = entries.filter(calculation_date__gte=date_from)
-        except ValueError:
-            pass
-
-    if date_to:
-        try:
-            date_to = datetime.strptime(date_to, '%Y-%m-%d').date()
-            entries = entries.filter(calculation_date__lte=date_to)
-        except ValueError:
-            pass
-
-    # Export if requested
-    export_format = request.GET.get('export')
-    if export_format in ['csv', 'excel']:
-        return export_payroll_data(entries, export_format)
-
-    # Prepare context for template
-    from Hr.models.salary_models import PayrollPeriod
-
-    context = {
-        'entries': entries,
-        'employees': Employee.objects.all(),
-        'periods': PayrollPeriod.objects.all(),
-        'selected_employee': employee_id,
-        'selected_period': period_id,
-        'selected_date_from': date_from,
-        'selected_date_to': date_to,
-        'title': 'تقرير الرواتب'
-    }
-
-    return render(request, 'Hr/reports/payroll_report.html', context)
-
-@login_required
-@permission_required('Hr.view_insurance', login_url='accounts:access_denied')
-def insurance_report(request):
-    """تقرير التأمينات"""
-    # Filter parameters
-    department_id = request.GET.get('department')
-    insurance_status = request.GET.get('insurance_status')
-    date_from = request.GET.get('date_from')
-    date_to = request.GET.get('date_to')
-
-    # Base queryset
-    employees = Employee.objects.all()
-
-    # Apply filters
-    if department_id:
-        employees = employees.filter(department_id=department_id)
-
-    if insurance_status:
-        employees = employees.filter(insurance_status=insurance_status)
-
-    if date_from:
-        try:
-            date_from = datetime.strptime(date_from, '%Y-%m-%d').date()
-            # Try to use date_insurance_start if insurance_date doesn't exist
-            try:
-                employees = employees.filter(insurance_date__gte=date_from)
-            except:
-                employees = employees.filter(date_insurance_start__gte=date_from)
-        except ValueError:
-            pass
-
-    if date_to:
-        try:
-            date_to = datetime.strptime(date_to, '%Y-%m-%d').date()
-            # Try to use date_insurance_start if insurance_date doesn't exist
-            try:
-                employees = employees.filter(insurance_date__lte=date_to)
-            except:
-                employees = employees.filter(date_insurance_start__lte=date_to)
-        except ValueError:
-            pass
-
-    # Export if requested and user has permission
-    export_format = request.GET.get('export')
-    if export_format in ['csv', 'excel'] and (
-        request.user.has_perm('Hr.export_insurance_data') or 
-        request.user.is_superuser
-    ):
-        return export_insurance_data(employees, export_format)
-
-    # Prepare context for template
-    from Hr.models.department_models import Department
-
-    # Get insurance statuses from the model's choices
-    insurance_statuses = getattr(Employee, 'INSURANCE_STATUSES',
-                               getattr(Employee, 'INSURANCE_STATUS_CHOICES', []))
-
-    context = {
-        'employees': employees,
-        'departments': Department.objects.all(),
-        'insurance_statuses': insurance_statuses,
-        'selected_department': department_id,
-        'selected_insurance_status': insurance_status,
-        'selected_date_from': date_from,
-        'selected_date_to': date_to,
-        'title': 'تقرير التأمينات'
-    }
-
-    return render(request, 'Hr/reports/insurance_report.html', context)
-
-@login_required
-@permission_required('Hr.view_payroll', login_url='accounts:access_denied')
-def monthly_salary_report(request):
-    """تقرير الرواتب الشهري"""
-    if not request.user.has_perm('Hr.view_payroll') and not request.user.is_superuser:
-        return redirect('accounts:access_denied')
-
-    # Process export requests
-    if request.GET.get('export') and (request.user.has_perm('Hr.export_payroll_data') or request.user.is_superuser):
-        export_format = request.GET.get('export')
-        if export_format == 'excel':
-            return export_salary_report_excel(request)
-        elif export_format == 'csv':
-            return export_salary_report_csv(request)
-
-    # Filter parameters
-    selected_period = request.GET.get('period')
-    selected_department = request.GET.get('department')
-
-    # Base queryset
-    salary_entries = PayrollEntry.objects.select_related('employee', 'employee__department').all()
-
-    # Apply filters
-    if selected_period:
-        salary_entries = salary_entries.filter(period_id=selected_period)
-    if selected_department:
-        salary_entries = salary_entries.filter(employee__department__dept_code=selected_department)
-
-    # Calculate totals
-    total_basic = salary_entries.aggregate(Sum('basic_salary'))['basic_salary__sum'] or 0
-    total_allowances = salary_entries.aggregate(Sum('total_allowances'))['total_allowances__sum'] or 0
-    total_deductions = salary_entries.aggregate(Sum('total_deductions'))['total_deductions__sum'] or 0
-    total_salary = total_basic + total_allowances - total_deductions
-
-    context = {
-        'periods': PayrollPeriod.objects.all(),
-        'departments': Department.objects.all(),
-        'selected_period': selected_period,
-        'selected_department': selected_department,
-        'entries': salary_entries,
-        'total_basic': total_basic,
-        'total_allowances': total_allowances,
-        'total_deductions': total_deductions,
-        'total_salary': total_salary,
-    }
-
-    return render(request, 'Hr/reports/monthly_salary_report.html', context)
-
-@login_required
-@permission_required('Hr.view_payroll_reports', login_url='accounts:access_denied')
-def export_salary_report_excel(request):
-    """Export salary report to Excel"""
-    wb = xlwt.Workbook(encoding='utf-8')
-    ws = wb.add_sheet('تقرير الرواتب')
-
-    # Sheet header
-    row_num = 0
-    font_style = xlwt.XFStyle()
-    font_style.font.bold = True
-
-    columns = [
-        'الموظف', 'القسم', 'الراتب الأساسي', 'البدلات',
-        'الخصومات', 'صافي الراتب', 'تاريخ الحساب'
-    ]
-
-    for col_num, column_title in enumerate(columns):
-        ws.write(row_num, col_num, column_title, font_style)
-
-    # Sheet body
-    font_style = xlwt.XFStyle()
-
-    # Get filtered data
-    selected_period = request.GET.get('period')
-    selected_department = request.GET.get('department')
-
-    entries = PayrollEntry.objects.select_related('employee', 'employee__department').all()
-
-    if selected_period:
-        entries = entries.filter(period_id=selected_period)
-    if selected_department:
-        entries = entries.filter(employee__department__dept_code=selected_department)
-
-    for entry in entries:
-        row_num += 1
-        row = [
-            entry.employee.emp_full_name if entry.employee else '',
-            entry.employee.department.dept_name if entry.employee and entry.employee.department else '',
-            str(entry.basic_salary or 0),
-            str(entry.total_allowances or 0),
-            str(entry.total_deductions or 0),
-            str((entry.basic_salary or 0) + (entry.total_allowances or 0) - (entry.total_deductions or 0)),
-            entry.calculation_date.strftime('%Y-%m-%d') if entry.calculation_date else ''
-        ]
-        for col_num, cell_value in enumerate(row):
-            ws.write(row_num, col_num, cell_value, font_style)
-
-    response = HttpResponse(content_type='application/ms-excel')
-    response['Content-Disposition'] = 'attachment; filename="salary_report.xls"'
-    wb.save(response)
-    return response
-
-@login_required
-@permission_required('Hr.view_payroll_reports', login_url='accounts:access_denied')
-def export_salary_report_csv(request):
-    """Export salary report to CSV"""
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="salary_report.csv"'
-
-    writer = csv.writer(response)
-    writer.writerow([
-        'الموظف', 'القسم', 'الراتب الأساسي', 'البدلات',
-        'الخصومات', 'صافي الراتب', 'تاريخ الحساب'
-    ])
-
-    # Get filtered data
-    selected_period = request.GET.get('period')
-    selected_department = request.GET.get('department')
-
-    entries = PayrollEntry.objects.select_related('employee', 'employee__department').all()
-
-    if selected_period:
-        entries = entries.filter(period_id=selected_period)
-    if selected_department:
-        entries = entries.filter(employee__department__dept_code=selected_department)
-
-    for entry in entries:
-        writer.writerow([
-            entry.employee.emp_full_name if entry.employee else '',
-            entry.employee.department.dept_name if entry.employee and entry.employee.department else '',
-            str(entry.basic_salary or 0),
-            str(entry.total_allowances or 0),
-            str(entry.total_deductions or 0),
-            str((entry.basic_salary or 0) + (entry.total_allowances or 0) - (entry.total_deductions or 0)),
-            entry.calculation_date.strftime('%Y-%m-%d') if entry.calculation_date else ''
-        ])
-
-    return response
-
-def check_report_permissions(user, report_type):
-    """Helper function to check if user has required permissions for a report type"""
-    permission_map = {
-        'salary': 'Hr.view_payroll_reports',
-        'attendance': 'Hr.view_attendance_reports',
-        'leave': 'Hr.view_leave_reports',
-        'task': 'Hr.view_task_reports',
-        'employee': 'Hr.view_employee_reports'
-    }
-    
-    if report_type not in permission_map:
-        return False
+@hr_permission_required('share_reports')
+@require_http_methods(["POST"])
+def share_report(request, instance_id):
+    """مشاركة تقرير"""
+    try:
+        shared_with_ids = request.POST.getlist('shared_with')
+        message = request.POST.get('message')
+        expires_days = int(request.POST.get('expires_days', 30))
         
-    return user.has_perm(permission_map[report_type])
-
-def has_export_permission(user, report_type):
-    """Check if user has permission to export a specific report type"""
-    export_permission_map = {
-        'salary': 'Hr.export_payroll_reports',
-        'attendance': 'Hr.export_attendance_reports',
-        'leave': 'Hr.export_leave_reports',
-        'task': 'Hr.export_task_reports',
-        'employee': 'Hr.export_employee_reports'
-    }
-    
-    if report_type not in export_permission_map:
-        return False
+        shares = report_service.share_report(
+            instance_id=instance_id,
+            shared_by=request.user,
+            shared_with_ids=shared_with_ids,
+            message=message,
+            expires_days=expires_days
+        )
         
-    return user.has_perm(export_permission_map[report_type])
+        messages.success(request, f'تم مشاركة التقرير مع {len(shares)} مستخدم')
+        return redirect('Hr:report_instance_detail', instance_id=instance_id)
+        
+    except Exception as e:
+        messages.error(request, f'خطأ في مشاركة التقرير: {e}')
+        return redirect('Hr:report_instance_detail', instance_id=instance_id)
+
 
 @login_required
-def attendance_report_view(request):
-    if not check_report_permissions(request.user, 'attendance'):
-        return redirect('accounts:access_denied')
+@hr_permission_required('view_reports')
+def shared_with_me(request):
+    """التقارير المشاركة معي"""
+    try:
+        shares = ReportShare.objects.filter(
+            shared_with=request.user
+        ).select_related(
+            'instance__template', 'shared_by'
+        ).order_by('-created_at')
         
-    # Filter parameters
-    employee_id = request.GET.get('employee')
-    status = request.GET.get('status')
-    date_from = request.GET.get('date_from')
-    date_to = request.GET.get('date_to')
+        # ترقيم الصفحات
+        paginator = Paginator(shares, 20)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        
+        context = {
+            'page_obj': page_obj,
+        }
+        
+        return render(request, 'Hr/reports/shared_with_me.html', context)
+    except Exception as e:
+        messages.error(request, f'خطأ في تحميل التقارير المشاركة: {e}')
+        return redirect('Hr:reports_dashboard')
 
-    # Base queryset
-    attendance_data = AttendanceSummary.objects.all()
-
-    # Apply filters
-    if employee_id:
-        attendance_data = attendance_data.filter(employee_id=employee_id)
-
-    if status:
-        attendance_data = attendance_data.filter(status=status)
-
-    if date_from:
-        try:
-            date_from = datetime.strptime(date_from, '%Y-%m-%d').date()
-            attendance_data = attendance_data.filter(date__gte=date_from)
-        except ValueError:
-            pass
-
-    if date_to:
-        try:
-            date_to = datetime.strptime(date_to, '%Y-%m-%d').date()
-            attendance_data = attendance_data.filter(date__lte=date_to)
-        except ValueError:
-            pass
-
-    # Export if requested
-    export_format = request.GET.get('export')
-    if export_format in ['csv', 'excel']:
-        return export_attendance_data(attendance_data, export_format)
-
-    context = {
-        'attendance_data': attendance_data,
-        'can_export': has_export_permission(request.user, 'attendance'),
-        'employees': Employee.objects.all(),
-        'statuses': AttendanceSummary.STATUS_CHOICES,
-        'selected_employee': employee_id,
-        'selected_status': status,
-        'selected_date_from': date_from,
-        'selected_date_to': date_to,
-        'title': 'تقرير الحضور والانصراف'
-    }
-    return render(request, 'Hr/reports/attendance_report.html', context)
 
 @login_required
-def leave_report_view(request):
-    if not check_report_permissions(request.user, 'leave'):
-        return redirect('accounts:access_denied')
+@hr_permission_required('view_reports')
+def view_shared_report(request, share_id):
+    """عرض تقرير مشارك"""
+    try:
+        share = get_object_or_404(
+            ReportShare,
+            id=share_id,
+            shared_with=request.user
+        )
         
-    # Filter parameters
-    employee_id = request.GET.get('employee')
-    leave_type_id = request.GET.get('leave_type')
-    status = request.GET.get('status')
-    date_from = request.GET.get('date_from')
-    date_to = request.GET.get('date_to')
+        # فحص انتهاء الصلاحية
+        if share.is_expired():
+            messages.error(request, 'انتهت صلاحية هذا التقرير المشارك')
+            return redirect('Hr:shared_with_me')
+        
+        # تحديد كمقروء
+        if not share.is_read:
+            share.is_read = True
+            share.save(update_fields=['is_read'])
+        
+        context = {
+            'share': share,
+            'instance': share.instance,
+        }
+        
+        return render(request, 'Hr/reports/shared_report_detail.html', context)
+    except Exception as e:
+        messages.error(request, f'خطأ في عرض التقرير المشارك: {e}')
+        return redirect('Hr:shared_with_me')
 
-    # Base queryset
-    leave_data = EmployeeLeave.objects.all()
-
-    # Apply filters
-    if employee_id:
-        leave_data = leave_data.filter(employee_id=employee_id)
-
-    if leave_type_id:
-        leave_data = leave_data.filter(leave_type_id=leave_type_id)
-
-    if status:
-        leave_data = leave_data.filter(status=status)
-
-    if date_from:
-        try:
-            date_from = datetime.strptime(date_from, '%Y-%m-%d').date()
-            leave_data = leave_data.filter(start_date__gte=date_from)
-        except ValueError:
-            pass
-
-    if date_to:
-        try:
-            date_to = datetime.strptime(date_to, '%Y-%m-%d').date()
-            leave_data = leave_data.filter(end_date__lte=date_to)
-        except ValueError:
-            pass
-
-    # Export if requested and user has permission
-    export_format = request.GET.get('export')
-    if export_format in ['csv', 'excel'] and (
-        request.user.has_perm('Hr.export_leave_data') or 
-        request.user.is_superuser
-    ):
-        return export_leave_data(leave_data, export_format)
-
-    # Prepare context for template
-    from Hr.models.leave_models import LeaveType
-
-    context = {
-        'leave_data': leave_data,
-        'can_export': has_export_permission(request.user, 'leave'),
-        'employees': Employee.objects.all(),
-        'leave_types': LeaveType.objects.all(),
-        'statuses': EmployeeLeave.STATUS_CHOICES,
-        'selected_employee': employee_id,
-        'selected_leave_type': leave_type_id,
-        'selected_status': status,
-        'selected_date_from': date_from,
-        'selected_date_to': date_to,
-        'title': 'تقرير الإجازات'
-    }
-    return render(request, 'Hr/reports/leave_report.html', context)
 
 @login_required
-def employee_report_view(request):
-    if not check_report_permissions(request.user, 'employee'):
-        return redirect('accounts:access_denied')
+@hr_permission_required('view_reports')
+def get_filter_data(request, template_id):
+    """الحصول على بيانات الفلاتر للتقرير"""
+    try:
+        template = get_object_or_404(ReportTemplate, id=template_id)
         
-    # Filter parameters
-    department_id = request.GET.get('department')
-    working_condition = request.GET.get('working_condition')
-
-    # Base queryset
-    employees = Employee.objects.all()
-
-    # Apply filters
-    if department_id:
-        employees = employees.filter(department_id=department_id)
-
-    if working_condition:
-        employees = employees.filter(working_condition=working_condition)
-
-    # Export if requested
-    export_format = request.GET.get('export')
-    if export_format in ['csv', 'excel']:
-        return export_employee_data(employees, export_format)
-
-    # Prepare context for template
-    from Hr.models.department_models import Department
-
-    context = {
-        'employees': employees,
-        'can_export': has_export_permission(request.user, 'employee'),
-        'can_view_salary': has_report_permission(request.user, 'salary'),
-        'departments': Department.objects.all(),
-        'employee': Employee,  # Pass the Employee model to access WORKING_CONDITION_CHOICES
-        'selected_department': department_id,
-        'selected_working_condition': working_condition,
-        'title': 'تقرير الموظفين'
-    }
-
-    return render(request, 'Hr/reports/employee_report.html', context)
-
-@login_required
-def task_report_view(request):
-    if not check_report_permissions(request.user, 'task'):
-        return redirect('accounts:access_denied')
+        data = {}
         
-    # Filter parameters
-    employee_id = request.GET.get('employee')
-    status = request.GET.get('status')
-    priority = request.GET.get('priority')
-    date_from = request.GET.get('date_from')
-    date_to = request.GET.get('date_to')
-
-    # Base queryset
-    tasks = EmployeeTask.objects.all()
-
-    # Apply filters
-    if employee_id:
-        tasks = tasks.filter(employee_id=employee_id)
-
-    if status:
-        tasks = tasks.filter(status=status)
-
-    if priority:
-        tasks = tasks.filter(priority=priority)
-
-    if date_from:
-        try:
-            date_from = datetime.strptime(date_from, '%Y-%m-%d').date()
-            tasks = tasks.filter(start_date__gte=date_from)
-        except ValueError:
-            pass
-
-    if date_to:
-        try:
-            date_to = datetime.strptime(date_to, '%Y-%m-%d').date()
-            tasks = tasks.filter(due_date__lte=date_to)
-        except ValueError:
-            pass
-
-    # Export if requested and user has permission
-    export_format = request.GET.get('export')
-    if export_format in ['csv', 'excel'] and (
-        request.user.has_perm('Hr.export_task_data') or 
-        request.user.is_superuser
-    ):
-        return export_task_data(tasks, export_format)
-
-    # Prepare context for template
-    context = {
-        'tasks': tasks,
-        'can_export': has_export_permission(request.user, 'task'),
-        'can_edit': has_edit_permission(request.user, 'task'),
-        'employees': Employee.objects.all(),
-        'statuses': EmployeeTask.STATUS_CHOICES,
-        'priorities': EmployeeTask.PRIORITY_CHOICES,
-        'selected_employee': employee_id,
-        'selected_status': status,
-        'selected_priority': priority,
-        'selected_date_from': date_from,
-        'selected_date_to': date_to,
-        'title': 'تقرير المهام'
-    }
-
-    return render(request, 'Hr/reports/task_report.html', context)
-
-@login_required
-def export_report(request, report_type):
-    if not has_export_permission(request.user, report_type):
-        return redirect('accounts:access_denied')
+        if template.report_type in ['employee', 'attendance', 'payroll', 'leave']:
+            data['departments'] = [
+                {'id': str(dept.id), 'name': dept.name}
+                for dept in Department.objects.filter(is_active=True)
+            ]
+            
+            data['job_positions'] = [
+                {'id': str(pos.id), 'name': pos.name}
+                for pos in JobPosition.objects.filter(is_active=True)
+            ]
         
-    if report_type == 'salary':
-        return export_salary_report(request)
-    elif report_type == 'attendance':
-        return export_attendance_report(request)
-    elif report_type == 'leave':
-        return export_leave_report(request)
-    elif report_type == 'task':
-        return export_task_report(request)
-    else:
-        raise Http404('Report type not found')
+        if template.report_type == 'employee':
+            data['employees'] = [
+                {
+                    'id': str(emp.id), 
+                    'name': emp.get_full_name(),
+                    'department': emp.department.name if emp.department else ''
+                }
+                for emp in Employee.objects.filter(is_active=True).select_related('department')
+            ]
+        
+        if template.report_type == 'leave':
+            data['leave_types'] = [
+                {'id': str(lt.id), 'name': lt.name}
+                for lt in LeaveType.objects.filter(is_active=True)
+            ]
+            
+            data['status_choices'] = [
+                {'value': choice[0], 'label': choice[1]}
+                for choice in LeaveRequest.STATUS_CHOICES
+            ]
+        
+        return JsonResponse(data)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)

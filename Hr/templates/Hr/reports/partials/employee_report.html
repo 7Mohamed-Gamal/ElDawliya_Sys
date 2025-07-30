@@ -1,0 +1,52 @@
+<!-- تقرير الموظفين -->
+<table class="report-table">
+    <thead>
+        <tr>
+            <th>رقم الموظف</th>
+            <th>الاسم الكامل</th>
+            <th>القسم</th>
+            <th>الوظيفة</th>
+            <th>تاريخ التوظيف</th>
+            <th>الهاتف</th>
+            <th>البريد الإلكتروني</th>
+            <th>الحالة</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for employee in data %}
+        <tr>
+            <td>{{ employee.employee_number }}</td>
+            <td>{{ employee.full_name }}</td>
+            <td>{{ employee.department }}</td>
+            <td>{{ employee.job_position }}</td>
+            <td>{{ employee.hire_date }}</td>
+            <td>{{ employee.phone }}</td>
+            <td>{{ employee.email }}</td>
+            <td>
+                {% if employee.status == 'نشط' %}
+                    <span class="badge badge-success">{{ employee.status }}</span>
+                {% else %}
+                    <span class="badge badge-secondary">{{ employee.status }}</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- ملخص التقرير -->
+<div class="report-summary">
+    <h5>ملخص التقرير</h5>
+    <div class="summary-item">
+        <span class="summary-label">إجمالي الموظفين:</span>
+        <span class="summary-value">{{ data|length }}</span>
+    </div>
+    <div class="summary-item">
+        <span class="summary-label">الموظفين النشطين:</span>
+        <span class="summary-value">
+            {% for employee in data %}
+                {% if employee.status == 'نشط' %}{{ forloop.counter0|add:1 }}{% endif %}
+            {% endfor %}
+        </span>
+    </div>
+</div>

@@ -1,0 +1,58 @@
+<!-- تقرير الرواتب -->
+<table class="report-table">
+    <thead>
+        <tr>
+            <th>اسم الموظف</th>
+            <th>رقم الموظف</th>
+            <th>القسم</th>
+            <th>الراتب الأساسي</th>
+            <th>البدلات</th>
+            <th>الخصومات</th>
+            <th>صافي الراتب</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for record in data %}
+        <tr {% if record.employee_name == 'الإجمالي' %}style="background-color: #e3f2fd; font-weight: bold;"{% endif %}>
+            <td>{{ record.employee_name }}</td>
+            <td>{{ record.employee_number }}</td>
+            <td>{{ record.department }}</td>
+            <td class="text-left">{{ record.basic_salary|floatformat:2 }}</td>
+            <td class="text-left">{{ record.allowances|floatformat:2 }}</td>
+            <td class="text-left">{{ record.deductions|floatformat:2 }}</td>
+            <td class="text-left">
+                <strong>{{ record.net_salary|floatformat:2 }}</strong>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- ملخص التقرير -->
+<div class="report-summary">
+    <h5>ملخص الرواتب</h5>
+    {% for record in data %}
+        {% if record.employee_name == 'الإجمالي' %}
+        <div class="summary-item">
+            <span class="summary-label">إجمالي الرواتب الأساسية:</span>
+            <span class="summary-value">{{ record.basic_salary|floatformat:2 }} ريال</span>
+        </div>
+        <div class="summary-item">
+            <span class="summary-label">إجمالي البدلات:</span>
+            <span class="summary-value">{{ record.allowances|floatformat:2 }} ريال</span>
+        </div>
+        <div class="summary-item">
+            <span class="summary-label">إجمالي الخصومات:</span>
+            <span class="summary-value">{{ record.deductions|floatformat:2 }} ريال</span>
+        </div>
+        <div class="summary-item">
+            <span class="summary-label">إجمالي صافي الرواتب:</span>
+            <span class="summary-value">{{ record.net_salary|floatformat:2 }} ريال</span>
+        </div>
+        {% endif %}
+    {% endfor %}
+    <div class="summary-item">
+        <span class="summary-label">عدد الموظفين:</span>
+        <span class="summary-value">{{ data|length|add:"-1" }}</span>
+    </div>
+</div>

@@ -1,0 +1,456 @@
+/* تنسيقات نظام التقارير */
+
+/* Cards */
+.border-left-primary {
+    border-left: 0.25rem solid #4e73df !important;
+}
+
+.border-left-success {
+    border-left: 0.25rem solid #1cc88a !important;
+}
+
+.border-left-info {
+    border-left: 0.25rem solid #36b9cc !important;
+}
+
+.border-left-warning {
+    border-left: 0.25rem solid #f6c23e !important;
+}
+
+/* Avatar */
+.avatar-sm {
+    width: 2.5rem;
+    height: 2.5rem;
+}
+
+/* Report Cards */
+.report-card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    cursor: pointer;
+}
+
+.report-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+.report-type-badge {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    z-index: 1;
+}
+
+/* Template Grid */
+.template-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.template-card {
+    border: 1px solid #e3e6f0;
+    border-radius: 0.35rem;
+    transition: all 0.2s ease-in-out;
+    position: relative;
+    overflow: hidden;
+}
+
+.template-card:hover {
+    border-color: #4e73df;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    transform: translateY(-2px);
+}
+
+.template-card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1.5rem;
+    position: relative;
+}
+
+.template-card-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.template-card:hover .template-card-header::before {
+    opacity: 1;
+}
+
+.template-card-body {
+    padding: 1.5rem;
+}
+
+.template-usage-count {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+/* Report Status */
+.status-pending {
+    color: #f6c23e;
+}
+
+.status-processing {
+    color: #36b9cc;
+}
+
+.status-completed {
+    color: #1cc88a;
+}
+
+.status-failed {
+    color: #e74a3b;
+}
+
+.status-cancelled {
+    color: #6c757d;
+}
+
+/* Report Filters */
+.report-filters {
+    background: #f8f9fc;
+    border-radius: 0.35rem;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.filter-group {
+    margin-bottom: 1rem;
+}
+
+.filter-group:last-child {
+    margin-bottom: 0;
+}
+
+/* Report Table */
+.report-table {
+    background: white;
+    border-radius: 0.35rem;
+    overflow: hidden;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+
+.report-table th {
+    background: #f8f9fc;
+    border-bottom: 1px solid #e3e6f0;
+    font-weight: 600;
+    color: #5a5c69;
+    padding: 1rem;
+}
+
+.report-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #e3e6f0;
+    vertical-align: middle;
+}
+
+.report-table tbody tr:hover {
+    background: #f8f9fc;
+}
+
+/* Report Actions */
+.report-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.report-actions .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+
+/* Progress Bar */
+.report-progress {
+    height: 0.5rem;
+    background: #e3e6f0;
+    border-radius: 0.25rem;
+    overflow: hidden;
+    margin-top: 0.5rem;
+}
+
+.report-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #4e73df, #36b9cc);
+    transition: width 0.3s ease-in-out;
+}
+
+/* Report Statistics */
+.report-stat-card {
+    text-align: center;
+    padding: 2rem 1rem;
+    border-radius: 0.35rem;
+    background: white;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+    transition: transform 0.2s ease-in-out;
+}
+
+.report-stat-card:hover {
+    transform: translateY(-2px);
+}
+
+.report-stat-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.8;
+}
+
+.report-stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.report-stat-label {
+    color: #6c757d;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Favorites */
+.favorite-item {
+    padding: 1rem;
+    border: 1px solid #e3e6f0;
+    border-radius: 0.35rem;
+    margin-bottom: 1rem;
+    transition: all 0.2s ease-in-out;
+}
+
+.favorite-item:hover {
+    border-color: #f6c23e;
+    background: #fffbf0;
+}
+
+.favorite-star {
+    color: #f6c23e;
+    font-size: 1.25rem;
+}
+
+/* Shared Reports */
+.shared-report-item {
+    padding: 1rem;
+    border: 1px solid #e3e6f0;
+    border-radius: 0.35rem;
+    margin-bottom: 1rem;
+    position: relative;
+}
+
+.shared-report-item.unread {
+    border-left: 4px solid #4e73df;
+    background: #f8f9fc;
+}
+
+.shared-report-item.expired {
+    opacity: 0.6;
+    background: #f8f9fa;
+}
+
+.share-badge {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+}
+
+/* Report Generation Form */
+.report-form {
+    background: white;
+    border-radius: 0.35rem;
+    padding: 2rem;
+    box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+
+.form-section {
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid #e3e6f0;
+}
+
+.form-section:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.form-section-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #5a5c69;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.form-section-title i {
+    margin-left: 0.5rem;
+    color: #4e73df;
+}
+
+/* Loading States */
+.report-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    color: #6c757d;
+}
+
+.report-loading i {
+    animation: spin 1s linear infinite;
+    margin-left: 0.5rem;
+    font-size: 1.25rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Empty States */
+.report-empty {
+    text-align: center;
+    padding: 3rem;
+    color: #6c757d;
+}
+
+.report-empty i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.report-empty h5 {
+    margin-bottom: 1rem;
+    color: #5a5c69;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .template-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .report-actions {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+    
+    .report-actions .btn {
+        width: 100%;
+        text-align: center;
+    }
+    
+    .report-filters {
+        padding: 1rem;
+    }
+    
+    .report-form {
+        padding: 1rem;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .report-actions,
+    .report-filters,
+    .btn,
+    .navbar,
+    .sidebar {
+        display: none !important;
+    }
+    
+    .report-table {
+        box-shadow: none;
+        border: 1px solid #000;
+    }
+    
+    .report-table th,
+    .report-table td {
+        border: 1px solid #000;
+        padding: 0.5rem;
+    }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .report-filters {
+        background: #2d3748;
+        color: #e2e8f0;
+    }
+    
+    .report-table {
+        background: #2d3748;
+        color: #e2e8f0;
+    }
+    
+    .report-table th {
+        background: #4a5568;
+        color: #e2e8f0;
+        border-bottom-color: #4a5568;
+    }
+    
+    .report-table td {
+        border-bottom-color: #4a5568;
+    }
+    
+    .report-table tbody tr:hover {
+        background: #4a5568;
+    }
+    
+    .template-card {
+        background: #2d3748;
+        border-color: #4a5568;
+        color: #e2e8f0;
+    }
+    
+    .template-card:hover {
+        border-color: #667eea;
+    }
+}
+
+/* Animation Classes */
+.fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-in-right {
+    animation: slideInRight 0.3s ease-in-out;
+}
+
+@keyframes slideInRight {
+    from { opacity: 0; transform: translateX(30px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+/* Custom Scrollbar */
+.report-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.report-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.report-content::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 4px;
+}
+
+.report-content::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}

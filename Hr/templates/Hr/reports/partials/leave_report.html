@@ -1,0 +1,76 @@
+<!-- تقرير الإجازات -->
+<table class="report-table">
+    <thead>
+        <tr>
+            <th>اسم الموظف</th>
+            <th>رقم الموظف</th>
+            <th>نوع الإجازة</th>
+            <th>تاريخ البداية</th>
+            <th>تاريخ النهاية</th>
+            <th>عدد الأيام</th>
+            <th>الحالة</th>
+            <th>السبب</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for request in data %}
+        <tr>
+            <td>{{ request.employee_name }}</td>
+            <td>{{ request.employee_number }}</td>
+            <td>{{ request.leave_type }}</td>
+            <td>{{ request.start_date }}</td>
+            <td>{{ request.end_date }}</td>
+            <td>{{ request.days_count }}</td>
+            <td>
+                {% if request.status == 'معتمد' %}
+                    <span class="badge badge-success">{{ request.status }}</span>
+                {% elif request.status == 'مرفوض' %}
+                    <span class="badge badge-danger">{{ request.status }}</span>
+                {% else %}
+                    <span class="badge badge-warning">{{ request.status }}</span>
+                {% endif %}
+            </td>
+            <td>{{ request.reason|truncatechars:50 }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- ملخص التقرير -->
+<div class="report-summary">
+    <h5>ملخص الإجازات</h5>
+    <div class="summary-item">
+        <span class="summary-label">إجمالي الطلبات:</span>
+        <span class="summary-value">{{ data|length }}</span>
+    </div>
+    <div class="summary-item">
+        <span class="summary-label">الطلبات المعتمدة:</span>
+        <span class="summary-value">
+            {% for request in data %}
+                {% if request.status == 'معتمد' %}{{ forloop.counter0|add:1 }}{% endif %}
+            {% endfor %}
+        </span>
+    </div>
+    <div class="summary-item">
+        <span class="summary-label">الطلبات المرفوضة:</span>
+        <span class="summary-value">
+            {% for request in data %}
+                {% if request.status == 'مرفوض' %}{{ forloop.counter0|add:1 }}{% endif %}
+            {% endfor %}
+        </span>
+    </div>
+    <div class="summary-item">
+        <span class="summary-label">الطلبات في الانتظار:</span>
+        <span class="summary-value">
+            {% for request in data %}
+                {% if request.status == 'في الانتظار' %}{{ forloop.counter0|add:1 }}{% endif %}
+            {% endfor %}
+        </span>
+    </div>
+    <div class="summary-item">
+        <span class="summary-label">إجمالي أيام الإجازات:</span>
+        <span class="summary-value">
+            {% for request in data %}{{ request.days_count|add:0 }}{% endfor %}
+        </span>
+    </div>
+</div>

@@ -1,648 +1,606 @@
 """
-Report Service for HR System
-Handles generation of various HR reports in different formats
+خدمة التقارير الشاملة
 """
 
-import io
-import csv
+import os
 import json
-from datetime import date, datetime, timedelta
-from decimal import Decimal
-from typing import Dict, List, Any, Optional, Union
-
+import pandas as pd
+from datetime import datetime, timedelta
+from django.db import models
 from django.db.models import Q, Count, Sum, Avg, Max, Min
-from django.http import HttpResponse
-from django.template.loader import render_to_string
 from django.utils import timezone
 from django.conf import settings
+from django.template.loader import render_to_string
+from django.core.mail import EmailMessage
+from django.contrib.auth import get_user_model
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+from io import BytesIO
+import logging
 
-# PDF generation
-try:
-    from reportlab.lib import colors
-    from reportlab.lib.pagesizes import letter, A4
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-    from reportlab.lib.units import inch
-    from reportlab.pdfbase import pdfmetrics
-    from reportlab.pdfbase.ttfonts import TTFont
-    REPORTLAB_AVAILABLE = True
-except ImportError:
-    REPORTLAB_AVAILABLE = False
-
-# Excel generation
-try:
-    import openpyxl
-    from openpyxl.styles import Font, Alignment, PatternFill
-    from openpyxl.utils.dataframe import dataframe_to_rows
-    OPENPYXL_AVAILABLE = True
-except ImportError:
-    OPENPYXL_AVAILABLE = False
-
-from Hr.models import (
-    Employee, Department, Company, Branch, JobPosition,
-    AttendanceRecord, LeaveRequest, PayrollEntry, PayrollPeriod
+# استيراد النماذج
+from ..models import Employee, Department, JobPosition, Company, Branch
+from ..models_reports import (
+    ReportCategory, ReportTemplate, ReportInstance, 
+    ScheduledReport, ReportFavorite, ReportShare
 )
+from ..models_enhanced import AttendanceRecord, LeaveRequest, PayrollRecord
+
+logger = logging.getLogger(__name__)
+
+User = get_user_model()
 
 
 class ReportService:
-    """Service class for generating HR reports"""
+    """خدمة التقارير الشاملة"""
     
     def __init__(self):
-        self.setup_fonts()
-    
-    def setup_fonts(self):
-        """Setup Arabic fonts for PDF generation"""
-        if REPORTLAB_AVAILABLE:
-            try:
-                # Register Arabic font if available
-                font_path = getattr(settings, 'ARABIC_FONT_PATH', None)
-                if font_path:
-                    pdfmetrics.registerFont(TTFont('Arabic', font_path))
-                    self.arabic_font = 'Arabic'
-                else:
-                    self.arabic_font = 'Helvetica'
-            except Exception:
-                self.arabic_font = 'Helvetica'
-        else:
-            self.arabic_font = 'Helvetica'
-    
-    # Employee Reports
-    def generate_employee_report(self, 
-                               company_id: Optional[str] = None,
-                               department_id: Optional[str] = None,
-                               branch_id: Optional[str] = None,
-                               status: Optional[str] = None,
-                               format: str = 'csv') -> Union[HttpResponse, Dict]:
-        """Generate comprehensive employee report"""
-        
-        # Build query
-        queryset = Employee.objects.select_related(
-            'company', 'branch', 'department', 'job_position', 'manager'
-        )
-        
-        if company_id:
-            queryset = queryset.filter(company_id=company_id)
-        if department_id:
-            queryset = queryset.filter(department_id=department_id)
-        if branch_id:
-            queryset = queryset.filter(branch_id=branch_id)
-        if status:
-            queryset = queryset.filter(status=status)
-        
-        # Prepare data
-        data = []
-        for employee in queryset:
-            data.append({
-                'رقم الموظف': employee.employee_number,
-                'الاسم الكامل': employee.full_name,
-                'البريد الإلكتروني': employee.email or '',
-                'الهاتف': employee.mobile or employee.phone or '',
-                'القسم': employee.department.name if employee.department else '',
-                'الوظيفة': employee.job_position.title if employee.job_position else '',
-                'المدير المباشر': employee.manager.full_name if employee.manager else '',
-                'تاريخ التوظيف': employee.hire_date.strftime('%Y-%m-%d') if employee.hire_date else '',
-                'سنوات الخدمة': employee.years_of_service or 0,
-                'الراتب الأساسي': float(employee.basic_salary) if employee.basic_salary else 0,
-                'الحالة': employee.get_status_display(),
-                'نوع التوظيف': employee.get_employment_type_display(),
-            })
-        
-        if format == 'json':
-            return {'data': data, 'count': len(data)}
-        elif format == 'excel':
-            return self._generate_excel_report(data, 'تقرير الموظفين')
-        elif format == 'pdf':
-            return self._generate_pdf_report(data, 'تقرير الموظفين')
-        else:  # CSV
-            return self._generate_csv_report(data, 'employee_report')
-    
-    def generate_organizational_chart(self, company_id: Optional[str] = None) -> Dict:
-        """Generate organizational chart data"""
-        
-        queryset = Employee.objects.select_related('department', 'job_position', 'manager')
-        if company_id:
-            queryset = queryset.filter(company_id=company_id)
-        
-        # Build hierarchy
-        hierarchy = {}
-        employees_by_manager = {}
-        
-        for employee in queryset.filter(status='active'):
-            manager_id = str(employee.manager.id) if employee.manager else 'root'
-            
-            if manager_id not in employees_by_manager:
-                employees_by_manager[manager_id] = []
-            
-            employees_by_manager[manager_id].append({
-                'id': str(employee.id),
-                'name': employee.full_name,
-                'title': employee.job_position.title if employee.job_position else '',
-                'department': employee.department.name if employee.department else '',
-                'email': employee.email or '',
-                'phone': employee.mobile or employee.phone or '',
-            })
-        
-        def build_tree(manager_id='root'):
-            children = employees_by_manager.get(manager_id, [])
-            result = []
-            
-            for child in children:
-                child_data = child.copy()
-                child_data['children'] = build_tree(child['id'])
-                result.append(child_data)
-            
-            return result
-        
-        return {
-            'hierarchy': build_tree(),
-            'total_employees': queryset.filter(status='active').count()
+        self.supported_formats = ['pdf', 'excel', 'csv', 'html', 'json']
+        self.report_generators = {
+            'employee': self._generate_employee_report,
+            'attendance': self._generate_attendance_report,
+            'payroll': self._generate_payroll_report,
+            'leave': self._generate_leave_report,
+            'performance': self._generate_performance_report,
+            'analytics': self._generate_analytics_report,
+            'custom': self._generate_custom_report,
         }
     
-    def generate_birthday_report(self, days_ahead: int = 30) -> Dict:
-        """Generate upcoming birthdays report"""
-        
-        today = date.today()
-        end_date = today + timedelta(days=days_ahead)
-        
-        # Handle year boundary
-        if today.year == end_date.year:
-            employees = Employee.objects.filter(
-                birth_date__month__gte=today.month,
-                birth_date__month__lte=end_date.month,
-                birth_date__day__gte=today.day if today.month == end_date.month else 1,
-                birth_date__day__lte=end_date.day if today.month == end_date.month else 31,
-                status='active'
-            )
-        else:
-            # Cross year boundary
-            employees = Employee.objects.filter(
-                Q(birth_date__month__gte=today.month, birth_date__day__gte=today.day) |
-                Q(birth_date__month__lte=end_date.month, birth_date__day__lte=end_date.day),
-                status='active'
-            )
-        
-        birthdays = []
-        for employee in employees.select_related('department'):
-            if employee.birth_date:
-                # Calculate next birthday
-                next_birthday = employee.birth_date.replace(year=today.year)
-                if next_birthday < today:
-                    next_birthday = next_birthday.replace(year=today.year + 1)
-                
-                days_until = (next_birthday - today).days
-                
-                if days_until <= days_ahead:
-                    birthdays.append({
-                        'employee': {
-                            'id': str(employee.id),
-                            'name': employee.full_name,
-                            'department': employee.department.name if employee.department else '',
-                            'email': employee.email or '',
-                        },
-                        'birth_date': employee.birth_date.strftime('%m-%d'),
-                        'next_birthday': next_birthday.strftime('%Y-%m-%d'),
-                        'days_until': days_until,
-                        'age_turning': employee.age + 1 if employee.age else None
-                    })
-        
-        # Sort by days until birthday
-        birthdays.sort(key=lambda x: x['days_until'])
-        
-        return {
-            'birthdays': birthdays,
-            'count': len(birthdays),
-            'period': f"{today.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}"
-        }
-    
-    def generate_work_anniversary_report(self, days_ahead: int = 30) -> Dict:
-        """Generate work anniversaries report"""
-        
-        today = date.today()
-        end_date = today + timedelta(days=days_ahead)
-        
-        # Similar logic to birthdays but for hire_date
-        if today.year == end_date.year:
-            employees = Employee.objects.filter(
-                hire_date__month__gte=today.month,
-                hire_date__month__lte=end_date.month,
-                hire_date__day__gte=today.day if today.month == end_date.month else 1,
-                hire_date__day__lte=end_date.day if today.month == end_date.month else 31,
-                status='active'
-            )
-        else:
-            employees = Employee.objects.filter(
-                Q(hire_date__month__gte=today.month, hire_date__day__gte=today.day) |
-                Q(hire_date__month__lte=end_date.month, hire_date__day__lte=end_date.day),
-                status='active'
-            )
-        
-        anniversaries = []
-        for employee in employees.select_related('department'):
-            if employee.hire_date:
-                # Calculate next anniversary
-                next_anniversary = employee.hire_date.replace(year=today.year)
-                if next_anniversary < today:
-                    next_anniversary = next_anniversary.replace(year=today.year + 1)
-                
-                days_until = (next_anniversary - today).days
-                
-                if days_until <= days_ahead:
-                    anniversaries.append({
-                        'employee': {
-                            'id': str(employee.id),
-                            'name': employee.full_name,
-                            'department': employee.department.name if employee.department else '',
-                            'email': employee.email or '',
-                        },
-                        'hire_date': employee.hire_date.strftime('%Y-%m-%d'),
-                        'next_anniversary': next_anniversary.strftime('%Y-%m-%d'),
-                        'days_until': days_until,
-                        'years_of_service': employee.years_of_service or 0
-                    })
-        
-        # Sort by days until anniversary
-        anniversaries.sort(key=lambda x: x['days_until'])
-        
-        return {
-            'anniversaries': anniversaries,
-            'count': len(anniversaries),
-            'period': f"{today.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}"
-        }
-    
-    # Attendance Reports
-    def generate_attendance_report(self,
-                                 start_date: date,
-                                 end_date: date,
-                                 department_id: Optional[str] = None,
-                                 employee_id: Optional[str] = None,
-                                 format: str = 'csv') -> Union[HttpResponse, Dict]:
-        """Generate attendance report"""
-        
-        queryset = AttendanceRecord.objects.select_related(
-            'employee', 'employee__department'
-        ).filter(date__range=[start_date, end_date])
-        
-        if department_id:
-            queryset = queryset.filter(employee__department_id=department_id)
-        if employee_id:
-            queryset = queryset.filter(employee_id=employee_id)
-        
-        data = []
-        for record in queryset:
-            data.append({
-                'التاريخ': record.date.strftime('%Y-%m-%d'),
-                'رقم الموظف': record.employee.employee_number,
-                'اسم الموظف': record.employee.full_name,
-                'القسم': record.employee.department.name if record.employee.department else '',
-                'وقت الحضور': record.check_in_time.strftime('%H:%M') if record.check_in_time else '',
-                'وقت الانصراف': record.check_out_time.strftime('%H:%M') if record.check_out_time else '',
-                'إجمالي الساعات': float(record.total_hours) if record.total_hours else 0,
-                'متأخر': 'نعم' if record.is_late else 'لا',
-                'انصراف مبكر': 'نعم' if record.is_early_departure else 'لا',
-                'ملاحظات': record.notes or ''
-            })
-        
-        if format == 'json':
-            return {'data': data, 'count': len(data)}
-        elif format == 'excel':
-            return self._generate_excel_report(data, 'تقرير الحضور')
-        elif format == 'pdf':
-            return self._generate_pdf_report(data, 'تقرير الحضور')
-        else:
-            return self._generate_csv_report(data, 'attendance_report')
-    
-    def generate_attendance_summary(self,
-                                  start_date: date,
-                                  end_date: date,
-                                  department_id: Optional[str] = None) -> Dict:
-        """Generate attendance summary statistics"""
-        
-        queryset = AttendanceRecord.objects.select_related('employee')
-        queryset = queryset.filter(date__range=[start_date, end_date])
-        
-        if department_id:
-            queryset = queryset.filter(employee__department_id=department_id)
-        
-        # Calculate statistics
-        total_records = queryset.count()
-        late_arrivals = queryset.filter(is_late=True).count()
-        early_departures = queryset.filter(is_early_departure=True).count()
-        
-        # Average working hours
-        avg_hours = queryset.aggregate(avg_hours=Avg('total_hours'))['avg_hours'] or 0
-        
-        # Daily breakdown
-        daily_stats = []
-        current_date = start_date
-        while current_date <= end_date:
-            day_records = queryset.filter(date=current_date)
-            daily_stats.append({
-                'date': current_date.strftime('%Y-%m-%d'),
-                'total_attendance': day_records.count(),
-                'late_arrivals': day_records.filter(is_late=True).count(),
-                'early_departures': day_records.filter(is_early_departure=True).count(),
-                'avg_hours': float(day_records.aggregate(avg=Avg('total_hours'))['avg'] or 0)
-            })
-            current_date += timedelta(days=1)
-        
-        return {
-            'period': f"{start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}",
-            'summary': {
-                'total_records': total_records,
-                'late_arrivals': late_arrivals,
-                'early_departures': early_departures,
-                'late_percentage': (late_arrivals / total_records * 100) if total_records > 0 else 0,
-                'early_departure_percentage': (early_departures / total_records * 100) if total_records > 0 else 0,
-                'average_working_hours': float(avg_hours)
-            },
-            'daily_breakdown': daily_stats
-        }
-    
-    # Leave Reports
-    def generate_leave_report(self,
-                            start_date: date,
-                            end_date: date,
-                            department_id: Optional[str] = None,
-                            status: Optional[str] = None,
-                            format: str = 'csv') -> Union[HttpResponse, Dict]:
-        """Generate leave requests report"""
-        
-        queryset = LeaveRequest.objects.select_related(
-            'employee', 'employee__department', 'leave_type'
-        ).filter(start_date__lte=end_date, end_date__gte=start_date)
-        
-        if department_id:
-            queryset = queryset.filter(employee__department_id=department_id)
-        if status:
-            queryset = queryset.filter(status=status)
-        
-        data = []
-        for leave in queryset:
-            data.append({
-                'رقم الموظف': leave.employee.employee_number,
-                'اسم الموظف': leave.employee.full_name,
-                'القسم': leave.employee.department.name if leave.employee.department else '',
-                'نوع الإجازة': leave.leave_type.name,
-                'تاريخ البداية': leave.start_date.strftime('%Y-%m-%d'),
-                'تاريخ النهاية': leave.end_date.strftime('%Y-%m-%d'),
-                'عدد الأيام': leave.days,
-                'الحالة': leave.get_status_display(),
-                'السبب': leave.reason or '',
-                'تاريخ الطلب': leave.created_at.strftime('%Y-%m-%d')
-            })
-        
-        if format == 'json':
-            return {'data': data, 'count': len(data)}
-        elif format == 'excel':
-            return self._generate_excel_report(data, 'تقرير الإجازات')
-        elif format == 'pdf':
-            return self._generate_pdf_report(data, 'تقرير الإجازات')
-        else:
-            return self._generate_csv_report(data, 'leave_report')
-    
-    # Payroll Reports
-    def generate_payroll_report(self,
-                              payroll_period_id: str,
-                              department_id: Optional[str] = None,
-                              format: str = 'csv') -> Union[HttpResponse, Dict]:
-        """Generate payroll report for a specific period"""
-        
+    def get_available_templates(self, user, category=None):
+        """الحصول على القوالب المتاحة للمستخدم"""
         try:
-            period = PayrollPeriod.objects.get(id=payroll_period_id)
-        except PayrollPeriod.DoesNotExist:
-            raise ValueError("Payroll period not found")
-        
-        queryset = PayrollEntry.objects.select_related(
-            'employee', 'employee__department'
-        ).filter(payroll_period=period)
-        
-        if department_id:
-            queryset = queryset.filter(employee__department_id=department_id)
-        
-        data = []
-        total_gross = 0
-        total_deductions = 0
-        total_net = 0
-        
-        for entry in queryset:
+            templates = ReportTemplate.objects.filter(is_active=True)
+            
+            if category:
+                templates = templates.filter(category=category)
+            
+            # فلترة حسب الصلاحيات
+            user_templates = []
+            for template in templates:
+                if self._check_template_permissions(template, user):
+                    user_templates.append(template)
+            
+            return user_templates
+        except Exception as e:
+            logger.error(f"خطأ في الحصول على القوالب: {e}")
+            return []
+    
+    def _check_template_permissions(self, template, user):
+        """فحص صلاحيات المستخدم للقالب"""
+        try:
+            # فحص الصلاحيات المطلوبة
+            if template.required_permissions:
+                for permission in template.required_permissions:
+                    if not user.has_perm(permission):
+                        return False
+            
+            # فحص الأقسام المسموحة
+            if template.allowed_departments:
+                user_department = getattr(user, 'employee', None)
+                if user_department:
+                    dept_id = str(user_department.department.id)
+                    if dept_id not in template.allowed_departments:
+                        return False
+            
+            return True
+        except Exception as e:
+            logger.error(f"خطأ في فحص الصلاحيات: {e}")
+            return False
+    
+    def generate_report(self, template_id, user, parameters=None, output_format='pdf'):
+        """إنتاج تقرير جديد"""
+        try:
+            template = ReportTemplate.objects.get(id=template_id, is_active=True)
+            
+            # فحص الصلاحيات
+            if not self._check_template_permissions(template, user):
+                raise PermissionError("ليس لديك صلاحية لإنتاج هذا التقرير")
+            
+            # إنشاء مثيل التقرير
+            instance = ReportInstance.objects.create(
+                template=template,
+                name=f"{template.name} - {timezone.now().strftime('%Y-%m-%d %H:%M')}",
+                parameters=parameters or {},
+                output_format=output_format,
+                created_by=user
+            )
+            
+            # بدء المعالجة
+            instance.mark_as_processing()
+            
+            try:
+                # إنتاج البيانات
+                data = self._generate_report_data(template, parameters)
+                
+                # إنتاج الملف
+                file_path, file_size = self._generate_report_file(
+                    template, data, output_format, instance.id
+                )
+                
+                # تحديث المثيل
+                instance.mark_as_completed(
+                    file_path=file_path,
+                    record_count=len(data) if isinstance(data, list) else 0,
+                    file_size=file_size
+                )
+                
+                # زيادة عداد الاستخدام
+                template.increment_usage()
+                
+                return instance
+                
+            except Exception as e:
+                instance.mark_as_failed(str(e))
+                raise
+                
+        except Exception as e:
+            logger.error(f"خطأ في إنتاج التقرير: {e}")
+            raise
+    
+    def _generate_report_data(self, template, parameters):
+        """إنتاج بيانات التقرير"""
+        try:
+            generator = self.report_generators.get(template.report_type)
+            if not generator:
+                raise ValueError(f"نوع التقرير غير مدعوم: {template.report_type}")
+            
+            return generator(template, parameters)
+        except Exception as e:
+            logger.error(f"خطأ في إنتاج بيانات التقرير: {e}")
+            raise
+    
+    def _generate_employee_report(self, template, parameters):
+        """إنتاج تقرير الموظفين"""
+        try:
+            queryset = Employee.objects.select_related(
+                'department', 'job_position', 'company', 'branch'
+            ).filter(is_active=True)
+            
+            # تطبيق الفلاتر
+            if parameters:
+                if parameters.get('department_id'):
+                    queryset = queryset.filter(department_id=parameters['department_id'])
+                
+                if parameters.get('job_position_id'):
+                    queryset = queryset.filter(job_position_id=parameters['job_position_id'])
+                
+                if parameters.get('hire_date_from'):
+                    queryset = queryset.filter(hire_date__gte=parameters['hire_date_from'])
+                
+                if parameters.get('hire_date_to'):
+                    queryset = queryset.filter(hire_date__lte=parameters['hire_date_to'])
+                
+                if parameters.get('search'):
+                    search = parameters['search']
+                    queryset = queryset.filter(
+                        Q(first_name__icontains=search) |
+                        Q(last_name__icontains=search) |
+                        Q(employee_number__icontains=search)
+                    )
+            
+            # تحويل إلى قائمة
+            data = []
+            for employee in queryset:
+                data.append({
+                    'employee_number': employee.employee_number,
+                    'full_name': employee.get_full_name(),
+                    'department': employee.department.name if employee.department else '',
+                    'job_position': employee.job_position.name if employee.job_position else '',
+                    'hire_date': employee.hire_date.strftime('%Y-%m-%d') if employee.hire_date else '',
+                    'phone': employee.phone or '',
+                    'email': employee.email or '',
+                    'status': 'نشط' if employee.is_active else 'غير نشط',
+                })
+            
+            return data
+        except Exception as e:
+            logger.error(f"خطأ في تقرير الموظفين: {e}")
+            raise
+    
+    def _generate_attendance_report(self, template, parameters):
+        """إنتاج تقرير الحضور"""
+        try:
+            # الحصول على تاريخ البداية والنهاية
+            date_from = parameters.get('date_from', timezone.now().date() - timedelta(days=30))
+            date_to = parameters.get('date_to', timezone.now().date())
+            
+            if isinstance(date_from, str):
+                date_from = datetime.strptime(date_from, '%Y-%m-%d').date()
+            if isinstance(date_to, str):
+                date_to = datetime.strptime(date_to, '%Y-%m-%d').date()
+            
+            queryset = AttendanceRecord.objects.select_related('employee').filter(
+                date__range=[date_from, date_to]
+            )
+            
+            # تطبيق الفلاتر
+            if parameters.get('employee_id'):
+                queryset = queryset.filter(employee_id=parameters['employee_id'])
+            
+            if parameters.get('department_id'):
+                queryset = queryset.filter(employee__department_id=parameters['department_id'])
+            
+            # تجميع البيانات
+            data = []
+            for record in queryset:
+                data.append({
+                    'employee_name': record.employee.get_full_name(),
+                    'employee_number': record.employee.employee_number,
+                    'date': record.date.strftime('%Y-%m-%d'),
+                    'check_in': record.check_in.strftime('%H:%M') if record.check_in else '',
+                    'check_out': record.check_out.strftime('%H:%M') if record.check_out else '',
+                    'total_hours': str(record.total_hours) if record.total_hours else '',
+                    'overtime_hours': str(record.overtime_hours) if record.overtime_hours else '',
+                    'late_minutes': record.late_minutes or 0,
+                    'status': record.get_status_display(),
+                })
+            
+            return data
+        except Exception as e:
+            logger.error(f"خطأ في تقرير الحضور: {e}")
+            raise
+    
+    def _generate_payroll_report(self, template, parameters):
+        """إنتاج تقرير الرواتب"""
+        try:
+            # الحصول على الشهر والسنة
+            month = parameters.get('month', timezone.now().month)
+            year = parameters.get('year', timezone.now().year)
+            
+            queryset = PayrollRecord.objects.select_related('employee').filter(
+                month=month, year=year
+            )
+            
+            # تطبيق الفلاتر
+            if parameters.get('department_id'):
+                queryset = queryset.filter(employee__department_id=parameters['department_id'])
+            
+            # تجميع البيانات
+            data = []
+            total_basic_salary = 0
+            total_allowances = 0
+            total_deductions = 0
+            total_net_salary = 0
+            
+            for record in queryset:
+                data.append({
+                    'employee_name': record.employee.get_full_name(),
+                    'employee_number': record.employee.employee_number,
+                    'department': record.employee.department.name if record.employee.department else '',
+                    'basic_salary': float(record.basic_salary),
+                    'allowances': float(record.total_allowances),
+                    'deductions': float(record.total_deductions),
+                    'net_salary': float(record.net_salary),
+                })
+                
+                total_basic_salary += float(record.basic_salary)
+                total_allowances += float(record.total_allowances)
+                total_deductions += float(record.total_deductions)
+                total_net_salary += float(record.net_salary)
+            
+            # إضافة الإجماليات
             data.append({
-                'رقم الموظف': entry.employee.employee_number,
-                'اسم الموظف': entry.employee.full_name,
-                'القسم': entry.employee.department.name if entry.employee.department else '',
-                'الراتب الأساسي': float(entry.basic_salary),
-                'إجمالي الراتب': float(entry.gross_salary),
-                'إجمالي الخصومات': float(entry.total_deductions),
-                'صافي الراتب': float(entry.net_salary),
-                'أيام العمل': entry.working_days,
-                'أيام الحضور': entry.present_days,
-                'أيام الغياب': entry.absent_days,
-                'أيام الإجازة': entry.leave_days,
-                'الحالة': entry.get_status_display()
+                'employee_name': 'الإجمالي',
+                'employee_number': '',
+                'department': '',
+                'basic_salary': total_basic_salary,
+                'allowances': total_allowances,
+                'deductions': total_deductions,
+                'net_salary': total_net_salary,
             })
             
-            total_gross += float(entry.gross_salary)
-            total_deductions += float(entry.total_deductions)
-            total_net += float(entry.net_salary)
-        
-        # Add summary row
-        data.append({
-            'رقم الموظف': '',
-            'اسم الموظف': 'الإجمالي',
-            'القسم': '',
-            'الراتب الأساسي': '',
-            'إجمالي الراتب': total_gross,
-            'إجمالي الخصومات': total_deductions,
-            'صافي الراتب': total_net,
-            'أيام العمل': '',
-            'أيام الحضور': '',
-            'أيام الغياب': '',
-            'أيام الإجازة': '',
-            'الحالة': ''
-        })
-        
-        if format == 'json':
-            return {
-                'data': data[:-1],  # Exclude summary row
-                'summary': {
-                    'total_gross': total_gross,
-                    'total_deductions': total_deductions,
-                    'total_net': total_net,
-                    'employee_count': len(data) - 1
-                },
-                'period': {
-                    'name': period.name,
-                    'start_date': period.start_date.strftime('%Y-%m-%d'),
-                    'end_date': period.end_date.strftime('%Y-%m-%d')
-                }
+            return data
+        except Exception as e:
+            logger.error(f"خطأ في تقرير الرواتب: {e}")
+            raise
+    
+    def _generate_leave_report(self, template, parameters):
+        """إنتاج تقرير الإجازات"""
+        try:
+            # الحصول على تاريخ البداية والنهاية
+            date_from = parameters.get('date_from', timezone.now().date() - timedelta(days=365))
+            date_to = parameters.get('date_to', timezone.now().date())
+            
+            if isinstance(date_from, str):
+                date_from = datetime.strptime(date_from, '%Y-%m-%d').date()
+            if isinstance(date_to, str):
+                date_to = datetime.strptime(date_to, '%Y-%m-%d').date()
+            
+            queryset = LeaveRequest.objects.select_related(
+                'employee', 'leave_type'
+            ).filter(
+                start_date__range=[date_from, date_to]
+            )
+            
+            # تطبيق الفلاتر
+            if parameters.get('employee_id'):
+                queryset = queryset.filter(employee_id=parameters['employee_id'])
+            
+            if parameters.get('leave_type_id'):
+                queryset = queryset.filter(leave_type_id=parameters['leave_type_id'])
+            
+            if parameters.get('status'):
+                queryset = queryset.filter(status=parameters['status'])
+            
+            # تجميع البيانات
+            data = []
+            for request in queryset:
+                data.append({
+                    'employee_name': request.employee.get_full_name(),
+                    'employee_number': request.employee.employee_number,
+                    'leave_type': request.leave_type.name,
+                    'start_date': request.start_date.strftime('%Y-%m-%d'),
+                    'end_date': request.end_date.strftime('%Y-%m-%d'),
+                    'days_count': request.days_count,
+                    'status': request.get_status_display(),
+                    'reason': request.reason or '',
+                })
+            
+            return data
+        except Exception as e:
+            logger.error(f"خطأ في تقرير الإجازات: {e}")
+            raise
+    
+    def _generate_performance_report(self, template, parameters):
+        """إنتاج تقرير الأداء"""
+        # TODO: تنفيذ تقرير الأداء عند إنشاء نظام التقييمات
+        return []
+    
+    def _generate_analytics_report(self, template, parameters):
+        """إنتاج تقرير تحليلي"""
+        try:
+            data = {}
+            
+            # إحصائيات الموظفين
+            data['employee_stats'] = {
+                'total_employees': Employee.objects.filter(is_active=True).count(),
+                'by_department': list(
+                    Employee.objects.filter(is_active=True)
+                    .values('department__name')
+                    .annotate(count=Count('id'))
+                ),
+                'by_job_position': list(
+                    Employee.objects.filter(is_active=True)
+                    .values('job_position__name')
+                    .annotate(count=Count('id'))
+                ),
             }
-        elif format == 'excel':
-            return self._generate_excel_report(data, f'كشف رواتب - {period.name}')
-        elif format == 'pdf':
-            return self._generate_pdf_report(data, f'كشف رواتب - {period.name}')
-        else:
-            return self._generate_csv_report(data, f'payroll_report_{period.name}')
+            
+            # إحصائيات الحضور (آخر 30 يوم)
+            thirty_days_ago = timezone.now().date() - timedelta(days=30)
+            attendance_stats = AttendanceRecord.objects.filter(
+                date__gte=thirty_days_ago
+            ).aggregate(
+                avg_attendance_rate=Avg('attendance_rate'),
+                total_late_minutes=Sum('late_minutes'),
+                total_overtime_hours=Sum('overtime_hours')
+            )
+            
+            data['attendance_stats'] = attendance_stats
+            
+            # إحصائيات الإجازات (آخر سنة)
+            one_year_ago = timezone.now().date() - timedelta(days=365)
+            leave_stats = LeaveRequest.objects.filter(
+                start_date__gte=one_year_ago
+            ).aggregate(
+                total_requests=Count('id'),
+                approved_requests=Count('id', filter=Q(status='approved')),
+                total_days=Sum('days_count')
+            )
+            
+            data['leave_stats'] = leave_stats
+            
+            return [data]  # إرجاع كقائمة للتوافق مع باقي التقارير
+        except Exception as e:
+            logger.error(f"خطأ في التقرير التحليلي: {e}")
+            raise
     
-    # Format-specific generators
-    def _generate_csv_report(self, data: List[Dict], filename: str) -> HttpResponse:
-        """Generate CSV report"""
-        response = HttpResponse(content_type='text/csv; charset=utf-8')
-        response['Content-Disposition'] = f'attachment; filename="{filename}.csv"'
-        
-        # Add BOM for proper UTF-8 encoding in Excel
-        response.write('\ufeff')
-        
-        if data:
-            writer = csv.DictWriter(response, fieldnames=data[0].keys())
-            writer.writeheader()
-            writer.writerows(data)
-        
-        return response
+    def _generate_custom_report(self, template, parameters):
+        """إنتاج تقرير مخصص"""
+        # TODO: تنفيذ التقارير المخصصة
+        return []
     
-    def _generate_excel_report(self, data: List[Dict], title: str) -> HttpResponse:
-        """Generate Excel report"""
-        if not OPENPYXL_AVAILABLE:
-            raise ImportError("openpyxl is required for Excel export")
-        
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.title = title
-        
-        if data:
-            # Headers
-            headers = list(data[0].keys())
-            ws.append(headers)
-            
-            # Style headers
-            header_font = Font(bold=True)
-            header_fill = PatternFill(start_color="CCCCCC", end_color="CCCCCC", fill_type="solid")
-            
-            for col_num, header in enumerate(headers, 1):
-                cell = ws.cell(row=1, column=col_num)
-                cell.font = header_font
-                cell.fill = header_fill
-                cell.alignment = Alignment(horizontal="center")
-            
-            # Data rows
-            for row_data in data:
-                ws.append(list(row_data.values()))
-            
-            # Auto-adjust column widths
-            for column in ws.columns:
-                max_length = 0
-                column_letter = column[0].column_letter
-                for cell in column:
-                    try:
-                        if len(str(cell.value)) > max_length:
-                            max_length = len(str(cell.value))
-                    except:
-                        pass
-                adjusted_width = min(max_length + 2, 50)
-                ws.column_dimensions[column_letter].width = adjusted_width
-        
-        # Save to response
-        response = HttpResponse(
-            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        )
-        response['Content-Disposition'] = f'attachment; filename="{title}.xlsx"'
-        wb.save(response)
-        
-        return response
+    def _generate_report_file(self, template, data, output_format, instance_id):
+        """إنتاج ملف التقرير"""
+        try:
+            if output_format == 'excel':
+                return self._generate_excel_file(template, data, instance_id)
+            elif output_format == 'csv':
+                return self._generate_csv_file(template, data, instance_id)
+            elif output_format == 'pdf':
+                return self._generate_pdf_file(template, data, instance_id)
+            elif output_format == 'html':
+                return self._generate_html_file(template, data, instance_id)
+            elif output_format == 'json':
+                return self._generate_json_file(template, data, instance_id)
+            else:
+                raise ValueError(f"صيغة غير مدعومة: {output_format}")
+        except Exception as e:
+            logger.error(f"خطأ في إنتاج ملف التقرير: {e}")
+            raise
     
-    def _generate_pdf_report(self, data: List[Dict], title: str) -> HttpResponse:
-        """Generate PDF report"""
-        if not REPORTLAB_AVAILABLE:
-            raise ImportError("reportlab is required for PDF export")
-        
-        response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="{title}.pdf"'
-        
-        # Create PDF document
-        doc = SimpleDocTemplate(response, pagesize=A4)
-        elements = []
-        
-        # Styles
-        styles = getSampleStyleSheet()
-        title_style = ParagraphStyle(
-            'CustomTitle',
-            parent=styles['Heading1'],
-            fontName=self.arabic_font,
-            fontSize=16,
-            alignment=1,  # Center
-            spaceAfter=30
-        )
-        
-        # Title
-        elements.append(Paragraph(title, title_style))
-        elements.append(Spacer(1, 12))
-        
-        if data:
-            # Prepare table data
-            headers = list(data[0].keys())
-            table_data = [headers]
+    def _generate_excel_file(self, template, data, instance_id):
+        """إنتاج ملف Excel"""
+        try:
+            # إنشاء DataFrame
+            df = pd.DataFrame(data)
             
-            for row in data:
-                table_data.append(list(row.values()))
+            # إنشاء ملف Excel في الذاكرة
+            buffer = BytesIO()
+            with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
+                df.to_excel(writer, sheet_name=template.name[:31], index=False)
             
-            # Create table
-            table = Table(table_data)
-            table.setStyle(TableStyle([
-                ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                ('FONTNAME', (0, 0), (-1, 0), self.arabic_font),
-                ('FONTSIZE', (0, 0), (-1, 0), 10),
-                ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-                ('FONTNAME', (0, 1), (-1, -1), self.arabic_font),
-                ('FONTSIZE', (0, 1), (-1, -1), 8),
-                ('GRID', (0, 0), (-1, -1), 1, colors.black)
-            ]))
+            # حفظ الملف
+            filename = f"report_{instance_id}.xlsx"
+            file_path = f"reports/{filename}"
             
-            elements.append(table)
-        
-        # Build PDF
-        doc.build(elements)
-        
-        return response
+            buffer.seek(0)
+            saved_path = default_storage.save(file_path, ContentFile(buffer.getvalue()))
+            file_size = buffer.tell()
+            
+            return saved_path, file_size
+        except Exception as e:
+            logger.error(f"خطأ في إنتاج ملف Excel: {e}")
+            raise
     
-    # Utility methods
-    def get_available_reports(self) -> Dict:
-        """Get list of available reports"""
-        return {
-            'employee_reports': [
-                {'key': 'employee_list', 'name': 'تقرير الموظفين', 'description': 'قائمة شاملة بالموظفين'},
-                {'key': 'org_chart', 'name': 'الهيكل التنظيمي', 'description': 'مخطط الهيكل التنظيمي'},
-                {'key': 'birthdays', 'name': 'أعياد الميلاد', 'description': 'أعياد ميلاد الموظفين القادمة'},
-                {'key': 'anniversaries', 'name': 'ذكريات التوظيف', 'description': 'ذكريات توظيف الموظفين'},
-            ],
-            'attendance_reports': [
-                {'key': 'attendance_detail', 'name': 'تقرير الحضور التفصيلي', 'description': 'سجلات الحضور التفصيلية'},
-                {'key': 'attendance_summary', 'name': 'ملخص الحضور', 'description': 'إحصائيات الحضور'},
-            ],
-            'leave_reports': [
-                {'key': 'leave_requests', 'name': 'تقرير الإجازات', 'description': 'طلبات الإجازات'},
-                {'key': 'leave_balance', 'name': 'أرصدة الإجازات', 'description': 'أرصدة إجازات الموظفين'},
-            ],
-            'payroll_reports': [
-                {'key': 'payroll_detail', 'name': 'كشف الرواتب', 'description': 'كشف رواتب تفصيلي'},
-                {'key': 'payroll_summary', 'name': 'ملخص الرواتب', 'description': 'ملخص إحصائيات الرواتب'},
-            ]
-        }
+    def _generate_csv_file(self, template, data, instance_id):
+        """إنتاج ملف CSV"""
+        try:
+            # إنشاء DataFrame
+            df = pd.DataFrame(data)
+            
+            # إنشاء ملف CSV في الذاكرة
+            buffer = BytesIO()
+            df.to_csv(buffer, index=False, encoding='utf-8-sig')
+            
+            # حفظ الملف
+            filename = f"report_{instance_id}.csv"
+            file_path = f"reports/{filename}"
+            
+            buffer.seek(0)
+            saved_path = default_storage.save(file_path, ContentFile(buffer.getvalue()))
+            file_size = buffer.tell()
+            
+            return saved_path, file_size
+        except Exception as e:
+            logger.error(f"خطأ في إنتاج ملف CSV: {e}")
+            raise
     
-    def schedule_report(self, report_type: str, parameters: Dict, schedule: str, recipients: List[str]) -> Dict:
-        """Schedule a report to be generated and sent automatically"""
-        # This would typically integrate with a task queue like Celery
-        # For now, return a placeholder response
-        
-        return {
-            'status': 'scheduled',
-            'report_type': report_type,
-            'schedule': schedule,
-            'recipients': recipients,
-            'next_run': timezone.now() + timedelta(days=1),  # Placeholder
-            'message': 'تم جدولة التقرير بنجاح'
-        }
+    def _generate_pdf_file(self, template, data, instance_id):
+        """إنتاج ملف PDF"""
+        try:
+            # TODO: تنفيذ إنتاج PDF باستخدام ReportLab أو WeasyPrint
+            # حالياً سنرجع ملف HTML
+            return self._generate_html_file(template, data, instance_id)
+        except Exception as e:
+            logger.error(f"خطأ في إنتاج ملف PDF: {e}")
+            raise
+    
+    def _generate_html_file(self, template, data, instance_id):
+        """إنتاج ملف HTML"""
+        try:
+            # إنشاء محتوى HTML
+            context = {
+                'template': template,
+                'data': data,
+                'generated_at': timezone.now(),
+            }
+            
+            html_content = render_to_string('Hr/reports/report_template.html', context)
+            
+            # حفظ الملف
+            filename = f"report_{instance_id}.html"
+            file_path = f"reports/{filename}"
+            
+            saved_path = default_storage.save(
+                file_path, 
+                ContentFile(html_content.encode('utf-8'))
+            )
+            file_size = len(html_content.encode('utf-8'))
+            
+            return saved_path, file_size
+        except Exception as e:
+            logger.error(f"خطأ في إنتاج ملف HTML: {e}")
+            raise
+    
+    def _generate_json_file(self, template, data, instance_id):
+        """إنتاج ملف JSON"""
+        try:
+            # إنشاء محتوى JSON
+            json_data = {
+                'template': {
+                    'name': template.name,
+                    'type': template.report_type,
+                    'generated_at': timezone.now().isoformat(),
+                },
+                'data': data
+            }
+            
+            json_content = json.dumps(json_data, ensure_ascii=False, indent=2)
+            
+            # حفظ الملف
+            filename = f"report_{instance_id}.json"
+            file_path = f"reports/{filename}"
+            
+            saved_path = default_storage.save(
+                file_path, 
+                ContentFile(json_content.encode('utf-8'))
+            )
+            file_size = len(json_content.encode('utf-8'))
+            
+            return saved_path, file_size
+        except Exception as e:
+            logger.error(f"خطأ في إنتاج ملف JSON: {e}")
+            raise
+    
+    def get_user_reports(self, user, limit=20):
+        """الحصول على تقارير المستخدم"""
+        try:
+            return ReportInstance.objects.filter(
+                created_by=user
+            ).select_related('template').order_by('-created_at')[:limit]
+        except Exception as e:
+            logger.error(f"خطأ في الحصول على تقارير المستخدم: {e}")
+            return []
+    
+    def add_to_favorites(self, user, template_id, parameters=None, name=None):
+        """إضافة تقرير للمفضلة"""
+        try:
+            template = ReportTemplate.objects.get(id=template_id)
+            favorite, created = ReportFavorite.objects.get_or_create(
+                user=user,
+                template=template,
+                defaults={
+                    'parameters': parameters or {},
+                    'name': name
+                }
+            )
+            return favorite
+        except Exception as e:
+            logger.error(f"خطأ في إضافة التقرير للمفضلة: {e}")
+            raise
+    
+    def get_user_favorites(self, user):
+        """الحصول على التقارير المفضلة للمستخدم"""
+        try:
+            return ReportFavorite.objects.filter(
+                user=user
+            ).select_related('template').order_by('-created_at')
+        except Exception as e:
+            logger.error(f"خطأ في الحصول على المفضلة: {e}")
+            return []
+    
+    def share_report(self, instance_id, shared_by, shared_with_ids, message=None, expires_days=30):
+        """مشاركة تقرير"""
+        try:
+            instance = ReportInstance.objects.get(id=instance_id)
+            
+            # فحص الصلاحيات
+            if instance.created_by != shared_by:
+                raise PermissionError("ليس لديك صلاحية لمشاركة هذا التقرير")
+            
+            expires_at = timezone.now() + timedelta(days=expires_days) if expires_days else None
+            
+            shares = []
+            for user_id in shared_with_ids:
+                try:
+                    shared_with = User.objects.get(id=user_id)
+                    share = ReportShare.objects.create(
+                        instance=instance,
+                        shared_by=shared_by,
+                        shared_with=shared_with,
+                        message=message,
+                        expires_at=expires_at
+                    )
+                    shares.append(share)
+                except User.DoesNotExist:
+                    continue
+            
+            return shares
+        except Exception as e:
+            logger.error(f"خطأ في مشاركة التقرير: {e}")
+            raise
 
 
-# Singleton instance
+# إنشاء مثيل الخدمة
 report_service = ReportService()

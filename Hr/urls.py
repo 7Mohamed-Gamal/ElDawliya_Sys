@@ -567,8 +567,8 @@ urlpatterns = [
     path('update-data/', update_data, name='update_data'),
     
     # ==================== REPORTS & ANALYTICS ====================
-    # Temporarily disabled due to package structure issues
-    # path('reports/', include('Hr.urls.reports_urls', namespace='reports')),
+    # نظام التقارير الشامل
+    path('reports/', include('Hr.urls.report_urls', namespace='reports')),
     
     # ==================== NOTIFICATIONS ====================
     path('notifications/', include('Hr.url_modules.notification_urls', namespace='notifications')),
