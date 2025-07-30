@@ -10,7 +10,18 @@ from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 from django.utils import timezone
 from Hr.services.monitoring_service import monitoring_service
-from Hr.decorators.query_decorators import cache_query_result, monitor_query_performance
+# from Hr.decorators.query_decorators import cache_query_result, monitor_query_performance
+
+# Temporary decorators until the module is fixed
+def cache_query_result(timeout=300, key_prefix='query', vary_on=None):
+    def decorator(func):
+        return func
+    return decorator
+
+def monitor_query_performance():
+    def decorator(func):
+        return func
+    return decorator
 import json
 
 

@@ -67,24 +67,11 @@ urlpatterns = [
     path('', dashboard, name='dashboard'),
     path('dashboard/', dashboard, name='dashboard_alt'),
 
-    # Employee patterns
-    path('employees/', employee_list, name='employee_list'),
-    path('employees/ajax/', employee_list_ajax, name='employee_list_ajax'),
-    path('employees/create/', employee_create, name='employee_create'),
-    path('employees/<int:emp_id>/', employee_detail, name='employee_detail'),
-    path('employees/<int:emp_id>/edit/', employee_edit, name='employee_edit'),
-    path('employees/<int:emp_id>/delete/', employee_delete, name='employee_delete'),
-    path('employees/<int:emp_id>/print/', employee_print, name='employee_print'),
-    path('employees/search/', employee_search, name='employee_search'),
-    path('employees/export/', employee_export, name='employee_export'),
+    # Employee patterns with namespace
+    path('employees/', include('Hr.url_modules.employee_urls', namespace='employees')),
 
-    # Department patterns
-    path('departments/', department_list, name='department_list'),
-    path('departments/create/', department_create, name='department_create'),
-    path('departments/<int:dept_code>/', department_detail, name='department_detail'),
-    path('departments/<int:dept_code>/edit/', department_edit, name='department_edit'),
-    path('departments/<int:dept_code>/delete/', department_delete, name='department_delete'),
-    path('departments/<int:dept_code>/performance/', department_performance, name='department_performance'),
+    # Department patterns with namespace
+    path('departments/', include('Hr.url_modules.department_urls', namespace='departments')),
 
     # Job patterns
     path('jobs/', job_list, name='job_list'),
@@ -94,25 +81,8 @@ urlpatterns = [
     path('jobs/<int:jop_code>/delete/', job_delete, name='job_delete'),
     path('jobs/next_code/', get_next_job_code, name='get_next_job_code'),
 
-    # Salary patterns
-    path('salary/', salary_item_list, name='salary_item_list'),
-    path('salary/create/', salary_item_create, name='salary_item_create'),
-    path('salary/<int:pk>/', salary_item_edit, name='salary_item_edit'),
-    path('salary/<int:pk>/delete/', salary_item_delete, name='salary_item_delete'),
-    path('salary/employee/<int:emp_id>/', employee_salary_item_list, name='employee_salary_item_list'),
-    path('salary/employee/<int:emp_id>/create/', employee_salary_item_create, name='employee_salary_item_create'),
-    path('salary/employee/bulk_create/', employee_salary_item_bulk_create, name='employee_salary_item_bulk_create'),
-    path('salary/employee/item/<int:pk>/edit/', employee_salary_item_edit, name='employee_salary_item_edit'),
-    path('salary/employee/item/<int:pk>/delete/', employee_salary_item_delete, name='employee_salary_item_delete'),
-    path('salary/payroll/calculate/', payroll_calculate, name='payroll_calculate'),
-    path('salary/payroll/period/create/', payroll_period_create, name='payroll_period_create'),
-    path('salary/payroll/period/<int:period_id>/edit/', payroll_period_edit, name='payroll_period_edit'),
-    path('salary/payroll/period/<int:period_id>/delete/', payroll_period_delete, name='payroll_period_delete'),
-    path('salary/payroll/entry/list/', payroll_entry_list, name='payroll_entry_list'),
-    path('salary/payroll/entry/<int:entry_id>/detail/', payroll_entry_detail, name='payroll_entry_detail'),
-    path('salary/payroll/entry/<int:entry_id>/approve/', payroll_entry_approve, name='payroll_entry_approve'),
-    path('salary/payroll/entry/<int:entry_id>/reject/', payroll_entry_reject, name='payroll_entry_reject'),
-    path('salary/payroll/period/list/', payroll_period_list, name='payroll_period_list'),
+    # Salary patterns with namespace
+    path('salaries/', include('Hr.url_modules.salary_urls', namespace='salaries')),
 
     # Legacy Report patterns (temporarily disabled)
     # path('reports/', report_list, name='report_list'),
@@ -176,5 +146,8 @@ urlpatterns = [
     path('update_data/', update_data, name='update_data'),
     
     # نظام التقارير الشامل
-    path('reports/', include('Hr.report_urls', namespace='reports')),
+    path('reports/', include('Hr.report_urls')),
+    
+    # نظام مراقبة النظام
+    path('monitoring/', include('Hr.url_modules.monitoring_urls', namespace='monitoring')),
 ]

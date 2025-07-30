@@ -2,7 +2,6 @@
 خدمة مراقبة النظام المتقدمة
 """
 
-import psutil
 import os
 import time
 import logging
@@ -15,6 +14,14 @@ from django.utils import timezone
 from django.core.mail import send_mail
 from collections import defaultdict, deque
 import threading
+
+# محاولة استيراد psutil مع معالجة الخطأ
+try:
+    import psutil
+    PSUTIL_AVAILABLE = True
+except ImportError:
+    PSUTIL_AVAILABLE = False
+    psutil = None
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +91,17 @@ class SystemMonitoringService:
     
     def collect_system_metrics(self):
         """جمع مقاييس النظام"""
+        if not PSUTIL_AVAILABLE:
+            logger.warning("مكتبة psutil غير متاحة - سيتم استخدام قيم افتراضية")
+            return {
+                'cpu': {'usage_percent': 0, 'count': 1, 'frequency': None},
+                'memory': {'total': 0, 'available': 0, 'used': 0, 'usage_percent': 0, 'swap_total': 0, 'swap_used': 0, 'swap_percent': 0},
+                'disk': {'total': 0, 'used': 0, 'free': 0, 'usage_percent': 0, 'read_bytes': 0, 'write_bytes': 0},
+                'network': {'bytes_sent': 0, 'bytes_recv': 0, 'packets_sent': 0, 'packets_recv': 0},
+                'processes': {'count': 0},
+                'temperatures': {}
+            }
+        
         try:
             # معلومات المعالج
             cpu_percent = psutil.cpu_percent(interval=1)
@@ -156,6 +174,25 @@ class SystemMonitoringService:
     def collect_application_metrics(self):
         """جمع مقاييس التطبيق"""
         try:
+            # إحصائيات Django
+            django_stats = self._get_django_stats()
+            
+            if not PSUTIL_AVAILABLE:
+                return {
+                    'process': {
+                        'pid': os.getpid(),
+                        'memory_rss': 0,
+                        'memory_vms': 0,
+                        'memory_percent': 0,
+                        'cpu_percent': 0,
+                        'thread_count': 0,
+                        'open_files': 0,
+                        'connections': 0,
+                        'create_time': 0
+                    },
+                    'django': django_stats
+                }
+            
             # معلومات العملية الحالية
             current_process = psutil.Process(os.getpid())
             
@@ -180,9 +217,6 @@ class SystemMonitoringService:
                 connections = len(current_process.connections())
             except:
                 connections = 0
-            
-            # إحصائيات Django
-            django_stats = self._get_django_stats()
             
             return {
                 'process': {
