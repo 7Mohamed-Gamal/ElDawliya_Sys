@@ -4,7 +4,11 @@
 
 import os
 import json
-import pandas as pd
+try:
+    import pandas as pd
+    PANDAS_AVAILABLE = True
+except ImportError:
+    PANDAS_AVAILABLE = False
 from datetime import datetime, timedelta
 from django.conf import settings
 from django.template.loader import render_to_string
@@ -358,16 +362,33 @@ class ExportService:
     def _export_to_csv(self, data, template_name, metadata):
         """تصدير إلى CSV"""
         try:
-            if isinstance(data, list) and data:
-                df = pd.DataFrame(data)
-            else:
-                df = pd.DataFrame()
-            
             buffer = BytesIO()
-            csv_content = df.to_csv(index=False, encoding='utf-8-sig')
-            buffer.write(csv_content.encode('utf-8-sig'))
-            buffer.seek(0)
             
+            if PANDAS_AVAILABLE and isinstance(data, list) and data:
+                # استخدام pandas إذا كان متاحاً
+                df = pd.DataFrame(data)
+                csv_content = df.to_csv(index=False, encoding='utf-8-sig')
+                buffer.write(csv_content.encode('utf-8-sig'))
+            else:
+                # إنشاء CSV يدوياً بدون pandas
+                import csv
+                from io import StringIO
+                
+                if data and isinstance(data[0], dict):
+                    # كتابة CSV يدوياً
+                    csv_buffer = StringIO()
+                    headers = list(data[0].keys())
+                    
+                    writer = csv.DictWriter(csv_buffer, fieldnames=headers)
+                    writer.writeheader()
+                    writer.writerows(data)
+                    
+                    csv_content = csv_buffer.getvalue()
+                    buffer.write(csv_content.encode('utf-8-sig'))
+                else:
+                    buffer.write("لا توجد بيانات".encode('utf-8-sig'))
+            
+            buffer.seek(0)
             return buffer.getvalue(), 'text/csv'
             
         except Exception as e:

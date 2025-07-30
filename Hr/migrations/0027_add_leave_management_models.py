@@ -136,7 +136,7 @@ class Migration(migrations.Migration):
                 ('updated_at', models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')),
                 ('assigned_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL, verbose_name='معين بواسطة')),
                 ('employee', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='shift_assignments', to='Hr.employee', verbose_name='الموظف')),
-                ('shift', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='employee_assignments', to='Hr.workshiftenhanced', verbose_name='الوردية')),
+                ('shift', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='employee_assignments', to='Hr.workshift', verbose_name='الوردية')),
             ],
             options={
                 'verbose_name': 'تعيين وردية الموظف',

@@ -3,15 +3,18 @@
 """
 
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.postgres.search import SearchVector, SearchQuery, SearchRank
 from django.contrib.postgres.indexes import GinIndex
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
+from django.conf import settings
 import uuid
 import json
+
+User = get_user_model()
 
 
 class SearchIndex(models.Model):

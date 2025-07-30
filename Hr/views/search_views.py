@@ -19,7 +19,7 @@ from ..models_search import (
     SearchFilter, SmartSearchPattern
 )
 from ..services.search_service import AdvancedSearchService, SearchIndexManager
-from ..models_enhanced import Company, Department
+from ..models import Company, Department
 
 
 @login_required

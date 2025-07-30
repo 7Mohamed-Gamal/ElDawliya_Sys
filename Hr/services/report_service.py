@@ -4,7 +4,11 @@
 
 import os
 import json
-import pandas as pd
+try:
+    import pandas as pd
+    PANDAS_AVAILABLE = True
+except ImportError:
+    PANDAS_AVAILABLE = False
 from datetime import datetime, timedelta
 from django.db import models
 from django.db.models import Q, Count, Sum, Avg, Max, Min
@@ -24,7 +28,15 @@ from ..models_reports import (
     ReportCategory, ReportTemplate, ReportInstance, 
     ScheduledReport, ReportFavorite, ReportShare
 )
-from ..models_enhanced import AttendanceRecord, LeaveRequest, PayrollRecord
+# استيراد النماذج المتاحة
+try:
+    from ..models_enhanced import AttendanceRecord, LeaveRequest
+except ImportError:
+    AttendanceRecord = None
+    LeaveRequest = None
+
+# PayrollRecord سيتم إنشاؤه لاحقاً
+PayrollRecord = None
 
 logger = logging.getLogger(__name__)
 
@@ -200,6 +212,9 @@ class ReportService:
     def _generate_attendance_report(self, template, parameters):
         """إنتاج تقرير الحضور"""
         try:
+            if not AttendanceRecord:
+                return []  # إرجاع قائمة فارغة إذا لم يكن النموذج متاحاً
+            
             # الحصول على تاريخ البداية والنهاية
             date_from = parameters.get('date_from', timezone.now().date() - timedelta(days=30))
             date_to = parameters.get('date_to', timezone.now().date())
@@ -243,6 +258,9 @@ class ReportService:
     def _generate_payroll_report(self, template, parameters):
         """إنتاج تقرير الرواتب"""
         try:
+            if not PayrollRecord:
+                return []  # إرجاع قائمة فارغة إذا لم يكن النموذج متاحاً
+            
             # الحصول على الشهر والسنة
             month = parameters.get('month', timezone.now().month)
             year = parameters.get('year', timezone.now().year)
@@ -297,6 +315,9 @@ class ReportService:
     def _generate_leave_report(self, template, parameters):
         """إنتاج تقرير الإجازات"""
         try:
+            if not LeaveRequest:
+                return []  # إرجاع قائمة فارغة إذا لم يكن النموذج متاحاً
+            
             # الحصول على تاريخ البداية والنهاية
             date_from = parameters.get('date_from', timezone.now().date() - timedelta(days=365))
             date_to = parameters.get('date_to', timezone.now().date())
@@ -422,6 +443,9 @@ class ReportService:
     def _generate_excel_file(self, template, data, instance_id):
         """إنتاج ملف Excel"""
         try:
+            if not PANDAS_AVAILABLE:
+                raise ImportError("مكتبة pandas غير متاحة")
+            
             # إنشاء DataFrame
             df = pd.DataFrame(data)
             
@@ -446,12 +470,30 @@ class ReportService:
     def _generate_csv_file(self, template, data, instance_id):
         """إنتاج ملف CSV"""
         try:
-            # إنشاء DataFrame
-            df = pd.DataFrame(data)
-            
-            # إنشاء ملف CSV في الذاكرة
-            buffer = BytesIO()
-            df.to_csv(buffer, index=False, encoding='utf-8-sig')
+            if not PANDAS_AVAILABLE:
+                # إنشاء CSV يدوياً بدون pandas
+                import csv
+                buffer = BytesIO()
+                
+                if data and isinstance(data[0], dict):
+                    # كتابة CSV يدوياً
+                    csv_content = ""
+                    headers = list(data[0].keys())
+                    csv_content += ",".join(headers) + "\n"
+                    
+                    for row in data:
+                        csv_content += ",".join([str(row.get(col, '')) for col in headers]) + "\n"
+                    
+                    buffer.write(csv_content.encode('utf-8-sig'))
+                else:
+                    buffer.write("لا توجد بيانات".encode('utf-8-sig'))
+            else:
+                # إنشاء DataFrame
+                df = pd.DataFrame(data)
+                
+                # إنشاء ملف CSV في الذاكرة
+                csv_content = df.to_csv(index=False, encoding='utf-8-sig')
+                buffer.write(csv_content.encode('utf-8-sig'))
             
             # حفظ الملف
             filename = f"report_{instance_id}.csv"
