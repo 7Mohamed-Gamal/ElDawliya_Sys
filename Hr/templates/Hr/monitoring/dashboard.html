@@ -1,0 +1,566 @@
+{% extends 'Hr/base_hr_modern.html' %}
+{% load static %}
+
+{% block title %}لوحة تحكم مراقبة النظام{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'Hr/css/monitoring.css' %}">
+<style>
+.monitoring-dashboard {
+    padding: 20px;
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.metric-card {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border-right: 4px solid #007bff;
+}
+
+.metric-card.warning {
+    border-right-color: #ffc107;
+}
+
+.metric-card.critical {
+    border-right-color: #dc3545;
+}
+
+.metric-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.metric-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.metric-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #007bff;
+}
+
+.metric-value.warning {
+    color: #ffc107;
+}
+
+.metric-value.critical {
+    color: #dc3545;
+}
+
+.metric-subtitle {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.health-score {
+    text-align: center;
+    padding: 30px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    margin-bottom: 30px;
+}
+
+.health-score-value {
+    font-size: 4rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.health-status {
+    font-size: 1.2rem;
+    opacity: 0.9;
+}
+
+.alerts-section {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+}
+
+.alert-item {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+}
+
+.alert-item.critical {
+    background-color: #f8d7da;
+    border-right: 4px solid #dc3545;
+}
+
+.alert-item.warning {
+    background-color: #fff3cd;
+    border-right: 4px solid #ffc107;
+}
+
+.progress-ring {
+    transform: rotate(-90deg);
+}
+
+.progress-ring-circle {
+    transition: stroke-dashoffset 0.35s;
+    transform-origin: 50% 50%;
+}
+
+.auto-refresh {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 10px 15px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+}
+
+.charts-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 20px;
+    margin-top: 30px;
+}
+
+.chart-card {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="monitoring-dashboard">
+    <!-- Auto Refresh Indicator -->
+    <div class="auto-refresh" id="refreshIndicator">
+        <i class="fas fa-sync-alt fa-spin"></i> تحديث تلقائي
+    </div>
+
+    <!-- Health Score -->
+    <div class="health-score">
+        <div class="health-score-value" id="healthScore">{{ health_score|floatformat:1 }}</div>
+        <div class="health-status" id="healthStatus">
+            {% if health_score >= 90 %}ممتاز
+            {% elif health_score >= 70 %}جيد
+            {% elif health_score >= 50 %}متوسط
+            {% else %}ضعيف
+            {% endif %}
+        </div>
+        <div style="margin-top: 15px;">
+            <svg width="200" height="200" class="progress-ring">
+                <circle
+                    class="progress-ring-circle"
+                    stroke="#ffffff40"
+                    stroke-width="8"
+                    fill="transparent"
+                    r="90"
+                    cx="100"
+                    cy="100"/>
+                <circle
+                    class="progress-ring-circle"
+                    stroke="#ffffff"
+                    stroke-width="8"
+                    fill="transparent"
+                    r="90"
+                    cx="100"
+                    cy="100"
+                    stroke-dasharray="565.48"
+                    stroke-dashoffset="{{ health_score|floatformat:0|add:'-100'|mul:'-5.6548' }}"
+                    id="healthCircle"/>
+            </svg>
+        </div>
+    </div>
+
+    <!-- System Metrics -->
+    <div class="metrics-grid" id="metricsGrid">
+        {% if current_metrics.system %}
+            <!-- CPU Usage -->
+            <div class="metric-card {% if current_metrics.system.cpu.usage_percent >= 90 %}critical{% elif current_metrics.system.cpu.usage_percent >= 80 %}warning{% endif %}">
+                <div class="metric-header">
+                    <div class="metric-title">
+                        <i class="fas fa-microchip"></i> استخدام المعالج
+                    </div>
+                </div>
+                <div class="metric-value {% if current_metrics.system.cpu.usage_percent >= 90 %}critical{% elif current_metrics.system.cpu.usage_percent >= 80 %}warning{% endif %}">
+                    {{ current_metrics.system.cpu.usage_percent|floatformat:1 }}%
+                </div>
+                <div class="metric-subtitle">
+                    {{ current_metrics.system.cpu.count }} نواة
+                </div>
+            </div>
+
+            <!-- Memory Usage -->
+            <div class="metric-card {% if current_metrics.system.memory.usage_percent >= 95 %}critical{% elif current_metrics.system.memory.usage_percent >= 85 %}warning{% endif %}">
+                <div class="metric-header">
+                    <div class="metric-title">
+                        <i class="fas fa-memory"></i> استخدام الذاكرة
+                    </div>
+                </div>
+                <div class="metric-value {% if current_metrics.system.memory.usage_percent >= 95 %}critical{% elif current_metrics.system.memory.usage_percent >= 85 %}warning{% endif %}">
+                    {{ current_metrics.system.memory.usage_percent|floatformat:1 }}%
+                </div>
+                <div class="metric-subtitle">
+                    {{ current_metrics.system.memory.used|filesizeformat }} / {{ current_metrics.system.memory.total|filesizeformat }}
+                </div>
+            </div>
+
+            <!-- Disk Usage -->
+            <div class="metric-card {% if current_metrics.system.disk.usage_percent >= 95 %}critical{% elif current_metrics.system.disk.usage_percent >= 90 %}warning{% endif %}">
+                <div class="metric-header">
+                    <div class="metric-title">
+                        <i class="fas fa-hdd"></i> استخدام القرص
+                    </div>
+                </div>
+                <div class="metric-value {% if current_metrics.system.disk.usage_percent >= 95 %}critical{% elif current_metrics.system.disk.usage_percent >= 90 %}warning{% endif %}">
+                    {{ current_metrics.system.disk.usage_percent|floatformat:1 }}%
+                </div>
+                <div class="metric-subtitle">
+                    {{ current_metrics.system.disk.used|filesizeformat }} / {{ current_metrics.system.disk.total|filesizeformat }}
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Active Alerts -->
+        <div class="metric-card {% if critical_alerts_count > 0 %}critical{% elif warning_alerts_count > 0 %}warning{% endif %}">
+            <div class="metric-header">
+                <div class="metric-title">
+                    <i class="fas fa-exclamation-triangle"></i> التنبيهات النشطة
+                </div>
+            </div>
+            <div class="metric-value {% if critical_alerts_count > 0 %}critical{% elif warning_alerts_count > 0 %}warning{% endif %}">
+                {{ active_alerts|length }}
+            </div>
+            <div class="metric-subtitle">
+                {{ critical_alerts_count }} حرج، {{ warning_alerts_count }} تحذير
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Alerts -->
+    {% if active_alerts %}
+    <div class="alerts-section">
+        <h3><i class="fas fa-bell"></i> التنبيهات النشطة</h3>
+        <div id="alertsList">
+            {% for alert in active_alerts %}
+            <div class="alert-item {{ alert.severity }}">
+                <div>
+                    <strong>{{ alert.type }}</strong>: {{ alert.message }}
+                    <small class="text-muted d-block">{{ alert.timestamp }}</small>
+                </div>
+                <button class="btn btn-sm btn-outline-secondary" onclick="acknowledgeAlert('{{ alert.id }}')">
+                    إقرار
+                </button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Charts -->
+    <div class="charts-container">
+        <div class="chart-card">
+            <h4>استخدام المعالج (آخر 24 ساعة)</h4>
+            <canvas id="cpuChart" width="400" height="200"></canvas>
+        </div>
+        <div class="chart-card">
+            <h4>استخدام الذاكرة (آخر 24 ساعة)</h4>
+            <canvas id="memoryChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+
+    <!-- Daily Summary -->
+    {% if daily_summary %}
+    <div class="alerts-section">
+        <h3><i class="fas fa-chart-line"></i> الملخص اليومي</h3>
+        <div class="row">
+            <div class="col-md-3">
+                <div class="text-center">
+                    <h4>{{ daily_summary.samples_count }}</h4>
+                    <small>عينة</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <h4>{{ daily_summary.system.cpu_avg|floatformat:1 }}%</h4>
+                    <small>متوسط المعالج</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <h4>{{ daily_summary.system.memory_avg|floatformat:1 }}%</h4>
+                    <small>متوسط الذاكرة</small>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="text-center">
+                    <h4>{{ daily_summary.alerts_count }}</h4>
+                    <small>تنبيه</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let refreshInterval;
+let cpuChart, memoryChart;
+
+// Initialize charts
+function initCharts() {
+    const cpuCtx = document.getElementById('cpuChart').getContext('2d');
+    const memoryCtx = document.getElementById('memoryChart').getContext('2d');
+    
+    cpuChart = new Chart(cpuCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'استخدام المعالج %',
+                data: [],
+                borderColor: '#007bff',
+                backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+    
+    memoryChart = new Chart(memoryCtx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'استخدام الذاكرة %',
+                data: [],
+                borderColor: '#28a745',
+                backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100
+                }
+            }
+        }
+    });
+}
+
+// Update metrics
+function updateMetrics() {
+    fetch('/hr/monitoring/api/current-metrics/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateMetricsDisplay(data.data);
+                updateCharts(data.data);
+            }
+        })
+        .catch(error => console.error('Error updating metrics:', error));
+    
+    // Update health score
+    fetch('/hr/monitoring/api/health-score/')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateHealthScore(data.data);
+            }
+        })
+        .catch(error => console.error('Error updating health score:', error));
+}
+
+// Update metrics display
+function updateMetricsDisplay(metrics) {
+    if (metrics.system) {
+        // Update CPU
+        if (metrics.system.cpu) {
+            const cpuElement = document.querySelector('.metric-card .metric-value');
+            if (cpuElement) {
+                cpuElement.textContent = metrics.system.cpu.usage_percent.toFixed(1) + '%';
+                updateCardStatus(cpuElement.closest('.metric-card'), metrics.system.cpu.usage_percent, 80, 90);
+            }
+        }
+        
+        // Update Memory
+        if (metrics.system.memory) {
+            const memoryElements = document.querySelectorAll('.metric-card .metric-value');
+            if (memoryElements[1]) {
+                memoryElements[1].textContent = metrics.system.memory.usage_percent.toFixed(1) + '%';
+                updateCardStatus(memoryElements[1].closest('.metric-card'), metrics.system.memory.usage_percent, 85, 95);
+            }
+        }
+        
+        // Update Disk
+        if (metrics.system.disk) {
+            const diskElements = document.querySelectorAll('.metric-card .metric-value');
+            if (diskElements[2]) {
+                diskElements[2].textContent = metrics.system.disk.usage_percent.toFixed(1) + '%';
+                updateCardStatus(diskElements[2].closest('.metric-card'), metrics.system.disk.usage_percent, 90, 95);
+            }
+        }
+    }
+}
+
+// Update card status based on thresholds
+function updateCardStatus(card, value, warningThreshold, criticalThreshold) {
+    card.classList.remove('warning', 'critical');
+    const valueElement = card.querySelector('.metric-value');
+    valueElement.classList.remove('warning', 'critical');
+    
+    if (value >= criticalThreshold) {
+        card.classList.add('critical');
+        valueElement.classList.add('critical');
+    } else if (value >= warningThreshold) {
+        card.classList.add('warning');
+        valueElement.classList.add('warning');
+    }
+}
+
+// Update health score
+function updateHealthScore(healthData) {
+    const scoreElement = document.getElementById('healthScore');
+    const statusElement = document.getElementById('healthStatus');
+    const circleElement = document.getElementById('healthCircle');
+    
+    if (scoreElement) {
+        scoreElement.textContent = healthData.score.toFixed(1);
+    }
+    
+    if (statusElement) {
+        statusElement.textContent = healthData.status_text;
+    }
+    
+    if (circleElement) {
+        const offset = 565.48 - (healthData.score / 100) * 565.48;
+        circleElement.style.strokeDashoffset = offset;
+    }
+}
+
+// Update charts
+function updateCharts(metrics) {
+    const now = new Date().toLocaleTimeString();
+    
+    if (metrics.system && cpuChart && memoryChart) {
+        // CPU Chart
+        if (metrics.system.cpu) {
+            cpuChart.data.labels.push(now);
+            cpuChart.data.datasets[0].data.push(metrics.system.cpu.usage_percent);
+            
+            // Keep only last 20 points
+            if (cpuChart.data.labels.length > 20) {
+                cpuChart.data.labels.shift();
+                cpuChart.data.datasets[0].data.shift();
+            }
+            
+            cpuChart.update('none');
+        }
+        
+        // Memory Chart
+        if (metrics.system.memory) {
+            memoryChart.data.labels.push(now);
+            memoryChart.data.datasets[0].data.push(metrics.system.memory.usage_percent);
+            
+            // Keep only last 20 points
+            if (memoryChart.data.labels.length > 20) {
+                memoryChart.data.labels.shift();
+                memoryChart.data.datasets[0].data.shift();
+            }
+            
+            memoryChart.update('none');
+        }
+    }
+}
+
+// Acknowledge alert
+function acknowledgeAlert(alertId) {
+    fetch('/hr/monitoring/api/acknowledge-alert/', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        },
+        body: JSON.stringify({
+            alert_id: alertId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload(); // Refresh to update alerts
+        } else {
+            alert('خطأ في الإقرار بالتنبيه: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error acknowledging alert:', error);
+        alert('خطأ في الإقرار بالتنبيه');
+    });
+}
+
+// Start auto refresh
+function startAutoRefresh() {
+    refreshInterval = setInterval(updateMetrics, 30000); // Every 30 seconds
+}
+
+// Stop auto refresh
+function stopAutoRefresh() {
+    if (refreshInterval) {
+        clearInterval(refreshInterval);
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    initCharts();
+    startAutoRefresh();
+    
+    // Stop refresh when page is hidden
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            stopAutoRefresh();
+        } else {
+            startAutoRefresh();
+        }
+    });
+});
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+    stopAutoRefresh();
+});
+</script>
+{% endblock %}
