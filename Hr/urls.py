@@ -73,22 +73,26 @@ urlpatterns = [
     # Department patterns with namespace
     path('departments/', include('Hr.url_modules.department_urls', namespace='departments')),
 
-    # Job patterns
-    path('jobs/', job_list, name='job_list'),
-    path('jobs/create/', job_create, name='job_create'),
-    path('jobs/<int:jop_code>/', job_detail, name='job_detail'),
-    path('jobs/<int:jop_code>/edit/', job_edit, name='job_edit'),
-    path('jobs/<int:jop_code>/delete/', job_delete, name='job_delete'),
-    path('jobs/next_code/', get_next_job_code, name='get_next_job_code'),
+    # Job patterns with namespace
+    path('jobs/', include('Hr.url_modules.job_urls', namespace='jobs')),
 
     # Salary patterns with namespace
     path('salaries/', include('Hr.url_modules.salary_urls', namespace='salaries')),
+    
+    # Salary components patterns with namespace
+    path('salary-components/', include('Hr.url_modules.salary_component_urls', namespace='salary_components')),
 
-    # Legacy Report patterns (temporarily disabled)
-    # path('reports/', report_list, name='report_list'),
-    # path('reports/<str:report_type>/', report_detail, name='report_detail'),
-    # path('reports/monthly_salary/', monthly_salary_report, name='monthly_salary_report'),
-    # path('reports/employee_report/', employee_report, name='employee_report'),
+    # Search patterns with namespace
+    path('search/', include('Hr.url_modules.search_urls', namespace='search')),
+    
+    # Reports patterns with namespace
+    path('reports/', include('Hr.url_modules.reports_urls', namespace='reports')),
+    
+    # Notifications patterns with namespace
+    path('notifications/', include('Hr.url_modules.notification_urls', namespace='notifications')),
+    
+    # Integrations patterns with namespace
+    path('integrations/', include('Hr.url_modules.integration_urls', namespace='integrations')),
 
     # Analytics patterns
     path('analytics/', analytics_dashboard, name='analytics_dashboard'),
@@ -113,40 +117,11 @@ urlpatterns = [
     path('notes/<int:note_id>/delete/', employee_note_delete, name='employee_note_delete'),
     path('notes/reports/', employee_notes_reports, name='employee_notes_reports'),
 
-    # Attendance patterns
-    path('attendance/rules/', attendance_rule_list, name='attendance_rule_list'),
-    path('attendance/rules/create/', attendance_rule_create, name='attendance_rule_create'),
-    path('attendance/rules/<int:rule_id>/edit/', attendance_rule_edit, name='attendance_rule_edit'),
-    path('attendance/rules/<int:rule_id>/delete/', attendance_rule_delete, name='attendance_rule_delete'),
-    path('attendance/employee-rules/', employee_attendance_rule_list, name='employee_attendance_rule_list'),
-    path('attendance/employee-rules/create/', employee_attendance_rule_create, name='employee_attendance_rule_create'),
-    path('attendance/employee-rules/<int:rule_id>/edit/', employee_attendance_rule_edit, name='employee_attendance_rule_edit'),
-    path('attendance/employee-rules/<int:rule_id>/delete/', employee_attendance_rule_delete, name='employee_attendance_rule_delete'),
-    path('attendance/employee-rules/bulk-create/', employee_attendance_rule_bulk_create, name='employee_attendance_rule_bulk_create'),
-    path('attendance/holidays/', official_holiday_list, name='official_holiday_list'),
-    path('attendance/holidays/create/', official_holiday_create, name='official_holiday_create'),
-    path('attendance/holidays/<int:holiday_id>/edit/', official_holiday_edit, name='official_holiday_edit'),
-    path('attendance/holidays/<int:holiday_id>/delete/', official_holiday_delete, name='official_holiday_delete'),
-    path('attendance/machines/', attendance_machine_list, name='attendance_machine_list'),
-    path('attendance/machines/create/', attendance_machine_create, name='attendance_machine_create'),
-    path('attendance/machines/<int:machine_id>/edit/', attendance_machine_edit, name='attendance_machine_edit'),
-    path('attendance/machines/<int:machine_id>/delete/', attendance_machine_delete, name='attendance_machine_delete'),
-    path('attendance/records/', attendance_record_list, name='attendance_record_list'),
-    path('attendance/records/create/', attendance_record_create, name='attendance_record_create'),
-    path('attendance/records/<int:record_id>/edit/', attendance_record_edit, name='attendance_record_edit'),
-    path('attendance/records/<int:record_id>/delete/', attendance_record_delete, name='attendance_record_delete'),
-    path('attendance/summary/', attendance_summary_list, name='attendance_summary_list'),
-    path('attendance/zk-device/', zk_device_connection, name='zk_device_connection'),
-    path('attendance/fetch-data/', fetch_attendance_data, name='fetch_attendance_data'),
-    path('attendance/ajax/test-zk-connection/', test_zk_connection, name='test_zk_connection'),
-    path('attendance/ajax/fetch-zk-records/', fetch_zk_records_ajax, name='fetch_zk_records_ajax'),
-    path('attendance/ajax/save-zk-records/', save_zk_records_to_db, name='save_zk_records_to_db'),
+    # Attendance patterns with namespace
+    path('attendance/', include('Hr.url_modules.attendance_urls', namespace='attendance')),
 
     # Update data
     path('update_data/', update_data, name='update_data'),
-    
-    # نظام التقارير الشامل
-    path('reports/', include('Hr.report_urls')),
     
     # نظام مراقبة النظام
     path('monitoring/', include('Hr.url_modules.monitoring_urls', namespace='monitoring')),

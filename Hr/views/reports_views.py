@@ -11,10 +11,7 @@ from django.utils import timezone
 from datetime import datetime, timedelta
 import json
 
-from Hr.models.employee.employee_models import Employee
-from Hr.models.organization.department_models import Department
-from Hr.models.organization.position_models import Position
-from Hr.models.organization.branch_models import Branch
+from Hr.models import Employee, Department, JobPosition, Branch
 from Hr.services.report_service import ReportService
 from Hr.decorators import hr_required
 
@@ -29,7 +26,7 @@ def analytics_dashboard(request):
         'employee_count': Employee.objects.filter(is_active=True).count(),
         'departments': Department.objects.filter(is_active=True),
         'branches': Branch.objects.filter(is_active=True),
-        'positions': Position.objects.filter(is_active=True),
+        'positions': JobPosition.objects.filter(is_active=True),
     }
     
     return render(request, 'Hr/analytics/analytics_dashboard.html', context)
@@ -44,7 +41,7 @@ def employee_reports(request):
     context = {
         'departments': Department.objects.filter(is_active=True),
         'branches': Branch.objects.filter(is_active=True),
-        'positions': Position.objects.filter(is_active=True),
+        'positions': JobPosition.objects.filter(is_active=True),
     }
     
     return render(request, 'Hr/reports/employee_reports.html', context)

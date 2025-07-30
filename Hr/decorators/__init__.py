@@ -35,3 +35,24 @@ def hr_module_permission_required(module_name=None, action=None):
 
 # Alias للتوافق مع الكود الموجود
 hr_permission_required = hr_module_permission_required
+
+def hr_required(view_func):
+    """
+    Decorator بسيط للتحقق من الوصول لنظام الموارد البشرية
+    """
+    @wraps(view_func)
+    @login_required
+    def _wrapped_view(request, *args, **kwargs):
+        # التحقق من أن المستخدم لديه صلاحية الوصول لنظام الموارد البشرية
+        if request.user.is_superuser or request.user.is_staff:
+            return view_func(request, *args, **kwargs)
+        
+        # التحقق من الصلاحيات العادية
+        if request.user.has_perm('Hr.view_employee') or \
+           request.user.has_perm('Hr.change_employee'):
+            return view_func(request, *args, **kwargs)
+        
+        messages.error(request, 'ليس لديك صلاحية للوصول إلى نظام الموارد البشرية')
+        return redirect('admin:index')
+    
+    return _wrapped_view

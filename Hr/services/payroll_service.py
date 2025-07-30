@@ -627,3 +627,5 @@ class PayrollService:
         # This would generate HTML payslip
         # For now, return empty string
         return ''
+# Create a global instance for easy import
+payroll_service = PayrollService()
