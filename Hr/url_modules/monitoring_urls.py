@@ -1,39 +1,39 @@
 """
-URLs خاصة بمراقبة النظام
+روابط مراقبة النظام
 """
 
 from django.urls import path
-from ..views.monitoring_views import (
+from Hr.views.monitoring_views import (
     SystemMonitoringDashboard,
-    get_current_metrics_api,
-    get_metrics_history_api,
-    get_alerts_api,
-    acknowledge_alert_api,
-    get_health_score_api,
-    get_daily_summary_api,
-    SystemMetricsDetailView,
-    AlertsManagementView,
-    system_performance_report,
-    export_metrics_data
+    SystemStatusAPI,
+    SystemAlertsAPI,
+    MonitoringHistoryAPI,
+    SystemMetricsAPI,
+    TriggerSystemCheckAPI,
+    ClearAlertsAPI,
+    MonitoringSettingsAPI,
+    monitoring_dashboard_view,
+    system_logs_view,
+    performance_report_view
 )
 
 app_name = 'monitoring'
 
 urlpatterns = [
-    # Dashboard
-    path('', SystemMonitoringDashboard.as_view(), name='dashboard'),
+    # لوحة تحكم المراقبة
+    path('', monitoring_dashboard_view, name='dashboard'),
+    path('dashboard/', SystemMonitoringDashboard.as_view(), name='dashboard_class'),
+    
+    # السجلات والتقارير
+    path('logs/', system_logs_view, name='logs'),
+    path('performance/', performance_report_view, name='performance_report'),
     
     # API endpoints
-    path('api/current-metrics/', get_current_metrics_api, name='current_metrics_api'),
-    path('api/metrics-history/', get_metrics_history_api, name='metrics_history_api'),
-    path('api/alerts/', get_alerts_api, name='alerts_api'),
-    path('api/acknowledge-alert/', acknowledge_alert_api, name='acknowledge_alert_api'),
-    path('api/health-score/', get_health_score_api, name='health_score_api'),
-    path('api/daily-summary/', get_daily_summary_api, name='daily_summary_api'),
-    
-    # Detail views
-    path('metrics/<str:category>/', SystemMetricsDetailView.as_view(), name='metrics_detail'),
-    path('alerts/', AlertsManagementView.as_view(), name='alerts_management'),
-    path('report/', system_performance_report, name='performance_report'),
-    path('export/', export_metrics_data, name='export_data'),
+    path('api/status/', SystemStatusAPI.as_view(), name='api_status'),
+    path('api/alerts/', SystemAlertsAPI.as_view(), name='api_alerts'),
+    path('api/alerts/clear/', ClearAlertsAPI.as_view(), name='api_clear_alerts'),
+    path('api/history/', MonitoringHistoryAPI.as_view(), name='api_history'),
+    path('api/metrics/', SystemMetricsAPI.as_view(), name='api_metrics'),
+    path('api/check/', TriggerSystemCheckAPI.as_view(), name='api_trigger_check'),
+    path('api/settings/', MonitoringSettingsAPI.as_view(), name='api_settings'),
 ]

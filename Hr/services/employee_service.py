@@ -1,5 +1,6 @@
 """
 Employee Service - خدمات إدارة الموظفين الشاملة المحسنة
+يوفر جميع العمليات المتعلقة بإدارة الموظفين مع دعم النماذج المحسنة والموسعة
 """
 
 from django.db import transaction, models
@@ -7,12 +8,19 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from django.conf import settings
 from django.core.cache import cache
-from django.db.models import Q, Count, Sum, Avg, F, Case, When
+from django.db.models import Q, Count, Sum, Avg, F, Case, When, Prefetch
+from django.contrib.auth.hashers import check_password
 from decimal import Decimal
 from datetime import date, datetime, timedelta
 import logging
 import json
 import hashlib
+# import pandas as pd
+# from openpyxl import Workbook
+# from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+# from io import BytesIO
+import csv
+from io import StringIO
 
 logger = logging.getLogger('hr_system')
 

@@ -9,7 +9,7 @@ from django.core.validators import RegexValidator
 from django.conf import settings
 
 
-class EmployeeEmergencyContact(models.Model):
+class EmployeeEmergencyContactEnhanced(models.Model):
     """
     Employee Emergency Contact model
     Stores emergency contact information for employees
@@ -17,7 +17,7 @@ class EmployeeEmergencyContact(models.Model):
     
     # Relationship to Employee
     employee = models.ForeignKey(
-        'Employee',
+        'EmployeeEnhanced',
         on_delete=models.CASCADE,
         related_name='emergency_contacts',
         verbose_name=_("الموظف")
@@ -265,7 +265,7 @@ class EmployeeEmergencyContact(models.Model):
         
         # Ensure only one primary contact per employee
         if self.is_primary:
-            existing_primary = EmployeeEmergencyContact.objects.filter(
+            existing_primary = EmployeeEmergencyContactEnhanced.objects.filter(
                 employee=self.employee,
                 is_primary=True
             ).exclude(pk=self.pk)
@@ -316,15 +316,195 @@ class EmployeeEmergencyContact(models.Model):
         """Override save to handle primary contact logic"""
         # If this is set as primary, unset other primary contacts for the same employee
         if self.is_primary:
-            EmployeeEmergencyContact.objects.filter(
+            EmployeeEmergencyContactEnhanced.objects.filter(
                 employee=self.employee,
                 is_primary=True
             ).exclude(pk=self.pk).update(is_primary=False)
         
         # If no primary contact exists and this is the first contact, make it primary
         if not self.pk:  # New record
-            existing_contacts = EmployeeEmergencyContact.objects.filter(employee=self.employee)
+            existing_contacts = EmployeeEmergencyContactEnhanced.objects.filter(employee=self.employee)
             if not existing_contacts.exists():
                 self.is_primary = True
         
         super().save(*args, **kwargs)
+    
+    # Advanced Methods
+    def get_priority_display_with_icon(self):
+        """Get priority with visual indicator"""
+        priority_icons = {
+            1: "🔴 الأولوية الأولى",
+            2: "🟠 الأولوية الثانية", 
+            3: "🟡 الأولوية الثالثة",
+            4: "🟢 الأولوية الرابعة",
+            5: "⚪ الأولوية الخامسة"
+        }
+        return priority_icons.get(self.priority, "غير محدد")
+    
+    def get_authorization_summary(self):
+        """Get summary of authorizations"""
+        authorizations = []
+        if self.can_make_medical_decisions:
+            authorizations.append("قرارات طبية")
+        if self.can_receive_salary:
+            authorizations.append("استلام راتب")
+        if self.has_power_of_attorney:
+            authorizations.append("توكيل قانوني")
+        
+        return ", ".join(authorizations) if authorizations else "لا توجد تفويضات"
+    
+    def get_contact_methods(self):
+        """Get available contact methods"""
+        methods = []
+        if self.primary_phone:
+            methods.append(f"📞 {self.primary_phone}")
+        if self.secondary_phone:
+            methods.append(f"📱 {self.secondary_phone}")
+        if self.email:
+            methods.append(f"📧 {self.email}")
+        
+        return methods
+    
+    def get_availability_info(self):
+        """Get formatted availability information"""
+        info = {}
+        if self.best_time_to_call:
+            info['best_time'] = self.best_time_to_call
+        if self.availability_notes:
+            info['notes'] = self.availability_notes
+        if self.preferred_language:
+            info['language'] = self.get_preferred_language_display()
+        
+        return info
+    
+    def is_reachable_now(self):
+        """Check if contact is likely reachable now (basic implementation)"""
+        from datetime import datetime
+        current_hour = datetime.now().hour
+        
+        # Basic logic - can be enhanced with more sophisticated rules
+        if self.best_time_to_call:
+            if "صباح" in self.best_time_to_call and 6 <= current_hour <= 12:
+                return True
+            elif "مساء" in self.best_time_to_call and 18 <= current_hour <= 22:
+                return True
+            elif "ليل" in self.best_time_to_call and (22 <= current_hour or current_hour <= 6):
+                return True
+        
+        # Default: assume reachable during normal hours
+        return 8 <= current_hour <= 20
+    
+    def get_contact_score(self):
+        """Calculate contact reliability score"""
+        score = 100
+        
+        # Deduct points based on priority (lower priority = lower score)
+        score -= (self.priority - 1) * 10
+        
+        # Add points for verification
+        if self.is_verified:
+            score += 20
+        
+        # Add points for multiple contact methods
+        contact_methods = len([x for x in [self.primary_phone, self.secondary_phone, self.email] if x])
+        score += contact_methods * 5
+        
+        # Add points for authorizations
+        authorizations = sum([
+            self.can_make_medical_decisions,
+            self.can_receive_salary,
+            self.has_power_of_attorney
+        ])
+        score += authorizations * 10
+        
+        # Deduct points if not active
+        if not self.is_active:
+            score -= 50
+        
+        return max(0, min(100, score))
+    
+    def needs_verification(self):
+        """Check if contact needs verification"""
+        if not self.is_verified:
+            return True
+        
+        # Check if verification is old (more than 1 year)
+        if self.verified_date:
+            from datetime import datetime, timedelta
+            one_year_ago = datetime.now() - timedelta(days=365)
+            return self.verified_date < one_year_ago
+        
+        return True
+    
+    def get_relationship_category(self):
+        """Get relationship category for grouping"""
+        family_relationships = ['spouse', 'father', 'mother', 'son', 'daughter', 
+                               'brother', 'sister', 'grandfather', 'grandmother']
+        extended_family = ['uncle', 'aunt', 'cousin']
+        
+        if self.relationship in family_relationships:
+            return "أسرة مباشرة"
+        elif self.relationship in extended_family:
+            return "أسرة ممتدة"
+        elif self.relationship in ['friend', 'colleague', 'neighbor']:
+            return "معارف"
+        else:
+            return "أخرى"
+    
+    @classmethod
+    def get_emergency_contacts_by_priority(cls, employee):
+        """Get emergency contacts ordered by priority"""
+        return cls.objects.filter(
+            employee=employee,
+            is_active=True
+        ).order_by('priority')
+    
+    @classmethod
+    def get_primary_contact(cls, employee):
+        """Get primary emergency contact for employee"""
+        try:
+            return cls.objects.get(employee=employee, is_primary=True, is_active=True)
+        except cls.DoesNotExist:
+            # Return highest priority contact if no primary is set
+            return cls.objects.filter(
+                employee=employee,
+                is_active=True
+            ).order_by('priority').first()
+    
+    @classmethod
+    def get_authorized_contacts(cls, employee, authorization_type):
+        """Get contacts with specific authorization"""
+        filters = {'employee': employee, 'is_active': True}
+        
+        if authorization_type == 'medical':
+            filters['can_make_medical_decisions'] = True
+        elif authorization_type == 'salary':
+            filters['can_receive_salary'] = True
+        elif authorization_type == 'legal':
+            filters['has_power_of_attorney'] = True
+        
+        return cls.objects.filter(**filters).order_by('priority')
+    
+    def send_test_notification(self):
+        """Send test notification to verify contact information"""
+        # This would integrate with notification system
+        # For now, just return the contact methods that would be used
+        methods = self.get_contact_methods()
+        return {
+            'contact': self.full_name,
+            'methods': methods,
+            'language': self.get_preferred_language_display(),
+            'message': f"اختبار إشعار طوارئ للموظف {self.employee.full_name}"
+        }
+    
+    def get_emergency_notification_template(self):
+        """Get emergency notification template for this contact"""
+        template = {
+            'recipient_name': self.full_name,
+            'employee_name': self.employee.full_name,
+            'relationship': self.relationship_display,
+            'language': self.preferred_language,
+            'contact_methods': self.get_contact_methods(),
+            'authorizations': self.get_authorization_summary(),
+        }
+        return template

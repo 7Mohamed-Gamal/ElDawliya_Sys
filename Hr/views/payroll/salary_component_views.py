@@ -16,7 +16,8 @@ from django.db.models import Q, Count
 from django.utils.translation import gettext_lazy as _
 from django.core.paginator import Paginator
 
-from Hr.models import SalaryComponent, Employee
+from Hr.models.legacy.legacy_models import SalaryItem as SalaryComponent
+from Hr.models.legacy_employee import LegacyEmployee as Employee
 from Hr.forms.new_payroll_forms import SalaryComponentForm
 
 
@@ -27,25 +28,20 @@ from Hr.forms.new_payroll_forms import SalaryComponentForm
 @login_required
 def component_list(request):
     """عرض قائمة مكونات الراتب"""
-    components = SalaryComponent.objects.all().order_by('display_order', 'name')
+    components = SalaryComponent.objects.all().order_by('name')
     
     # البحث والتصفية
     search_query = request.GET.get('search', '')
-    category_filter = request.GET.get('category', '')
     component_type_filter = request.GET.get('component_type', '')
     
     if search_query:
         components = components.filter(
             Q(name__icontains=search_query) |
-            Q(code__icontains=search_query) |
-            Q(description__icontains=search_query)
+            Q(item_code__icontains=search_query)
         )
     
-    if category_filter:
-        components = components.filter(category=category_filter)
-    
     if component_type_filter:
-        components = components.filter(component_type=component_type_filter)
+        components = components.filter(type=component_type_filter)
     
     # الترقيم
     paginator = Paginator(components, 20)
@@ -55,11 +51,8 @@ def component_list(request):
     context = {
         'components': page_obj,
         'search_query': search_query,
-        'category_filter': category_filter,
         'component_type_filter': component_type_filter,
         'title': _('مكونات الراتب'),
-        'categories': SalaryComponent.CATEGORIES,
-        'component_types': SalaryComponent.COMPONENT_TYPES,
     }
     
     return render(request, 'Hr/payroll/salary_component_list.html', context)
@@ -68,13 +61,14 @@ def component_list(request):
 @login_required
 def component_detail(request, component_id):
     """عرض تفاصيل مكون الراتب"""
-    component = get_object_or_404(SalaryComponent, id=component_id)
+    component = get_object_or_404(SalaryComponent, item_code=component_id)
     
     # إحصائيات الاستخدام
+    from Hr.models.legacy.legacy_models import EmployeeSalaryItem
     usage_stats = {
-        'total_employees': component.employee_salary_components.count(),
-        'active_employees': component.employee_salary_components.filter(
-            is_active=True
+        'total_employees': EmployeeSalaryItem.objects.filter(salary_item=component).count(),
+        'active_employees': EmployeeSalaryItem.objects.filter(
+            salary_item=component, is_active=True
         ).count(),
     }
     
@@ -93,12 +87,10 @@ def component_create(request):
     if request.method == 'POST':
         form = SalaryComponentForm(request.POST)
         if form.is_valid():
-            component = form.save(commit=False)
-            component.created_by = request.user
-            component.save()
+            component = form.save()
             
             messages.success(request, _('تم إنشاء مكون الراتب بنجاح'))
-            return redirect('Hr:salary_components:detail', component_id=component.id)
+            return redirect('Hr:salary_components:detail', component_id=component.item_code)
     else:
         form = SalaryComponentForm()
     
@@ -114,14 +106,14 @@ def component_create(request):
 @login_required
 def component_edit(request, component_id):
     """تحديث مكون الراتب"""
-    component = get_object_or_404(SalaryComponent, id=component_id)
+    component = get_object_or_404(SalaryComponent, item_code=component_id)
     
     if request.method == 'POST':
         form = SalaryComponentForm(request.POST, instance=component)
         if form.is_valid():
             form.save()
             messages.success(request, _('تم تحديث مكون الراتب بنجاح'))
-            return redirect('Hr:salary_components:detail', component_id=component.id)
+            return redirect('Hr:salary_components:detail', component_id=component.item_code)
     else:
         form = SalaryComponentForm(instance=component)
     
@@ -138,16 +130,17 @@ def component_edit(request, component_id):
 @login_required
 def component_delete(request, component_id):
     """حذف مكون الراتب"""
-    component = get_object_or_404(SalaryComponent, id=component_id)
+    component = get_object_or_404(SalaryComponent, item_code=component_id)
     
     if request.method == 'POST':
         # التحقق من عدم وجود استخدام للمكون
-        if component.employee_salary_components.exists():
+        from Hr.models.legacy.legacy_models import EmployeeSalaryItem
+        if EmployeeSalaryItem.objects.filter(salary_item=component).exists():
             messages.error(
                 request, 
                 _('لا يمكن حذف مكون الراتب لأنه مستخدم من قبل موظفين')
             )
-            return redirect('Hr:salary_components:detail', component_id=component.id)
+            return redirect('Hr:salary_components:detail', component_id=component.item_code)
         
         component_name = component.name
         component.delete()
@@ -166,7 +159,7 @@ def component_delete(request, component_id):
 def component_toggle_status(request, component_id):
     """تبديل حالة مكون الراتب (نشط/غير نشط)"""
     if request.method == 'POST':
-        component = get_object_or_404(SalaryComponent, id=component_id)
+        component = get_object_or_404(SalaryComponent, item_code=component_id)
         component.is_active = not component.is_active
         component.save()
         
@@ -188,26 +181,28 @@ def component_toggle_status(request, component_id):
 @login_required
 def component_duplicate(request, component_id):
     """نسخ مكون الراتب"""
-    original_component = get_object_or_404(SalaryComponent, id=component_id)
+    original_component = get_object_or_404(SalaryComponent, item_code=component_id)
     
     if request.method == 'POST':
+        # إنشاء كود جديد للنسخة
+        new_code = f"{original_component.item_code}_COPY"
+        counter = 1
+        while SalaryComponent.objects.filter(item_code=new_code).exists():
+            new_code = f"{original_component.item_code}_COPY_{counter}"
+            counter += 1
+        
         # إنشاء نسخة جديدة
         new_component = SalaryComponent.objects.create(
+            item_code=new_code,
             name=f"{original_component.name} - نسخة",
-            code=f"{original_component.code}_COPY",
-            component_type=original_component.component_type,
-            category=original_component.category,
-            calculation_method=original_component.calculation_method,
-            default_amount=original_component.default_amount,
-            percentage_base=original_component.percentage_base,
-            is_taxable=original_component.is_taxable,
-            is_mandatory=original_component.is_mandatory,
-            description=f"نسخة من {original_component.description}",
-            created_by=request.user
+            type=original_component.type,
+            default_value=original_component.default_value,
+            is_auto_applied=original_component.is_auto_applied,
+            is_active=original_component.is_active
         )
         
         messages.success(request, f'تم نسخ مكون الراتب بنجاح')
-        return redirect('Hr:salary_components:edit', component_id=new_component.id)
+        return redirect('Hr:salary_components:edit', component_id=new_component.item_code)
     
     context = {
         'component': original_component,
@@ -221,30 +216,30 @@ def component_duplicate(request, component_id):
 def component_search_ajax(request):
     """البحث السريع عن مكونات الراتب - AJAX"""
     query = request.GET.get('q', '')
-    category = request.GET.get('category', '')
+    component_type = request.GET.get('component_type', '')
     
     components = SalaryComponent.objects.filter(is_active=True)
     
     if query:
         components = components.filter(
             Q(name__icontains=query) |
-            Q(code__icontains=query)
+            Q(item_code__icontains=query)
         )
     
-    if category:
-        components = components.filter(category=category)
+    if component_type:
+        components = components.filter(type=component_type)
     
     components = components[:10]  # الحد الأقصى 10 نتائج
     
     results = []
     for component in components:
         results.append({
-            'id': str(component.id),
+            'id': str(component.item_code),
             'name': component.name,
-            'code': component.code,
-            'category': component.get_category_display(),
-            'component_type': component.get_component_type_display(),
-            'default_amount': float(component.default_amount) if component.default_amount else 0,
+            'code': component.item_code,
+            'type': component.type,
+            'default_value': float(component.default_value) if component.default_value else 0,
+            'is_auto_applied': component.is_auto_applied,
         })
     
     return JsonResponse({'results': results})

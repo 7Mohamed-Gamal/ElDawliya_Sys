@@ -13,6 +13,7 @@ app_name = 'departments'
 urlpatterns = [
     # Department patterns
     path('', department_list, name='department_list'),
+    path('list/', department_list, name='list'),  # Alias for list
     path('create/', department_create, name='department_create'),
     path('<int:dept_code>/', department_detail, name='department_detail'),
     path('<int:dept_code>/edit/', department_edit, name='department_edit'),

@@ -107,7 +107,7 @@ class SalaryItem(models.Model):
 
     class Meta:
         managed = True
-        db_table = 'Tbl_Salary_Item'
+        db_table = 'Hr_SalaryItem'
         verbose_name = _("بند الراتب")
         verbose_name_plural = _("بنود الرواتب")
 
@@ -123,7 +123,7 @@ class EmployeeSalaryItem(models.Model):
 
     class Meta:
         managed = True
-        db_table = 'Tbl_Employee_Salary_Item'
+        db_table = 'Hr_EmployeeSalaryItem'
         verbose_name = _("بند راتب الموظف")
         verbose_name_plural = _("بنود رواتب الموظفين")
 

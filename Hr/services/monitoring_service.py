@@ -2,681 +2,588 @@
 خدمة مراقبة النظام المتقدمة
 """
 
-import os
-import time
 import logging
+import time
 import json
 from datetime import datetime, timedelta
 from django.core.cache import cache
-from django.db import connection
 from django.conf import settings
+from django.db import connection
 from django.utils import timezone
 from django.core.mail import send_mail
-from collections import defaultdict, deque
-import threading
-
-# محاولة استيراد psutil مع معالجة الخطأ
-try:
-    import psutil
-    PSUTIL_AVAILABLE = True
-except ImportError:
-    PSUTIL_AVAILABLE = False
-    psutil = None
+import os
+import psutil
 
 logger = logging.getLogger(__name__)
 
 
 class SystemMonitoringService:
-    """خدمة مراقبة النظام المتقدمة"""
+    """خدمة مراقبة النظام الشاملة"""
     
     def __init__(self):
-        self.monitoring_enabled = getattr(settings, 'HR_SYSTEM_MONITORING', True)
-        self.alert_thresholds = {
-            'cpu_usage': getattr(settings, 'HR_CPU_THRESHOLD', 80),
-            'memory_usage': getattr(settings, 'HR_MEMORY_THRESHOLD', 85),
-            'disk_usage': getattr(settings, 'HR_DISK_THRESHOLD', 90),
-            'response_time': getattr(settings, 'HR_RESPONSE_TIME_THRESHOLD', 2.0),
-            'error_rate': getattr(settings, 'HR_ERROR_RATE_THRESHOLD', 5.0)
-        }
-        self.alert_emails = getattr(settings, 'HR_ALERT_EMAILS', [])
-        self.metrics_history = defaultdict(lambda: deque(maxlen=1000))
-        self.lock = threading.Lock()
-        
-        # بدء مراقبة النظام في خيط منفصل
-        if self.monitoring_enabled:
-            self.start_monitoring()
+        self.monitoring_enabled = getattr(settings, 'ENABLE_SYSTEM_MONITORING', True)
+        self.alert_thresholds = getattr(settings, 'MONITORING_THRESHOLDS', {
+            'cpu_usage': 80,
+            'memory_usage': 85,
+            'disk_usage': 90,
+            'response_time': 2.0,
+            'error_rate': 5.0,
+            'database_connections': 80
+        })
+        self.alert_emails = getattr(settings, 'MONITORING_ALERT_EMAILS', [])
+        self.check_interval = getattr(settings, 'MONITORING_CHECK_INTERVAL', 300)  # 5 دقائق
     
-    def start_monitoring(self):
-        """بدء مراقبة النظام"""
+    def get_system_status(self):
+        """الحصول على حالة النظام الشاملة"""
+        if not self.monitoring_enabled:
+            return {'status': 'monitoring_disabled'}
+        
         try:
-            monitoring_thread = threading.Thread(target=self._monitoring_loop, daemon=True)
-            monitoring_thread.start()
-            logger.info("تم بدء مراقبة النظام")
-        except Exception as e:
-            logger.error(f"خطأ في بدء مراقبة النظام: {e}")
-    
-    def _monitoring_loop(self):
-        """حلقة مراقبة النظام"""
-        while self.monitoring_enabled:
-            try:
-                # جمع مقاييس النظام
-                system_metrics = self.collect_system_metrics()
-                
-                # جمع مقاييس التطبيق
-                app_metrics = self.collect_application_metrics()
-                
-                # جمع مقاييس قاعدة البيانات
-                db_metrics = self.collect_database_metrics()
-                
-                # دمج جميع المقاييس
-                all_metrics = {
-                    'timestamp': timezone.now().isoformat(),
-                    'system': system_metrics,
-                    'application': app_metrics,
-                    'database': db_metrics
-                }
-                
-                # حفظ المقاييس
-                self.save_metrics(all_metrics)
-                
-                # فحص التنبيهات
-                self.check_alerts(all_metrics)
-                
-                # انتظار قبل الدورة التالية
-                time.sleep(60)  # كل دقيقة
-                
-            except Exception as e:
-                logger.error(f"خطأ في حلقة مراقبة النظام: {e}")
-                time.sleep(60)
-    
-    def collect_system_metrics(self):
-        """جمع مقاييس النظام"""
-        if not PSUTIL_AVAILABLE:
-            logger.warning("مكتبة psutil غير متاحة - سيتم استخدام قيم افتراضية")
-            return {
-                'cpu': {'usage_percent': 0, 'count': 1, 'frequency': None},
-                'memory': {'total': 0, 'available': 0, 'used': 0, 'usage_percent': 0, 'swap_total': 0, 'swap_used': 0, 'swap_percent': 0},
-                'disk': {'total': 0, 'used': 0, 'free': 0, 'usage_percent': 0, 'read_bytes': 0, 'write_bytes': 0},
-                'network': {'bytes_sent': 0, 'bytes_recv': 0, 'packets_sent': 0, 'packets_recv': 0},
-                'processes': {'count': 0},
-                'temperatures': {}
+            status = {
+                'timestamp': timezone.now().isoformat(),
+                'overall_status': 'healthy',
+                'system': self.get_system_metrics(),
+                'database': self.get_database_metrics(),
+                'application': self.get_application_metrics(),
+                'performance': self.get_performance_metrics(),
+                'alerts': self.get_active_alerts()
             }
+            
+            # تحديد الحالة العامة
+            status['overall_status'] = self.determine_overall_status(status)
+            
+            return status
         
+        except Exception as e:
+            logger.error(f'خطأ في الحصول على حالة النظام: {e}')
+            return {
+                'status': 'error',
+                'error': str(e),
+                'timestamp': timezone.now().isoformat()
+            }
+    
+    def get_system_metrics(self):
+        """الحصول على مقاييس النظام"""
         try:
             # معلومات المعالج
             cpu_percent = psutil.cpu_percent(interval=1)
             cpu_count = psutil.cpu_count()
-            cpu_freq = psutil.cpu_freq()
             
             # معلومات الذاكرة
             memory = psutil.virtual_memory()
-            swap = psutil.swap_memory()
+            memory_percent = memory.percent
+            memory_available = memory.available / (1024**3)  # GB
+            memory_total = memory.total / (1024**3)  # GB
             
             # معلومات القرص
-            disk_usage = psutil.disk_usage('/')
-            disk_io = psutil.disk_io_counters()
+            disk = psutil.disk_usage('/')
+            disk_percent = disk.percent
+            disk_free = disk.free / (1024**3)  # GB
+            disk_total = disk.total / (1024**3)  # GB
             
             # معلومات الشبكة
-            network_io = psutil.net_io_counters()
-            
-            # معلومات العمليات
-            process_count = len(psutil.pids())
-            
-            # درجة حرارة النظام (إذا كانت متاحة)
-            temperatures = {}
-            try:
-                temps = psutil.sensors_temperatures()
-                if temps:
-                    temperatures = {name: [temp.current for temp in temp_list] 
-                                  for name, temp_list in temps.items()}
-            except:
-                pass
+            network = psutil.net_io_counters()
             
             return {
                 'cpu': {
                     'usage_percent': cpu_percent,
                     'count': cpu_count,
-                    'frequency': cpu_freq.current if cpu_freq else None
+                    'status': 'warning' if cpu_percent > self.alert_thresholds['cpu_usage'] else 'normal'
                 },
                 'memory': {
-                    'total': memory.total,
-                    'available': memory.available,
-                    'used': memory.used,
-                    'usage_percent': memory.percent,
-                    'swap_total': swap.total,
-                    'swap_used': swap.used,
-                    'swap_percent': swap.percent
+                    'usage_percent': memory_percent,
+                    'available_gb': round(memory_available, 2),
+                    'total_gb': round(memory_total, 2),
+                    'status': 'warning' if memory_percent > self.alert_thresholds['memory_usage'] else 'normal'
                 },
                 'disk': {
-                    'total': disk_usage.total,
-                    'used': disk_usage.used,
-                    'free': disk_usage.free,
-                    'usage_percent': (disk_usage.used / disk_usage.total) * 100,
-                    'read_bytes': disk_io.read_bytes if disk_io else 0,
-                    'write_bytes': disk_io.write_bytes if disk_io else 0
+                    'usage_percent': disk_percent,
+                    'free_gb': round(disk_free, 2),
+                    'total_gb': round(disk_total, 2),
+                    'status': 'warning' if disk_percent > self.alert_thresholds['disk_usage'] else 'normal'
                 },
                 'network': {
-                    'bytes_sent': network_io.bytes_sent,
-                    'bytes_recv': network_io.bytes_recv,
-                    'packets_sent': network_io.packets_sent,
-                    'packets_recv': network_io.packets_recv
-                },
-                'processes': {
-                    'count': process_count
-                },
-                'temperatures': temperatures
-            }
-            
-        except Exception as e:
-            logger.error(f"خطأ في جمع مقاييس النظام: {e}")
-            return {}
-    
-    def collect_application_metrics(self):
-        """جمع مقاييس التطبيق"""
-        try:
-            # إحصائيات Django
-            django_stats = self._get_django_stats()
-            
-            if not PSUTIL_AVAILABLE:
-                return {
-                    'process': {
-                        'pid': os.getpid(),
-                        'memory_rss': 0,
-                        'memory_vms': 0,
-                        'memory_percent': 0,
-                        'cpu_percent': 0,
-                        'thread_count': 0,
-                        'open_files': 0,
-                        'connections': 0,
-                        'create_time': 0
-                    },
-                    'django': django_stats
+                    'bytes_sent': network.bytes_sent,
+                    'bytes_recv': network.bytes_recv,
+                    'packets_sent': network.packets_sent,
+                    'packets_recv': network.packets_recv
                 }
+            }
+        
+        except Exception as e:
+            logger.error(f'خطأ في الحصول على مقاييس النظام: {e}')
+            return {'error': str(e)}
+    
+    def get_database_metrics(self):
+        """الحصول على مقاييس قاعدة البيانات"""
+        try:
+            # عدد الاستعلامات
+            query_count = len(connection.queries)
             
-            # معلومات العملية الحالية
-            current_process = psutil.Process(os.getpid())
+            # حالة الاتصال
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1")
+                db_connected = True
             
-            # استخدام الذاكرة للتطبيق
-            memory_info = current_process.memory_info()
-            memory_percent = current_process.memory_percent()
-            
-            # استخدام المعالج للتطبيق
-            cpu_percent = current_process.cpu_percent()
-            
-            # عدد الخيوط
-            thread_count = current_process.num_threads()
-            
-            # الملفات المفتوحة
-            try:
-                open_files = len(current_process.open_files())
-            except:
-                open_files = 0
-            
-            # اتصالات الشبكة
-            try:
-                connections = len(current_process.connections())
-            except:
-                connections = 0
+            # معلومات قاعدة البيانات حسب النوع
+            db_info = self.get_database_specific_info()
             
             return {
-                'process': {
-                    'pid': current_process.pid,
-                    'memory_rss': memory_info.rss,
-                    'memory_vms': memory_info.vms,
-                    'memory_percent': memory_percent,
-                    'cpu_percent': cpu_percent,
-                    'thread_count': thread_count,
-                    'open_files': open_files,
-                    'connections': connections,
-                    'create_time': current_process.create_time()
-                },
-                'django': django_stats
+                'connected': db_connected,
+                'query_count': query_count,
+                'vendor': connection.vendor,
+                'database_info': db_info,
+                'status': 'normal' if db_connected else 'error'
             }
-            
+        
         except Exception as e:
-            logger.error(f"خطأ في جمع مقاييس التطبيق: {e}")
-            return {}
-    
-    def collect_database_metrics(self):
-        """جمع مقاييس قاعدة البيانات"""
-        try:
-            db_metrics = {
-                'connection_info': {
-                    'vendor': connection.vendor,
-                    'database': connection.settings_dict.get('NAME', 'unknown'),
-                    'host': connection.settings_dict.get('HOST', 'localhost'),
-                    'port': connection.settings_dict.get('PORT', 'default')
-                },
-                'queries': {
-                    'total_queries': len(connection.queries) if hasattr(connection, 'queries') else 0
-                }
+            logger.error(f'خطأ في الحصول على مقاييس قاعدة البيانات: {e}')
+            return {
+                'connected': False,
+                'error': str(e),
+                'status': 'error'
             }
-            
-            # إحصائيات خاصة بنوع قاعدة البيانات
+    
+    def get_database_specific_info(self):
+        """الحصول على معلومات قاعدة البيانات المحددة"""
+        try:
             with connection.cursor() as cursor:
-                if connection.vendor == 'mysql':
-                    # إحصائيات MySQL
-                    cursor.execute("SHOW STATUS LIKE 'Threads_connected'")
-                    result = cursor.fetchone()
-                    if result:
-                        db_metrics['connections'] = {'active': int(result[1])}
-                    
-                    cursor.execute("SHOW STATUS LIKE 'Queries'")
-                    result = cursor.fetchone()
-                    if result:
-                        db_metrics['queries']['total'] = int(result[1])
-                    
-                    cursor.execute("SHOW STATUS LIKE 'Slow_queries'")
-                    result = cursor.fetchone()
-                    if result:
-                        db_metrics['queries']['slow'] = int(result[1])
-                
-                elif connection.vendor == 'postgresql':
-                    # إحصائيات PostgreSQL
-                    cursor.execute("SELECT count(*) FROM pg_stat_activity")
-                    result = cursor.fetchone()
-                    if result:
-                        db_metrics['connections'] = {'active': result[0]}
-                    
+                if connection.vendor == 'postgresql':
                     cursor.execute("""
-                        SELECT sum(calls) as total_calls, 
-                               sum(total_time) as total_time,
-                               avg(mean_time) as avg_time
-                        FROM pg_stat_statements 
-                        WHERE query NOT LIKE '%pg_stat_statements%'
+                        SELECT 
+                            count(*) as active_connections,
+                            pg_size_pretty(pg_database_size(current_database())) as db_size
+                        FROM pg_stat_activity 
+                        WHERE state = 'active'
                     """)
                     result = cursor.fetchone()
-                    if result and result[0]:
-                        db_metrics['queries'].update({
-                            'total': int(result[0]),
-                            'total_time': float(result[1]) if result[1] else 0,
-                            'avg_time': float(result[2]) if result[2] else 0
-                        })
-            
-            return db_metrics
-            
+                    return {
+                        'active_connections': result[0],
+                        'database_size': result[1]
+                    }
+                
+                elif connection.vendor == 'mysql':
+                    cursor.execute("SHOW STATUS LIKE 'Threads_connected'")
+                    connections = cursor.fetchone()
+                    
+                    cursor.execute("""
+                        SELECT ROUND(SUM(data_length + index_length) / 1024 / 1024, 1) AS 'DB Size in MB' 
+                        FROM information_schema.tables 
+                        WHERE table_schema=DATABASE()
+                    """)
+                    size = cursor.fetchone()
+                    
+                    return {
+                        'active_connections': connections[1] if connections else 0,
+                        'database_size': f"{size[0]} MB" if size else "Unknown"
+                    }
+                
+                elif connection.vendor == 'sqlite':
+                    cursor.execute("PRAGMA database_list")
+                    db_info = cursor.fetchone()
+                    
+                    # حجم ملف قاعدة البيانات
+                    if db_info and db_info[2]:
+                        db_size = os.path.getsize(db_info[2]) / (1024**2)  # MB
+                        return {
+                            'database_file': db_info[2],
+                            'database_size': f"{db_size:.1f} MB"
+                        }
+                
+                return {'info': 'Database info not available for this vendor'}
+        
         except Exception as e:
-            logger.error(f"خطأ في جمع مقاييس قاعدة البيانات: {e}")
-            return {}
+            logger.error(f'خطأ في الحصول على معلومات قاعدة البيانات: {e}')
+            return {'error': str(e)}
     
-    def _get_django_stats(self):
-        """الحصول على إحصائيات Django"""
+    def get_application_metrics(self):
+        """الحصول على مقاييس التطبيق"""
         try:
             # إحصائيات التخزين المؤقت
-            cache_stats = {
-                'backend': cache.__class__.__name__
-            }
+            cache_stats = self.get_cache_statistics()
             
-            # محاولة الحصول على إحصائيات التخزين المؤقت
-            try:
-                cache_stats.update({
-                    'hits': getattr(cache, '_hits', 0),
-                    'misses': getattr(cache, '_misses', 0)
-                })
-            except:
-                pass
+            # إحصائيات الأخطاء
+            error_stats = self.get_error_statistics()
             
-            # إحصائيات الجلسات
-            session_stats = {}
-            try:
-                from django.contrib.sessions.models import Session
-                active_sessions = Session.objects.filter(
-                    expire_date__gt=timezone.now()
-                ).count()
-                session_stats['active_sessions'] = active_sessions
-            except:
-                pass
+            # إحصائيات المستخدمين
+            user_stats = self.get_user_statistics()
+            
+            # إحصائيات الطلبات
+            request_stats = self.get_request_statistics()
             
             return {
                 'cache': cache_stats,
-                'sessions': session_stats,
-                'debug': settings.DEBUG,
-                'timezone': str(settings.TIME_ZONE)
+                'errors': error_stats,
+                'users': user_stats,
+                'requests': request_stats,
+                'uptime': self.get_application_uptime()
             }
-            
+        
         except Exception as e:
-            logger.error(f"خطأ في جمع إحصائيات Django: {e}")
-            return {}
+            logger.error(f'خطأ في الحصول على مقاييس التطبيق: {e}')
+            return {'error': str(e)}
     
-    def save_metrics(self, metrics):
-        """حفظ المقاييس"""
+    def get_cache_statistics(self):
+        """إحصائيات التخزين المؤقت"""
         try:
-            with self.lock:
-                # حفظ في الذاكرة للوصول السريع
-                timestamp = metrics['timestamp']
-                
-                for category, data in metrics.items():
-                    if category != 'timestamp':
-                        self.metrics_history[category].append({
-                            'timestamp': timestamp,
-                            'data': data
-                        })
-                
-                # حفظ في التخزين المؤقت
-                cache_key = f'system_metrics_{timezone.now().strftime("%Y%m%d_%H%M")}'
-                cache.set(cache_key, metrics, 3600)  # ساعة واحدة
-                
-                # حفظ الملخص اليومي
-                self._save_daily_summary(metrics)
-                
-        except Exception as e:
-            logger.error(f"خطأ في حفظ المقاييس: {e}")
-    
-    def _save_daily_summary(self, metrics):
-        """حفظ ملخص يومي للمقاييس"""
-        try:
-            today = timezone.now().date().isoformat()
-            summary_key = f'daily_metrics_summary_{today}'
-            
-            # الحصول على الملخص الحالي
-            daily_summary = cache.get(summary_key, {
-                'date': today,
-                'samples_count': 0,
-                'system': {
-                    'cpu_avg': 0,
-                    'cpu_max': 0,
-                    'memory_avg': 0,
-                    'memory_max': 0,
-                    'disk_avg': 0,
-                    'disk_max': 0
-                },
-                'alerts_count': 0
+            # محاولة الحصول على إحصائيات التخزين المؤقت
+            cache_stats = cache.get('cache_statistics', {
+                'hits': 0,
+                'misses': 0,
+                'total_keys': 0
             })
             
-            # تحديث الملخص
-            daily_summary['samples_count'] += 1
+            total_operations = cache_stats['hits'] + cache_stats['misses']
+            hit_rate = (cache_stats['hits'] / total_operations * 100) if total_operations > 0 else 0
             
-            if 'system' in metrics:
-                system_data = metrics['system']
-                
-                # تحديث متوسطات المعالج
-                if 'cpu' in system_data:
-                    cpu_usage = system_data['cpu'].get('usage_percent', 0)
-                    daily_summary['system']['cpu_avg'] = (
-                        (daily_summary['system']['cpu_avg'] * (daily_summary['samples_count'] - 1) + cpu_usage) /
-                        daily_summary['samples_count']
-                    )
-                    daily_summary['system']['cpu_max'] = max(
-                        daily_summary['system']['cpu_max'], cpu_usage
-                    )
-                
-                # تحديث متوسطات الذاكرة
-                if 'memory' in system_data:
-                    memory_usage = system_data['memory'].get('usage_percent', 0)
-                    daily_summary['system']['memory_avg'] = (
-                        (daily_summary['system']['memory_avg'] * (daily_summary['samples_count'] - 1) + memory_usage) /
-                        daily_summary['samples_count']
-                    )
-                    daily_summary['system']['memory_max'] = max(
-                        daily_summary['system']['memory_max'], memory_usage
-                    )
-                
-                # تحديث متوسطات القرص
-                if 'disk' in system_data:
-                    disk_usage = system_data['disk'].get('usage_percent', 0)
-                    daily_summary['system']['disk_avg'] = (
-                        (daily_summary['system']['disk_avg'] * (daily_summary['samples_count'] - 1) + disk_usage) /
-                        daily_summary['samples_count']
-                    )
-                    daily_summary['system']['disk_max'] = max(
-                        daily_summary['system']['disk_max'], disk_usage
-                    )
-            
-            # حفظ الملخص المحدث
-            cache.set(summary_key, daily_summary, 86400)  # 24 ساعة
-            
-        except Exception as e:
-            logger.error(f"خطأ في حفظ الملخص اليومي: {e}")
-    
-    def check_alerts(self, metrics):
-        """فحص التنبيهات"""
-        try:
-            alerts = []
-            
-            if 'system' in metrics:
-                system_data = metrics['system']
-                
-                # فحص استخدام المعالج
-                if 'cpu' in system_data:
-                    cpu_usage = system_data['cpu'].get('usage_percent', 0)
-                    if cpu_usage > self.alert_thresholds['cpu_usage']:
-                        alerts.append({
-                            'type': 'cpu_high',
-                            'message': f'استخدام المعالج عالي: {cpu_usage:.1f}%',
-                            'value': cpu_usage,
-                            'threshold': self.alert_thresholds['cpu_usage'],
-                            'severity': 'warning' if cpu_usage < 90 else 'critical'
-                        })
-                
-                # فحص استخدام الذاكرة
-                if 'memory' in system_data:
-                    memory_usage = system_data['memory'].get('usage_percent', 0)
-                    if memory_usage > self.alert_thresholds['memory_usage']:
-                        alerts.append({
-                            'type': 'memory_high',
-                            'message': f'استخدام الذاكرة عالي: {memory_usage:.1f}%',
-                            'value': memory_usage,
-                            'threshold': self.alert_thresholds['memory_usage'],
-                            'severity': 'warning' if memory_usage < 95 else 'critical'
-                        })
-                
-                # فحص استخدام القرص
-                if 'disk' in system_data:
-                    disk_usage = system_data['disk'].get('usage_percent', 0)
-                    if disk_usage > self.alert_thresholds['disk_usage']:
-                        alerts.append({
-                            'type': 'disk_high',
-                            'message': f'استخدام القرص عالي: {disk_usage:.1f}%',
-                            'value': disk_usage,
-                            'threshold': self.alert_thresholds['disk_usage'],
-                            'severity': 'warning' if disk_usage < 95 else 'critical'
-                        })
-            
-            # إرسال التنبيهات
-            if alerts:
-                self.send_alerts(alerts)
-                
-        except Exception as e:
-            logger.error(f"خطأ في فحص التنبيهات: {e}")
-    
-    def send_alerts(self, alerts):
-        """إرسال التنبيهات"""
-        try:
-            for alert in alerts:
-                # تسجيل التنبيه
-                if alert['severity'] == 'critical':
-                    logger.critical(alert['message'])
-                else:
-                    logger.warning(alert['message'])
-                
-                # حفظ التنبيه في التخزين المؤقت
-                self._save_alert(alert)
-                
-                # إرسال بريد إلكتروني للتنبيهات الحرجة
-                if alert['severity'] == 'critical' and self.alert_emails:
-                    self._send_email_alert(alert)
-                
-        except Exception as e:
-            logger.error(f"خطأ في إرسال التنبيهات: {e}")
-    
-    def _save_alert(self, alert):
-        """حفظ التنبيه"""
-        try:
-            alert_data = {
-                **alert,
-                'timestamp': timezone.now().isoformat(),
-                'acknowledged': False
-            }
-            
-            # حفظ في قائمة التنبيهات
-            today = timezone.now().date().isoformat()
-            alerts_key = f'system_alerts_{today}'
-            
-            alerts_list = cache.get(alerts_key, [])
-            alerts_list.append(alert_data)
-            cache.set(alerts_key, alerts_list, 86400)  # 24 ساعة
-            
-            # تحديث عداد التنبيهات في الملخص اليومي
-            summary_key = f'daily_metrics_summary_{today}'
-            daily_summary = cache.get(summary_key, {})
-            daily_summary['alerts_count'] = daily_summary.get('alerts_count', 0) + 1
-            cache.set(summary_key, daily_summary, 86400)
-            
-        except Exception as e:
-            logger.error(f"خطأ في حفظ التنبيه: {e}")
-    
-    def _send_email_alert(self, alert):
-        """إرسال تنبيه عبر البريد الإلكتروني"""
-        try:
-            subject = f'تنبيه نظام الموارد البشرية - {alert["type"]}'
-            message = f"""
-            تم اكتشاف مشكلة في النظام:
-            
-            النوع: {alert['type']}
-            الرسالة: {alert['message']}
-            القيمة الحالية: {alert['value']}
-            الحد المسموح: {alert['threshold']}
-            مستوى الخطورة: {alert['severity']}
-            الوقت: {timezone.now().strftime('%Y-%m-%d %H:%M:%S')}
-            
-            يرجى اتخاذ الإجراء المناسب.
-            """
-            
-            send_mail(
-                subject,
-                message,
-                settings.DEFAULT_FROM_EMAIL,
-                self.alert_emails,
-                fail_silently=True
-            )
-            
-        except Exception as e:
-            logger.error(f"خطأ في إرسال تنبيه البريد الإلكتروني: {e}")
-    
-    def get_current_metrics(self):
-        """الحصول على المقاييس الحالية"""
-        try:
             return {
-                'system': self.collect_system_metrics(),
-                'application': self.collect_application_metrics(),
-                'database': self.collect_database_metrics(),
-                'timestamp': timezone.now().isoformat()
+                'hit_rate': round(hit_rate, 2),
+                'total_operations': total_operations,
+                'total_keys': cache_stats['total_keys'],
+                'status': 'normal' if hit_rate > 70 else 'warning'
             }
+        
         except Exception as e:
-            logger.error(f"خطأ في الحصول على المقاييس الحالية: {e}")
-            return {}
+            return {'error': str(e), 'status': 'error'}
     
-    def get_metrics_history(self, category=None, hours=24):
-        """الحصول على تاريخ المقاييس"""
+    def get_error_statistics(self):
+        """إحصائيات الأخطاء"""
         try:
-            with self.lock:
-                if category:
-                    return list(self.metrics_history.get(category, []))
-                else:
-                    return {cat: list(data) for cat, data in self.metrics_history.items()}
+            # الحصول على أخطاء آخر 24 ساعة
+            error_log = cache.get('error_statistics', [])
+            
+            # فلترة الأخطاء حسب الوقت
+            now = timezone.now()
+            last_24h = now - timedelta(hours=24)
+            
+            recent_errors = [
+                error for error in error_log 
+                if datetime.fromisoformat(error.get('timestamp', '')) > last_24h
+            ]
+            
+            error_count = len(recent_errors)
+            error_rate = error_count / 24  # أخطاء في الساعة
+            
+            return {
+                'total_errors_24h': error_count,
+                'error_rate_per_hour': round(error_rate, 2),
+                'status': 'warning' if error_rate > self.alert_thresholds['error_rate'] else 'normal'
+            }
+        
         except Exception as e:
-            logger.error(f"خطأ في الحصول على تاريخ المقاييس: {e}")
-            return {}
+            return {'error': str(e), 'status': 'error'}
     
-    def get_daily_summary(self, date=None):
-        """الحصول على الملخص اليومي"""
+    def get_user_statistics(self):
+        """إحصائيات المستخدمين"""
         try:
-            if date is None:
-                date = timezone.now().date().isoformat()
+            from django.contrib.auth.models import User
+            from django.contrib.sessions.models import Session
             
-            summary_key = f'daily_metrics_summary_{date}'
-            return cache.get(summary_key, {})
+            # إجمالي المستخدمين
+            total_users = User.objects.count()
+            active_users = User.objects.filter(is_active=True).count()
             
+            # الجلسات النشطة
+            active_sessions = Session.objects.filter(
+                expire_date__gte=timezone.now()
+            ).count()
+            
+            # المستخدمين المتصلين حالياً (تقدير)
+            online_users = cache.get('online_users_count', 0)
+            
+            return {
+                'total_users': total_users,
+                'active_users': active_users,
+                'active_sessions': active_sessions,
+                'online_users': online_users
+            }
+        
         except Exception as e:
-            logger.error(f"خطأ في الحصول على الملخص اليومي: {e}")
-            return {}
+            return {'error': str(e)}
     
-    def get_alerts(self, date=None, acknowledged=None):
-        """الحصول على التنبيهات"""
+    def get_request_statistics(self):
+        """إحصائيات الطلبات"""
         try:
-            if date is None:
-                date = timezone.now().date().isoformat()
+            # الحصول على إحصائيات الطلبات من التخزين المؤقت
+            today = timezone.now().date().isoformat()
+            request_stats = cache.get(f'request_statistics_{today}', {
+                'total_requests': 0,
+                'avg_response_time': 0,
+                'slow_requests': 0
+            })
             
-            alerts_key = f'system_alerts_{date}'
-            alerts = cache.get(alerts_key, [])
+            avg_response_time = request_stats.get('avg_response_time', 0)
             
-            if acknowledged is not None:
-                alerts = [alert for alert in alerts if alert.get('acknowledged') == acknowledged]
-            
-            return alerts
-            
+            return {
+                'total_requests_today': request_stats.get('total_requests', 0),
+                'avg_response_time': round(avg_response_time, 3),
+                'slow_requests': request_stats.get('slow_requests', 0),
+                'status': 'warning' if avg_response_time > self.alert_thresholds['response_time'] else 'normal'
+            }
+        
         except Exception as e:
-            logger.error(f"خطأ في الحصول على التنبيهات: {e}")
+            return {'error': str(e)}
+    
+    def get_application_uptime(self):
+        """وقت تشغيل التطبيق"""
+        try:
+            # محاولة الحصول على وقت بدء التطبيق
+            start_time = cache.get('application_start_time')
+            if not start_time:
+                # إذا لم يكن محفوظاً، احفظه الآن
+                start_time = timezone.now().isoformat()
+                cache.set('application_start_time', start_time, None)  # بدون انتهاء صلاحية
+            
+            start_datetime = datetime.fromisoformat(start_time)
+            uptime = timezone.now() - start_datetime
+            
+            return {
+                'start_time': start_time,
+                'uptime_seconds': int(uptime.total_seconds()),
+                'uptime_formatted': str(uptime).split('.')[0]  # إزالة الميكروثواني
+            }
+        
+        except Exception as e:
+            return {'error': str(e)}
+    
+    def get_performance_metrics(self):
+        """مقاييس الأداء"""
+        try:
+            # الاستعلامات البطيئة
+            slow_queries = cache.get('slow_queries_log', [])
+            slow_query_count = len(slow_queries)
+            
+            # الطلبات البطيئة
+            slow_requests = cache.get('slow_requests_log', [])
+            slow_request_count = len(slow_requests)
+            
+            # متوسط وقت الاستجابة
+            today_stats = cache.get(f'performance_stats_{timezone.now().date().isoformat()}', {})
+            avg_response_time = today_stats.get('total_time', 0) / max(today_stats.get('total_requests', 1), 1)
+            
+            return {
+                'slow_queries': slow_query_count,
+                'slow_requests': slow_request_count,
+                'avg_response_time': round(avg_response_time, 3),
+                'status': 'warning' if slow_query_count > 10 or slow_request_count > 5 else 'normal'
+            }
+        
+        except Exception as e:
+            return {'error': str(e)}
+    
+    def get_active_alerts(self):
+        """الحصول على التنبيهات النشطة"""
+        try:
+            alerts = cache.get('active_alerts', [])
+            
+            # فلترة التنبيهات النشطة (آخر ساعة)
+            now = timezone.now()
+            one_hour_ago = now - timedelta(hours=1)
+            
+            active_alerts = [
+                alert for alert in alerts
+                if datetime.fromisoformat(alert.get('timestamp', '')) > one_hour_ago
+            ]
+            
+            return active_alerts
+        
+        except Exception as e:
+            logger.error(f'خطأ في الحصول على التنبيهات: {e}')
             return []
     
-    def acknowledge_alert(self, alert_id, user_id=None):
-        """الإقرار بالتنبيه"""
+    def determine_overall_status(self, status):
+        """تحديد الحالة العامة للنظام"""
         try:
-            # البحث عن التنبيه وتحديثه
-            # هذا مثال بسيط - يحتاج تنفيذ أكثر تفصيلاً
-            today = timezone.now().date().isoformat()
-            alerts_key = f'system_alerts_{today}'
-            alerts = cache.get(alerts_key, [])
+            # فحص حالة المكونات الرئيسية
+            system_status = status.get('system', {})
+            database_status = status.get('database', {})
+            performance_status = status.get('performance', {})
             
-            for alert in alerts:
-                if alert.get('id') == alert_id:
-                    alert['acknowledged'] = True
-                    alert['acknowledged_by'] = user_id
-                    alert['acknowledged_at'] = timezone.now().isoformat()
-                    break
+            # فحص التنبيهات النشطة
+            active_alerts = status.get('alerts', [])
+            critical_alerts = [alert for alert in active_alerts if alert.get('level') == 'critical']
             
-            cache.set(alerts_key, alerts, 86400)
-            return True
+            # تحديد الحالة
+            if critical_alerts or database_status.get('status') == 'error':
+                return 'critical'
             
+            warning_conditions = [
+                system_status.get('cpu', {}).get('status') == 'warning',
+                system_status.get('memory', {}).get('status') == 'warning',
+                system_status.get('disk', {}).get('status') == 'warning',
+                performance_status.get('status') == 'warning',
+                len(active_alerts) > 0
+            ]
+            
+            if any(warning_conditions):
+                return 'warning'
+            
+            return 'healthy'
+        
         except Exception as e:
-            logger.error(f"خطأ في الإقرار بالتنبيه: {e}")
-            return False
+            logger.error(f'خطأ في تحديد الحالة العامة: {e}')
+            return 'unknown'
     
-    def get_system_health_score(self):
-        """حساب نقاط صحة النظام"""
+    def check_and_alert(self):
+        """فحص النظام وإرسال التنبيهات"""
+        if not self.monitoring_enabled:
+            return
+        
         try:
-            current_metrics = self.get_current_metrics()
+            status = self.get_system_status()
+            alerts = []
             
-            if not current_metrics:
-                return 0
+            # فحص استخدام المعالج
+            cpu_usage = status.get('system', {}).get('cpu', {}).get('usage_percent', 0)
+            if cpu_usage > self.alert_thresholds['cpu_usage']:
+                alerts.append({
+                    'type': 'cpu_high',
+                    'level': 'warning',
+                    'message': f'استخدام المعالج مرتفع: {cpu_usage}%',
+                    'value': cpu_usage,
+                    'threshold': self.alert_thresholds['cpu_usage'],
+                    'timestamp': timezone.now().isoformat()
+                })
             
-            score = 100
+            # فحص استخدام الذاكرة
+            memory_usage = status.get('system', {}).get('memory', {}).get('usage_percent', 0)
+            if memory_usage > self.alert_thresholds['memory_usage']:
+                alerts.append({
+                    'type': 'memory_high',
+                    'level': 'warning',
+                    'message': f'استخدام الذاكرة مرتفع: {memory_usage}%',
+                    'value': memory_usage,
+                    'threshold': self.alert_thresholds['memory_usage'],
+                    'timestamp': timezone.now().isoformat()
+                })
             
-            # خصم نقاط بناءً على استخدام الموارد
-            if 'system' in current_metrics:
-                system_data = current_metrics['system']
+            # فحص استخدام القرص
+            disk_usage = status.get('system', {}).get('disk', {}).get('usage_percent', 0)
+            if disk_usage > self.alert_thresholds['disk_usage']:
+                alerts.append({
+                    'type': 'disk_high',
+                    'level': 'critical' if disk_usage > 95 else 'warning',
+                    'message': f'استخدام القرص مرتفع: {disk_usage}%',
+                    'value': disk_usage,
+                    'threshold': self.alert_thresholds['disk_usage'],
+                    'timestamp': timezone.now().isoformat()
+                })
+            
+            # فحص قاعدة البيانات
+            if not status.get('database', {}).get('connected', True):
+                alerts.append({
+                    'type': 'database_disconnected',
+                    'level': 'critical',
+                    'message': 'فقدان الاتصال بقاعدة البيانات',
+                    'timestamp': timezone.now().isoformat()
+                })
+            
+            # حفظ التنبيهات
+            if alerts:
+                self.save_alerts(alerts)
+                self.send_alert_notifications(alerts)
+            
+            return alerts
+        
+        except Exception as e:
+            logger.error(f'خطأ في فحص النظام: {e}')
+            return []
+    
+    def save_alerts(self, alerts):
+        """حفظ التنبيهات"""
+        try:
+            # الحصول على التنبيهات الحالية
+            current_alerts = cache.get('active_alerts', [])
+            
+            # إضافة التنبيهات الجديدة
+            current_alerts.extend(alerts)
+            
+            # الاحتفاظ بآخر 100 تنبيه فقط
+            if len(current_alerts) > 100:
+                current_alerts = current_alerts[-100:]
+            
+            # حفظ في التخزين المؤقت
+            cache.set('active_alerts', current_alerts, 86400)  # 24 ساعة
+            
+            # تسجيل في السجلات
+            for alert in alerts:
+                logger.warning(f"System Alert: {alert['message']}")
+        
+        except Exception as e:
+            logger.error(f'خطأ في حفظ التنبيهات: {e}')
+    
+    def send_alert_notifications(self, alerts):
+        """إرسال إشعارات التنبيهات"""
+        if not self.alert_emails:
+            return
+        
+        try:
+            critical_alerts = [alert for alert in alerts if alert.get('level') == 'critical']
+            warning_alerts = [alert for alert in alerts if alert.get('level') == 'warning']
+            
+            if critical_alerts or len(warning_alerts) > 3:
+                subject = f'تنبيه نظام الموارد البشرية - {len(alerts)} تنبيه'
                 
-                # المعالج
-                if 'cpu' in system_data:
-                    cpu_usage = system_data['cpu'].get('usage_percent', 0)
-                    if cpu_usage > 80:
-                        score -= (cpu_usage - 80) * 2
+                message = 'تم اكتشاف المشاكل التالية في النظام:\\n\\n'
                 
-                # الذاكرة
-                if 'memory' in system_data:
-                    memory_usage = system_data['memory'].get('usage_percent', 0)
-                    if memory_usage > 80:
-                        score -= (memory_usage - 80) * 2
+                for alert in alerts:
+                    message += f"- {alert['message']} ({alert['level']})\\n"
                 
-                # القرص
-                if 'disk' in system_data:
-                    disk_usage = system_data['disk'].get('usage_percent', 0)
-                    if disk_usage > 80:
-                        score -= (disk_usage - 80) * 1.5
+                message += f'\\nالوقت: {timezone.now().strftime("%Y-%m-%d %H:%M:%S")}\\n'
+                message += 'يرجى مراجعة لوحة مراقبة النظام للمزيد من التفاصيل.'
+                
+                send_mail(
+                    subject=subject,
+                    message=message,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=self.alert_emails,
+                    fail_silently=True
+                )
+        
+        except Exception as e:
+            logger.error(f'خطأ في إرسال إشعارات التنبيهات: {e}')
+    
+    def get_monitoring_history(self, hours=24):
+        """الحصول على تاريخ المراقبة"""
+        try:
+            history = []
+            now = timezone.now()
             
-            # خصم نقاط للتنبيهات النشطة
-            active_alerts = self.get_alerts(acknowledged=False)
-            critical_alerts = len([a for a in active_alerts if a.get('severity') == 'critical'])
-            warning_alerts = len([a for a in active_alerts if a.get('severity') == 'warning'])
+            for i in range(hours):
+                timestamp = now - timedelta(hours=i)
+                cache_key = f'monitoring_snapshot_{timestamp.strftime("%Y%m%d_%H")}'
+                snapshot = cache.get(cache_key)
+                
+                if snapshot:
+                    history.append(snapshot)
             
-            score -= critical_alerts * 20
-            score -= warning_alerts * 10
+            return sorted(history, key=lambda x: x.get('timestamp', ''))
+        
+        except Exception as e:
+            logger.error(f'خطأ في الحصول على تاريخ المراقبة: {e}')
+            return []
+    
+    def save_monitoring_snapshot(self):
+        """حفظ لقطة من حالة المراقبة"""
+        try:
+            status = self.get_system_status()
+            timestamp = timezone.now()
+            cache_key = f'monitoring_snapshot_{timestamp.strftime("%Y%m%d_%H")}'
             
-            return max(0, min(100, score))
+            snapshot = {
+                'timestamp': timestamp.isoformat(),
+                'cpu_usage': status.get('system', {}).get('cpu', {}).get('usage_percent', 0),
+                'memory_usage': status.get('system', {}).get('memory', {}).get('usage_percent', 0),
+                'disk_usage': status.get('system', {}).get('disk', {}).get('usage_percent', 0),
+                'response_time': status.get('performance', {}).get('avg_response_time', 0),
+                'database_connected': status.get('database', {}).get('connected', False),
+                'overall_status': status.get('overall_status', 'unknown')
+            }
+            
+            cache.set(cache_key, snapshot, 86400 * 7)  # أسبوع واحد
             
         except Exception as e:
-            logger.error(f"خطأ في حساب نقاط صحة النظام: {e}")
-            return 0
+            logger.error(f'خطأ في حفظ لقطة المراقبة: {e}')
 
 
 # إنشاء مثيل الخدمة

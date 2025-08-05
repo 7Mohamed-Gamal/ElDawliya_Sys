@@ -1,443 +1,424 @@
 """
-خدمة تحسين الأداء العامة
+خدمة تحسين الأداء الشاملة
 """
 
-from django.core.cache import cache
-from django.db import connection, transaction
-from django.conf import settings
-from django.utils import timezone
-from django.db.models import Q, Count, Sum, Avg, Max, Min
-from datetime import timedelta
 import logging
 import time
-import threading
-from collections import defaultdict
+from django.db import models, connection
+from django.core.cache import cache
+from django.conf import settings
+from django.utils import timezone
+from django.db.models import Prefetch, Q, Count, Sum, Avg, Max, Min
+from datetime import timedelta
+import hashlib
+import json
 
 logger = logging.getLogger(__name__)
 
 
 class PerformanceService:
-    """خدمة تحسين الأداء العامة"""
+    """خدمة تحسين الأداء الشاملة"""
     
     def __init__(self):
-        self.cache_timeout = getattr(settings, 'HR_CACHE_TIMEOUT', 300)
-        self.performance_metrics = defaultdict(list)
-        self.lock = threading.Lock()
+        self.cache_timeout = getattr(settings, 'PERFORMANCE_CACHE_TIMEOUT', 300)
+        self.slow_query_threshold = getattr(settings, 'SLOW_QUERY_THRESHOLD', 1.0)
+        self.enable_monitoring = getattr(settings, 'ENABLE_PERFORMANCE_MONITORING', True)
     
-    def monitor_query_performance(self, func_name, execution_time, query_count):
-        """مراقبة أداء الاستعلامات"""
-        with self.lock:
-            self.performance_metrics[func_name].append({
-                'execution_time': execution_time,
-                'query_count': query_count,
-                'timestamp': timezone.now()
-            })
-            
-            # الاحتفاظ بآخر 100 قياس فقط
-            if len(self.performance_metrics[func_name]) > 100:
-                self.performance_metrics[func_name] = self.performance_metrics[func_name][-100:]
-    
-    def get_performance_metrics(self, func_name=None):
-        """الحصول على مقاييس الأداء"""
-        with self.lock:
-            if func_name:
-                return self.performance_metrics.get(func_name, [])
-            return dict(self.performance_metrics)
-    
-    def get_slow_queries_report(self, threshold=1.0):
-        """تقرير الاستعلامات البطيئة"""
-        slow_queries = {}
+    def optimize_queryset(self, queryset, optimization_config=None):
+        """
+        تحسين QuerySet بناءً على التكوين المحدد
+        """
+        if not optimization_config:
+            return queryset
         
-        with self.lock:
-            for func_name, metrics in self.performance_metrics.items():
-                slow_executions = [
-                    m for m in metrics 
-                    if m['execution_time'] > threshold
-                ]
-                
-                if slow_executions:
-                    slow_queries[func_name] = {
-                        'count': len(slow_executions),
-                        'avg_time': sum(m['execution_time'] for m in slow_executions) / len(slow_executions),
-                        'max_time': max(m['execution_time'] for m in slow_executions),
-                        'recent_slow': slow_executions[-5:]  # آخر 5 تنفيذات بطيئة
-                    }
+        # تطبيق select_related
+        if 'select_related' in optimization_config:
+            queryset = queryset.select_related(*optimization_config['select_related'])
         
-        return slow_queries
+        # تطبيق prefetch_related
+        if 'prefetch_related' in optimization_config:
+            prefetch_list = []
+            for prefetch in optimization_config['prefetch_related']:
+                if isinstance(prefetch, dict):
+                    # Prefetch متقدم مع queryset مخصص
+                    prefetch_obj = Prefetch(
+                        prefetch['lookup'],
+                        queryset=prefetch.get('queryset'),
+                        to_attr=prefetch.get('to_attr')
+                    )
+                    prefetch_list.append(prefetch_obj)
+                else:
+                    prefetch_list.append(prefetch)
+            
+            queryset = queryset.prefetch_related(*prefetch_list)
+        
+        # تطبيق only
+        if 'only' in optimization_config:
+            queryset = queryset.only(*optimization_config['only'])
+        
+        # تطبيق defer
+        if 'defer' in optimization_config:
+            queryset = queryset.defer(*optimization_config['defer'])
+        
+        # تطبيق distinct
+        if optimization_config.get('distinct'):
+            queryset = queryset.distinct()
+        
+        return queryset
     
-    def optimize_database_connections(self):
-        """تحسين اتصالات قاعدة البيانات"""
-        try:
-            # إغلاق الاتصالات غير المستخدمة
-            connection.close()
-            
-            # تنظيف التخزين المؤقت للاستعلامات
-            if hasattr(connection, 'queries'):
-                connection.queries.clear()
-            
-            logger.info("تم تحسين اتصالات قاعدة البيانات")
-            return True
-            
-        except Exception as e:
-            logger.error(f"خطأ في تحسين اتصالات قاعدة البيانات: {e}")
-            return False
+    def get_optimized_employees(self, filters=None, optimization_level='full'):
+        """
+        الحصول على استعلام محسن للموظفين
+        """
+        from ..models import Employee
+        
+        queryset = Employee.objects.all()
+        
+        # تطبيق الفلاتر
+        if filters:
+            queryset = queryset.filter(**filters)
+        
+        # تحسينات حسب المستوى
+        if optimization_level == 'basic':
+            queryset = queryset.select_related('department', 'job_position')
+        elif optimization_level == 'full':
+            queryset = queryset.select_related(
+                'department',
+                'job_position', 
+                'company',
+                'branch',
+                'user'
+            ).prefetch_related(
+                'employee_documents',
+                'employee_contacts',
+                'employee_emergency_contacts'
+            )
+        elif optimization_level == 'minimal':
+            queryset = queryset.only(
+                'id', 'first_name', 'last_name', 'employee_id',
+                'department__name', 'job_position__name'
+            ).select_related('department', 'job_position')
+        
+        return queryset
     
-    def clear_expired_cache(self):
-        """مسح التخزين المؤقت المنتهي الصلاحية"""
+    def get_cached_data(self, cache_key, data_func, timeout=None, *args, **kwargs):
+        """
+        الحصول على البيانات مع التخزين المؤقت الذكي
+        """
+        if timeout is None:
+            timeout = self.cache_timeout
+        
+        # محاولة الحصول على البيانات من التخزين المؤقت
+        cached_data = cache.get(cache_key)
+        if cached_data is not None:
+            logger.debug(f'Cache hit for key: {cache_key}')
+            return cached_data
+        
+        # تنفيذ الدالة وحفظ النتيجة
+        start_time = time.time()
+        data = data_func(*args, **kwargs)
+        execution_time = time.time() - start_time
+        
+        # حفظ في التخزين المؤقت
+        cache.set(cache_key, data, timeout)
+        
+        logger.debug(
+            f'Cache miss for key: {cache_key}, '
+            f'execution time: {execution_time:.2f}s'
+        )
+        
+        return data
+    
+    def invalidate_cache_pattern(self, pattern):
+        """
+        إبطال التخزين المؤقت بناءً على نمط معين
+        """
         try:
-            # مسح التخزين المؤقت المرتبط بالموارد البشرية
-            cache_patterns = [
-                'employee_*',
-                'department_*',
-                'attendance_*',
-                'payroll_*',
-                'leave_*',
-                'dashboard_*'
-            ]
-            
-            cleared_count = 0
-            for pattern in cache_patterns:
-                # هذا يتطلب تنفيذ مخصص حسب نوع التخزين المؤقت
-                # في الوقت الحالي، سنمسح بعض المفاتيح المعروفة
-                keys_to_clear = [
-                    f'{pattern.replace("*", "")}summary',
-                    f'{pattern.replace("*", "")}stats',
-                    f'{pattern.replace("*", "")}list'
-                ]
+            # هذا يعتمد على نوع التخزين المؤقت المستخدم
+            # للـ Redis يمكن استخدام KEYS pattern
+            if hasattr(cache, 'delete_pattern'):
+                cache.delete_pattern(pattern)
+            else:
+                # للتخزين المؤقت الافتراضي، نحتاج لحفظ قائمة المفاتيح
+                cache_keys = cache.get('cache_keys_registry', set())
+                keys_to_delete = [key for key in cache_keys if pattern in key]
+                cache.delete_many(keys_to_delete)
                 
-                for key in keys_to_clear:
-                    if cache.delete(key):
-                        cleared_count += 1
-            
-            logger.info(f"تم مسح {cleared_count} مفتاح من التخزين المؤقت")
-            return cleared_count
-            
+                # تحديث السجل
+                cache_keys -= set(keys_to_delete)
+                cache.set('cache_keys_registry', cache_keys, 86400)
         except Exception as e:
-            logger.error(f"خطأ في مسح التخزين المؤقت: {e}")
+            logger.error(f'خطأ في إبطال التخزين المؤقت: {e}')
+    
+    def create_cache_key(self, prefix, *args, **kwargs):
+        """
+        إنشاء مفتاح تخزين مؤقت فريد
+        """
+        # تحويل المعاملات إلى نص
+        key_parts = [prefix]
+        
+        for arg in args:
+            key_parts.append(str(arg))
+        
+        for key, value in sorted(kwargs.items()):
+            key_parts.append(f'{key}:{value}')
+        
+        # إنشاء hash للمفتاح الطويل
+        key_string = ':'.join(key_parts)
+        if len(key_string) > 200:  # حد أقصى لطول المفتاح
+            key_hash = hashlib.md5(key_string.encode()).hexdigest()
+            return f'{prefix}:{key_hash}'
+        
+        return key_string
+    
+    def batch_process(self, queryset, batch_size=1000, process_func=None):
+        """
+        معالجة البيانات على دفعات لتحسين الذاكرة
+        """
+        if not process_func:
+            return list(queryset)
+        
+        results = []
+        total_count = queryset.count()
+        
+        for start in range(0, total_count, batch_size):
+            batch = queryset[start:start + batch_size]
+            batch_results = process_func(batch)
+            
+            if batch_results:
+                if isinstance(batch_results, list):
+                    results.extend(batch_results)
+                else:
+                    results.append(batch_results)
+            
+            logger.debug(f'Processed batch {start//batch_size + 1}/{(total_count + batch_size - 1)//batch_size}')
+        
+        return results
+    
+    def optimize_database_queries(self):
+        """
+        تحسين استعلامات قاعدة البيانات العامة
+        """
+        optimizations = []
+        
+        try:
+            with connection.cursor() as cursor:
+                # تحديث إحصائيات الجداول
+                if connection.vendor == 'postgresql':
+                    cursor.execute('ANALYZE;')
+                    optimizations.append('تم تحديث إحصائيات PostgreSQL')
+                elif connection.vendor == 'mysql':
+                    cursor.execute("SHOW TABLES LIKE 'Hr_%'")
+                    tables = cursor.fetchall()
+                    for table in tables:
+                        cursor.execute(f'ANALYZE TABLE {table[0]}')
+                    optimizations.append(f'تم تحديث إحصائيات {len(tables)} جدول في MySQL')
+                
+                # إنشاء فهارس مفقودة
+                missing_indexes = self.find_missing_indexes()
+                for index_sql in missing_indexes:
+                    try:
+                        cursor.execute(index_sql)
+                        optimizations.append(f'تم إنشاء فهرس: {index_sql}')
+                    except Exception as e:
+                        logger.warning(f'فشل في إنشاء الفهرس {index_sql}: {e}')
+        
+        except Exception as e:
+            logger.error(f'خطأ في تحسين قاعدة البيانات: {e}')
+        
+        return optimizations
+    
+    def find_missing_indexes(self):
+        """
+        البحث عن الفهارس المفقودة
+        """
+        missing_indexes = []
+        
+        # فهارس أساسية للموظفين
+        basic_indexes = [
+            'CREATE INDEX IF NOT EXISTS idx_hr_employee_department ON Hr_employee(department_id);',
+            'CREATE INDEX IF NOT EXISTS idx_hr_employee_active ON Hr_employee(is_active);',
+            'CREATE INDEX IF NOT EXISTS idx_hr_employee_hire_date ON Hr_employee(hire_date);',
+            'CREATE INDEX IF NOT EXISTS idx_hr_employee_employee_id ON Hr_employee(employee_id);',
+        ]
+        
+        # فحص الفهارس الموجودة
+        existing_indexes = self.get_existing_indexes()
+        
+        for index_sql in basic_indexes:
+            index_name = self.extract_index_name(index_sql)
+            if index_name not in existing_indexes:
+                missing_indexes.append(index_sql)
+        
+        return missing_indexes
+    
+    def get_existing_indexes(self):
+        """
+        الحصول على قائمة الفهارس الموجودة
+        """
+        existing_indexes = set()
+        
+        try:
+            with connection.cursor() as cursor:
+                if connection.vendor == 'postgresql':
+                    cursor.execute("""
+                        SELECT indexname FROM pg_indexes 
+                        WHERE tablename LIKE 'hr_%'
+                    """)
+                elif connection.vendor == 'mysql':
+                    cursor.execute("""
+                        SELECT INDEX_NAME FROM INFORMATION_SCHEMA.STATISTICS 
+                        WHERE TABLE_SCHEMA = DATABASE() 
+                        AND TABLE_NAME LIKE 'Hr_%'
+                    """)
+                elif connection.vendor == 'sqlite':
+                    cursor.execute("""
+                        SELECT name FROM sqlite_master 
+                        WHERE type = 'index' 
+                        AND tbl_name LIKE 'Hr_%'
+                    """)
+                
+                for row in cursor.fetchall():
+                    existing_indexes.add(row[0])
+        
+        except Exception as e:
+            logger.error(f'خطأ في الحصول على الفهارس الموجودة: {e}')
+        
+        return existing_indexes
+    
+    def extract_index_name(self, index_sql):
+        """
+        استخراج اسم الفهرس من SQL
+        """
+        import re
+        match = re.search(r'INDEX\s+(?:IF\s+NOT\s+EXISTS\s+)?(\w+)', index_sql, re.IGNORECASE)
+        return match.group(1) if match else None
+    
+    def get_performance_metrics(self):
+        """
+        الحصول على مقاييس الأداء الحالية
+        """
+        metrics = {
+            'timestamp': timezone.now().isoformat(),
+            'database': {
+                'query_count': len(connection.queries),
+                'slow_queries': self.get_slow_queries_count(),
+            },
+            'cache': {
+                'hit_rate': self.get_cache_hit_rate(),
+                'memory_usage': self.get_cache_memory_usage(),
+            },
+            'system': {
+                'memory_usage': self.get_system_memory_usage(),
+                'cpu_usage': self.get_cpu_usage(),
+            }
+        }
+        
+        return metrics
+    
+    def get_slow_queries_count(self):
+        """
+        الحصول على عدد الاستعلامات البطيئة
+        """
+        slow_queries = cache.get('slow_queries_log', [])
+        return len(slow_queries)
+    
+    def get_cache_hit_rate(self):
+        """
+        حساب معدل إصابة التخزين المؤقت
+        """
+        try:
+            # هذا يعتمد على نوع التخزين المؤقت
+            # يمكن تخصيصه حسب Redis أو Memcached
+            stats = cache.get('cache_stats', {'hits': 0, 'misses': 0})
+            total = stats['hits'] + stats['misses']
+            return stats['hits'] / total if total > 0 else 0
+        except Exception:
+            return 0.0
+    
+    def get_cache_memory_usage(self):
+        """
+        الحصول على استخدام ذاكرة التخزين المؤقت
+        """
+        try:
+            # هذا يحتاج تخصيص حسب نوع التخزين المؤقت
+            return 0  # قيمة افتراضية
+        except Exception:
             return 0
     
-    def analyze_memory_usage(self):
-        """تحليل استخدام الذاكرة"""
+    def get_system_memory_usage(self):
+        """
+        الحصول على استخدام ذاكرة النظام
+        """
         try:
             import psutil
-            import os
-            
-            # معلومات العملية الحالية
-            process = psutil.Process(os.getpid())
-            memory_info = process.memory_info()
-            
-            analysis = {
-                'rss': memory_info.rss / 1024 / 1024,  # MB
-                'vms': memory_info.vms / 1024 / 1024,  # MB
-                'percent': process.memory_percent(),
-                'available_memory': psutil.virtual_memory().available / 1024 / 1024,  # MB
-                'total_memory': psutil.virtual_memory().total / 1024 / 1024,  # MB
-            }
-            
-            # تحذيرات الذاكرة
-            if analysis['percent'] > 80:
-                logger.warning(f"استخدام ذاكرة عالي: {analysis['percent']:.1f}%")
-            
-            return analysis
-            
+            return psutil.virtual_memory().percent
         except ImportError:
-            logger.warning("مكتبة psutil غير متاحة لتحليل الذاكرة")
-            return {'error': 'psutil not available'}
-        except Exception as e:
-            logger.error(f"خطأ في تحليل الذاكرة: {e}")
-            return {'error': str(e)}
-    
-    def optimize_queryset_for_large_data(self, queryset, batch_size=1000):
-        """تحسين QuerySet للبيانات الكبيرة"""
-        try:
-            total_count = queryset.count()
-            
-            if total_count > batch_size:
-                logger.info(f"استخدام التحميل المجمع للبيانات الكبيرة: {total_count} سجل")
-                
-                # استخدام iterator للبيانات الكبيرة
-                return queryset.iterator(chunk_size=batch_size)
-            else:
-                return queryset
-                
-        except Exception as e:
-            logger.error(f"خطأ في تحسين QuerySet: {e}")
-            return queryset
-    
-    def bulk_create_optimized(self, model_class, objects_data, batch_size=1000):
-        """إنشاء مجمع محسن"""
-        try:
-            objects_to_create = []
-            created_objects = []
-            
-            for i, obj_data in enumerate(objects_data):
-                if isinstance(obj_data, dict):
-                    obj = model_class(**obj_data)
-                else:
-                    obj = obj_data
-                
-                objects_to_create.append(obj)
-                
-                # إنشاء دفعة عند الوصول لحجم الدفعة
-                if len(objects_to_create) >= batch_size:
-                    batch_created = model_class.objects.bulk_create(
-                        objects_to_create,
-                        ignore_conflicts=True
-                    )
-                    created_objects.extend(batch_created)
-                    objects_to_create = []
-            
-            # إنشاء الدفعة الأخيرة
-            if objects_to_create:
-                batch_created = model_class.objects.bulk_create(
-                    objects_to_create,
-                    ignore_conflicts=True
-                )
-                created_objects.extend(batch_created)
-            
-            logger.info(f"تم إنشاء {len(created_objects)} كائن بشكل مجمع")
-            return created_objects
-            
-        except Exception as e:
-            logger.error(f"خطأ في الإنشاء المجمع: {e}")
-            return []
-    
-    def bulk_update_optimized(self, model_class, updates_data, batch_size=1000):
-        """تحديث مجمع محسن"""
-        try:
-            updated_count = 0
-            
-            # تجميع التحديثات حسب الحقول
-            updates_by_fields = defaultdict(list)
-            
-            for update_data in updates_data:
-                obj_id = update_data.pop('id')
-                fields_key = tuple(sorted(update_data.keys()))
-                updates_by_fields[fields_key].append((obj_id, update_data))
-            
-            # تنفيذ التحديثات المجمعة
-            for fields, updates in updates_by_fields.items():
-                for i in range(0, len(updates), batch_size):
-                    batch = updates[i:i + batch_size]
-                    
-                    # إنشاء استعلام التحديث المجمع
-                    ids = [update[0] for update in batch]
-                    
-                    # تحديث كل حقل على حدة (Django لا يدعم bulk_update متقدم)
-                    for field in fields:
-                        values = {update[0]: update[1][field] for update in batch}
-                        
-                        # استخدام case/when للتحديث المجمع
-                        from django.db.models import Case, When, Value
-                        
-                        cases = [
-                            When(id=obj_id, then=Value(value))
-                            for obj_id, value in values.items()
-                        ]
-                        
-                        updated = model_class.objects.filter(
-                            id__in=ids
-                        ).update(**{field: Case(*cases)})
-                        
-                        updated_count += updated
-            
-            logger.info(f"تم تحديث {updated_count} سجل بشكل مجمع")
-            return updated_count
-            
-        except Exception as e:
-            logger.error(f"خطأ في التحديث المجمع: {e}")
             return 0
     
-    def optimize_database_indexes(self):
-        """تحسين فهارس قاعدة البيانات"""
+    def get_cpu_usage(self):
+        """
+        الحصول على استخدام المعالج
+        """
         try:
-            optimization_results = []
-            
-            with connection.cursor() as cursor:
-                if connection.vendor == 'mysql':
-                    # تحليل الجداول
-                    cursor.execute("SHOW TABLES")
-                    tables = cursor.fetchall()
-                    
-                    for table in tables:
-                        table_name = table[0]
-                        if table_name.startswith('Hr_'):
-                            cursor.execute(f"ANALYZE TABLE {table_name}")
-                            result = cursor.fetchone()
-                            optimization_results.append({
-                                'table': table_name,
-                                'status': result[3] if result else 'unknown'
-                            })
-                
-                elif connection.vendor == 'postgresql':
-                    # تحديث إحصائيات الجداول
-                    cursor.execute("""
-                        SELECT tablename FROM pg_tables 
-                        WHERE schemaname = 'public' AND tablename LIKE 'Hr_%'
-                    """)
-                    tables = cursor.fetchall()
-                    
-                    for table in tables:
-                        table_name = table[0]
-                        cursor.execute(f"ANALYZE {table_name}")
-                        optimization_results.append({
-                            'table': table_name,
-                            'status': 'analyzed'
-                        })
-            
-            logger.info(f"تم تحسين {len(optimization_results)} جدول")
-            return optimization_results
-            
-        except Exception as e:
-            logger.error(f"خطأ في تحسين الفهارس: {e}")
-            return []
+            import psutil
+            return psutil.cpu_percent(interval=1)
+        except ImportError:
+            return 0
     
-    def get_database_statistics(self):
-        """الحصول على إحصائيات قاعدة البيانات"""
-        try:
-            stats = {
-                'vendor': connection.vendor,
-                'tables': {},
-                'total_size': 0,
-                'connection_info': {
-                    'host': connection.settings_dict.get('HOST', 'localhost'),
-                    'port': connection.settings_dict.get('PORT', 'default'),
-                    'name': connection.settings_dict.get('NAME', 'unknown')
-                }
+    def optimize_for_report(self, report_type, parameters=None):
+        """
+        تحسين خاص للتقارير
+        """
+        optimization_configs = {
+            'employee_list': {
+                'select_related': ['department', 'job_position', 'company'],
+                'only': ['id', 'first_name', 'last_name', 'employee_id', 
+                        'department__name', 'job_position__name']
+            },
+            'attendance_report': {
+                'select_related': ['employee', 'employee__department'],
+                'prefetch_related': ['employee__employee_contacts']
+            },
+            'payroll_report': {
+                'select_related': ['employee', 'employee__department', 'employee__job_position'],
+                'prefetch_related': ['payroll_allowances', 'payroll_deductions']
             }
-            
-            with connection.cursor() as cursor:
-                if connection.vendor == 'mysql':
-                    # حجم قاعدة البيانات
-                    cursor.execute("""
-                        SELECT table_name, 
-                               ROUND(((data_length + index_length) / 1024 / 1024), 2) AS size_mb,
-                               table_rows
-                        FROM information_schema.tables 
-                        WHERE table_schema = DATABASE() AND table_name LIKE 'Hr_%'
-                    """)
-                    
-                    for row in cursor.fetchall():
-                        table_name, size_mb, row_count = row
-                        stats['tables'][table_name] = {
-                            'size_mb': float(size_mb) if size_mb else 0,
-                            'row_count': int(row_count) if row_count else 0
-                        }
-                        stats['total_size'] += float(size_mb) if size_mb else 0
-                
-                elif connection.vendor == 'postgresql':
-                    # حجم الجداول
-                    cursor.execute("""
-                        SELECT schemaname, tablename, 
-                               pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size,
-                               pg_total_relation_size(schemaname||'.'||tablename) as size_bytes
-                        FROM pg_tables 
-                        WHERE schemaname = 'public' AND tablename LIKE 'Hr_%'
-                    """)
-                    
-                    for row in cursor.fetchall():
-                        schema, table_name, size_pretty, size_bytes = row
-                        stats['tables'][table_name] = {
-                            'size_mb': size_bytes / 1024 / 1024,
-                            'size_pretty': size_pretty
-                        }
-                        stats['total_size'] += size_bytes / 1024 / 1024
-                
-                elif connection.vendor == 'sqlite':
-                    # معلومات أساسية لـ SQLite
-                    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'Hr_%'")
-                    tables = cursor.fetchall()
-                    
-                    for table in tables:
-                        table_name = table[0]
-                        cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
-                        row_count = cursor.fetchone()[0]
-                        
-                        stats['tables'][table_name] = {
-                            'row_count': row_count,
-                            'size_mb': 0  # SQLite لا يوفر معلومات حجم الجدول بسهولة
-                        }
-            
-            return stats
-            
-        except Exception as e:
-            logger.error(f"خطأ في الحصول على إحصائيات قاعدة البيانات: {e}")
-            return {'error': str(e)}
-    
-    def schedule_maintenance_tasks(self):
-        """جدولة مهام الصيانة"""
-        try:
-            maintenance_results = {
-                'cache_cleared': self.clear_expired_cache(),
-                'connections_optimized': self.optimize_database_connections(),
-                'indexes_optimized': len(self.optimize_database_indexes()),
-                'timestamp': timezone.now()
-            }
-            
-            # حفظ نتائج الصيانة في التخزين المؤقت
-            cache.set('maintenance_last_run', maintenance_results, 86400)  # 24 ساعة
-            
-            logger.info("تم تنفيذ مهام الصيانة بنجاح")
-            return maintenance_results
-            
-        except Exception as e:
-            logger.error(f"خطأ في مهام الصيانة: {e}")
-            return {'error': str(e)}
-    
-    def get_performance_recommendations(self):
-        """الحصول على توصيات تحسين الأداء"""
-        recommendations = []
+        }
         
+        return optimization_configs.get(report_type, {})
+    
+    def clear_expired_cache(self):
+        """
+        مسح التخزين المؤقت المنتهي الصلاحية
+        """
         try:
-            # تحليل الاستعلامات البطيئة
-            slow_queries = self.get_slow_queries_report()
+            # هذا يعتمد على نوع التخزين المؤقت
+            # للـ Redis يمكن استخدام TTL
+            cleared_count = 0
+            
+            # مسح الاستعلامات البطيئة القديمة
+            slow_queries = cache.get('slow_queries_log', [])
             if slow_queries:
-                recommendations.append({
-                    'type': 'slow_queries',
-                    'priority': 'high',
-                    'message': f'يوجد {len(slow_queries)} دالة بها استعلامات بطيئة',
-                    'details': slow_queries
-                })
+                # الاحتفاظ بآخر 100 استعلام فقط
+                if len(slow_queries) > 100:
+                    cache.set('slow_queries_log', slow_queries[-100:], 3600)
+                    cleared_count += len(slow_queries) - 100
             
-            # تحليل الذاكرة
-            memory_analysis = self.analyze_memory_usage()
-            if 'percent' in memory_analysis and memory_analysis['percent'] > 70:
-                recommendations.append({
-                    'type': 'memory',
-                    'priority': 'medium',
-                    'message': f'استخدام ذاكرة عالي: {memory_analysis["percent"]:.1f}%'
-                })
+            # مسح إحصائيات الأداء القديمة
+            today = timezone.now().date()
+            for i in range(7, 30):  # مسح الإحصائيات الأقدم من أسبوع
+                old_date = today - timedelta(days=i)
+                old_key = f'performance_stats_{old_date.isoformat()}'
+                if cache.get(old_key):
+                    cache.delete(old_key)
+                    cleared_count += 1
             
-            # تحليل قاعدة البيانات
-            db_stats = self.get_database_statistics()
-            if 'tables' in db_stats:
-                large_tables = [
-                    name for name, info in db_stats['tables'].items()
-                    if info.get('row_count', 0) > 10000
-                ]
-                
-                if large_tables:
-                    recommendations.append({
-                        'type': 'database',
-                        'priority': 'medium',
-                        'message': f'يوجد {len(large_tables)} جدول كبير يحتاج تحسين',
-                        'details': large_tables
-                    })
-            
-            # توصيات التخزين المؤقت
-            cache_stats = cache.get('cache_hit_rate')
-            if cache_stats and cache_stats < 0.8:
-                recommendations.append({
-                    'type': 'cache',
-                    'priority': 'low',
-                    'message': f'معدل إصابة التخزين المؤقت منخفض: {cache_stats:.1%}'
-                })
-            
-            return recommendations
-            
+            return cleared_count
+        
         except Exception as e:
-            logger.error(f"خطأ في توليد التوصيات: {e}")
-            return [{'type': 'error', 'message': str(e)}]
+            logger.error(f'خطأ في مسح التخزين المؤقت: {e}')
+            return 0
 
 
 # إنشاء مثيل الخدمة

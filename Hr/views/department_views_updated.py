@@ -15,7 +15,7 @@ from Hr.decorators import hr_module_permission_required
 @hr_module_permission_required('departments', 'view')
 def department_list(request):
     """عرض قائمة الأقسام"""
-    departments = Department.objects.annotate(employee_count=Count('employees')).order_by('dept_name')
+    departments = Department.objects.annotate(employee_count=Count('legacy_employees')).order_by('dept_name')
 
     # إضافة معلومات مدير القسم لكل قسم
     departments_with_managers = []
@@ -163,7 +163,7 @@ def department_delete(request, dept_code):
 
     if request.method == 'POST':
         # Check if there are any employees in this department
-        if department.employees.exists():
+        if department.legacy_employees.exists():
             messages.error(request, 'لا يمكن حذف القسم لأنه يحتوي على موظفين')
             return redirect('Hr:departments:department_detail', dept_code=department.dept_code)
 

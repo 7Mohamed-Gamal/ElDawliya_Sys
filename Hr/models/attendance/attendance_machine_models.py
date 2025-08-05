@@ -332,6 +332,94 @@ class AttendanceMachine(models.Model):
                 needing_sync.append(machine)
         
         return needing_sync
+    
+    def get_status_display_with_icon(self):
+        """Get status with visual indicator"""
+        status_icons = {
+            'online': '🟢 متصل',
+            'offline': '🔴 غير متصل',
+            'maintenance': '🔧 صيانة',
+            'error': '⚠️ خطأ',
+            'disabled': '⚫ معطل',
+        }
+        return status_icons.get(self.status, self.get_status_display())
+    
+    def get_connection_health_score(self):
+        """Calculate connection health score"""
+        score = 100
+        
+        # Deduct points for offline status
+        if self.status == 'offline':
+            score -= 50
+        elif self.status == 'error':
+            score -= 30
+        elif self.status == 'maintenance':
+            score -= 20
+        
+        # Deduct points for old sync
+        if self.last_sync_time:
+            hours_since_sync = (timezone.now() - self.last_sync_time).total_seconds() / 3600
+            if hours_since_sync > 24:
+                score -= 30
+            elif hours_since_sync > 12:
+                score -= 15
+            elif hours_since_sync > 6:
+                score -= 10
+        else:
+            score -= 40  # Never synced
+        
+        # Deduct points for old ping
+        if self.last_ping_time:
+            hours_since_ping = (timezone.now() - self.last_ping_time).total_seconds() / 3600
+            if hours_since_ping > 1:
+                score -= 20
+        else:
+            score -= 30  # Never pinged
+        
+        return max(0, min(100, score))
+    
+    def get_machine_statistics(self):
+        """Get comprehensive machine statistics"""
+        from django.db.models import Count
+        
+        stats = {
+            'total_users': self.machine_users.count(),
+            'enrolled_users': self.machine_users.filter(is_enrolled=True).count(),
+            'active_users': self.machine_users.filter(is_active=True).count(),
+            'fingerprint_users': self.machine_users.filter(fingerprint_templates__gt=0).count(),
+            'face_users': self.machine_users.filter(face_template_exists=True).count(),
+            'card_users': self.machine_users.exclude(card_number='').count(),
+            'pin_users': self.machine_users.exclude(pin_code='').count(),
+        }
+        
+        # Get attendance records count for today
+        from datetime import date
+        today = date.today()
+        stats['today_records'] = getattr(self, 'attendance_records', self.__class__.objects.none()).filter(
+            date=today
+        ).count()
+        
+        return stats
+    
+    @classmethod
+    def get_fleet_status(cls):
+        """Get status of all machines"""
+        machines = cls.objects.filter(is_active=True)
+        
+        status_summary = {
+            'total_machines': machines.count(),
+            'online': machines.filter(status='online').count(),
+            'offline': machines.filter(status='offline').count(),
+            'maintenance': machines.filter(status='maintenance').count(),
+            'error': machines.filter(status='error').count(),
+            'disabled': machines.filter(status='disabled').count(),
+        }
+        
+        status_summary['health_percentage'] = (
+            status_summary['online'] / status_summary['total_machines'] * 100
+        ) if status_summary['total_machines'] > 0 else 0
+        
+        return status_summary
 
 
 class MachineUser(models.Model):
@@ -469,3 +557,5 @@ class MachineUser(models.Model):
                 success_count += 1
         
         return success_count
+
+

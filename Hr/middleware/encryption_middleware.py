@@ -1,384 +1,409 @@
 """
-Middleware للتشفير التلقائي والأمان
+Middleware للتشفير والأمان
 """
 
-from django.utils.deprecation import MiddlewareMixin
-from django.http import HttpResponseForbidden
-from django.core.cache import cache
-from django.conf import settings
-from django.utils import timezone
-from Hr.services.encryption_service import encryption_service, secure_data_manager
 import logging
+from django.utils.deprecation import MiddlewareMixin
+from django.conf import settings
+from django.http import JsonResponse
+from Hr.services.encryption_service import encryption_service
 import json
-import hashlib
-from datetime import timedelta
 
 logger = logging.getLogger(__name__)
 
 
-class EncryptionSecurityMiddleware(MiddlewareMixin):
-    """Middleware للأمان والتشفير"""
+class DataEncryptionMiddleware(MiddlewareMixin):
+    """
+    Middleware لتشفير البيانات الحساسة في الطلبات والاستجابات
+    """
     
     def __init__(self, get_response):
         self.get_response = get_response
-        self.enabled = getattr(settings, 'HR_ENCRYPTION_SECURITY', True)
-        self.max_requests_per_minute = getattr(settings, 'HR_MAX_REQUESTS_PER_MINUTE', 60)
-        self.sensitive_paths = getattr(settings, 'HR_SENSITIVE_PATHS', [
-            '/hr/employees/',
-            '/hr/payroll/',
-            '/hr/files/',
-            '/api/v1/employees/',
-            '/api/v1/payroll/'
+        self.enable_encryption = getattr(settings, 'ENABLE_DATA_ENCRYPTION', True)
+        self.sensitive_fields = getattr(settings, 'SENSITIVE_FIELDS', [
+            'national_id', 'phone_number', 'mobile_number', 
+            'personal_email', 'salary', 'bank_account'
         ])
         super().__init__(get_response)
     
     def process_request(self, request):
         """معالجة الطلب الوارد"""
-        if not self.enabled:
+        if not self.enable_encryption:
             return None
         
-        # التحقق من معدل الطلبات
-        if not self._check_rate_limit(request):
-            logger.warning(f"تم تجاوز حد الطلبات من IP: {self._get_client_ip(request)}")
-            return HttpResponseForbidden("تم تجاوز حد الطلبات المسموح")
-        
-        # التحقق من الوصول للمسارات الحساسة
-        if self._is_sensitive_path(request.path):
-            if not self._validate_sensitive_access(request):
-                logger.warning(f"محاولة وصول غير مصرح بها للمسار الحساس: {request.path}")
-                return HttpResponseForbidden("غير مصرح بالوصول")
-        
-        # إضافة معلومات الأمان للطلب
-        request.security_context = {
-            'client_ip': self._get_client_ip(request),
-            'user_agent': request.META.get('HTTP_USER_AGENT', ''),
-            'timestamp': timezone.now(),
-            'is_sensitive_path': self._is_sensitive_path(request.path)
-        }
-        
-        return None
-    
-    def process_response(self, request, response):
-        """معالجة الاستجابة"""
-        if not self.enabled:
-            return response
-        
-        # إضافة headers الأمان
-        response['X-Content-Type-Options'] = 'nosniff'
-        response['X-Frame-Options'] = 'DENY'
-        response['X-XSS-Protection'] = '1; mode=block'
-        response['Referrer-Policy'] = 'strict-origin-when-cross-origin'
-        
-        # إضافة CSP للمسارات الحساسة
-        if hasattr(request, 'security_context') and request.security_context.get('is_sensitive_path'):
-            response['Content-Security-Policy'] = (
-                "default-src 'self'; "
-                "script-src 'self' 'unsafe-inline'; "
-                "style-src 'self' 'unsafe-inline'; "
-                "img-src 'self' data:; "
-                "font-src 'self'"
-            )
-        
-        # تسجيل الوصول للمسارات الحساسة
-        if hasattr(request, 'security_context') and request.security_context.get('is_sensitive_path'):
-            self._log_sensitive_access(request, response)
-        
-        return response
-    
-    def _check_rate_limit(self, request):
-        """التحقق من معدل الطلبات"""
-        try:
-            client_ip = self._get_client_ip(request)
-            cache_key = f'rate_limit_{client_ip}'
-            
-            # الحصول على عدد الطلبات الحالي
-            current_requests = cache.get(cache_key, 0)
-            
-            if current_requests >= self.max_requests_per_minute:
-                return False
-            
-            # زيادة العداد
-            cache.set(cache_key, current_requests + 1, 60)  # 60 ثانية
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"خطأ في التحقق من معدل الطلبات: {e}")
-            return True  # السماح بالطلب في حالة الخطأ
-    
-    def _is_sensitive_path(self, path):
-        """التحقق من كون المسار حساساً"""
-        return any(path.startswith(sensitive_path) for sensitive_path in self.sensitive_paths)
-    
-    def _validate_sensitive_access(self, request):
-        """التحقق من صحة الوصول للمسارات الحساسة"""
-        # التحقق من تسجيل الدخول
-        if not hasattr(request, 'user') or not request.user.is_authenticated:
-            return False
-        
-        # التحقق من الصلاحيات الأساسية
-        if not request.user.is_active:
-            return False
-        
-        # التحقق من IP المسموح (إذا تم تكوينه)
-        allowed_ips = getattr(settings, 'HR_ALLOWED_IPS', None)
-        if allowed_ips:
-            client_ip = self._get_client_ip(request)
-            if client_ip not in allowed_ips:
-                return False
-        
-        return True
-    
-    def _get_client_ip(self, request):
-        """الحصول على IP العميل"""
-        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-        if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0]
-        else:
-            ip = request.META.get('REMOTE_ADDR')
-        return ip
-    
-    def _log_sensitive_access(self, request, response):
-        """تسجيل الوصول للمسارات الحساسة"""
-        try:
-            access_log = {
-                'user_id': request.user.id if hasattr(request, 'user') and request.user.is_authenticated else None,
-                'username': request.user.username if hasattr(request, 'user') and request.user.is_authenticated else 'anonymous',
-                'path': request.path,
-                'method': request.method,
-                'client_ip': self._get_client_ip(request),
-                'user_agent': request.META.get('HTTP_USER_AGENT', ''),
-                'status_code': response.status_code,
-                'timestamp': timezone.now().isoformat()
-            }
-            
-            # حفظ في التخزين المؤقت
-            today = timezone.now().date().isoformat()
-            cache_key = f'sensitive_access_log_{today}'
-            
-            access_logs = cache.get(cache_key, [])
-            access_logs.append(access_log)
-            cache.set(cache_key, access_logs, 86400)  # 24 ساعة
-            
-            # تسجيل في السجل
-            logger.info(f"وصول حساس: {access_log['username']} -> {access_log['path']}")
-            
-        except Exception as e:
-            logger.error(f"خطأ في تسجيل الوصول الحساس: {e}")
-
-
-class DataEncryptionMiddleware(MiddlewareMixin):
-    """Middleware لتشفير البيانات تلقائياً"""
-    
-    def __init__(self, get_response):
-        self.get_response = get_response
-        self.enabled = getattr(settings, 'HR_AUTO_ENCRYPTION', True)
-        super().__init__(get_response)
-    
-    def process_request(self, request):
-        """معالجة الطلب لتشفير البيانات الواردة"""
-        if not self.enabled:
-            return None
-        
-        # تشفير البيانات الحساسة في POST requests
+        # تشفير البيانات الحساسة في POST data
         if request.method == 'POST' and request.content_type == 'application/json':
             try:
                 if hasattr(request, 'body') and request.body:
                     data = json.loads(request.body.decode('utf-8'))
                     
                     # تشفير البيانات الحساسة
-                    encrypted_data = encryption_service.encrypt_sensitive_data(data)
+                    encrypted_data = self.encrypt_request_data(data)
                     
                     # تحديث body الطلب
                     request._body = json.dumps(encrypted_data).encode('utf-8')
-                    
-            except Exception as e:
-                logger.error(f"خطأ في تشفير بيانات الطلب: {e}")
+            
+            except (json.JSONDecodeError, UnicodeDecodeError) as e:
+                logger.warning(f'خطأ في معالجة بيانات الطلب: {e}')
         
         return None
     
     def process_response(self, request, response):
-        """معالجة الاستجابة لفك تشفير البيانات"""
-        if not self.enabled:
+        """معالجة الاستجابة"""
+        if not self.enable_encryption:
             return response
         
-        # فك تشفير البيانات في JSON responses
+        # فك تشفير البيانات في الاستجابة للعرض
         if (response.get('Content-Type', '').startswith('application/json') and 
             hasattr(response, 'content')):
-            
             try:
                 data = json.loads(response.content.decode('utf-8'))
                 
-                # فك تشفير البيانات الحساسة
-                if isinstance(data, dict):
-                    decrypted_data = encryption_service.decrypt_sensitive_data(data)
-                    response.content = json.dumps(decrypted_data, ensure_ascii=False).encode('utf-8')
-                elif isinstance(data, list):
-                    decrypted_list = []
-                    for item in data:
-                        if isinstance(item, dict):
-                            decrypted_list.append(encryption_service.decrypt_sensitive_data(item))
-                        else:
-                            decrypted_list.append(item)
-                    response.content = json.dumps(decrypted_list, ensure_ascii=False).encode('utf-8')
+                # فك تشفير البيانات للعرض
+                decrypted_data = self.decrypt_response_data(data)
                 
-            except Exception as e:
-                logger.error(f"خطأ في فك تشفير بيانات الاستجابة: {e}")
-        
-        return response
-
-
-class SecureSessionMiddleware(MiddlewareMixin):
-    """Middleware للجلسات الآمنة"""
-    
-    def __init__(self, get_response):
-        self.get_response = get_response
-        self.enabled = getattr(settings, 'HR_SECURE_SESSIONS', True)
-        self.session_timeout = getattr(settings, 'HR_SESSION_TIMEOUT', 3600)  # ساعة واحدة
-        super().__init__(get_response)
-    
-    def process_request(self, request):
-        """معالجة الطلب للجلسات الآمنة"""
-        if not self.enabled:
-            return None
-        
-        # التحقق من انتهاء صلاحية الجلسة
-        if hasattr(request, 'session') and request.session.session_key:
-            last_activity = request.session.get('last_activity')
+                # تحديث محتوى الاستجابة
+                response.content = json.dumps(decrypted_data, ensure_ascii=False).encode('utf-8')
+                response['Content-Length'] = str(len(response.content))
             
-            if last_activity:
-                last_activity_time = timezone.datetime.fromisoformat(last_activity)
-                if timezone.now() - last_activity_time > timedelta(seconds=self.session_timeout):
-                    # انتهت صلاحية الجلسة
-                    request.session.flush()
-                    logger.info("تم إنهاء جلسة منتهية الصلاحية")
-            
-            # تحديث وقت النشاط الأخير
-            request.session['last_activity'] = timezone.now().isoformat()
-        
-        # التحقق من تغيير IP
-        if hasattr(request, 'session') and request.session.session_key:
-            session_ip = request.session.get('client_ip')
-            current_ip = self._get_client_ip(request)
-            
-            if session_ip and session_ip != current_ip:
-                # تغير IP - إنهاء الجلسة للأمان
-                request.session.flush()
-                logger.warning(f"تم إنهاء جلسة بسبب تغيير IP: {session_ip} -> {current_ip}")
-            else:
-                request.session['client_ip'] = current_ip
-        
-        return None
-    
-    def process_response(self, request, response):
-        """معالجة الاستجابة للجلسات الآمنة"""
-        if not self.enabled:
-            return response
-        
-        # إضافة headers الأمان للجلسات
-        if hasattr(request, 'session') and request.session.session_key:
-            response['X-Session-Timeout'] = str(self.session_timeout)
-            
-            # تشفير معرف الجلسة في cookie
-            if 'sessionid' in response.cookies:
-                response.cookies['sessionid']['secure'] = True
-                response.cookies['sessionid']['httponly'] = True
-                response.cookies['sessionid']['samesite'] = 'Strict'
+            except (json.JSONDecodeError, UnicodeDecodeError) as e:
+                logger.warning(f'خطأ في معالجة بيانات الاستجابة: {e}')
         
         return response
     
-    def _get_client_ip(self, request):
-        """الحصول على IP العميل"""
-        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-        if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0]
-        else:
-            ip = request.META.get('REMOTE_ADDR')
-        return ip
-
-
-class EncryptionAuditMiddleware(MiddlewareMixin):
-    """Middleware لتدقيق عمليات التشفير"""
-    
-    def __init__(self, get_response):
-        self.get_response = get_response
-        self.enabled = getattr(settings, 'HR_ENCRYPTION_AUDIT', True)
-        super().__init__(get_response)
-    
-    def process_request(self, request):
-        """معالجة الطلب لتدقيق التشفير"""
-        if not self.enabled:
-            return None
+    def encrypt_request_data(self, data):
+        """تشفير البيانات الحساسة في الطلب"""
+        if isinstance(data, dict):
+            encrypted_data = {}
+            for key, value in data.items():
+                if key in self.sensitive_fields and value:
+                    encrypted_data[key] = self.encrypt_field_value(key, value)
+                elif isinstance(value, (dict, list)):
+                    encrypted_data[key] = self.encrypt_request_data(value)
+                else:
+                    encrypted_data[key] = value
+            return encrypted_data
         
-        # تسجيل الطلبات للمسارات الحساسة
-        if self._is_sensitive_path(request.path):
-            audit_data = {
-                'action': 'access_sensitive_data',
-                'path': request.path,
-                'method': request.method,
-                'user_id': request.user.id if hasattr(request, 'user') and request.user.is_authenticated else None,
-                'client_ip': self._get_client_ip(request),
-                'timestamp': timezone.now().isoformat()
-            }
-            
-            self._save_audit_log(audit_data)
+        elif isinstance(data, list):
+            return [self.encrypt_request_data(item) for item in data]
         
-        return None
+        return data
     
-    def process_response(self, request, response):
-        """معالجة الاستجابة لتدقيق التشفير"""
-        if not self.enabled:
-            return response
+    def decrypt_response_data(self, data):
+        """فك تشفير البيانات للعرض في الاستجابة"""
+        if isinstance(data, dict):
+            decrypted_data = {}
+            for key, value in data.items():
+                if key in self.sensitive_fields and value:
+                    # فك التشفير وإخفاء البيانات الحساسة
+                    decrypted_value = self.decrypt_field_value(key, value)
+                    decrypted_data[key] = self.mask_sensitive_value(key, decrypted_value)
+                elif isinstance(value, (dict, list)):
+                    decrypted_data[key] = self.decrypt_response_data(value)
+                else:
+                    decrypted_data[key] = value
+            return decrypted_data
         
-        # تسجيل الاستجابات للمسارات الحساسة
-        if self._is_sensitive_path(request.path):
-            audit_data = {
-                'action': 'response_sensitive_data',
-                'path': request.path,
-                'method': request.method,
-                'status_code': response.status_code,
-                'user_id': request.user.id if hasattr(request, 'user') and request.user.is_authenticated else None,
-                'client_ip': self._get_client_ip(request),
-                'timestamp': timezone.now().isoformat()
-            }
-            
-            self._save_audit_log(audit_data)
+        elif isinstance(data, list):
+            return [self.decrypt_response_data(item) for item in data]
         
-        return response
+        return data
     
-    def _is_sensitive_path(self, path):
-        """التحقق من كون المسار حساساً"""
-        sensitive_paths = [
-            '/hr/employees/',
-            '/hr/payroll/',
-            '/hr/files/',
-            '/api/v1/employees/',
-            '/api/v1/payroll/'
-        ]
-        return any(path.startswith(sensitive_path) for sensitive_path in sensitive_paths)
-    
-    def _get_client_ip(self, request):
-        """الحصول على IP العميل"""
-        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-        if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0]
-        else:
-            ip = request.META.get('REMOTE_ADDR')
-        return ip
-    
-    def _save_audit_log(self, audit_data):
-        """حفظ سجل التدقيق"""
+    def encrypt_field_value(self, field_name, value):
+        """تشفير قيمة حقل محدد"""
         try:
-            # حفظ في التخزين المؤقت
-            today = timezone.now().date().isoformat()
-            cache_key = f'encryption_audit_log_{today}'
-            
-            audit_logs = cache.get(cache_key, [])
-            audit_logs.append(audit_data)
-            cache.set(cache_key, audit_logs, 86400)  # 24 ساعة
-            
-            # تسجيل في السجل
-            logger.info(f"تدقيق التشفير: {audit_data['action']} - {audit_data['path']}")
-            
+            if field_name == 'national_id':
+                return encryption_service.encrypt_national_id(value)
+            elif field_name in ['phone_number', 'mobile_number']:
+                return encryption_service.encrypt_phone_number(value)
+            elif field_name == 'personal_email':
+                return encryption_service.encrypt_email(value)
+            elif field_name in ['salary', 'basic_salary']:
+                return encryption_service.encrypt_salary(value)
+            elif field_name == 'bank_account':
+                return encryption_service.encrypt_bank_account(value)
+            else:
+                return encryption_service.encrypt_text(value)
         except Exception as e:
-            logger.error(f"خطأ في حفظ سجل تدقيق التشفير: {e}")
+            logger.error(f'خطأ في تشفير الحقل {field_name}: {e}')
+            return value
+    
+    def decrypt_field_value(self, field_name, value):
+        """فك تشفير قيمة حقل محدد"""
+        try:
+            if not encryption_service.is_encrypted(str(value)):
+                return value
+            
+            if field_name == 'national_id':
+                return encryption_service.decrypt_national_id(value)
+            elif field_name in ['phone_number', 'mobile_number']:
+                return encryption_service.decrypt_phone_number(value)
+            elif field_name == 'personal_email':
+                return encryption_service.decrypt_email(value)
+            elif field_name in ['salary', 'basic_salary']:
+                return encryption_service.decrypt_salary(value)
+            elif field_name == 'bank_account':
+                return encryption_service.decrypt_bank_account(value)
+            else:
+                return encryption_service.decrypt_text(value)
+        except Exception as e:
+            logger.error(f'خطأ في فك تشفير الحقل {field_name}: {e}')
+            return value
+    
+    def mask_sensitive_value(self, field_name, value):
+        """إخفاء البيانات الحساسة للعرض"""
+        if not value:
+            return value
+        
+        try:
+            if field_name == 'national_id':
+                return encryption_service.mask_sensitive_data(str(value), visible_chars=2)
+            elif field_name in ['phone_number', 'mobile_number']:
+                return encryption_service.mask_sensitive_data(str(value), visible_chars=3)
+            elif field_name == 'personal_email':
+                # إخفاء جزء من البريد الإلكتروني
+                if '@' in str(value):
+                    local, domain = str(value).split('@', 1)
+                    masked_local = encryption_service.mask_sensitive_data(local, visible_chars=2)
+                    return f'{masked_local}@{domain}'
+                return encryption_service.mask_sensitive_data(str(value))
+            elif field_name in ['salary', 'basic_salary']:
+                # إخفاء جزء من الراتب
+                return '****'
+            elif field_name == 'bank_account':
+                return encryption_service.mask_sensitive_data(str(value), visible_chars=4)
+            else:
+                return encryption_service.mask_sensitive_data(str(value))
+        except Exception as e:
+            logger.error(f'خطأ في إخفاء البيانات للحقل {field_name}: {e}')
+            return '****'
+
+
+class SecurityHeadersMiddleware(MiddlewareMixin):
+    """
+    Middleware لإضافة headers الأمان المتقدمة
+    """
+    
+    def __init__(self, get_response):
+        self.get_response = get_response
+        super().__init__(get_response)
+    
+    def process_response(self, request, response):
+        """إضافة headers الأمان"""
+        
+        # منع تضمين الصفحة في iframe
+        response['X-Frame-Options'] = 'DENY'
+        
+        # منع تخمين نوع المحتوى
+        response['X-Content-Type-Options'] = 'nosniff'
+        
+        # تفعيل حماية XSS
+        response['X-XSS-Protection'] = '1; mode=block'
+        
+        # إجبار HTTPS في الإنتاج
+        if not settings.DEBUG:
+            response['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains; preload'
+        
+        # سياسة المحتوى الأمنية المحسنة
+        csp_policy = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' "
+            "https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://code.jquery.com; "
+            "style-src 'self' 'unsafe-inline' "
+            "https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; "
+            "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; "
+            "img-src 'self' data: https: blob:; "
+            "connect-src 'self'; "
+            "media-src 'self'; "
+            "object-src 'none'; "
+            "base-uri 'self'; "
+            "form-action 'self'; "
+            "frame-ancestors 'none';"
+        )
+        response['Content-Security-Policy'] = csp_policy
+        
+        # منع تسريب المرجع
+        response['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        
+        # منع تحميل المحتوى المختلط
+        if not settings.DEBUG:
+            response['Content-Security-Policy'] += " upgrade-insecure-requests;"
+        
+        # إضافة header مخصص للتطبيق
+        response['X-HR-System'] = 'ElDawliya-HR-v2.0'
+        
+        return response
+
+
+class AuditLoggingMiddleware(MiddlewareMixin):
+    """
+    Middleware لتسجيل العمليات الحساسة
+    """
+    
+    def __init__(self, get_response):
+        self.get_response = get_response
+        self.sensitive_paths = [
+            '/hr/employees/',
+            '/hr/api/',
+            '/admin/',
+        ]
+        self.sensitive_methods = ['POST', 'PUT', 'PATCH', 'DELETE']
+        super().__init__(get_response)
+    
+    def process_request(self, request):
+        """تسجيل الطلبات الحساسة"""
+        if self.is_sensitive_request(request):
+            self.log_sensitive_request(request)
+        return None
+    
+    def process_response(self, request, response):
+        """تسجيل الاستجابات للطلبات الحساسة"""
+        if self.is_sensitive_request(request):
+            self.log_sensitive_response(request, response)
+        return response
+    
+    def is_sensitive_request(self, request):
+        """التحقق من كون الطلب حساساً"""
+        # فحص المسار
+        for path in self.sensitive_paths:
+            if request.path.startswith(path):
+                return True
+        
+        # فحص الطريقة
+        if request.method in self.sensitive_methods:
+            return True
+        
+        return False
+    
+    def log_sensitive_request(self, request):
+        """تسجيل الطلب الحساس"""
+        try:
+            log_data = {
+                'action': 'sensitive_request',
+                'method': request.method,
+                'path': request.path,
+                'user': str(request.user) if hasattr(request, 'user') and request.user.is_authenticated else 'Anonymous',
+                'ip_address': self.get_client_ip(request),
+                'user_agent': request.META.get('HTTP_USER_AGENT', ''),
+                'timestamp': str(timezone.now())
+            }
+            
+            # تسجيل معاملات GET
+            if request.GET:
+                log_data['get_params'] = dict(request.GET)
+            
+            # تسجيل معاملات POST (بدون البيانات الحساسة)
+            if request.method == 'POST' and request.POST:
+                safe_post_data = {}
+                for key, value in request.POST.items():
+                    if key not in self.sensitive_fields:
+                        safe_post_data[key] = value
+                    else:
+                        safe_post_data[key] = '***ENCRYPTED***'
+                log_data['post_params'] = safe_post_data
+            
+            logger.info(f'Sensitive request: {json.dumps(log_data, ensure_ascii=False)}')
+        
+        except Exception as e:
+            logger.error(f'خطأ في تسجيل الطلب الحساس: {e}')
+    
+    def log_sensitive_response(self, request, response):
+        """تسجيل الاستجابة للطلب الحساس"""
+        try:
+            log_data = {
+                'action': 'sensitive_response',
+                'method': request.method,
+                'path': request.path,
+                'status_code': response.status_code,
+                'user': str(request.user) if hasattr(request, 'user') and request.user.is_authenticated else 'Anonymous',
+                'ip_address': self.get_client_ip(request),
+                'response_size': len(response.content) if hasattr(response, 'content') else 0,
+                'timestamp': str(timezone.now())
+            }
+            
+            logger.info(f'Sensitive response: {json.dumps(log_data, ensure_ascii=False)}')
+        
+        except Exception as e:
+            logger.error(f'خطأ في تسجيل الاستجابة الحساسة: {e}')
+    
+    def get_client_ip(self, request):
+        """الحصول على عنوان IP الحقيقي للعميل"""
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip
+
+
+class RateLimitingMiddleware(MiddlewareMixin):
+    """
+    Middleware لتحديد معدل الطلبات
+    """
+    
+    def __init__(self, get_response):
+        self.get_response = get_response
+        self.rate_limits = getattr(settings, 'RATE_LIMITS', {
+            'default': {'requests': 100, 'window': 3600},  # 100 طلب في الساعة
+            'api': {'requests': 1000, 'window': 3600},      # 1000 طلب في الساعة للـ API
+            'sensitive': {'requests': 50, 'window': 3600}   # 50 طلب في الساعة للعمليات الحساسة
+        })
+        super().__init__(get_response)
+    
+    def process_request(self, request):
+        """فحص معدل الطلبات"""
+        # تحديد نوع الطلب
+        rate_limit_type = self.get_rate_limit_type(request)
+        
+        # فحص معدل الطلبات
+        if not self.check_rate_limit(request, rate_limit_type):
+            return JsonResponse({
+                'error': 'Rate limit exceeded',
+                'message': 'تم تجاوز الحد الأقصى للطلبات. يرجى المحاولة لاحقاً.',
+                'retry_after': self.rate_limits[rate_limit_type]['window']
+            }, status=429)
+        
+        return None
+    
+    def get_rate_limit_type(self, request):
+        """تحديد نوع حد الطلبات"""
+        if request.path.startswith('/hr/api/'):
+            return 'api'
+        elif any(request.path.startswith(path) for path in ['/admin/', '/hr/employees/']):
+            return 'sensitive'
+        else:
+            return 'default'
+    
+    def check_rate_limit(self, request, rate_limit_type):
+        """فحص معدل الطلبات"""
+        try:
+            from django.core.cache import cache
+            
+            # إنشاء مفتاح فريد للعميل
+            client_ip = self.get_client_ip(request)
+            user_id = request.user.id if hasattr(request, 'user') and request.user.is_authenticated else 'anonymous'
+            cache_key = f'rate_limit:{rate_limit_type}:{client_ip}:{user_id}'
+            
+            # الحصول على العدد الحالي
+            current_requests = cache.get(cache_key, 0)
+            rate_limit = self.rate_limits[rate_limit_type]
+            
+            if current_requests >= rate_limit['requests']:
+                return False
+            
+            # زيادة العداد
+            cache.set(cache_key, current_requests + 1, rate_limit['window'])
+            return True
+        
+        except Exception as e:
+            logger.error(f'خطأ في فحص معدل الطلبات: {e}')
+            return True  # السماح بالطلب في حالة الخطأ
+    
+    def get_client_ip(self, request):
+        """الحصول على عنوان IP الحقيقي للعميل"""
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip

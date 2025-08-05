@@ -66,7 +66,7 @@ class EmployeeBank(models.Model):
     
     # Relationship to Employee
     employee = models.ForeignKey(
-        'Employee',
+        'EmployeeEnhanced',
         on_delete=models.CASCADE,
         related_name='bank_accounts',
         verbose_name=_("الموظف")

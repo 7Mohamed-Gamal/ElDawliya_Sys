@@ -1,551 +1,472 @@
-/*
-=============================================================================
-HR Design System JavaScript - جافاسكريبت نظام التصميم للموارد البشرية
-=============================================================================
-مكتبة JavaScript لإدارة الثيمات والتفاعلات في نظام الموارد البشرية
-=============================================================================
-*/
+/**
+ * نظام التصميم التفاعلي لتطبيق الموارد البشرية
+ * HR Design System Interactive Components
+ */
 
 class HRDesignSystem {
     constructor() {
-        this.currentTheme = localStorage.getItem('hr-theme') || 'light';
         this.init();
     }
 
     init() {
-        this.applyTheme(this.currentTheme);
-        this.setupEventListeners();
-        this.initializeComponents();
+        this.initThemeToggle();
+        this.initTooltips();
+        this.initModals();
+        this.initTabs();
+        this.initDropdowns();
+        this.initFormValidation();
+        this.initDataTables();
+        this.initNotifications();
+        this.initProgressBars();
     }
 
-    // =============================================================================
-    // THEME MANAGEMENT (إدارة الثيمات)
-    // =============================================================================
+    // تبديل الثيم
+    initThemeToggle() {
+        const themeToggle = document.querySelector('[data-theme-toggle]');
+        if (themeToggle) {
+            themeToggle.addEventListener('click', () => {
+                const currentTheme = document.documentElement.getAttribute('data-theme');
+                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+            });
+        }
 
-    applyTheme(theme) {
-        document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem('hr-theme', theme);
-        this.currentTheme = theme;
-        
-        // تحديث أيقونة الثيم
-        const themeIcon = document.querySelector('.theme-toggle-icon');
-        if (themeIcon) {
-            themeIcon.innerHTML = theme === 'dark' ? '☀️' : '🌙';
+        // تطبيق الثيم المحفوظ
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme) {
+            document.documentElement.setAttribute('data-theme', savedTheme);
         }
     }
 
-    toggleTheme() {
-        const newTheme = this.currentTheme === 'light' ? 'dark' : 'light';
-        this.applyTheme(newTheme);
-    }
-
-    // =============================================================================
-    // EVENT LISTENERS (مستمعي الأحداث)
-    // =============================================================================
-
-    setupEventListeners() {
-        // تبديل الثيم
-        document.addEventListener('click', (e) => {
-            if (e.target.matches('.theme-toggle') || e.target.closest('.theme-toggle')) {
-                e.preventDefault();
-                this.toggleTheme();
-            }
-        });
-
-        // إغلاق القوائم المنسدلة عند النقر خارجها
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.dropdown')) {
-                this.closeAllDropdowns();
-            }
-        });
-
-        // إدارة القوائم المنسدلة
-        document.addEventListener('click', (e) => {
-            if (e.target.matches('.dropdown-toggle') || e.target.closest('.dropdown-toggle')) {
-                e.preventDefault();
-                const dropdown = e.target.closest('.dropdown');
-                this.toggleDropdown(dropdown);
-            }
-        });
-
-        // إدارة علامات التبويب
-        document.addEventListener('click', (e) => {
-            if (e.target.matches('.tab-button') || e.target.closest('.tab-button')) {
-                e.preventDefault();
-                const tabButton = e.target.closest('.tab-button');
-                this.switchTab(tabButton);
-            }
-        });
-
-        // إدارة النماذج المتعددة الخطوات
-        document.addEventListener('click', (e) => {
-            if (e.target.matches('.step-next') || e.target.closest('.step-next')) {
-                e.preventDefault();
-                this.nextStep(e.target.closest('.multi-step-form'));
-            }
-            
-            if (e.target.matches('.step-prev') || e.target.closest('.step-prev')) {
-                e.preventDefault();
-                this.prevStep(e.target.closest('.multi-step-form'));
-            }
-        });
-
-        // إدارة الجداول القابلة للفرز
-        document.addEventListener('click', (e) => {
-            if (e.target.matches('.sortable-header') || e.target.closest('.sortable-header')) {
-                e.preventDefault();
-                const header = e.target.closest('.sortable-header');
-                this.sortTable(header);
-            }
-        });
-
-        // إدارة البحث المباشر
-        document.addEventListener('input', (e) => {
-            if (e.target.matches('.live-search') || e.target.closest('.live-search')) {
-                this.handleLiveSearch(e.target);
-            }
-        });
-    }
-
-    // =============================================================================
-    // COMPONENT INITIALIZATION (تهيئة المكونات)
-    // =============================================================================
-
-    initializeComponents() {
-        this.initializeTooltips();
-        this.initializeModals();
-        this.initializeAlerts();
-        this.initializeProgressBars();
-        this.initializeDatePickers();
-    }
-
-    initializeTooltips() {
+    // تلميحات الأدوات
+    initTooltips() {
         const tooltips = document.querySelectorAll('[data-tooltip]');
         tooltips.forEach(element => {
             element.addEventListener('mouseenter', (e) => {
                 this.showTooltip(e.target);
             });
-            
             element.addEventListener('mouseleave', (e) => {
                 this.hideTooltip(e.target);
             });
         });
     }
 
-    initializeModals() {
-        // إغلاق النوافذ المنبثقة بالضغط على ESC
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                this.closeAllModals();
-            }
+    showTooltip(element) {
+        const text = element.getAttribute('data-tooltip');
+        const tooltip = document.createElement('div');
+        tooltip.className = 'tooltip';
+        tooltip.textContent = text;
+        tooltip.style.cssText = `
+            position: absolute;
+            background: var(--bg-dark);
+            color: var(--text-white);
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--radius-md);
+            font-size: var(--font-size-sm);
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity var(--transition-fast);
+        `;
+        
+        document.body.appendChild(tooltip);
+        
+        const rect = element.getBoundingClientRect();
+        tooltip.style.top = (rect.top - tooltip.offsetHeight - 5) + 'px';
+        tooltip.style.left = (rect.left + rect.width / 2 - tooltip.offsetWidth / 2) + 'px';
+        
+        setTimeout(() => tooltip.style.opacity = '1', 10);
+        element._tooltip = tooltip;
+    }
+
+    hideTooltip(element) {
+        if (element._tooltip) {
+            element._tooltip.remove();
+            delete element._tooltip;
+        }
+    }
+
+    // النوافذ المنبثقة
+    initModals() {
+        const modalTriggers = document.querySelectorAll('[data-modal-target]');
+        const modalCloses = document.querySelectorAll('[data-modal-close]');
+        
+        modalTriggers.forEach(trigger => {
+            trigger.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = trigger.getAttribute('data-modal-target');
+                this.openModal(targetId);
+            });
         });
 
-        // إغلاق النوافذ المنبثقة بالنقر على الخلفية
+        modalCloses.forEach(close => {
+            close.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.closeModal(close.closest('.modal'));
+            });
+        });
+
+        // إغلاق عند النقر خارج النافذة
         document.addEventListener('click', (e) => {
-            if (e.target.matches('.modal-backdrop')) {
-                this.closeModal(e.target.closest('.modal'));
+            if (e.target.classList.contains('modal-overlay')) {
+                this.closeModal(e.target.querySelector('.modal'));
             }
         });
     }
-
-    initializeAlerts() {
-        // إغلاق التنبيهات تلقائياً
-        const autoCloseAlerts = document.querySelectorAll('.alert[data-auto-close]');
-        autoCloseAlerts.forEach(alert => {
-            const delay = parseInt(alert.dataset.autoClose) || 5000;
-            setTimeout(() => {
-                this.closeAlert(alert);
-            }, delay);
-        });
-    }
-
-    initializeProgressBars() {
-        const progressBars = document.querySelectorAll('.progress-bar[data-animate]');
-        progressBars.forEach(bar => {
-            this.animateProgressBar(bar);
-        });
-    }
-
-    initializeDatePickers() {
-        const datePickers = document.querySelectorAll('.date-picker');
-        datePickers.forEach(picker => {
-            // تهيئة منتقي التاريخ (يمكن استخدام مكتبة خارجية)
-            this.setupDatePicker(picker);
-        });
-    }
-
-    // =============================================================================
-    // DROPDOWN FUNCTIONALITY (وظائف القوائم المنسدلة)
-    // =============================================================================
-
-    toggleDropdown(dropdown) {
-        const isOpen = dropdown.classList.contains('open');
-        
-        // إغلاق جميع القوائم المنسدلة الأخرى
-        this.closeAllDropdowns();
-        
-        if (!isOpen) {
-            dropdown.classList.add('open');
-            const menu = dropdown.querySelector('.dropdown-menu');
-            if (menu) {
-                menu.classList.add('animate-slideInDown');
-            }
-        }
-    }
-
-    closeAllDropdowns() {
-        const openDropdowns = document.querySelectorAll('.dropdown.open');
-        openDropdowns.forEach(dropdown => {
-            dropdown.classList.remove('open');
-            const menu = dropdown.querySelector('.dropdown-menu');
-            if (menu) {
-                menu.classList.remove('animate-slideInDown');
-            }
-        });
-    }
-
-    // =============================================================================
-    // TAB FUNCTIONALITY (وظائف علامات التبويب)
-    // =============================================================================
-
-    switchTab(tabButton) {
-        const tabContainer = tabButton.closest('.tabs');
-        const targetTab = tabButton.dataset.tab;
-        
-        // إزالة الفئة النشطة من جميع الأزرار والمحتويات
-        tabContainer.querySelectorAll('.tab-button').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        
-        tabContainer.querySelectorAll('.tab-content').forEach(content => {
-            content.classList.remove('active');
-        });
-        
-        // إضافة الفئة النشطة للزر والمحتوى المحدد
-        tabButton.classList.add('active');
-        const targetContent = tabContainer.querySelector(`[data-tab-content="${targetTab}"]`);
-        if (targetContent) {
-            targetContent.classList.add('active');
-            targetContent.classList.add('animate-fadeIn');
-        }
-    }
-
-    // =============================================================================
-    // MULTI-STEP FORM FUNCTIONALITY (وظائف النماذج متعددة الخطوات)
-    // =============================================================================
-
-    nextStep(form) {
-        const currentStep = form.querySelector('.step.active');
-        const nextStep = currentStep.nextElementSibling;
-        
-        if (nextStep && nextStep.classList.contains('step')) {
-            // التحقق من صحة الخطوة الحالية
-            if (this.validateStep(currentStep)) {
-                currentStep.classList.remove('active');
-                nextStep.classList.add('active');
-                nextStep.classList.add('animate-slideInRight');
-                
-                this.updateStepIndicator(form);
-            }
-        }
-    }
-
-    prevStep(form) {
-        const currentStep = form.querySelector('.step.active');
-        const prevStep = currentStep.previousElementSibling;
-        
-        if (prevStep && prevStep.classList.contains('step')) {
-            currentStep.classList.remove('active');
-            prevStep.classList.add('active');
-            prevStep.classList.add('animate-slideInLeft');
-            
-            this.updateStepIndicator(form);
-        }
-    }
-
-    validateStep(step) {
-        const requiredFields = step.querySelectorAll('[required]');
-        let isValid = true;
-        
-        requiredFields.forEach(field => {
-            if (!field.value.trim()) {
-                this.showFieldError(field, 'هذا الحقل مطلوب');
-                isValid = false;
-            } else {
-                this.clearFieldError(field);
-            }
-        });
-        
-        return isValid;
-    }
-
-    updateStepIndicator(form) {
-        const steps = form.querySelectorAll('.step');
-        const indicators = form.querySelectorAll('.step-indicator');
-        const currentStepIndex = Array.from(steps).findIndex(step => step.classList.contains('active'));
-        
-        indicators.forEach((indicator, index) => {
-            indicator.classList.toggle('active', index === currentStepIndex);
-            indicator.classList.toggle('completed', index < currentStepIndex);
-        });
-    }
-
-    // =============================================================================
-    // TABLE FUNCTIONALITY (وظائف الجداول)
-    // =============================================================================
-
-    sortTable(header) {
-        const table = header.closest('table');
-        const tbody = table.querySelector('tbody');
-        const rows = Array.from(tbody.querySelectorAll('tr'));
-        const columnIndex = Array.from(header.parentNode.children).indexOf(header);
-        const isAscending = !header.classList.contains('sort-asc');
-        
-        // إزالة فئات الترتيب من جميع الرؤوس
-        table.querySelectorAll('.sortable-header').forEach(h => {
-            h.classList.remove('sort-asc', 'sort-desc');
-        });
-        
-        // إضافة فئة الترتيب للرأس الحالي
-        header.classList.add(isAscending ? 'sort-asc' : 'sort-desc');
-        
-        // ترتيب الصفوف
-        rows.sort((a, b) => {
-            const aValue = a.children[columnIndex].textContent.trim();
-            const bValue = b.children[columnIndex].textContent.trim();
-            
-            // محاولة تحويل إلى رقم
-            const aNum = parseFloat(aValue);
-            const bNum = parseFloat(bValue);
-            
-            if (!isNaN(aNum) && !isNaN(bNum)) {
-                return isAscending ? aNum - bNum : bNum - aNum;
-            } else {
-                return isAscending ? 
-                    aValue.localeCompare(bValue, 'ar') : 
-                    bValue.localeCompare(aValue, 'ar');
-            }
-        });
-        
-        // إعادة ترتيب الصفوف في الجدول
-        rows.forEach(row => tbody.appendChild(row));
-    }
-
-    // =============================================================================
-    // SEARCH FUNCTIONALITY (وظائف البحث)
-    // =============================================================================
-
-    handleLiveSearch(input) {
-        const searchTerm = input.value.toLowerCase();
-        const targetSelector = input.dataset.searchTarget;
-        const targets = document.querySelectorAll(targetSelector);
-        
-        targets.forEach(target => {
-            const text = target.textContent.toLowerCase();
-            const matches = text.includes(searchTerm);
-            target.style.display = matches ? '' : 'none';
-        });
-    }
-
-    // =============================================================================
-    // MODAL FUNCTIONALITY (وظائف النوافذ المنبثقة)
-    // =============================================================================
 
     openModal(modalId) {
         const modal = document.getElementById(modalId);
         if (modal) {
-            modal.classList.add('active');
-            modal.classList.add('animate-fadeIn');
+            modal.style.display = 'flex';
+            modal.classList.add('animate-fade-in');
             document.body.style.overflow = 'hidden';
         }
     }
 
     closeModal(modal) {
         if (modal) {
-            modal.classList.remove('active');
+            modal.style.display = 'none';
+            modal.classList.remove('animate-fade-in');
             document.body.style.overflow = '';
         }
     }
 
-    closeAllModals() {
-        const openModals = document.querySelectorAll('.modal.active');
-        openModals.forEach(modal => this.closeModal(modal));
-    }
-
-    // =============================================================================
-    // TOOLTIP FUNCTIONALITY (وظائف التلميحات)
-    // =============================================================================
-
-    showTooltip(element) {
-        const tooltipText = element.dataset.tooltip;
-        const tooltip = document.createElement('div');
-        tooltip.className = 'tooltip';
-        tooltip.textContent = tooltipText;
+    // علامات التبويب
+    initTabs() {
+        const tabButtons = document.querySelectorAll('[data-tab-target]');
         
-        document.body.appendChild(tooltip);
-        
-        const rect = element.getBoundingClientRect();
-        tooltip.style.left = rect.left + (rect.width / 2) - (tooltip.offsetWidth / 2) + 'px';
-        tooltip.style.top = rect.top - tooltip.offsetHeight - 8 + 'px';
-        
-        tooltip.classList.add('animate-fadeIn');
-    }
-
-    hideTooltip(element) {
-        const tooltip = document.querySelector('.tooltip');
-        if (tooltip) {
-            tooltip.remove();
-        }
-    }
-
-    // =============================================================================
-    // ALERT FUNCTIONALITY (وظائف التنبيهات)
-    // =============================================================================
-
-    showAlert(message, type = 'info', duration = 5000) {
-        const alert = document.createElement('div');
-        alert.className = `alert alert-${type} animate-slideInDown`;
-        alert.innerHTML = `
-            <span>${message}</span>
-            <button type="button" class="alert-close" onclick="hrDesignSystem.closeAlert(this.parentElement)">
-                ×
-            </button>
-        `;
-        
-        const container = document.querySelector('.alerts-container') || document.body;
-        container.appendChild(alert);
-        
-        if (duration > 0) {
-            setTimeout(() => {
-                this.closeAlert(alert);
-            }, duration);
-        }
-    }
-
-    closeAlert(alert) {
-        alert.classList.add('animate-slideInUp');
-        setTimeout(() => {
-            alert.remove();
-        }, 300);
-    }
-
-    // =============================================================================
-    // PROGRESS BAR FUNCTIONALITY (وظائف أشرطة التقدم)
-    // =============================================================================
-
-    animateProgressBar(progressBar) {
-        const targetWidth = progressBar.dataset.progress || '0';
-        progressBar.style.width = '0%';
-        
-        setTimeout(() => {
-            progressBar.style.width = targetWidth + '%';
-        }, 100);
-    }
-
-    updateProgressBar(progressBar, percentage) {
-        progressBar.style.width = percentage + '%';
-        progressBar.dataset.progress = percentage;
-    }
-
-    // =============================================================================
-    // FORM VALIDATION (التحقق من النماذج)
-    // =============================================================================
-
-    showFieldError(field, message) {
-        this.clearFieldError(field);
-        
-        field.classList.add('error');
-        const errorElement = document.createElement('div');
-        errorElement.className = 'field-error';
-        errorElement.textContent = message;
-        
-        field.parentNode.appendChild(errorElement);
-    }
-
-    clearFieldError(field) {
-        field.classList.remove('error');
-        const errorElement = field.parentNode.querySelector('.field-error');
-        if (errorElement) {
-            errorElement.remove();
-        }
-    }
-
-    // =============================================================================
-    // UTILITY FUNCTIONS (وظائف مساعدة)
-    // =============================================================================
-
-    setupDatePicker(picker) {
-        // يمكن تخصيص هذه الوظيفة لاستخدام مكتبة منتقي التاريخ المفضلة
-        picker.addEventListener('focus', () => {
-            // تهيئة منتقي التاريخ
+        tabButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = button.getAttribute('data-tab-target');
+                this.switchTab(button, targetId);
+            });
         });
     }
 
-    formatDate(date, format = 'YYYY-MM-DD') {
-        const d = new Date(date);
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        
-        return format
-            .replace('YYYY', year)
-            .replace('MM', month)
-            .replace('DD', day);
-    }
+    switchTab(activeButton, targetId) {
+        const tabContainer = activeButton.closest('[data-tabs]');
+        const allButtons = tabContainer.querySelectorAll('[data-tab-target]');
+        const allPanes = tabContainer.querySelectorAll('[data-tab-pane]');
 
-    debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
+        // إزالة الحالة النشطة من جميع الأزرار والألواح
+        allButtons.forEach(btn => btn.classList.remove('active'));
+        allPanes.forEach(pane => pane.classList.remove('active'));
 
-    // =============================================================================
-    // API HELPERS (مساعدات API)
-    // =============================================================================
-
-    async apiRequest(url, options = {}) {
-        const defaultOptions = {
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': this.getCSRFToken(),
-            },
-        };
-
-        const mergedOptions = { ...defaultOptions, ...options };
-        
-        try {
-            const response = await fetch(url, mergedOptions);
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            
-            return await response.json();
-        } catch (error) {
-            console.error('API request failed:', error);
-            this.showAlert('حدث خطأ في الاتصال بالخادم', 'danger');
-            throw error;
+        // تفعيل الزر والوحة المحددة
+        activeButton.classList.add('active');
+        const targetPane = document.getElementById(targetId);
+        if (targetPane) {
+            targetPane.classList.add('active');
+            targetPane.classList.add('animate-fade-in');
         }
     }
 
-    getCSRFToken() {
-        const token = document.querySelector('[name=csrfmiddlewaretoken]');
-        return token ? token.value : '';
+    // القوائم المنسدلة
+    initDropdowns() {
+        const dropdownTriggers = document.querySelectorAll('[data-dropdown-toggle]');
+        
+        dropdownTriggers.forEach(trigger => {
+            trigger.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const targetId = trigger.getAttribute('data-dropdown-toggle');
+                this.toggleDropdown(targetId);
+            });
+        });
+
+        // إغلاق القوائم عند النقر خارجها
+        document.addEventListener('click', () => {
+            this.closeAllDropdowns();
+        });
+    }
+
+    toggleDropdown(dropdownId) {
+        const dropdown = document.getElementById(dropdownId);
+        if (dropdown) {
+            const isOpen = dropdown.classList.contains('show');
+            this.closeAllDropdowns();
+            if (!isOpen) {
+                dropdown.classList.add('show');
+                dropdown.classList.add('animate-fade-in');
+            }
+        }
+    }
+
+    closeAllDropdowns() {
+        const dropdowns = document.querySelectorAll('.dropdown-menu');
+        dropdowns.forEach(dropdown => {
+            dropdown.classList.remove('show', 'animate-fade-in');
+        });
+    }
+
+    // التحقق من صحة النماذج
+    initFormValidation() {
+        const forms = document.querySelectorAll('[data-validate]');
+        
+        forms.forEach(form => {
+            form.addEventListener('submit', (e) => {
+                if (!this.validateForm(form)) {
+                    e.preventDefault();
+                }
+            });
+
+            // التحقق المباشر أثناء الكتابة
+            const inputs = form.querySelectorAll('input, select, textarea');
+            inputs.forEach(input => {
+                input.addEventListener('blur', () => {
+                    this.validateField(input);
+                });
+            });
+        });
+    }
+
+    validateForm(form) {
+        const inputs = form.querySelectorAll('[required]');
+        let isValid = true;
+
+        inputs.forEach(input => {
+            if (!this.validateField(input)) {
+                isValid = false;
+            }
+        });
+
+        return isValid;
+    }
+
+    validateField(field) {
+        const value = field.value.trim();
+        const isRequired = field.hasAttribute('required');
+        const type = field.getAttribute('type');
+        
+        let isValid = true;
+        let message = '';
+
+        if (isRequired && !value) {
+            isValid = false;
+            message = 'هذا الحقل مطلوب';
+        } else if (value) {
+            switch (type) {
+                case 'email':
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(value)) {
+                        isValid = false;
+                        message = 'يرجى إدخال بريد إلكتروني صحيح';
+                    }
+                    break;
+                case 'tel':
+                    const phoneRegex = /^[\+]?[0-9\s\-\(\)]{10,}$/;
+                    if (!phoneRegex.test(value)) {
+                        isValid = false;
+                        message = 'يرجى إدخال رقم هاتف صحيح';
+                    }
+                    break;
+            }
+        }
+
+        this.showFieldValidation(field, isValid, message);
+        return isValid;
+    }
+
+    showFieldValidation(field, isValid, message) {
+        const existingError = field.parentNode.querySelector('.field-error');
+        if (existingError) {
+            existingError.remove();
+        }
+
+        if (!isValid) {
+            field.classList.add('is-invalid');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'field-error text-danger fs-sm mt-1';
+            errorDiv.textContent = message;
+            field.parentNode.appendChild(errorDiv);
+        } else {
+            field.classList.remove('is-invalid');
+            field.classList.add('is-valid');
+        }
+    }
+
+    // جداول البيانات
+    initDataTables() {
+        const tables = document.querySelectorAll('[data-table]');
+        
+        tables.forEach(table => {
+            this.enhanceTable(table);
+        });
+    }
+
+    enhanceTable(table) {
+        // إضافة البحث
+        const searchInput = table.parentNode.querySelector('[data-table-search]');
+        if (searchInput) {
+            searchInput.addEventListener('input', (e) => {
+                this.filterTable(table, e.target.value);
+            });
+        }
+
+        // إضافة الترتيب
+        const headers = table.querySelectorAll('th[data-sortable]');
+        headers.forEach(header => {
+            header.style.cursor = 'pointer';
+            header.addEventListener('click', () => {
+                this.sortTable(table, header);
+            });
+        });
+    }
+
+    filterTable(table, searchTerm) {
+        const rows = table.querySelectorAll('tbody tr');
+        const term = searchTerm.toLowerCase();
+
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            row.style.display = text.includes(term) ? '' : 'none';
+        });
+    }
+
+    sortTable(table, header) {
+        const columnIndex = Array.from(header.parentNode.children).indexOf(header);
+        const rows = Array.from(table.querySelectorAll('tbody tr'));
+        const isAscending = !header.classList.contains('sort-asc');
+
+        rows.sort((a, b) => {
+            const aText = a.children[columnIndex].textContent.trim();
+            const bText = b.children[columnIndex].textContent.trim();
+            
+            const aValue = isNaN(aText) ? aText : parseFloat(aText);
+            const bValue = isNaN(bText) ? bText : parseFloat(bText);
+
+            if (aValue < bValue) return isAscending ? -1 : 1;
+            if (aValue > bValue) return isAscending ? 1 : -1;
+            return 0;
+        });
+
+        // إعادة ترتيب الصفوف
+        const tbody = table.querySelector('tbody');
+        rows.forEach(row => tbody.appendChild(row));
+
+        // تحديث مؤشر الترتيب
+        table.querySelectorAll('th').forEach(th => {
+            th.classList.remove('sort-asc', 'sort-desc');
+        });
+        header.classList.add(isAscending ? 'sort-asc' : 'sort-desc');
+    }
+
+    // الإشعارات
+    initNotifications() {
+        this.notificationContainer = this.createNotificationContainer();
+    }
+
+    createNotificationContainer() {
+        let container = document.getElementById('notification-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'notification-container';
+            container.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 20px;
+                z-index: 9999;
+                max-width: 400px;
+            `;
+            document.body.appendChild(container);
+        }
+        return container;
+    }
+
+    showNotification(message, type = 'info', duration = 5000) {
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type} animate-fade-in`;
+        notification.style.cssText = `
+            margin-bottom: var(--spacing-sm);
+            box-shadow: var(--shadow-lg);
+        `;
+        notification.textContent = message;
+
+        // زر الإغلاق
+        const closeBtn = document.createElement('button');
+        closeBtn.innerHTML = '×';
+        closeBtn.style.cssText = `
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            float: left;
+            margin-right: var(--spacing-sm);
+            cursor: pointer;
+        `;
+        closeBtn.addEventListener('click', () => {
+            this.hideNotification(notification);
+        });
+
+        notification.appendChild(closeBtn);
+        this.notificationContainer.appendChild(notification);
+
+        // إخفاء تلقائي
+        if (duration > 0) {
+            setTimeout(() => {
+                this.hideNotification(notification);
+            }, duration);
+        }
+
+        return notification;
+    }
+
+    hideNotification(notification) {
+        notification.style.opacity = '0';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }
+
+    // أشرطة التقدم
+    initProgressBars() {
+        const progressBars = document.querySelectorAll('.progress-bar');
+        
+        progressBars.forEach(bar => {
+            const fill = bar.querySelector('.progress-fill');
+            const value = fill.getAttribute('data-value') || 0;
+            
+            // تحريك شريط التقدم
+            setTimeout(() => {
+                fill.style.width = value + '%';
+            }, 100);
+        });
+    }
+
+    // وظائف مساعدة عامة
+    static showLoading(element) {
+        element.classList.add('animate-pulse');
+        element.style.pointerEvents = 'none';
+    }
+
+    static hideLoading(element) {
+        element.classList.remove('animate-pulse');
+        element.style.pointerEvents = '';
+    }
+
+    static formatNumber(number, locale = 'ar-SA') {
+        return new Intl.NumberFormat(locale).format(number);
+    }
+
+    static formatDate(date, locale = 'ar-SA') {
+        return new Intl.DateTimeFormat(locale).format(new Date(date));
+    }
+
+    static formatCurrency(amount, currency = 'SAR', locale = 'ar-SA') {
+        return new Intl.NumberFormat(locale, {
+            style: 'currency',
+            currency: currency
+        }).format(amount);
     }
 }
 
-// تهيئة نظام التصميم عند تحميل الصفحة
+// تهيئة النظام عند تحميل الصفحة
 document.addEventListener('DOMContentLoaded', () => {
     window.hrDesignSystem = new HRDesignSystem();
 });
 
-// تصدير الفئة للاستخدام في ملفات أخرى
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = HRDesignSystem;
-}
+// تصدير للاستخدام العام
+window.HRDesignSystem = HRDesignSystem;

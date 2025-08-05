@@ -242,11 +242,11 @@
                             </td>
                             <td>
                                 <div class="btn-group btn-group-sm" role="group">
-                                    <a href="{% url 'hr:salary_component_detail' component.pk %}" 
+                                    <a href="{% url 'Hr:salary_components:detail' component.item_code %}" 
                                        class="btn btn-outline-primary" title="عرض التفاصيل">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <a href="{% url 'hr:salary_component_update' component.pk %}" 
+                                    <a href="{% url 'Hr:salary_components:edit' component.item_code %}" 
                                        class="btn btn-outline-warning" title="تعديل">
                                         <i class="fas fa-edit"></i>
                                     </a>
@@ -336,11 +336,11 @@
                             </div>
                             <div class="card-footer bg-transparent">
                                 <div class="btn-group w-100" role="group">
-                                    <a href="{% url 'hr:salary_component_detail' component.pk %}" 
+                                    <a href="{% url 'Hr:salary_components:detail' component.item_code %}" 
                                        class="btn btn-sm btn-outline-primary">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <a href="{% url 'hr:salary_component_update' component.pk %}" 
+                                    <a href="{% url 'Hr:salary_components:edit' component.item_code %}" 
                                        class="btn btn-sm btn-outline-warning">
                                         <i class="fas fa-edit"></i>
                                     </a>
@@ -407,7 +407,7 @@
                 <i class="fas fa-puzzle-piece fa-3x text-muted mb-3"></i>
                 <h5 class="text-muted">لا توجد مكونات راتب</h5>
                 <p class="text-muted">لم يتم العثور على مكونات راتب مطابقة لمعايير البحث</p>
-                <a href="{% url 'hr:salary_component_create' %}" class="btn btn-primary">
+                <a href="{% url 'Hr:salary_components:create' %}" class="btn btn-primary">
                     <i class="fas fa-plus"></i>
                     إضافة أول مكون راتب
                 </a>
@@ -422,7 +422,7 @@
 // Filter functions
 function clearFilters() {
     $('#filterForm')[0].reset();
-    window.location.href = '{% url "hr:salary_component_list" %}';
+    window.location.href = '{% url "Hr:salary_components:list" %}';
 }
 
 function filterByType(type) {

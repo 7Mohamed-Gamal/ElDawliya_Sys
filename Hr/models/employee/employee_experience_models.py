@@ -26,7 +26,7 @@ class EmployeeExperience(models.Model):
     
     # Relationship to Employee
     employee = models.ForeignKey(
-        'Employee',
+        'EmployeeEnhanced',
         on_delete=models.CASCADE,
         related_name='experience',
         verbose_name=_("الموظف")

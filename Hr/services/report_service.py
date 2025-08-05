@@ -30,9 +30,13 @@ from ..models_reports import (
 )
 # استيراد النماذج المتاحة
 try:
-    from ..models_enhanced import AttendanceRecord, LeaveRequest
+    from ..models import AttendanceRecord
 except ImportError:
     AttendanceRecord = None
+
+try:
+    from ..models import LeaveRequest
+except ImportError:
     LeaveRequest = None
 
 # PayrollRecord سيتم إنشاؤه لاحقاً

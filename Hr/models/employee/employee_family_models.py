@@ -29,7 +29,7 @@ class EmployeeFamily(models.Model):
     
     # Relationship to Employee
     employee = models.ForeignKey(
-        'Employee',
+        'EmployeeEnhanced',
         on_delete=models.CASCADE,
         related_name='family_members',
         verbose_name=_("الموظف")

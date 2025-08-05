@@ -1,6 +1,6 @@
 """
-نماذج الموظفين لنظام إدارة الموارد البشرية (HRMS)
-تتعامل مع جميع بيانات الموظفين والمعلومات الحساسة مع التشفير المناسب
+نماذج الموظفين لنظام إدارة الموارد البشرية (HRMS) - النسخة المحسنة والشاملة
+تتعامل مع جميع بيانات الموظفين والمعلومات الحساسة مع التشفير المتقدم والتحقق من صحة البيانات
 """
 
 from django.db import models
@@ -11,8 +11,12 @@ from django.contrib.auth.hashers import (
     check_password
 )
 from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.core.validators import RegexValidator, EmailValidator
+from django.utils import timezone
 import uuid
-from datetime import date
+from datetime import date, timedelta
+import re
 
 
 class Employee(models.Model):
@@ -96,10 +100,142 @@ class Employee(models.Model):
         help_text=_("يتم تشفير هذه البيانات")
     )
     
+    work_email = models.EmailField(
+        null=True,
+        blank=True,
+        verbose_name=_("البريد الإلكتروني للعمل")
+    )
+    
     mobile_phone = models.CharField(
         max_length=20,
         verbose_name=_("رقم الجوال"),
         help_text=_("يتم تشفير هذه البيانات")
+    )
+    
+    home_phone = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True,
+        verbose_name=_("هاتف المنزل"),
+        help_text=_("يتم تشفير هذه البيانات")
+    )
+    
+    # Address Information
+    address = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=_("العنوان"),
+        help_text=_("يتم تشفير هذه البيانات")
+    )
+    
+    city = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+        verbose_name=_("المدينة")
+    )
+    
+    country = models.CharField(
+        max_length=100,
+        default='Saudi Arabia',
+        verbose_name=_("الدولة")
+    )
+    
+    postal_code = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True,
+        verbose_name=_("الرمز البريدي")
+    )
+    
+    # Personal Details - Enhanced
+    nationality = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+        verbose_name=_("الجنسية")
+    )
+    
+    religion = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        verbose_name=_("الديانة")
+    )
+    
+    blood_type = models.CharField(
+        max_length=5,
+        choices=[
+            ('A+', 'A+'), ('A-', 'A-'),
+            ('B+', 'B+'), ('B-', 'B-'),
+            ('AB+', 'AB+'), ('AB-', 'AB-'),
+            ('O+', 'O+'), ('O-', 'O-'),
+        ],
+        null=True,
+        blank=True,
+        verbose_name=_("فصيلة الدم")
+    )
+    
+    # Additional Personal Information
+    place_of_birth = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+        verbose_name=_("مكان الميلاد")
+    )
+    
+    mother_name = models.CharField(
+        max_length=200,
+        null=True,
+        blank=True,
+        verbose_name=_("اسم الأم"),
+        help_text=_("يتم تشفير هذه البيانات")
+    )
+    
+    number_of_children = models.PositiveIntegerField(
+        default=0,
+        verbose_name=_("عدد الأطفال")
+    )
+    
+    # Physical Information
+    height = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name=_("الطول (سم)")
+    )
+    
+    weight = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name=_("الوزن (كغ)")
+    )
+    
+    # Language Skills
+    languages_spoken = models.TextField(
+        null=True,
+        blank=True,
+        verbose_name=_("اللغات المتحدث بها"),
+        help_text=_("فصل بين اللغات بفاصلة")
+    )
+    
+    # Military Service
+    military_service_status = models.CharField(
+        max_length=20,
+        choices=[
+            ('completed', _('مكتملة')),
+            ('exempted', _('معفى')),
+            ('postponed', _('مؤجلة')),
+            ('not_applicable', _('غير مطلوبة')),
+        ],
+        null=True,
+        blank=True,
+        verbose_name=_("حالة الخدمة العسكرية")
+    )
+    
+    military_service_end_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name=_("تاريخ انتهاء الخدمة العسكرية")
     )
     
     # Employment Information
@@ -120,10 +256,55 @@ class Employee(models.Model):
         verbose_name=_("تاريخ التعيين")
     )
     
+    probation_end_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name=_("تاريخ انتهاء فترة التجربة")
+    )
+    
+    contract_start_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name=_("تاريخ بداية العقد")
+    )
+    
+    contract_end_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name=_("تاريخ انتهاء العقد")
+    )
+    
+    # Employment Type
+    EMPLOYMENT_TYPES = [
+        ('full_time', _('دوام كامل')),
+        ('part_time', _('دوام جزئي')),
+        ('contract', _('عقد مؤقت')),
+        ('internship', _('تدريب')),
+        ('consultant', _('استشاري')),
+    ]
+    
+    employment_type = models.CharField(
+        max_length=20,
+        choices=EMPLOYMENT_TYPES,
+        default='full_time',
+        verbose_name=_("نوع التوظيف")
+    )
+    
+    # Organizational Structure
     company = models.ForeignKey(
         'Hr.Company',
         on_delete=models.CASCADE,
+        related_name='employees',
         verbose_name=_("الشركة")
+    )
+
+    branch = models.ForeignKey(
+        'Hr.Branch',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='employees',
+        verbose_name=_("الفرع")
     )
 
     department = models.ForeignKey(
@@ -131,6 +312,7 @@ class Employee(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
+        related_name='employees',
         verbose_name=_("القسم")
     )
 
@@ -139,7 +321,45 @@ class Employee(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
+        related_name='employees',
         verbose_name=_("الوظيفة")
+    )
+    
+    direct_manager = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='subordinates',
+        verbose_name=_("المدير المباشر")
+    )
+    
+    # Salary Information
+    base_salary = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name=_("الراتب الأساسي")
+    )
+    
+    salary_currency = models.CharField(
+        max_length=10,
+        default='SAR',
+        verbose_name=_("عملة الراتب")
+    )
+    
+    # Work Schedule
+    work_schedule = models.CharField(
+        max_length=20,
+        choices=[
+            ('regular', _('نظام عادي')),
+            ('shift', _('نظام ورديات')),
+            ('flexible', _('مرن')),
+            ('remote', _('عن بُعد')),
+        ],
+        default='regular',
+        verbose_name=_("نظام العمل")
     )
 
     # Financial Information - Encrypted
@@ -173,6 +393,59 @@ class Employee(models.Model):
         blank=True,
         unique=True,
         verbose_name=_("رقم الجواز"),
+        help_text=_("يتم تشفير هذه البيانات")
+    )
+    
+    passport_expiry_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name=_("تاريخ انتهاء الجواز")
+    )
+    
+    # Insurance Information - Encrypted
+    social_insurance_number = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True,
+        verbose_name=_("رقم التأمين الاجتماعي"),
+        help_text=_("يتم تشفير هذه البيانات")
+    )
+    
+    health_insurance_number = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True,
+        verbose_name=_("رقم التأمين الصحي"),
+        help_text=_("يتم تشفير هذه البيانات")
+    )
+    
+    insurance_start_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name=_("تاريخ بداية التأمين")
+    )
+    
+    # Emergency Contact Information - Encrypted
+    emergency_contact_name = models.CharField(
+        max_length=200,
+        null=True,
+        blank=True,
+        verbose_name=_("اسم جهة الاتصال للطوارئ"),
+        help_text=_("يتم تشفير هذه البيانات")
+    )
+    
+    emergency_contact_relationship = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        verbose_name=_("صلة القرابة")
+    )
+    
+    emergency_contact_phone = models.CharField(
+        max_length=20,
+        null=True,
+        blank=True,
+        verbose_name=_("هاتف جهة الاتصال للطوارئ"),
         help_text=_("يتم تشفير هذه البيانات")
     )
 
@@ -262,10 +535,16 @@ class Employee(models.Model):
         return [
             'private_email',
             'mobile_phone',
+            'home_phone',
+            'address',
             'bank_account_number',
             'iban',
             'national_id',
-            'passport_number'
+            'passport_number',
+            'social_insurance_number',
+            'health_insurance_number',
+            'emergency_contact_name',
+            'emergency_contact_phone'
         ]
 
     def verify_sensitive_data(self, field_name, value):
@@ -280,3 +559,206 @@ class Employee(models.Model):
             (today.month, today.day) < 
             (self.date_of_birth.month, self.date_of_birth.day)
         )
+    
+    @property
+    def age(self):
+        """خاصية العمر"""
+        return self.get_age()
+    
+    @property
+    def years_of_service(self):
+        """حساب سنوات الخدمة"""
+        if self.status == self.TERMINATED and self.termination_date:
+            end_date = self.termination_date
+        else:
+            end_date = date.today()
+        
+        years = end_date.year - self.join_date.year
+        if (end_date.month, end_date.day) < (self.join_date.month, self.join_date.day):
+            years -= 1
+        return years
+    
+    @property
+    def is_active(self):
+        """هل الموظف نشط"""
+        return self.status == self.ACTIVE
+    
+    @property
+    def is_in_probation(self):
+        """هل الموظف في فترة التجربة"""
+        if not self.probation_end_date:
+            return False
+        return date.today() <= self.probation_end_date
+    
+    @property
+    def contract_remaining_days(self):
+        """عدد الأيام المتبقية في العقد"""
+        if not self.contract_end_date:
+            return None
+        if self.contract_end_date < date.today():
+            return 0
+        return (self.contract_end_date - date.today()).days
+    
+    @property
+    def is_contract_expiring_soon(self, days=30):
+        """هل العقد ينتهي قريباً (خلال 30 يوم افتراضياً)"""
+        remaining = self.contract_remaining_days
+        return remaining is not None and 0 <= remaining <= days
+    
+    @property
+    def passport_expiring_soon(self, days=90):
+        """هل الجواز ينتهي قريباً (خلال 90 يوم افتراضياً)"""
+        if not self.passport_expiry_date:
+            return False
+        remaining = (self.passport_expiry_date - date.today()).days
+        return 0 <= remaining <= days
+    
+    @property
+    def full_address(self):
+        """العنوان الكامل"""
+        if not self.address:
+            return None
+        
+        parts = [self.address]
+        if self.city:
+            parts.append(self.city)
+        if self.country and self.country != 'Saudi Arabia':
+            parts.append(self.country)
+        if self.postal_code:
+            parts.append(self.postal_code)
+        
+        return ', '.join(parts)
+    
+    @property
+    def hierarchy_level(self):
+        """مستوى الموظف في الهيكل التنظيمي"""
+        level = 0
+        manager = self.direct_manager
+        while manager and level < 10:  # تجنب الحلقة اللانهائية
+            level += 1
+            manager = manager.direct_manager
+        return level
+    
+    def get_subordinates_count(self):
+        """عدد المرؤوسين المباشرين"""
+        return self.subordinates.filter(status=self.ACTIVE).count()
+    
+    def get_all_subordinates(self):
+        """جميع المرؤوسين (مباشرين وغير مباشرين)"""
+        subordinates = []
+        direct_subordinates = self.subordinates.filter(status=self.ACTIVE)
+        
+        for subordinate in direct_subordinates:
+            subordinates.append(subordinate)
+            subordinates.extend(subordinate.get_all_subordinates())
+        
+        return subordinates
+    
+    def get_management_chain(self):
+        """سلسلة الإدارة من الموظف إلى أعلى مستوى"""
+        chain = [self]
+        manager = self.direct_manager
+        
+        while manager and len(chain) < 10:  # تجنب الحلقة اللانهائية
+            chain.append(manager)
+            manager = manager.direct_manager
+        
+        return chain
+    
+    def can_approve_for(self, employee):
+        """هل يمكن لهذا الموظف الموافقة على طلبات موظف آخر"""
+        if not employee or employee == self:
+            return False
+        
+        # التحقق من كون هذا الموظف في سلسلة الإدارة للموظف الآخر
+        management_chain = employee.get_management_chain()
+        return self in management_chain[1:]  # استبعاد الموظف نفسه
+    
+    def get_display_name(self):
+        """اسم العرض (الاسم + الوظيفة)"""
+        name = self.full_name
+        if self.position:
+            name += f" - {self.position.title}"
+        return name
+    
+    def clean(self):
+        """التحقق من صحة البيانات"""
+        from django.core.exceptions import ValidationError
+        
+        # التحقق من تاريخ الميلاد
+        if self.date_of_birth and self.date_of_birth >= date.today():
+            raise ValidationError(_('تاريخ الميلاد يجب أن يكون في الماضي'))
+        
+        # التحقق من تاريخ التعيين
+        if self.join_date and self.join_date > date.today():
+            raise ValidationError(_('تاريخ التعيين لا يمكن أن يكون في المستقبل'))
+        
+        # التحقق من فترة التجربة
+        if self.probation_end_date and self.probation_end_date <= self.join_date:
+            raise ValidationError(_('تاريخ انتهاء فترة التجربة يجب أن يكون بعد تاريخ التعيين'))
+        
+        # التحقق من تواريخ العقد
+        if self.contract_start_date and self.contract_end_date:
+            if self.contract_start_date >= self.contract_end_date:
+                raise ValidationError(_('تاريخ بداية العقد يجب أن يكون قبل تاريخ النهاية'))
+        
+        # التحقق من تاريخ إنهاء الخدمة
+        if self.termination_date:
+            if self.termination_date <= self.join_date:
+                raise ValidationError(_('تاريخ إنهاء الخدمة يجب أن يكون بعد تاريخ التعيين'))
+            if self.status != self.TERMINATED:
+                raise ValidationError(_('يجب تغيير حالة الموظف إلى "منتهي الخدمة" عند تحديد تاريخ إنهاء الخدمة'))
+        
+        # التحقق من المدير المباشر
+        if self.direct_manager:
+            if self.direct_manager == self:
+                raise ValidationError(_('الموظف لا يمكن أن يكون مديراً لنفسه'))
+            if self.direct_manager.company != self.company:
+                raise ValidationError(_('المدير المباشر يجب أن يكون من نفس الشركة'))
+    
+    def get_contact_info(self):
+        """معلومات الاتصال (غير مشفرة للعرض)"""
+        return {
+            'work_email': self.work_email,
+            'city': self.city,
+            'country': self.country,
+            'postal_code': self.postal_code,
+        }
+    
+    def has_expired_documents(self):
+        """هل لدى الموظف وثائق منتهية الصلاحية"""
+        today = date.today()
+        expired = []
+        
+        if self.passport_expiry_date and self.passport_expiry_date < today:
+            expired.append('passport')
+        
+        if self.contract_end_date and self.contract_end_date < today:
+            expired.append('contract')
+        
+        return expired
+    
+    def get_upcoming_expirations(self, days=90):
+        """الوثائق التي ستنتهي صلاحيتها قريباً"""
+        today = date.today()
+        upcoming = []
+        
+        if self.passport_expiry_date:
+            days_remaining = (self.passport_expiry_date - today).days
+            if 0 <= days_remaining <= days:
+                upcoming.append({
+                    'document': 'passport',
+                    'expiry_date': self.passport_expiry_date,
+                    'days_remaining': days_remaining
+                })
+        
+        if self.contract_end_date:
+            days_remaining = (self.contract_end_date - today).days
+            if 0 <= days_remaining <= days:
+                upcoming.append({
+                    'document': 'contract',
+                    'expiry_date': self.contract_end_date,
+                    'days_remaining': days_remaining
+                })
+        
+        return upcoming

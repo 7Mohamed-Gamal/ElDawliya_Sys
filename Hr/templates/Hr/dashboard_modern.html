@@ -1,0 +1,635 @@
+{% extends 'Hr/base_modern.html' %}
+{% load static %}
+
+{% block title %}لوحة التحكم - نظام الموارد البشرية{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-stats {
+        margin-bottom: var(--spacing-xl);
+    }
+    
+    .stat-card {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+        color: var(--text-white);
+        border: none;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        transform: scale(0);
+        transition: transform var(--transition-slow);
+    }
+    
+    .stat-card:hover::before {
+        transform: scale(2);
+    }
+    
+    .stat-card.success {
+        background: linear-gradient(135deg, var(--success-color), #059669);
+    }
+    
+    .stat-card.warning {
+        background: linear-gradient(135deg, var(--warning-color), #d97706);
+    }
+    
+    .stat-card.danger {
+        background: linear-gradient(135deg, var(--error-color), #dc2626);
+    }
+    
+    .stat-icon {
+        font-size: 2.5rem;
+        opacity: 0.8;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: var(--spacing-sm) 0;
+    }
+    
+    .stat-label {
+        font-size: var(--font-size-sm);
+        opacity: 0.9;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+    
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-xl);
+    }
+    
+    .action-card {
+        text-align: center;
+        padding: var(--spacing-xl);
+        transition: all var(--transition-normal);
+        border: 2px solid transparent;
+    }
+    
+    .action-card:hover {
+        border-color: var(--primary-color);
+        transform: translateY(-5px);
+    }
+    
+    .action-icon {
+        font-size: 3rem;
+        color: var(--primary-color);
+        margin-bottom: var(--spacing-md);
+    }
+    
+    .recent-activities {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .activity-item {
+        display: flex;
+        align-items: center;
+        padding: var(--spacing-md);
+        border-bottom: 1px solid var(--border-light);
+        transition: background-color var(--transition-fast);
+    }
+    
+    .activity-item:hover {
+        background-color: var(--bg-tertiary);
+    }
+    
+    .activity-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: var(--spacing-md);
+        font-size: var(--font-size-sm);
+    }
+    
+    .activity-icon.success {
+        background-color: rgb(16 185 129 / 0.1);
+        color: var(--success-color);
+    }
+    
+    .activity-icon.warning {
+        background-color: rgb(245 158 11 / 0.1);
+        color: var(--warning-color);
+    }
+    
+    .activity-icon.info {
+        background-color: rgb(6 182 212 / 0.1);
+        color: var(--info-color);
+    }
+    
+    .activity-content {
+        flex: 1;
+    }
+    
+    .activity-title {
+        font-weight: 500;
+        margin-bottom: var(--spacing-xs);
+    }
+    
+    .activity-description {
+        font-size: var(--font-size-sm);
+        color: var(--text-secondary);
+        margin-bottom: var(--spacing-xs);
+    }
+    
+    .activity-time {
+        font-size: var(--font-size-xs);
+        color: var(--text-muted);
+    }
+    
+    .upcoming-events {
+        max-height: 350px;
+        overflow-y: auto;
+    }
+    
+    .event-item {
+        display: flex;
+        align-items: center;
+        padding: var(--spacing-md);
+        border-right: 4px solid var(--primary-color);
+        margin-bottom: var(--spacing-sm);
+        background-color: var(--bg-primary);
+        border-radius: var(--radius-md);
+    }
+    
+    .event-date {
+        text-align: center;
+        margin-left: var(--spacing-md);
+        min-width: 60px;
+    }
+    
+    .event-day {
+        font-size: var(--font-size-xl);
+        font-weight: 700;
+        color: var(--primary-color);
+    }
+    
+    .event-month {
+        font-size: var(--font-size-xs);
+        color: var(--text-muted);
+        text-transform: uppercase;
+    }
+    
+    .event-content {
+        flex: 1;
+    }
+    
+    .event-title {
+        font-weight: 500;
+        margin-bottom: var(--spacing-xs);
+    }
+    
+    .event-description {
+        font-size: var(--font-size-sm);
+        color: var(--text-secondary);
+    }
+</style>
+{% endblock %}
+
+{% block page_header %}
+<div class="page-header mb-4">
+    <div class="row align-items-center">
+        <div class="col">
+            <h1 class="page-title">
+                <i class="fas fa-tachometer-alt me-2"></i>
+                لوحة التحكم
+            </h1>
+            <p class="page-subtitle text-muted">نظرة عامة على نظام الموارد البشرية</p>
+        </div>
+        <div class="col-auto">
+            <div class="page-actions">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#quickAddModal">
+                    <i class="fas fa-plus me-2"></i>
+                    إضافة سريعة
+                </button>
+                <div class="dropdown d-inline-block ms-2">
+                    <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-download me-2"></i>
+                        تصدير التقارير
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-file-pdf me-2"></i>تقرير PDF</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-file-excel me-2"></i>تقرير Excel</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-file-csv me-2"></i>تقرير CSV</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- إحصائيات سريعة -->
+<div class="dashboard-stats">
+    <div class="row">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="stat-number">{{ total_employees|default:0 }}</div>
+                            <div class="stat-label">إجمالي الموظفين</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users stat-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card success">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="stat-number">{{ present_today|default:0 }}</div>
+                            <div class="stat-label">حاضر اليوم</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-user-check stat-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card warning">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="stat-number">{{ on_leave_today|default:0 }}</div>
+                            <div class="stat-label">في إجازة</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar-times stat-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card stat-card danger">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <div class="stat-number">{{ pending_requests|default:0 }}</div>
+                            <div class="stat-label">طلبات معلقة</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clock stat-icon"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- إجراءات سريعة -->
+<div class="quick-actions">
+    <div class="card action-card">
+        <div class="card-body">
+            <i class="fas fa-user-plus action-icon"></i>
+            <h6 class="card-title">إضافة موظف</h6>
+            <p class="card-text">إضافة موظف جديد للنظام</p>
+            <a href="{% url 'Hr:employee_add' %}" class="btn btn-primary btn-sm">إضافة</a>
+        </div>
+    </div>
+    
+    <div class="card action-card">
+        <div class="card-body">
+            <i class="fas fa-clock action-icon"></i>
+            <h6 class="card-title">تسجيل حضور</h6>
+            <p class="card-text">تسجيل حضور وانصراف الموظفين</p>
+            <a href="{% url 'Hr:attendance_records' %}" class="btn btn-primary btn-sm">تسجيل</a>
+        </div>
+    </div>
+    
+    <div class="card action-card">
+        <div class="card-body">
+            <i class="fas fa-calendar-plus action-icon"></i>
+            <h6 class="card-title">طلب إجازة</h6>
+            <p class="card-text">تقديم طلب إجازة جديد</p>
+            <a href="{% url 'Hr:leave_requests' %}" class="btn btn-primary btn-sm">طلب</a>
+        </div>
+    </div>
+    
+    <div class="card action-card">
+        <div class="card-body">
+            <i class="fas fa-money-bill-wave action-icon"></i>
+            <h6 class="card-title">حساب راتب</h6>
+            <p class="card-text">حساب وإنتاج كشوف الرواتب</p>
+            <a href="{% url 'Hr:payroll_calculator' %}" class="btn btn-primary btn-sm">حساب</a>
+        </div>
+    </div>
+</div>
+
+<!-- المحتوى الرئيسي -->
+<div class="row">
+    <!-- الرسوم البيانية -->
+    <div class="col-xl-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">إحصائيات الحضور الشهرية</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="attendanceChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- الأحداث القادمة -->
+    <div class="col-xl-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">الأحداث القادمة</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="upcoming-events">
+                    <div class="event-item">
+                        <div class="event-date">
+                            <div class="event-day">15</div>
+                            <div class="event-month">ديسمبر</div>
+                        </div>
+                        <div class="event-content">
+                            <div class="event-title">اجتماع الإدارة الشهري</div>
+                            <div class="event-description">مراجعة أداء الموظفين والخطط المستقبلية</div>
+                        </div>
+                    </div>
+                    
+                    <div class="event-item">
+                        <div class="event-date">
+                            <div class="event-day">20</div>
+                            <div class="event-month">ديسمبر</div>
+                        </div>
+                        <div class="event-content">
+                            <div class="event-title">صرف الرواتب</div>
+                            <div class="event-description">موعد صرف رواتب شهر ديسمبر</div>
+                        </div>
+                    </div>
+                    
+                    <div class="event-item">
+                        <div class="event-date">
+                            <div class="event-day">25</div>
+                            <div class="event-month">ديسمبر</div>
+                        </div>
+                        <div class="event-content">
+                            <div class="event-title">إجازة رسمية</div>
+                            <div class="event-description">عطلة رأس السنة الميلادية</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- الأنشطة الأخيرة -->
+    <div class="col-xl-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">الأنشطة الأخيرة</h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="recent-activities">
+                    <div class="activity-item">
+                        <div class="activity-icon success">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">تم إضافة موظف جديد</div>
+                            <div class="activity-description">أحمد محمد - قسم التسويق</div>
+                            <div class="activity-time">منذ 5 دقائق</div>
+                        </div>
+                    </div>
+                    
+                    <div class="activity-item">
+                        <div class="activity-icon warning">
+                            <i class="fas fa-calendar-times"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">طلب إجازة جديد</div>
+                            <div class="activity-description">سارة أحمد - إجازة مرضية</div>
+                            <div class="activity-time">منذ ساعة</div>
+                        </div>
+                    </div>
+                    
+                    <div class="activity-item">
+                        <div class="activity-icon info">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">تسجيل حضور</div>
+                            <div class="activity-description">محمد علي - وصل في الوقت المحدد</div>
+                            <div class="activity-time">منذ ساعتين</div>
+                        </div>
+                    </div>
+                    
+                    <div class="activity-item">
+                        <div class="activity-icon success">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">تم اعتماد طلب إجازة</div>
+                            <div class="activity-description">فاطمة محمد - إجازة سنوية</div>
+                            <div class="activity-time">منذ 3 ساعات</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- إحصائيات الأقسام -->
+    <div class="col-xl-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">توزيع الموظفين حسب الأقسام</h6>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="departmentChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- تنبيهات مهمة -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">تنبيهات مهمة</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>{{ expiring_documents|default:0 }}</strong> وثيقة ستنتهي خلال 30 يوم
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="alert alert-info">
+                            <i class="fas fa-calendar-check me-2"></i>
+                            <strong>{{ pending_evaluations|default:0 }}</strong> تقييم معلق
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="alert alert-success">
+                            <i class="fas fa-birthday-cake me-2"></i>
+                            <strong>{{ birthdays_this_month|default:0 }}</strong> عيد ميلاد هذا الشهر
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- نافذة الإضافة السريعة -->
+<div class="modal fade" id="quickAddModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">إضافة سريعة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <a href="{% url 'Hr:employee_add' %}" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-user-plus d-block mb-2" style="font-size: 2rem;"></i>
+                            إضافة موظف
+                        </a>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <a href="{% url 'Hr:leave_requests' %}" class="btn btn-outline-success w-100">
+                            <i class="fas fa-calendar-plus d-block mb-2" style="font-size: 2rem;"></i>
+                            طلب إجازة
+                        </a>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <a href="{% url 'Hr:departments' %}" class="btn btn-outline-info w-100">
+                            <i class="fas fa-sitemap d-block mb-2" style="font-size: 2rem;"></i>
+                            إضافة قسم
+                        </a>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <a href="{% url 'Hr:shift_management' %}" class="btn btn-outline-warning w-100">
+                            <i class="fas fa-clock d-block mb-2" style="font-size: 2rem;"></i>
+                            إضافة وردية
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // رسم بياني للحضور
+    const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
+    new Chart(attendanceCtx, {
+        type: 'line',
+        data: {
+            labels: ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو'],
+            datasets: [{
+                label: 'معدل الحضور',
+                data: [85, 88, 92, 89, 94, 91],
+                borderColor: 'rgb(37, 99, 235)',
+                backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // رسم بياني للأقسام
+    const departmentCtx = document.getElementById('departmentChart').getContext('2d');
+    new Chart(departmentCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['التسويق', 'المبيعات', 'التقنية', 'الموارد البشرية', 'المحاسبة'],
+            datasets: [{
+                data: [25, 30, 20, 15, 10],
+                backgroundColor: [
+                    'rgb(37, 99, 235)',
+                    'rgb(16, 185, 129)',
+                    'rgb(245, 158, 11)',
+                    'rgb(239, 68, 68)',
+                    'rgb(6, 182, 212)'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+    
+    // تحديث البيانات كل 5 دقائق
+    setInterval(function() {
+        // هنا يمكن إضافة استدعاء AJAX لتحديث البيانات
+        console.log('تحديث البيانات...');
+    }, 300000); // 5 دقائق
+});
+</script>
+{% endblock %}

@@ -401,4 +401,244 @@ class CachePerformanceMiddleware(MiddlewareMixin):
             cache.set(cache_stats_key, cache_stats, 86400)  # 24 ساعة
             
         except Exception as e:
-            logger.error(f"خطأ في حفظ إحصائيات التخزين المؤقت: {e}")
+            logger.error(f"خطأ في حفظ إحصائيات التخزين المؤقت: {e}")    
+        if execution_time > self.slow_request_threshold:
+                stats['slow_requests'] += 1
+            
+            # إحصائيات حسب المسار
+            path = request.path
+            if path not in stats['paths']:
+                stats['paths'][path] = {
+                    'count': 0,
+                    'total_time': 0,
+                    'avg_time': 0,
+                    'slow_count': 0
+                }
+            
+            stats['paths'][path]['count'] += 1
+            stats['paths'][path]['total_time'] += execution_time
+            stats['paths'][path]['avg_time'] = stats['paths'][path]['total_time'] / stats['paths'][path]['count']
+            
+            if execution_time > self.slow_request_threshold:
+                stats['paths'][path]['slow_count'] += 1
+            
+            # حفظ الإحصائيات
+            cache.set(stats_key, stats, 86400)  # 24 ساعة
+            
+        except Exception as e:
+            logger.error(f'خطأ في حفظ إحصائيات الأداء: {e}')
+
+
+class DatabaseQueryCountMiddleware(MiddlewareMixin):
+    """
+    Middleware لعد استعلامات قاعدة البيانات
+    """
+    
+    def __init__(self, get_response):
+        self.get_response = get_response
+        self.enable_monitoring = getattr(settings, 'ENABLE_DB_QUERY_MONITORING', True)
+        super().__init__(get_response)
+    
+    def process_request(self, request):
+        """بداية معالجة الطلب"""
+        if not self.enable_monitoring:
+            return None
+        
+        request._db_query_start_count = len(connection.queries)
+        return None
+    
+    def process_response(self, request, response):
+        """نهاية معالجة الطلب"""
+        if not self.enable_monitoring or not hasattr(request, '_db_query_start_count'):
+            return response
+        
+        query_count = len(connection.queries) - request._db_query_start_count
+        
+        # إضافة header لعدد الاستعلامات
+        response['X-DB-Query-Count'] = str(query_count)
+        
+        # تحذير إذا كان عدد الاستعلامات كبيراً
+        if query_count > 20:
+            logger.warning(
+                f'High query count: {request.method} {request.path} - {query_count} queries'
+            )
+        
+        return response
+
+
+class CacheHitRateMiddleware(MiddlewareMixin):
+    """
+    Middleware لمراقبة معدل إصابة التخزين المؤقت
+    """
+    
+    def __init__(self, get_response):
+        self.get_response = get_response
+        self.enable_monitoring = getattr(settings, 'ENABLE_CACHE_MONITORING', True)
+        super().__init__(get_response)
+    
+    def process_request(self, request):
+        """بداية معالجة الطلب"""
+        if not self.enable_monitoring:
+            return None
+        
+        # تسجيل بداية الطلب للتخزين المؤقت
+        request._cache_operations = {
+            'hits': 0,
+            'misses': 0,
+            'sets': 0
+        }
+        
+        return None
+    
+    def process_response(self, request, response):
+        """نهاية معالجة الطلب"""
+        if not self.enable_monitoring or not hasattr(request, '_cache_operations'):
+            return response
+        
+        # حساب معدل الإصابة
+        total_operations = request._cache_operations['hits'] + request._cache_operations['misses']
+        if total_operations > 0:
+            hit_rate = request._cache_operations['hits'] / total_operations
+            response['X-Cache-Hit-Rate'] = f'{hit_rate:.2%}'
+        
+        return response
+
+
+class MemoryUsageMiddleware(MiddlewareMixin):
+    """
+    Middleware لمراقبة استخدام الذاكرة
+    """
+    
+    def __init__(self, get_response):
+        self.get_response = get_response
+        self.enable_monitoring = getattr(settings, 'ENABLE_MEMORY_MONITORING', True)
+        super().__init__(get_response)
+    
+    def process_request(self, request):
+        """بداية معالجة الطلب"""
+        if not self.enable_monitoring:
+            return None
+        
+        try:
+            import psutil
+            process = psutil.Process()
+            request._memory_start = process.memory_info().rss
+        except ImportError:
+            # psutil غير متاح
+            request._memory_start = None
+        
+        return None
+    
+    def process_response(self, request, response):
+        """نهاية معالجة الطلب"""
+        if not self.enable_monitoring or not hasattr(request, '_memory_start') or request._memory_start is None:
+            return response
+        
+        try:
+            import psutil
+            process = psutil.Process()
+            memory_end = process.memory_info().rss
+            memory_diff = memory_end - request._memory_start
+            
+            # إضافة header لاستخدام الذاكرة
+            response['X-Memory-Usage'] = f'{memory_diff / 1024 / 1024:.2f}MB'
+            
+            # تحذير إذا كان استخدام الذاكرة كبيراً
+            if memory_diff > 50 * 1024 * 1024:  # 50MB
+                logger.warning(
+                    f'High memory usage: {request.method} {request.path} - '
+                    f'{memory_diff / 1024 / 1024:.2f}MB'
+                )
+        except ImportError:
+            pass
+        
+        return response
+
+
+class RequestLoggingMiddleware(MiddlewareMixin):
+    """
+    Middleware لتسجيل الطلبات المفصل
+    """
+    
+    def __init__(self, get_response):
+        self.get_response = get_response
+        self.enable_logging = getattr(settings, 'ENABLE_REQUEST_LOGGING', True)
+        super().__init__(get_response)
+    
+    def process_request(self, request):
+        """بداية معالجة الطلب"""
+        if not self.enable_logging:
+            return None
+        
+        # تسجيل معلومات الطلب
+        logger.info(
+            f'Request started: {request.method} {request.path} '
+            f'from {request.META.get("REMOTE_ADDR", "unknown")} '
+            f'User: {request.user if hasattr(request, "user") and request.user.is_authenticated else "Anonymous"}'
+        )
+        
+        return None
+    
+    def process_response(self, request, response):
+        """نهاية معالجة الطلب"""
+        if not self.enable_logging:
+            return response
+        
+        # تسجيل نتيجة الطلب
+        logger.info(
+            f'Request completed: {request.method} {request.path} '
+            f'Status: {response.status_code} '
+            f'Size: {len(response.content) if hasattr(response, "content") else 0} bytes'
+        )
+        
+        return response
+    
+    def process_exception(self, request, exception):
+        """معالجة الاستثناءات"""
+        if not self.enable_logging:
+            return None
+        
+        logger.error(
+            f'Request failed: {request.method} {request.path} '
+            f'Exception: {type(exception).__name__}: {exception}'
+        )
+        
+        return None
+
+
+class SecurityHeadersMiddleware(MiddlewareMixin):
+    """
+    Middleware لإضافة headers الأمان
+    """
+    
+    def __init__(self, get_response):
+        self.get_response = get_response
+        super().__init__(get_response)
+    
+    def process_response(self, request, response):
+        """إضافة headers الأمان"""
+        
+        # منع تضمين الصفحة في iframe
+        response['X-Frame-Options'] = 'DENY'
+        
+        # منع تخمين نوع المحتوى
+        response['X-Content-Type-Options'] = 'nosniff'
+        
+        # تفعيل حماية XSS
+        response['X-XSS-Protection'] = '1; mode=block'
+        
+        # إجبار HTTPS
+        if not settings.DEBUG:
+            response['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+        
+        # سياسة المحتوى الأمنية
+        response['Content-Security-Policy'] = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com; "
+            "font-src 'self' https://fonts.gstatic.com; "
+            "img-src 'self' data: https:; "
+            "connect-src 'self';"
+        )
+        
+        return response

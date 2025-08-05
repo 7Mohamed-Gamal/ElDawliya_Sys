@@ -1,17 +1,28 @@
 """
-Attendance Models Package
-Contains all attendance-related models for the HR system
+Attendance Models Package for HRMS
+Contains models for attendance tracking, shifts, and time management
 """
 
-from .work_shift_models import WorkShift, ShiftAssignment
-from .attendance_machine_models import AttendanceMachine, MachineUser
-from .attendance_record_models import AttendanceRecord, AttendanceSummary
+from .attendance_models import (
+    AttendanceRecordEnhanced,
+    EmployeeShiftAssignmentEnhanced,
+    AttendanceSummaryEnhanced
+)
+
+from .attendance_machine_models import (
+    AttendanceMachine,
+    MachineUser
+)
+
+from .work_shift_models import (
+    WorkShift
+)
 
 __all__ = [
     'WorkShift',
-    'ShiftAssignment', 
     'AttendanceMachine',
     'MachineUser',
-    'AttendanceRecord',
-    'AttendanceSummary',
+    'AttendanceRecordEnhanced',
+    'EmployeeShiftAssignmentEnhanced',
+    'AttendanceSummaryEnhanced',
 ]

@@ -1,94 +1,38 @@
 {% load static %}
 
-<header class="navbar">
-    <div class="navbar-content">
-        <!-- Left Section -->
-        <div class="navbar-left">
-            <!-- Mobile Menu Toggle -->
-            <button class="mobile-menu-toggle" onclick="toggleMobileSidebar()">
-                <i class="fas fa-bars"></i>
-            </button>
-            
-            <!-- Breadcrumb -->
-            <nav class="breadcrumb-nav">
-                {% block breadcrumb %}
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item">
-                        <a href="{% url 'Hr:dashboard' %}">
-                            <i class="fas fa-home"></i>
-                            الرئيسية
-                        </a>
-                    </li>
-                    {% if breadcrumb_items %}
-                        {% for item in breadcrumb_items %}
-                        <li class="breadcrumb-item {% if forloop.last %}active{% endif %}">
-                            {% if not forloop.last and item.url %}
-                                <a href="{{ item.url }}">{{ item.label }}</a>
-                            {% else %}
-                                {{ item.label }}
-                            {% endif %}
-                        </li>
-                        {% endfor %}
-                    {% endif %}
-                </ol>
-                {% endblock %}
-            </nav>
+<nav class="navbar" id="navbar">
+    <div class="navbar-container">
+        <!-- زر تبديل الشريط الجانبي -->
+        <button class="navbar-toggle" id="navbarToggle" data-sidebar-toggle>
+            <i class="fas fa-bars"></i>
+        </button>
+
+        <!-- شريط البحث -->
+        <div class="navbar-search">
+            <div class="search-container">
+                <input type="text" class="search-input" placeholder="البحث في النظام..." id="globalSearch">
+                <button class="search-button">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+            <div class="search-results" id="searchResults"></div>
         </div>
 
-        <!-- Right Section -->
-        <div class="navbar-right">
-            <!-- Global Search -->
-            <div class="global-search">
-                <div class="search-input-group">
-                    <input type="text" 
-                           class="search-input" 
-                           placeholder="البحث في النظام..."
-                           id="globalSearch"
-                           autocomplete="off">
-                    <button class="search-button" type="button">
-                        <i class="fas fa-search"></i>
-                    </button>
-                </div>
-                
-                <!-- Search Results Dropdown -->
-                <div class="search-results" id="searchResults" style="display: none;">
-                    <div class="search-loading">
-                        <i class="fas fa-spinner fa-spin"></i>
-                        جاري البحث...
-                    </div>
-                </div>
-            </div>
-
-            <!-- Quick Actions -->
-            <div class="quick-actions">
-                <button class="quick-action-btn" title="إضافة موظف جديد" onclick="location.href='{% url 'Hr:employee_add' %}'">
-                    <i class="fas fa-user-plus"></i>
-                </button>
-                <button class="quick-action-btn" title="تسجيل حضور" onclick="openAttendanceModal()">
-                    <i class="fas fa-clock"></i>
-                </button>
-                <button class="quick-action-btn" title="طلب إجازة" onclick="location.href='{% url 'Hr:leave_request_add' %}'">
-                    <i class="fas fa-calendar-plus"></i>
-                </button>
-            </div>
-
-            <!-- Notifications -->
-            <div class="notifications-dropdown dropdown">
-                <button class="dropdown-toggle notifications-btn" title="الإشعارات">
+        <!-- أدوات الشريط العلوي -->
+        <div class="navbar-tools">
+            <!-- الإشعارات -->
+            <div class="navbar-item dropdown">
+                <button class="navbar-button" data-dropdown-toggle="notificationsDropdown">
                     <i class="fas fa-bell"></i>
                     <span class="notification-badge" id="notificationCount">3</span>
                 </button>
-                
-                <div class="dropdown-menu notifications-menu">
-                    <div class="notifications-header">
+                <div id="notificationsDropdown" class="dropdown-menu notifications-dropdown">
+                    <div class="dropdown-header">
                         <h6>الإشعارات</h6>
-                        <button class="mark-all-read" onclick="markAllNotificationsRead()">
-                            تحديد الكل كمقروء
-                        </button>
+                        <button class="btn-link" onclick="markAllAsRead()">تحديد الكل كمقروء</button>
                     </div>
-                    
                     <div class="notifications-list" id="notificationsList">
-                        <!-- Notifications will be loaded here -->
+                        <!-- سيتم تحميل الإشعارات هنا -->
                         <div class="notification-item unread">
                             <div class="notification-icon">
                                 <i class="fas fa-user-plus text-success"></i>
@@ -99,10 +43,9 @@
                                 <div class="notification-time">منذ 5 دقائق</div>
                             </div>
                         </div>
-                        
                         <div class="notification-item">
                             <div class="notification-icon">
-                                <i class="fas fa-calendar text-warning"></i>
+                                <i class="fas fa-calendar-times text-warning"></i>
                             </div>
                             <div class="notification-content">
                                 <div class="notification-title">طلب إجازة</div>
@@ -110,93 +53,117 @@
                                 <div class="notification-time">منذ ساعة</div>
                             </div>
                         </div>
-                        
                         <div class="notification-item">
                             <div class="notification-icon">
-                                <i class="fas fa-clock text-info"></i>
+                                <i class="fas fa-exclamation-triangle text-danger"></i>
                             </div>
                             <div class="notification-content">
-                                <div class="notification-title">تأخير في الحضور</div>
-                                <div class="notification-text">محمد علي متأخر عن موعد الحضور</div>
-                                <div class="notification-time">منذ ساعتين</div>
+                                <div class="notification-title">انتهاء وثيقة</div>
+                                <div class="notification-text">ستنتهي وثيقة الهوية لمحمد علي خلال 30 يوم</div>
+                                <div class="notification-time">منذ يومين</div>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="notifications-footer">
-                        <a href="{% url 'Hr:notifications' %}" class="view-all-notifications">
+                    <div class="dropdown-footer">
+                        <a href="{% url 'Hr:notifications' %}" class="btn btn-sm btn-primary w-100">
                             عرض جميع الإشعارات
                         </a>
                     </div>
                 </div>
             </div>
 
-            <!-- Theme Toggle -->
-            <button class="theme-toggle" title="تبديل الثيم">
-                <span class="theme-toggle-icon">🌙</span>
-            </button>
+            <!-- الرسائل -->
+            <div class="navbar-item dropdown">
+                <button class="navbar-button" data-dropdown-toggle="messagesDropdown">
+                    <i class="fas fa-envelope"></i>
+                    <span class="notification-badge">2</span>
+                </button>
+                <div id="messagesDropdown" class="dropdown-menu messages-dropdown">
+                    <div class="dropdown-header">
+                        <h6>الرسائل</h6>
+                    </div>
+                    <div class="messages-list">
+                        <div class="message-item unread">
+                            <div class="message-avatar">
+                                <img src="{% static 'Hr/images/default-avatar.png' %}" alt="أحمد محمد">
+                            </div>
+                            <div class="message-content">
+                                <div class="message-sender">أحمد محمد</div>
+                                <div class="message-text">استفسار حول كشف الراتب</div>
+                                <div class="message-time">منذ 10 دقائق</div>
+                            </div>
+                        </div>
+                        <div class="message-item">
+                            <div class="message-avatar">
+                                <img src="{% static 'Hr/images/default-avatar.png' %}" alt="سارة أحمد">
+                            </div>
+                            <div class="message-content">
+                                <div class="message-sender">سارة أحمد</div>
+                                <div class="message-text">طلب تحديث البيانات الشخصية</div>
+                                <div class="message-time">منذ ساعة</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dropdown-footer">
+                        <a href="{% url 'Hr:messages' %}" class="btn btn-sm btn-primary w-100">
+                            عرض جميع الرسائل
+                        </a>
+                    </div>
+                </div>
+            </div>
 
-            <!-- User Menu -->
-            <div class="user-menu dropdown">
-                <button class="dropdown-toggle user-menu-btn">
+            <!-- تبديل الثيم -->
+            <div class="navbar-item">
+                <button class="navbar-button" data-theme-toggle title="تبديل الثيم">
+                    <i class="fas fa-moon" id="themeIcon"></i>
+                </button>
+            </div>
+
+            <!-- ملف المستخدم -->
+            <div class="navbar-item dropdown">
+                <button class="navbar-button user-button" data-dropdown-toggle="userDropdown">
                     <div class="user-avatar">
-                        {% if user.employee.photo %}
-                            <img src="{{ user.employee.photo.url }}" alt="{{ user.get_full_name }}">
+                        {% if user.profile_picture %}
+                        <img src="{{ user.profile_picture.url }}" alt="{{ user.get_full_name }}">
                         {% else %}
-                            <i class="fas fa-user"></i>
+                        <i class="fas fa-user"></i>
                         {% endif %}
                     </div>
-                    <div class="user-info">
-                        <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
-                        <div class="user-role">{{ user.employee.job_position.title|default:'موظف' }}</div>
-                    </div>
+                    <span class="user-name">{{ user.get_full_name|default:user.username }}</span>
                     <i class="fas fa-chevron-down"></i>
                 </button>
-                
-                <div class="dropdown-menu user-menu-dropdown">
-                    <div class="user-menu-header">
-                        <div class="user-avatar-large">
-                            {% if user.employee.photo %}
-                                <img src="{{ user.employee.photo.url }}" alt="{{ user.get_full_name }}">
-                            {% else %}
+                <div id="userDropdown" class="dropdown-menu user-dropdown">
+                    <div class="dropdown-header">
+                        <div class="user-info">
+                            <div class="user-avatar-large">
+                                {% if user.profile_picture %}
+                                <img src="{{ user.profile_picture.url }}" alt="{{ user.get_full_name }}">
+                                {% else %}
                                 <i class="fas fa-user"></i>
-                            {% endif %}
-                        </div>
-                        <div class="user-details">
-                            <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
-                            <div class="user-email">{{ user.email }}</div>
-                            <div class="user-role">{{ user.employee.job_position.title|default:'موظف' }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="user-details">
+                                <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
+                                <div class="user-email">{{ user.email }}</div>
+                                <div class="user-role">{{ user.role|default:'مستخدم' }}</div>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="user-menu-items">
-                        <a href="{% url 'Hr:profile' %}" class="user-menu-item">
+                    <div class="dropdown-body">
+                        <a href="{% url 'Hr:profile' %}" class="dropdown-item">
                             <i class="fas fa-user"></i>
                             الملف الشخصي
                         </a>
-                        <a href="{% url 'Hr:my_attendance' %}" class="user-menu-item">
-                            <i class="fas fa-clock"></i>
-                            حضوري
-                        </a>
-                        <a href="{% url 'Hr:my_leaves' %}" class="user-menu-item">
-                            <i class="fas fa-calendar"></i>
-                            إجازاتي
-                        </a>
-                        <a href="{% url 'Hr:my_payslips' %}" class="user-menu-item">
-                            <i class="fas fa-file-invoice"></i>
-                            كشوف راتبي
-                        </a>
-                        <div class="user-menu-divider"></div>
-                        <a href="{% url 'Hr:settings' %}" class="user-menu-item">
+                        <a href="{% url 'Hr:settings' %}" class="dropdown-item">
                             <i class="fas fa-cog"></i>
                             الإعدادات
                         </a>
-                        <a href="{% url 'Hr:help' %}" class="user-menu-item">
+                        <a href="{% url 'Hr:help' %}" class="dropdown-item">
                             <i class="fas fa-question-circle"></i>
                             المساعدة
                         </a>
-                        <div class="user-menu-divider"></div>
-                        <a href="{% url 'accounts:logout' %}" class="user-menu-item text-danger">
+                        <div class="dropdown-divider"></div>
+                        <a href="{% url 'accounts:logout' %}" class="dropdown-item text-danger">
                             <i class="fas fa-sign-out-alt"></i>
                             تسجيل الخروج
                         </a>
@@ -205,135 +172,106 @@
             </div>
         </div>
     </div>
-</header>
+
+    <!-- شريط المسار -->
+    <div class="breadcrumb-container">
+        <nav class="breadcrumb">
+            <a href="{% url 'Hr:dashboard' %}" class="breadcrumb-item">
+                <i class="fas fa-home"></i>
+                الرئيسية
+            </a>
+            {% if breadcrumbs %}
+                {% for crumb in breadcrumbs %}
+                <span class="breadcrumb-separator">/</span>
+                {% if crumb.url %}
+                <a href="{{ crumb.url }}" class="breadcrumb-item">{{ crumb.title }}</a>
+                {% else %}
+                <span class="breadcrumb-item active">{{ crumb.title }}</span>
+                {% endif %}
+                {% endfor %}
+            {% endif %}
+        </nav>
+    </div>
+</nav>
 
 <style>
-/* Navbar Styles */
 .navbar {
-    height: 64px;
-    background-color: var(--bg-primary);
-    border-bottom: 1px solid var(--border-color);
-    position: sticky;
+    position: fixed;
     top: 0;
+    left: 0;
+    right: 280px;
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
     z-index: 999;
     box-shadow: var(--shadow-sm);
+    transition: right var(--transition-normal);
 }
 
-.navbar-content {
-    height: 100%;
-    padding: 0 var(--spacing-6);
+.navbar.sidebar-collapsed {
+    right: 0;
+}
+
+.navbar-container {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    padding: var(--spacing-md) var(--spacing-lg);
+    gap: var(--spacing-lg);
 }
 
-.navbar-left {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-4);
-}
-
-.navbar-right {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-4);
-}
-
-.mobile-menu-toggle {
+.navbar-toggle {
     display: none;
     background: none;
     border: none;
-    color: var(--text-muted);
+    font-size: var(--font-size-lg);
+    color: var(--text-primary);
     cursor: pointer;
-    padding: var(--spacing-2);
-    border-radius: var(--radius);
-    transition: all var(--transition-fast);
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-sm);
+    transition: background-color var(--transition-fast);
 }
 
-.mobile-menu-toggle:hover {
-    background-color: var(--bg-secondary);
-    color: var(--text-primary);
+.navbar-toggle:hover {
+    background-color: var(--bg-tertiary);
 }
 
-/* Breadcrumb */
-.breadcrumb {
-    display: flex;
-    list-style: none;
-    gap: var(--spacing-2);
-    align-items: center;
-    margin: 0;
-    padding: 0;
-}
-
-.breadcrumb-item {
-    display: flex;
-    align-items: center;
-    font-size: var(--text-sm);
-}
-
-.breadcrumb-item:not(:last-child)::after {
-    content: '/';
-    margin-left: var(--spacing-2);
-    color: var(--text-muted);
-}
-
-.breadcrumb-item a {
-    color: var(--text-secondary);
-    text-decoration: none;
-    transition: color var(--transition-fast);
-}
-
-.breadcrumb-item a:hover {
-    color: var(--primary-color);
-}
-
-.breadcrumb-item.active {
-    color: var(--text-primary);
-    font-weight: 500;
-}
-
-/* Global Search */
-.global-search {
+.navbar-search {
+    flex: 1;
+    max-width: 500px;
     position: relative;
-    width: 300px;
 }
 
-.search-input-group {
+.search-container {
+    position: relative;
     display: flex;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    background-color: var(--bg-secondary);
+    align-items: center;
 }
 
 .search-input {
-    flex: 1;
-    padding: var(--spacing-2) var(--spacing-3);
-    border: none;
-    background: transparent;
-    color: var(--text-primary);
-    font-size: var(--text-sm);
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    padding-left: 40px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    background-color: var(--bg-secondary);
+    font-size: var(--font-size-sm);
+    transition: all var(--transition-fast);
 }
 
 .search-input:focus {
     outline: none;
-}
-
-.search-input::placeholder {
-    color: var(--text-muted);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
+    background-color: var(--bg-primary);
 }
 
 .search-button {
+    position: absolute;
+    right: var(--spacing-sm);
     background: none;
     border: none;
     color: var(--text-muted);
-    padding: var(--spacing-2) var(--spacing-3);
     cursor: pointer;
-    transition: color var(--transition-fast);
-}
-
-.search-button:hover {
-    color: var(--primary-color);
+    padding: var(--spacing-sm);
 }
 
 .search-results {
@@ -341,221 +279,68 @@
     top: 100%;
     left: 0;
     right: 0;
-    background-color: var(--bg-primary);
+    background: var(--bg-primary);
     border: 1px solid var(--border-color);
-    border-radius: var(--radius);
+    border-radius: var(--radius-md);
     box-shadow: var(--shadow-lg);
     max-height: 400px;
     overflow-y: auto;
     z-index: 1000;
-    margin-top: var(--spacing-1);
+    display: none;
 }
 
-.search-loading {
-    padding: var(--spacing-4);
-    text-align: center;
-    color: var(--text-muted);
-}
-
-/* Quick Actions */
-.quick-actions {
-    display: flex;
-    gap: var(--spacing-2);
-}
-
-.quick-action-btn {
-    width: 40px;
-    height: 40px;
-    border: none;
-    background-color: var(--bg-secondary);
-    color: var(--text-muted);
-    border-radius: var(--radius);
-    cursor: pointer;
+.navbar-tools {
     display: flex;
     align-items: center;
-    justify-content: center;
-    transition: all var(--transition-fast);
+    gap: var(--spacing-sm);
 }
 
-.quick-action-btn:hover {
-    background-color: var(--primary-color);
-    color: var(--white);
-}
-
-/* Notifications */
-.notifications-btn {
+.navbar-item {
     position: relative;
-    width: 40px;
-    height: 40px;
-    border: none;
-    background-color: var(--bg-secondary);
-    color: var(--text-muted);
-    border-radius: var(--radius);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all var(--transition-fast);
 }
 
-.notifications-btn:hover {
-    background-color: var(--primary-color);
-    color: var(--white);
+.navbar-button {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.navbar-button:hover {
+    background-color: var(--bg-tertiary);
+    color: var(--text-primary);
 }
 
 .notification-badge {
     position: absolute;
     top: -2px;
     left: -2px;
-    background-color: var(--danger-color);
-    color: var(--white);
-    font-size: var(--text-xs);
+    background: var(--error-color);
+    color: var(--text-white);
+    font-size: 10px;
     font-weight: 600;
     padding: 2px 6px;
-    border-radius: var(--radius-full);
+    border-radius: 10px;
     min-width: 18px;
-    height: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.notifications-menu {
-    width: 350px;
-    max-height: 500px;
-    overflow: hidden;
-}
-
-.notifications-header {
-    padding: var(--spacing-4);
-    border-bottom: 1px solid var(--border-color);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.notifications-header h6 {
-    margin: 0;
-    font-size: var(--text-base);
-    font-weight: 600;
-}
-
-.mark-all-read {
-    background: none;
-    border: none;
-    color: var(--primary-color);
-    cursor: pointer;
-    font-size: var(--text-sm);
-}
-
-.notifications-list {
-    max-height: 300px;
-    overflow-y: auto;
-}
-
-.notification-item {
-    display: flex;
-    padding: var(--spacing-3) var(--spacing-4);
-    border-bottom: 1px solid var(--border-light);
-    transition: background-color var(--transition-fast);
-    cursor: pointer;
-}
-
-.notification-item:hover {
-    background-color: var(--bg-secondary);
-}
-
-.notification-item.unread {
-    background-color: rgb(37 99 235 / 0.05);
-}
-
-.notification-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: var(--radius-full);
-    background-color: var(--bg-secondary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-left: var(--spacing-3);
-}
-
-.notification-content {
-    flex: 1;
-}
-
-.notification-title {
-    font-size: var(--text-sm);
-    font-weight: 500;
-    color: var(--text-primary);
-    margin-bottom: var(--spacing-1);
-}
-
-.notification-text {
-    font-size: var(--text-sm);
-    color: var(--text-secondary);
-    margin-bottom: var(--spacing-1);
-}
-
-.notification-time {
-    font-size: var(--text-xs);
-    color: var(--text-muted);
-}
-
-.notifications-footer {
-    padding: var(--spacing-3) var(--spacing-4);
-    border-top: 1px solid var(--border-color);
     text-align: center;
 }
 
-.view-all-notifications {
-    color: var(--primary-color);
-    text-decoration: none;
-    font-size: var(--text-sm);
-    font-weight: 500;
-}
-
-/* Theme Toggle */
-.theme-toggle {
-    width: 40px;
-    height: 40px;
-    border: none;
-    background-color: var(--bg-secondary);
-    border-radius: var(--radius);
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all var(--transition-fast);
-    font-size: var(--text-lg);
-}
-
-.theme-toggle:hover {
-    background-color: var(--primary-color);
-}
-
-/* User Menu */
-.user-menu-btn {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-3);
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: var(--spacing-2);
-    border-radius: var(--radius);
-    transition: background-color var(--transition-fast);
-}
-
-.user-menu-btn:hover {
-    background-color: var(--bg-secondary);
+.user-button {
+    padding: var(--spacing-sm) var(--spacing-md);
 }
 
 .user-avatar {
     width: 32px;
     height: 32px;
-    border-radius: var(--radius-full);
-    background-color: var(--bg-secondary);
+    border-radius: 50%;
+    background-color: var(--bg-tertiary);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -568,40 +353,205 @@
     object-fit: cover;
 }
 
-.user-info {
-    text-align: right;
-}
-
 .user-name {
-    font-size: var(--text-sm);
+    font-size: var(--font-size-sm);
     font-weight: 500;
-    color: var(--text-primary);
-    line-height: 1.2;
 }
 
-.user-role {
-    font-size: var(--text-xs);
-    color: var(--text-muted);
-    line-height: 1.2;
+/* قوائم منسدلة */
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    min-width: 280px;
+    z-index: 1000;
+    display: none;
+    overflow: hidden;
 }
 
-.user-menu-dropdown {
-    width: 280px;
+.dropdown-menu.show {
+    display: block;
 }
 
-.user-menu-header {
-    padding: var(--spacing-4);
-    border-bottom: 1px solid var(--border-color);
+.dropdown-header {
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-bottom: 1px solid var(--border-light);
+    background-color: var(--bg-secondary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dropdown-header h6 {
+    margin: 0;
+    font-weight: 600;
+}
+
+.dropdown-body {
+    padding: var(--spacing-sm) 0;
+}
+
+.dropdown-footer {
+    padding: var(--spacing-md);
+    border-top: 1px solid var(--border-light);
+    background-color: var(--bg-secondary);
+}
+
+.dropdown-item {
     display: flex;
     align-items: center;
-    gap: var(--spacing-3);
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-lg);
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: background-color var(--transition-fast);
+}
+
+.dropdown-item:hover {
+    background-color: var(--bg-tertiary);
+}
+
+.dropdown-divider {
+    height: 1px;
+    background-color: var(--border-light);
+    margin: var(--spacing-sm) 0;
+}
+
+/* إشعارات */
+.notifications-dropdown {
+    width: 350px;
+    left: -300px;
+}
+
+.notifications-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.notification-item {
+    display: flex;
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--border-light);
+    transition: background-color var(--transition-fast);
+}
+
+.notification-item:hover {
+    background-color: var(--bg-tertiary);
+}
+
+.notification-item.unread {
+    background-color: rgb(37 99 235 / 0.05);
+}
+
+.notification-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--bg-tertiary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: var(--spacing-md);
+}
+
+.notification-content {
+    flex: 1;
+}
+
+.notification-title {
+    font-weight: 500;
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-xs);
+}
+
+.notification-text {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.notification-time {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+}
+
+/* رسائل */
+.messages-dropdown {
+    width: 320px;
+    left: -250px;
+}
+
+.message-item {
+    display: flex;
+    padding: var(--spacing-md);
+    border-bottom: 1px solid var(--border-light);
+    transition: background-color var(--transition-fast);
+}
+
+.message-item:hover {
+    background-color: var(--bg-tertiary);
+}
+
+.message-item.unread {
+    background-color: rgb(37 99 235 / 0.05);
+}
+
+.message-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+    margin-left: var(--spacing-md);
+}
+
+.message-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.message-content {
+    flex: 1;
+}
+
+.message-sender {
+    font-weight: 500;
+    font-size: var(--font-size-sm);
+    margin-bottom: var(--spacing-xs);
+}
+
+.message-text {
+    font-size: var(--font-size-xs);
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-xs);
+}
+
+.message-time {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+}
+
+/* ملف المستخدم */
+.user-dropdown {
+    width: 280px;
+    left: -200px;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
 }
 
 .user-avatar-large {
-    width: 48px;
-    height: 48px;
-    border-radius: var(--radius-full);
-    background-color: var(--bg-secondary);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background-color: var(--bg-tertiary);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -614,205 +564,195 @@
     object-fit: cover;
 }
 
-.user-details {
-    flex: 1;
-}
-
 .user-details .user-name {
-    font-size: var(--text-base);
     font-weight: 600;
-    margin-bottom: var(--spacing-1);
+    margin-bottom: var(--spacing-xs);
 }
 
 .user-email {
-    font-size: var(--text-sm);
+    font-size: var(--font-size-xs);
     color: var(--text-secondary);
-    margin-bottom: var(--spacing-1);
+    margin-bottom: var(--spacing-xs);
 }
 
-.user-details .user-role {
-    font-size: var(--text-sm);
+.user-role {
+    font-size: var(--font-size-xs);
     color: var(--text-muted);
 }
 
-.user-menu-items {
-    padding: var(--spacing-2) 0;
+/* شريط المسار */
+.breadcrumb-container {
+    padding: var(--spacing-sm) var(--spacing-lg);
+    background-color: var(--bg-secondary);
+    border-top: 1px solid var(--border-light);
 }
 
-.user-menu-item {
+.breadcrumb {
     display: flex;
     align-items: center;
-    gap: var(--spacing-3);
-    padding: var(--spacing-2) var(--spacing-4);
+    gap: var(--spacing-sm);
+    font-size: var(--font-size-sm);
+}
+
+.breadcrumb-item {
     color: var(--text-secondary);
     text-decoration: none;
-    transition: all var(--transition-fast);
-    font-size: var(--text-sm);
+    transition: color var(--transition-fast);
 }
 
-.user-menu-item:hover {
-    background-color: var(--bg-secondary);
+.breadcrumb-item:hover {
+    color: var(--primary-color);
+}
+
+.breadcrumb-item.active {
     color: var(--text-primary);
+    font-weight: 500;
 }
 
-.user-menu-item.text-danger {
-    color: var(--danger-color);
+.breadcrumb-separator {
+    color: var(--text-muted);
 }
 
-.user-menu-item.text-danger:hover {
-    background-color: rgb(239 68 68 / 0.1);
-}
-
-.user-menu-divider {
-    height: 1px;
-    background-color: var(--border-color);
-    margin: var(--spacing-2) 0;
-}
-
-/* Mobile Responsive */
+/* الاستجابة للشاشات */
 @media (max-width: 768px) {
-    .mobile-menu-toggle {
+    .navbar {
+        right: 0;
+    }
+    
+    .navbar-toggle {
         display: block;
     }
     
-    .breadcrumb-nav {
+    .navbar-search {
+        max-width: 200px;
+    }
+    
+    .user-name {
         display: none;
     }
     
-    .global-search {
-        width: 200px;
-    }
-    
-    .quick-actions {
-        display: none;
-    }
-    
-    .user-info {
-        display: none;
-    }
-    
-    .notifications-menu,
-    .user-menu-dropdown {
+    .notifications-dropdown,
+    .messages-dropdown,
+    .user-dropdown {
+        left: -200px;
         width: 280px;
-        right: 0;
-        left: auto;
     }
 }
 
 @media (max-width: 480px) {
-    .navbar-content {
-        padding: 0 var(--spacing-4);
+    .navbar-container {
+        padding: var(--spacing-sm) var(--spacing-md);
+        gap: var(--spacing-sm);
     }
     
-    .global-search {
-        width: 150px;
+    .navbar-search {
+        max-width: 150px;
     }
     
-    .theme-toggle {
-        display: none;
+    .search-input {
+        font-size: var(--font-size-xs);
+    }
+    
+    .breadcrumb-container {
+        padding: var(--spacing-xs) var(--spacing-md);
+    }
+    
+    .breadcrumb {
+        font-size: var(--font-size-xs);
     }
 }
 </style>
 
 <script>
-// Global Search Functionality
 document.addEventListener('DOMContentLoaded', function() {
-    const searchInput = document.getElementById('globalSearch');
-    const searchResults = document.getElementById('searchResults');
-    let searchTimeout;
-
-    searchInput.addEventListener('input', function() {
-        const query = this.value.trim();
-        
-        clearTimeout(searchTimeout);
-        
-        if (query.length < 2) {
-            searchResults.style.display = 'none';
-            return;
-        }
-        
-        searchTimeout = setTimeout(() => {
-            performGlobalSearch(query);
-        }, 300);
-    });
-
-    searchInput.addEventListener('focus', function() {
-        if (this.value.trim().length >= 2) {
-            searchResults.style.display = 'block';
-        }
-    });
-
-    document.addEventListener('click', function(e) {
-        if (!e.target.closest('.global-search')) {
-            searchResults.style.display = 'none';
-        }
-    });
-});
-
-async function performGlobalSearch(query) {
-    const searchResults = document.getElementById('searchResults');
-    searchResults.style.display = 'block';
-    searchResults.innerHTML = '<div class="search-loading"><i class="fas fa-spinner fa-spin"></i> جاري البحث...</div>';
+    // تبديل الشريط الجانبي من الشريط العلوي
+    const navbarToggle = document.getElementById('navbarToggle');
+    const sidebar = document.getElementById('sidebar');
+    const navbar = document.getElementById('navbar');
     
-    try {
-        const response = await fetch(`/api/global-search/?q=${encodeURIComponent(query)}`, {
-            headers: {
-                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+    if (navbarToggle) {
+        navbarToggle.addEventListener('click', function() {
+            sidebar.classList.toggle('show');
+            navbar.classList.toggle('sidebar-collapsed');
+        });
+    }
+    
+    // البحث العام
+    const globalSearch = document.getElementById('globalSearch');
+    const searchResults = document.getElementById('searchResults');
+    
+    if (globalSearch) {
+        globalSearch.addEventListener('input', function() {
+            const query = this.value.trim();
+            if (query.length > 2) {
+                // هنا يمكن إضافة استدعاء AJAX للبحث
+                searchResults.style.display = 'block';
+            } else {
+                searchResults.style.display = 'none';
             }
         });
         
-        const data = await response.json();
-        displaySearchResults(data);
-    } catch (error) {
-        console.error('Search error:', error);
-        searchResults.innerHTML = '<div class="search-error">حدث خطأ في البحث</div>';
-    }
-}
-
-function displaySearchResults(results) {
-    const searchResults = document.getElementById('searchResults');
-    
-    if (!results.length) {
-        searchResults.innerHTML = '<div class="search-no-results">لا توجد نتائج</div>';
-        return;
+        // إخفاء النتائج عند النقر خارجها
+        document.addEventListener('click', function(e) {
+            if (!globalSearch.contains(e.target) && !searchResults.contains(e.target)) {
+                searchResults.style.display = 'none';
+            }
+        });
     }
     
-    let html = '';
-    results.forEach(result => {
-        html += `
-            <div class="search-result-item" onclick="location.href='${result.url}'">
-                <div class="search-result-icon">
-                    <i class="${result.icon}"></i>
-                </div>
-                <div class="search-result-content">
-                    <div class="search-result-title">${result.title}</div>
-                    <div class="search-result-description">${result.description}</div>
-                    <div class="search-result-type">${result.type}</div>
-                </div>
-            </div>
-        `;
-    });
+    // تبديل الثيم
+    const themeToggle = document.querySelector('[data-theme-toggle]');
+    const themeIcon = document.getElementById('themeIcon');
     
-    searchResults.innerHTML = html;
-}
-
-// Notifications
-function markAllNotificationsRead() {
-    // Implementation for marking all notifications as read
-    const unreadNotifications = document.querySelectorAll('.notification-item.unread');
-    unreadNotifications.forEach(notification => {
-        notification.classList.remove('unread');
-    });
+    if (themeToggle) {
+        themeToggle.addEventListener('click', function() {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            // تحديث الأيقونة
+            if (themeIcon) {
+                themeIcon.className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            }
+        });
+    }
     
-    // Update notification count
-    const notificationCount = document.getElementById('notificationCount');
-    notificationCount.textContent = '0';
-    notificationCount.style.display = 'none';
-}
-
-// Quick Actions
-function openAttendanceModal() {
-    // Implementation for opening attendance modal
-    hrDesignSystem.openModal('attendanceModal');
-}
+    // تطبيق الثيم المحفوظ
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        if (themeIcon) {
+            themeIcon.className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        }
+    }
+    
+    // تحديث عدد الإشعارات
+    function updateNotificationCount() {
+        // هنا يمكن إضافة استدعاء AJAX لجلب عدد الإشعارات
+        const count = 3; // مثال
+        const badge = document.getElementById('notificationCount');
+        if (badge) {
+            badge.textContent = count;
+            badge.style.display = count > 0 ? 'block' : 'none';
+        }
+    }
+    
+    // تحديد جميع الإشعارات كمقروءة
+    window.markAllAsRead = function() {
+        const notifications = document.querySelectorAll('.notification-item.unread');
+        notifications.forEach(notification => {
+            notification.classList.remove('unread');
+        });
+        
+        const badge = document.getElementById('notificationCount');
+        if (badge) {
+            badge.style.display = 'none';
+        }
+    };
+    
+    // تحديث الإشعارات كل دقيقة
+    setInterval(updateNotificationCount, 60000);
+});
 </script>

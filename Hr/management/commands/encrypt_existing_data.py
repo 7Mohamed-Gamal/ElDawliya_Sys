@@ -4,8 +4,8 @@
 
 from django.core.management.base import BaseCommand
 from django.db import transaction
-from django.apps import apps
 from Hr.services.encryption_service import encryption_service
+from Hr.models import Employee
 import logging
 
 logger = logging.getLogger(__name__)
@@ -17,319 +17,306 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             '--model',
-            type=str,
-            help='تشفير نموذج محدد (مثل: Employee)'
+            choices=['employee', 'all'],
+            default='all',
+            help='النموذج المراد تشفير بياناته'
         )
+        
         parser.add_argument(
             '--field',
             type=str,
-            help='تشفير حقل محدد في النموذج'
+            help='الحقل المحدد للتشفير (اختياري)'
         )
-        parser.add_argument(
-            '--dry-run',
-            action='store_true',
-            help='تشغيل تجريبي بدون حفظ التغييرات'
-        )
+        
         parser.add_argument(
             '--batch-size',
             type=int,
             default=100,
             help='حجم الدفعة للمعالجة (افتراضي: 100)'
         )
+        
+        parser.add_argument(
+            '--dry-run',
+            action='store_true',
+            help='تشغيل تجريبي بدون حفظ التغييرات'
+        )
+        
         parser.add_argument(
             '--force',
             action='store_true',
-            help='إجبار إعادة التشفير حتى للبيانات المشفرة'
+            help='إجبار التشفير حتى لو كانت البيانات مشفرة'
         )
 
     def handle(self, *args, **options):
-        self.stdout.write(
-            self.style.SUCCESS('=== بدء تشفير البيانات الموجودة ===')
-        )
-
-        if options['dry_run']:
+        model = options['model']
+        field = options['field']
+        batch_size = options['batch_size']
+        dry_run = options['dry_run']
+        force = options['force']
+        
+        if dry_run:
             self.stdout.write(
                 self.style.WARNING('تشغيل تجريبي - لن يتم حفظ التغييرات')
             )
+        
+        if model == 'employee' or model == 'all':
+            self.encrypt_employee_data(field, batch_size, dry_run, force)
+        
+        if model == 'all':
+            # يمكن إضافة نماذج أخرى هنا
+            pass
+        
+        self.stdout.write(
+            self.style.SUCCESS('تم الانتهاء من عملية التشفير')
+        )
 
-        # تعريف النماذج والحقول الحساسة
-        sensitive_data_mapping = {
-            'Employee': {
-                'national_id': True,
-                'passport_number': True,
-                'phone_number': True,
-                'personal_email': True,
-                'bank_account_number': True,
-                'iban': True,
-                'tax_number': True,
-                'social_security_number': True,
-            },
-            'EmployeeEmergencyContact': {
-                'phone_number': True,
-                'email': True,
-            },
-            'EmployeeInsurance': {
-                'policy_number': True,
-                'insurance_number': True,
-            },
-            'PayrollRecord': {
-                'bank_account_number': True,
-                'iban': True,
-            }
+    def encrypt_employee_data(self, specific_field, batch_size, dry_run, force):
+        """تشفير بيانات الموظفين"""
+        self.stdout.write(
+            self.style.SUCCESS('بدء تشفير بيانات الموظفين...')
+        )
+        
+        # الحقول الحساسة في نموذج الموظف
+        sensitive_fields = {
+            'national_id': 'رقم الهوية الوطنية',
+            'phone_number': 'رقم الهاتف',
+            'mobile_number': 'رقم الجوال',
+            'personal_email': 'البريد الإلكتروني الشخصي',
+            'emergency_contact_phone': 'هاتف جهة الاتصال الطارئة',
         }
-
-        total_encrypted = 0
-
-        try:
-            if options['model']:
-                # تشفير نموذج محدد
-                model_name = options['model']
-                if model_name in sensitive_data_mapping:
-                    encrypted_count = self.encrypt_model_data(
-                        model_name,
-                        sensitive_data_mapping[model_name],
-                        options
-                    )
-                    total_encrypted += encrypted_count
-                else:
-                    self.stdout.write(
-                        self.style.ERROR(f'النموذج {model_name} غير مدعوم')
-                    )
-            else:
-                # تشفير جميع النماذج
-                for model_name, field_mapping in sensitive_data_mapping.items():
-                    encrypted_count = self.encrypt_model_data(
-                        model_name,
-                        field_mapping,
-                        options
-                    )
-                    total_encrypted += encrypted_count
-
-            # عرض النتائج
-            self.stdout.write('\n' + self.style.SUCCESS('=== ملخص التشفير ==='))
-            self.stdout.write(f'إجمالي السجلات المشفرة: {total_encrypted}')
-            
-            if not options['dry_run']:
-                self.stdout.write(
-                    self.style.SUCCESS('تم تشفير البيانات بنجاح!')
-                )
+        
+        # تحديد الحقول المراد تشفيرها
+        fields_to_encrypt = {}
+        if specific_field:
+            if specific_field in sensitive_fields:
+                fields_to_encrypt[specific_field] = sensitive_fields[specific_field]
             else:
                 self.stdout.write(
-                    self.style.WARNING('تشغيل تجريبي - لم يتم حفظ التغييرات')
+                    self.style.ERROR(f'الحقل {specific_field} غير موجود في القائمة الحساسة')
                 )
-
-        except Exception as e:
-            self.stdout.write(
-                self.style.ERROR(f'خطأ في عملية التشفير: {e}')
-            )
-            logger.error(f'خطأ في تشفير البيانات: {e}')
-
-    def encrypt_model_data(self, model_name, field_mapping, options):
-        """تشفير بيانات نموذج محدد"""
-        try:
-            # الحصول على النموذج
-            model_class = apps.get_model('Hr', model_name)
-            
-            self.stdout.write(f'\nمعالجة نموذج: {model_name}')
-            
-            # الحصول على جميع السجلات
-            queryset = model_class.objects.all()
-            total_records = queryset.count()
-            
-            if total_records == 0:
-                self.stdout.write('  لا توجد سجلات للمعالجة')
-                return 0
-            
-            self.stdout.write(f'  إجمالي السجلات: {total_records}')
-            
-            encrypted_count = 0
-            batch_size = options['batch_size']
-            
-            # معالجة البيانات على دفعات
-            for i in range(0, total_records, batch_size):
-                batch = queryset[i:i + batch_size]
-                batch_encrypted = self.encrypt_batch(
-                    batch, 
-                    field_mapping, 
-                    options
-                )
-                encrypted_count += batch_encrypted
-                
-                # عرض التقدم
-                progress = min(i + batch_size, total_records)
-                self.stdout.write(
-                    f'  تم معالجة: {progress}/{total_records} '
-                    f'({progress/total_records*100:.1f}%)'
-                )
-            
-            self.stdout.write(
-                self.style.SUCCESS(f'  تم تشفير {encrypted_count} سجل في {model_name}')
-            )
-            
-            return encrypted_count
-            
-        except Exception as e:
-            self.stdout.write(
-                self.style.ERROR(f'خطأ في معالجة {model_name}: {e}')
-            )
-            return 0
-
-    def encrypt_batch(self, batch, field_mapping, options):
-        """تشفير دفعة من السجلات"""
+                return
+        else:
+            fields_to_encrypt = sensitive_fields
+        
+        # الحصول على جميع الموظفين
+        total_employees = Employee.objects.count()
+        self.stdout.write(f'إجمالي الموظفين: {total_employees}')
+        
         encrypted_count = 0
+        skipped_count = 0
+        error_count = 0
         
-        try:
-            with transaction.atomic():
-                for instance in batch:
-                    instance_updated = False
-                    
-                    # معالجة كل حقل حساس
-                    for field_name, should_encrypt in field_mapping.items():
-                        if not should_encrypt:
-                            continue
-                        
-                        # التحقق من وجود الحقل في النموذج
-                        if not hasattr(instance, field_name):
-                            continue
-                        
-                        # معالجة حقل محدد إذا تم تحديده
-                        if options['field'] and options['field'] != field_name:
-                            continue
-                        
-                        current_value = getattr(instance, field_name)
-                        
-                        # تخطي القيم الفارغة
-                        if not current_value:
-                            continue
-                        
-                        # التحقق من كون البيانات مشفرة بالفعل
-                        if not options['force'] and self.is_encrypted(current_value):
-                            continue
-                        
-                        # تشفير القيمة
-                        try:
-                            encrypted_value = encryption_service.encrypt_text(str(current_value))
-                            setattr(instance, field_name, encrypted_value)
-                            instance_updated = True
-                            
-                            if options['dry_run']:
-                                self.stdout.write(
-                                    f'    [تجريبي] سيتم تشفير {field_name}: '
-                                    f'{self.mask_value(current_value)}'
-                                )
-                            
-                        except Exception as e:
-                            self.stdout.write(
-                                self.style.ERROR(
-                                    f'    خطأ في تشفير {field_name} للسجل {instance.id}: {e}'
-                                )
-                            )
-                    
-                    # حفظ السجل إذا تم تحديثه
-                    if instance_updated:
-                        if not options['dry_run']:
-                            instance.save()
-                            
-                            # تسجيل عملية التشفير
-                            encryption_service.create_encryption_audit_log(
-                                'encrypt_existing_data',
-                                instance.__class__.__name__
-                            )
-                        
-                        encrypted_count += 1
-                
-                # إلغاء المعاملة في حالة التشغيل التجريبي
-                if options['dry_run']:
-                    transaction.set_rollback(True)
+        # معالجة على دفعات
+        for start in range(0, total_employees, batch_size):
+            end = min(start + batch_size, total_employees)
+            employees = Employee.objects.all()[start:end]
             
-            return encrypted_count
-            
-        except Exception as e:
             self.stdout.write(
-                self.style.ERROR(f'خطأ في معالجة الدفعة: {e}')
+                f'معالجة الدفعة {start//batch_size + 1}: '
+                f'الموظفين {start + 1} إلى {end}'
             )
-            return 0
-
-    def is_encrypted(self, value):
-        """التحقق من كون القيمة مشفرة بالفعل"""
-        try:
-            # محاولة فك التشفير
-            decrypted = encryption_service.decrypt_text(value)
-            # إذا نجح فك التشفير، فالقيمة مشفرة
-            return True
-        except:
-            # إذا فشل فك التشفير، فالقيمة غير مشفرة
-            return False
-
-    def mask_value(self, value):
-        """إخفاء القيمة جزئياً للعرض"""
-        if not value:
-            return value
-        
-        return encryption_service.mask_sensitive_data(str(value))
-
-    def verify_encryption(self, model_name, field_mapping):
-        """التحقق من صحة التشفير"""
-        try:
-            model_class = apps.get_model('Hr', model_name)
             
-            self.stdout.write(f'\nالتحقق من تشفير {model_name}...')
-            
-            sample_size = min(10, model_class.objects.count())
-            sample_records = model_class.objects.all()[:sample_size]
-            
-            verification_results = {
-                'total_checked': 0,
-                'encrypted_fields': 0,
-                'decryption_successful': 0,
-                'errors': 0
-            }
-            
-            for instance in sample_records:
-                verification_results['total_checked'] += 1
-                
-                for field_name, should_encrypt in field_mapping.items():
-                    if not should_encrypt or not hasattr(instance, field_name):
-                        continue
-                    
-                    current_value = getattr(instance, field_name)
-                    if not current_value:
-                        continue
-                    
-                    verification_results['encrypted_fields'] += 1
-                    
+            with transaction.atomic():
+                for employee in employees:
                     try:
-                        # محاولة فك التشفير
-                        decrypted = encryption_service.decrypt_text(current_value)
-                        verification_results['decryption_successful'] += 1
+                        updated = False
                         
+                        for field_name, field_desc in fields_to_encrypt.items():
+                            if hasattr(employee, field_name):
+                                current_value = getattr(employee, field_name)
+                                
+                                if current_value:
+                                    # التحقق من كون البيانات مشفرة بالفعل
+                                    if not force and encryption_service.is_encrypted(str(current_value)):
+                                        self.stdout.write(
+                                            f'  تم تخطي {field_desc} للموظف {employee.employee_id} - مشفر بالفعل'
+                                        )
+                                        skipped_count += 1
+                                        continue
+                                    
+                                    # تشفير البيانات
+                                    encrypted_value = self.encrypt_field_value(
+                                        field_name, current_value
+                                    )
+                                    
+                                    if encrypted_value != current_value:
+                                        if not dry_run:
+                                            setattr(employee, field_name, encrypted_value)
+                                            updated = True
+                                        
+                                        self.stdout.write(
+                                            f'  تم تشفير {field_desc} للموظف {employee.employee_id}'
+                                        )
+                                        encrypted_count += 1
+                        
+                        # حفظ التغييرات
+                        if updated and not dry_run:
+                            employee.save(update_fields=list(fields_to_encrypt.keys()))
+                    
                     except Exception as e:
-                        verification_results['errors'] += 1
+                        error_count += 1
+                        logger.error(
+                            f'خطأ في تشفير بيانات الموظف {employee.employee_id}: {e}'
+                        )
                         self.stdout.write(
                             self.style.ERROR(
-                                f'  خطأ في فك تشفير {field_name}: {e}'
+                                f'  خطأ في معالجة الموظف {employee.employee_id}: {e}'
                             )
                         )
-            
-            # عرض نتائج التحقق
-            self.stdout.write(f'  السجلات المفحوصة: {verification_results["total_checked"]}')
-            self.stdout.write(f'  الحقول المشفرة: {verification_results["encrypted_fields"]}')
-            self.stdout.write(f'  فك التشفير الناجح: {verification_results["decryption_successful"]}')
-            self.stdout.write(f'  الأخطاء: {verification_results["errors"]}')
-            
-            if verification_results['errors'] == 0:
-                self.stdout.write(
-                    self.style.SUCCESS(f'  ✓ التحقق من {model_name} مكتمل بنجاح')
-                )
+                
+                # إذا كان تشغيل تجريبي، تراجع عن المعاملة
+                if dry_run:
+                    transaction.set_rollback(True)
+        
+        # ملخص النتائج
+        self.stdout.write(
+            self.style.SUCCESS(
+                f'\\nملخص تشفير بيانات الموظفين:'
+                f'\\n  تم التشفير: {encrypted_count}'
+                f'\\n  تم التخطي: {skipped_count}'
+                f'\\n  أخطاء: {error_count}'
+            )
+        )
+
+    def encrypt_field_value(self, field_name, value):
+        """تشفير قيمة حقل محدد"""
+        try:
+            if field_name == 'national_id':
+                return encryption_service.encrypt_national_id(value)
+            elif field_name in ['phone_number', 'mobile_number', 'emergency_contact_phone']:
+                return encryption_service.encrypt_phone_number(value)
+            elif field_name == 'personal_email':
+                return encryption_service.encrypt_email(value)
+            else:
+                return encryption_service.encrypt_text(value)
+        except Exception as e:
+            logger.error(f'خطأ في تشفير الحقل {field_name}: {e}')
+            return value
+
+    def decrypt_employee_data(self, specific_field, batch_size, dry_run):
+        """فك تشفير بيانات الموظفين (للاختبار)"""
+        self.stdout.write(
+            self.style.WARNING('بدء فك تشفير بيانات الموظفين...')
+        )
+        
+        sensitive_fields = {
+            'national_id': 'رقم الهوية الوطنية',
+            'phone_number': 'رقم الهاتف',
+            'mobile_number': 'رقم الجوال',
+            'personal_email': 'البريد الإلكتروني الشخصي',
+            'emergency_contact_phone': 'هاتف جهة الاتصال الطارئة',
+        }
+        
+        fields_to_decrypt = {}
+        if specific_field:
+            if specific_field in sensitive_fields:
+                fields_to_decrypt[specific_field] = sensitive_fields[specific_field]
             else:
                 self.stdout.write(
-                    self.style.ERROR(f'  ✗ يوجد أخطاء في تشفير {model_name}')
+                    self.style.ERROR(f'الحقل {specific_field} غير موجود في القائمة الحساسة')
                 )
+                return
+        else:
+            fields_to_decrypt = sensitive_fields
+        
+        total_employees = Employee.objects.count()
+        decrypted_count = 0
+        error_count = 0
+        
+        for start in range(0, total_employees, batch_size):
+            end = min(start + batch_size, total_employees)
+            employees = Employee.objects.all()[start:end]
             
-            return verification_results
-            
-        except Exception as e:
-            self.stdout.write(
-                self.style.ERROR(f'خطأ في التحقق من {model_name}: {e}')
+            with transaction.atomic():
+                for employee in employees:
+                    try:
+                        updated = False
+                        
+                        for field_name, field_desc in fields_to_decrypt.items():
+                            if hasattr(employee, field_name):
+                                current_value = getattr(employee, field_name)
+                                
+                                if current_value and encryption_service.is_encrypted(str(current_value)):
+                                    # فك التشفير
+                                    decrypted_value = self.decrypt_field_value(
+                                        field_name, current_value
+                                    )
+                                    
+                                    if decrypted_value != current_value:
+                                        if not dry_run:
+                                            setattr(employee, field_name, decrypted_value)
+                                            updated = True
+                                        
+                                        self.stdout.write(
+                                            f'  تم فك تشفير {field_desc} للموظف {employee.employee_id}'
+                                        )
+                                        decrypted_count += 1
+                        
+                        if updated and not dry_run:
+                            employee.save(update_fields=list(fields_to_decrypt.keys()))
+                    
+                    except Exception as e:
+                        error_count += 1
+                        logger.error(
+                            f'خطأ في فك تشفير بيانات الموظف {employee.employee_id}: {e}'
+                        )
+                
+                if dry_run:
+                    transaction.set_rollback(True)
+        
+        self.stdout.write(
+            self.style.SUCCESS(
+                f'\\nملخص فك تشفير بيانات الموظفين:'
+                f'\\n  تم فك التشفير: {decrypted_count}'
+                f'\\n  أخطاء: {error_count}'
             )
-            return None
+        )
+
+    def decrypt_field_value(self, field_name, value):
+        """فك تشفير قيمة حقل محدد"""
+        try:
+            if field_name == 'national_id':
+                return encryption_service.decrypt_national_id(value)
+            elif field_name in ['phone_number', 'mobile_number', 'emergency_contact_phone']:
+                return encryption_service.decrypt_phone_number(value)
+            elif field_name == 'personal_email':
+                return encryption_service.decrypt_email(value)
+            else:
+                return encryption_service.decrypt_text(value)
+        except Exception as e:
+            logger.error(f'خطأ في فك تشفير الحقل {field_name}: {e}')
+            return value
+
+    def verify_encryption(self):
+        """التحقق من صحة التشفير"""
+        self.stdout.write(
+            self.style.SUCCESS('التحقق من صحة التشفير...')
+        )
+        
+        # اختبار عينة من الموظفين
+        sample_employees = Employee.objects.all()[:10]
+        
+        for employee in sample_employees:
+            self.stdout.write(f'\\nالموظف: {employee.employee_id}')
+            
+            # فحص الحقول الحساسة
+            sensitive_fields = ['national_id', 'phone_number', 'personal_email']
+            
+            for field_name in sensitive_fields:
+                if hasattr(employee, field_name):
+                    value = getattr(employee, field_name)
+                    if value:
+                        is_encrypted = encryption_service.is_encrypted(str(value))
+                        status = 'مشفر' if is_encrypted else 'غير مشفر'
+                        self.stdout.write(f'  {field_name}: {status}')
+                        
+                        # محاولة فك التشفير للتأكد
+                        if is_encrypted:
+                            try:
+                                decrypted = self.decrypt_field_value(field_name, value)
+                                masked = encryption_service.mask_sensitive_data(decrypted)
+                                self.stdout.write(f'    القيمة المفكوكة: {masked}')
+                            except Exception as e:
+                                self.stdout.write(
+                                    self.style.ERROR(f'    خطأ في فك التشفير: {e}')
+                                )

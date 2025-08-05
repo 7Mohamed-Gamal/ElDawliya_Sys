@@ -7,19 +7,27 @@ from Hr.models.core.branch_models import Branch
 from Hr.models.core.department_models import Department
 from Hr.models.core.job_position_models import JobPosition, JobLevel
 
-# Employee Management Models
+# Employee Management Models (Legacy)
 from Hr.models.employee.employee_models import Employee
-from Hr.models.employee.employee_document_models import EmployeeDocument
 from Hr.models.employee.employee_contact_models import EmployeeContact
-from Hr.models.employee.employee_education_models import EmployeeEducation
 from Hr.models.employee.employee_experience_models import EmployeeExperience
 from Hr.models.employee.employee_family_models import EmployeeFamily
 from Hr.models.employee.employee_bank_models import EmployeeBank
 
+# Employee Management Models (Enhanced)
+from Hr.models.employee.employee_models_enhanced import EmployeeEnhanced
+from Hr.models.employee.employee_document_models import EmployeeDocumentEnhanced
+from Hr.models.employee.employee_education_models import EmployeeEducationEnhanced
+from Hr.models.employee.employee_insurance_models import EmployeeInsuranceEnhanced
+from Hr.models.employee.employee_vehicle_models import EmployeeVehicleEnhanced
+from Hr.models.employee.employee_file_models import EmployeeFileEnhanced, EmployeeFileCategory, EmployeeFileAccessLog
+from Hr.models.employee.employee_emergency_contact_models import EmployeeEmergencyContactEnhanced
+from Hr.models.employee.employee_training_models import EmployeeTrainingEnhanced, TrainingCategory, TrainingProvider
+
 # Attendance & Time Management Models (Modern - for new development)
 from Hr.models.attendance.work_shift_models import WorkShift, ShiftAssignment
 from Hr.models.attendance.attendance_machine_models import AttendanceMachine, MachineUser
-from Hr.models.attendance.attendance_record_models import AttendanceRecord, AttendanceSummary
+# from Hr.models.attendance.attendance_models import AttendanceRecord, AttendanceSummary, EmployeeShiftAssignment
 
 # Legacy Attendance Models (Currently used by working views)
 from Hr.models.attendance_models import (
@@ -91,9 +99,15 @@ __all__ = [
     # Core Organizational Models
     'Company', 'Branch', 'Department', 'JobPosition', 'JobLevel',
 
-    # Employee Management Models
-    'Employee', 'EmployeeDocument', 'EmployeeContact', 'EmployeeEducation',
+    # Employee Management Models (Legacy)
+    'Employee', 'EmployeeContact',
     'EmployeeExperience', 'EmployeeFamily', 'EmployeeBank',
+    
+    # Employee Management Models (Enhanced)
+    'EmployeeEnhanced', 'EmployeeDocumentEnhanced', 'EmployeeEducationEnhanced',
+    'EmployeeInsuranceEnhanced', 'EmployeeVehicleEnhanced', 'EmployeeFileEnhanced',
+    'EmployeeFileCategory', 'EmployeeFileAccessLog', 'EmployeeEmergencyContactEnhanced',
+    'EmployeeTrainingEnhanced', 'TrainingCategory', 'TrainingProvider',
 
     # Attendance & Time Management Models (Modern)
     'WorkShift', 'ShiftAssignment', 'AttendanceMachine', 'MachineUser',

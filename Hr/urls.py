@@ -72,6 +72,9 @@ urlpatterns = [
 
     # Department patterns with namespace
     path('departments/', include('Hr.url_modules.department_urls', namespace='departments')),
+    
+    # Department patterns with new namespace (alias)
+    path('departments_new/', include('Hr.url_modules.departments_new_urls', namespace='departments_new')),
 
     # Job patterns with namespace
     path('jobs/', include('Hr.url_modules.job_urls', namespace='jobs')),
@@ -94,31 +97,29 @@ urlpatterns = [
     # Integrations patterns with namespace
     path('integrations/', include('Hr.url_modules.integration_urls', namespace='integrations')),
 
-    # Analytics patterns
-    path('analytics/', analytics_dashboard, name='analytics_dashboard'),
-    path('analytics/chart/', analytics_chart, name='analytics_chart'),
+    # Analytics patterns with namespace
+    path('analytics/', include('Hr.url_modules.analytics_urls', namespace='analytics')),
 
-    # Org Chart patterns
-    path('org_chart/', org_chart, name='org_chart'),
-    path('org_chart/data/', org_chart_data, name='org_chart_data'),
-    path('org_chart/department/<int:dept_id>/', department_org_chart, name='department_org_chart'),
-    path('org_chart/employee/<int:emp_id>/', employee_hierarchy, name='employee_hierarchy'),
+    # Org Chart patterns with namespace
+    path('org_chart/', include('Hr.url_modules.org_chart_urls', namespace='org_chart')),
 
-    # Alert patterns
-    path('alerts/', alert_list, name='alert_list'),
+    # Alert patterns with namespace
+    path('alerts/', include('Hr.url_modules.alerts_urls', namespace='alerts')),
 
-    # Note patterns
-    path('notes/', employee_notes_dashboard, name='employee_notes_dashboard'),
-    path('notes/create/', employee_notes_create, name='employee_notes_create'),
-    path('notes/search/ajax/', employee_search_ajax, name='employee_search_ajax'),
-    path('notes/list/', employee_notes_list, name='employee_notes_list'),
-    path('notes/<int:note_id>/', employee_note_detail, name='employee_note_detail'),
-    path('notes/<int:note_id>/edit/', employee_note_edit, name='employee_note_edit'),
-    path('notes/<int:note_id>/delete/', employee_note_delete, name='employee_note_delete'),
-    path('notes/reports/', employee_notes_reports, name='employee_notes_reports'),
+    # Note patterns with namespace
+    path('notes/', include('Hr.url_modules.notes_urls', namespace='notes')),
 
     # Attendance patterns with namespace
     path('attendance/', include('Hr.url_modules.attendance_urls', namespace='attendance')),
+
+    # Leave Requests patterns with namespace
+    path('leave_requests/', include('Hr.url_modules.leave_requests_urls', namespace='leave_requests')),
+    
+    # Leave Balances patterns with namespace
+    path('leave_balances/', include('Hr.url_modules.leave_balances_urls', namespace='leave_balances')),
+    
+    # Employee Training patterns with namespace
+    path('employee_training/', include('Hr.url_modules.employee_training_urls', namespace='employee_training')),
 
     # Update data
     path('update_data/', update_data, name='update_data'),

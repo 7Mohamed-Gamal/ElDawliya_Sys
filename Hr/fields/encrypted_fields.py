@@ -1,5 +1,5 @@
 """
-حقول مشفرة مخصصة للنماذج
+حقول قاعدة البيانات المشفرة
 """
 
 from django.db import models
@@ -10,61 +10,27 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class EncryptedCharField(models.CharField):
-    """حقل نصي مشفر"""
-    
-    description = "حقل نصي مشفر للبيانات الحساسة"
-    
-    def __init__(self, *args, **kwargs):
-        # زيادة الحد الأقصى للطول لاستيعاب البيانات المشفرة
-        if 'max_length' in kwargs:
-            kwargs['max_length'] = kwargs['max_length'] * 2  # مضاعفة الطول للتشفير
-        
-        super().__init__(*args, **kwargs)
-    
-    def from_db_value(self, value, expression, connection):
-        """فك تشفير القيمة عند قراءتها من قاعدة البيانات"""
-        if value is None:
-            return value
-        
-        try:
-            return encryption_service.decrypt_text(value)
-        except Exception as e:
-            logger.error(f"خطأ في فك تشفير الحقل: {e}")
-            return value
-    
-    def to_python(self, value):
-        """تحويل القيمة إلى Python"""
-        if isinstance(value, str) or value is None:
-            return value
-        return str(value)
-    
-    def get_prep_value(self, value):
-        """تشفير القيمة قبل حفظها في قاعدة البيانات"""
-        if value is None:
-            return value
-        
-        try:
-            return encryption_service.encrypt_text(str(value))
-        except Exception as e:
-            logger.error(f"خطأ في تشفير الحقل: {e}")
-            return value
-
-
 class EncryptedTextField(models.TextField):
-    """حقل نص طويل مشفر"""
+    """حقل نص مشفر"""
     
-    description = "حقل نص طويل مشفر للبيانات الحساسة"
+    description = "حقل نص مشفر"
+    
+    def __init__(self, *args, **kwargs):
+        self.encrypt_on_save = kwargs.pop('encrypt_on_save', True)
+        super().__init__(*args, **kwargs)
     
     def from_db_value(self, value, expression, connection):
-        """فك تشفير القيمة عند قراءتها من قاعدة البيانات"""
+        """فك التشفير عند القراءة من قاعدة البيانات"""
         if value is None:
             return value
         
         try:
-            return encryption_service.decrypt_text(value)
+            # التحقق من كون القيمة مشفرة
+            if encryption_service.is_encrypted(value):
+                return encryption_service.decrypt_text(value)
+            return value
         except Exception as e:
-            logger.error(f"خطأ في فك تشفير النص الطويل: {e}")
+            logger.error(f'خطأ في فك تشفير النص: {e}')
             return value
     
     def to_python(self, value):
@@ -74,73 +40,44 @@ class EncryptedTextField(models.TextField):
         return str(value)
     
     def get_prep_value(self, value):
-        """تشفير القيمة قبل حفظها في قاعدة البيانات"""
+        """تحضير القيمة للحفظ في قاعدة البيانات"""
         if value is None:
             return value
         
-        try:
-            return encryption_service.encrypt_text(str(value))
-        except Exception as e:
-            logger.error(f"خطأ في تشفير النص الطويل: {e}")
-            return value
+        if self.encrypt_on_save and value:
+            try:
+                # تشفير القيمة إذا لم تكن مشفرة بالفعل
+                if not encryption_service.is_encrypted(str(value)):
+                    return encryption_service.encrypt_text(str(value))
+            except Exception as e:
+                logger.error(f'خطأ في تشفير النص: {e}')
+        
+        return str(value)
 
 
-class EncryptedEmailField(models.EmailField):
-    """حقل بريد إلكتروني مشفر"""
+class EncryptedCharField(models.CharField):
+    """حقل نص قصير مشفر"""
     
-    description = "حقل بريد إلكتروني مشفر"
+    description = "حقل نص قصير مشفر"
     
     def __init__(self, *args, **kwargs):
-        # زيادة الحد الأقصى للطول
-        kwargs['max_length'] = kwargs.get('max_length', 254) * 2
+        self.encrypt_on_save = kwargs.pop('encrypt_on_save', True)
+        # زيادة الحد الأقصى للطول لاستيعاب التشفير
+        if 'max_length' in kwargs:
+            kwargs['max_length'] = max(kwargs['max_length'] * 2, 255)
         super().__init__(*args, **kwargs)
     
     def from_db_value(self, value, expression, connection):
-        """فك تشفير القيمة عند قراءتها من قاعدة البيانات"""
+        """فك التشفير عند القراءة من قاعدة البيانات"""
         if value is None:
             return value
         
         try:
-            return encryption_service.decrypt_text(value)
+            if encryption_service.is_encrypted(value):
+                return encryption_service.decrypt_text(value)
+            return value
         except Exception as e:
-            logger.error(f"خطأ في فك تشفير البريد الإلكتروني: {e}")
-            return value
-    
-    def to_python(self, value):
-        """تحويل القيمة إلى Python مع التحقق من صحة البريد الإلكتروني"""
-        value = super().to_python(value)
-        return value
-    
-    def get_prep_value(self, value):
-        """تشفير القيمة قبل حفظها في قاعدة البيانات"""
-        if value is None:
-            return value
-        
-        try:
-            return encryption_service.encrypt_text(str(value))
-        except Exception as e:
-            logger.error(f"خطأ في تشفير البريد الإلكتروني: {e}")
-            return value
-
-
-class EncryptedPhoneField(models.CharField):
-    """حقل رقم هاتف مشفر"""
-    
-    description = "حقل رقم هاتف مشفر"
-    
-    def __init__(self, *args, **kwargs):
-        kwargs['max_length'] = kwargs.get('max_length', 20) * 2
-        super().__init__(*args, **kwargs)
-    
-    def from_db_value(self, value, expression, connection):
-        """فك تشفير القيمة عند قراءتها من قاعدة البيانات"""
-        if value is None:
-            return value
-        
-        try:
-            return encryption_service.decrypt_text(value)
-        except Exception as e:
-            logger.error(f"خطأ في فك تشفير رقم الهاتف: {e}")
+            logger.error(f'خطأ في فك تشفير النص: {e}')
             return value
     
     def to_python(self, value):
@@ -150,259 +87,306 @@ class EncryptedPhoneField(models.CharField):
         return str(value)
     
     def get_prep_value(self, value):
-        """تشفير القيمة قبل حفظها في قاعدة البيانات"""
+        """تحضير القيمة للحفظ في قاعدة البيانات"""
+        if value is None:
+            return value
+        
+        if self.encrypt_on_save and value:
+            try:
+                if not encryption_service.is_encrypted(str(value)):
+                    return encryption_service.encrypt_text(str(value))
+            except Exception as e:
+                logger.error(f'خطأ في تشفير النص: {e}')
+        
+        return str(value)
+
+
+class EncryptedNationalIDField(EncryptedCharField):
+    """حقل رقم الهوية الوطنية المشفر"""
+    
+    description = "حقل رقم الهوية الوطنية المشفر"
+    
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('max_length', 255)
+        super().__init__(*args, **kwargs)
+    
+    def from_db_value(self, value, expression, connection):
+        """فك التشفير عند القراءة من قاعدة البيانات"""
         if value is None:
             return value
         
         try:
-            return encryption_service.encrypt_text(str(value))
-        except Exception as e:
-            logger.error(f"خطأ في تشفير رقم الهاتف: {e}")
+            if encryption_service.is_encrypted(value):
+                return encryption_service.decrypt_national_id(value)
             return value
+        except Exception as e:
+            logger.error(f'خطأ في فك تشفير رقم الهوية: {e}')
+            return value
+    
+    def get_prep_value(self, value):
+        """تحضير القيمة للحفظ في قاعدة البيانات"""
+        if value is None:
+            return value
+        
+        if self.encrypt_on_save and value:
+            try:
+                if not encryption_service.is_encrypted(str(value)):
+                    return encryption_service.encrypt_national_id(str(value))
+            except Exception as e:
+                logger.error(f'خطأ في تشفير رقم الهوية: {e}')
+        
+        return str(value)
+    
+    def validate(self, value, model_instance):
+        """التحقق من صحة رقم الهوية"""
+        super().validate(value, model_instance)
+        
+        if value:
+            # فك التشفير للتحقق من الصحة
+            decrypted_value = value
+            if encryption_service.is_encrypted(str(value)):
+                decrypted_value = encryption_service.decrypt_national_id(str(value))
+            
+            # التحقق من صحة رقم الهوية
+            clean_id = ''.join(filter(str.isdigit, str(decrypted_value)))
+            if len(clean_id) < 10:
+                raise ValidationError('رقم الهوية الوطنية يجب أن يكون 10 أرقام على الأقل')
+
+
+class EncryptedPhoneField(EncryptedCharField):
+    """حقل رقم الهاتف المشفر"""
+    
+    description = "حقل رقم الهاتف المشفر"
+    
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('max_length', 255)
+        super().__init__(*args, **kwargs)
+    
+    def from_db_value(self, value, expression, connection):
+        """فك التشفير عند القراءة من قاعدة البيانات"""
+        if value is None:
+            return value
+        
+        try:
+            if encryption_service.is_encrypted(value):
+                return encryption_service.decrypt_phone_number(value)
+            return value
+        except Exception as e:
+            logger.error(f'خطأ في فك تشفير رقم الهاتف: {e}')
+            return value
+    
+    def get_prep_value(self, value):
+        """تحضير القيمة للحفظ في قاعدة البيانات"""
+        if value is None:
+            return value
+        
+        if self.encrypt_on_save and value:
+            try:
+                if not encryption_service.is_encrypted(str(value)):
+                    return encryption_service.encrypt_phone_number(str(value))
+            except Exception as e:
+                logger.error(f'خطأ في تشفير رقم الهاتف: {e}')
+        
+        return str(value)
     
     def validate(self, value, model_instance):
         """التحقق من صحة رقم الهاتف"""
         super().validate(value, model_instance)
         
-        if value and not self._is_valid_phone(value):
-            raise ValidationError('رقم هاتف غير صحيح')
+        if value:
+            # فك التشفير للتحقق من الصحة
+            decrypted_value = value
+            if encryption_service.is_encrypted(str(value)):
+                decrypted_value = encryption_service.decrypt_phone_number(str(value))
+            
+            # التحقق من صحة رقم الهاتف
+            clean_phone = ''.join(filter(str.isdigit, str(decrypted_value)))
+            if len(clean_phone) < 9:
+                raise ValidationError('رقم الهاتف يجب أن يكون 9 أرقام على الأقل')
+
+
+class EncryptedEmailField(models.EmailField):
+    """حقل البريد الإلكتروني المشفر"""
     
-    def _is_valid_phone(self, phone):
-        """التحقق من صحة رقم الهاتف"""
-        import re
-        # نمط بسيط للتحقق من رقم الهاتف
-        phone_pattern = r'^[\+]?[1-9][\d]{0,15}$'
-        return re.match(phone_pattern, phone.replace(' ', '').replace('-', ''))
+    description = "حقل البريد الإلكتروني المشفر"
+    
+    def __init__(self, *args, **kwargs):
+        self.encrypt_on_save = kwargs.pop('encrypt_on_save', True)
+        kwargs.setdefault('max_length', 255)
+        super().__init__(*args, **kwargs)
+    
+    def from_db_value(self, value, expression, connection):
+        """فك التشفير عند القراءة من قاعدة البيانات"""
+        if value is None:
+            return value
+        
+        try:
+            if encryption_service.is_encrypted(value):
+                return encryption_service.decrypt_email(value)
+            return value
+        except Exception as e:
+            logger.error(f'خطأ في فك تشفير البريد الإلكتروني: {e}')
+            return value
+    
+    def to_python(self, value):
+        """تحويل القيمة إلى Python"""
+        if isinstance(value, str) or value is None:
+            return value
+        return str(value)
+    
+    def get_prep_value(self, value):
+        """تحضير القيمة للحفظ في قاعدة البيانات"""
+        if value is None:
+            return value
+        
+        if self.encrypt_on_save and value:
+            try:
+                if not encryption_service.is_encrypted(str(value)):
+                    return encryption_service.encrypt_email(str(value))
+            except Exception as e:
+                logger.error(f'خطأ في تشفير البريد الإلكتروني: {e}')
+        
+        return str(value)
 
 
 class EncryptedDecimalField(models.DecimalField):
-    """حقل رقم عشري مشفر (للرواتب والمبالغ المالية)"""
+    """حقل رقم عشري مشفر (للرواتب)"""
     
-    description = "حقل رقم عشري مشفر للمبالغ المالية"
+    description = "حقل رقم عشري مشفر"
     
-    def from_db_value(self, value, expression, connection):
-        """فك تشفير القيمة عند قراءتها من قاعدة البيانات"""
-        if value is None:
-            return value
-        
-        try:
-            decrypted_value = encryption_service.decrypt_text(value)
-            return self.to_python(decrypted_value)
-        except Exception as e:
-            logger.error(f"خطأ في فك تشفير الرقم العشري: {e}")
-            return value
-    
-    def get_prep_value(self, value):
-        """تشفير القيمة قبل حفظها في قاعدة البيانات"""
-        if value is None:
-            return value
-        
-        try:
-            # تحويل إلى string أولاً
-            string_value = str(value)
-            return encryption_service.encrypt_text(string_value)
-        except Exception as e:
-            logger.error(f"خطأ في تشفير الرقم العشري: {e}")
-            return value
-
-
-class EncryptedJSONField(models.JSONField):
-    """حقل JSON مشفر"""
-    
-    description = "حقل JSON مشفر للبيانات المعقدة"
-    
-    def from_db_value(self, value, expression, connection):
-        """فك تشفير القيمة عند قراءتها من قاعدة البيانات"""
-        if value is None:
-            return value
-        
-        try:
-            decrypted_json = encryption_service.decrypt_text(value)
-            return self.to_python(decrypted_json)
-        except Exception as e:
-            logger.error(f"خطأ في فك تشفير JSON: {e}")
-            return value
-    
-    def get_prep_value(self, value):
-        """تشفير القيمة قبل حفظها في قاعدة البيانات"""
-        if value is None:
-            return value
-        
-        try:
-            import json
-            json_string = json.dumps(value, ensure_ascii=False)
-            return encryption_service.encrypt_text(json_string)
-        except Exception as e:
-            logger.error(f"خطأ في تشفير JSON: {e}")
-            return value
-
-
-class MaskedCharField(models.CharField):
-    """حقل نصي مع إخفاء جزئي للبيانات الحساسة"""
-    
-    description = "حقل نصي مع إخفاء جزئي للعرض"
-    
-    def __init__(self, mask_char='*', visible_chars=4, *args, **kwargs):
-        self.mask_char = mask_char
-        self.visible_chars = visible_chars
+    def __init__(self, *args, **kwargs):
+        self.encrypt_on_save = kwargs.pop('encrypt_on_save', True)
         super().__init__(*args, **kwargs)
     
-    def get_masked_value(self, value):
-        """الحصول على القيمة المخفية جزئياً"""
-        if not value:
+    def from_db_value(self, value, expression, connection):
+        """فك التشفير عند القراءة من قاعدة البيانات"""
+        if value is None:
             return value
         
-        return encryption_service.mask_sensitive_data(
-            value, 
-            self.mask_char, 
-            self.visible_chars
-        )
+        # إذا كانت القيمة نص (مشفرة)
+        if isinstance(value, str):
+            try:
+                if encryption_service.is_encrypted(value):
+                    decrypted = encryption_service.decrypt_salary(value)
+                    return self.to_python(decrypted)
+                return self.to_python(value)
+            except Exception as e:
+                logger.error(f'خطأ في فك تشفير الراتب: {e}')
+                return value
+        
+        return value
+    
+    def get_prep_value(self, value):
+        """تحضير القيمة للحفظ في قاعدة البيانات"""
+        if value is None:
+            return value
+        
+        if self.encrypt_on_save and value:
+            try:
+                # تحويل إلى نص وتشفير
+                return encryption_service.encrypt_salary(value)
+            except Exception as e:
+                logger.error(f'خطأ في تشفير الراتب: {e}')
+        
+        return super().get_prep_value(value)
+
+
+class EncryptedBankAccountField(EncryptedCharField):
+    """حقل رقم الحساب البنكي المشفر"""
+    
+    description = "حقل رقم الحساب البنكي المشفر"
+    
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('max_length', 255)
+        super().__init__(*args, **kwargs)
+    
+    def from_db_value(self, value, expression, connection):
+        """فك التشفير عند القراءة من قاعدة البيانات"""
+        if value is None:
+            return value
+        
+        try:
+            if encryption_service.is_encrypted(value):
+                return encryption_service.decrypt_bank_account(value)
+            return value
+        except Exception as e:
+            logger.error(f'خطأ في فك تشفير رقم الحساب البنكي: {e}')
+            return value
+    
+    def get_prep_value(self, value):
+        """تحضير القيمة للحفظ في قاعدة البيانات"""
+        if value is None:
+            return value
+        
+        if self.encrypt_on_save and value:
+            try:
+                if not encryption_service.is_encrypted(str(value)):
+                    return encryption_service.encrypt_bank_account(str(value))
+            except Exception as e:
+                logger.error(f'خطأ في تشفير رقم الحساب البنكي: {e}')
+        
+        return str(value)
+    
+    def validate(self, value, model_instance):
+        """التحقق من صحة رقم الحساب البنكي"""
+        super().validate(value, model_instance)
+        
+        if value:
+            # فك التشفير للتحقق من الصحة
+            decrypted_value = value
+            if encryption_service.is_encrypted(str(value)):
+                decrypted_value = encryption_service.decrypt_bank_account(str(value))
+            
+            # التحقق من صحة رقم الحساب
+            clean_account = ''.join(filter(str.isalnum, str(decrypted_value)))
+            if len(clean_account) < 8:
+                raise ValidationError('رقم الحساب البنكي يجب أن يكون 8 أحرف/أرقام على الأقل')
 
 
 class EncryptedFileField(models.FileField):
     """حقل ملف مشفر"""
     
-    description = "حقل ملف مشفر للملفات الحساسة"
-    
-    def save_form_data(self, instance, data):
-        """حفظ الملف مع التشفير"""
-        if data is not None:
-            # حفظ الملف الأصلي أولاً
-            super().save_form_data(instance, data)
-            
-            # تشفير الملف
-            if hasattr(instance, self.attname):
-                file_field = getattr(instance, self.attname)
-                if file_field and hasattr(file_field, 'path'):
-                    try:
-                        encrypted_path = encryption_service.encrypt_file(file_field.path)
-                        
-                        # تسجيل عملية التشفير
-                        encryption_service.create_encryption_audit_log(
-                            'encrypt_file', 
-                            'employee_file'
-                        )
-                        
-                    except Exception as e:
-                        logger.error(f"خطأ في تشفير الملف: {e}")
-
-
-class SecurePasswordField(models.CharField):
-    """حقل كلمة مرور آمن"""
-    
-    description = "حقل كلمة مرور مع تشفير آمن"
+    description = "حقل ملف مشفر"
     
     def __init__(self, *args, **kwargs):
-        kwargs['max_length'] = kwargs.get('max_length', 128)
+        self.encrypt_content = kwargs.pop('encrypt_content', True)
         super().__init__(*args, **kwargs)
     
-    def get_prep_value(self, value):
-        """تشفير كلمة المرور قبل حفظها"""
-        if value is None:
-            return value
-        
-        try:
-            return encryption_service.hash_password(value)
-        except Exception as e:
-            logger.error(f"خطأ في تشفير كلمة المرور: {e}")
-            return value
-    
-    def verify_password(self, raw_password, hashed_password):
-        """التحقق من كلمة المرور"""
-        try:
-            return encryption_service.verify_password(raw_password, hashed_password)
-        except Exception as e:
-            logger.error(f"خطأ في التحقق من كلمة المرور: {e}")
-            return False
-
-
-class EncryptedModelMixin:
-    """Mixin للنماذج التي تحتوي على بيانات مشفرة"""
-    
-    def get_encrypted_fields(self):
-        """الحصول على قائمة الحقول المشفرة"""
-        encrypted_fields = []
-        
-        for field in self._meta.fields:
-            if isinstance(field, (
-                EncryptedCharField, 
-                EncryptedTextField, 
-                EncryptedEmailField,
-                EncryptedPhoneField,
-                EncryptedDecimalField,
-                EncryptedJSONField
-            )):
-                encrypted_fields.append(field.name)
-        
-        return encrypted_fields
-    
-    def get_decrypted_data(self):
-        """الحصول على البيانات مفكوكة التشفير"""
-        data = {}
-        
-        for field_name in self.get_encrypted_fields():
-            value = getattr(self, field_name, None)
-            if value is not None:
-                data[field_name] = value  # القيمة ستكون مفكوكة التشفير تلقائياً
-        
-        return data
-    
-    def get_masked_data(self):
-        """الحصول على البيانات مع الإخفاء الجزئي"""
-        data = {}
-        
-        for field_name in self.get_encrypted_fields():
-            value = getattr(self, field_name, None)
-            if value is not None:
-                data[field_name] = encryption_service.mask_sensitive_data(str(value))
-        
-        return data
-    
-    def audit_encryption_access(self, operation='read', user=None):
-        """تسجيل الوصول للبيانات المشفرة"""
-        try:
-            encryption_service.create_encryption_audit_log(
-                operation=operation,
-                data_type=self.__class__.__name__,
-                user_id=str(user.id) if user else None
-            )
-        except Exception as e:
-            logger.error(f"خطأ في تسجيل تدقيق التشفير: {e}")
-
-
-# دالة مساعدة لتحديث النماذج الموجودة
-def add_encryption_to_existing_model(model_class, field_mappings):
-    """إضافة التشفير للنماذج الموجودة"""
-    
-    def encrypt_existing_data():
-        """تشفير البيانات الموجودة"""
-        try:
-            for instance in model_class.objects.all():
-                updated = False
+    def save_form_data(self, instance, data):
+        """حفظ بيانات النموذج مع التشفير"""
+        if data and self.encrypt_content:
+            try:
+                # قراءة محتوى الملف
+                content = data.read()
                 
-                for field_name, should_encrypt in field_mappings.items():
-                    if should_encrypt and hasattr(instance, field_name):
-                        current_value = getattr(instance, field_name)
-                        
-                        if current_value and not _is_encrypted(current_value):
-                            encrypted_value = encryption_service.encrypt_text(current_value)
-                            setattr(instance, field_name, encrypted_value)
-                            updated = True
+                # تشفير المحتوى
+                encrypted_content = encryption_service.encrypt_file_content(content)
                 
-                if updated:
-                    instance.save()
-                    
-            logger.info(f"تم تشفير البيانات الموجودة في {model_class.__name__}")
-            
-        except Exception as e:
-            logger.error(f"خطأ في تشفير البيانات الموجودة: {e}")
+                # إنشاء ملف جديد بالمحتوى المشفر
+                from django.core.files.base import ContentFile
+                encrypted_file = ContentFile(encrypted_content, name=data.name)
+                
+                super().save_form_data(instance, encrypted_file)
+            except Exception as e:
+                logger.error(f'خطأ في تشفير الملف: {e}')
+                super().save_form_data(instance, data)
+        else:
+            super().save_form_data(instance, data)
+
+
+# دالة مساعدة لإنشاء حقل مشفر حسب النوع
+def create_encrypted_field(field_type, **kwargs):
+    """إنشاء حقل مشفر حسب النوع"""
+    field_mapping = {
+        'text': EncryptedTextField,
+        'char': EncryptedCharField,
+        'national_id': EncryptedNationalIDField,
+        'phone': EncryptedPhoneField,
+        'email': EncryptedEmailField,
+        'decimal': EncryptedDecimalField,
+        'bank_account': EncryptedBankAccountField,
+        'file': EncryptedFileField,
+    }
     
-    def _is_encrypted(value):
-        """التحقق من كون القيمة مشفرة بالفعل"""
-        try:
-            encryption_service.decrypt_text(value)
-            return True
-        except:
-            return False
-    
-    return encrypt_existing_data
+    field_class = field_mapping.get(field_type, EncryptedTextField)
+    return field_class(**kwargs)

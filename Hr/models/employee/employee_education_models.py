@@ -1,260 +1,397 @@
 """
-Employee Education Models for HRMS
-Handles employee education history and qualifications
+نماذج المؤهلات الدراسية للموظفين - النسخة المحسنة
 """
 
-import uuid
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
-from django.conf import settings
+from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils import timezone
+import uuid
+from datetime import date
 
 
-class EmployeeEducation(models.Model):
-    """
-    Employee Education model for storing educational qualifications
-    Includes degrees, certifications, and training courses
-    """
+class EmployeeEducationEnhanced(models.Model):
+    """نموذج المؤهلات الدراسية المحسن للموظف"""
     
-    # Primary Key
-    id = models.UUIDField(
-        primary_key=True,
-        default=uuid.uuid4,
-        editable=False,
-        verbose_name=_("المعرف الفريد")
-    )
-    
-    # Relationship to Employee
-    employee = models.ForeignKey(
-        'Employee',
-        on_delete=models.CASCADE,
-        related_name='education',
-        verbose_name=_("الموظف")
-    )
-    
-    # Education Type
-    EDUCATION_TYPE_CHOICES = [
-        ('school', _('تعليم مدرسي')),
+    DEGREE_CHOICES = [
+        ('elementary', _('ابتدائية')),
+        ('intermediate', _('متوسطة')),
+        ('high_school', _('ثانوية عامة')),
+        ('vocational', _('مهني')),
         ('diploma', _('دبلوم')),
+        ('associate', _('دبلوم عالي')),
         ('bachelor', _('بكالوريوس')),
         ('master', _('ماجستير')),
         ('phd', _('دكتوراه')),
-        ('certification', _('شهادة مهنية')),
-        ('course', _('دورة تدريبية')),
-        ('other', _('أخرى')),
+        ('certificate', _('شهادة مهنية')),
+        ('training', _('دورة تدريبية')),
+        ('professional', _('شهادة احترافية')),
     ]
     
-    education_type = models.CharField(
+    GRADE_SYSTEM_CHOICES = [
+        ('percentage', _('نسبة مئوية')),
+        ('gpa_4', _('GPA من 4')),
+        ('gpa_5', _('GPA من 5')),
+        ('letter', _('حروف (A, B, C)')),
+        ('pass_fail', _('نجح/راسب')),
+        ('honors', _('مرتبة الشرف')),
+    ]
+    
+    STUDY_MODE_CHOICES = [
+        ('full_time', _('دوام كامل')),
+        ('part_time', _('دوام جزئي')),
+        ('distance', _('تعليم عن بُعد')),
+        ('evening', _('مسائي')),
+        ('weekend', _('نهاية الأسبوع')),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    employee = models.ForeignKey(
+        'Hr.EmployeeEnhanced', 
+        on_delete=models.CASCADE, 
+        related_name='education_records_enhanced', 
+        verbose_name=_('الموظف')
+    )
+    
+    # Education Details
+    degree_type = models.CharField(
+        max_length=20, 
+        choices=DEGREE_CHOICES, 
+        verbose_name=_('نوع الشهادة')
+    )
+    
+    major = models.CharField(
+        max_length=200, 
+        verbose_name=_('التخصص الرئيسي')
+    )
+    
+    minor = models.CharField(
+        max_length=200, 
+        blank=True, 
+        null=True, 
+        verbose_name=_('التخصص الفرعي')
+    )
+    
+    institution = models.CharField(
+        max_length=200, 
+        verbose_name=_('الجامعة/المؤسسة')
+    )
+    
+    institution_english = models.CharField(
+        max_length=200, 
+        blank=True, 
+        null=True, 
+        verbose_name=_('اسم المؤسسة بالإنجليزية')
+    )
+    
+    # Academic Information
+    graduation_year = models.PositiveIntegerField(
+        verbose_name=_('سنة التخرج'),
+        validators=[
+            MinValueValidator(1950),
+            MaxValueValidator(date.today().year + 10)
+        ]
+    )
+    
+    start_year = models.PositiveIntegerField(
+        blank=True, 
+        null=True, 
+        verbose_name=_('سنة البداية'),
+        validators=[
+            MinValueValidator(1950),
+            MaxValueValidator(date.today().year + 10)
+        ]
+    )
+    
+    study_duration_years = models.PositiveIntegerField(
+        blank=True,
+        null=True,
+        verbose_name=_('مدة الدراسة بالسنوات'),
+        validators=[MinValueValidator(1), MaxValueValidator(15)]
+    )
+    
+    study_mode = models.CharField(
         max_length=20,
-        choices=EDUCATION_TYPE_CHOICES,
-        verbose_name=_("نوع التعليم")
+        choices=STUDY_MODE_CHOICES,
+        default='full_time',
+        verbose_name=_('نظام الدراسة')
     )
     
-    # Institution Information
-    institution_name = models.CharField(
-        max_length=200,
-        verbose_name=_("اسم المؤسسة التعليمية")
+    grade_system = models.CharField(
+        max_length=20, 
+        choices=GRADE_SYSTEM_CHOICES, 
+        default='percentage', 
+        verbose_name=_('نظام الدرجات')
     )
     
-    institution_location = models.CharField(
-        max_length=200,
-        null=True,
-        blank=True,
-        verbose_name=_("موقع المؤسسة")
-    )
-    
-    institution_country = models.CharField(
-        max_length=100,
-        null=True,
-        blank=True,
-        verbose_name=_("دولة المؤسسة")
-    )
-    
-    # Degree/Qualification Information
-    degree_name = models.CharField(
-        max_length=200,
-        verbose_name=_("اسم الدرجة/المؤهل")
-    )
-    
-    field_of_study = models.CharField(
-        max_length=200,
-        null=True,
-        blank=True,
-        verbose_name=_("مجال الدراسة")
-    )
-    
-    specialization = models.CharField(
-        max_length=200,
-        null=True,
-        blank=True,
-        verbose_name=_("التخصص")
-    )
-    
-    # Duration and Dates
-    start_date = models.DateField(
-        verbose_name=_("تاريخ البداية")
-    )
-    
-    end_date = models.DateField(
-        null=True,
-        blank=True,
-        verbose_name=_("تاريخ الانتهاء")
-    )
-    
-    is_current = models.BooleanField(
-        default=False,
-        verbose_name=_("حالي")
-    )
-    
-    duration_months = models.PositiveIntegerField(
-        null=True,
-        blank=True,
-        verbose_name=_("المدة (بالشهور)")
-    )
-    
-    # Performance and Results
     grade = models.CharField(
-        max_length=50,
-        null=True,
-        blank=True,
-        verbose_name=_("الدرجة/التقدير")
+        max_length=10, 
+        blank=True, 
+        null=True, 
+        verbose_name=_('المعدل/الدرجة')
     )
     
-    score = models.CharField(
-        max_length=50,
-        null=True,
-        blank=True,
-        verbose_name=_("الدرجة/المعدل")
+    # Location
+    country = models.CharField(
+        max_length=100, 
+        verbose_name=_('الدولة')
     )
     
-    score_type = models.CharField(
-        max_length=50,
-        null=True,
-        blank=True,
-        verbose_name=_("نوع الدرجة"),
-        help_text=_("مثل: GPA، النسبة المئوية، إلخ")
+    city = models.CharField(
+        max_length=100, 
+        blank=True, 
+        null=True, 
+        verbose_name=_('المدينة')
     )
     
-    # Certificate Information
-    certificate_number = models.CharField(
-        max_length=100,
-        null=True,
-        blank=True,
-        verbose_name=_("رقم الشهادة")
-    )
-    
-    certificate_file = models.FileField(
-        upload_to='employee_certificates/',
-        null=True,
-        blank=True,
-        verbose_name=_("ملف الشهادة")
-    )
-    
-    # Verification Status
+    # Verification
     is_verified = models.BooleanField(
-        default=False,
-        verbose_name=_("تم التحقق")
+        default=False, 
+        verbose_name=_('تم التحقق')
+    )
+    
+    verification_date = models.DateField(
+        blank=True, 
+        null=True, 
+        verbose_name=_('تاريخ التحقق')
+    )
+    
+    verification_notes = models.TextField(
+        blank=True, 
+        null=True, 
+        verbose_name=_('ملاحظات التحقق')
     )
     
     verified_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
+        'accounts.Users_Login_New',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='verified_education',
-        verbose_name=_("تم التحقق بواسطة")
+        related_name='verified_education_records',
+        verbose_name=_('تم التحقق بواسطة')
     )
     
-    verified_at = models.DateTimeField(
-        null=True,
-        blank=True,
-        verbose_name=_("تاريخ التحقق")
+    # Files
+    certificate_file = models.FileField(
+        upload_to='education/certificates/', 
+        blank=True, 
+        null=True, 
+        verbose_name=_('ملف الشهادة')
+    )
+    
+    transcript_file = models.FileField(
+        upload_to='education/transcripts/', 
+        blank=True, 
+        null=True, 
+        verbose_name=_('كشف الدرجات')
     )
     
     # Additional Information
-    description = models.TextField(
-        null=True,
-        blank=True,
-        verbose_name=_("وصف")
+    honors = models.CharField(
+        max_length=200, 
+        blank=True, 
+        null=True, 
+        verbose_name=_('مرتبة الشرف')
     )
     
-    achievements = models.TextField(
-        null=True,
-        blank=True,
-        verbose_name=_("الإنجازات")
+    thesis_title = models.CharField(
+        max_length=500, 
+        blank=True, 
+        null=True, 
+        verbose_name=_('عنوان الرسالة/المشروع')
     )
     
-    # Metadata
-    created_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
+    thesis_title_en = models.CharField(
+        max_length=500, 
+        blank=True, 
+        null=True, 
+        verbose_name=_('عنوان الرسالة بالإنجليزية')
+    )
+    
+    supervisor_name = models.CharField(
+        max_length=200,
         blank=True,
-        related_name='created_employee_education',
-        verbose_name=_("أنشئ بواسطة")
+        null=True,
+        verbose_name=_('اسم المشرف')
+    )
+    
+    # Ranking and Recognition
+    class_rank = models.PositiveIntegerField(
+        blank=True,
+        null=True,
+        verbose_name=_('الترتيب على الدفعة')
+    )
+    
+    class_size = models.PositiveIntegerField(
+        blank=True,
+        null=True,
+        verbose_name=_('عدد طلاب الدفعة')
+    )
+    
+    awards = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name=_('الجوائز والتكريمات')
+    )
+    
+    # Relevance to Job
+    is_relevant_to_job = models.BooleanField(
+        default=True,
+        verbose_name=_('مرتبط بالوظيفة')
+    )
+    
+    relevance_notes = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name=_('ملاحظات الصلة بالوظيفة')
+    )
+    
+    # Status and Timestamps
+    is_active = models.BooleanField(
+        default=True, 
+        verbose_name=_('نشط')
     )
     
     created_at = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name=_("تاريخ الإنشاء")
+        auto_now_add=True, 
+        verbose_name=_('تاريخ الإنشاء')
     )
     
     updated_at = models.DateTimeField(
-        auto_now=True,
-        verbose_name=_("تاريخ التحديث")
+        auto_now=True, 
+        verbose_name=_('تاريخ التحديث')
     )
     
+    created_by = models.ForeignKey(
+        'accounts.Users_Login_New',
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='created_education_records',
+        verbose_name=_('تم الإنشاء بواسطة')
+    )
+
     class Meta:
-        verbose_name = _("تعليم الموظف")
-        verbose_name_plural = _("تعليم الموظفين")
-        db_table = 'hrms_employee_education'
-        ordering = ['employee', '-end_date', '-start_date']
+        verbose_name = _('مؤهل دراسي محسن')
+        verbose_name_plural = _('المؤهلات الدراسية المحسنة')
+        ordering = ['-graduation_year', 'degree_type']
         indexes = [
-            models.Index(fields=['employee', 'education_type']),
+            models.Index(fields=['employee']),
+            models.Index(fields=['degree_type']),
+            models.Index(fields=['graduation_year']),
             models.Index(fields=['is_verified']),
+            models.Index(fields=['country']),
+            models.Index(fields=['is_relevant_to_job']),
         ]
-    
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(start_year__lte=models.F('graduation_year')),
+                name='start_before_graduation'
+            ),
+            models.CheckConstraint(
+                check=models.Q(class_rank__lte=models.F('class_size')),
+                name='rank_within_class_size'
+            ),
+        ]
+
     def __str__(self):
-        return f"{self.employee.full_name} - {self.degree_name} ({self.institution_name})"
-    
+        return f"{self.employee.full_name} - {self.get_degree_type_display()} - {self.major}"
+
     def clean(self):
-        """Validate education data"""
-        super().clean()
+        """التحقق من صحة البيانات"""
+        errors = {}
         
-        # Validate dates
-        if self.start_date and self.end_date:
-            if self.start_date > self.end_date:
-                raise ValidationError(_("تاريخ البداية لا يمكن أن يكون بعد تاريخ الانتهاء"))
+        if self.start_year and self.graduation_year and self.start_year > self.graduation_year:
+            errors['graduation_year'] = _('سنة التخرج لا يمكن أن تكون أقل من سنة البداية')
         
-        # If current, end date should be null
-        if self.is_current and self.end_date:
-            raise ValidationError(_("إذا كان التعليم حالياً، يجب أن يكون تاريخ الانتهاء فارغاً"))
+        if self.graduation_year > date.today().year:
+            errors['graduation_year'] = _('سنة التخرج لا يمكن أن تكون في المستقبل')
         
-        # If not current, end date should be provided
-        if not self.is_current and not self.end_date:
-            raise ValidationError(_("إذا لم يكن التعليم حالياً، يجب تحديد تاريخ الانتهاء"))
-    
-    def save(self, *args, **kwargs):
-        """Override save to calculate duration"""
-        # Calculate duration in months if start and end dates are provided
-        if self.start_date and self.end_date:
-            # Calculate months between dates
-            months = (self.end_date.year - self.start_date.year) * 12 + (self.end_date.month - self.start_date.month)
-            self.duration_months = months if months > 0 else 1
+        if self.class_rank and self.class_size and self.class_rank > self.class_size:
+            errors['class_rank'] = _('الترتيب لا يمكن أن يكون أكبر من عدد الطلاب')
         
-        super().save(*args, **kwargs)
+        # التحقق من منطقية مدة الدراسة
+        if self.start_year and self.graduation_year and self.study_duration_years:
+            actual_duration = self.graduation_year - self.start_year + 1
+            if abs(actual_duration - self.study_duration_years) > 2:
+                errors['study_duration_years'] = _('مدة الدراسة لا تتطابق مع سنوات البداية والتخرج')
+        
+        if errors:
+            raise ValidationError(errors)
     
     @property
-    def duration_display(self):
-        """Get formatted duration"""
-        if self.duration_months:
-            years = self.duration_months // 12
-            months = self.duration_months % 12
-            
-            if years > 0 and months > 0:
-                return f"{years} {_('سنة')} {months} {_('شهر')}"
-            elif years > 0:
-                return f"{years} {_('سنة')}"
-            else:
-                return f"{months} {_('شهر')}"
-        return _("غير محدد")
+    def study_duration_calculated(self):
+        """حساب مدة الدراسة من سنة البداية والتخرج"""
+        if self.start_year and self.graduation_year:
+            return self.graduation_year - self.start_year + 1
+        return None
+    
+    @property
+    def years_since_graduation(self):
+        """عدد السنوات منذ التخرج"""
+        return date.today().year - self.graduation_year
+    
+    @property
+    def is_recent_graduate(self):
+        """هل هو خريج حديث (خلال 3 سنوات)"""
+        return self.years_since_graduation <= 3
+    
+    @property
+    def grade_percentage(self):
+        """تحويل الدرجة إلى نسبة مئوية إذا أمكن"""
+        if not self.grade:
+            return None
+        
+        try:
+            if self.grade_system == 'percentage':
+                return float(self.grade)
+            elif self.grade_system == 'gpa_4':
+                return (float(self.grade) / 4.0) * 100
+            elif self.grade_system == 'gpa_5':
+                return (float(self.grade) / 5.0) * 100
+            elif self.grade_system == 'letter':
+                grade_map = {'A+': 95, 'A': 90, 'B+': 85, 'B': 80, 'C+': 75, 'C': 70, 'D': 60, 'F': 50}
+                return grade_map.get(self.grade.upper(), None)
+        except (ValueError, TypeError):
+            return None
+        
+        return None
+    
+    @property
+    def is_high_achiever(self):
+        """هل هو متفوق أكاديمياً"""
+        grade_pct = self.grade_percentage
+        if grade_pct and grade_pct >= 85:
+            return True
+        if self.honors or self.awards:
+            return True
+        if self.class_rank and self.class_size and (self.class_rank / self.class_size) <= 0.1:
+            return True
+        return False
+    
+    def get_degree_level_order(self):
+        """ترتيب مستوى الشهادة للفرز"""
+        level_order = {
+            'elementary': 1,
+            'intermediate': 2,
+            'high_school': 3,
+            'vocational': 4,
+            'certificate': 5,
+            'diploma': 6,
+            'associate': 7,
+            'bachelor': 8,
+            'master': 9,
+            'phd': 10,
+            'professional': 11,
+            'training': 12,
+        }
+        return level_order.get(self.degree_type, 0)
+    
+    def save(self, *args, **kwargs):
+        """تجاوز الحفظ لحساب مدة الدراسة تلقائياً"""
+        if self.start_year and self.graduation_year and not self.study_duration_years:
+            self.study_duration_years = self.graduation_year - self.start_year + 1
+        
+        self.full_clean()
+        super().save(*args, **kwargs)

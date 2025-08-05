@@ -26,7 +26,7 @@ class EmployeeContact(models.Model):
     
     # Relationship to Employee
     employee = models.ForeignKey(
-        'Employee',
+        'EmployeeEnhanced',
         on_delete=models.CASCADE,
         related_name='contact_details',
         verbose_name=_("الموظف")

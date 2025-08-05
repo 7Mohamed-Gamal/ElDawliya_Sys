@@ -1,124 +1,105 @@
 {% comment %}
-=============================================================================
-HR UI Components - مكونات واجهة المستخدم للموارد البشرية
-=============================================================================
-مجموعة شاملة من مكونات واجهة المستخدم القابلة لإعادة الاستخدام
-=============================================================================
+مكونات واجهة المستخدم القابلة لإعادة الاستخدام
+UI Components for HR System
 {% endcomment %}
 
 {% load static %}
 
-{% comment %} =============================================================================
-BUTTON COMPONENT - مكون الزر
-============================================================================= {% endcomment %}
-
-{% comment %} استخدام: {% include 'Hr/components/ui_components.html' with component='button' text='حفظ' type='primary' size='md' %} {% endcomment %}
-{% if component == 'button' %}
-<button type="{{ button_type|default:'button' }}" 
-        class="btn btn-{{ type|default:'primary' }} btn-{{ size|default:'md' }} {{ class|default:'' }}"
-        {% if disabled %}disabled{% endif %}
-        {% if onclick %}onclick="{{ onclick }}"{% endif %}
-        {% if id %}id="{{ id }}"{% endif %}>
-    {% if icon %}
-        <i class="{{ icon }} mr-2"></i>
-    {% endif %}
-    {{ text|default:'زر' }}
-    {% if loading %}
-        <span class="animate-spin ml-2">⟳</span>
-    {% endif %}
-</button>
-{% endif %}
-
-{% comment %} =============================================================================
-CARD COMPONENT - مكون البطاقة
-============================================================================= {% endcomment %}
-
-{% comment %} استخدام: {% include 'Hr/components/ui_components.html' with component='card' title='عنوان البطاقة' %} {% endcomment %}
-{% if component == 'card' %}
-<div class="card {{ class|default:'' }}">
-    {% if title or actions %}
-    <div class="card-header flex justify-between items-center">
-        {% if title %}
-        <h3 class="text-lg font-semibold mb-0">{{ title }}</h3>
+{% comment %} مكون البطاقة الأساسية {% endcomment %}
+{% block card %}
+<div class="card {% if card_class %}{{ card_class }}{% endif %}">
+    {% if card_header %}
+    <div class="card-header">
+        {% if card_title %}
+        <h5 class="card-title">{{ card_title }}</h5>
         {% endif %}
-        {% if actions %}
-        <div class="card-actions">
-            {{ actions|safe }}
-        </div>
+        {% if card_subtitle %}
+        <p class="card-subtitle">{{ card_subtitle }}</p>
         {% endif %}
+        {{ card_header }}
     </div>
     {% endif %}
     
     <div class="card-body">
-        {{ content|safe }}
+        {{ card_content }}
     </div>
     
-    {% if footer %}
+    {% if card_footer %}
     <div class="card-footer">
-        {{ footer|safe }}
+        {{ card_footer }}
     </div>
     {% endif %}
 </div>
-{% endif %}
+{% endblock %}
 
-{% comment %} =============================================================================
-FORM GROUP COMPONENT - مكون مجموعة النموذج
-============================================================================= {% endcomment %}
+{% comment %} مكون الزر {% endcomment %}
+{% block button %}
+<button type="{{ btn_type|default:'button' }}" 
+        class="btn {% if btn_variant %}btn-{{ btn_variant }}{% else %}btn-primary{% endif %} {% if btn_size %}btn-{{ btn_size }}{% endif %} {% if btn_class %}{{ btn_class }}{% endif %}"
+        {% if btn_id %}id="{{ btn_id }}"{% endif %}
+        {% if btn_onclick %}onclick="{{ btn_onclick }}"{% endif %}
+        {% if btn_disabled %}disabled{% endif %}>
+    {% if btn_icon %}
+    <i class="{{ btn_icon }}"></i>
+    {% endif %}
+    {{ btn_text }}
+</button>
+{% endblock %}
 
-{% comment %} استخدام: {% include 'Hr/components/ui_components.html' with component='form_group' label='الاسم' field=form.name %} {% endcomment %}
-{% if component == 'form_group' %}
-<div class="form-group {{ class|default:'' }}">
-    {% if label %}
-    <label class="form-label" {% if field.id_for_label %}for="{{ field.id_for_label }}"{% endif %}>
-        {{ label }}
-        {% if required %}<span class="text-danger">*</span>{% endif %}
-    </label>
+{% comment %} مكون الشارة {% endcomment %}
+{% block badge %}
+<span class="badge {% if badge_variant %}badge-{{ badge_variant }}{% else %}badge-primary{% endif %} {% if badge_class %}{{ badge_class }}{% endif %}">
+    {% if badge_icon %}
+    <i class="{{ badge_icon }}"></i>
     {% endif %}
-    
-    {% if field %}
-        {{ field }}
-    {% else %}
-        <input type="{{ input_type|default:'text' }}" 
-               class="form-control {{ field_class|default:'' }}"
-               {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
-               {% if required %}required{% endif %}
-               {% if disabled %}disabled{% endif %}
-               {% if name %}name="{{ name }}"{% endif %}
-               {% if id %}id="{{ id }}"{% endif %}
-               {% if value %}value="{{ value }}"{% endif %}>
+    {{ badge_text }}
+</span>
+{% endblock %}
+
+{% comment %} مكون التنبيه {% endcomment %}
+{% block alert %}
+<div class="alert {% if alert_type %}alert-{{ alert_type }}{% else %}alert-info{% endif %} {% if alert_class %}{{ alert_class }}{% endif %}" 
+     {% if alert_dismissible %}data-dismissible{% endif %}>
+    {% if alert_icon %}
+    <i class="{{ alert_icon }}"></i>
     {% endif %}
-    
-    {% if help_text %}
-    <div class="form-text">{{ help_text }}</div>
-    {% endif %}
-    
-    {% if field.errors %}
-    <div class="field-error">
-        {% for error in field.errors %}
-            {{ error }}
-        {% endfor %}
-    </div>
+    {{ alert_message }}
+    {% if alert_dismissible %}
+    <button type="button" class="btn-close" data-alert-close></button>
     {% endif %}
 </div>
-{% endif %}
+{% endblock %}
 
-{% comment %} =============================================================================
-TABLE COMPONENT - مكون الجدول
-============================================================================= {% endcomment %}
-
-{% comment %} استخدام: {% include 'Hr/components/ui_components.html' with component='table' headers=headers data=data %} {% endcomment %}
-{% if component == 'table' %}
-<div class="table-container {{ class|default:'' }}">
-    <table class="table {{ table_class|default:'' }}">
-        {% if headers %}
+{% comment %} مكون الجدول المحسن {% endcomment %}
+{% block data_table %}
+<div class="table-container">
+    {% if table_search %}
+    <div class="table-header p-3">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                {% if table_title %}
+                <h6 class="mb-0">{{ table_title }}</h6>
+                {% endif %}
+            </div>
+            <div class="col-md-6">
+                <div class="d-flex justify-content-end">
+                    <input type="text" class="form-control" placeholder="البحث..." 
+                           data-table-search style="max-width: 250px;">
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <table class="table" data-table>
+        {% if table_headers %}
         <thead>
             <tr>
-                {% for header in headers %}
-                <th class="{% if header.sortable %}sortable-header cursor-pointer{% endif %}"
-                    {% if header.sortable %}data-sort="{{ header.key }}"{% endif %}>
-                    {{ header.label }}
+                {% for header in table_headers %}
+                <th {% if header.sortable %}data-sortable{% endif %}>
+                    {{ header.text }}
                     {% if header.sortable %}
-                    <span class="sort-icon">↕️</span>
+                    <i class="fas fa-sort ms-1"></i>
                     {% endif %}
                 </th>
                 {% endfor %}
@@ -127,388 +108,64 @@ TABLE COMPONENT - مكون الجدول
         {% endif %}
         
         <tbody>
-            {% for row in data %}
-            <tr class="{% if row.class %}{{ row.class }}{% endif %}">
-                {% for cell in row.cells %}
-                <td class="{% if cell.class %}{{ cell.class }}{% endif %}">
-                    {% if cell.type == 'badge' %}
-                        <span class="badge badge-{{ cell.variant|default:'primary' }}">{{ cell.value }}</span>
-                    {% elif cell.type == 'button' %}
-                        {% include 'Hr/components/ui_components.html' with component='button' text=cell.text type=cell.variant size='sm' onclick=cell.onclick %}
-                    {% elif cell.type == 'link' %}
-                        <a href="{{ cell.url }}" class="text-primary">{{ cell.value }}</a>
-                    {% else %}
-                        {{ cell.value }}
-                    {% endif %}
-                </td>
-                {% endfor %}
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="{{ headers|length }}" class="text-center text-muted py-8">
-                    {{ empty_message|default:'لا توجد بيانات للعرض' }}
-                </td>
-            </tr>
-            {% endfor %}
+            {{ table_body }}
         </tbody>
     </table>
-</div>
-{% endif %}
-
-{% comment %} =============================================================================
-MODAL COMPONENT - مكون النافذة المنبثقة
-============================================================================= {% endcomment %}
-
-{% comment %} استخدام: {% include 'Hr/components/ui_components.html' with component='modal' id='myModal' title='عنوان النافذة' %} {% endcomment %}
-{% if component == 'modal' %}
-<div class="modal" id="{{ id }}" {% if show %}style="display: block;"{% endif %}>
-    <div class="modal-backdrop" onclick="hrDesignSystem.closeModal(document.getElementById('{{ id }}'))"></div>
-    <div class="modal-dialog {{ size|default:'md' }}">
-        <div class="modal-content">
-            {% if title or closable %}
-            <div class="modal-header">
-                {% if title %}
-                <h4 class="modal-title">{{ title }}</h4>
-                {% endif %}
-                {% if closable|default:True %}
-                <button type="button" class="modal-close" onclick="hrDesignSystem.closeModal(document.getElementById('{{ id }}'))">
-                    ×
-                </button>
-                {% endif %}
-            </div>
-            {% endif %}
-            
-            <div class="modal-body">
-                {{ content|safe }}
-            </div>
-            
-            {% if footer %}
-            <div class="modal-footer">
-                {{ footer|safe }}
-            </div>
-            {% endif %}
-        </div>
-    </div>
-</div>
-{% endif %}
-
-{% comment %} =============================================================================
-TABS COMPONENT - مكون علامات التبويب
-============================================================================= {% endcomment %}
-
-{% comment %} استخدام: {% include 'Hr/components/ui_components.html' with component='tabs' tabs=tabs_data %} {% endcomment %}
-{% if component == 'tabs' %}
-<div class="tabs {{ class|default:'' }}">
-    <div class="tab-buttons">
-        {% for tab in tabs %}
-        <button class="tab-button {% if forloop.first %}active{% endif %}" data-tab="{{ tab.id }}">
-            {% if tab.icon %}<i class="{{ tab.icon }} ml-2"></i>{% endif %}
-            {{ tab.label }}
-            {% if tab.badge %}<span class="badge badge-{{ tab.badge.type|default:'primary' }} mr-2">{{ tab.badge.value }}</span>{% endif %}
-        </button>
-        {% endfor %}
-    </div>
     
-    <div class="tab-contents">
-        {% for tab in tabs %}
-        <div class="tab-content {% if forloop.first %}active{% endif %}" data-tab-content="{{ tab.id }}">
-            {{ tab.content|safe }}
-        </div>
-        {% endfor %}
+    {% if table_pagination %}
+    <div class="table-footer p-3">
+        {{ table_pagination }}
     </div>
-</div>
-{% endif %}
-
-{% comment %} =============================================================================
-ALERT COMPONENT - مكون التنبيه
-============================================================================= {% endcomment %}
-
-{% comment %} استخدام: {% include 'Hr/components/ui_components.html' with component='alert' type='success' message='تم الحفظ بنجاح' %} {% endcomment %}
-{% if component == 'alert' %}
-<div class="alert alert-{{ type|default:'info' }} {{ class|default:'' }}" 
-     {% if auto_close %}data-auto-close="{{ auto_close }}"{% endif %}>
-    {% if icon %}
-    <i class="{{ icon }} ml-2"></i>
-    {% endif %}
-    
-    <div class="alert-content">
-        {% if title %}
-        <div class="alert-title font-semibold">{{ title }}</div>
-        {% endif %}
-        <div class="alert-message">{{ message }}</div>
-    </div>
-    
-    {% if dismissible|default:True %}
-    <button type="button" class="alert-close" onclick="hrDesignSystem.closeAlert(this.parentElement)">
-        ×
-    </button>
     {% endif %}
 </div>
-{% endif %}
+{% endblock %}
 
-{% comment %} =============================================================================
-BADGE COMPONENT - مكون الشارة
-============================================================================= {% endcomment %}
-
-{% comment %} استخدام: {% include 'Hr/components/ui_components.html' with component='badge' text='نشط' type='success' %} {% endcomment %}
-{% if component == 'badge' %}
-<span class="badge badge-{{ type|default:'primary' }} {{ class|default:'' }}">
-    {% if icon %}<i class="{{ icon }} ml-1"></i>{% endif %}
-    {{ text }}
-</span>
-{% endif %}
-
-{% comment %} =============================================================================
-PROGRESS BAR COMPONENT - مكون شريط التقدم
-============================================================================= {% endcomment %}
-
-{% comment %} استخدام: {% include 'Hr/components/ui_components.html' with component='progress' value=75 %} {% endcomment %}
-{% if component == 'progress' %}
-<div class="progress {{ class|default:'' }}">
-    <div class="progress-bar bg-{{ type|default:'primary' }}" 
-         style="width: {{ value|default:0 }}%"
-         data-progress="{{ value|default:0 }}"
-         {% if animate %}data-animate="true"{% endif %}>
-        {% if show_label %}
-        <span class="progress-label">{{ value|default:0 }}%</span>
-        {% endif %}
-    </div>
-</div>
-{% endif %}
-
-{% comment %} =============================================================================
-DROPDOWN COMPONENT - مكون القائمة المنسدلة
-============================================================================= {% endcomment %}
-
-{% comment %} استخدام: {% include 'Hr/components/ui_components.html' with component='dropdown' label='الخيارات' items=dropdown_items %} {% endcomment %}
-{% if component == 'dropdown' %}
-<div class="dropdown {{ class|default:'' }}">
-    <button class="dropdown-toggle btn btn-{{ type|default:'secondary' }}">
-        {{ label|default:'خيارات' }}
-        <span class="dropdown-arrow">▼</span>
-    </button>
-    
-    <div class="dropdown-menu">
-        {% for item in items %}
-        {% if item.type == 'divider' %}
-        <div class="dropdown-divider"></div>
-        {% elif item.type == 'header' %}
-        <div class="dropdown-header">{{ item.label }}</div>
-        {% else %}
-        <a href="{{ item.url|default:'#' }}" 
-           class="dropdown-item {% if item.disabled %}disabled{% endif %}"
-           {% if item.onclick %}onclick="{{ item.onclick }}"{% endif %}>
-            {% if item.icon %}<i class="{{ item.icon }} ml-2"></i>{% endif %}
-            {{ item.label }}
-        </a>
-        {% endif %}
-        {% endfor %}
-    </div>
-</div>
-{% endif %}
-
-{% comment %} =============================================================================
-PAGINATION COMPONENT - مكون التصفح
-============================================================================= {% endcomment %}
-
-{% comment %} استخدام: {% include 'Hr/components/ui_components.html' with component='pagination' page_obj=page_obj %} {% endcomment %}
-{% if component == 'pagination' %}
-{% if page_obj.has_other_pages %}
-<nav class="pagination-nav {{ class|default:'' }}">
-    <ul class="pagination">
-        {% if page_obj.has_previous %}
-        <li class="page-item">
-            <a class="page-link" href="?page=1{{ request.GET.urlencode|slice:'5:' }}">الأولى</a>
-        </li>
-        <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{{ request.GET.urlencode|slice:'5:' }}">السابقة</a>
-        </li>
-        {% endif %}
+{% comment %} مكون النافذة المنبثقة {% endcomment %}
+{% block modal %}
+<div id="{{ modal_id }}" class="modal-overlay" style="display: none;">
+    <div class="modal" style="max-width: {{ modal_size|default:'500px' }};">
+        <div class="modal-header">
+            <h5 class="modal-title">{{ modal_title }}</h5>
+            <button type="button" class="btn-close" data-modal-close></button>
+        </div>
         
-        {% for num in page_obj.paginator.page_range %}
-        {% if page_obj.number == num %}
-        <li class="page-item active">
-            <span class="page-link">{{ num }}</span>
-        </li>
-        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-        <li class="page-item">
-            <a class="page-link" href="?page={{ num }}{{ request.GET.urlencode|slice:'5:' }}">{{ num }}</a>
-        </li>
-        {% endif %}
-        {% endfor %}
-        
-        {% if page_obj.has_next %}
-        <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.next_page_number }}{{ request.GET.urlencode|slice:'5:' }}">التالية</a>
-        </li>
-        <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{{ request.GET.urlencode|slice:'5:' }}">الأخيرة</a>
-        </li>
-        {% endif %}
-    </ul>
-    
-    <div class="pagination-info">
-        عرض {{ page_obj.start_index }} - {{ page_obj.end_index }} من {{ page_obj.paginator.count }} نتيجة
-    </div>
-</nav>
-{% endif %}
-{% endif %}
-
-{% comment %} =============================================================================
-SEARCH BOX COMPONENT - مكون صندوق البحث
-============================================================================= {% endcomment %}
-
-{% comment %} استخدام: {% include 'Hr/components/ui_components.html' with component='search' placeholder='البحث في الموظفين' %} {% endcomment %}
-{% if component == 'search' %}
-<div class="search-box {{ class|default:'' }}">
-    <div class="search-input-group">
-        <input type="text" 
-               class="form-control live-search" 
-               placeholder="{{ placeholder|default:'بحث...' }}"
-               {% if search_target %}data-search-target="{{ search_target }}"{% endif %}
-               {% if name %}name="{{ name }}"{% endif %}
-               {% if value %}value="{{ value }}"{% endif %}>
-        <button type="submit" class="search-button">
-            <i class="search-icon">🔍</i>
-        </button>
-    </div>
-    
-    {% if filters %}
-    <div class="search-filters">
-        {% for filter in filters %}
-        <select class="form-control" name="{{ filter.name }}">
-            <option value="">{{ filter.label }}</option>
-            {% for option in filter.options %}
-            <option value="{{ option.value }}" {% if option.selected %}selected{% endif %}>
-                {{ option.label }}
-            </option>
-            {% endfor %}
-        </select>
-        {% endfor %}
-    </div>
-    {% endif %}
-</div>
-{% endif %}
-
-{% comment %} =============================================================================
-LOADING SPINNER COMPONENT - مكون دوار التحميل
-============================================================================= {% endcomment %}
-
-{% comment %} استخدام: {% include 'Hr/components/ui_components.html' with component='loading' text='جاري التحميل...' %} {% endcomment %}
-{% if component == 'loading' %}
-<div class="loading-spinner {{ class|default:'' }}">
-    <div class="spinner animate-spin">⟳</div>
-    {% if text %}
-    <div class="loading-text">{{ text }}</div>
-    {% endif %}
-</div>
-{% endif %}
-
-{% comment %} =============================================================================
-BREADCRUMB COMPONENT - مكون مسار التنقل
-============================================================================= {% endcomment %}
-
-{% comment %} استخدام: {% include 'Hr/components/ui_components.html' with component='breadcrumb' items=breadcrumb_items %} {% endcomment %}
-{% if component == 'breadcrumb' %}
-<nav class="breadcrumb-nav {{ class|default:'' }}">
-    <ol class="breadcrumb">
-        {% for item in items %}
-        <li class="breadcrumb-item {% if forloop.last %}active{% endif %}">
-            {% if not forloop.last and item.url %}
-            <a href="{{ item.url }}">{{ item.label }}</a>
-            {% else %}
-            {{ item.label }}
-            {% endif %}
-        </li>
-        {% endfor %}
-    </ol>
-</nav>
-{% endif %}
-
-{% comment %} =============================================================================
-STATS CARD COMPONENT - مكون بطاقة الإحصائيات
-============================================================================= {% endcomment %}
-
-{% comment %} استخدام: {% include 'Hr/components/ui_components.html' with component='stats_card' title='إجمالي الموظفين' value=150 %} {% endcomment %}
-{% if component == 'stats_card' %}
-<div class="stats-card card {{ class|default:'' }}">
-    <div class="card-body">
-        <div class="stats-content">
-            {% if icon %}
-            <div class="stats-icon">
-                <i class="{{ icon }}"></i>
-            </div>
-            {% endif %}
-            
-            <div class="stats-info">
-                <div class="stats-value text-2xl font-bold">{{ value }}</div>
-                <div class="stats-title text-muted">{{ title }}</div>
-                
-                {% if change %}
-                <div class="stats-change">
-                    <span class="change-value {% if change.positive %}text-success{% else %}text-danger{% endif %}">
-                        {% if change.positive %}↗{% else %}↘{% endif %} {{ change.value }}%
-                    </span>
-                    <span class="change-period text-muted">{{ change.period|default:'هذا الشهر' }}</span>
-                </div>
-                {% endif %}
-            </div>
+        <div class="modal-body">
+            {{ modal_content }}
         </div>
+        
+        {% if modal_footer %}
+        <div class="modal-footer">
+            {{ modal_footer }}
+        </div>
+        {% endif %}
     </div>
 </div>
-{% endif %}
 
 <style>
-/* =============================================================================
-   COMPONENT SPECIFIC STYLES (أنماط المكونات المحددة)
-   ============================================================================= */
-
-/* Modal Styles */
-.modal {
+.modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: 1050;
-    display: none;
-}
-
-.modal.active {
+    background: rgba(0, 0, 0, 0.5);
     display: flex;
     align-items: center;
     justify-content: center;
+    z-index: 1050;
 }
 
-.modal-backdrop {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-}
-
-.modal-dialog {
-    position: relative;
-    max-width: 500px;
+.modal {
+    background: var(--bg-primary);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
     width: 90%;
     max-height: 90vh;
     overflow-y: auto;
 }
 
-.modal-dialog.sm { max-width: 300px; }
-.modal-dialog.lg { max-width: 800px; }
-.modal-dialog.xl { max-width: 1200px; }
-
-.modal-content {
-    background-color: var(--bg-primary);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-xl);
-}
-
 .modal-header {
-    padding: var(--spacing-4) var(--spacing-6);
+    padding: var(--spacing-lg);
     border-bottom: 1px solid var(--border-color);
     display: flex;
     justify-content: space-between;
@@ -516,52 +173,68 @@ STATS CARD COMPONENT - مكون بطاقة الإحصائيات
 }
 
 .modal-body {
-    padding: var(--spacing-6);
+    padding: var(--spacing-lg);
 }
 
 .modal-footer {
-    padding: var(--spacing-4) var(--spacing-6);
+    padding: var(--spacing-lg);
     border-top: 1px solid var(--border-color);
     display: flex;
     justify-content: flex-end;
-    gap: var(--spacing-2);
+    gap: var(--spacing-sm);
 }
 
-.modal-close {
+.btn-close {
     background: none;
     border: none;
-    font-size: var(--text-xl);
+    font-size: 1.5rem;
     cursor: pointer;
     color: var(--text-muted);
-    padding: 0;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
+</style>
+{% endblock %}
 
-/* Tabs Styles */
-.tabs {
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-}
+{% comment %} مكون علامات التبويب {% endcomment %}
+{% block tabs %}
+<div data-tabs>
+    <div class="tab-nav">
+        {% for tab in tabs %}
+        <button class="tab-button {% if forloop.first %}active{% endif %}" 
+                data-tab-target="{{ tab.id }}">
+            {% if tab.icon %}
+            <i class="{{ tab.icon }}"></i>
+            {% endif %}
+            {{ tab.title }}
+        </button>
+        {% endfor %}
+    </div>
+    
+    <div class="tab-content">
+        {% for tab in tabs %}
+        <div id="{{ tab.id }}" class="tab-pane {% if forloop.first %}active{% endif %}" data-tab-pane>
+            {{ tab.content }}
+        </div>
+        {% endfor %}
+    </div>
+</div>
 
-.tab-buttons {
+<style>
+.tab-nav {
     display: flex;
-    background-color: var(--bg-secondary);
     border-bottom: 1px solid var(--border-color);
+    margin-bottom: var(--spacing-lg);
 }
 
 .tab-button {
-    flex: 1;
-    padding: var(--spacing-3) var(--spacing-4);
     background: none;
     border: none;
+    padding: var(--spacing-md) var(--spacing-lg);
     cursor: pointer;
-    transition: all var(--transition-fast);
     border-bottom: 2px solid transparent;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
 }
 
 .tab-button:hover {
@@ -569,308 +242,200 @@ STATS CARD COMPONENT - مكون بطاقة الإحصائيات
 }
 
 .tab-button.active {
-    background-color: var(--bg-primary);
     border-bottom-color: var(--primary-color);
     color: var(--primary-color);
 }
 
-.tab-contents {
-    background-color: var(--bg-primary);
-}
-
-.tab-content {
+.tab-pane {
     display: none;
-    padding: var(--spacing-6);
 }
 
-.tab-content.active {
+.tab-pane.active {
     display: block;
 }
+</style>
+{% endblock %}
 
-/* Dropdown Styles */
+{% comment %} مكون شريط التقدم {% endcomment %}
+{% block progress_bar %}
+<div class="progress-container">
+    {% if progress_label %}
+    <div class="progress-label mb-2">
+        <span>{{ progress_label }}</span>
+        <span class="text-muted">{{ progress_value }}%</span>
+    </div>
+    {% endif %}
+    
+    <div class="progress-bar">
+        <div class="progress-fill" data-value="{{ progress_value }}" 
+             style="background-color: {{ progress_color|default:'var(--primary-color)' }};"></div>
+    </div>
+</div>
+
+<style>
+.progress-container {
+    margin-bottom: var(--spacing-md);
+}
+
+.progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--font-size-sm);
+}
+</style>
+{% endblock %}
+
+{% comment %} مكون القائمة المنسدلة {% endcomment %}
+{% block dropdown %}
+<div class="dropdown">
+    <button class="btn btn-secondary dropdown-toggle" 
+            data-dropdown-toggle="{{ dropdown_id }}">
+        {% if dropdown_icon %}
+        <i class="{{ dropdown_icon }}"></i>
+        {% endif %}
+        {{ dropdown_text }}
+    </button>
+    
+    <div id="{{ dropdown_id }}" class="dropdown-menu">
+        {% for item in dropdown_items %}
+        <a href="{{ item.url }}" class="dropdown-item">
+            {% if item.icon %}
+            <i class="{{ item.icon }}"></i>
+            {% endif %}
+            {{ item.text }}
+        </a>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
 .dropdown {
     position: relative;
     display: inline-block;
 }
 
-.dropdown-toggle {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-2);
-}
-
-.dropdown-arrow {
-    transition: transform var(--transition-fast);
-}
-
-.dropdown.open .dropdown-arrow {
-    transform: rotate(180deg);
+.dropdown-toggle::after {
+    content: '▼';
+    margin-right: var(--spacing-sm);
+    font-size: 0.8em;
 }
 
 .dropdown-menu {
     position: absolute;
     top: 100%;
     right: 0;
-    min-width: 200px;
-    background-color: var(--bg-primary);
+    background: var(--bg-primary);
     border: 1px solid var(--border-color);
-    border-radius: var(--radius);
+    border-radius: var(--radius-md);
     box-shadow: var(--shadow-lg);
+    min-width: 200px;
     z-index: 1000;
     display: none;
-    overflow: hidden;
 }
 
-.dropdown.open .dropdown-menu {
+.dropdown-menu.show {
     display: block;
 }
 
 .dropdown-item {
-    display: block;
-    padding: var(--spacing-2) var(--spacing-4);
-    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
     text-decoration: none;
+    color: var(--text-primary);
     transition: background-color var(--transition-fast);
 }
 
 .dropdown-item:hover {
-    background-color: var(--bg-secondary);
-}
-
-.dropdown-item.disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
-.dropdown-divider {
-    height: 1px;
-    background-color: var(--border-color);
-    margin: var(--spacing-1) 0;
-}
-
-.dropdown-header {
-    padding: var(--spacing-2) var(--spacing-4);
-    font-size: var(--text-sm);
-    font-weight: 600;
-    color: var(--text-muted);
-    background-color: var(--bg-secondary);
-}
-
-/* Progress Styles */
-.progress {
-    width: 100%;
-    height: 8px;
-    background-color: var(--bg-secondary);
-    border-radius: var(--radius-full);
-    overflow: hidden;
-}
-
-.progress-bar {
-    height: 100%;
-    background-color: var(--primary-color);
-    transition: width var(--transition-normal);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-}
-
-.progress-label {
-    font-size: var(--text-xs);
-    color: var(--white);
-    font-weight: 500;
-}
-
-/* Search Box Styles */
-.search-box {
-    margin-bottom: var(--spacing-4);
-}
-
-.search-input-group {
-    display: flex;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius);
-    overflow: hidden;
-}
-
-.search-input-group .form-control {
-    border: none;
-    border-radius: 0;
-    flex: 1;
-}
-
-.search-button {
-    background-color: var(--primary-color);
-    color: var(--white);
-    border: none;
-    padding: var(--spacing-2) var(--spacing-4);
-    cursor: pointer;
-    transition: background-color var(--transition-fast);
-}
-
-.search-button:hover {
-    background-color: var(--primary-dark);
-}
-
-.search-filters {
-    display: flex;
-    gap: var(--spacing-2);
-    margin-top: var(--spacing-2);
-}
-
-/* Stats Card Styles */
-.stats-card {
-    transition: transform var(--transition-fast);
-}
-
-.stats-card:hover {
-    transform: translateY(-2px);
-}
-
-.stats-content {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-4);
-}
-
-.stats-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: var(--radius-lg);
-    background-color: var(--primary-color);
-    color: var(--white);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: var(--text-xl);
-}
-
-.stats-info {
-    flex: 1;
-}
-
-.stats-change {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-2);
-    margin-top: var(--spacing-1);
-}
-
-/* Loading Spinner Styles */
-.loading-spinner {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: var(--spacing-8);
-}
-
-.spinner {
-    font-size: var(--text-2xl);
-    color: var(--primary-color);
-}
-
-.loading-text {
-    margin-top: var(--spacing-2);
-    color: var(--text-muted);
-}
-
-/* Pagination Styles */
-.pagination-nav {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: var(--spacing-4);
-}
-
-.pagination {
-    display: flex;
-    list-style: none;
-    gap: var(--spacing-1);
-}
-
-.page-item {
-    display: block;
-}
-
-.page-link {
-    display: block;
-    padding: var(--spacing-2) var(--spacing-3);
-    color: var(--text-primary);
-    text-decoration: none;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius);
-    transition: all var(--transition-fast);
-}
-
-.page-link:hover {
-    background-color: var(--bg-secondary);
-}
-
-.page-item.active .page-link {
-    background-color: var(--primary-color);
-    color: var(--white);
-    border-color: var(--primary-color);
-}
-
-.pagination-info {
-    color: var(--text-muted);
-    font-size: var(--text-sm);
-}
-
-/* Breadcrumb Styles */
-.breadcrumb {
-    display: flex;
-    list-style: none;
-    gap: var(--spacing-2);
-    align-items: center;
-}
-
-.breadcrumb-item {
-    display: flex;
-    align-items: center;
-}
-
-.breadcrumb-item:not(:last-child)::after {
-    content: '/';
-    margin-left: var(--spacing-2);
-    color: var(--text-muted);
-}
-
-.breadcrumb-item.active {
-    color: var(--text-muted);
-}
-
-/* Field Error Styles */
-.field-error {
-    color: var(--danger-color);
-    font-size: var(--text-sm);
-    margin-top: var(--spacing-1);
-}
-
-.form-control.error {
-    border-color: var(--danger-color);
-}
-
-/* Tooltip Styles */
-.tooltip {
-    position: absolute;
-    background-color: var(--gray-900);
-    color: var(--white);
-    padding: var(--spacing-1) var(--spacing-2);
-    border-radius: var(--radius);
-    font-size: var(--text-xs);
-    z-index: 1060;
-    pointer-events: none;
-}
-
-.tooltip::before {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    border: 4px solid transparent;
-    border-top-color: var(--gray-900);
+    background-color: var(--bg-tertiary);
 }
 </style>
+{% endblock %}
+
+{% comment %} مكون مؤشر الحالة {% endcomment %}
+{% block status_indicator %}
+<span class="status-badge status-{{ status_type|default:'active' }}">
+    <span class="status-indicator status-{{ status_type|default:'active' }}"></span>
+    {{ status_text }}
+</span>
+
+<style>
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: var(--font-size-sm);
+}
+</style>
+{% endblock %}
+
+{% comment %} مكون بطاقة الموظف {% endcomment %}
+{% block employee_card %}
+<div class="card employee-card">
+    <div class="card-body">
+        <div class="d-flex align-items-center mb-3">
+            {% if employee.profile_picture %}
+            <img src="{{ employee.profile_picture.url }}" alt="{{ employee.full_name }}" 
+                 class="employee-avatar me-3">
+            {% else %}
+            <div class="employee-avatar-placeholder me-3">
+                {{ employee.first_name.0 }}{{ employee.last_name.0 }}
+            </div>
+            {% endif %}
+            
+            <div class="flex-grow-1">
+                <h6 class="mb-1">{{ employee.full_name }}</h6>
+                <p class="text-muted mb-1">{{ employee.position.title|default:'غير محدد' }}</p>
+                <p class="text-muted mb-0">{{ employee.department.name|default:'غير محدد' }}</p>
+            </div>
+            
+            <div class="employee-status">
+                {% include 'Hr/components/ui_components.html' with status_type=employee.status status_text=employee.get_status_display only %}
+            </div>
+        </div>
+        
+        <div class="employee-info">
+            <div class="row">
+                <div class="col-6">
+                    <small class="text-muted">رقم الموظف</small>
+                    <div>{{ employee.employee_id }}</div>
+                </div>
+                <div class="col-6">
+                    <small class="text-muted">تاريخ التعيين</small>
+                    <div>{{ employee.join_date|date:'Y/m/d' }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.employee-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.employee-avatar-placeholder {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    color: var(--text-white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
+
+.employee-info {
+    font-size: var(--font-size-sm);
+}
+
+.employee-info .row > div {
+    margin-bottom: var(--spacing-sm);
+}
+</style>
+{% endblock %}
