@@ -649,6 +649,429 @@ class EmployeeServiceEnhanced:
                 date_of_birth__day__lte=today.day + 7
             ).count()
             
+            upcoming_contract_expiries = queryset.filter(
+                contract_end_date__gte=today,
+                contract_end_date__lte=today + timedelta(days=30)
+            ).count()
+            
+            upcoming_document_expiries = queryset.filter(
+                Q(passport_expiry_date__gte=today, passport_expiry_date__lte=today + timedelta(days=30)) |
+                Q(visa_expiry_date__gte=today, visa_expiry_date__lte=today + timedelta(days=30))
+            ).count()
+            
+            # Performance metrics
+            high_performers = queryset.filter(performance_rating='excellent').count()
+            needs_improvement = queryset.filter(performance_rating='needs_improvement').count()
+            
+            # Education statistics
+            education_stats = {
+                'phd': queryset.filter(education_records__degree_type='phd').distinct().count(),
+                'master': queryset.filter(education_records__degree_type='master').distinct().count(),
+                'bachelor': queryset.filter(education_records__degree_type='bachelor').distinct().count(),
+                'diploma': queryset.filter(education_records__degree_type='diploma').distinct().count(),
+                'high_school': queryset.filter(education_records__degree_type='high_school').distinct().count(),
+            }
+            
+            # Vehicle statistics
+            vehicle_stats = {
+                'company_vehicles': queryset.filter(vehicle_records__vehicle_type='company').distinct().count(),
+                'personal_vehicles': queryset.filter(vehicle_records__vehicle_type='personal').distinct().count(),
+                'vehicle_allowance': queryset.filter(vehicle_records__vehicle_type='allowance').distinct().count(),
+            }
+            
+            # Insurance coverage
+            insurance_stats = {
+                'social_insurance': queryset.filter(insurance_records__insurance_type='social').distinct().count(),
+                'medical_insurance': queryset.filter(insurance_records__insurance_type='medical').distinct().count(),
+                'life_insurance': queryset.filter(insurance_records__insurance_type='life').distinct().count(),
+            }
+            
+            # Compile comprehensive statistics
+            stats = {
+                'overview': {
+                    'total_employees': total_employees,
+                    'active_employees': active_employees,
+                    'inactive_employees': inactive_employees,
+                    'probation_employees': probation_employees,
+                    'activity_rate': round((active_employees / total_employees * 100), 2) if total_employees > 0 else 0,
+                    'recent_hires': recent_hires,
+                    'recent_terminations': recent_terminations,
+                },
+                'demographics': {
+                    'by_department': list(by_department),
+                    'by_branch': list(by_branch),
+                    'by_employment_type': list(by_employment_type),
+                    'by_gender': list(by_gender),
+                    'by_marital_status': list(by_marital_status),
+                    'by_nationality': list(by_nationality),
+                    'age_distribution': age_distribution,
+                    'service_distribution': service_distribution,
+                },
+                'compensation': {
+                    'salary_stats': salary_stats,
+                    'vehicle_stats': vehicle_stats,
+                },
+                'qualifications': {
+                    'education_stats': education_stats,
+                    'insurance_stats': insurance_stats,
+                },
+                'performance': {
+                    'high_performers': high_performers,
+                    'needs_improvement': needs_improvement,
+                    'performance_rate': round((high_performers / total_employees * 100), 2) if total_employees > 0 else 0,
+                },
+                'upcoming_events': {
+                    'birthdays': upcoming_birthdays,
+                    'contract_expiries': upcoming_contract_expiries,
+                    'document_expiries': upcoming_document_expiries,
+                },
+                'generated_at': timezone.now(),
+                'filters_applied': filters or {},
+            }
+            
+            # Cache for 15 minutes
+            cache.set(cache_key, stats, 900)
+            
+            return stats
+            
+        except Exception as e:
+            logger.error(f"Error generating enhanced employee statistics: {e}")
+            raise ValidationError(f"خطأ في إنتاج الإحصائيات: {e}")
+    
+    # =============================================================================
+    # BULK OPERATIONS
+    # =============================================================================
+    
+    def bulk_update_employees(self, employee_updates, user=None):
+        """تحديث مجمع للموظفين"""
+        try:
+            from ..models.employee.employee_models_enhanced import EmployeeEnhanced
+            
+            if len(employee_updates) > self.max_bulk_operations:
+                raise ValidationError(f"عدد العمليات المجمعة يتجاوز الحد الأقصى ({self.max_bulk_operations})")
+            
+            updated_count = 0
+            errors = []
+            
+            with transaction.atomic():
+                for update_data in employee_updates:
+                    try:
+                        employee_id = update_data.get('employee_id')
+                        if not employee_id:
+                            errors.append("معرف الموظف مطلوب")
+                            continue
+                        
+                        employee = EmployeeEnhanced.objects.get(id=employee_id)
+                        
+                        # Update fields
+                        for field, value in update_data.get('fields', {}).items():
+                            if hasattr(employee, field):
+                                setattr(employee, field, value)
+                        
+                        if user:
+                            employee.updated_by = user
+                        
+                        employee.save()
+                        updated_count += 1
+                        
+                    except EmployeeEnhanced.DoesNotExist:
+                        errors.append(f"الموظف {employee_id} غير موجود")
+                    except Exception as e:
+                        errors.append(f"خطأ في تحديث الموظف {employee_id}: {e}")
+            
+            # Clear cache
+            self._clear_employee_cache()
+            
+            return {
+                'updated_count': updated_count,
+                'errors': errors,
+                'success': len(errors) == 0
+            }
+            
+        except Exception as e:
+            logger.error(f"Error in bulk employee update: {e}")
+            raise ValidationError(f"خطأ في التحديث المجمع: {e}")
+    
+    def bulk_import_employees(self, import_data, user=None, validate_only=False):
+        """استيراد مجمع للموظفين من ملف Excel أو CSV"""
+        try:
+            from ..models.employee.employee_models_enhanced import EmployeeEnhanced
+            
+            if len(import_data) > self.max_bulk_operations:
+                raise ValidationError(f"عدد السجلات يتجاوز الحد الأقصى ({self.max_bulk_operations})")
+            
+            created_count = 0
+            updated_count = 0
+            errors = []
+            
+            # Validation phase
+            for row_num, row_data in enumerate(import_data, 1):
+                try:
+                    # Validate required fields
+                    required_fields = ['first_name', 'last_name', 'employee_id', 'company_id']
+                    for field in required_fields:
+                        if not row_data.get(field):
+                            errors.append(f"الصف {row_num}: الحقل {field} مطلوب")
+                    
+                    # Validate data types and formats
+                    if row_data.get('date_of_birth'):
+                        try:
+                            datetime.strptime(row_data['date_of_birth'], '%Y-%m-%d')
+                        except ValueError:
+                            errors.append(f"الصف {row_num}: تنسيق تاريخ الميلاد غير صحيح")
+                    
+                    if row_data.get('base_salary'):
+                        try:
+                            float(row_data['base_salary'])
+                        except ValueError:
+                            errors.append(f"الصف {row_num}: قيمة الراتب غير صحيحة")
+                    
+                except Exception as e:
+                    errors.append(f"الصف {row_num}: خطأ في التحقق - {e}")
+            
+            if validate_only:
+                return {
+                    'validation_errors': errors,
+                    'is_valid': len(errors) == 0,
+                    'total_rows': len(import_data)
+                }
+            
+            if errors:
+                raise ValidationError(f"أخطاء في التحقق: {errors}")
+            
+            # Import phase
+            with transaction.atomic():
+                for row_num, row_data in enumerate(import_data, 1):
+                    try:
+                        employee_id = row_data.get('employee_id')
+                        
+                        # Check if employee exists
+                        try:
+                            employee = EmployeeEnhanced.objects.get(employee_id=employee_id)
+                            # Update existing employee
+                            for field, value in row_data.items():
+                                if hasattr(employee, field) and value is not None:
+                                    setattr(employee, field, value)
+                            
+                            if user:
+                                employee.updated_by = user
+                            
+                            employee.save()
+                            updated_count += 1
+                            
+                        except EmployeeEnhanced.DoesNotExist:
+                            # Create new employee
+                            if user:
+                                row_data['created_by'] = user
+                            
+                            employee = EmployeeEnhanced.objects.create(**row_data)
+                            created_count += 1
+                        
+                    except Exception as e:
+                        errors.append(f"الصف {row_num}: خطأ في الاستيراد - {e}")
+            
+            # Clear cache
+            self._clear_employee_cache()
+            
+            return {
+                'created_count': created_count,
+                'updated_count': updated_count,
+                'errors': errors,
+                'success': len(errors) == 0,
+                'total_processed': created_count + updated_count
+            }
+            
+        except Exception as e:
+            logger.error(f"Error in bulk employee import: {e}")
+            raise ValidationError(f"خطأ في الاستيراد المجمع: {e}")
+    
+    # =============================================================================
+    # HELPER METHODS
+    # =============================================================================
+    
+    def _clear_employee_cache(self, employee_id=None):
+        """مسح ذاكرة التخزين المؤقت للموظفين"""
+        if employee_id:
+            # Clear specific employee cache
+            cache.delete_many([
+                f"employee_profile_{employee_id}_True",
+                f"employee_profile_{employee_id}_False",
+            ])
+        else:
+            # Clear all employee-related cache
+            cache.clear()
+    
+    def _can_access_sensitive_data(self, user):
+        """التحقق من صلاحية الوصول للبيانات الحساسة"""
+        if not user:
+            return False
+        
+        if user.is_superuser:
+            return True
+        
+        # Check if user has HR permissions
+        return user.has_perm('Hr.view_sensitive_employee_data')
+    
+    def _apply_security_filters(self, queryset, user):
+        """تطبيق فلاتر الأمان حسب صلاحيات المستخدم"""
+        if not user:
+            return queryset.none()
+        
+        if user.is_superuser:
+            return queryset
+        
+        # Apply department-based filtering if user has limited access
+        if hasattr(user, 'employee_profile'):
+            user_department = user.employee_profile.department
+            if user_department:
+                return queryset.filter(department=user_department)
+        
+        return queryset
+    
+    def _get_service_category(self, years):
+        """تصنيف الخدمة حسب السنوات"""
+        if years < 1:
+            return "موظف جديد"
+        elif years < 3:
+            return "موظف مبتدئ"
+        elif years < 5:
+            return "موظف متوسط الخبرة"
+        elif years < 10:
+            return "موظف ذو خبرة"
+        elif years < 15:
+            return "موظف خبير"
+        else:
+            return "موظف مخضرم"
+    
+    def _get_expiring_documents(self, employee):
+        """الحصول على الوثائق التي ستنتهي صلاحيتها"""
+        expiring = []
+        today = date.today()
+        warning_days = 90
+        
+        # Check passport
+        if employee.passport_expiry_date:
+            days_left = (employee.passport_expiry_date - today).days
+            if 0 <= days_left <= warning_days:
+                expiring.append({
+                    'document': 'جواز السفر',
+                    'expiry_date': employee.passport_expiry_date,
+                    'days_left': days_left,
+                    'urgency': 'high' if days_left <= 30 else 'medium'
+                })
+        
+        # Check visa
+        if employee.visa_expiry_date:
+            days_left = (employee.visa_expiry_date - today).days
+            if 0 <= days_left <= warning_days:
+                expiring.append({
+                    'document': 'التأشيرة',
+                    'expiry_date': employee.visa_expiry_date,
+                    'days_left': days_left,
+                    'urgency': 'high' if days_left <= 30 else 'medium'
+                })
+        
+        # Check contract
+        if employee.contract_end_date:
+            days_left = (employee.contract_end_date - today).days
+            if 0 <= days_left <= warning_days:
+                expiring.append({
+                    'document': 'العقد',
+                    'expiry_date': employee.contract_end_date,
+                    'days_left': days_left,
+                    'urgency': 'high' if days_left <= 30 else 'medium'
+                })
+        
+        return sorted(expiring, key=lambda x: x['days_left'])
+    
+    def _get_recent_activities(self, employee):
+        """الحصول على الأنشطة الحديثة للموظف"""
+        activities = []
+        
+        # Recent file uploads
+        recent_files = employee.files.filter(
+            created_at__gte=timezone.now() - timedelta(days=30)
+        ).order_by('-created_at')[:5]
+        
+        for file in recent_files:
+            activities.append({
+                'type': 'file_upload',
+                'description': f"تم رفع ملف: {file.title}",
+                'date': file.created_at,
+                'icon': '📄'
+            })
+        
+        # Recent training
+        recent_training = employee.training_records.filter(
+            created_at__gte=timezone.now() - timedelta(days=30)
+        ).order_by('-created_at')[:5]
+        
+        for training in recent_training:
+            activities.append({
+                'type': 'training',
+                'description': f"تدريب: {training.training_name}",
+                'date': training.created_at,
+                'icon': '📚'
+            })
+        
+        return sorted(activities, key=lambda x: x['date'], reverse=True)[:10]
+    
+    def _get_employee_alerts(self, employee):
+        """الحصول على تنبيهات الموظف"""
+        alerts = []
+        
+        # Document expiry alerts
+        expiring_docs = self._get_expiring_documents(employee)
+        for doc in expiring_docs:
+            if doc['urgency'] == 'high':
+                alerts.append({
+                    'type': 'document_expiry',
+                    'level': 'danger',
+                    'message': f"{doc['document']} ينتهي خلال {doc['days_left']} يوم",
+                    'action_required': True
+                })
+        
+        # Performance alerts
+        if employee.performance_rating == 'needs_improvement':
+            alerts.append({
+                'type': 'performance',
+                'level': 'warning',
+                'message': "الأداء يحتاج لتحسين",
+                'action_required': True
+            })
+        
+        # Probation period alert
+        if employee.is_in_probation:
+            alerts.append({
+                'type': 'probation',
+                'level': 'info',
+                'message': "الموظف في فترة التجربة",
+                'action_required': False
+            })
+        
+        return alerts
+    
+    def _get_performance_summary(self, employee):
+        """ملخص أداء الموظف"""
+        return {
+            'current_rating': employee.performance_rating,
+            'last_evaluation': employee.last_evaluation_date,
+            'next_evaluation': employee.next_evaluation_date,
+            'needs_evaluation': employee.next_evaluation_date and employee.next_evaluation_date <= date.today(),
+        }
+    
+    def _get_sensitive_data(self, employee):
+        """الحصول على البيانات الحساسة (مشفرة)"""
+        # This would decrypt sensitive fields if needed
+        return {
+            'national_id_hint': f"***{employee.national_id[-4:]}" if employee.national_id else None,
+            'mobile_hint': f"***{employee.mobile_phone[-4:]}" if employee.mobile_phone else None,
+            'bank_account_hint': f"***{employee.bank_account_number[-4:]}" if employee.bank_account_number else None,
+        }month=today.month,
+                date_of_birth__day__gte=today.day,
+                date_of_birth__day__lte=today.day + 7
+            ).count()
+            
             # Contract and document expirations
             contracts_expiring = queryset.filter(
                 contract_end_date__gte=today,

@@ -1,275 +1,280 @@
-{% extends 'Hr/base_modern.html' %}
+{% extends 'Hr/base_hr_modern.html' %}
 {% load static %}
 
 {% block title %}
-{% if employee %}تعديل الموظف{% else %}إضافة موظف جديد{% endif %} - نظام الموارد البشرية
+{% if employee %}تعديل الموظف - {{ employee.full_name }}{% else %}إضافة موظف جديد{% endif %} - نظام الموارد البشرية
+{% endblock %}
+
+{% block page_title %}
+{% if employee %}تعديل بيانات الموظف{% else %}إضافة موظف جديد{% endif %}
+{% endblock %}
+
+{% block page_subtitle %}
+{% if employee %}تعديل بيانات {{ employee.full_name }}{% else %}إدخال بيانات الموظف الجديد في النظام{% endif %}
+{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item">
+    <a href="{% url 'Hr:dashboard' %}">لوحة التحكم</a>
+</li>
+<li class="breadcrumb-item">
+    <a href="{% url 'Hr:employee_list' %}">قائمة الموظفين</a>
+</li>
+<li class="breadcrumb-item active">
+    {% if employee %}تعديل الموظف{% else %}إضافة موظف جديد{% endif %}
+</li>
+{% endblock %}
+
+{% block page_actions %}
+<div class="d-flex gap-2">
+    <a href="{% url 'Hr:employee_list' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-right me-1"></i>
+        العودة للقائمة
+    </a>
+    {% if employee %}
+    <a href="{% url 'Hr:employee_detail' employee.id %}" class="btn btn-outline-info">
+        <i class="fas fa-eye me-1"></i>
+        عرض الملف
+    </a>
+    {% endif %}
+</div>
 {% endblock %}
 
 {% block extra_css %}
 <style>
-    .form-wizard {
-        background: var(--bg-primary);
-        border-radius: var(--radius-lg);
-        box-shadow: var(--shadow-sm);
-        overflow: hidden;
+.form-wizard {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.wizard-header {
+    background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-700) 100%);
+    color: white;
+    padding: 2rem;
+}
+
+.wizard-steps {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+.wizard-steps::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.3);
+    z-index: 1;
+}
+
+.wizard-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 2;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.wizard-step.active .step-number {
+    background: white;
+    color: var(--primary-600);
+    transform: scale(1.1);
+}
+
+.wizard-step.completed .step-number {
+    background: var(--success-500);
+    color: white;
+}
+
+.wizard-step.completed .step-number i {
+    display: inline;
+}
+
+.wizard-step.completed .step-number span {
+    display: none;
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.step-number i {
+    display: none;
+}
+
+.step-title {
+    font-size: 0.875rem;
+    text-align: center;
+    opacity: 0.8;
+}
+
+.wizard-step.active .step-title {
+    opacity: 1;
+    font-weight: 600;
+}
+
+.wizard-content {
+    padding: 2rem;
+}
+
+.step-content {
+    display: none;
+}
+
+.step-content.active {
+    display: block;
+    animation: fadeInUp 0.5s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
     }
-    
-    .wizard-header {
-        background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
-        color: var(--text-white);
-        padding: var(--spacing-lg);
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
-    
+}
+
+.form-section {
+    background: var(--secondary-50);
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.form-section-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--secondary-800);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.photo-upload {
+    text-align: center;
+    padding: 2rem;
+    border: 2px dashed var(--secondary-300);
+    border-radius: 10px;
+    background: var(--secondary-50);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.photo-upload:hover {
+    border-color: var(--primary-400);
+    background: var(--primary-50);
+}
+
+.photo-upload.dragover {
+    border-color: var(--primary-500);
+    background: var(--primary-100);
+}
+
+.photo-preview {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid var(--primary-200);
+    margin-bottom: 1rem;
+}
+
+.wizard-navigation {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    background: var(--secondary-50);
+    border-top: 1px solid var(--secondary-200);
+}
+
+.progress-bar-container {
+    flex-grow: 1;
+    margin: 0 2rem;
+}
+
+.progress {
+    height: 8px;
+    border-radius: 4px;
+    background: var(--secondary-200);
+}
+
+.progress-bar {
+    background: linear-gradient(90deg, var(--primary-500) 0%, var(--primary-600) 100%);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+}
+
+.form-floating label {
+    color: var(--secondary-600);
+}
+
+.form-floating .form-control:focus ~ label,
+.form-floating .form-control:not(:placeholder-shown) ~ label {
+    color: var(--primary-600);
+}
+
+.required-field::after {
+    content: ' *';
+    color: var(--error-500);
+}
+
+.field-help {
+    font-size: 0.875rem;
+    color: var(--secondary-500);
+    margin-top: 0.25rem;
+}
+
+@media (max-width: 768px) {
     .wizard-steps {
-        display: flex;
-        justify-content: space-between;
-        margin-bottom: var(--spacing-lg);
+        flex-wrap: wrap;
+        gap: 1rem;
     }
     
     .wizard-step {
-        display: flex;
-        align-items: center;
-        gap: var(--spacing-sm);
-        padding: var(--spacing-sm) var(--spacing-md);
-        border-radius: var(--radius-md);
-        background: rgba(255, 255, 255, 0.1);
-        transition: all var(--transition-fast);
-        cursor: pointer;
         flex: 1;
-        margin: 0 var(--spacing-xs);
-    }
-    
-    .wizard-step.active {
-        background: rgba(255, 255, 255, 0.2);
-        transform: scale(1.05);
-    }
-    
-    .wizard-step.completed {
-        background: var(--success-color);
-    }
-    
-    .step-number {
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.2);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: var(--font-size-sm);
-        font-weight: 600;
-    }
-    
-    .step-title {
-        font-size: var(--font-size-sm);
-        font-weight: 500;
+        min-width: calc(50% - 0.5rem);
     }
     
     .wizard-content {
-        padding: var(--spacing-xl);
-    }
-    
-    .step-content {
-        display: none;
-    }
-    
-    .step-content.active {
-        display: block;
-        animation: fadeIn 0.3s ease-in-out;
-    }
-    
-    .form-section {
-        margin-bottom: var(--spacing-xl);
-    }
-    
-    .section-title {
-        font-size: var(--font-size-lg);
-        font-weight: 600;
-        color: var(--text-primary);
-        margin-bottom: var(--spacing-md);
-        padding-bottom: var(--spacing-sm);
-        border-bottom: 2px solid var(--primary-color);
-    }
-    
-    .form-row {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: var(--spacing-lg);
-        margin-bottom: var(--spacing-lg);
-    }
-    
-    .form-group {
-        position: relative;
-    }
-    
-    .form-label {
-        font-weight: 500;
-        color: var(--text-primary);
-        margin-bottom: var(--spacing-sm);
-        display: block;
-    }
-    
-    .form-label.required::after {
-        content: ' *';
-        color: var(--error-color);
-    }
-    
-    .form-control {
-        width: 100%;
-        padding: var(--spacing-md);
-        border: 2px solid var(--border-color);
-        border-radius: var(--radius-md);
-        font-size: var(--font-size-base);
-        transition: all var(--transition-fast);
-        background: var(--bg-primary);
-    }
-    
-    .form-control:focus {
-        outline: none;
-        border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
-    }
-    
-    .form-control.is-invalid {
-        border-color: var(--error-color);
-    }
-    
-    .form-control.is-valid {
-        border-color: var(--success-color);
-    }
-    
-    .invalid-feedback {
-        color: var(--error-color);
-        font-size: var(--font-size-sm);
-        margin-top: var(--spacing-xs);
-    }
-    
-    .photo-upload {
-        text-align: center;
-        padding: var(--spacing-xl);
-        border: 2px dashed var(--border-color);
-        border-radius: var(--radius-lg);
-        transition: all var(--transition-fast);
-        cursor: pointer;
-    }
-    
-    .photo-upload:hover {
-        border-color: var(--primary-color);
-        background: rgb(37 99 235 / 0.05);
-    }
-    
-    .photo-preview {
-        width: 120px;
-        height: 120px;
-        border-radius: 50%;
-        margin: 0 auto var(--spacing-md);
-        overflow: hidden;
-        border: 4px solid var(--border-color);
-    }
-    
-    .photo-preview img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-    
-    .photo-placeholder {
-        width: 100%;
-        height: 100%;
-        background: var(--bg-tertiary);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--text-muted);
-        font-size: 2rem;
+        padding: 1rem;
     }
     
     .wizard-navigation {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: var(--spacing-lg);
-        border-top: 1px solid var(--border-color);
-        background: var(--bg-secondary);
+        padding: 1rem;
     }
     
-    .progress-indicator {
-        flex: 1;
-        margin: 0 var(--spacing-lg);
+    .progress-bar-container {
+        margin: 0 1rem;
     }
-    
-    .progress-bar {
-        height: 6px;
-        background: var(--bg-tertiary);
-        border-radius: 3px;
-        overflow: hidden;
-    }
-    
-    .progress-fill {
-        height: 100%;
-        background: var(--primary-color);
-        transition: width var(--transition-normal);
-    }
-    
-    .form-help {
-        background: rgb(6 182 212 / 0.1);
-        border: 1px solid rgb(6 182 212 / 0.2);
-        border-radius: var(--radius-md);
-        padding: var(--spacing-md);
-        margin-bottom: var(--spacing-lg);
-        color: #0e7490;
-    }
-    
-    .form-help i {
-        margin-left: var(--spacing-sm);
-    }
-    
-    @media (max-width: 768px) {
-        .wizard-steps {
-            flex-direction: column;
-            gap: var(--spacing-sm);
-        }
-        
-        .wizard-step {
-            margin: 0;
-        }
-        
-        .form-row {
-            grid-template-columns: 1fr;
-            gap: var(--spacing-md);
-        }
-        
-        .wizard-content {
-            padding: var(--spacing-lg);
-        }
-    }
+}
 </style>
 {% endblock %}
 
-{% block page_header %}
-<div class="page-header mb-4">
-    <div class="row align-items-center">
-        <div class="col">
-            <h1 class="page-title">
-                <i class="fas fa-{% if employee %}user-edit{% else %}user-plus{% endif %} me-2"></i>
-                {% if employee %}تعديل الموظف{% else %}إضافة موظف جديد{% endif %}
-            </h1>
-            <p class="page-subtitle text-muted">
-                {% if employee %}تعديل بيانات الموظف {{ employee.full_name }}{% else %}إضافة موظف جديد إلى النظام{% endif %}
-            </p>
-        </div>
-        <div class="col-auto">
-            <a href="{% url 'Hr:employee_list' %}" class="btn btn-secondary">
-                <i class="fas fa-arrow-right me-2"></i>
-                العودة للقائمة
-            </a>
-        </div>
-    </div>
-</div>
-{% endblock %}
-
 {% block content %}
-<form method="post" enctype="multipart/form-data" id="employeeForm" novalidate>
+<form method="post" enctype="multipart/form-data" id="employee-form" class="needs-validation" novalidate>
     {% csrf_token %}
     
     <div class="form-wizard">
@@ -277,19 +282,38 @@
         <div class="wizard-header">
             <div class="wizard-steps">
                 <div class="wizard-step active" data-step="1">
-                    <div class="step-number">1</div>
-                    <div class="step-title">المعلومات الأساسية</div>
+                    <div class="step-number">
+                        <span>1</span>
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="step-title">البيانات الشخصية</div>
                 </div>
                 <div class="wizard-step" data-step="2">
-                    <div class="step-number">2</div>
-                    <div class="step-title">معلومات التوظيف</div>
+                    <div class="step-number">
+                        <span>2</span>
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="step-title">بيانات العمل</div>
                 </div>
                 <div class="wizard-step" data-step="3">
-                    <div class="step-number">3</div>
-                    <div class="step-title">معلومات الاتصال</div>
+                    <div class="step-number">
+                        <span>3</span>
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="step-title">التأمينات والمالية</div>
                 </div>
                 <div class="wizard-step" data-step="4">
-                    <div class="step-number">4</div>
+                    <div class="step-number">
+                        <span>4</span>
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="step-title">المؤهلات والخبرات</div>
+                </div>
+                <div class="wizard-step" data-step="5">
+                    <div class="step-number">
+                        <span>5</span>
+                        <i class="fas fa-check"></i>
+                    </div>
                     <div class="step-title">المراجعة والحفظ</div>
                 </div>
             </div>
@@ -297,331 +321,181 @@
 
         <!-- محتوى المعالج -->
         <div class="wizard-content">
-            <!-- الخطوة الأولى: المعلومات الأساسية -->
-            <div class="step-content active" data-step="1">
-                <div class="form-help">
-                    <i class="fas fa-info-circle"></i>
-                    يرجى إدخال المعلومات الشخصية الأساسية للموظف
-                </div>
-                
-                <!-- الصورة الشخصية -->
-                <div class="form-section">
-                    <h5 class="section-title">الصورة الشخصية</h5>
-                    <div class="photo-upload" onclick="document.getElementById('photoInput').click()">
-                        <div class="photo-preview">
-                            {% if employee.profile_picture %}
-                            <img src="{{ employee.profile_picture.url }}" alt="الصورة الشخصية" id="photoPreview">
-                            {% else %}
-                            <div class="photo-placeholder" id="photoPlaceholder">
+            <!-- الخطوة الأولى: البيانات الشخصية -->
+            <div class="step-content active" id="step-1">
+                <div class="row">
+                    <!-- رفع الصورة -->
+                    <div class="col-md-4 mb-4">
+                        <div class="form-section text-center">
+                            <div class="form-section-title">
                                 <i class="fas fa-camera"></i>
+                                صورة الموظف
                             </div>
-                            {% endif %}
+                            <div class="photo-upload" id="photo-upload">
+                                {% if employee and employee.photo %}
+                                    <img src="{{ employee.photo.url }}" alt="صورة الموظف" class="photo-preview" id="photo-preview">
+                                {% else %}
+                                    <div id="upload-placeholder">
+                                        <i class="fas fa-camera fa-3x text-muted mb-3"></i>
+                                        <div class="h6">اضغط لرفع الصورة</div>
+                                        <div class="text-muted small">أو اسحب الصورة هنا</div>
+                                        <div class="text-muted small mt-2">الحد الأقصى: 5MB</div>
+                                    </div>
+                                    <img src="#" alt="معاينة الصورة" class="photo-preview d-none" id="photo-preview">
+                                {% endif %}
+                                <input type="file" id="photo-input" name="photo" accept="image/*" class="d-none">
+                            </div>
                         </div>
-                        <p class="text-muted mb-0">انقر لرفع الصورة الشخصية</p>
-                        <small class="text-muted">JPG, PNG أو GIF (الحد الأقصى 2MB)</small>
                     </div>
-                    <input type="file" id="photoInput" name="profile_picture" accept="image/*" style="display: none;">
+                    
+                    <!-- البيانات الشخصية -->
+                    <div class="col-md-8">
+                        <div class="form-section">
+                            <div class="form-section-title">
+                                <i class="fas fa-user"></i>
+                                المعلومات الأساسية
+                            </div>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="first_name" name="first_name" 
+                                               placeholder="الاسم الأول" value="{{ employee.first_name|default:'' }}" required>
+                                        <label for="first_name" class="required-field">الاسم الأول</label>
+                                        <div class="invalid-feedback">يرجى إدخال الاسم الأول</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="last_name" name="last_name" 
+                                               placeholder="اسم العائلة" value="{{ employee.last_name|default:'' }}" required>
+                                        <label for="last_name" class="required-field">اسم العائلة</label>
+                                        <div class="invalid-feedback">يرجى إدخال اسم العائلة</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control" id="national_id" name="national_id" 
+                                               placeholder="رقم الهوية" value="{{ employee.national_id|default:'' }}" required>
+                                        <label for="national_id" class="required-field">رقم الهوية الوطنية</label>
+                                        <div class="invalid-feedback">يرجى إدخال رقم الهوية</div>
+                                        <div class="field-help">10 أرقام للسعوديين، رقم الإقامة للمقيمين</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="date" class="form-control" id="birth_date" name="birth_date" 
+                                               value="{{ employee.birth_date|date:'Y-m-d'|default:'' }}" required>
+                                        <label for="birth_date" class="required-field">تاريخ الميلاد</label>
+                                        <div class="invalid-feedback">يرجى إدخال تاريخ الميلاد</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <select class="form-select" id="gender" name="gender" required>
+                                            <option value="">اختر الجنس</option>
+                                            <option value="male" {% if employee.gender == 'male' %}selected{% endif %}>ذكر</option>
+                                            <option value="female" {% if employee.gender == 'female' %}selected{% endif %}>أنثى</option>
+                                        </select>
+                                        <label for="gender" class="required-field">الجنس</label>
+                                        <div class="invalid-feedback">يرجى اختيار الجنس</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <select class="form-select" id="marital_status" name="marital_status">
+                                            <option value="">اختر الحالة الاجتماعية</option>
+                                            <option value="single" {% if employee.marital_status == 'single' %}selected{% endif %}>أعزب</option>
+                                            <option value="married" {% if employee.marital_status == 'married' %}selected{% endif %}>متزوج</option>
+                                            <option value="divorced" {% if employee.marital_status == 'divorced' %}selected{% endif %}>مطلق</option>
+                                            <option value="widowed" {% if employee.marital_status == 'widowed' %}selected{% endif %}>أرمل</option>
+                                        </select>
+                                        <label for="marital_status">الحالة الاجتماعية</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- معلومات الاتصال -->
+                        <div class="form-section">
+                            <div class="form-section-title">
+                                <i class="fas fa-phone"></i>
+                                معلومات الاتصال
+                            </div>
+                            
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="tel" class="form-control" id="phone" name="phone" 
+                                               placeholder="رقم الهاتف" value="{{ employee.phone|default:'' }}" required>
+                                        <label for="phone" class="required-field">رقم الهاتف</label>
+                                        <div class="invalid-feedback">يرجى إدخال رقم هاتف صحيح</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="email" class="form-control" id="email" name="email" 
+                                               placeholder="البريد الإلكتروني" value="{{ employee.email|default:'' }}">
+                                        <label for="email">البريد الإلكتروني</label>
+                                        <div class="invalid-feedback">يرجى إدخال بريد إلكتروني صحيح</div>
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="form-floating">
+                                        <textarea class="form-control" id="address" name="address" 
+                                                  placeholder="العنوان" style="height: 100px">{{ employee.address|default:'' }}</textarea>
+                                        <label for="address">العنوان</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-
-                <!-- المعلومات الشخصية -->
+            </div>    
+        <!-- الخطوة الثانية: بيانات العمل -->
+            <div class="step-content" id="step-2">
                 <div class="form-section">
-                    <h5 class="section-title">المعلومات الشخصية</h5>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label required">الاسم الأول</label>
-                            <input type="text" class="form-control" name="first_name" 
-                                   value="{{ employee.first_name|default:'' }}" required>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">الاسم الأوسط</label>
-                            <input type="text" class="form-control" name="middle_name" 
-                                   value="{{ employee.middle_name|default:'' }}">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label required">الاسم الأخير</label>
-                            <input type="text" class="form-control" name="last_name" 
-                                   value="{{ employee.last_name|default:'' }}" required>
-                            <div class="invalid-feedback"></div>
-                        </div>
+                    <div class="form-section-title">
+                        <i class="fas fa-briefcase"></i>
+                        معلومات الوظيفة
                     </div>
                     
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">الاسم الأول (إنجليزي)</label>
-                            <input type="text" class="form-control" name="first_name_en" 
-                                   value="{{ employee.first_name_en|default:'' }}">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="text" class="form-control" id="employee_number" name="employee_number" 
+                                       placeholder="رقم الموظف" value="{{ employee.employee_number|default:'' }}" required>
+                                <label for="employee_number" class="required-field">رقم الموظف</label>
+                                <div class="invalid-feedback">يرجى إدخال رقم الموظف</div>
+                                <div class="field-help">رقم فريد للموظف في النظام</div>
+                            </div>
                         </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">الاسم الأوسط (إنجليزي)</label>
-                            <input type="text" class="form-control" name="middle_name_en" 
-                                   value="{{ employee.middle_name_en|default:'' }}">
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <input type="date" class="form-control" id="hire_date" name="hire_date" 
+                                       value="{{ employee.hire_date|date:'Y-m-d'|default:'' }}" required>
+                                <label for="hire_date" class="required-field">تاريخ التوظيف</label>
+                                <div class="invalid-feedback">يرجى إدخال تاريخ التوظيف</div>
+                            </div>
                         </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">الاسم الأخير (إنجليزي)</label>
-                            <input type="text" class="form-control" name="last_name_en" 
-                                   value="{{ employee.last_name_en|default:'' }}">
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <select class="form-select" id="department" name="department" required>
+                                    <option value="">اختر القسم</option>
+                                    {% for dept in departments %}
+                                    <option value="{{ dept.id }}" {% if employee.department_id == dept.id %}selected{% endif %}>
+                                        {{ dept.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <label for="department" class="required-field">القسم</label>
+                                <div class="invalid-feedback">يرجى اختيار القسم</div>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label required">النوع</label>
-                            <select class="form-control" name="gender" required>
-                                <option value="">اختر النوع</option>
-                                <option value="M" {% if employee.gender == 'M' %}selected{% endif %}>ذكر</option>
-                                <option value="F" {% if employee.gender == 'F' %}selected{% endif %}>أنثى</option>
-                            </select>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label required">تاريخ الميلاد</label>
-                            <input type="date" class="form-control" name="date_of_birth" 
-                                   value="{{ employee.date_of_birth|date:'Y-m-d'|default:'' }}" required>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">مكان الميلاد</label>
-                            <input type="text" class="form-control" name="place_of_birth" 
-                                   value="{{ employee.place_of_birth|default:'' }}">
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">الحالة الاجتماعية</label>
-                            <select class="form-control" name="marital_status">
-                                <option value="S" {% if employee.marital_status == 'S' %}selected{% endif %}>أعزب</option>
-                                <option value="M" {% if employee.marital_status == 'M' %}selected{% endif %}>متزوج</option>
-                                <option value="D" {% if employee.marital_status == 'D' %}selected{% endif %}>مطلق</option>
-                                <option value="W" {% if employee.marital_status == 'W' %}selected{% endif %}>أرمل</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">عدد الأطفال</label>
-                            <input type="number" class="form-control" name="number_of_children" 
-                                   value="{{ employee.number_of_children|default:0 }}" min="0" max="20">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">الجنسية</label>
-                            <input type="text" class="form-control" name="nationality" 
-                                   value="{{ employee.nationality|default:'' }}">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- الخطوة الثانية: معلومات التوظيف -->
-            <div class="step-content" data-step="2">
-                <div class="form-help">
-                    <i class="fas fa-info-circle"></i>
-                    أدخل معلومات التوظيف والهيكل التنظيمي
-                </div>
-                
-                <div class="form-section">
-                    <h5 class="section-title">معلومات التوظيف</h5>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label required">رقم الموظف</label>
-                            <input type="text" class="form-control" name="employee_id" 
-                                   value="{{ employee.employee_id|default:'' }}" 
-                                   {% if not employee %}placeholder="سيتم توليده تلقائياً"{% endif %} required>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label required">تاريخ التعيين</label>
-                            <input type="date" class="form-control" name="join_date" 
-                                   value="{{ employee.join_date|date:'Y-m-d'|default:'' }}" required>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">نوع التوظيف</label>
-                            <select class="form-control" name="employment_type">
-                                <option value="full_time" {% if employee.employment_type == 'full_time' %}selected{% endif %}>دوام كامل</option>
-                                <option value="part_time" {% if employee.employment_type == 'part_time' %}selected{% endif %}>دوام جزئي</option>
-                                <option value="contract" {% if employee.employment_type == 'contract' %}selected{% endif %}>عقد مؤقت</option>
-                                <option value="internship" {% if employee.employment_type == 'internship' %}selected{% endif %}>تدريب</option>
-                                <option value="consultant" {% if employee.employment_type == 'consultant' %}selected{% endif %}>استشاري</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label required">الشركة</label>
-                            <select class="form-control" name="company" required>
-                                <option value="">اختر الشركة</option>
-                                {% for company in companies %}
-                                <option value="{{ company.id }}" {% if employee.company_id == company.id %}selected{% endif %}>
-                                    {{ company.name }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">الفرع</label>
-                            <select class="form-control" name="branch">
-                                <option value="">اختر الفرع</option>
-                                {% for branch in branches %}
-                                <option value="{{ branch.id }}" {% if employee.branch_id == branch.id %}selected{% endif %}>
-                                    {{ branch.name }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">القسم</label>
-                            <select class="form-control" name="department">
-                                <option value="">اختر القسم</option>
-                                {% for dept in departments %}
-                                <option value="{{ dept.id }}" {% if employee.department_id == dept.id %}selected{% endif %}>
-                                    {{ dept.name }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">الوظيفة</label>
-                            <select class="form-control" name="position">
-                                <option value="">اختر الوظيفة</option>
-                                {% for pos in positions %}
-                                <option value="{{ pos.id }}" {% if employee.position_id == pos.id %}selected{% endif %}>
-                                    {{ pos.title }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">المدير المباشر</label>
-                            <select class="form-control" name="direct_manager">
-                                <option value="">اختر المدير المباشر</option>
-                                {% for manager in managers %}
-                                <option value="{{ manager.id }}" {% if employee.direct_manager_id == manager.id %}selected{% endif %}>
-                                    {{ manager.full_name }}
-                                </option>
-                                {% endfor %}
-                            </select>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">الراتب الأساسي</label>
-                            <input type="number" class="form-control" name="base_salary" 
-                                   value="{{ employee.base_salary|default:'' }}" step="0.01" min="0">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- الخطوة الثالثة: معلومات الاتصال -->
-            <div class="step-content" data-step="3">
-                <div class="form-help">
-                    <i class="fas fa-info-circle"></i>
-                    أدخل معلومات الاتصال والعنوان
-                </div>
-                
-                <div class="form-section">
-                    <h5 class="section-title">معلومات الاتصال</h5>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label required">رقم الجوال</label>
-                            <input type="tel" class="form-control" name="mobile_phone" 
-                                   value="{{ employee.mobile_phone|default:'' }}" required>
-                            <div class="invalid-feedback"></div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">هاتف المنزل</label>
-                            <input type="tel" class="form-control" name="home_phone" 
-                                   value="{{ employee.home_phone|default:'' }}">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">البريد الإلكتروني للعمل</label>
-                            <input type="email" class="form-control" name="work_email" 
-                                   value="{{ employee.work_email|default:'' }}">
-                        </div>
-                    </div>
-                    
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label">العنوان</label>
-                            <textarea class="form-control" name="address" rows="3">{{ employee.address|default:'' }}</textarea>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">المدينة</label>
-                            <input type="text" class="form-control" name="city" 
-                                   value="{{ employee.city|default:'' }}">
-                        </div>
-                        
-                        <div class="form-group">
-                            <label class="form-label">الدولة</label>
-                            <input type="text" class="form-control" name="country" 
-                                   value="{{ employee.country|default:'Saudi Arabia' }}">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- الخطوة الرابعة: المراجعة والحفظ -->
-            <div class="step-content" data-step="4">
-                <div class="form-help">
-                    <i class="fas fa-check-circle"></i>
-                    راجع البيانات المدخلة قبل الحفظ
-                </div>
-                
-                <div class="form-section">
-                    <h5 class="section-title">مراجعة البيانات</h5>
-                    <div id="reviewContent">
-                        <!-- سيتم ملء هذا المحتوى بـ JavaScript -->
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- شريط التنقل -->
-        <div class="wizard-navigation">
-            <button type="button" class="btn btn-secondary" id="prevBtn" style="display: none;">
-                <i class="fas fa-arrow-right me-2"></i>
-                السابق
-            </button>
-            
-            <div class="progress-indicator">
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: 25%"></div>
-                </div>
-            </div>
-            
-            <button type="button" class="btn btn-primary" id="nextBtn">
-                التالي
-                <i class="fas fa-arrow-left ms-2"></i>
-            </button>
-            
-            <button type="submit" class="btn btn-success" id="submitBtn" style="display: none;">
-                <i class="fas fa-save me-2"></i>
-                {% if employee %}تحديث البيانات{% else %}حفظ الموظف{% endif %}
-            </button>
-        </div>
-    </div>
-</form>
-{% endblock %}
+                        <div class="col-md-6">
+                            <div class="form-floating">
+                                <select class="form-select" id="job_position" name="job_position" required>
+                                    <option value="">اختر الوظيفة</option>
+                                    {% for pos in job_positions %}
+                                    <option value="{{ pos.id }}" {% if employee.job_position_id == pos.id %}selected{% endif %}>
+  

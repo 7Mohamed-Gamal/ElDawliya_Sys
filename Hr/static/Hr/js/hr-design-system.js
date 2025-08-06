@@ -1,472 +1,452 @@
-/**
- * نظام التصميم التفاعلي لتطبيق الموارد البشرية
- * HR Design System Interactive Components
- */
+/*
+=============================================================================
+نظام التصميم التفاعلي - HR Design System JavaScript
+=============================================================================
+*/
 
-class HRDesignSystem {
-    constructor() {
-        this.init();
-    }
-
-    init() {
-        this.initThemeToggle();
-        this.initTooltips();
-        this.initModals();
-        this.initTabs();
-        this.initDropdowns();
-        this.initFormValidation();
-        this.initDataTables();
-        this.initNotifications();
-        this.initProgressBars();
-    }
-
-    // تبديل الثيم
-    initThemeToggle() {
-        const themeToggle = document.querySelector('[data-theme-toggle]');
-        if (themeToggle) {
-            themeToggle.addEventListener('click', () => {
-                const currentTheme = document.documentElement.getAttribute('data-theme');
-                const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-                document.documentElement.setAttribute('data-theme', newTheme);
-                localStorage.setItem('theme', newTheme);
-            });
-        }
-
-        // تطبيق الثيم المحفوظ
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme) {
-            document.documentElement.setAttribute('data-theme', savedTheme);
-        }
-    }
-
-    // تلميحات الأدوات
-    initTooltips() {
-        const tooltips = document.querySelectorAll('[data-tooltip]');
-        tooltips.forEach(element => {
-            element.addEventListener('mouseenter', (e) => {
-                this.showTooltip(e.target);
-            });
-            element.addEventListener('mouseleave', (e) => {
-                this.hideTooltip(e.target);
-            });
-        });
-    }
-
-    showTooltip(element) {
-        const text = element.getAttribute('data-tooltip');
-        const tooltip = document.createElement('div');
-        tooltip.className = 'tooltip';
-        tooltip.textContent = text;
-        tooltip.style.cssText = `
-            position: absolute;
-            background: var(--bg-dark);
-            color: var(--text-white);
-            padding: var(--spacing-sm) var(--spacing-md);
-            border-radius: var(--radius-md);
-            font-size: var(--font-size-sm);
-            z-index: 1000;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity var(--transition-fast);
-        `;
-        
-        document.body.appendChild(tooltip);
-        
-        const rect = element.getBoundingClientRect();
-        tooltip.style.top = (rect.top - tooltip.offsetHeight - 5) + 'px';
-        tooltip.style.left = (rect.left + rect.width / 2 - tooltip.offsetWidth / 2) + 'px';
-        
-        setTimeout(() => tooltip.style.opacity = '1', 10);
-        element._tooltip = tooltip;
-    }
-
-    hideTooltip(element) {
-        if (element._tooltip) {
-            element._tooltip.remove();
-            delete element._tooltip;
-        }
-    }
-
-    // النوافذ المنبثقة
-    initModals() {
-        const modalTriggers = document.querySelectorAll('[data-modal-target]');
-        const modalCloses = document.querySelectorAll('[data-modal-close]');
-        
-        modalTriggers.forEach(trigger => {
-            trigger.addEventListener('click', (e) => {
-                e.preventDefault();
-                const targetId = trigger.getAttribute('data-modal-target');
-                this.openModal(targetId);
-            });
-        });
-
-        modalCloses.forEach(close => {
-            close.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.closeModal(close.closest('.modal'));
-            });
-        });
-
-        // إغلاق عند النقر خارج النافذة
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('modal-overlay')) {
-                this.closeModal(e.target.querySelector('.modal'));
-            }
-        });
-    }
-
-    openModal(modalId) {
-        const modal = document.getElementById(modalId);
-        if (modal) {
-            modal.style.display = 'flex';
-            modal.classList.add('animate-fade-in');
-            document.body.style.overflow = 'hidden';
-        }
-    }
-
-    closeModal(modal) {
-        if (modal) {
-            modal.style.display = 'none';
-            modal.classList.remove('animate-fade-in');
-            document.body.style.overflow = '';
-        }
-    }
-
-    // علامات التبويب
-    initTabs() {
-        const tabButtons = document.querySelectorAll('[data-tab-target]');
-        
-        tabButtons.forEach(button => {
-            button.addEventListener('click', (e) => {
-                e.preventDefault();
-                const targetId = button.getAttribute('data-tab-target');
-                this.switchTab(button, targetId);
-            });
-        });
-    }
-
-    switchTab(activeButton, targetId) {
-        const tabContainer = activeButton.closest('[data-tabs]');
-        const allButtons = tabContainer.querySelectorAll('[data-tab-target]');
-        const allPanes = tabContainer.querySelectorAll('[data-tab-pane]');
-
-        // إزالة الحالة النشطة من جميع الأزرار والألواح
-        allButtons.forEach(btn => btn.classList.remove('active'));
-        allPanes.forEach(pane => pane.classList.remove('active'));
-
-        // تفعيل الزر والوحة المحددة
-        activeButton.classList.add('active');
-        const targetPane = document.getElementById(targetId);
-        if (targetPane) {
-            targetPane.classList.add('active');
-            targetPane.classList.add('animate-fade-in');
-        }
-    }
-
-    // القوائم المنسدلة
-    initDropdowns() {
-        const dropdownTriggers = document.querySelectorAll('[data-dropdown-toggle]');
-        
-        dropdownTriggers.forEach(trigger => {
-            trigger.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                const targetId = trigger.getAttribute('data-dropdown-toggle');
-                this.toggleDropdown(targetId);
-            });
-        });
-
-        // إغلاق القوائم عند النقر خارجها
-        document.addEventListener('click', () => {
-            this.closeAllDropdowns();
-        });
-    }
-
-    toggleDropdown(dropdownId) {
-        const dropdown = document.getElementById(dropdownId);
-        if (dropdown) {
-            const isOpen = dropdown.classList.contains('show');
-            this.closeAllDropdowns();
-            if (!isOpen) {
-                dropdown.classList.add('show');
-                dropdown.classList.add('animate-fade-in');
+// إعدادات النظام الأساسية
+const HRDesignSystem = {
+    // إعدادات الثيم
+    theme: {
+        current: localStorage.getItem('hr-theme') || 'light',
+        toggle: function() {
+            this.current = this.current === 'light' ? 'dark' : 'light';
+            this.apply();
+            localStorage.setItem('hr-theme', this.current);
+        },
+        apply: function() {
+            document.documentElement.setAttribute('data-theme', this.current);
+            // تحديث أيقونة الثيم
+            const themeIcon = document.querySelector('.theme-toggle i');
+            if (themeIcon) {
+                themeIcon.className = this.current === 'light' ? 'fas fa-moon' : 'fas fa-sun';
             }
         }
-    }
+    },
 
-    closeAllDropdowns() {
-        const dropdowns = document.querySelectorAll('.dropdown-menu');
-        dropdowns.forEach(dropdown => {
-            dropdown.classList.remove('show', 'animate-fade-in');
-        });
-    }
+    // إدارة الشريط الجانبي
+    sidebar: {
+        isCollapsed: localStorage.getItem('hr-sidebar-collapsed') === 'true',
+        toggle: function() {
+            this.isCollapsed = !this.isCollapsed;
+            this.apply();
+            localStorage.setItem('hr-sidebar-collapsed', this.isCollapsed);
+        },
+        apply: function() {
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+            
+            if (sidebar) {
+                sidebar.classList.toggle('collapsed', this.isCollapsed);
+            }
+            
+            // تحديث عرض المحتوى الرئيسي
+            if (mainContent) {
+                mainContent.style.marginRight = this.isCollapsed ? '80px' : '280px';
+            }
+        },
+        show: function() {
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar) {
+                sidebar.classList.add('show');
+            }
+        },
+        hide: function() {
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar) {
+                sidebar.classList.remove('show');
+            }
+        }
+    },
 
-    // التحقق من صحة النماذج
-    initFormValidation() {
-        const forms = document.querySelectorAll('[data-validate]');
-        
-        forms.forEach(form => {
-            form.addEventListener('submit', (e) => {
-                if (!this.validateForm(form)) {
-                    e.preventDefault();
+    // إدارة النماذج
+    forms: {
+        // التحقق من صحة النماذج
+        validate: function(form) {
+            let isValid = true;
+            const inputs = form.querySelectorAll('input[required], select[required], textarea[required]');
+            
+            inputs.forEach(input => {
+                if (!input.value.trim()) {
+                    this.showError(input, 'هذا الحقل مطلوب');
+                    isValid = false;
+                } else {
+                    this.clearError(input);
                 }
             });
-
-            // التحقق المباشر أثناء الكتابة
-            const inputs = form.querySelectorAll('input, select, textarea');
-            inputs.forEach(input => {
-                input.addEventListener('blur', () => {
-                    this.validateField(input);
+            
+            return isValid;
+        },
+        
+        // عرض رسالة خطأ
+        showError: function(input, message) {
+            input.classList.add('is-invalid');
+            
+            let errorDiv = input.parentNode.querySelector('.invalid-feedback');
+            if (!errorDiv) {
+                errorDiv = document.createElement('div');
+                errorDiv.className = 'invalid-feedback';
+                input.parentNode.appendChild(errorDiv);
+            }
+            errorDiv.textContent = message;
+        },
+        
+        // إزالة رسالة الخطأ
+        clearError: function(input) {
+            input.classList.remove('is-invalid');
+            const errorDiv = input.parentNode.querySelector('.invalid-feedback');
+            if (errorDiv) {
+                errorDiv.remove();
+            }
+        },
+        
+        // تحسين تجربة المستخدم للنماذج
+        enhance: function() {
+            // إضافة تأثيرات التركيز
+            document.querySelectorAll('.form-control').forEach(input => {
+                input.addEventListener('focus', function() {
+                    this.parentNode.classList.add('focused');
+                });
+                
+                input.addEventListener('blur', function() {
+                    this.parentNode.classList.remove('focused');
+                    if (this.value) {
+                        this.parentNode.classList.add('filled');
+                    } else {
+                        this.parentNode.classList.remove('filled');
+                    }
                 });
             });
-        });
-    }
-
-    validateForm(form) {
-        const inputs = form.querySelectorAll('[required]');
-        let isValid = true;
-
-        inputs.forEach(input => {
-            if (!this.validateField(input)) {
-                isValid = false;
-            }
-        });
-
-        return isValid;
-    }
-
-    validateField(field) {
-        const value = field.value.trim();
-        const isRequired = field.hasAttribute('required');
-        const type = field.getAttribute('type');
-        
-        let isValid = true;
-        let message = '';
-
-        if (isRequired && !value) {
-            isValid = false;
-            message = 'هذا الحقل مطلوب';
-        } else if (value) {
-            switch (type) {
-                case 'email':
-                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                    if (!emailRegex.test(value)) {
-                        isValid = false;
-                        message = 'يرجى إدخال بريد إلكتروني صحيح';
-                    }
-                    break;
-                case 'tel':
-                    const phoneRegex = /^[\+]?[0-9\s\-\(\)]{10,}$/;
-                    if (!phoneRegex.test(value)) {
-                        isValid = false;
-                        message = 'يرجى إدخال رقم هاتف صحيح';
-                    }
-                    break;
-            }
         }
+    },
 
-        this.showFieldValidation(field, isValid, message);
-        return isValid;
-    }
-
-    showFieldValidation(field, isValid, message) {
-        const existingError = field.parentNode.querySelector('.field-error');
-        if (existingError) {
-            existingError.remove();
-        }
-
-        if (!isValid) {
-            field.classList.add('is-invalid');
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'field-error text-danger fs-sm mt-1';
-            errorDiv.textContent = message;
-            field.parentNode.appendChild(errorDiv);
-        } else {
-            field.classList.remove('is-invalid');
-            field.classList.add('is-valid');
-        }
-    }
-
-    // جداول البيانات
-    initDataTables() {
-        const tables = document.querySelectorAll('[data-table]');
-        
-        tables.forEach(table => {
-            this.enhanceTable(table);
-        });
-    }
-
-    enhanceTable(table) {
-        // إضافة البحث
-        const searchInput = table.parentNode.querySelector('[data-table-search]');
-        if (searchInput) {
-            searchInput.addEventListener('input', (e) => {
-                this.filterTable(table, e.target.value);
+    // إدارة الجداول
+    tables: {
+        // تحسين الجداول المتجاوبة
+        enhance: function() {
+            document.querySelectorAll('.table-responsive').forEach(wrapper => {
+                const table = wrapper.querySelector('table');
+                if (table) {
+                    // إضافة فئات Bootstrap
+                    table.classList.add('table', 'table-hover');
+                    
+                    // إضافة إمكانية الفرز
+                    this.addSorting(table);
+                    
+                    // إضافة البحث السريع
+                    this.addQuickSearch(wrapper);
+                }
             });
-        }
-
-        // إضافة الترتيب
-        const headers = table.querySelectorAll('th[data-sortable]');
-        headers.forEach(header => {
-            header.style.cursor = 'pointer';
-            header.addEventListener('click', () => {
-                this.sortTable(table, header);
+        },
+        
+        // إضافة إمكانية الفرز
+        addSorting: function(table) {
+            const headers = table.querySelectorAll('th[data-sortable]');
+            headers.forEach(header => {
+                header.style.cursor = 'pointer';
+                header.innerHTML += ' <i class=\"fas fa-sort text-muted\"></i>';
+                
+                header.addEventListener('click', () => {
+                    this.sortTable(table, header);
+                });
             });
-        });
-    }
-
-    filterTable(table, searchTerm) {
-        const rows = table.querySelectorAll('tbody tr');
-        const term = searchTerm.toLowerCase();
-
-        rows.forEach(row => {
-            const text = row.textContent.toLowerCase();
-            row.style.display = text.includes(term) ? '' : 'none';
-        });
-    }
-
-    sortTable(table, header) {
-        const columnIndex = Array.from(header.parentNode.children).indexOf(header);
-        const rows = Array.from(table.querySelectorAll('tbody tr'));
-        const isAscending = !header.classList.contains('sort-asc');
-
-        rows.sort((a, b) => {
-            const aText = a.children[columnIndex].textContent.trim();
-            const bText = b.children[columnIndex].textContent.trim();
+        },
+        
+        // فرز الجدول
+        sortTable: function(table, header) {
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            const columnIndex = Array.from(header.parentNode.children).indexOf(header);
+            const isAscending = !header.classList.contains('sort-asc');
             
-            const aValue = isNaN(aText) ? aText : parseFloat(aText);
-            const bValue = isNaN(bText) ? bText : parseFloat(bText);
+            // إزالة فئات الفرز من جميع الرؤوس
+            table.querySelectorAll('th').forEach(th => {
+                th.classList.remove('sort-asc', 'sort-desc');
+                const icon = th.querySelector('i');
+                if (icon) {
+                    icon.className = 'fas fa-sort text-muted';
+                }
+            });
+            
+            // إضافة فئة الفرز للرأس الحالي
+            header.classList.add(isAscending ? 'sort-asc' : 'sort-desc');
+            const icon = header.querySelector('i');
+            if (icon) {
+                icon.className = isAscending ? 'fas fa-sort-up text-primary' : 'fas fa-sort-down text-primary';
+            }
+            
+            // فرز الصفوف
+            rows.sort((a, b) => {
+                const aValue = a.children[columnIndex].textContent.trim();
+                const bValue = b.children[columnIndex].textContent.trim();
+                
+                if (isAscending) {
+                    return aValue.localeCompare(bValue, 'ar');
+                } else {
+                    return bValue.localeCompare(aValue, 'ar');
+                }
+            });
+            
+            // إعادة ترتيب الصفوف
+            rows.forEach(row => tbody.appendChild(row));
+        },
+        
+        // إضافة البحث السريع
+        addQuickSearch: function(wrapper) {
+            const searchInput = document.createElement('input');
+            searchInput.type = 'text';
+            searchInput.className = 'form-control mb-3';
+            searchInput.placeholder = 'البحث في الجدول...';
+            
+            wrapper.insertBefore(searchInput, wrapper.firstChild);
+            
+            searchInput.addEventListener('input', (e) => {
+                this.filterTable(wrapper.querySelector('table'), e.target.value);
+            });
+        },
+        
+        // فلترة الجدول
+        filterTable: function(table, searchTerm) {
+            const tbody = table.querySelector('tbody');
+            const rows = tbody.querySelectorAll('tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                const shouldShow = text.includes(searchTerm.toLowerCase());
+                row.style.display = shouldShow ? '' : 'none';
+            });
+        }
+    },
 
-            if (aValue < bValue) return isAscending ? -1 : 1;
-            if (aValue > bValue) return isAscending ? 1 : -1;
-            return 0;
-        });
-
-        // إعادة ترتيب الصفوف
-        const tbody = table.querySelector('tbody');
-        rows.forEach(row => tbody.appendChild(row));
-
-        // تحديث مؤشر الترتيب
-        table.querySelectorAll('th').forEach(th => {
-            th.classList.remove('sort-asc', 'sort-desc');
-        });
-        header.classList.add(isAscending ? 'sort-asc' : 'sort-desc');
-    }
-
-    // الإشعارات
-    initNotifications() {
-        this.notificationContainer = this.createNotificationContainer();
-    }
-
-    createNotificationContainer() {
-        let container = document.getElementById('notification-container');
-        if (!container) {
-            container = document.createElement('div');
-            container.id = 'notification-container';
-            container.style.cssText = `
-                position: fixed;
+    // إدارة الإشعارات
+    notifications: {
+        // عرض إشعار
+        show: function(message, type = 'info', duration = 5000) {
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            notification.style.cssText = `
                 top: 20px;
                 left: 20px;
                 z-index: 9999;
-                max-width: 400px;
+                min-width: 300px;
+                box-shadow: var(--shadow-lg);
             `;
-            document.body.appendChild(container);
-        }
-        return container;
-    }
-
-    showNotification(message, type = 'info', duration = 5000) {
-        const notification = document.createElement('div');
-        notification.className = `alert alert-${type} animate-fade-in`;
-        notification.style.cssText = `
-            margin-bottom: var(--spacing-sm);
-            box-shadow: var(--shadow-lg);
-        `;
-        notification.textContent = message;
-
-        // زر الإغلاق
-        const closeBtn = document.createElement('button');
-        closeBtn.innerHTML = '×';
-        closeBtn.style.cssText = `
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            float: left;
-            margin-right: var(--spacing-sm);
-            cursor: pointer;
-        `;
-        closeBtn.addEventListener('click', () => {
-            this.hideNotification(notification);
-        });
-
-        notification.appendChild(closeBtn);
-        this.notificationContainer.appendChild(notification);
-
-        // إخفاء تلقائي
-        if (duration > 0) {
-            setTimeout(() => {
-                this.hideNotification(notification);
-            }, duration);
-        }
-
-        return notification;
-    }
-
-    hideNotification(notification) {
-        notification.style.opacity = '0';
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.parentNode.removeChild(notification);
-            }
-        }, 300);
-    }
-
-    // أشرطة التقدم
-    initProgressBars() {
-        const progressBars = document.querySelectorAll('.progress-bar');
-        
-        progressBars.forEach(bar => {
-            const fill = bar.querySelector('.progress-fill');
-            const value = fill.getAttribute('data-value') || 0;
             
-            // تحريك شريط التقدم
+            notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // إزالة الإشعار تلقائياً
             setTimeout(() => {
-                fill.style.width = value + '%';
-            }, 100);
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, duration);
+        },
+        
+        // إشعار نجاح
+        success: function(message, duration) {
+            this.show(message, 'success', duration);
+        },
+        
+        // إشعار خطأ
+        error: function(message, duration) {
+            this.show(message, 'error', duration);
+        },
+        
+        // إشعار تحذير
+        warning: function(message, duration) {
+            this.show(message, 'warning', duration);
+        },
+        
+        // إشعار معلومات
+        info: function(message, duration) {
+            this.show(message, 'info', duration);
+        }
+    },
+
+    // إدارة النوافذ المنبثقة
+    modals: {
+        // فتح نافذة منبثقة
+        open: function(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('show');
+                modal.style.display = 'block';
+                document.body.classList.add('modal-open');
+                
+                // إضافة backdrop
+                const backdrop = document.createElement('div');
+                backdrop.className = 'modal-backdrop fade show';
+                backdrop.id = modalId + '-backdrop';
+                document.body.appendChild(backdrop);
+            }
+        },
+        
+        // إغلاق نافذة منبثقة
+        close: function(modalId) {
+            const modal = document.getElementById(modalId);
+            const backdrop = document.getElementById(modalId + '-backdrop');
+            
+            if (modal) {
+                modal.classList.remove('show');
+                modal.style.display = 'none';
+                document.body.classList.remove('modal-open');
+            }
+            
+            if (backdrop) {
+                backdrop.remove();
+            }
+        }
+    },
+
+    // أدوات مساعدة
+    utils: {
+        // تنسيق التاريخ
+        formatDate: function(date, format = 'dd/mm/yyyy') {
+            if (!(date instanceof Date)) {
+                date = new Date(date);
+            }
+            
+            const day = date.getDate().toString().padStart(2, '0');
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const year = date.getFullYear();
+            
+            return format
+                .replace('dd', day)
+                .replace('mm', month)
+                .replace('yyyy', year);
+        },
+        
+        // تنسيق الأرقام
+        formatNumber: function(number, decimals = 0) {
+            return new Intl.NumberFormat('ar-SA', {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            }).format(number);
+        },
+        
+        // تنسيق العملة
+        formatCurrency: function(amount, currency = 'SAR') {
+            return new Intl.NumberFormat('ar-SA', {
+                style: 'currency',
+                currency: currency
+            }).format(amount);
+        },
+        
+        // تأخير التنفيذ (debounce)
+        debounce: function(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        },
+        
+        // نسخ النص إلى الحافظة
+        copyToClipboard: function(text) {
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(() => {
+                    HRDesignSystem.notifications.success('تم نسخ النص بنجاح');
+                });
+            } else {
+                // fallback للمتصفحات القديمة
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                HRDesignSystem.notifications.success('تم نسخ النص بنجاح');
+            }
+        }
+    },
+
+    // تهيئة النظام
+    init: function() {
+        // تطبيق الثيم المحفوظ
+        this.theme.apply();
+        
+        // تطبيق حالة الشريط الجانبي
+        this.sidebar.apply();
+        
+        // تحسين النماذج
+        this.forms.enhance();
+        
+        // تحسين الجداول
+        this.tables.enhance();
+        
+        // إضافة مستمعي الأحداث
+        this.addEventListeners();
+        
+        console.log('HR Design System initialized successfully');
+    },
+
+    // إضافة مستمعي الأحداث
+    addEventListeners: function() {
+        // تبديل الثيم
+        document.addEventListener('click', (e) => {
+            if (e.target.matches('.theme-toggle, .theme-toggle *')) {
+                e.preventDefault();
+                this.theme.toggle();
+            }
+        });
+        
+        // تبديل الشريط الجانبي
+        document.addEventListener('click', (e) => {
+            if (e.target.matches('.sidebar-toggle, .sidebar-toggle *')) {
+                e.preventDefault();
+                this.sidebar.toggle();
+            }
+        });
+        
+        // إغلاق الشريط الجانبي على الشاشات الصغيرة
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768 && !e.target.closest('.sidebar') && !e.target.matches('.sidebar-toggle, .sidebar-toggle *')) {
+                this.sidebar.hide();
+            }
+        });
+        
+        // التحقق من النماذج عند الإرسال
+        document.addEventListener('submit', (e) => {
+            const form = e.target;
+            if (form.hasAttribute('data-validate')) {
+                if (!this.forms.validate(form)) {
+                    e.preventDefault();
+                }
+            }
+        });
+        
+        // إغلاق النوافذ المنبثقة
+        document.addEventListener('click', (e) => {
+            if (e.target.matches('.modal-backdrop, [data-dismiss=\"modal\"]')) {
+                const modal = e.target.closest('.modal') || document.querySelector('.modal.show');
+                if (modal) {
+                    this.modals.close(modal.id);
+                }
+            }
+        });
+        
+        // تحديث حالة الشريط الجانبي عند تغيير حجم الشاشة
+        window.addEventListener('resize', () => {
+            if (window.innerWidth <= 768) {
+                this.sidebar.hide();
+            }
         });
     }
-
-    // وظائف مساعدة عامة
-    static showLoading(element) {
-        element.classList.add('animate-pulse');
-        element.style.pointerEvents = 'none';
-    }
-
-    static hideLoading(element) {
-        element.classList.remove('animate-pulse');
-        element.style.pointerEvents = '';
-    }
-
-    static formatNumber(number, locale = 'ar-SA') {
-        return new Intl.NumberFormat(locale).format(number);
-    }
-
-    static formatDate(date, locale = 'ar-SA') {
-        return new Intl.DateTimeFormat(locale).format(new Date(date));
-    }
-
-    static formatCurrency(amount, currency = 'SAR', locale = 'ar-SA') {
-        return new Intl.NumberFormat(locale, {
-            style: 'currency',
-            currency: currency
-        }).format(amount);
-    }
-}
+};
 
 // تهيئة النظام عند تحميل الصفحة
-document.addEventListener('DOMContentLoaded', () => {
-    window.hrDesignSystem = new HRDesignSystem();
+document.addEventListener('DOMContentLoaded', function() {
+    HRDesignSystem.init();
 });
 
-// تصدير للاستخدام العام
+// تصدير النظام للاستخدام العام
 window.HRDesignSystem = HRDesignSystem;

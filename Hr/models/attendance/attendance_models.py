@@ -801,7 +801,7 @@ class EmployeeShiftAssignmentEnhanced(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='created_shift_assignments',
+        related_name='created_shift_assignments_enhanced',
         verbose_name=_("أنشئ بواسطة")
     )
     

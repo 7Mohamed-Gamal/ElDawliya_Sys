@@ -298,6 +298,342 @@ class EmployeeFileServiceEnhanced:
                 'total_size': sum(f.file_size for f in files),
                 'by_type': {},
                 'by_confidentiality': {},
+                'by_status': {},
+                'recent_uploads': files.filter(uploaded_at__gte=timezone.now() - timedelta(days=30)).count(),
+                'expiring_soon': files.filter(
+                    expiry_date__lte=date.today() + timedelta(days=30),
+                    expiry_date__gte=date.today()
+                ).count(),
+                'expired': files.filter(expiry_date__lt=date.today()).count(),
+            }
+            
+            # Organize by different criteria
+            if organization_type == 'type':
+                for file in files:
+                    file_type = file.get_file_type_display()
+                    if file_type not in organized_files:
+                        organized_files[file_type] = []
+                    organized_files[file_type].append(file)
+                    
+                    # Update statistics
+                    if file_type not in file_statistics['by_type']:
+                        file_statistics['by_type'][file_type] = 0
+                    file_statistics['by_type'][file_type] += 1
+            
+            elif organization_type == 'date':
+                for file in files:
+                    year_month = file.uploaded_at.strftime('%Y-%m')
+                    if year_month not in organized_files:
+                        organized_files[year_month] = []
+                    organized_files[year_month].append(file)
+            
+            elif organization_type == 'confidentiality':
+                for file in files:
+                    conf_level = file.get_confidentiality_level_display()
+                    if conf_level not in organized_files:
+                        organized_files[conf_level] = []
+                    organized_files[conf_level].append(file)
+                    
+                    # Update statistics
+                    if conf_level not in file_statistics['by_confidentiality']:
+                        file_statistics['by_confidentiality'][conf_level] = 0
+                    file_statistics['by_confidentiality'][conf_level] += 1
+            
+            elif organization_type == 'status':
+                for file in files:
+                    status = file.get_status_display()
+                    if status not in organized_files:
+                        organized_files[status] = []
+                    organized_files[status].append(file)
+                    
+                    # Update statistics
+                    if status not in file_statistics['by_status']:
+                        file_statistics['by_status'][status] = 0
+                    file_statistics['by_status'][status] += 1
+            
+            result = {
+                'employee': employee,
+                'organized_files': organized_files,
+                'statistics': file_statistics,
+                'organization_type': organization_type,
+                'generated_at': timezone.now()
+            }
+            
+            # Cache for 15 minutes
+            cache.set(cache_key, result, 900)
+            
+            return result
+            
+        except EmployeeEnhanced.DoesNotExist:
+            raise ValidationError("الموظف غير موجود")
+        except Exception as e:
+            logger.error(f"Error organizing enhanced employee files {employee_id}: {e}")
+            raise ValidationError(f"خطأ في تنظيم الملفات: {e}")
+    
+    def search_files_advanced(self, search_params, user=None):
+        """البحث المتقدم في الملفات"""
+        try:
+            from ..models.employee.employee_file_models import EmployeeFileEnhanced
+            
+            # Build cache key
+            cache_key = f"file_search_enhanced_{hashlib.md5(json.dumps(search_params, sort_keys=True).encode()).hexdigest()}"
+            cached_result = cache.get(cache_key)
+            
+            if cached_result:
+                return cached_result
+            
+            queryset = EmployeeFileEnhanced.objects.select_related(
+                'employee', 'uploaded_by'
+            ).filter(is_deleted=False)
+            
+            # Apply security filters
+            queryset = self._apply_file_security_filters(queryset, user)
+            
+            # Text search
+            if search_params.get('search_text'):
+                search_text = search_params['search_text']
+                queryset = queryset.filter(
+                    Q(title__icontains=search_text) |
+                    Q(description__icontains=search_text) |
+                    Q(original_filename__icontains=search_text) |
+                    Q(document_number__icontains=search_text) |
+                    Q(issuing_authority__icontains=search_text) |
+                    Q(tags__icontains=search_text)
+                )
+            
+            # Employee filter
+            if search_params.get('employee_ids'):
+                queryset = queryset.filter(employee_id__in=search_params['employee_ids'])
+            
+            # File type filter
+            if search_params.get('file_types'):
+                queryset = queryset.filter(file_type__in=search_params['file_types'])
+            
+            # Confidentiality level filter
+            if search_params.get('confidentiality_levels'):
+                queryset = queryset.filter(confidentiality_level__in=search_params['confidentiality_levels'])
+            
+            # Status filter
+            if search_params.get('statuses'):
+                queryset = queryset.filter(status__in=search_params['statuses'])
+            
+            # Date range filters
+            if search_params.get('uploaded_from'):
+                queryset = queryset.filter(uploaded_at__gte=search_params['uploaded_from'])
+            if search_params.get('uploaded_to'):
+                queryset = queryset.filter(uploaded_at__lte=search_params['uploaded_to'])
+            
+            if search_params.get('document_date_from'):
+                queryset = queryset.filter(document_date__gte=search_params['document_date_from'])
+            if search_params.get('document_date_to'):
+                queryset = queryset.filter(document_date__lte=search_params['document_date_to'])
+            
+            # Expiry date filters
+            if search_params.get('expiry_from'):
+                queryset = queryset.filter(expiry_date__gte=search_params['expiry_from'])
+            if search_params.get('expiry_to'):
+                queryset = queryset.filter(expiry_date__lte=search_params['expiry_to'])
+            
+            # File size filter
+            if search_params.get('min_size'):
+                queryset = queryset.filter(file_size__gte=search_params['min_size'])
+            if search_params.get('max_size'):
+                queryset = queryset.filter(file_size__lte=search_params['max_size'])
+            
+            # Uploaded by filter
+            if search_params.get('uploaded_by_ids'):
+                queryset = queryset.filter(uploaded_by_id__in=search_params['uploaded_by_ids'])
+            
+            # Tags filter
+            if search_params.get('tags'):
+                for tag in search_params['tags']:
+                    queryset = queryset.filter(tags__icontains=tag)
+            
+            # Expiring soon filter
+            if search_params.get('expiring_soon_days'):
+                expiry_date = date.today() + timedelta(days=search_params['expiring_soon_days'])
+                queryset = queryset.filter(
+                    expiry_date__lte=expiry_date,
+                    expiry_date__gte=date.today()
+                )
+            
+            # Expired filter
+            if search_params.get('include_expired') is False:
+                queryset = queryset.exclude(expiry_date__lt=date.today())
+            elif search_params.get('only_expired'):
+                queryset = queryset.filter(expiry_date__lt=date.today())
+            
+            # Ordering
+            order_by = search_params.get('order_by', '-uploaded_at')
+            if search_params.get('order_desc'):
+                if not order_by.startswith('-'):
+                    order_by = f'-{order_by}'
+            queryset = queryset.order_by(order_by)
+            
+            # Pagination
+            page = search_params.get('page', 1)
+            page_size = min(search_params.get('page_size', 50), 200)
+            start = (page - 1) * page_size
+            end = start + page_size
+            
+            total_count = queryset.count()
+            files = list(queryset[start:end])
+            
+            result = {
+                'files': files,
+                'total_count': total_count,
+                'page': page,
+                'page_size': page_size,
+                'total_pages': (total_count + page_size - 1) // page_size,
+                'has_next': end < total_count,
+                'has_previous': page > 1,
+                'search_params': search_params
+            }
+            
+            # Cache for 5 minutes
+            cache.set(cache_key, result, 300)
+            
+            return result
+            
+        except Exception as e:
+            logger.error(f"Error in advanced file search: {e}")
+            raise ValidationError(f"خطأ في البحث المتقدم: {e}")
+    
+    def bulk_file_operations(self, operation_type, file_ids, operation_data=None, user=None):
+        """العمليات المجمعة على الملفات"""
+        try:
+            from ..models.employee.employee_file_models import EmployeeFileEnhanced
+            
+            if len(file_ids) > 100:  # Limit bulk operations
+                raise ValidationError("عدد الملفات يتجاوز الحد الأقصى (100)")
+            
+            files = EmployeeFileEnhanced.objects.filter(
+                id__in=file_ids, is_deleted=False
+            )
+            
+            # Check permissions
+            for file in files:
+                if not self._can_user_modify_file(user, file):
+                    raise ValidationError(f"ليس لديك صلاحية لتعديل الملف: {file.title}")
+            
+            success_count = 0
+            errors = []
+            
+            with transaction.atomic():
+                for file in files:
+                    try:
+                        if operation_type == 'delete':
+                            file.is_deleted = True
+                            file.deleted_at = timezone.now()
+                            file.deleted_by = user
+                            file.save()
+                            
+                        elif operation_type == 'approve':
+                            file.status = 'approved'
+                            file.approved_by = user
+                            file.approved_at = timezone.now()
+                            file.save()
+                            
+                        elif operation_type == 'reject':
+                            file.status = 'rejected'
+                            file.rejection_reason = operation_data.get('reason', '')
+                            file.save()
+                            
+                        elif operation_type == 'update_confidentiality':
+                            new_level = operation_data.get('confidentiality_level')
+                            if new_level in self.CONFIDENTIALITY_LEVELS:
+                                file.confidentiality_level = new_level
+                                file.save()
+                            else:
+                                errors.append(f"مستوى السرية غير صحيح للملف {file.title}")
+                                continue
+                                
+                        elif operation_type == 'add_tags':
+                            new_tags = operation_data.get('tags', [])
+                            existing_tags = file.tags or []
+                            file.tags = list(set(existing_tags + new_tags))
+                            file.save()
+                            
+                        elif operation_type == 'remove_tags':
+                            tags_to_remove = operation_data.get('tags', [])
+                            existing_tags = file.tags or []
+                            file.tags = [tag for tag in existing_tags if tag not in tags_to_remove]
+                            file.save()
+                            
+                        elif operation_type == 'update_expiry':
+                            new_expiry = operation_data.get('expiry_date')
+                            if new_expiry:
+                                file.expiry_date = new_expiry
+                                file.save()
+                        
+                        success_count += 1
+                        
+                    except Exception as e:
+                        errors.append(f"خطأ في معالجة الملف {file.title}: {e}")
+            
+            # Clear cache
+            self._clear_file_cache()
+            
+            return {
+                'success_count': success_count,
+                'total_files': len(file_ids),
+                'errors': errors,
+                'operation_type': operation_type
+            }
+            
+        except Exception as e:
+            logger.error(f"Error in bulk file operations: {e}")
+            raise ValidationError(f"خطأ في العمليات المجمعة: {e}")
+    
+    # =============================================================================
+    # HELPER METHODS
+    # =============================================================================
+    
+    def _clear_file_cache(self, employee_id=None):
+        """مسح ذاكرة التخزين المؤقت للملفات"""
+        if employee_id:
+            cache.delete_many([
+                f"employee_files_organized_{employee_id}_type",
+                f"employee_files_organized_{employee_id}_date",
+                f"employee_files_organized_{employee_id}_confidentiality",
+                f"employee_files_organized_{employee_id}_status",
+            ])
+        else:
+            # Clear all file-related cache
+            cache.clear()
+    
+    def _apply_file_security_filters(self, queryset, user):
+        """تطبيق فلاتر الأمان على الملفات"""
+        if not user:
+            return queryset.none()
+        
+        if user.is_superuser:
+            return queryset
+        
+        # Apply confidentiality level filtering
+        if hasattr(user, 'profile'):
+            max_level = user.profile.max_confidentiality_level or 2
+            return queryset.filter(confidentiality_level__lte=max_level)
+        
+        return queryset.filter(confidentiality_level__in=['public', 'internal'])
+    
+    def _can_user_modify_file(self, user, file):
+        """التحقق من صلاحية المستخدم لتعديل الملف"""
+        if not user:
+            return False
+        
+        if user.is_superuser:
+            return True
+        
+        # File owner can modify
+        if file.uploaded_by == user:
+            return True
+        
+        # HR users can modify
+        if user.has_perm('Hr.change_employeefileenhanced'):
+            return True
+        
+        return False
                 'expired_count': 0,
                 'expiring_soon_count': 0,
                 'encrypted_count': 0

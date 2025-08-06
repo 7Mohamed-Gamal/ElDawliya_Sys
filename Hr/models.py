@@ -341,7 +341,7 @@ class EmployeeShiftAssignment(models.Model):
     start_date = models.DateField(verbose_name=_('تاريخ البداية'))
     end_date = models.DateField(blank=True, null=True, verbose_name=_('تاريخ النهاية'))
     is_active = models.BooleanField(default=True, verbose_name=_('نشط'))
-    created_by = models.ForeignKey('accounts.Users_Login_New', on_delete=models.PROTECT, verbose_name=_('تم الإنشاء بواسطة'))
+    created_by = models.ForeignKey('accounts.Users_Login_New', on_delete=models.PROTECT, related_name='created_shift_assignments_legacy', verbose_name=_('تم الإنشاء بواسطة'))
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('تاريخ الإنشاء'))
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_('تاريخ التحديث'))
 

@@ -1,304 +1,218 @@
-{% extends 'Hr/base_modern.html' %}
+{% extends 'Hr/base_hr_modern.html' %}
 {% load static %}
 
 {% block title %}لوحة التحكم - نظام الموارد البشرية{% endblock %}
 
+{% block page_title %}لوحة التحكم{% endblock %}
+{% block page_subtitle %}نظرة شاملة على نظام الموارد البشرية{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active">لوحة التحكم</li>
+{% endblock %}
+
+{% block page_actions %}
+<div class="d-flex gap-2">
+    <button class="btn btn-outline-primary btn-sm" data-bs-toggle="modal" data-bs-target="#quick-actions-modal">
+        <i class="fas fa-bolt me-1"></i>
+        إجراءات سريعة
+    </button>
+    <div class="dropdown">
+        <button class="btn btn-primary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+            <i class="fas fa-plus me-1"></i>
+            إضافة جديد
+        </button>
+        <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="{% url 'Hr:employee_add' %}">
+                <i class="fas fa-user-plus me-2"></i>موظف جديد
+            </a></li>
+            <li><a class="dropdown-item" href="#">
+                <i class="fas fa-calendar-plus me-2"></i>طلب إجازة
+            </a></li>
+            <li><a class="dropdown-item" href="#">
+                <i class="fas fa-file-plus me-2"></i>تقرير جديد
+            </a></li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
 {% block extra_css %}
 <style>
-    .dashboard-stats {
-        margin-bottom: var(--spacing-xl);
-    }
-    
-    .stat-card {
-        background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
-        color: var(--text-white);
-        border: none;
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .stat-card::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        right: -50%;
-        width: 100%;
-        height: 100%;
-        background: rgba(255, 255, 255, 0.1);
-        border-radius: 50%;
-        transform: scale(0);
-        transition: transform var(--transition-slow);
-    }
-    
-    .stat-card:hover::before {
-        transform: scale(2);
-    }
-    
-    .stat-card.success {
-        background: linear-gradient(135deg, var(--success-color), #059669);
-    }
-    
-    .stat-card.warning {
-        background: linear-gradient(135deg, var(--warning-color), #d97706);
-    }
-    
-    .stat-card.danger {
-        background: linear-gradient(135deg, var(--error-color), #dc2626);
-    }
-    
-    .stat-icon {
-        font-size: 2.5rem;
-        opacity: 0.8;
-    }
-    
-    .stat-number {
+.dashboard-card {
+    transition: all 0.3s ease;
+    border: none;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.stat-card {
+    background: linear-gradient(135deg, var(--primary-50) 0%, var(--primary-100) 100%);
+    border-left: 4px solid var(--primary-600);
+}
+
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--primary-700);
+}
+
+.stat-change.positive {
+    color: var(--success-600);
+}
+
+.stat-change.negative {
+    color: var(--error-600);
+}
+
+.chart-container {
+    position: relative;
+    height: 300px;
+}
+
+.quick-action-card {
+    transition: all 0.2s ease;
+    cursor: pointer;
+    border: 2px solid transparent;
+}
+
+.quick-action-card:hover {
+    border-color: var(--primary-300);
+    background-color: var(--primary-50);
+    transform: scale(1.02);
+}
+
+.recent-activity-item {
+    padding: 1rem;
+    border-bottom: 1px solid var(--secondary-100);
+    transition: background-color 0.2s ease;
+}
+
+.recent-activity-item:hover {
+    background-color: var(--secondary-50);
+}
+
+.recent-activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.875rem;
+}
+
+.weather-widget {
+    background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+    color: white;
+    border-radius: 15px;
+}
+
+.time-widget {
+    background: linear-gradient(135deg, #fd79a8 0%, #e84393 100%);
+    color: white;
+    border-radius: 15px;
+}
+
+@media (max-width: 768px) {
+    .stat-value {
         font-size: 2rem;
-        font-weight: 700;
-        margin: var(--spacing-sm) 0;
-    }
-    
-    .stat-label {
-        font-size: var(--font-size-sm);
-        opacity: 0.9;
     }
     
     .chart-container {
-        position: relative;
-        height: 300px;
+        height: 250px;
     }
-    
-    .quick-actions {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: var(--spacing-md);
-        margin-bottom: var(--spacing-xl);
-    }
-    
-    .action-card {
-        text-align: center;
-        padding: var(--spacing-xl);
-        transition: all var(--transition-normal);
-        border: 2px solid transparent;
-    }
-    
-    .action-card:hover {
-        border-color: var(--primary-color);
-        transform: translateY(-5px);
-    }
-    
-    .action-icon {
-        font-size: 3rem;
-        color: var(--primary-color);
-        margin-bottom: var(--spacing-md);
-    }
-    
-    .recent-activities {
-        max-height: 400px;
-        overflow-y: auto;
-    }
-    
-    .activity-item {
-        display: flex;
-        align-items: center;
-        padding: var(--spacing-md);
-        border-bottom: 1px solid var(--border-light);
-        transition: background-color var(--transition-fast);
-    }
-    
-    .activity-item:hover {
-        background-color: var(--bg-tertiary);
-    }
-    
-    .activity-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-left: var(--spacing-md);
-        font-size: var(--font-size-sm);
-    }
-    
-    .activity-icon.success {
-        background-color: rgb(16 185 129 / 0.1);
-        color: var(--success-color);
-    }
-    
-    .activity-icon.warning {
-        background-color: rgb(245 158 11 / 0.1);
-        color: var(--warning-color);
-    }
-    
-    .activity-icon.info {
-        background-color: rgb(6 182 212 / 0.1);
-        color: var(--info-color);
-    }
-    
-    .activity-content {
-        flex: 1;
-    }
-    
-    .activity-title {
-        font-weight: 500;
-        margin-bottom: var(--spacing-xs);
-    }
-    
-    .activity-description {
-        font-size: var(--font-size-sm);
-        color: var(--text-secondary);
-        margin-bottom: var(--spacing-xs);
-    }
-    
-    .activity-time {
-        font-size: var(--font-size-xs);
-        color: var(--text-muted);
-    }
-    
-    .upcoming-events {
-        max-height: 350px;
-        overflow-y: auto;
-    }
-    
-    .event-item {
-        display: flex;
-        align-items: center;
-        padding: var(--spacing-md);
-        border-right: 4px solid var(--primary-color);
-        margin-bottom: var(--spacing-sm);
-        background-color: var(--bg-primary);
-        border-radius: var(--radius-md);
-    }
-    
-    .event-date {
-        text-align: center;
-        margin-left: var(--spacing-md);
-        min-width: 60px;
-    }
-    
-    .event-day {
-        font-size: var(--font-size-xl);
-        font-weight: 700;
-        color: var(--primary-color);
-    }
-    
-    .event-month {
-        font-size: var(--font-size-xs);
-        color: var(--text-muted);
-        text-transform: uppercase;
-    }
-    
-    .event-content {
-        flex: 1;
-    }
-    
-    .event-title {
-        font-weight: 500;
-        margin-bottom: var(--spacing-xs);
-    }
-    
-    .event-description {
-        font-size: var(--font-size-sm);
-        color: var(--text-secondary);
-    }
+}
 </style>
 {% endblock %}
 
-{% block page_header %}
-<div class="page-header mb-4">
-    <div class="row align-items-center">
-        <div class="col">
-            <h1 class="page-title">
-                <i class="fas fa-tachometer-alt me-2"></i>
-                لوحة التحكم
-            </h1>
-            <p class="page-subtitle text-muted">نظرة عامة على نظام الموارد البشرية</p>
-        </div>
-        <div class="col-auto">
-            <div class="page-actions">
-                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#quickAddModal">
-                    <i class="fas fa-plus me-2"></i>
-                    إضافة سريعة
-                </button>
-                <div class="dropdown d-inline-block ms-2">
-                    <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                        <i class="fas fa-download me-2"></i>
-                        تصدير التقارير
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#"><i class="fas fa-file-pdf me-2"></i>تقرير PDF</a></li>
-                        <li><a class="dropdown-item" href="#"><i class="fas fa-file-excel me-2"></i>تقرير Excel</a></li>
-                        <li><a class="dropdown-item" href="#"><i class="fas fa-file-csv me-2"></i>تقرير CSV</a></li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
-
 {% block content %}
-<!-- إحصائيات سريعة -->
-<div class="dashboard-stats">
-    <div class="row">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card stat-card">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col">
-                            <div class="stat-number">{{ total_employees|default:0 }}</div>
-                            <div class="stat-label">إجمالي الموظفين</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-users stat-icon"></i>
+<!-- الإحصائيات الرئيسية -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card dashboard-card stat-card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-primary-100 text-primary-600 rounded-circle p-3 me-3">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="stat-value">{{ total_employees|default:0 }}</div>
+                        <div class="stat-title text-muted mb-1">إجمالي الموظفين</div>
+                        <div class="stat-change positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+5.2%</span>
+                            <small class="text-muted">من الشهر الماضي</small>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card stat-card success">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col">
-                            <div class="stat-number">{{ present_today|default:0 }}</div>
-                            <div class="stat-label">حاضر اليوم</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-user-check stat-icon"></i>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card dashboard-card h-100" style="background: linear-gradient(135deg, var(--success-50) 0%, var(--success-100) 100%); border-left: 4px solid var(--success-600);">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-success-100 text-success-600 rounded-circle p-3 me-3">
+                        <i class="fas fa-user-check fa-2x"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="stat-value text-success-700">{{ present_today|default:0 }}</div>
+                        <div class="stat-title text-muted mb-1">الحضور اليوم</div>
+                        <div class="stat-change positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+2.1%</span>
+                            <small class="text-muted">من أمس</small>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card stat-card warning">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col">
-                            <div class="stat-number">{{ on_leave_today|default:0 }}</div>
-                            <div class="stat-label">في إجازة</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-calendar-times stat-icon"></i>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card dashboard-card h-100" style="background: linear-gradient(135deg, var(--warning-50) 0%, var(--warning-100) 100%); border-left: 4px solid var(--warning-600);">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-warning-100 text-warning-600 rounded-circle p-3 me-3">
+                        <i class="fas fa-calendar-times fa-2x"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="stat-value text-warning-700">{{ pending_leaves|default:0 }}</div>
+                        <div class="stat-title text-muted mb-1">طلبات الإجازات المعلقة</div>
+                        <div class="stat-change negative">
+                            <i class="fas fa-arrow-down"></i>
+                            <span>-1.3%</span>
+                            <small class="text-muted">من الأسبوع الماضي</small>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card stat-card danger">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col">
-                            <div class="stat-number">{{ pending_requests|default:0 }}</div>
-                            <div class="stat-label">طلبات معلقة</div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-clock stat-icon"></i>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card dashboard-card h-100" style="background: linear-gradient(135deg, var(--info-50) 0%, var(--info-100) 100%); border-left: 4px solid var(--info-600);">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-info-100 text-info-600 rounded-circle p-3 me-3">
+                        <i class="fas fa-money-bill-wave fa-2x"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="stat-value text-info-700">{{ monthly_payroll|default:0|floatformat:0 }}</div>
+                        <div class="stat-title text-muted mb-1">إجمالي الرواتب الشهرية</div>
+                        <div class="stat-change positive">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>+3.7%</span>
+                            <small class="text-muted">من الشهر الماضي</small>
                         </div>
                     </div>
                 </div>
@@ -307,52 +221,28 @@
     </div>
 </div>
 
-<!-- إجراءات سريعة -->
-<div class="quick-actions">
-    <div class="card action-card">
-        <div class="card-body">
-            <i class="fas fa-user-plus action-icon"></i>
-            <h6 class="card-title">إضافة موظف</h6>
-            <p class="card-text">إضافة موظف جديد للنظام</p>
-            <a href="{% url 'Hr:employee_add' %}" class="btn btn-primary btn-sm">إضافة</a>
-        </div>
-    </div>
-    
-    <div class="card action-card">
-        <div class="card-body">
-            <i class="fas fa-clock action-icon"></i>
-            <h6 class="card-title">تسجيل حضور</h6>
-            <p class="card-text">تسجيل حضور وانصراف الموظفين</p>
-            <a href="{% url 'Hr:attendance_records' %}" class="btn btn-primary btn-sm">تسجيل</a>
-        </div>
-    </div>
-    
-    <div class="card action-card">
-        <div class="card-body">
-            <i class="fas fa-calendar-plus action-icon"></i>
-            <h6 class="card-title">طلب إجازة</h6>
-            <p class="card-text">تقديم طلب إجازة جديد</p>
-            <a href="{% url 'Hr:leave_requests' %}" class="btn btn-primary btn-sm">طلب</a>
-        </div>
-    </div>
-    
-    <div class="card action-card">
-        <div class="card-body">
-            <i class="fas fa-money-bill-wave action-icon"></i>
-            <h6 class="card-title">حساب راتب</h6>
-            <p class="card-text">حساب وإنتاج كشوف الرواتب</p>
-            <a href="{% url 'Hr:payroll_calculator' %}" class="btn btn-primary btn-sm">حساب</a>
-        </div>
-    </div>
-</div>
-
-<!-- المحتوى الرئيسي -->
-<div class="row">
-    <!-- الرسوم البيانية -->
-    <div class="col-xl-8 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h6 class="card-title mb-0">إحصائيات الحضور الشهرية</h6>
+<!-- الصف الثاني - الرسوم البيانية والأنشطة -->
+<div class="row mb-4">
+    <!-- رسم بياني للحضور -->
+    <div class="col-xl-8 col-lg-7 mb-4">
+        <div class="card dashboard-card h-100">
+            <div class="card-header bg-white border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-line text-primary me-2"></i>
+                        إحصائيات الحضور الأسبوعية
+                    </h5>
+                    <div class="dropdown">
+                        <button class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                            آخر 7 أيام
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#">آخر 7 أيام</a></li>
+                            <li><a class="dropdown-item" href="#">آخر 30 يوم</a></li>
+                            <li><a class="dropdown-item" href="#">آخر 3 أشهر</a></li>
+                        </ul>
+                    </div>
+                </div>
             </div>
             <div class="card-body">
                 <div class="chart-container">
@@ -362,102 +252,137 @@
         </div>
     </div>
     
-    <!-- الأحداث القادمة -->
-    <div class="col-xl-4 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h6 class="card-title mb-0">الأحداث القادمة</h6>
+    <!-- الأنشطة الأخيرة -->
+    <div class="col-xl-4 col-lg-5 mb-4">
+        <div class="card dashboard-card h-100">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history text-info me-2"></i>
+                    الأنشطة الأخيرة
+                </h5>
             </div>
-            <div class="card-body p-0">
-                <div class="upcoming-events">
-                    <div class="event-item">
-                        <div class="event-date">
-                            <div class="event-day">15</div>
-                            <div class="event-month">ديسمبر</div>
+            <div class="card-body p-0" style="max-height: 350px; overflow-y: auto;">
+                <div class="recent-activity-item">
+                    <div class="d-flex align-items-center">
+                        <div class="activity-icon bg-success-100 text-success-600 me-3">
+                            <i class="fas fa-user-plus"></i>
                         </div>
-                        <div class="event-content">
-                            <div class="event-title">اجتماع الإدارة الشهري</div>
-                            <div class="event-description">مراجعة أداء الموظفين والخطط المستقبلية</div>
-                        </div>
-                    </div>
-                    
-                    <div class="event-item">
-                        <div class="event-date">
-                            <div class="event-day">20</div>
-                            <div class="event-month">ديسمبر</div>
-                        </div>
-                        <div class="event-content">
-                            <div class="event-title">صرف الرواتب</div>
-                            <div class="event-description">موعد صرف رواتب شهر ديسمبر</div>
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold">تم إضافة موظف جديد</div>
+                            <div class="text-muted small">أحمد محمد - قسم المبيعات</div>
+                            <div class="text-muted small">منذ 5 دقائق</div>
                         </div>
                     </div>
-                    
-                    <div class="event-item">
-                        <div class="event-date">
-                            <div class="event-day">25</div>
-                            <div class="event-month">ديسمبر</div>
+                </div>
+                
+                <div class="recent-activity-item">
+                    <div class="d-flex align-items-center">
+                        <div class="activity-icon bg-info-100 text-info-600 me-3">
+                            <i class="fas fa-calendar-check"></i>
                         </div>
-                        <div class="event-content">
-                            <div class="event-title">إجازة رسمية</div>
-                            <div class="event-description">عطلة رأس السنة الميلادية</div>
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold">تم الموافقة على إجازة</div>
+                            <div class="text-muted small">سارة أحمد - إجازة سنوية</div>
+                            <div class="text-muted small">منذ 15 دقيقة</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="recent-activity-item">
+                    <div class="d-flex align-items-center">
+                        <div class="activity-icon bg-warning-100 text-warning-600 me-3">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold">تأخير في الحضور</div>
+                            <div class="text-muted small">محمد علي - تأخر 30 دقيقة</div>
+                            <div class="text-muted small">منذ ساعة</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="recent-activity-item">
+                    <div class="d-flex align-items-center">
+                        <div class="activity-icon bg-primary-100 text-primary-600 me-3">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold">تم إنشاء تقرير جديد</div>
+                            <div class="text-muted small">تقرير الحضور الشهري</div>
+                            <div class="text-muted small">منذ ساعتين</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="recent-activity-item">
+                    <div class="d-flex align-items-center">
+                        <div class="activity-icon bg-error-100 text-error-600 me-3">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold">تنبيه انتهاء صلاحية</div>
+                            <div class="text-muted small">هوية فاطمة خالد تنتهي خلال 30 يوم</div>
+                            <div class="text-muted small">منذ 3 ساعات</div>
                         </div>
                     </div>
                 </div>
             </div>
+            <div class="card-footer bg-white border-top text-center">
+                <a href="#" class="text-primary text-decoration-none">
+                    عرض جميع الأنشطة
+                    <i class="fas fa-arrow-left ms-1"></i>
+                </a>
+            </div>
         </div>
     </div>
-</div>
-
-<div class="row">
-    <!-- الأنشطة الأخيرة -->
-    <div class="col-xl-6 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h6 class="card-title mb-0">الأنشطة الأخيرة</h6>
+</div><!-- الصف 
+الثالث - الإجراءات السريعة والمعلومات الإضافية -->
+<div class="row mb-4">
+    <!-- الإجراءات السريعة -->
+    <div class="col-xl-6 col-lg-6 mb-4">
+        <div class="card dashboard-card h-100">
+            <div class="card-header bg-white border-bottom">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bolt text-warning me-2"></i>
+                    الإجراءات السريعة
+                </h5>
             </div>
-            <div class="card-body p-0">
-                <div class="recent-activities">
-                    <div class="activity-item">
-                        <div class="activity-icon success">
-                            <i class="fas fa-user-plus"></i>
-                        </div>
-                        <div class="activity-content">
-                            <div class="activity-title">تم إضافة موظف جديد</div>
-                            <div class="activity-description">أحمد محمد - قسم التسويق</div>
-                            <div class="activity-time">منذ 5 دقائق</div>
-                        </div>
-                    </div>
-                    
-                    <div class="activity-item">
-                        <div class="activity-icon warning">
-                            <i class="fas fa-calendar-times"></i>
-                        </div>
-                        <div class="activity-content">
-                            <div class="activity-title">طلب إجازة جديد</div>
-                            <div class="activity-description">سارة أحمد - إجازة مرضية</div>
-                            <div class="activity-time">منذ ساعة</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="quick-action-card card text-center p-3">
+                            <div class="card-body">
+                                <i class="fas fa-user-plus fa-2x text-primary mb-2"></i>
+                                <h6 class="card-title">إضافة موظف</h6>
+                                <p class="card-text small text-muted">إضافة موظف جديد للنظام</p>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="activity-item">
-                        <div class="activity-icon info">
-                            <i class="fas fa-clock"></i>
-                        </div>
-                        <div class="activity-content">
-                            <div class="activity-title">تسجيل حضور</div>
-                            <div class="activity-description">محمد علي - وصل في الوقت المحدد</div>
-                            <div class="activity-time">منذ ساعتين</div>
+                    <div class="col-6">
+                        <div class="quick-action-card card text-center p-3">
+                            <div class="card-body">
+                                <i class="fas fa-calendar-plus fa-2x text-success mb-2"></i>
+                                <h6 class="card-title">طلب إجازة</h6>
+                                <p class="card-text small text-muted">تقديم طلب إجازة جديد</p>
+                            </div>
                         </div>
                     </div>
-                    
-                    <div class="activity-item">
-                        <div class="activity-icon success">
-                            <i class="fas fa-check-circle"></i>
+                    <div class="col-6">
+                        <div class="quick-action-card card text-center p-3">
+                            <div class="card-body">
+                                <i class="fas fa-chart-bar fa-2x text-info mb-2"></i>
+                                <h6 class="card-title">إنشاء تقرير</h6>
+                                <p class="card-text small text-muted">إنشاء تقرير مخصص</p>
+                            </div>
                         </div>
-                        <div class="activity-content">
-                            <div class="activity-title">تم اعتماد طلب إجازة</div>
-                            <div class="activity-description">فاطمة محمد - إجازة سنوية</div>
-                            <div class="activity-time">منذ 3 ساعات</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="quick-action-card card text-center p-3">
+                            <div class="card-body">
+                                <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                                <h6 class="card-title">تسجيل الحضور</h6>
+                                <p class="card-text small text-muted">تسجيل حضور يدوي</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -465,46 +390,114 @@
         </div>
     </div>
     
-    <!-- إحصائيات الأقسام -->
-    <div class="col-xl-6 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h6 class="card-title mb-0">توزيع الموظفين حسب الأقسام</h6>
+    <!-- معلومات إضافية -->
+    <div class="col-xl-6 col-lg-6 mb-4">
+        <div class="row g-3 h-100">
+            <!-- ويدجت الطقس -->
+            <div class="col-12">
+                <div class="card weather-widget text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title mb-1">الطقس اليوم</h6>
+                                <div class="d-flex align-items-center">
+                                    <i class="fas fa-sun fa-2x me-3"></i>
+                                    <div>
+                                        <div class="h4 mb-0">28°C</div>
+                                        <small>مشمس</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <div class="small">الرياض</div>
+                                <div class="small">الرطوبة: 45%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                <div class="chart-container">
-                    <canvas id="departmentChart"></canvas>
+            
+            <!-- ويدجت الوقت -->
+            <div class="col-12">
+                <div class="card time-widget text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="card-title mb-1">الوقت الحالي</h6>
+                                <div class="h4 mb-0" id="current-time-display">--:--</div>
+                                <small id="current-date-display">--</small>
+                            </div>
+                            <div class="text-end">
+                                <i class="fas fa-clock fa-3x opacity-50"></i>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- تنبيهات مهمة -->
-<div class="row">
+<!-- الصف الرابع - التقارير السريعة -->
+<div class="row mb-4">
     <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h6 class="card-title mb-0">تنبيهات مهمة</h6>
+        <div class="card dashboard-card">
+            <div class="card-header bg-white border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-pie text-success me-2"></i>
+                        توزيع الموظفين حسب الأقسام
+                    </h5>
+                    <button class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-expand-arrows-alt me-1"></i>
+                        عرض مفصل
+                    </button>
+                </div>
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-md-4">
-                        <div class="alert alert-warning">
-                            <i class="fas fa-exclamation-triangle me-2"></i>
-                            <strong>{{ expiring_documents|default:0 }}</strong> وثيقة ستنتهي خلال 30 يوم
+                    <div class="col-lg-8">
+                        <div class="chart-container">
+                            <canvas id="departmentChart"></canvas>
                         </div>
                     </div>
-                    <div class="col-md-4">
-                        <div class="alert alert-info">
-                            <i class="fas fa-calendar-check me-2"></i>
-                            <strong>{{ pending_evaluations|default:0 }}</strong> تقييم معلق
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="alert alert-success">
-                            <i class="fas fa-birthday-cake me-2"></i>
-                            <strong>{{ birthdays_this_month|default:0 }}</strong> عيد ميلاد هذا الشهر
+                    <div class="col-lg-4">
+                        <div class="department-stats">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-primary rounded-circle me-2" style="width: 12px; height: 12px;"></div>
+                                    <span>المبيعات</span>
+                                </div>
+                                <span class="fw-bold">45 موظف</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-success rounded-circle me-2" style="width: 12px; height: 12px;"></div>
+                                    <span>التسويق</span>
+                                </div>
+                                <span class="fw-bold">32 موظف</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-warning rounded-circle me-2" style="width: 12px; height: 12px;"></div>
+                                    <span>تقنية المعلومات</span>
+                                </div>
+                                <span class="fw-bold">28 موظف</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-info rounded-circle me-2" style="width: 12px; height: 12px;"></div>
+                                    <span>الموارد البشرية</span>
+                                </div>
+                                <span class="fw-bold">15 موظف</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-secondary rounded-circle me-2" style="width: 12px; height: 12px;"></div>
+                                    <span>المحاسبة</span>
+                                </div>
+                                <span class="fw-bold">12 موظف</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -512,42 +505,75 @@
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block modals %}
-<!-- نافذة الإضافة السريعة -->
-<div class="modal fade" id="quickAddModal" tabindex="-1">
-    <div class="modal-dialog">
+<!-- نافذة الإجراءات السريعة -->
+<div class="modal fade" id="quick-actions-modal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">إضافة سريعة</h5>
+                <h5 class="modal-title">
+                    <i class="fas fa-bolt text-warning me-2"></i>
+                    الإجراءات السريعة
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <div class="row">
-                    <div class="col-6 mb-3">
-                        <a href="{% url 'Hr:employee_add' %}" class="btn btn-outline-primary w-100">
-                            <i class="fas fa-user-plus d-block mb-2" style="font-size: 2rem;"></i>
-                            إضافة موظف
+                <div class="row g-3">
+                    <div class="col-md-4">
+                        <a href="{% url 'Hr:employee_add' %}" class="text-decoration-none">
+                            <div class="card quick-action-card text-center h-100">
+                                <div class="card-body">
+                                    <i class="fas fa-user-plus fa-3x text-primary mb-3"></i>
+                                    <h6 class="card-title">إضافة موظف جديد</h6>
+                                    <p class="card-text small text-muted">إضافة موظف جديد مع جميع البيانات المطلوبة</p>
+                                </div>
+                            </div>
                         </a>
                     </div>
-                    <div class="col-6 mb-3">
-                        <a href="{% url 'Hr:leave_requests' %}" class="btn btn-outline-success w-100">
-                            <i class="fas fa-calendar-plus d-block mb-2" style="font-size: 2rem;"></i>
-                            طلب إجازة
-                        </a>
+                    <div class="col-md-4">
+                        <div class="card quick-action-card text-center h-100">
+                            <div class="card-body">
+                                <i class="fas fa-calendar-plus fa-3x text-success mb-3"></i>
+                                <h6 class="card-title">طلب إجازة</h6>
+                                <p class="card-text small text-muted">تقديم طلب إجازة جديد للموظفين</p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-6 mb-3">
-                        <a href="{% url 'Hr:departments' %}" class="btn btn-outline-info w-100">
-                            <i class="fas fa-sitemap d-block mb-2" style="font-size: 2rem;"></i>
-                            إضافة قسم
-                        </a>
+                    <div class="col-md-4">
+                        <div class="card quick-action-card text-center h-100">
+                            <div class="card-body">
+                                <i class="fas fa-clock fa-3x text-warning mb-3"></i>
+                                <h6 class="card-title">تسجيل حضور</h6>
+                                <p class="card-text small text-muted">تسجيل حضور أو انصراف يدوي</p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-6 mb-3">
-                        <a href="{% url 'Hr:shift_management' %}" class="btn btn-outline-warning w-100">
-                            <i class="fas fa-clock d-block mb-2" style="font-size: 2rem;"></i>
-                            إضافة وردية
-                        </a>
+                    <div class="col-md-4">
+                        <div class="card quick-action-card text-center h-100">
+                            <div class="card-body">
+                                <i class="fas fa-chart-bar fa-3x text-info mb-3"></i>
+                                <h6 class="card-title">إنشاء تقرير</h6>
+                                <p class="card-text small text-muted">إنشاء تقرير مخصص للبيانات</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card quick-action-card text-center h-100">
+                            <div class="card-body">
+                                <i class="fas fa-money-bill-wave fa-3x text-success mb-3"></i>
+                                <h6 class="card-title">حساب الراتب</h6>
+                                <p class="card-text small text-muted">حساب راتب موظف معين</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card quick-action-card text-center h-100">
+                            <div class="card-body">
+                                <i class="fas fa-cog fa-3x text-secondary mb-3"></i>
+                                <h6 class="card-title">إعدادات النظام</h6>
+                                <p class="card-text small text-muted">الوصول السريع لإعدادات النظام</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -557,20 +583,52 @@
 {% endblock %}
 
 {% block extra_js %}
+<!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // تحديث الوقت والتاريخ
+    function updateDateTime() {
+        const now = new Date();
+        const timeOptions = {
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+        };
+        const dateOptions = {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        };
+        
+        document.getElementById('current-time-display').textContent = now.toLocaleTimeString('ar-SA', timeOptions);
+        document.getElementById('current-date-display').textContent = now.toLocaleDateString('ar-SA', dateOptions);
+    }
+    
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+    
     // رسم بياني للحضور
     const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
     new Chart(attendanceCtx, {
         type: 'line',
         data: {
-            labels: ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو'],
+            labels: ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'],
             datasets: [{
-                label: 'معدل الحضور',
-                data: [85, 88, 92, 89, 94, 91],
-                borderColor: 'rgb(37, 99, 235)',
-                backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                label: 'الحضور',
+                data: [85, 92, 88, 94, 90, 87, 0],
+                borderColor: 'rgb(59, 130, 246)',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                tension: 0.4,
+                fill: true
+            }, {
+                label: 'الغياب',
+                data: [15, 8, 12, 6, 10, 13, 0],
+                borderColor: 'rgb(239, 68, 68)',
+                backgroundColor: 'rgba(239, 68, 68, 0.1)',
                 tension: 0.4,
                 fill: true
             }]
@@ -580,6 +638,9 @@ document.addEventListener('DOMContentLoaded', function() {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
+                    position: 'top',
+                },
+                title: {
                     display: false
                 }
             },
@@ -602,16 +663,18 @@ document.addEventListener('DOMContentLoaded', function() {
     new Chart(departmentCtx, {
         type: 'doughnut',
         data: {
-            labels: ['التسويق', 'المبيعات', 'التقنية', 'الموارد البشرية', 'المحاسبة'],
+            labels: ['المبيعات', 'التسويق', 'تقنية المعلومات', 'الموارد البشرية', 'المحاسبة'],
             datasets: [{
-                data: [25, 30, 20, 15, 10],
+                data: [45, 32, 28, 15, 12],
                 backgroundColor: [
-                    'rgb(37, 99, 235)',
-                    'rgb(16, 185, 129)',
-                    'rgb(245, 158, 11)',
-                    'rgb(239, 68, 68)',
-                    'rgb(6, 182, 212)'
-                ]
+                    'rgb(59, 130, 246)',
+                    'rgb(34, 197, 94)',
+                    'rgb(251, 191, 36)',
+                    'rgb(14, 165, 233)',
+                    'rgb(107, 114, 128)'
+                ],
+                borderWidth: 2,
+                borderColor: '#fff'
             }]
         },
         options: {
@@ -619,17 +682,19 @@ document.addEventListener('DOMContentLoaded', function() {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    position: 'bottom'
+                    display: false
                 }
             }
         }
     });
     
-    // تحديث البيانات كل 5 دقائق
-    setInterval(function() {
-        // هنا يمكن إضافة استدعاء AJAX لتحديث البيانات
-        console.log('تحديث البيانات...');
-    }, 300000); // 5 دقائق
+    // تفعيل الإجراءات السريعة
+    document.querySelectorAll('.quick-action-card').forEach(card => {
+        card.addEventListener('click', function() {
+            // يمكن إضافة منطق للإجراءات هنا
+            console.log('تم النقر على:', this.querySelector('.card-title').textContent);
+        });
+    });
 });
 </script>
 {% endblock %}

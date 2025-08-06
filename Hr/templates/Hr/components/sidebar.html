@@ -1,502 +1,455 @@
-{% load static %}
-
-<aside class="sidebar" id="sidebar">
+<!-- مكون الشريط الجانبي المحسن -->
+<aside class="sidebar" id="main-sidebar">
+    <!-- رأس الشريط الجانبي -->
     <div class="sidebar-header">
-        <div class="sidebar-brand">
-            <img src="{% static 'Hr/images/logo.png' %}" alt="الشعار" class="sidebar-logo">
-            <span class="sidebar-title">نظام الموارد البشرية</span>
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="sidebar-brand d-flex align-items-center">
+                <img src="{% load static %}{% static 'Hr/images/logo-mini.png' %}" alt="الشعار" class="sidebar-logo me-2" width="32" height="32">
+                <div class="brand-text">
+                    <h6 class="mb-0 fw-bold text-primary">الدولية</h6>
+                    <small class="text-muted">HR System</small>
+                </div>
+            </div>
+            <button class="sidebar-toggle btn btn-ghost btn-sm d-none d-lg-block" id="sidebar-toggle">
+                <i class="fas fa-chevron-right"></i>
+            </button>
         </div>
-        <button class="sidebar-toggle" id="sidebarToggle">
-            <i class="fas fa-bars"></i>
-        </button>
     </div>
 
-    <nav class="sidebar-nav">
-        <ul class="nav-list">
+    <!-- قائمة التنقل الرئيسية -->
+    <nav class="sidebar-nav" id="sidebar-nav">
+        <div class="nav-section">
             <!-- لوحة التحكم -->
-            <li class="nav-item">
-                <a href="{% url 'Hr:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-                    <i class="fas fa-tachometer-alt nav-icon"></i>
+            <div class="nav-item">
+                <a href="{% url 'Hr:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" data-bs-toggle="tooltip" data-bs-placement="left" title="لوحة التحكم">
+                    <div class="nav-icon">
+                        <i class="fas fa-tachometer-alt"></i>
+                    </div>
                     <span class="nav-text">لوحة التحكم</span>
                 </a>
-            </li>
+            </div>
 
             <!-- إدارة الموظفين -->
-            <li class="nav-item has-submenu">
-                <a href="#" class="nav-link" data-submenu="employees">
-                    <i class="fas fa-users nav-icon"></i>
+            <div class="nav-item">
+                <a href="#" class="nav-link" data-bs-toggle="collapse" data-bs-target="#employees-submenu" aria-expanded="false">
+                    <div class="nav-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
                     <span class="nav-text">إدارة الموظفين</span>
-                    <i class="fas fa-chevron-down nav-arrow"></i>
+                    <i class="nav-arrow fas fa-chevron-down"></i>
                 </a>
-                <ul class="nav-submenu" id="employees">
-                    <li><a href="{% url 'Hr:employee_list' %}" class="nav-sublink">
-                        <i class="fas fa-list"></i>قائمة الموظفين
-                    </a></li>
-                    <li><a href="{% url 'Hr:employee_add' %}" class="nav-sublink">
-                        <i class="fas fa-plus"></i>إضافة موظف
-                    </a></li>
-                    <li><a href="{% url 'Hr:employee_search' %}" class="nav-sublink">
-                        <i class="fas fa-search"></i>البحث المتقدم
-                    </a></li>
-                    <li><a href="{% url 'Hr:employee_reports' %}" class="nav-sublink">
-                        <i class="fas fa-chart-bar"></i>تقارير الموظفين
-                    </a></li>
-                </ul>
-            </li>
+                <div class="collapse nav-submenu" id="employees-submenu">
+                    <a href="{% url 'Hr:employee_list' %}" class="nav-sublink {% if 'employee_list' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-list nav-subicon"></i>
+                        <span class="nav-subtext">قائمة الموظفين</span>
+                    </a>
+                    <a href="{% url 'Hr:employee_add' %}" class="nav-sublink {% if 'employee_add' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-user-plus nav-subicon"></i>
+                        <span class="nav-subtext">إضافة موظف جديد</span>
+                    </a>
+                    <a href="#" class="nav-sublink">
+                        <i class="fas fa-file-alt nav-subicon"></i>
+                        <span class="nav-subtext">ملفات الموظفين</span>
+                    </a>
+                    <a href="#" class="nav-sublink">
+                        <i class="fas fa-id-card nav-subicon"></i>
+                        <span class="nav-subtext">بطاقات الموظفين</span>
+                    </a>
+                </div>
+            </div>
 
             <!-- الحضور والانصراف -->
-            <li class="nav-item has-submenu">
-                <a href="#" class="nav-link" data-submenu="attendance">
-                    <i class="fas fa-clock nav-icon"></i>
+            <div class="nav-item">
+                <a href="#" class="nav-link" data-bs-toggle="collapse" data-bs-target="#attendance-submenu" aria-expanded="false">
+                    <div class="nav-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
                     <span class="nav-text">الحضور والانصراف</span>
-                    <i class="fas fa-chevron-down nav-arrow"></i>
+                    <i class="nav-arrow fas fa-chevron-down"></i>
                 </a>
-                <ul class="nav-submenu" id="attendance">
-                    <li><a href="{% url 'Hr:attendance_dashboard' %}" class="nav-sublink">
-                        <i class="fas fa-tachometer-alt"></i>لوحة الحضور
-                    </a></li>
-                    <li><a href="{% url 'Hr:attendance_records' %}" class="nav-sublink">
-                        <i class="fas fa-list"></i>سجلات الحضور
-                    </a></li>
-                    <li><a href="{% url 'Hr:shift_management' %}" class="nav-sublink">
-                        <i class="fas fa-calendar-alt"></i>إدارة الورديات
-                    </a></li>
-                    <li><a href="{% url 'Hr:attendance_reports' %}" class="nav-sublink">
-                        <i class="fas fa-chart-line"></i>تقارير الحضور
-                    </a></li>
-                </ul>
-            </li>
+                <div class="collapse nav-submenu" id="attendance-submenu">
+                    <a href="#" class="nav-sublink">
+                        <i class="fas fa-calendar-check nav-subicon"></i>
+                        <span class="nav-subtext">سجلات الحضور</span>
+                    </a>
+                    <a href="#" class="nav-sublink">
+                        <i class="fas fa-business-time nav-subicon"></i>
+                        <span class="nav-subtext">إدارة الورديات</span>
+                    </a>
+                    <a href="#" class="nav-sublink">
+                        <i class="fas fa-chart-line nav-subicon"></i>
+                        <span class="nav-subtext">تقارير الحضور</span>
+                    </a>
+                    <a href="#" class="nav-sublink">
+                        <i class="fas fa-user-clock nav-subicon"></i>
+                        <span class="nav-subtext">الوقت الإضافي</span>
+                    </a>
+                </div>
+            </div>
 
-            <!-- الإجازات -->
-            <li class="nav-item has-submenu">
-                <a href="#" class="nav-link" data-submenu="leaves">
-                    <i class="fas fa-calendar-times nav-icon"></i>
+            <!-- إدارة الإجازات -->
+            <div class="nav-item">
+                <a href="#" class="nav-link" data-bs-toggle="collapse" data-bs-target="#leaves-submenu" aria-expanded="false">
+                    <div class="nav-icon">
+                        <i class="fas fa-calendar-times"></i>
+                    </div>
                     <span class="nav-text">إدارة الإجازات</span>
-                    <i class="fas fa-chevron-down nav-arrow"></i>
+                    <i class="nav-arrow fas fa-chevron-down"></i>
                 </a>
-                <ul class="nav-submenu" id="leaves">
-                    <li><a href="{% url 'Hr:leave_requests' %}" class="nav-sublink">
-                        <i class="fas fa-paper-plane"></i>طلبات الإجازات
-                    </a></li>
-                    <li><a href="{% url 'Hr:leave_types' %}" class="nav-sublink">
-                        <i class="fas fa-tags"></i>أنواع الإجازات
-                    </a></li>
-                    <li><a href="{% url 'Hr:leave_calendar' %}" class="nav-sublink">
-                        <i class="fas fa-calendar"></i>تقويم الإجازات
-                    </a></li>
-                    <li><a href="{% url 'Hr:leave_reports' %}" class="nav-sublink">
-                        <i class="fas fa-chart-pie"></i>تقارير الإجازات
-                    </a></li>
-                </ul>
-            </li>
+                <div class="collapse nav-submenu" id="leaves-submenu">
+                    <a href="#" class="nav-sublink">
+                        <i class="fas fa-plus-circle nav-subicon"></i>
+                        <span class="nav-subtext">طلب إجازة جديد</span>
+                    </a>
+                    <a href="#" class="nav-sublink">
+                        <i class="fas fa-list-check nav-subicon"></i>
+                        <span class="nav-subtext">طلبات الإجازات</span>
+                    </a>
+                    <a href="#" class="nav-sublink">
+                        <i class="fas fa-calendar-alt nav-subicon"></i>
+                        <span class="nav-subtext">تقويم الإجازات</span>
+                    </a>
+                    <a href="#" class="nav-sublink">
+                        <i class="fas fa-cog nav-subicon"></i>
+                        <span class="nav-subtext">أنواع الإجازات</span>
+                    </a>
+                </div>
+            </div>
 
-            <!-- الرواتب -->
-            <li class="nav-item has-submenu">
-                <a href="#" class="nav-link" data-submenu="payroll">
-                    <i class="fas fa-money-bill-wave nav-icon"></i>
+            <!-- إدارة الرواتب -->
+            <div class="nav-item">
+                <a href="#" class="nav-link" data-bs-toggle="collapse" data-bs-target="#payroll-submenu" aria-expanded="false">
+                    <div class="nav-icon">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
                     <span class="nav-text">إدارة الرواتب</span>
-                    <i class="fas fa-chevron-down nav-arrow"></i>
+                    <i class="nav-arrow fas fa-chevron-down"></i>
                 </a>
-                <ul class="nav-submenu" id="payroll">
-                    <li><a href="{% url 'Hr:payroll_calculator' %}" class="nav-sublink">
-                        <i class="fas fa-calculator"></i>حاسبة الرواتب
-                    </a></li>
-                    <li><a href="{% url 'Hr:salary_slips' %}" class="nav-sublink">
-                        <i class="fas fa-file-invoice"></i>كشوف الرواتب
-                    </a></li>
-                    <li><a href="{% url 'Hr:salary_components' %}" class="nav-sublink">
-                        <i class="fas fa-cogs"></i>مكونات الراتب
-                    </a></li>
-                    <li><a href="{% url 'Hr:payroll_reports' %}" class="nav-sublink">
-                        <i class="fas fa-chart-area"></i>تقارير الرواتب
-                    </a></li>
-                </ul>
-            </li>
+                <div class="collapse nav-submenu" id="payroll-submenu">
+                    <a href="#" class="nav-sublink">
+                        <i class="fas fa-calculator nav-subicon"></i>
+                        <span class="nav-subtext">حساب الرواتب</span>
+                    </a>
+                    <a href="#" class="nav-sublink">
+                        <i class="fas fa-file-invoice-dollar nav-subicon"></i>
+                        <span class="nav-subtext">كشوف الرواتب</span>
+                    </a>
+                    <a href="#" class="nav-sublink">
+                        <i class="fas fa-chart-pie nav-subicon"></i>
+                        <span class="nav-subtext">تقارير الرواتب</span>
+                    </a>
+                    <a href="#" class="nav-sublink">
+                        <i class="fas fa-coins nav-subicon"></i>
+                        <span class="nav-subtext">البدلات والحوافز</span>
+                    </a>
+                </div>
+            </div>
+        </div>
 
-            <!-- التقييمات -->
-            <li class="nav-item has-submenu">
-                <a href="#" class="nav-link" data-submenu="evaluations">
-                    <i class="fas fa-star nav-icon"></i>
-                    <span class="nav-text">تقييم الأداء</span>
-                    <i class="fas fa-chevron-down nav-arrow"></i>
-                </a>
-                <ul class="nav-submenu" id="evaluations">
-                    <li><a href="{% url 'Hr:employee_evaluation' %}" class="nav-sublink">
-                        <i class="fas fa-clipboard-check"></i>تقييم الموظفين
-                    </a></li>
-                    <li><a href="{% url 'Hr:evaluation_criteria' %}" class="nav-sublink">
-                        <i class="fas fa-list-check"></i>معايير التقييم
-                    </a></li>
-                    <li><a href="{% url 'Hr:evaluation_reports' %}" class="nav-sublink">
-                        <i class="fas fa-chart-radar"></i>تقارير التقييم
-                    </a></li>
-                </ul>
-            </li>
+        <!-- قسم التقارير والتحليلات -->
+        <div class="nav-section">
+            <div class="nav-section-title">
+                <span>التقارير والتحليلات</span>
+            </div>
 
-            <!-- ملفات الموظفين -->
-            <li class="nav-item has-submenu">
-                <a href="#" class="nav-link" data-submenu="files">
-                    <i class="fas fa-folder nav-icon"></i>
-                    <span class="nav-text">ملفات الموظفين</span>
-                    <i class="fas fa-chevron-down nav-arrow"></i>
+            <!-- التقارير -->
+            <div class="nav-item">
+                <a href="#" class="nav-link" data-bs-toggle="collapse" data-bs-target="#reports-submenu" aria-expanded="false">
+                    <div class="nav-icon">
+                        <i class="fas fa-chart-bar"></i>
+                    </div>
+                    <span class="nav-text">التقارير</span>
+                    <i class="nav-arrow fas fa-chevron-down"></i>
                 </a>
-                <ul class="nav-submenu" id="files">
-                    <li><a href="{% url 'Hr:employee_files' %}" class="nav-sublink">
-                        <i class="fas fa-file-alt"></i>إدارة الملفات
-                    </a></li>
-                    <li><a href="{% url 'Hr:file_upload' %}" class="nav-sublink">
-                        <i class="fas fa-upload"></i>رفع الملفات
-                    </a></li>
-                    <li><a href="{% url 'Hr:document_expiry' %}" class="nav-sublink">
-                        <i class="fas fa-exclamation-triangle"></i>انتهاء الوثائق
-                    </a></li>
-                </ul>
-            </li>
+                <div class="collapse nav-submenu" id="reports-submenu">
+                    <a href="#" class="nav-sublink">
+                        <i class="fas fa-users nav-subicon"></i>
+                        <span class="nav-subtext">تقارير الموظفين</span>
+                    </a>
+                    <a href="#" class="nav-sublink">
+                        <i class="fas fa-clock nav-subicon"></i>
+                        <span class="nav-subtext">تقارير الحضور</span>
+                    </a>
+                    <a href="#" class="nav-sublink">
+                        <i class="fas fa-money-bill nav-subicon"></i>
+                        <span class="nav-subtext">التقارير المالية</span>
+                    </a>
+                    <a href="#" class="nav-sublink">
+                        <i class="fas fa-chart-line nav-subicon"></i>
+                        <span class="nav-subtext">تقارير الأداء</span>
+                    </a>
+                </div>
+            </div>
 
-            <!-- التقارير والتحليلات -->
-            <li class="nav-item has-submenu">
-                <a href="#" class="nav-link" data-submenu="reports">
-                    <i class="fas fa-chart-line nav-icon"></i>
-                    <span class="nav-text">التقارير والتحليلات</span>
-                    <i class="fas fa-chevron-down nav-arrow"></i>
+            <!-- التحليلات -->
+            <div class="nav-item">
+                <a href="#" class="nav-link">
+                    <div class="nav-icon">
+                        <i class="fas fa-analytics"></i>
+                    </div>
+                    <span class="nav-text">التحليلات المتقدمة</span>
                 </a>
-                <ul class="nav-submenu" id="reports">
-                    <li><a href="{% url 'Hr:analytics_dashboard' %}" class="nav-sublink">
-                        <i class="fas fa-analytics"></i>لوحة التحليلات
-                    </a></li>
-                    <li><a href="{% url 'Hr:report_templates' %}" class="nav-sublink">
-                        <i class="fas fa-file-contract"></i>قوالب التقارير
-                    </a></li>
-                    <li><a href="{% url 'Hr:custom_reports' %}" class="nav-sublink">
-                        <i class="fas fa-tools"></i>تقارير مخصصة
-                    </a></li>
-                    <li><a href="{% url 'Hr:export_data' %}" class="nav-sublink">
-                        <i class="fas fa-download"></i>تصدير البيانات
-                    </a></li>
-                </ul>
-            </li>
+            </div>
+        </div>
 
-            <!-- الإعدادات -->
-            <li class="nav-item has-submenu">
-                <a href="#" class="nav-link" data-submenu="settings">
-                    <i class="fas fa-cog nav-icon"></i>
-                    <span class="nav-text">الإعدادات</span>
-                    <i class="fas fa-chevron-down nav-arrow"></i>
+        <!-- قسم الإعدادات -->
+        <div class="nav-section">
+            <div class="nav-section-title">
+                <span>الإعدادات والإدارة</span>
+            </div>
+
+            <!-- إعدادات النظام -->
+            <div class="nav-item">
+                <a href="#" class="nav-link" data-bs-toggle="collapse" data-bs-target="#settings-submenu" aria-expanded="false">
+                    <div class="nav-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <span class="nav-text">إعدادات النظام</span>
+                    <i class="nav-arrow fas fa-chevron-down"></i>
                 </a>
-                <ul class="nav-submenu" id="settings">
-                    <li><a href="{% url 'Hr:company_settings' %}" class="nav-sublink">
-                        <i class="fas fa-building"></i>إعدادات الشركة
-                    </a></li>
-                    <li><a href="{% url 'Hr:departments' %}" class="nav-sublink">
-                        <i class="fas fa-sitemap"></i>الأقسام والوظائف
-                    </a></li>
-                    <li><a href="{% url 'Hr:permissions' %}" class="nav-sublink">
-                        <i class="fas fa-shield-alt"></i>الصلاحيات
-                    </a></li>
-                    <li><a href="{% url 'Hr:system_settings' %}" class="nav-sublink">
-                        <i class="fas fa-sliders-h"></i>إعدادات النظام
-                    </a></li>
-                </ul>
-            </li>
-        </ul>
+                <div class="collapse nav-submenu" id="settings-submenu">
+                    <a href="#" class="nav-sublink">
+                        <i class="fas fa-building nav-subicon"></i>
+                        <span class="nav-subtext">بيانات الشركة</span>
+                    </a>
+                    <a href="#" class="nav-sublink">
+                        <i class="fas fa-sitemap nav-subicon"></i>
+                        <span class="nav-subtext">الأقسام والوظائف</span>
+                    </a>
+                    <a href="#" class="nav-sublink">
+                        <i class="fas fa-shield-alt nav-subicon"></i>
+                        <span class="nav-subtext">الصلاحيات</span>
+                    </a>
+                    <a href="#" class="nav-sublink">
+                        <i class="fas fa-database nav-subicon"></i>
+                        <span class="nav-subtext">النسخ الاحتياطي</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- المساعدة والدعم -->
+            <div class="nav-item">
+                <a href="#" class="nav-link">
+                    <div class="nav-icon">
+                        <i class="fas fa-question-circle"></i>
+                    </div>
+                    <span class="nav-text">المساعدة والدعم</span>
+                </a>
+            </div>
+        </div>
     </nav>
 
+    <!-- تذييل الشريط الجانبي -->
     <div class="sidebar-footer">
-        <div class="user-info">
-            <div class="user-avatar">
-                {% if user.profile_picture %}
-                <img src="{{ user.profile_picture.url }}" alt="{{ user.get_full_name }}">
-                {% else %}
-                <i class="fas fa-user"></i>
-                {% endif %}
-            </div>
-            <div class="user-details">
-                <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
-                <div class="user-role">{{ user.role|default:'مستخدم' }}</div>
+        <div class="user-info-mini">
+            <div class="d-flex align-items-center p-3">
+                <img src="{% static 'Hr/images/default-avatar.png' %}" alt="المستخدم" class="user-avatar-mini me-2">
+                <div class="user-details">
+                    <div class="user-name-mini">{{ user.get_full_name|default:user.username|truncatechars:15 }}</div>
+                    <div class="user-role-mini text-muted small">مدير النظام</div>
+                </div>
             </div>
         </div>
     </div>
 </aside>
 
+<!-- Sidebar Overlay for Mobile -->
+<div class="sidebar-overlay d-lg-none" id="sidebar-overlay"></div>
+
 <style>
+/* تحسينات إضافية للشريط الجانبي */
 .sidebar {
-    position: fixed;
-    top: 0;
-    right: 0;
-    width: 280px;
-    height: 100vh;
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-    color: var(--text-white);
-    z-index: 1000;
-    transition: transform var(--transition-normal);
-    overflow-y: auto;
-    box-shadow: var(--shadow-lg);
+    transition: all 0.3s ease;
 }
 
 .sidebar.collapsed {
-    transform: translateX(100%);
+    width: 80px;
 }
 
-.sidebar-header {
-    padding: var(--spacing-lg);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+.sidebar.collapsed .nav-text,
+.sidebar.collapsed .nav-subtext,
+.sidebar.collapsed .nav-arrow,
+.sidebar.collapsed .brand-text,
+.sidebar.collapsed .nav-section-title,
+.sidebar.collapsed .user-details {
+    opacity: 0;
+    visibility: hidden;
 }
 
-.sidebar-brand {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-md);
+.sidebar.collapsed .nav-submenu {
+    display: none !important;
 }
 
-.sidebar-logo {
-    width: 40px;
-    height: 40px;
-    border-radius: var(--radius-md);
+.nav-section {
+    margin-bottom: 2rem;
 }
 
-.sidebar-title {
-    font-size: var(--font-size-lg);
+.nav-section-title {
+    padding: 0.5rem 1.5rem;
+    font-size: 0.75rem;
     font-weight: 600;
-}
-
-.sidebar-toggle {
-    background: none;
-    border: none;
-    color: var(--text-white);
-    font-size: var(--font-size-lg);
-    cursor: pointer;
-    padding: var(--spacing-sm);
-    border-radius: var(--radius-sm);
-    transition: background-color var(--transition-fast);
-}
-
-.sidebar-toggle:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-}
-
-.sidebar-nav {
-    padding: var(--spacing-md) 0;
-}
-
-.nav-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
+    text-transform: uppercase;
+    color: var(--secondary-500);
+    letter-spacing: 0.5px;
 }
 
 .nav-item {
-    margin-bottom: var(--spacing-xs);
+    margin-bottom: 0.25rem;
 }
 
 .nav-link {
     display: flex;
     align-items: center;
-    padding: var(--spacing-md) var(--spacing-lg);
-    color: rgba(255, 255, 255, 0.8);
+    padding: 0.75rem 1.5rem;
+    color: var(--secondary-600);
     text-decoration: none;
-    transition: all var(--transition-fast);
+    border-radius: 0.5rem;
+    margin: 0 0.75rem;
+    transition: all 0.2s ease;
     position: relative;
 }
 
 .nav-link:hover {
-    background-color: rgba(255, 255, 255, 0.1);
-    color: var(--text-white);
+    background-color: var(--primary-50);
+    color: var(--primary-700);
+    transform: translateX(-2px);
 }
 
 .nav-link.active {
-    background-color: rgba(255, 255, 255, 0.15);
-    color: var(--text-white);
+    background-color: var(--primary-100);
+    color: var(--primary-800);
+    font-weight: 500;
 }
 
 .nav-link.active::before {
     content: '';
     position: absolute;
-    left: 0;
+    right: -0.75rem;
     top: 0;
     bottom: 0;
-    width: 4px;
-    background-color: var(--accent-color);
+    width: 3px;
+    background-color: var(--primary-600);
+    border-radius: 0 2px 2px 0;
 }
 
 .nav-icon {
     width: 20px;
-    margin-left: var(--spacing-md);
-    text-align: center;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 0.75rem;
+    flex-shrink: 0;
 }
 
 .nav-text {
-    flex: 1;
+    flex-grow: 1;
+    transition: all 0.3s ease;
 }
 
 .nav-arrow {
-    font-size: var(--font-size-sm);
-    transition: transform var(--transition-fast);
+    margin-right: auto;
+    font-size: 0.75rem;
+    transition: transform 0.2s ease;
 }
 
-.has-submenu .nav-link[aria-expanded="true"] .nav-arrow {
+.nav-link[aria-expanded="true"] .nav-arrow {
     transform: rotate(180deg);
 }
 
 .nav-submenu {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    background-color: rgba(0, 0, 0, 0.1);
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height var(--transition-normal);
-}
-
-.nav-submenu.show {
-    max-height: 500px;
+    margin-top: 0.25rem;
+    margin-bottom: 0.5rem;
 }
 
 .nav-sublink {
     display: flex;
     align-items: center;
-    padding: var(--spacing-sm) var(--spacing-lg) var(--spacing-sm) 60px;
-    color: rgba(255, 255, 255, 0.7);
+    padding: 0.5rem 1.5rem 0.5rem 3.5rem;
+    color: var(--secondary-500);
     text-decoration: none;
-    font-size: var(--font-size-sm);
-    transition: all var(--transition-fast);
-    gap: var(--spacing-sm);
+    border-radius: 0.375rem;
+    margin: 0 0.75rem;
+    transition: all 0.2s ease;
+    font-size: 0.875rem;
 }
 
 .nav-sublink:hover {
-    background-color: rgba(255, 255, 255, 0.05);
-    color: var(--text-white);
+    background-color: var(--secondary-50);
+    color: var(--secondary-700);
+    transform: translateX(-2px);
+}
+
+.nav-sublink.active {
+    background-color: var(--primary-50);
+    color: var(--primary-700);
+    font-weight: 500;
+}
+
+.nav-subicon {
+    width: 16px;
+    height: 16px;
+    margin-left: 0.5rem;
+    flex-shrink: 0;
+}
+
+.nav-subtext {
+    transition: all 0.3s ease;
 }
 
 .sidebar-footer {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: var(--spacing-lg);
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(0, 0, 0, 0.1);
+    margin-top: auto;
+    border-top: 1px solid var(--secondary-200);
 }
 
-.user-info {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-md);
-}
-
-.user-avatar {
-    width: 40px;
-    height: 40px;
+.user-avatar-mini {
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
-    background-color: rgba(255, 255, 255, 0.1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-}
-
-.user-avatar img {
-    width: 100%;
-    height: 100%;
     object-fit: cover;
 }
 
-.user-details {
-    flex: 1;
-}
-
-.user-name {
+.user-name-mini {
+    font-size: 0.875rem;
     font-weight: 500;
-    font-size: var(--font-size-sm);
+    line-height: 1.2;
 }
 
-.user-role {
-    font-size: var(--font-size-xs);
-    color: rgba(255, 255, 255, 0.7);
+.user-role-mini {
+    font-size: 0.75rem;
+    line-height: 1;
 }
 
-/* الاستجابة للشاشات الصغيرة */
-@media (max-width: 768px) {
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1040;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.sidebar-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+@media (max-width: 991.98px) {
     .sidebar {
-        width: 100%;
-        transform: translateX(100%);
+        position: fixed;
+        top: 0;
+        right: -100%;
+        height: 100vh;
+        z-index: 1050;
+        transition: right 0.3s ease;
     }
     
     .sidebar.show {
-        transform: translateX(0);
-    }
-}
-
-@media (max-width: 480px) {
-    .sidebar-header {
-        padding: var(--spacing-md);
-    }
-    
-    .sidebar-title {
-        font-size: var(--font-size-base);
-    }
-    
-    .nav-link {
-        padding: var(--spacing-sm) var(--spacing-md);
+        right: 0;
     }
 }
 </style>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // تبديل الشريط الجانبي
-    const sidebarToggle = document.getElementById('sidebarToggle');
-    const sidebar = document.getElementById('sidebar');
-    
-    if (sidebarToggle) {
-        sidebarToggle.addEventListener('click', function() {
-            sidebar.classList.toggle('collapsed');
-        });
-    }
-    
-    // إدارة القوائم الفرعية
-    const submenuLinks = document.querySelectorAll('[data-submenu]');
-    
-    submenuLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            const submenuId = this.getAttribute('data-submenu');
-            const submenu = document.getElementById(submenuId);
-            const arrow = this.querySelector('.nav-arrow');
-            
-            // إغلاق جميع القوائم الفرعية الأخرى
-            submenuLinks.forEach(otherLink => {
-                if (otherLink !== this) {
-                    const otherSubmenuId = otherLink.getAttribute('data-submenu');
-                    const otherSubmenu = document.getElementById(otherSubmenuId);
-                    const otherArrow = otherLink.querySelector('.nav-arrow');
-                    
-                    if (otherSubmenu) {
-                        otherSubmenu.classList.remove('show');
-                        otherLink.setAttribute('aria-expanded', 'false');
-                    }
-                }
-            });
-            
-            // تبديل القائمة الحالية
-            if (submenu) {
-                submenu.classList.toggle('show');
-                const isExpanded = submenu.classList.contains('show');
-                this.setAttribute('aria-expanded', isExpanded);
-            }
-        });
-    });
-    
-    // إغلاق الشريط الجانبي عند النقر خارجه في الشاشات الصغيرة
-    document.addEventListener('click', function(e) {
-        if (window.innerWidth <= 768) {
-            if (!sidebar.contains(e.target) && !e.target.matches('[data-sidebar-toggle]')) {
-                sidebar.classList.add('collapsed');
-            }
-        }
-    });
-});
-</script>

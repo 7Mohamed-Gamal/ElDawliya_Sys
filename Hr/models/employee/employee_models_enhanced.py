@@ -730,7 +730,7 @@ class EmployeeEnhanced(models.Model):
         """تجاوز الحفظ لتوليد رقم الموظف وتشفير الحقول الحساسة تلقائيًا"""
         if not self.employee_id:
             # Generate employee ID using company code and sequence
-            company_code = self.company.name[:3].upper()
+            company_code = self.company.name[:3].upper() if self.company else 'EMP'
             last_emp = EmployeeEnhanced.objects.filter(
                 company=self.company
             ).order_by('-employee_id').first()
@@ -752,11 +752,25 @@ class EmployeeEnhanced(models.Model):
             if value and not str(value).startswith('$pbkdf2-sha256'):
                 setattr(self, field, make_password(str(value)))
 
+        # Auto-set probation end date if not set
+        if not self.probation_end_date and self.join_date:
+            self.probation_end_date = self.join_date + timedelta(days=90)  # 3 months default
+
+        # Auto-set next evaluation date if not set
+        if not self.next_evaluation_date and self.join_date:
+            if self.last_evaluation_date:
+                self.next_evaluation_date = self.last_evaluation_date + timedelta(days=365)  # 1 year
+            else:
+                self.next_evaluation_date = self.join_date + timedelta(days=180)  # 6 months for new employees
+
         # Call clean method for validation
         try:
             self.full_clean()
-        except ValidationError:
-            pass  # Allow saving even with validation errors for now
+        except ValidationError as e:
+            # Log validation errors but don't prevent saving
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Validation errors for employee {self.employee_id}: {e}")
         
         super().save(*args, **kwargs)
 
@@ -942,6 +956,166 @@ class EmployeeEnhanced(models.Model):
         if self.position:
             name += f" - {self.position.title}"
         return name
+    
+    @property
+    def bmi(self):
+        """حساب مؤشر كتلة الجسم"""
+        if not self.height or not self.weight:
+            return None
+        height_m = self.height / 100  # تحويل من سم إلى متر
+        return round(self.weight / (height_m ** 2), 2)
+    
+    @property
+    def bmi_category(self):
+        """تصنيف مؤشر كتلة الجسم"""
+        bmi = self.bmi
+        if not bmi:
+            return None
+        
+        if bmi < 18.5:
+            return _('نحيف')
+        elif bmi < 25:
+            return _('طبيعي')
+        elif bmi < 30:
+            return _('زيادة وزن')
+        else:
+            return _('سمنة')
+    
+    def get_upcoming_documents_expiry(self, days=90):
+        """الحصول على الوثائق التي ستنتهي صلاحيتها قريباً"""
+        expiring_docs = []
+        today = date.today()
+        
+        if self.passport_expiry_date:
+            remaining = (self.passport_expiry_date - today).days
+            if 0 <= remaining <= days:
+                expiring_docs.append({
+                    'type': _('جواز السفر'),
+                    'expiry_date': self.passport_expiry_date,
+                    'days_remaining': remaining
+                })
+        
+        if self.visa_expiry_date:
+            remaining = (self.visa_expiry_date - today).days
+            if 0 <= remaining <= days:
+                expiring_docs.append({
+                    'type': _('التأشيرة'),
+                    'expiry_date': self.visa_expiry_date,
+                    'days_remaining': remaining
+                })
+        
+        if self.contract_end_date:
+            remaining = (self.contract_end_date - today).days
+            if 0 <= remaining <= days:
+                expiring_docs.append({
+                    'type': _('العقد'),
+                    'expiry_date': self.contract_end_date,
+                    'days_remaining': remaining
+                })
+        
+        return sorted(expiring_docs, key=lambda x: x['days_remaining'])
+    
+    def get_service_milestones(self):
+        """الحصول على معالم الخدمة (سنوات مهمة)"""
+        years = self.years_of_service
+        milestones = []
+        
+        milestone_years = [1, 5, 10, 15, 20, 25, 30]
+        for milestone in milestone_years:
+            if years >= milestone:
+                milestones.append({
+                    'years': milestone,
+                    'achieved': True,
+                    'date': self.join_date.replace(year=self.join_date.year + milestone)
+                })
+            else:
+                milestones.append({
+                    'years': milestone,
+                    'achieved': False,
+                    'date': self.join_date.replace(year=self.join_date.year + milestone)
+                })
+        
+        return milestones
+    
+    def calculate_detailed_service_period(self):
+        """حساب فترة الخدمة بالتفصيل (سنوات، شهور، أيام)"""
+        if self.status == self.TERMINATED and self.termination_date:
+            end_date = self.termination_date
+        else:
+            end_date = date.today()
+        
+        # حساب الفرق
+        years = end_date.year - self.join_date.year
+        months = end_date.month - self.join_date.month
+        days = end_date.day - self.join_date.day
+        
+        # تعديل الحسابات
+        if days < 0:
+            months -= 1
+            # الحصول على عدد أيام الشهر السابق
+            if end_date.month == 1:
+                prev_month = 12
+                prev_year = end_date.year - 1
+            else:
+                prev_month = end_date.month - 1
+                prev_year = end_date.year
+            
+            from calendar import monthrange
+            days_in_prev_month = monthrange(prev_year, prev_month)[1]
+            days += days_in_prev_month
+        
+        if months < 0:
+            years -= 1
+            months += 12
+        
+        return {
+            'years': years,
+            'months': months,
+            'days': days,
+            'total_days': (end_date - self.join_date).days,
+            'formatted': f"{years} سنة، {months} شهر، {days} يوم"
+        }
+    
+    @property
+    def retirement_eligibility(self):
+        """التحقق من أهلية التقاعد"""
+        age = self.age
+        service_years = self.years_of_service
+        
+        # قواعد التقاعد العامة (يمكن تخصيصها حسب الشركة)
+        if age >= 60 or service_years >= 35:
+            return {
+                'eligible': True,
+                'reason': _('بلغ سن التقاعد أو أكمل سنوات الخدمة المطلوبة'),
+                'retirement_date': None
+            }
+        elif age >= 55 and service_years >= 25:
+            return {
+                'eligible': True,
+                'reason': _('التقاعد المبكر'),
+                'retirement_date': None
+            }
+        else:
+            # حساب تاريخ التقاعد المتوقع
+            years_to_retirement = max(60 - age, 35 - service_years)
+            retirement_date = date.today().replace(year=date.today().year + years_to_retirement)
+            
+            return {
+                'eligible': False,
+                'reason': f"متبقي {years_to_retirement} سنة للتقاعد",
+                'retirement_date': retirement_date
+            }
+    
+    def get_salary_history_summary(self):
+        """ملخص تاريخ الرواتب (يتطلب نموذج تاريخ الرواتب)"""
+        # هذا مثال - يحتاج لنموذج SalaryHistory منفصل
+        return {
+            'current_salary': self.base_salary,
+            'currency': self.salary_currency,
+            'last_increase_date': None,  # يحتاج لنموذج منفصل
+            'total_increases': 0,  # يحتاج لنموذج منفصل
+            'average_annual_increase': 0  # يحتاج لنموذج منفصل
+        }
     
     def clean(self):
         """التحقق من صحة البيانات المتقدم"""

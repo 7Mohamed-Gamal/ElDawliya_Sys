@@ -1,441 +1,242 @@
+<!-- مكونات واجهة المستخدم القابلة لإعادة الاستخدام -->
+
+<!-- مكون البطاقة الإحصائية -->
 {% comment %}
-مكونات واجهة المستخدم القابلة لإعادة الاستخدام
-UI Components for HR System
+الاستخدام:
+{% include 'Hr/components/ui_components.html' with component='stat_card' title='عدد الموظفين' value='150' icon='fas fa-users' color='primary' %}
 {% endcomment %}
-
-{% load static %}
-
-{% comment %} مكون البطاقة الأساسية {% endcomment %}
-{% block card %}
-<div class="card {% if card_class %}{{ card_class }}{% endif %}">
-    {% if card_header %}
-    <div class="card-header">
-        {% if card_title %}
-        <h5 class="card-title">{{ card_title }}</h5>
-        {% endif %}
-        {% if card_subtitle %}
-        <p class="card-subtitle">{{ card_subtitle }}</p>
-        {% endif %}
-        {{ card_header }}
-    </div>
-    {% endif %}
-    
+{% if component == 'stat_card' %}
+<div class="card stat-card border-0 shadow-sm h-100">
     <div class="card-body">
-        {{ card_content }}
-    </div>
-    
-    {% if card_footer %}
-    <div class="card-footer">
-        {{ card_footer }}
-    </div>
-    {% endif %}
-</div>
-{% endblock %}
-
-{% comment %} مكون الزر {% endcomment %}
-{% block button %}
-<button type="{{ btn_type|default:'button' }}" 
-        class="btn {% if btn_variant %}btn-{{ btn_variant }}{% else %}btn-primary{% endif %} {% if btn_size %}btn-{{ btn_size }}{% endif %} {% if btn_class %}{{ btn_class }}{% endif %}"
-        {% if btn_id %}id="{{ btn_id }}"{% endif %}
-        {% if btn_onclick %}onclick="{{ btn_onclick }}"{% endif %}
-        {% if btn_disabled %}disabled{% endif %}>
-    {% if btn_icon %}
-    <i class="{{ btn_icon }}"></i>
-    {% endif %}
-    {{ btn_text }}
-</button>
-{% endblock %}
-
-{% comment %} مكون الشارة {% endcomment %}
-{% block badge %}
-<span class="badge {% if badge_variant %}badge-{{ badge_variant }}{% else %}badge-primary{% endif %} {% if badge_class %}{{ badge_class }}{% endif %}">
-    {% if badge_icon %}
-    <i class="{{ badge_icon }}"></i>
-    {% endif %}
-    {{ badge_text }}
-</span>
-{% endblock %}
-
-{% comment %} مكون التنبيه {% endcomment %}
-{% block alert %}
-<div class="alert {% if alert_type %}alert-{{ alert_type }}{% else %}alert-info{% endif %} {% if alert_class %}{{ alert_class }}{% endif %}" 
-     {% if alert_dismissible %}data-dismissible{% endif %}>
-    {% if alert_icon %}
-    <i class="{{ alert_icon }}"></i>
-    {% endif %}
-    {{ alert_message }}
-    {% if alert_dismissible %}
-    <button type="button" class="btn-close" data-alert-close></button>
-    {% endif %}
-</div>
-{% endblock %}
-
-{% comment %} مكون الجدول المحسن {% endcomment %}
-{% block data_table %}
-<div class="table-container">
-    {% if table_search %}
-    <div class="table-header p-3">
-        <div class="row align-items-center">
-            <div class="col-md-6">
-                {% if table_title %}
-                <h6 class="mb-0">{{ table_title }}</h6>
+        <div class="d-flex align-items-center">
+            <div class="stat-icon bg-{{ color|default:'primary' }}-100 text-{{ color|default:'primary' }}-600 rounded-circle p-3 me-3">
+                <i class="{{ icon|default:'fas fa-chart-line' }} fa-lg"></i>
+            </div>
+            <div class="flex-grow-1">
+                <div class="stat-value h3 mb-1 fw-bold text-{{ color|default:'primary' }}-700">{{ value|default:'0' }}</div>
+                <div class="stat-title text-muted small">{{ title|default:'إحصائية' }}</div>
+                {% if change %}
+                <div class="stat-change small">
+                    <i class="fas fa-arrow-{{ change_direction|default:'up' }} text-{{ change_color|default:'success' }}"></i>
+                    <span class="text-{{ change_color|default:'success' }}">{{ change }}%</span>
+                    <span class="text-muted">من الشهر الماضي</span>
+                </div>
                 {% endif %}
             </div>
-            <div class="col-md-6">
-                <div class="d-flex justify-content-end">
-                    <input type="text" class="form-control" placeholder="البحث..." 
-                           data-table-search style="max-width: 250px;">
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- مكون جدول البيانات -->
+{% comment %}
+الاستخدام:
+{% include 'Hr/components/ui_components.html' with component='data_table' table_id='employees-table' %}
+{% endcomment %}
+{% if component == 'data_table' %}
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white border-bottom">
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="card-title mb-0">{{ table_title|default:'جدول البيانات' }}</h5>
+            <div class="d-flex gap-2">
+                {% if show_search|default:True %}
+                <div class="input-group input-group-sm" style="width: 250px;">
+                    <input type="text" class="form-control" placeholder="البحث..." id="{{ table_id|default:'data-table' }}-search">
+                    <span class="input-group-text">
+                        <i class="fas fa-search"></i>
+                    </span>
                 </div>
+                {% endif %}
+                {% if show_export|default:True %}
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" data-bs-toggle="dropdown">
+                        <i class="fas fa-download me-1"></i>
+                        تصدير
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-file-excel me-2"></i>Excel</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-file-pdf me-2"></i>PDF</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-file-csv me-2"></i>CSV</a></li>
+                    </ul>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
-    {% endif %}
-    
-    <table class="table" data-table>
-        {% if table_headers %}
-        <thead>
-            <tr>
-                {% for header in table_headers %}
-                <th {% if header.sortable %}data-sortable{% endif %}>
-                    {{ header.text }}
-                    {% if header.sortable %}
-                    <i class="fas fa-sort ms-1"></i>
-                    {% endif %}
-                </th>
-                {% endfor %}
-            </tr>
-        </thead>
-        {% endif %}
-        
-        <tbody>
-            {{ table_body }}
-        </tbody>
-    </table>
-    
-    {% if table_pagination %}
-    <div class="table-footer p-3">
-        {{ table_pagination }}
-    </div>
-    {% endif %}
-</div>
-{% endblock %}
-
-{% comment %} مكون النافذة المنبثقة {% endcomment %}
-{% block modal %}
-<div id="{{ modal_id }}" class="modal-overlay" style="display: none;">
-    <div class="modal" style="max-width: {{ modal_size|default:'500px' }};">
-        <div class="modal-header">
-            <h5 class="modal-title">{{ modal_title }}</h5>
-            <button type="button" class="btn-close" data-modal-close></button>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" id="{{ table_id|default:'data-table' }}">
+                {% block table_content %}
+                <thead class="table-light">
+                    <tr>
+                        <th>العمود 1</th>
+                        <th>العمود 2</th>
+                        <th>العمود 3</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="4" class="text-center py-4 text-muted">
+                            لا توجد بيانات للعرض
+                        </td>
+                    </tr>
+                </tbody>
+                {% endblock %}
+            </table>
         </div>
-        
-        <div class="modal-body">
-            {{ modal_content }}
-        </div>
-        
-        {% if modal_footer %}
-        <div class="modal-footer">
-            {{ modal_footer }}
-        </div>
-        {% endif %}
     </div>
-</div>
-
-<style>
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1050;
-}
-
-.modal {
-    background: var(--bg-primary);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
-    width: 90%;
-    max-height: 90vh;
-    overflow-y: auto;
-}
-
-.modal-header {
-    padding: var(--spacing-lg);
-    border-bottom: 1px solid var(--border-color);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.modal-body {
-    padding: var(--spacing-lg);
-}
-
-.modal-footer {
-    padding: var(--spacing-lg);
-    border-top: 1px solid var(--border-color);
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--spacing-sm);
-}
-
-.btn-close {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    color: var(--text-muted);
-}
-</style>
-{% endblock %}
-
-{% comment %} مكون علامات التبويب {% endcomment %}
-{% block tabs %}
-<div data-tabs>
-    <div class="tab-nav">
-        {% for tab in tabs %}
-        <button class="tab-button {% if forloop.first %}active{% endif %}" 
-                data-tab-target="{{ tab.id }}">
-            {% if tab.icon %}
-            <i class="{{ tab.icon }}"></i>
-            {% endif %}
-            {{ tab.title }}
-        </button>
-        {% endfor %}
-    </div>
-    
-    <div class="tab-content">
-        {% for tab in tabs %}
-        <div id="{{ tab.id }}" class="tab-pane {% if forloop.first %}active{% endif %}" data-tab-pane>
-            {{ tab.content }}
+    {% if show_pagination|default:True %}
+    <div class="card-footer bg-white border-top">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="text-muted small">
+                عرض 1 إلى 10 من أصل 100 سجل
+            </div>
+            <nav>
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#">السابق</a>
+                    </li>
+                    <li class="page-item active">
+                        <a class="page-link" href="#">1</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">2</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">3</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="#">التالي</a>
+                    </li>
+                </ul>
+            </nav>
         </div>
-        {% endfor %}
-    </div>
-</div>
-
-<style>
-.tab-nav {
-    display: flex;
-    border-bottom: 1px solid var(--border-color);
-    margin-bottom: var(--spacing-lg);
-}
-
-.tab-button {
-    background: none;
-    border: none;
-    padding: var(--spacing-md) var(--spacing-lg);
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    transition: all var(--transition-fast);
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-}
-
-.tab-button:hover {
-    background-color: var(--bg-tertiary);
-}
-
-.tab-button.active {
-    border-bottom-color: var(--primary-color);
-    color: var(--primary-color);
-}
-
-.tab-pane {
-    display: none;
-}
-
-.tab-pane.active {
-    display: block;
-}
-</style>
-{% endblock %}
-
-{% comment %} مكون شريط التقدم {% endcomment %}
-{% block progress_bar %}
-<div class="progress-container">
-    {% if progress_label %}
-    <div class="progress-label mb-2">
-        <span>{{ progress_label }}</span>
-        <span class="text-muted">{{ progress_value }}%</span>
     </div>
     {% endif %}
-    
-    <div class="progress-bar">
-        <div class="progress-fill" data-value="{{ progress_value }}" 
-             style="background-color: {{ progress_color|default:'var(--primary-color)' }};"></div>
-    </div>
 </div>
+{% endif %}
 
-<style>
-.progress-container {
-    margin-bottom: var(--spacing-md);
-}
-
-.progress-label {
-    display: flex;
-    justify-content: space-between;
-    font-size: var(--font-size-sm);
-}
-</style>
-{% endblock %}
-
-{% comment %} مكون القائمة المنسدلة {% endcomment %}
-{% block dropdown %}
-<div class="dropdown">
-    <button class="btn btn-secondary dropdown-toggle" 
-            data-dropdown-toggle="{{ dropdown_id }}">
-        {% if dropdown_icon %}
-        <i class="{{ dropdown_icon }}"></i>
-        {% endif %}
-        {{ dropdown_text }}
-    </button>
+<!-- مكون النموذج المحسن -->
+{% comment %}
+الاستخدام:
+{% include 'Hr/components/ui_components.html' with component='form_field' field=form.name %}
+{% endcomment %}
+{% if component == 'form_field' %}
+<div class="form-group mb-3">
+    <label for="{{ field.id_for_label }}" class="form-label{% if field.field.required %} required{% endif %}">
+        {{ field.label }}
+    </label>
+    {% if field.field.widget.input_type == 'select' %}
+        <select name="{{ field.name }}" id="{{ field.id_for_label }}" class="form-select{% if field.errors %} is-invalid{% endif %}" {% if field.field.required %}required{% endif %}>
+            {% for choice in field.field.choices %}
+                <option value="{{ choice.0 }}" {% if choice.0 == field.value %}selected{% endif %}>{{ choice.1 }}</option>
+            {% endfor %}
+        </select>
+    {% elif field.field.widget.input_type == 'textarea' %}
+        <textarea name="{{ field.name }}" id="{{ field.id_for_label }}" class="form-control{% if field.errors %} is-invalid{% endif %}" rows="4" {% if field.field.required %}required{% endif %}>{{ field.value|default:'' }}</textarea>
+    {% else %}
+        <input type="{{ field.field.widget.input_type|default:'text' }}" name="{{ field.name }}" id="{{ field.id_for_label }}" class="form-control{% if field.errors %} is-invalid{% endif %}" value="{{ field.value|default:'' }}" {% if field.field.required %}required{% endif %}>
+    {% endif %}
     
-    <div id="{{ dropdown_id }}" class="dropdown-menu">
-        {% for item in dropdown_items %}
-        <a href="{{ item.url }}" class="dropdown-item">
-            {% if item.icon %}
-            <i class="{{ item.icon }}"></i>
-            {% endif %}
-            {{ item.text }}
-        </a>
-        {% endfor %}
-    </div>
+    {% if field.help_text %}
+        <div class="form-text">{{ field.help_text }}</div>
+    {% endif %}
+    
+    {% if field.errors %}
+        <div class="invalid-feedback">
+            {% for error in field.errors %}
+                {{ error }}
+            {% endfor %}
+        </div>
+    {% endif %}
 </div>
+{% endif %}
 
-<style>
-.dropdown {
-    position: relative;
-    display: inline-block;
-}
-
-.dropdown-toggle::after {
-    content: '▼';
-    margin-right: var(--spacing-sm);
-    font-size: 0.8em;
-}
-
-.dropdown-menu {
-    position: absolute;
-    top: 100%;
-    right: 0;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-lg);
-    min-width: 200px;
-    z-index: 1000;
-    display: none;
-}
-
-.dropdown-menu.show {
-    display: block;
-}
-
-.dropdown-item {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-sm) var(--spacing-md);
-    text-decoration: none;
-    color: var(--text-primary);
-    transition: background-color var(--transition-fast);
-}
-
-.dropdown-item:hover {
-    background-color: var(--bg-tertiary);
-}
-</style>
-{% endblock %}
-
-{% comment %} مكون مؤشر الحالة {% endcomment %}
-{% block status_indicator %}
-<span class="status-badge status-{{ status_type|default:'active' }}">
-    <span class="status-indicator status-{{ status_type|default:'active' }}"></span>
-    {{ status_text }}
+<!-- مكون الشارة -->
+{% comment %}
+الاستخدام:
+{% include 'Hr/components/ui_components.html' with component='badge' text='نشط' color='success' %}
+{% endcomment %}
+{% if component == 'badge' %}
+<span class="badge bg-{{ color|default:'primary' }}{% if outline %}-outline{% endif %}">
+    {% if icon %}<i class="{{ icon }} me-1"></i>{% endif %}
+    {{ text|default:'شارة' }}
 </span>
+{% endif %}
 
-<style>
-.status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    font-size: var(--font-size-sm);
-}
-</style>
-{% endblock %}
+<!-- مكون زر الإجراء -->
+{% comment %}
+الاستخدام:
+{% include 'Hr/components/ui_components.html' with component='action_button' text='حفظ' color='primary' icon='fas fa-save' %}
+{% endcomment %}
+{% if component == 'action_button' %}
+<button type="{{ type|default:'button' }}" class="btn btn-{{ color|default:'primary' }}{% if size %} btn-{{ size }}{% endif %}{% if outline %}-outline{% endif %}" {% if onclick %}onclick="{{ onclick }}"{% endif %} {% if disabled %}disabled{% endif %}>
+    {% if icon %}<i class="{{ icon }} me-2"></i>{% endif %}
+    {{ text|default:'زر' }}
+</button>
+{% endif %}
 
-{% comment %} مكون بطاقة الموظف {% endcomment %}
-{% block employee_card %}
-<div class="card employee-card">
-    <div class="card-body">
-        <div class="d-flex align-items-center mb-3">
-            {% if employee.profile_picture %}
-            <img src="{{ employee.profile_picture.url }}" alt="{{ employee.full_name }}" 
-                 class="employee-avatar me-3">
-            {% else %}
-            <div class="employee-avatar-placeholder me-3">
-                {{ employee.first_name.0 }}{{ employee.last_name.0 }}
-            </div>
-            {% endif %}
-            
-            <div class="flex-grow-1">
-                <h6 class="mb-1">{{ employee.full_name }}</h6>
-                <p class="text-muted mb-1">{{ employee.position.title|default:'غير محدد' }}</p>
-                <p class="text-muted mb-0">{{ employee.department.name|default:'غير محدد' }}</p>
-            </div>
-            
-            <div class="employee-status">
-                {% include 'Hr/components/ui_components.html' with status_type=employee.status status_text=employee.get_status_display only %}
-            </div>
-        </div>
-        
-        <div class="employee-info">
-            <div class="row">
-                <div class="col-6">
-                    <small class="text-muted">رقم الموظف</small>
-                    <div>{{ employee.employee_id }}</div>
-                </div>
-                <div class="col-6">
-                    <small class="text-muted">تاريخ التعيين</small>
-                    <div>{{ employee.join_date|date:'Y/m/d' }}</div>
-                </div>
-            </div>
-        </div>
-    </div>
+<!-- مكون التنبيه -->
+{% comment %}
+الاستخدام:
+{% include 'Hr/components/ui_components.html' with component='alert' message='تم الحفظ بنجاح' type='success' %}
+{% endcomment %}
+{% if component == 'alert' %}
+<div class="alert alert-{{ type|default:'info' }}{% if dismissible %} alert-dismissible fade show{% endif %}" role="alert">
+    {% if icon %}
+        <i class="{{ icon }} me-2"></i>
+    {% else %}
+        {% if type == 'success' %}
+            <i class="fas fa-check-circle me-2"></i>
+        {% elif type == 'danger' or type == 'error' %}
+            <i class="fas fa-exclamation-triangle me-2"></i>
+        {% elif type == 'warning' %}
+            <i class="fas fa-exclamation-circle me-2"></i>
+        {% else %}
+            <i class="fas fa-info-circle me-2"></i>
+        {% endif %}
+    {% endif %}
+    {{ message|default:'رسالة تنبيه' }}
+    {% if dismissible %}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    {% endif %}
 </div>
+{% endif %}
 
-<style>
-.employee-avatar {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    object-fit: cover;
-}
+<!-- مكون شاشة التحميل -->
+{% comment %}
+الاستخدام:
+{% include 'Hr/components/ui_components.html' with component='loading_spinner' %}
+{% endcomment %}
+{% if component == 'loading_spinner' %}
+<div class="d-flex justify-content-center align-items-center py-5">
+    <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">جاري التحميل...</span>
+    </div>
+    {% if message %}
+        <span class="ms-3">{{ message }}</span>
+    {% endif %}
+</div>
+{% endif %}
 
-.employee-avatar-placeholder {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background: var(--primary-color);
-    color: var(--text-white);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 600;
-}
-
-.employee-info {
-    font-size: var(--font-size-sm);
-}
-
-.employee-info .row > div {
-    margin-bottom: var(--spacing-sm);
-}
-</style>
-{% endblock %}
+<!-- مكون الصفحة الفارغة -->
+{% comment %}
+الاستخدام:
+{% include 'Hr/components/ui_components.html' with component='empty_state' title='لا توجد بيانات' message='لم يتم العثور على أي سجلات' %}
+{% endcomment %}
+{% if component == 'empty_state' %}
+<div class="text-center py-5">
+    <div class="empty-state-icon mb-3">
+        <i class="{{ icon|default:'fas fa-inbox' }} text-muted" style="font-size: 4rem;"></i>
+    </div>
+    <h4 class="text-muted">{{ title|default:'لا توجد بيانات' }}</h4>
+    <p class="text-muted">{{ message|default:'لم يتم العثور على أي سجلات للعرض' }}</p>
+    {% if action_text and action_url %}
+        <a href="{{ action_url }}" class="btn btn-primary">
+            {% if action_icon %}<i class="{{ action_icon }} me-2"></i>{% endif %}
+            {{ action_text }}
+        </a>
+    {% endif %}
+</div>
+{% endif %}

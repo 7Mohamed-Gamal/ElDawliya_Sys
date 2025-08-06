@@ -1,758 +1,435 @@
-{% load static %}
-
-<nav class="navbar" id="navbar">
-    <div class="navbar-container">
-        <!-- زر تبديل الشريط الجانبي -->
-        <button class="navbar-toggle" id="navbarToggle" data-sidebar-toggle>
-            <i class="fas fa-bars"></i>
-        </button>
-
-        <!-- شريط البحث -->
-        <div class="navbar-search">
-            <div class="search-container">
-                <input type="text" class="search-input" placeholder="البحث في النظام..." id="globalSearch">
-                <button class="search-button">
-                    <i class="fas fa-search"></i>
-                </button>
-            </div>
-            <div class="search-results" id="searchResults"></div>
+<!-- مكون شريط التنقل العلوي المحسن -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm sticky-top">
+    <div class="container-fluid px-4">
+        <!-- الجانب الأيمن - العلامة التجارية وزر القائمة -->
+        <div class="d-flex align-items-center">
+            <!-- زر تبديل الشريط الجانبي للشاشات الكبيرة -->
+            <button class="sidebar-toggle btn btn-ghost me-3 d-none d-lg-block" id="sidebar-toggle-btn" data-bs-toggle="tooltip" title="تبديل القائمة الجانبية">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <!-- زر القائمة للشاشات الصغيرة -->
+            <button class="mobile-menu-toggle btn btn-ghost me-3 d-lg-none" id="mobile-menu-toggle" data-bs-toggle="tooltip" title="فتح القائمة">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <!-- العلامة التجارية -->
+            <a class="navbar-brand d-flex align-items-center" href="{% url 'Hr:dashboard' %}">
+                <img src="{% load static %}{% static 'Hr/images/logo.png' %}" alt="شعار الشركة" height="40" class="me-2">
+                <div class="brand-text">
+                    <h5 class="mb-0 fw-bold text-primary">نظام الدولية</h5>
+                    <small class="text-muted d-none d-sm-block">إدارة الموارد البشرية</small>
+                </div>
+            </a>
         </div>
 
-        <!-- أدوات الشريط العلوي -->
-        <div class="navbar-tools">
+        <!-- الوسط - شريط البحث -->
+        <div class="navbar-search flex-grow-1 mx-4 d-none d-md-block">
+            <div class="position-relative">
+                <div class="input-group">
+                    <span class="input-group-text bg-transparent border-end-0">
+                        <i class="fas fa-search text-muted"></i>
+                    </span>
+                    <input type="text" class="form-control border-start-0 ps-0" placeholder="البحث في النظام... (Ctrl+K)" id="global-search-input" autocomplete="off">
+                    <span class="input-group-text bg-transparent border-start-0">
+                        <kbd class="bg-light border rounded px-2 py-1 small">Ctrl+K</kbd>
+                    </span>
+                </div>
+                
+                <!-- نتائج البحث المنسدلة -->
+                <div class="search-results position-absolute w-100 bg-white border rounded-3 shadow-lg mt-1 d-none" id="search-results" style="z-index: 1050; max-height: 400px; overflow-y: auto;">
+                    <div class="search-results-header p-3 border-bottom bg-light">
+                        <h6 class="mb-0">نتائج البحث</h6>
+                    </div>
+                    <div class="search-results-body">
+                        <!-- سيتم ملء النتائج ديناميكياً -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- الجانب الأيسر - الإجراءات والمستخدم -->
+        <div class="navbar-actions d-flex align-items-center gap-2">
+            <!-- البحث السريع للشاشات الصغيرة -->
+            <button class="btn btn-ghost d-md-none" data-bs-toggle="modal" data-bs-target="#mobile-search-modal">
+                <i class="fas fa-search"></i>
+            </button>
+
             <!-- الإشعارات -->
-            <div class="navbar-item dropdown">
-                <button class="navbar-button" data-dropdown-toggle="notificationsDropdown">
+            <div class="dropdown">
+                <button class="btn btn-ghost position-relative" data-bs-toggle="dropdown" aria-expanded="false" data-bs-toggle="tooltip" title="الإشعارات">
                     <i class="fas fa-bell"></i>
-                    <span class="notification-badge" id="notificationCount">3</span>
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger notification-count" id="notification-count">
+                        3
+                    </span>
                 </button>
-                <div id="notificationsDropdown" class="dropdown-menu notifications-dropdown">
-                    <div class="dropdown-header">
-                        <h6>الإشعارات</h6>
-                        <button class="btn-link" onclick="markAllAsRead()">تحديد الكل كمقروء</button>
-                    </div>
-                    <div class="notifications-list" id="notificationsList">
-                        <!-- سيتم تحميل الإشعارات هنا -->
-                        <div class="notification-item unread">
-                            <div class="notification-icon">
-                                <i class="fas fa-user-plus text-success"></i>
-                            </div>
-                            <div class="notification-content">
-                                <div class="notification-title">موظف جديد</div>
-                                <div class="notification-text">تم إضافة أحمد محمد كموظف جديد</div>
-                                <div class="notification-time">منذ 5 دقائق</div>
-                            </div>
-                        </div>
-                        <div class="notification-item">
-                            <div class="notification-icon">
-                                <i class="fas fa-calendar-times text-warning"></i>
-                            </div>
-                            <div class="notification-content">
-                                <div class="notification-title">طلب إجازة</div>
-                                <div class="notification-text">طلب إجازة جديد من سارة أحمد</div>
-                                <div class="notification-time">منذ ساعة</div>
-                            </div>
-                        </div>
-                        <div class="notification-item">
-                            <div class="notification-icon">
-                                <i class="fas fa-exclamation-triangle text-danger"></i>
-                            </div>
-                            <div class="notification-content">
-                                <div class="notification-title">انتهاء وثيقة</div>
-                                <div class="notification-text">ستنتهي وثيقة الهوية لمحمد علي خلال 30 يوم</div>
-                                <div class="notification-time">منذ يومين</div>
-                            </div>
+                <div class="dropdown-menu dropdown-menu-end notification-dropdown shadow-lg" style="width: 350px;">
+                    <!-- رأس الإشعارات -->
+                    <div class="dropdown-header d-flex justify-content-between align-items-center py-3 px-4 border-bottom">
+                        <h6 class="mb-0 fw-semibold">الإشعارات</h6>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-primary rounded-pill">3</span>
+                            <button class="btn btn-sm btn-ghost" data-bs-toggle="tooltip" title="تحديد الكل كمقروء">
+                                <i class="fas fa-check-double"></i>
+                            </button>
                         </div>
                     </div>
-                    <div class="dropdown-footer">
-                        <a href="{% url 'Hr:notifications' %}" class="btn btn-sm btn-primary w-100">
+                    
+                    <!-- قائمة الإشعارات -->
+                    <div class="notification-list" style="max-height: 300px; overflow-y: auto;">
+                        <a href="#" class="dropdown-item notification-item py-3 px-4 border-bottom">
+                            <div class="d-flex">
+                                <div class="notification-icon me-3">
+                                    <div class="bg-success-subtle text-success rounded-circle p-2">
+                                        <i class="fas fa-user-plus"></i>
+                                    </div>
+                                </div>
+                                <div class="notification-content flex-grow-1">
+                                    <div class="notification-title fw-semibold">موظف جديد</div>
+                                    <div class="notification-message text-muted small">تم إضافة أحمد محمد إلى قسم المبيعات</div>
+                                    <div class="notification-time text-muted small">
+                                        <i class="fas fa-clock me-1"></i>
+                                        منذ 5 دقائق
+                                    </div>
+                                </div>
+                                <div class="notification-status">
+                                    <span class="badge bg-primary rounded-circle" style="width: 8px; height: 8px;"></span>
+                                </div>
+                            </div>
+                        </a>
+                        
+                        <a href="#" class="dropdown-item notification-item py-3 px-4 border-bottom">
+                            <div class="d-flex">
+                                <div class="notification-icon me-3">
+                                    <div class="bg-info-subtle text-info rounded-circle p-2">
+                                        <i class="fas fa-calendar-check"></i>
+                                    </div>
+                                </div>
+                                <div class="notification-content flex-grow-1">
+                                    <div class="notification-title fw-semibold">طلب إجازة</div>
+                                    <div class="notification-message text-muted small">طلب إجازة من سارة أحمد يحتاج موافقة</div>
+                                    <div class="notification-time text-muted small">
+                                        <i class="fas fa-clock me-1"></i>
+                                        منذ ساعة
+                                    </div>
+                                </div>
+                                <div class="notification-status">
+                                    <span class="badge bg-primary rounded-circle" style="width: 8px; height: 8px;"></span>
+                                </div>
+                            </div>
+                        </a>
+                        
+                        <a href="#" class="dropdown-item notification-item py-3 px-4">
+                            <div class="d-flex">
+                                <div class="notification-icon me-3">
+                                    <div class="bg-warning-subtle text-warning rounded-circle p-2">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                    </div>
+                                </div>
+                                <div class="notification-content flex-grow-1">
+                                    <div class="notification-title fw-semibold">تنبيه انتهاء صلاحية</div>
+                                    <div class="notification-message text-muted small">ستنتهي صلاحية هوية محمد علي خلال 30 يوماً</div>
+                                    <div class="notification-time text-muted small">
+                                        <i class="fas fa-clock me-1"></i>
+                                        منذ يومين
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    
+                    <!-- تذييل الإشعارات -->
+                    <div class="dropdown-footer text-center py-3 border-top">
+                        <a href="#" class="text-primary text-decoration-none fw-semibold">
                             عرض جميع الإشعارات
+                            <i class="fas fa-arrow-left ms-1"></i>
                         </a>
                     </div>
                 </div>
             </div>
 
-            <!-- الرسائل -->
-            <div class="navbar-item dropdown">
-                <button class="navbar-button" data-dropdown-toggle="messagesDropdown">
+            <!-- الرسائل السريعة -->
+            <div class="dropdown">
+                <button class="btn btn-ghost position-relative" data-bs-toggle="dropdown" aria-expanded="false" data-bs-toggle="tooltip" title="الرسائل">
                     <i class="fas fa-envelope"></i>
-                    <span class="notification-badge">2</span>
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-success">
+                        2
+                    </span>
                 </button>
-                <div id="messagesDropdown" class="dropdown-menu messages-dropdown">
+                <div class="dropdown-menu dropdown-menu-end shadow-lg" style="width: 300px;">
                     <div class="dropdown-header">
-                        <h6>الرسائل</h6>
+                        <h6 class="mb-0">الرسائل الجديدة</h6>
                     </div>
-                    <div class="messages-list">
-                        <div class="message-item unread">
-                            <div class="message-avatar">
-                                <img src="{% static 'Hr/images/default-avatar.png' %}" alt="أحمد محمد">
-                            </div>
-                            <div class="message-content">
-                                <div class="message-sender">أحمد محمد</div>
-                                <div class="message-text">استفسار حول كشف الراتب</div>
-                                <div class="message-time">منذ 10 دقائق</div>
+                    <div class="dropdown-divider"></div>
+                    <a href="#" class="dropdown-item py-3">
+                        <div class="d-flex">
+                            <img src="{% static 'Hr/images/default-avatar.png' %}" alt="المرسل" class="rounded-circle me-3" width="40" height="40">
+                            <div class="flex-grow-1">
+                                <div class="fw-semibold">أحمد محمد</div>
+                                <div class="text-muted small">استفسار حول الراتب...</div>
+                                <div class="text-muted small">منذ 10 دقائق</div>
                             </div>
                         </div>
-                        <div class="message-item">
-                            <div class="message-avatar">
-                                <img src="{% static 'Hr/images/default-avatar.png' %}" alt="سارة أحمد">
-                            </div>
-                            <div class="message-content">
-                                <div class="message-sender">سارة أحمد</div>
-                                <div class="message-text">طلب تحديث البيانات الشخصية</div>
-                                <div class="message-time">منذ ساعة</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="dropdown-footer">
-                        <a href="{% url 'Hr:messages' %}" class="btn btn-sm btn-primary w-100">
-                            عرض جميع الرسائل
-                        </a>
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <div class="dropdown-footer text-center py-2">
+                        <a href="#" class="text-primary">عرض جميع الرسائل</a>
                     </div>
                 </div>
             </div>
 
             <!-- تبديل الثيم -->
-            <div class="navbar-item">
-                <button class="navbar-button" data-theme-toggle title="تبديل الثيم">
-                    <i class="fas fa-moon" id="themeIcon"></i>
+            <button class="btn btn-ghost theme-toggle" id="theme-toggle-btn" data-bs-toggle="tooltip" title="تبديل الثيم">
+                <i class="fas fa-moon theme-icon"></i>
+            </button>
+
+            <!-- الإعدادات السريعة -->
+            <div class="dropdown">
+                <button class="btn btn-ghost" data-bs-toggle="dropdown" aria-expanded="false" data-bs-toggle="tooltip" title="الإعدادات السريعة">
+                    <i class="fas fa-cog"></i>
                 </button>
+                <div class="dropdown-menu dropdown-menu-end">
+                    <h6 class="dropdown-header">الإعدادات السريعة</h6>
+                    <a class="dropdown-item" href="#">
+                        <i class="fas fa-palette me-2"></i>
+                        تخصيص الواجهة
+                    </a>
+                    <a class="dropdown-item" href="#">
+                        <i class="fas fa-bell me-2"></i>
+                        إعدادات الإشعارات
+                    </a>
+                    <a class="dropdown-item" href="#">
+                        <i class="fas fa-language me-2"></i>
+                        اللغة
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a class="dropdown-item" href="#">
+                        <i class="fas fa-cogs me-2"></i>
+                        جميع الإعدادات
+                    </a>
+                </div>
             </div>
 
-            <!-- ملف المستخدم -->
-            <div class="navbar-item dropdown">
-                <button class="navbar-button user-button" data-dropdown-toggle="userDropdown">
-                    <div class="user-avatar">
-                        {% if user.profile_picture %}
-                        <img src="{{ user.profile_picture.url }}" alt="{{ user.get_full_name }}">
-                        {% else %}
-                        <i class="fas fa-user"></i>
-                        {% endif %}
+            <!-- قائمة المستخدم -->
+            <div class="dropdown">
+                <button class="btn btn-ghost d-flex align-items-center user-menu-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                    <img src="{% static 'Hr/images/default-avatar.png' %}" alt="صورة المستخدم" class="user-avatar rounded-circle me-2" width="36" height="36">
+                    <div class="user-info text-end d-none d-sm-block">
+                        <div class="user-name fw-semibold">{{ user.get_full_name|default:user.username }}</div>
+                        <div class="user-role text-muted small">مدير النظام</div>
                     </div>
-                    <span class="user-name">{{ user.get_full_name|default:user.username }}</span>
-                    <i class="fas fa-chevron-down"></i>
+                    <i class="fas fa-chevron-down ms-2 d-none d-sm-block"></i>
                 </button>
-                <div id="userDropdown" class="dropdown-menu user-dropdown">
-                    <div class="dropdown-header">
-                        <div class="user-info">
-                            <div class="user-avatar-large">
-                                {% if user.profile_picture %}
-                                <img src="{{ user.profile_picture.url }}" alt="{{ user.get_full_name }}">
-                                {% else %}
-                                <i class="fas fa-user"></i>
-                                {% endif %}
-                            </div>
-                            <div class="user-details">
-                                <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
-                                <div class="user-email">{{ user.email }}</div>
-                                <div class="user-role">{{ user.role|default:'مستخدم' }}</div>
-                            </div>
-                        </div>
+                <div class="dropdown-menu dropdown-menu-end user-dropdown shadow-lg">
+                    <!-- معلومات المستخدم -->
+                    <div class="dropdown-header text-center py-3 border-bottom">
+                        <img src="{% static 'Hr/images/default-avatar.png' %}" alt="صورة المستخدم" class="rounded-circle mb-2" width="60" height="60">
+                        <div class="fw-semibold">{{ user.get_full_name|default:user.username }}</div>
+                        <div class="text-muted small">{{ user.email }}</div>
+                        <div class="text-muted small">مدير النظام</div>
                     </div>
-                    <div class="dropdown-body">
-                        <a href="{% url 'Hr:profile' %}" class="dropdown-item">
-                            <i class="fas fa-user"></i>
-                            الملف الشخصي
-                        </a>
-                        <a href="{% url 'Hr:settings' %}" class="dropdown-item">
-                            <i class="fas fa-cog"></i>
-                            الإعدادات
-                        </a>
-                        <a href="{% url 'Hr:help' %}" class="dropdown-item">
-                            <i class="fas fa-question-circle"></i>
-                            المساعدة
-                        </a>
-                        <div class="dropdown-divider"></div>
-                        <a href="{% url 'accounts:logout' %}" class="dropdown-item text-danger">
-                            <i class="fas fa-sign-out-alt"></i>
-                            تسجيل الخروج
-                        </a>
+                    
+                    <!-- روابط المستخدم -->
+                    <a class="dropdown-item py-2" href="#">
+                        <i class="fas fa-user me-2 text-primary"></i>
+                        الملف الشخصي
+                    </a>
+                    <a class="dropdown-item py-2" href="#">
+                        <i class="fas fa-cog me-2 text-secondary"></i>
+                        إعدادات الحساب
+                    </a>
+                    <a class="dropdown-item py-2" href="#">
+                        <i class="fas fa-bell me-2 text-info"></i>
+                        تفضيلات الإشعارات
+                    </a>
+                    <a class="dropdown-item py-2" href="#">
+                        <i class="fas fa-shield-alt me-2 text-success"></i>
+                        الأمان والخصوصية
+                    </a>
+                    
+                    <div class="dropdown-divider"></div>
+                    
+                    <!-- المساعدة والدعم -->
+                    <a class="dropdown-item py-2" href="#">
+                        <i class="fas fa-question-circle me-2 text-info"></i>
+                        المساعدة والدعم
+                    </a>
+                    <a class="dropdown-item py-2" href="#">
+                        <i class="fas fa-keyboard me-2 text-secondary"></i>
+                        اختصارات لوحة المفاتيح
+                    </a>
+                    
+                    <div class="dropdown-divider"></div>
+                    
+                    <!-- تسجيل الخروج -->
+                    <a class="dropdown-item py-2 text-danger" href="{% url 'accounts:logout' %}">
+                        <i class="fas fa-sign-out-alt me-2"></i>
+                        تسجيل الخروج
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- نافذة البحث للشاشات الصغيرة -->
+<div class="modal fade" id="mobile-search-modal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title">البحث في النظام</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" class="form-control" placeholder="ابحث عن موظف، قسم، تقرير..." id="mobile-search-input">
+                </div>
+                <div class="search-suggestions mt-3">
+                    <h6 class="text-muted small">اقتراحات البحث:</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge bg-light text-dark">الموظفين</span>
+                        <span class="badge bg-light text-dark">الحضور</span>
+                        <span class="badge bg-light text-dark">الرواتب</span>
+                        <span class="badge bg-light text-dark">التقارير</span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- شريط المسار -->
-    <div class="breadcrumb-container">
-        <nav class="breadcrumb">
-            <a href="{% url 'Hr:dashboard' %}" class="breadcrumb-item">
-                <i class="fas fa-home"></i>
-                الرئيسية
-            </a>
-            {% if breadcrumbs %}
-                {% for crumb in breadcrumbs %}
-                <span class="breadcrumb-separator">/</span>
-                {% if crumb.url %}
-                <a href="{{ crumb.url }}" class="breadcrumb-item">{{ crumb.title }}</a>
-                {% else %}
-                <span class="breadcrumb-item active">{{ crumb.title }}</span>
-                {% endif %}
-                {% endfor %}
-            {% endif %}
-        </nav>
-    </div>
-</nav>
+</div>
 
 <style>
+/* تحسينات إضافية لشريط التنقل */
 .navbar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 280px;
-    background: var(--bg-primary);
-    border-bottom: 1px solid var(--border-color);
-    z-index: 999;
-    box-shadow: var(--shadow-sm);
-    transition: right var(--transition-normal);
+    height: 70px;
+    backdrop-filter: blur(10px);
+    background-color: rgba(255, 255, 255, 0.95) !important;
 }
 
-.navbar.sidebar-collapsed {
-    right: 0;
+.navbar-brand .brand-text h5 {
+    font-size: 1.1rem;
+    line-height: 1.2;
 }
 
-.navbar-container {
-    display: flex;
-    align-items: center;
-    padding: var(--spacing-md) var(--spacing-lg);
-    gap: var(--spacing-lg);
-}
-
-.navbar-toggle {
-    display: none;
-    background: none;
-    border: none;
-    font-size: var(--font-size-lg);
-    color: var(--text-primary);
-    cursor: pointer;
-    padding: var(--spacing-sm);
-    border-radius: var(--radius-sm);
-    transition: background-color var(--transition-fast);
-}
-
-.navbar-toggle:hover {
-    background-color: var(--bg-tertiary);
-}
-
-.navbar-search {
-    flex: 1;
-    max-width: 500px;
-    position: relative;
-}
-
-.search-container {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
-.search-input {
-    width: 100%;
-    padding: var(--spacing-sm) var(--spacing-md);
-    padding-left: 40px;
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    background-color: var(--bg-secondary);
-    font-size: var(--font-size-sm);
-    transition: all var(--transition-fast);
-}
-
-.search-input:focus {
-    outline: none;
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgb(37 99 235 / 0.1);
-    background-color: var(--bg-primary);
-}
-
-.search-button {
-    position: absolute;
-    right: var(--spacing-sm);
-    background: none;
-    border: none;
-    color: var(--text-muted);
-    cursor: pointer;
-    padding: var(--spacing-sm);
-}
-
-.search-results {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-lg);
-    max-height: 400px;
-    overflow-y: auto;
-    z-index: 1000;
-    display: none;
-}
-
-.navbar-tools {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-}
-
-.navbar-item {
-    position: relative;
-}
-
-.navbar-button {
-    background: none;
-    border: none;
-    color: var(--text-secondary);
-    cursor: pointer;
-    padding: var(--spacing-sm);
-    border-radius: var(--radius-md);
-    transition: all var(--transition-fast);
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-}
-
-.navbar-button:hover {
-    background-color: var(--bg-tertiary);
-    color: var(--text-primary);
-}
-
-.notification-badge {
-    position: absolute;
-    top: -2px;
-    left: -2px;
-    background: var(--error-color);
-    color: var(--text-white);
-    font-size: 10px;
-    font-weight: 600;
-    padding: 2px 6px;
-    border-radius: 10px;
-    min-width: 18px;
-    text-align: center;
-}
-
-.user-button {
-    padding: var(--spacing-sm) var(--spacing-md);
-}
-
-.user-avatar {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background-color: var(--bg-tertiary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.navbar-search .input-group {
+    max-width: 400px;
+    border-radius: 25px;
     overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-.user-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+.navbar-search .form-control {
+    border: 1px solid #e9ecef;
+    background-color: #f8f9fa;
 }
 
-.user-name {
-    font-size: var(--font-size-sm);
-    font-weight: 500;
+.navbar-search .form-control:focus {
+    background-color: white;
+    box-shadow: none;
+    border-color: var(--primary-300);
 }
 
-/* قوائم منسدلة */
-.dropdown-menu {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    background: var(--bg-primary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
-    min-width: 280px;
-    z-index: 1000;
-    display: none;
-    overflow: hidden;
-}
-
-.dropdown-menu.show {
-    display: block;
-}
-
-.dropdown-header {
-    padding: var(--spacing-md) var(--spacing-lg);
-    border-bottom: 1px solid var(--border-light);
-    background-color: var(--bg-secondary);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.dropdown-header h6 {
-    margin: 0;
-    font-weight: 600;
-}
-
-.dropdown-body {
-    padding: var(--spacing-sm) 0;
-}
-
-.dropdown-footer {
-    padding: var(--spacing-md);
-    border-top: 1px solid var(--border-light);
-    background-color: var(--bg-secondary);
-}
-
-.dropdown-item {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-sm) var(--spacing-lg);
-    color: var(--text-primary);
-    text-decoration: none;
-    transition: background-color var(--transition-fast);
-}
-
-.dropdown-item:hover {
-    background-color: var(--bg-tertiary);
-}
-
-.dropdown-divider {
-    height: 1px;
-    background-color: var(--border-light);
-    margin: var(--spacing-sm) 0;
-}
-
-/* إشعارات */
-.notifications-dropdown {
-    width: 350px;
-    left: -300px;
-}
-
-.notifications-list {
-    max-height: 300px;
-    overflow-y: auto;
+.notification-dropdown {
+    border: none;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
 }
 
 .notification-item {
-    display: flex;
-    padding: var(--spacing-md);
-    border-bottom: 1px solid var(--border-light);
-    transition: background-color var(--transition-fast);
+    transition: background-color 0.2s ease;
 }
 
 .notification-item:hover {
-    background-color: var(--bg-tertiary);
-}
-
-.notification-item.unread {
-    background-color: rgb(37 99 235 / 0.05);
+    background-color: var(--primary-50);
 }
 
 .notification-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: var(--bg-tertiary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-left: var(--spacing-md);
+    flex-shrink: 0;
 }
 
-.notification-content {
-    flex: 1;
-}
-
-.notification-title {
-    font-weight: 500;
-    font-size: var(--font-size-sm);
-    margin-bottom: var(--spacing-xs);
-}
-
-.notification-text {
-    font-size: var(--font-size-xs);
-    color: var(--text-secondary);
-    margin-bottom: var(--spacing-xs);
-}
-
-.notification-time {
-    font-size: var(--font-size-xs);
-    color: var(--text-muted);
-}
-
-/* رسائل */
-.messages-dropdown {
-    width: 320px;
-    left: -250px;
-}
-
-.message-item {
-    display: flex;
-    padding: var(--spacing-md);
-    border-bottom: 1px solid var(--border-light);
-    transition: background-color var(--transition-fast);
-}
-
-.message-item:hover {
-    background-color: var(--bg-tertiary);
-}
-
-.message-item.unread {
-    background-color: rgb(37 99 235 / 0.05);
-}
-
-.message-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    overflow: hidden;
-    margin-left: var(--spacing-md);
-}
-
-.message-avatar img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.message-content {
-    flex: 1;
-}
-
-.message-sender {
-    font-weight: 500;
-    font-size: var(--font-size-sm);
-    margin-bottom: var(--spacing-xs);
-}
-
-.message-text {
-    font-size: var(--font-size-xs);
-    color: var(--text-secondary);
-    margin-bottom: var(--spacing-xs);
-}
-
-.message-time {
-    font-size: var(--font-size-xs);
-    color: var(--text-muted);
-}
-
-/* ملف المستخدم */
 .user-dropdown {
-    width: 280px;
-    left: -200px;
+    min-width: 280px;
+    border: none;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
 }
 
-.user-info {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-md);
+.user-menu-btn {
+    border-radius: 25px;
+    padding: 0.375rem 0.75rem;
+    transition: all 0.2s ease;
 }
 
-.user-avatar-large {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background-color: var(--bg-tertiary);
+.user-menu-btn:hover {
+    background-color: var(--primary-50);
+    transform: translateY(-1px);
+}
+
+.user-avatar {
+    border: 2px solid var(--primary-200);
+    transition: border-color 0.2s ease;
+}
+
+.user-menu-btn:hover .user-avatar {
+    border-color: var(--primary-400);
+}
+
+.theme-toggle {
+    transition: transform 0.3s ease;
+}
+
+.theme-toggle:hover {
+    transform: rotate(180deg);
+}
+
+.search-results {
+    border: none;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+@media (max-width: 767.98px) {
+    .navbar {
+        height: 60px;
+    }
+    
+    .navbar-brand .brand-text h5 {
+        font-size: 1rem;
+    }
+    
+    .user-info {
+        display: none !important;
+    }
+}
+
+/* تأثيرات الحركة */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dropdown-menu {
+    animation: slideDown 0.2s ease;
+}
+
+/* تحسين شكل الشارات */
+.badge {
+    font-size: 0.65rem;
+    padding: 0.25em 0.5em;
+}
+
+.notification-count {
+    font-size: 0.6rem;
+    min-width: 18px;
+    height: 18px;
     display: flex;
     align-items: center;
     justify-content: center;
-    overflow: hidden;
-}
-
-.user-avatar-large img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.user-details .user-name {
-    font-weight: 600;
-    margin-bottom: var(--spacing-xs);
-}
-
-.user-email {
-    font-size: var(--font-size-xs);
-    color: var(--text-secondary);
-    margin-bottom: var(--spacing-xs);
-}
-
-.user-role {
-    font-size: var(--font-size-xs);
-    color: var(--text-muted);
-}
-
-/* شريط المسار */
-.breadcrumb-container {
-    padding: var(--spacing-sm) var(--spacing-lg);
-    background-color: var(--bg-secondary);
-    border-top: 1px solid var(--border-light);
-}
-
-.breadcrumb {
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-    font-size: var(--font-size-sm);
-}
-
-.breadcrumb-item {
-    color: var(--text-secondary);
-    text-decoration: none;
-    transition: color var(--transition-fast);
-}
-
-.breadcrumb-item:hover {
-    color: var(--primary-color);
-}
-
-.breadcrumb-item.active {
-    color: var(--text-primary);
-    font-weight: 500;
-}
-
-.breadcrumb-separator {
-    color: var(--text-muted);
-}
-
-/* الاستجابة للشاشات */
-@media (max-width: 768px) {
-    .navbar {
-        right: 0;
-    }
-    
-    .navbar-toggle {
-        display: block;
-    }
-    
-    .navbar-search {
-        max-width: 200px;
-    }
-    
-    .user-name {
-        display: none;
-    }
-    
-    .notifications-dropdown,
-    .messages-dropdown,
-    .user-dropdown {
-        left: -200px;
-        width: 280px;
-    }
-}
-
-@media (max-width: 480px) {
-    .navbar-container {
-        padding: var(--spacing-sm) var(--spacing-md);
-        gap: var(--spacing-sm);
-    }
-    
-    .navbar-search {
-        max-width: 150px;
-    }
-    
-    .search-input {
-        font-size: var(--font-size-xs);
-    }
-    
-    .breadcrumb-container {
-        padding: var(--spacing-xs) var(--spacing-md);
-    }
-    
-    .breadcrumb {
-        font-size: var(--font-size-xs);
-    }
 }
 </style>
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // تبديل الشريط الجانبي من الشريط العلوي
-    const navbarToggle = document.getElementById('navbarToggle');
-    const sidebar = document.getElementById('sidebar');
-    const navbar = document.getElementById('navbar');
-    
-    if (navbarToggle) {
-        navbarToggle.addEventListener('click', function() {
-            sidebar.classList.toggle('show');
-            navbar.classList.toggle('sidebar-collapsed');
-        });
-    }
-    
-    // البحث العام
-    const globalSearch = document.getElementById('globalSearch');
-    const searchResults = document.getElementById('searchResults');
-    
-    if (globalSearch) {
-        globalSearch.addEventListener('input', function() {
-            const query = this.value.trim();
-            if (query.length > 2) {
-                // هنا يمكن إضافة استدعاء AJAX للبحث
-                searchResults.style.display = 'block';
-            } else {
-                searchResults.style.display = 'none';
-            }
-        });
-        
-        // إخفاء النتائج عند النقر خارجها
-        document.addEventListener('click', function(e) {
-            if (!globalSearch.contains(e.target) && !searchResults.contains(e.target)) {
-                searchResults.style.display = 'none';
-            }
-        });
-    }
-    
-    // تبديل الثيم
-    const themeToggle = document.querySelector('[data-theme-toggle]');
-    const themeIcon = document.getElementById('themeIcon');
-    
-    if (themeToggle) {
-        themeToggle.addEventListener('click', function() {
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            
-            document.documentElement.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            
-            // تحديث الأيقونة
-            if (themeIcon) {
-                themeIcon.className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-            }
-        });
-    }
-    
-    // تطبيق الثيم المحفوظ
-    const savedTheme = localStorage.getItem('theme');
-    if (savedTheme) {
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        if (themeIcon) {
-            themeIcon.className = savedTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-        }
-    }
-    
-    // تحديث عدد الإشعارات
-    function updateNotificationCount() {
-        // هنا يمكن إضافة استدعاء AJAX لجلب عدد الإشعارات
-        const count = 3; // مثال
-        const badge = document.getElementById('notificationCount');
-        if (badge) {
-            badge.textContent = count;
-            badge.style.display = count > 0 ? 'block' : 'none';
-        }
-    }
-    
-    // تحديد جميع الإشعارات كمقروءة
-    window.markAllAsRead = function() {
-        const notifications = document.querySelectorAll('.notification-item.unread');
-        notifications.forEach(notification => {
-            notification.classList.remove('unread');
-        });
-        
-        const badge = document.getElementById('notificationCount');
-        if (badge) {
-            badge.style.display = 'none';
-        }
-    };
-    
-    // تحديث الإشعارات كل دقيقة
-    setInterval(updateNotificationCount, 60000);
-});
-</script>
