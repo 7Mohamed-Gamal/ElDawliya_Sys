@@ -29,59 +29,95 @@ class Company(models.Model):
         unique=True,
         verbose_name=_("اسم الشركة")
     )
-    
+    # Compatibility fields expected by API/tests
+    name_english = models.CharField(
+        max_length=200,
+        null=True,
+        blank=True,
+        verbose_name=_("الاسم بالإنجليزية")
+    )
+    code = models.CharField(
+        max_length=20,
+        unique=True,
+        null=True,
+        blank=True,
+        verbose_name=_("الكود")
+    )
+    tax_number = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        verbose_name=_("الرقم الضريبي (متوافق)")
+    )
+    commercial_register = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        verbose_name=_("السجل التجاري")
+    )
+
     legal_name = models.CharField(
         max_length=200,
         null=True,
         blank=True,
         verbose_name=_("الاسم القانوني")
     )
-    
+
     tax_id = models.CharField(
         max_length=50,
         null=True,
         blank=True,
-        verbose_name=_("الرقم الضريبي")
+        verbose_name=_("الرقم الضريبي الداخلي")
     )
-    
+
     registration_number = models.CharField(
         max_length=50,
         null=True,
         blank=True,
-        verbose_name=_("رقم السجل التجاري")
+        verbose_name=_("رقم السجل التجاري الداخلي")
     )
-    
+
     # Contact Information
     email = models.EmailField(
+        null=True,
+        blank=True,
         verbose_name=_("البريد الإلكتروني")
     )
-    
+
     phone = models.CharField(
         max_length=20,
+        null=True,
+        blank=True,
         verbose_name=_("رقم الهاتف")
     )
-    
+
     website = models.URLField(
         null=True,
         blank=True,
         verbose_name=_("الموقع الإلكتروني")
     )
-    
+
     # Address Information
     address = models.TextField(
+        null=True,
+        blank=True,
         verbose_name=_("العنوان")
     )
-    
+
     city = models.CharField(
         max_length=100,
+        null=True,
+        blank=True,
         verbose_name=_("المدينة")
     )
-    
+
     state = models.CharField(
         max_length=100,
+        null=True,
+        blank=True,
         verbose_name=_("المحافظة/الولاية")
     )
-    
+
     country = models.CharField(
         max_length=100,
         default="مصر",
@@ -163,7 +199,21 @@ class Company(models.Model):
         return self.name
     
     def save(self, *args, **kwargs):
-        """Override save to set default settings"""
+        """Override save to set default settings and fiscal year if missing"""
+        from datetime import date
+        today = date.today()
+        # Ensure fiscal year dates exist
+        if not getattr(self, 'fiscal_year_start', None):
+            try:
+                self.fiscal_year_start = date(today.year, 1, 1)
+            except Exception:
+                self.fiscal_year_start = today
+        if not getattr(self, 'fiscal_year_end', None):
+            try:
+                self.fiscal_year_end = date(today.year, 12, 31)
+            except Exception:
+                self.fiscal_year_end = today
+        # Default settings
         if not self.company_settings:
             self.company_settings = {
                 'leave_approval_required': True,

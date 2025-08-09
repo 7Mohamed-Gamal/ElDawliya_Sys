@@ -215,6 +215,9 @@ class Employee(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active', verbose_name=_('الحالة'))
     is_active = models.BooleanField(default=True, verbose_name=_('نشط'))
 
+    # Compensation
+    basic_salary = models.DecimalField(max_digits=12, decimal_places=2, default=Decimal('0.00'), verbose_name=_('الراتب الأساسي'))
+
     # Media
     photo = models.ImageField(upload_to='employees/photos/', blank=True, null=True, verbose_name=_('الصورة الشخصية'))
 
