@@ -32,7 +32,7 @@ class ViewsAuthenticationTest(TestCase):
     
     def test_employee_list_requires_login(self):
         """اختبار أن قائمة الموظفين تتطلب تسجيل دخول"""
-        url = reverse('hr:employee_list')
+        url = reverse('Hr:employees:list')
         response = self.client.get(url)
         
         # يجب إعادة توجيه إلى صفحة تسجيل الدخول
@@ -43,7 +43,7 @@ class ViewsAuthenticationTest(TestCase):
         """اختبار الوصول لقائمة الموظفين بعد تسجيل الدخول"""
         self.client.login(username='testuser', password='testpass123')
         
-        url = reverse('hr:employee_list')
+        url = reverse('Hr:employees:list')
         response = self.client.get(url)
         
         # يجب أن يكون الوصول مسموحاً
@@ -131,7 +131,7 @@ class EmployeeViewsTest(TestCase):
     
     def test_employee_list_view(self):
         """اختبار عرض قائمة الموظفين"""
-        url = reverse('hr:employee_list')
+        url = reverse('Hr:employees:list')
         response = self.client.get(url)
         
         self.assertEqual(response.status_code, 200)
@@ -528,7 +528,7 @@ class ResponseFormatTest(TestCase):
     
     def test_html_response_format(self):
         """اختبار تنسيق الاستجابة HTML"""
-        url = reverse('hr:employee_list')
+        url = reverse('Hr:employees:list')
         response = self.client.get(url)
         
         self.assertEqual(response.status_code, 200)
@@ -567,7 +567,7 @@ class ContextDataTest(TestCase):
     
     def test_employee_list_context(self):
         """اختبار بيانات السياق في قائمة الموظفين"""
-        url = reverse('hr:employee_list')
+        url = reverse('Hr:employees:list')
         response = self.client.get(url)
         
         self.assertEqual(response.status_code, 200)

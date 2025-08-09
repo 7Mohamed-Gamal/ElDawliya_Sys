@@ -69,6 +69,9 @@ urlpatterns = [
 
     # Employee patterns with namespace
     path('employees/', include('Hr.url_modules.employee_urls', namespace='employees')),
+    
+    # Temporary redirect for legacy employee_list URL
+    path('employee_list/', employee_list, name='employee_list'),
 
     # Department patterns with namespace
     path('departments/', include('Hr.url_modules.department_urls', namespace='departments')),

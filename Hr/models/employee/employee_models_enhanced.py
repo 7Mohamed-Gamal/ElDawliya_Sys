@@ -19,6 +19,12 @@ from datetime import date, timedelta
 import re
 
 
+def validate_birth_date(value):
+    """التحقق من صحة تاريخ الميلاد"""
+    if value >= date.today():
+        raise ValidationError(_('تاريخ الميلاد يجب أن يكون في الماضي'))
+
+
 class EmployeeEnhanced(models.Model):
     """
     نموذج الموظف المحسن والشامل يحتوي على جميع المعلومات الشخصية والمالية مع تشفير الحقول الحساسة.
@@ -172,10 +178,7 @@ class EmployeeEnhanced(models.Model):
     
     date_of_birth = models.DateField(
         verbose_name=_("تاريخ الميلاد"),
-        validators=[
-            lambda value: ValidationError(_('تاريخ الميلاد يجب أن يكون في الماضي')) 
-            if value >= date.today() else None
-        ]
+        validators=[validate_birth_date]
     )
     
     place_of_birth = models.CharField(

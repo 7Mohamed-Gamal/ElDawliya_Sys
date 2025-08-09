@@ -416,7 +416,7 @@ class ConcurrencyTest(TransactionTestCase):
         
         try:
             # طلب قائمة الموظفين
-            response = client.get(reverse('hr:employee_list'))
+            response = client.get(reverse('Hr:employees:list'))
             return response.status_code
         except Exception as e:
             return str(e)

@@ -220,7 +220,7 @@ class NewEmployeeForm(forms.ModelForm):
             ),
             FormActions(
                 Submit('submit', _('حفظ'), css_class='btn btn-primary btn-lg'),
-                HTML('<a href="{% url "hr:employee_list" %}" class="btn btn-secondary btn-lg ms-2">إلغاء</a>'),
+                HTML('<a href="{% url "Hr:employees:list" %}" class="btn btn-secondary btn-lg ms-2">إلغاء</a>'),
                 css_class='text-center mt-4'
             )
         )

@@ -64,7 +64,7 @@ class AuthenticationSecurityTest(TestCase):
     def test_csrf_protection(self):
         """اختبار الحماية من CSRF"""
         # محاولة إرسال طلب POST بدون CSRF token
-        response = self.client.post(reverse('hr:employee_list'), {
+        response = self.client.post(reverse('Hr:employees:list'), {
             'test': 'data'
         })
         
@@ -317,7 +317,7 @@ class AccessControlSecurityTest(TestCase):
         """اختبار منع الوصول غير المصرح"""
         # محاولة الوصول لصفحة محمية بدون تسجيل دخول
         protected_urls = [
-            reverse('hr:employee_list'),
+            reverse('Hr:employees:list'),
             reverse('hr:department_list'),
             reverse('hr:monitoring_dashboard'),
         ]
@@ -455,7 +455,7 @@ class SecurityHeadersTest(TestCase):
     
     def test_security_headers_present(self):
         """اختبار وجود headers الأمان"""
-        response = self.client.get(reverse('hr:employee_list'))
+        response = self.client.get(reverse('Hr:employees:list'))
         
         # التحقق من وجود headers الأمان المهمة
         security_headers = [
@@ -474,7 +474,7 @@ class SecurityHeadersTest(TestCase):
     
     def test_content_security_policy(self):
         """اختبار سياسة الأمان للمحتوى"""
-        response = self.client.get(reverse('hr:employee_list'))
+        response = self.client.get(reverse('Hr:employees:list'))
         
         # التحقق من وجود CSP header
         if 'Content-Security-Policy' in response:
