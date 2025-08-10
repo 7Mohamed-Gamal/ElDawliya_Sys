@@ -997,7 +997,7 @@ class Migration(migrations.Migration):
             field=models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False),
         ),
         migrations.AlterField(
-            model_name='employeeemergencycontactenhanced',
+            model_name='employeeemergencycontact',
             name='id',
             field=models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID'),
         ),
@@ -1135,7 +1135,7 @@ class Migration(migrations.Migration):
             unique_together={('employee', 'date')},
         ),
         migrations.AlterUniqueTogether(
-            name='employeeemergencycontactenhanced',
+            name='employeeemergencycontact',
             unique_together={('employee', 'priority')},
         ),
         migrations.AlterUniqueTogether(
@@ -1199,15 +1199,15 @@ class Migration(migrations.Migration):
             index=models.Index(fields=['is_relevant_to_job'], name='Hr_employee_is_rele_b80596_idx'),
         ),
         migrations.AddIndex(
-            model_name='employeeemergencycontactenhanced',
+            model_name='employeeemergencycontact',
             index=models.Index(fields=['employee', 'priority'], name='hrms_employ_employe_0e6341_idx'),
         ),
         migrations.AddIndex(
-            model_name='employeeemergencycontactenhanced',
+            model_name='employeeemergencycontact',
             index=models.Index(fields=['is_primary'], name='hrms_employ_is_prim_a3d5c9_idx'),
         ),
         migrations.AddIndex(
-            model_name='employeeemergencycontactenhanced',
+            model_name='employeeemergencycontact',
             index=models.Index(fields=['is_active'], name='hrms_employ_is_acti_eaf2a1_idx'),
         ),
         migrations.AddIndex(
