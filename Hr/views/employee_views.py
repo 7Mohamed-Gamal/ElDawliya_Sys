@@ -246,7 +246,7 @@ def employee_create(request):
         'button_text': 'إنشاء'
     }
 
-    return render(request, 'Hr/employees/employee_form_new.html', context)
+    return render(request, 'Hr/employees/employee_form.html', context)
 
 
 @login_required
