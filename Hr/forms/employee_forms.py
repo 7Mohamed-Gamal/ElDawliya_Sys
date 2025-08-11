@@ -160,17 +160,16 @@ class EmployeeForm(forms.ModelForm):
             except Job.DoesNotExist:
                 pass
 
-        # Split fields into fieldsets for display (only include fields that exist in the model)
+        # Split fields into fieldsets for display (rendered in template if available)
         self.fieldsets = [
             (_('المعلومات الأساسية'), [
-                'emp_id', 'emp_first_name', 'emp_second_name', 'emp_full_name',
-                'working_condition', 'insurance_status'
+                'emp_id', 'emp_first_name', 'emp_second_name', 'emp_full_name'
             ]),
             (_('معلومات الهوية'), [
                 'national_id', 'date_birth'
             ]),
             (_('معلومات العمل'), [
-                'working_condition', 'department', 'dept_name', 'jop_code', 'emp_date_hiring'
+                'department', 'dept_name', 'jop_name', 'jop_code', 'emp_date_hiring', 'working_condition'
             ]),
             (_('معلومات التأمين'), [
                 'insurance_status'
@@ -452,14 +451,14 @@ class EmployeeSearchForm(forms.Form):
         label='القسم',
         required=False,
         empty_label='جميع الأقسام',
-        widget=forms.Select(attrs={'class': 'form-select'})
+        widget=forms.Select(attrs={'class': 'form-select select2', 'data-placeholder': 'اختر القسم'})
     )
     job_name = forms.ModelChoiceField(
         queryset=Job.objects.all(),
         label='الوظيفة',
         required=False,
         empty_label='جميع الوظائف',
-        widget=forms.Select(attrs={'class': 'form-select'})
+        widget=forms.Select(attrs={'class': 'form-select select2', 'data-placeholder': 'اختر الوظيفة'})
     )
     working_condition = forms.ChoiceField(
         choices=[('', 'جميع الحالات')] + WORKING_CONDITION_CHOICES,

@@ -1,5 +1,12 @@
 from django.urls import path, include
 
+# Bring in modular patterns for companies/branches from main_urls
+try:
+    from .main_urls import company_patterns, branch_patterns
+except Exception:
+    company_patterns = None
+    branch_patterns = None
+
 # Legacy views (existing)
 from .views.employee_views import (
     dashboard, employee_list, employee_create, employee_detail,
@@ -69,34 +76,45 @@ urlpatterns = [
 
     # Employee patterns with namespace
     path('employees/', include('Hr.url_modules.employee_urls', namespace='employees')),
-    
+
     # Temporary redirect for legacy employee_list URL
     path('employee_list/', employee_list, name='employee_list'),
 
     # Department patterns with namespace
     path('departments/', include('Hr.url_modules.department_urls', namespace='departments')),
-    
+
     # Department patterns with new namespace (alias)
     path('departments_new/', include('Hr.url_modules.departments_new_urls', namespace='departments_new')),
 
     # Job patterns with namespace
     path('jobs/', include('Hr.url_modules.job_urls', namespace='jobs')),
 
+    # Company patterns with namespace (organizational structure)
+    # Use patterns from main_urls if available
+    *(
+        [path('companies/', include((company_patterns, app_name), namespace='companies'))]
+        if company_patterns is not None else []
+    ),
+    *(
+        [path('branches/', include((branch_patterns, app_name), namespace='branches'))]
+        if branch_patterns is not None else []
+    ),
+
     # Salary patterns with namespace
     path('salaries/', include('Hr.url_modules.salary_urls', namespace='salaries')),
-    
+
     # Salary components patterns with namespace
     path('salary-components/', include('Hr.url_modules.salary_component_urls', namespace='salary_components')),
 
     # Search patterns with namespace
     path('search/', include('Hr.url_modules.search_urls', namespace='search')),
-    
+
     # Reports patterns with namespace
     path('reports/', include('Hr.url_modules.reports_urls', namespace='reports')),
-    
+
     # Notifications patterns with namespace
     path('notifications/', include('Hr.url_modules.notification_urls', namespace='notifications')),
-    
+
     # Integrations patterns with namespace
     path('integrations/', include('Hr.url_modules.integration_urls', namespace='integrations')),
 
@@ -117,16 +135,19 @@ urlpatterns = [
 
     # Leave Requests patterns with namespace
     path('leave_requests/', include('Hr.url_modules.leave_requests_urls', namespace='leave_requests')),
-    
+
     # Leave Balances patterns with namespace
     path('leave_balances/', include('Hr.url_modules.leave_balances_urls', namespace='leave_balances')),
-    
+
     # Employee Training patterns with namespace
     path('employee_training/', include('Hr.url_modules.employee_training_urls', namespace='employee_training')),
 
     # Update data
     path('update_data/', update_data, name='update_data'),
-    
+
     # نظام مراقبة النظام
     path('monitoring/', include('Hr.url_modules.monitoring_urls', namespace='monitoring')),
+    # Files patterns with namespace
+    path('files/', include('Hr.url_modules.files_urls', namespace='files')),
+
 ]

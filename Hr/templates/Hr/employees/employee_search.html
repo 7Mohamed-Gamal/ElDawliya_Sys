@@ -242,7 +242,7 @@
                             <i class="fas fa-sync-alt me-2"></i>
                             مسح الكل
                         </a>
-                        <button type="button" class="btn btn-outline-info btn-lg" onclick="toggleAdvancedSearch()">
+                        <button type="button" id="toggle-advanced" class="btn btn-outline-info btn-lg">
                             <i class="fas fa-cogs me-2"></i>
                             بحث متقدم
                         </button>
@@ -439,6 +439,30 @@
                             </table>
                         </div>
                     </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                      <nav aria-label="نتائج البحث">
+                        <ul class="pagination justify-content-center m-0">
+                          {% if page_obj.has_previous %}
+                            <li class="page-item">
+                              <a class="page-link" href="?{% if request.GET %}{{ request.GET.urlencode|cut:'page='|cut:'&page=' }}&{% endif %}page={{ page_obj.previous_page_number }}">السابق</a>
+                            </li>
+                          {% else %}
+                            <li class="page-item disabled"><span class="page-link">السابق</span></li>
+                          {% endif %}
+                          <li class="page-item disabled"><span class="page-link">صفحة {{ page_obj.number }} من {{ page_obj.paginator.num_pages }}</span></li>
+                          {% if page_obj.has_next %}
+                            <li class="page-item">
+                              <a class="page-link" href="?{% if request.GET %}{{ request.GET.urlencode|cut:'page='|cut:'&page=' }}&{% endif %}page={{ page_obj.next_page_number }}">التالي</a>
+                            </li>
+                          {% else %}
+                            <li class="page-item disabled"><span class="page-link">التالي</span></li>
+                          {% endif %}
+                        </ul>
+                      </nav>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -537,6 +561,7 @@
         document.addEventListener('keydown', function(e) {
             // Ctrl + F للتركيز على البحث السريع
             if (e.ctrlKey && e.key === 'f' && quickSearchInput) {
+
                 e.preventDefault();
                 quickSearchInput.focus();
             }
@@ -565,4 +590,35 @@
     });
 </script>
 {% endblock %}
+{% endblock %}
+
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const toggleBtn = document.getElementById('toggle-advanced');
+    const collapse = document.getElementById('advancedSearchCollapse');
+    if (toggleBtn && collapse) {
+      toggleBtn.addEventListener('click', function() {
+        const bsCollapse = new bootstrap.Collapse(collapse, {toggle: false});
+        if (collapse.classList.contains('show')) {
+          bsCollapse.hide();
+        } else {
+          bsCollapse.show();
+        }
+      });
+    }
+
+    // Initialize Select2 if available
+    if (window.jQuery && jQuery().select2) {
+      jQuery('.select2').select2({
+        width: '100%',
+        dir: 'rtl',
+        language: {
+          noResults: function(){return 'لا توجد نتائج';}
+        }
+      });
+    }
+  });
+</script>
 {% endblock %}

@@ -371,7 +371,10 @@ def employee_search(request):
             filters &= Q(department=form.cleaned_data['department'])
 
         if form.cleaned_data.get('job_name'):
-            filters &= Q(jop_name=form.cleaned_data['job_name'].jop_name)
+            try:
+                filters &= Q(jop_code=form.cleaned_data['job_name'].jop_code)
+            except Exception:
+                pass
 
         if form.cleaned_data.get('working_condition'):
             filters &= Q(working_condition=form.cleaned_data['working_condition'])
@@ -414,8 +417,14 @@ def employee_search(request):
         if form.cleaned_data.get('birth_date_to'):
             filters &= Q(date_birth__lte=form.cleaned_data['birth_date_to'])
 
-        # تطبيق الفلاتر والحصول على النتائج
-        employees = Employee.objects.filter(filters).select_related('department').order_by('emp_full_name')
+        # تطبيق الفلاتر والحصول على النتائج + pagination
+        employees_qs = Employee.objects.filter(filters).select_related('department').order_by('emp_full_name')
+
+        # Pagination
+        from django.core.paginator import Paginator
+        paginator = Paginator(employees_qs, 20)
+        page_number = request.GET.get('page')
+        employees = paginator.get_page(page_number)
 
         # If exactly one employee found, select for detailed view
         if employees.count() == 1:
@@ -434,7 +443,9 @@ def employee_search(request):
         'selected_employee': selected_employee,
         'analytics': analytics,
         'title': 'بحث الموظفين',
-        'total_results': employees.count() if employees else 0,
+        'total_results': employees.paginator.count if employees else 0,
+        'page_obj': employees,
+        'paginator': getattr(employees, 'paginator', None),
     }
     return render(request, 'Hr/employees/employee_search.html', context)
 

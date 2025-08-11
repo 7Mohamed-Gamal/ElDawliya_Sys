@@ -1,0 +1,171 @@
+{% extends 'Hr/base_hr.html' %}
+{% load static %}
+
+{% block title %}ملفات الموظفين{% endblock %}
+{% block page_title %}ملفات الموظفين{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Hr:employees:list' %}">الموظفون</a></li>
+<li class="breadcrumb-item active">ملفات الموظفين</li>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <div class="row align-items-center g-2">
+      <div class="col-md-4"><h5 class="mb-0"><i class="fas fa-folder-open me-2"></i>قائمة الملفات</h5></div>
+      <div class="col-md-8">
+        <form class="row g-2" method="get">
+          <div class="col-lg-3 col-md-6">
+            {% if employees_for_filter %}
+              <select name="employee" class="form-select form-select-sm select2" data-placeholder="اختر موظفًا">
+                <option value=""></option>
+                {% for emp in employees_for_filter %}
+                  <option value="{{ emp.emp_id }}" {% if request.GET.employee|stringformat:'s' == emp.emp_id|stringformat:'s' %}selected{% endif %}>{{ emp.emp_full_name }} (#{{ emp.emp_id }})</option>
+                {% endfor %}
+              </select>
+            {% else %}
+              <input type="number" name="employee" value="{{ request.GET.employee|default:'' }}" class="form-control form-control-sm" placeholder="رقم الموظف">
+            {% endif %}
+          </div>
+          <div class="col-lg-3 col-md-6">
+            <select name="file_type" class="form-select form-select-sm">
+              <option value="">كل الأنواع</option>
+              <option value="contract" {% if request.GET.file_type == 'contract' %}selected{% endif %}>عقد</option>
+              <option value="id_copy" {% if request.GET.file_type == 'id_copy' %}selected{% endif %}>صورة هوية</option>
+              <option value="cv" {% if request.GET.file_type == 'cv' %}selected{% endif %}>سيرة ذاتية</option>
+              <option value="other" {% if request.GET.file_type == 'other' %}selected{% endif %}>أخرى</option>
+            </select>
+          </div>
+          <div class="col-lg-3 col-md-6">
+            <input type="text" name="q" value="{{ request.GET.q|default:'' }}" class="form-control form-control-sm" placeholder="بحث بالعنوان/الاسم">
+          </div>
+          <div class="col-lg-3 col-md-6">
+            <div class="d-flex gap-2">
+              <input type="date" name="date_from" value="{{ request.GET.date_from|default:'' }}" class="form-control form-control-sm">
+              <input type="date" name="date_to" value="{{ request.GET.date_to|default:'' }}" class="form-control form-control-sm">
+            </div>
+          </div>
+          <div class="col-lg-6 col-md-6">
+            <div class="d-flex gap-2">
+              <select name="order" class="form-select form-select-sm">
+                <option value="newest" {% if request.GET.order == 'newest' or not request.GET.order %}selected{% endif %}>أحدث أولاً</option>
+                <option value="oldest" {% if request.GET.order == 'oldest' %}selected{% endif %}>أقدم أولاً</option>
+              </select>
+              <button type="submit" class="btn btn-sm btn-primary"><i class="fas fa-search me-1"></i>بحث</button>
+              <a href="{% url 'Hr:files:list' %}" class="btn btn-sm btn-outline-secondary">مسح</a>
+            </div>
+          </div>
+          <div class="col-lg-6 col-md-6 text-end">
+            <a href="{% url 'Hr:files:create' %}{% if request.GET.employee %}?employee={{ request.GET.employee }}{% endif %}" class="btn btn-sm btn-success">
+              <i class="fas fa-upload me-1"></i>رفع ملف جديد
+            </a>
+          </div>
+        </form>
+  {% if page_obj %}
+  <div class="card-footer">
+    <nav aria-label="قائمة الملفات">
+      <ul class="pagination justify-content-center m-0">
+        {% if page_obj.has_previous %}
+          <li class="page-item">
+            <a class="page-link" href="?{% if request.GET %}{{ request.GET.urlencode|cut:'page='|cut:'&page=' }}&{% endif %}page={{ page_obj.previous_page_number }}">السابق</a>
+          </li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">السابق</span></li>
+        {% endif %}
+        <li class="page-item disabled"><span class="page-link">صفحة {{ page_obj.number }} من {{ page_obj.paginator.num_pages }}</span></li>
+        {% if page_obj.has_next %}
+          <li class="page-item">
+            <a class="page-link" href="?{% if request.GET %}{{ request.GET.urlencode|cut:'page='|cut:'&page=' }}&{% endif %}page={{ page_obj.next_page_number }}">التالي</a>
+          </li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">التالي</span></li>
+        {% endif %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+
+      </div>
+    </div>
+  </div>
+  <div class="card-body p-0">
+    <script>
+      document.addEventListener('DOMContentLoaded', function(){
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+          return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+      })
+    </script>
+
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>العنوان</th>
+            <th>الموظف</th>
+            <th>النوع</th>
+            <th>تاريخ الرفع</th>
+            <th class="text-center" style="width: 160px;">العمليات</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for f in files %}
+          <tr>
+            <td>
+              <a href="{% url 'Hr:files:detail' f.pk %}" class="text-decoration-none">{{ f.title }}</a>
+              <div class="small text-muted">{{ f.file.name|default:'-' }}</div>
+            </td>
+            <td>
+              {{ f.employee.emp_full_name|default:'-' }}
+              <div class="small text-muted">#{{ f.employee.emp_id }}</div>
+            </td>
+            <td>
+              {% with t=f.file_type %}
+                {% if t == 'contract' %}
+                  <span class="badge bg-primary">عقد</span>
+                {% elif t == 'id_copy' %}
+                  <span class="badge bg-info text-dark">صورة هوية</span>
+                {% elif t == 'cv' %}
+                  <span class="badge bg-success">سيرة ذاتية</span>
+                {% elif t == 'certificate' %}
+                  <span class="badge bg-secondary">شهادة</span>
+                {% elif t == 'medical' %}
+                  <span class="badge bg-warning text-dark">تقرير طبي</span>
+                {% elif t == 'photo' %}
+                  <span class="badge bg-dark">صورة</span>
+                {% else %}
+                  <span class="badge bg-light text-dark">أخرى</span>
+                {% endif %}
+              {% endwith %}
+            </td>
+            <td>
+              {{ f.created_at|date:'Y-m-d H:i' }}
+              <div class="small text-muted">منذ {{ f.created_at|timesince }} </div>
+            </td>
+            <td class="text-center">
+              <a class="btn btn-sm btn-outline-primary" href="{% url 'Hr:files:detail' f.pk %}" title="عرض" data-bs-toggle="tooltip"><i class="fas fa-eye"></i></a>
+              {% with ext=f.file.name|lower %}
+                {% if ext.endswith('.jpg') or ext.endswith('.jpeg') or ext.endswith('.png') or ext.endswith('.gif') or ext.endswith('.bmp') %}
+                  <a class="btn btn-sm btn-outline-info" href="{{ f.file.url }}" target="_blank" rel="noopener" title="فتح" data-bs-toggle="tooltip"><i class="fas fa-external-link-alt"></i></a>
+                {% endif %}
+              {% endwith %}
+              <a class="btn btn-sm btn-outline-success" href="{% url 'Hr:files:download' f.pk %}" title="تنزيل" data-bs-toggle="tooltip"><i class="fas fa-download"></i></a>
+              <a class="btn btn-sm btn-outline-secondary" href="{% url 'Hr:files:edit' f.pk %}" title="تعديل" data-bs-toggle="tooltip"><i class="fas fa-edit"></i></a>
+              <a class="btn btn-sm btn-outline-danger" href="{% url 'Hr:files:delete' f.pk %}" title="حذف" data-bs-toggle="tooltip"><i class="fas fa-trash"></i></a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="text-center py-4 text-muted">لا توجد ملفات مطابقة</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

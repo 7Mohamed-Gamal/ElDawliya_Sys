@@ -44,6 +44,15 @@
                         </button>
                     {% endif %}
                 </div>
+                        <a href="{% url 'Hr:files:list' %}?employee={{ employee.emp_id }}" class="btn btn-outline-secondary btn-with-icon">
+                            <i class="fas fa-folder-open"></i>
+                            <span>ملفات الموظف</span>
+                        </a>
+                        <a href="{% url 'Hr:files:create' %}?employee={{ employee.emp_id }}" class="btn btn-success btn-with-icon">
+                            <i class="fas fa-upload"></i>
+                            <span>رفع ملف</span>
+                        </a>
+
             </div>
         </div>
     </div>

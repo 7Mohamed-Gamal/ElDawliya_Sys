@@ -234,7 +234,7 @@
                                 </h3>
                                 <div class="form-row">
                                     {% for field in form %}
-                                        {% if field.name in "emp_first_name,emp_middle_name,emp_last_name,emp_full_name,emp_national_id,emp_phone,emp_email" %}
+                                        {% if field.name in "emp_id,emp_first_name,emp_second_name,emp_full_name,national_id,date_birth" %}
                                         <div class="form-group">
                                             <label class="form-label" for="{{ field.id_for_label }}">
                                                 {{ field.label }}
@@ -260,7 +260,7 @@
                                 </h3>
                                 <div class="form-row">
                                     {% for field in form %}
-                                        {% if field.name in "department,jop_code,emp_date_hiring,working_condition,emp_salary" %}
+                                        {% if field.name in "department,dept_name,jop_name,jop_code,emp_date_hiring,working_condition,insurance_status" %}
                                         <div class="form-group">
                                             <label class="form-label" for="{{ field.id_for_label }}">
                                                 {{ field.label }}
@@ -286,7 +286,7 @@
                                 </h3>
                                 <div class="form-row">
                                     {% for field in form %}
-                                        {% if field.name not in "emp_first_name,emp_middle_name,emp_last_name,emp_full_name,emp_national_id,emp_phone,emp_email,department,jop_code,emp_date_hiring,working_condition,emp_salary" %}
+                                        {% if field.name not in "emp_id,emp_first_name,emp_second_name,emp_full_name,national_id,date_birth,department,dept_name,jop_name,jop_code,emp_date_hiring,working_condition,insurance_status" %}
                                         <div class="form-group">
                                             <label class="form-label" for="{{ field.id_for_label }}">
                                                 {{ field.label }}
