@@ -32,7 +32,10 @@ urlpatterns = [
     path('accounts/', include('accounts.urls')),  # مسارات تطبيق الحسابات
     path('meetings/', include('meetings.urls')),  # مسارات تطبيق الاجتماعات
     path('tasks/', include('tasks.urls')),  # مسارات تطبيق المهام
-    path('Hr/', include('Hr.urls')), # مسارات تطبيق الموارد البشرية
+    # path('Hr/', include('Hr.urls')), # Disabled: legacy HR app removed
+    path('org/', include('org.urls')),
+    path('employees/', include('employees.urls')),
+
     path('attendance/', include('attendance.urls')),
     path('inventory/', include('inventory.urls')), # مسارات تطبيق مخزن قطع الغيار
     path('purchase/', include('Purchase_orders.urls')), # مسارات تطبيق طلبات الشراء
@@ -42,6 +45,17 @@ urlpatterns = [
     path('employee-tasks/', include('employee_tasks.urls')),  # مسارات تطبيق مهام الموظفين
     path('cars/', include('cars.urls')),  # مسارات تطبيق السيارات
     path('core/', include('core.urls')),  # مسارات النظام الأساسي
+    path('companies/', include('companies.urls')),  # مسارات الشركات
+    path('leaves/', include('leaves.urls')),  # مسارات الإجازات
+    path('insurance/', include('insurance.urls')),
+    path('training/', include('training.urls')),
+    path('disciplinary/', include('disciplinary.urls')),
+    path('loans/', include('loans.urls')),
+    path('assets/', include('assets.urls')),
+    path('tickets/', include('tickets.urls')),
+    path('workflow/', include('workflow.urls')),
+    path('syssettings/', include('syssettings.urls')),
+    path('rbac/', include('rbac.urls')),
     path('api/v1/', include('api.urls')),  # مسارات API
     # path('api/hr/', include('Hr.api.urls')),  # مسارات API الموارد البشرية - معلق مؤقتاً
     path('api/global-search/', global_search_api, name='global_search_api'),  # Global search API endpoint

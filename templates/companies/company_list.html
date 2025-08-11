@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>الشركات</h1>
+<ul>
+  {% for c in companies %}
+  <li><a href="{% url 'companies:detail' c.pk %}">{{ c.name }}</a></li>
+  {% empty %}
+  <li>لا توجد شركات بعد</li>
+  {% endfor %}
+</ul>
+{% endblock %}
+

@@ -3,7 +3,8 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 from django.db.models import Count, Q
-from Hr.models.employee.employee_models import Employee
+# Use the new Employees app model
+from employees.models import Employee
 
 
 class AttendanceRule(models.Model):
@@ -255,3 +256,37 @@ class AttendanceRecord(models.Model):
             total_minutes = (self.check_out - self.check_in).total_seconds() / 60
             return total_minutes - self.break_minutes
         return 0
+
+
+# Schema-specific models to match provided SQL tables
+class AttendanceRules(models.Model):
+    rule_id = models.AutoField(primary_key=True, db_column='RuleID')
+    rule_name = models.CharField(max_length=100, db_column='RuleName', blank=True, null=True)
+    shift_start = models.TimeField(db_column='ShiftStart', blank=True, null=True)
+    shift_end = models.TimeField(db_column='ShiftEnd', blank=True, null=True)
+    late_threshold = models.IntegerField(db_column='LateThreshold', blank=True, null=True)
+    early_threshold = models.IntegerField(db_column='EarlyThreshold', blank=True, null=True)
+    overtime_start_after = models.TimeField(db_column='OvertimeStartAfter', blank=True, null=True)
+    week_end_days = models.CharField(max_length=20, db_column='WeekEndDays', blank=True, null=True)
+    is_default = models.BooleanField(db_column='IsDefault', default=False)
+
+    class Meta:
+        db_table = 'AttendanceRules'
+        verbose_name = 'قاعدة حضور'
+        verbose_name_plural = 'قواعد الحضور'
+
+
+class EmployeeAttendance(models.Model):
+    att_id = models.BigAutoField(primary_key=True, db_column='AttID')
+    emp = models.ForeignKey(Employee, on_delete=models.CASCADE, db_column='EmpID')
+    att_date = models.DateField(db_column='AttDate', blank=True, null=True)
+    check_in = models.DateTimeField(db_column='CheckIn', blank=True, null=True)
+    check_out = models.DateTimeField(db_column='CheckOut', blank=True, null=True)
+    # WorkMinutes computed via RunSQL migration
+    status = models.CharField(max_length=20, db_column='Status', blank=True, null=True)
+    rule = models.ForeignKey(AttendanceRules, on_delete=models.SET_NULL, db_column='RuleID', blank=True, null=True)
+
+    class Meta:
+        db_table = 'EmployeeAttendance'
+        verbose_name = 'سجل حضور'
+        verbose_name_plural = 'سجلات الحضور'

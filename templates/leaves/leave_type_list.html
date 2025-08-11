@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>أنواع الإجازات</h1>
+<ul>
+  {% for t in items %}
+  <li>{{ t.leave_name }} {% if t.is_paid %}(مدفوعة){% endif %}</li>
+  {% empty %}
+  <li>لا توجد أنواع إجازات</li>
+  {% endfor %}
+</ul>
+{% endblock %}
+

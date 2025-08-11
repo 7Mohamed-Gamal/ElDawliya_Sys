@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>قواعد الحضور</h1>
+<p><a class="btn btn-primary" href="{% url 'attendance:rules_create' %}">+ إضافة</a></p>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>الاسم</th><th>بداية الدوام</th><th>نهاية الدوام</th><th>افتراضي</th><th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for i in items %}
+    <tr>
+      <td>{{ i.rule_name }}</td>
+      <td>{{ i.shift_start }}</td>
+      <td>{{ i.shift_end }}</td>
+      <td>{% if i.is_default %}نعم{% else %}لا{% endif %}</td>
+      <td>
+        <a class="btn btn-sm btn-secondary" href="{% url 'attendance:rules_edit' i.pk %}">تعديل</a>
+        <a class="btn btn-sm btn-danger" href="{% url 'attendance:rules_delete' i.pk %}">حذف</a>
+      </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="5">لا توجد قواعد</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+

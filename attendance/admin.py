@@ -77,3 +77,24 @@ class LeaveBalanceAdmin(admin.ModelAdmin):
     list_filter = ['leave_type', 'year']
     search_fields = ['employee__full_name', 'employee__employee_id']
     readonly_fields = ['used_days', 'remaining_days']
+
+
+# Register schema-specific attendance models
+try:
+    from .models import AttendanceRules, EmployeeAttendance
+
+    @admin.register(AttendanceRules)
+    class AttendanceRulesAdmin(admin.ModelAdmin):
+        list_display = ('rule_id', 'rule_name', 'is_default')
+        list_filter = ('is_default',)
+        search_fields = ('rule_name',)
+
+    @admin.register(EmployeeAttendance)
+    class EmployeeAttendanceAdmin(admin.ModelAdmin):
+        list_display = ('att_id', 'emp', 'att_date', 'status', 'rule')
+        list_filter = ('status', 'att_date')
+        date_hierarchy = 'att_date'
+        search_fields = ('emp__emp_code',)
+except Exception:
+    # If models are not present for any reason, skip admin registration
+    pass

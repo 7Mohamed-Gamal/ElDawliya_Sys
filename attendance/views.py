@@ -16,7 +16,7 @@ from .models import (
     AttendanceRule,
     WorkSchedule
 )
-from Hr.models import Employee
+from employees.models import Employee
 
 
 class AttendanceRecordListView(LoginRequiredMixin, ListView):
@@ -57,7 +57,7 @@ def mark_attendance(request):
     if request.method == 'POST':
         employee = get_object_or_404(Employee, user=request.user)
         record_type = request.POST.get('record_type')
-        
+
         # Check if employee has already marked attendance for today
         today = timezone.localtime().date()
         existing_record = AttendanceRecord.objects.filter(
@@ -77,7 +77,7 @@ def mark_attendance(request):
             date=today,
             time=timezone.localtime().time(),
         )
-        
+
         messages.success(request, _('تم تسجيل الحضور/الانصراف بنجاح'))
         return redirect('attendance:dashboard')
 
@@ -99,7 +99,7 @@ class LeaveBalanceListView(LoginRequiredMixin, ListView):
         queryset = LeaveBalance.objects.select_related('employee', 'leave_type')
         if employee_id:
             queryset = queryset.filter(employee_id=employee_id)
-        
+
         return queryset.filter(year=year)
 
     def get_context_data(self, **kwargs):
@@ -113,7 +113,7 @@ class LeaveBalanceListView(LoginRequiredMixin, ListView):
 def attendance_dashboard(request):
     """View for attendance dashboard"""
     today = timezone.localtime().date()
-    
+
     # Get today's attendance statistics
     today_stats = AttendanceRecord.objects.filter(date=today).aggregate(
         present=Count('id', filter=Q(record_type='check_in')),
@@ -121,7 +121,7 @@ def attendance_dashboard(request):
         leave=Count('id', filter=Q(record_type='leave')),
         late=Count('id', filter=Q(record_type='check_in', late_minutes__gt=0))
     )
-    
+
     # Get the user's attendance info if they are an employee
     user_attendance = None
     if hasattr(request.user, 'employee'):
@@ -129,7 +129,7 @@ def attendance_dashboard(request):
             employee=request.user.employee,
             date=today
         ).order_by('-time').first()
-    
+
     # Get employee's work schedule and attendance profile
     work_schedule = None
     attendance_profile = None
@@ -139,7 +139,7 @@ def attendance_dashboard(request):
         ).first()
         if attendance_profile:
             work_schedule = attendance_profile.work_schedule
-    
+
     context = {
         'today_stats': today_stats,
         'user_attendance': user_attendance,
@@ -147,5 +147,89 @@ def attendance_dashboard(request):
         'attendance_profile': attendance_profile,
         'now': timezone.localtime(),
     }
-    
+
     return render(request, 'attendance/dashboard.html', context)
+
+
+# ==== CRUD for AttendanceRules and EmployeeAttendance (schema-specific) ====
+from .models import AttendanceRules, EmployeeAttendance
+from .forms import AttendanceRulesForm, EmployeeAttendanceForm
+
+@login_required
+def attendance_rules_list(request):
+    items = AttendanceRules.objects.all().order_by('rule_name')
+    return render(request, 'attendance/rules_list.html', {'items': items})
+
+@login_required
+def attendance_rules_create(request):
+    if request.method == 'POST':
+        form = AttendanceRulesForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _('تم إضافة قاعدة حضور'))
+            return redirect('attendance:rules_list')
+    else:
+        form = AttendanceRulesForm()
+    return render(request, 'attendance/rules_form.html', {'form': form, 'title': 'إضافة قاعدة حضور'})
+
+@login_required
+def attendance_rules_edit(request, pk):
+    item = get_object_or_404(AttendanceRules, pk=pk)
+    if request.method == 'POST':
+        form = AttendanceRulesForm(request.POST, instance=item)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _('تم تعديل قاعدة الحضور'))
+            return redirect('attendance:rules_list')
+    else:
+        form = AttendanceRulesForm(instance=item)
+    return render(request, 'attendance/rules_form.html', {'form': form, 'title': 'تعديل قاعدة حضور'})
+
+@login_required
+def attendance_rules_delete(request, pk):
+    item = get_object_or_404(AttendanceRules, pk=pk)
+    if request.method == 'POST':
+        item.delete()
+        messages.success(request, _('تم حذف قاعدة الحضور'))
+        return redirect('attendance:rules_list')
+    return render(request, 'attendance/rules_confirm_delete.html', {'item': item})
+
+
+@login_required
+def employee_attendance_list(request):
+    items = EmployeeAttendance.objects.select_related('emp', 'rule').order_by('-att_date')
+    return render(request, 'attendance/emp_att_list.html', {'items': items})
+
+@login_required
+def employee_attendance_create(request):
+    if request.method == 'POST':
+        form = EmployeeAttendanceForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _('تم إضافة سجل حضور'))
+            return redirect('attendance:emp_att_list')
+    else:
+        form = EmployeeAttendanceForm()
+    return render(request, 'attendance/emp_att_form.html', {'form': form, 'title': 'إضافة سجل حضور'})
+
+@login_required
+def employee_attendance_edit(request, pk):
+    item = get_object_or_404(EmployeeAttendance, pk=pk)
+    if request.method == 'POST':
+        form = EmployeeAttendanceForm(request.POST, instance=item)
+        if form.is_valid():
+            form.save()
+            messages.success(request, _('تم تعديل سجل الحضور'))
+            return redirect('attendance:emp_att_list')
+    else:
+        form = EmployeeAttendanceForm(instance=item)
+    return render(request, 'attendance/emp_att_form.html', {'form': form, 'title': 'تعديل سجل حضور'})
+
+@login_required
+def employee_attendance_delete(request, pk):
+    item = get_object_or_404(EmployeeAttendance, pk=pk)
+    if request.method == 'POST':
+        item.delete()
+        messages.success(request, _('تم حذف سجل الحضور'))
+        return redirect('attendance:emp_att_list')
+    return render(request, 'attendance/emp_att_confirm_delete.html', {'item': item})

@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>تأكيد الحذف</h1>
+<p>هل أنت متأكد من حذف الشركة "{{ company.name }}"؟</p>
+<form method="post">
+  {% csrf_token %}
+  <a href="{% url 'companies:detail' company.pk %}" class="btn btn-secondary">إلغاء</a>
+  <button type="submit" class="btn btn-danger">حذف</button>
+</form>
+{% endblock %}
+

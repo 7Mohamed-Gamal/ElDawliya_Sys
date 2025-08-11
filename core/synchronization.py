@@ -15,8 +15,15 @@ from typing import Dict, List, Optional, Any
 import logging
 import json
 
-# Import models from all modules
-from Hr.models import Employee, Department
+# Temporary decouple from Hr to allow project to start while rebuilding HR
+try:
+    from Hr.models import Employee, Department  # Legacy
+except Exception:
+    from django.contrib.auth import get_user_model
+    Employee = get_user_model()  # Placeholder
+    class Department:
+        id: int = 0
+        dept_name: str = ""
 from tasks.models import Task
 from meetings.models import Meeting, MeetingTask
 from inventory.models import TblProducts
@@ -248,27 +255,27 @@ sync_service = SynchronizationService()
 
 
 # Signal handlers for automatic synchronization
-@receiver(post_save, sender=Employee)
+@receiver(post_save)
 def employee_post_save(sender, instance, created, **kwargs):
     """Handle employee save events"""
     action = 'create' if created else 'update'
     sync_service.sync_employee_data(instance, action)
 
 
-@receiver(post_delete, sender=Employee)
+@receiver(post_delete)
 def employee_post_delete(sender, instance, **kwargs):
     """Handle employee delete events"""
     sync_service.sync_employee_data(instance, 'delete')
 
 
-@receiver(post_save, sender=Department)
+@receiver(post_save)
 def department_post_save(sender, instance, created, **kwargs):
     """Handle department save events"""
     action = 'create' if created else 'update'
     sync_service.sync_department_data(instance, action)
 
 
-@receiver(post_delete, sender=Department)
+@receiver(post_delete)
 def department_post_delete(sender, instance, **kwargs):
     """Handle department delete events"""
     sync_service.sync_department_data(instance, 'delete')

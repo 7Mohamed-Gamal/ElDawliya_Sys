@@ -1,6 +1,6 @@
 from django.db import models
-# Import the HR app's Employee model from the new structure
-from Hr.models.employee.employee_models import Employee
+from django.conf import settings
+# Using AUTH_USER_MODEL as a temporary decoupled reference until the new employees app is ready
 
 class Supplier(models.Model):
     """Model for storing supplier information"""
@@ -155,7 +155,7 @@ class RoutePoint(models.Model):
     point_name = models.CharField(max_length=100, verbose_name="اسم النقطة")
     departure_time = models.TimeField(verbose_name="وقت المغادرة")
     order = models.PositiveIntegerField(default=0, verbose_name="الترتيب")
-    employees = models.ManyToManyField('Hr.Employee', related_name='car_route_points', blank=True, verbose_name="الموظفين")
+    employees = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='car_route_points', blank=True, verbose_name="الموظفون")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

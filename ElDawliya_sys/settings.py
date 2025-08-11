@@ -53,7 +53,7 @@ INSTALLED_APPS = [
     'accounts',
     'meetings',
     'tasks',
-    'Hr',
+    'Hr',  # Temporarily enabled to allow project to boot while we split apps
     'inventory',
     'administrator',
     'Purchase_orders',
@@ -62,6 +62,22 @@ INSTALLED_APPS = [
     'employee_tasks',
     'cars',
     'attendance.apps.AttendanceConfig',  # New attendance management app
+    'org.apps.OrgConfig',
+    'employees.apps.EmployeesConfig',
+    'companies.apps.CompaniesConfig',
+    'leaves.apps.LeavesConfig',
+    'evaluations.apps.EvaluationsConfig',
+    'payrolls.apps.PayrollsConfig',
+    'banks',
+    'insurance.apps.InsuranceConfig',
+    'training.apps.TrainingConfig',
+    'disciplinary.apps.DisciplinaryConfig',
+    'loans.apps.LoansConfig',
+    'assets.apps.AssetsConfig',
+    'tickets.apps.TicketsConfig',
+    'workflow.apps.WorkflowConfig',
+    'syssettings.apps.SyssettingsConfig',
+    'rbac.apps.RbacConfig',
 ]
 
 MIDDLEWARE = [

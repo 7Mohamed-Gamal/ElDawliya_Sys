@@ -111,7 +111,7 @@ def company_create(request):
             try:
                 company = form.save()
                 messages.success(request, f'تم إنشاء الشركة "{company.name}" بنجاح')
-                return redirect('Hr:companies:detail', company_id=company.id)
+                return redirect('companies:detail', company.id)
             except Exception as e:
                 messages.error(request, f'حدث خطأ في إنشاء الشركة: {str(e)}')
     else:
@@ -180,7 +180,7 @@ def company_edit(request, company_id):
             try:
                 company = form.save()
                 messages.success(request, f'تم تحديث الشركة "{company.name}" بنجاح')
-                return redirect('Hr:companies:detail', company_id=company.id)
+                return redirect('companies:detail', company.id)
             except Exception as e:
                 messages.error(request, f'حدث خطأ في تحديث الشركة: {str(e)}')
     else:
@@ -209,16 +209,16 @@ def company_delete(request, company_id):
             # Check if company has employees
             if company.employees.exists():
                 messages.error(request, 'لا يمكن حذف الشركة لأنها تحتوي على موظفين')
-                return redirect('Hr:companies:detail', company_id=company.id)
+                return redirect('companies:detail', company.id)
             
             company_name = company.name
             company.delete()
             messages.success(request, f'تم حذف الشركة "{company_name}" بنجاح')
-            return redirect('Hr:companies:list')
+            return redirect('companies:list')
             
         except Exception as e:
             messages.error(request, f'حدث خطأ في حذف الشركة: {str(e)}')
-            return redirect('Hr:companies:detail', company_id=company.id)
+            return redirect('companies:detail', company.id)
     
     context = {
         'company': company,
@@ -247,7 +247,7 @@ def company_toggle_status(request, company_id):
     except Exception as e:
         messages.error(request, f'حدث خطأ في تغيير حالة الشركة: {str(e)}')
     
-    return redirect('Hr:companies:detail', company_id=company.id)
+    return redirect('companies:detail', company.id)
 
 
 @login_required
@@ -257,7 +257,7 @@ def company_dashboard(request, company_id):
         return render_under_construction(request, 'لوحة تحكم الشركة')
     
     # This is a placeholder for now - can be expanded later
-    return redirect('Hr:companies:detail', company_id=company.id)
+    return redirect('companies:list')
 
 
 @login_required
@@ -265,7 +265,7 @@ def company_export(request):
     """تصدير قائمة الشركات"""
     # Placeholder for export functionality
     messages.info(request, 'ميزة التصدير قيد التطوير')
-    return redirect('Hr:companies:list')
+    return redirect('companies:list')
 
 
 @require_http_methods(["GET"])
