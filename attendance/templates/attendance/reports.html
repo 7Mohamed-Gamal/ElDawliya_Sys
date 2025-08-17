@@ -1,0 +1,395 @@
+{% extends 'attendance/base_attendance.html' %}
+{% load static %}
+
+{% block title %}تقارير الحضور والانصراف{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active">التقارير</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .report-card {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+        margin-bottom: 20px;
+        cursor: pointer;
+    }
+    .report-card:hover {
+        transform: translateY(-5px);
+    }
+    .report-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        margin: 0 auto 15px;
+    }
+    .chart-container {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    .filter-section {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-chart-bar me-2"></i>
+            تقارير الحضور والانصراف
+        </h1>
+    </div>
+</div>
+
+<!-- Filter Section -->
+<div class="row">
+    <div class="col-12">
+        <div class="filter-section">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="report_type" class="form-label">نوع التقرير</label>
+                    <select class="form-select" name="report_type" id="report_type">
+                        <option value="daily" {% if request.GET.report_type == 'daily' %}selected{% endif %}>يومي</option>
+                        <option value="weekly" {% if request.GET.report_type == 'weekly' %}selected{% endif %}>أسبوعي</option>
+                        <option value="monthly" {% if request.GET.report_type == 'monthly' %}selected{% endif %}>شهري</option>
+                        <option value="custom" {% if request.GET.report_type == 'custom' %}selected{% endif %}>مخصص</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="date_from" class="form-label">من تاريخ</label>
+                    <input type="date" class="form-control" name="date_from" id="date_from" value="{{ request.GET.date_from }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="date_to" class="form-label">إلى تاريخ</label>
+                    <input type="date" class="form-control" name="date_to" id="date_to" value="{{ request.GET.date_to }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="department" class="form-label">القسم</label>
+                    <select class="form-select" name="department" id="department">
+                        <option value="">جميع الأقسام</option>
+                        {% for dept in departments %}
+                        <option value="{{ dept.dept_id }}" {% if request.GET.department == dept.dept_id|stringformat:"s" %}selected{% endif %}>
+                            {{ dept.dept_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search me-1"></i>
+                            تطبيق
+                        </button>
+                        <button type="button" class="btn btn-success" onclick="exportReport()">
+                            <i class="fas fa-download me-1"></i>
+                            تصدير
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Report Cards -->
+<div class="row">
+    <div class="col-md-3">
+        <div class="card report-card" onclick="showDetailedReport('attendance_summary')">
+            <div class="card-body text-center">
+                <div class="report-icon bg-success">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h5>ملخص الحضور</h5>
+                <p class="text-muted">عرض إحصائيات شاملة للحضور والغياب</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card report-card" onclick="showDetailedReport('late_arrivals')">
+            <div class="card-body text-center">
+                <div class="report-icon bg-warning">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <h5>التأخير</h5>
+                <p class="text-muted">تقرير الموظفين المتأخرين</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card report-card" onclick="showDetailedReport('overtime')">
+            <div class="card-body text-center">
+                <div class="report-icon bg-primary">
+                    <i class="fas fa-plus-circle"></i>
+                </div>
+                <h5>الوقت الإضافي</h5>
+                <p class="text-muted">ساعات العمل الإضافية</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card report-card" onclick="showDetailedReport('absences')">
+            <div class="card-body text-center">
+                <div class="report-icon bg-danger">
+                    <i class="fas fa-times-circle"></i>
+                </div>
+                <h5>الغياب</h5>
+                <p class="text-muted">تقرير حالات الغياب</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="row">
+    <div class="col-md-8">
+        <div class="chart-container">
+            <h5 class="mb-3">
+                <i class="fas fa-chart-line me-2"></i>
+                اتجاه الحضور الشهري
+            </h5>
+            <canvas id="attendanceChart" height="100"></canvas>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="chart-container">
+            <h5 class="mb-3">
+                <i class="fas fa-chart-pie me-2"></i>
+                توزيع حالات الحضور
+            </h5>
+            <canvas id="statusChart" height="200"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Statistics -->
+<div class="row">
+    <div class="col-12">
+        <div class="chart-container">
+            <h5 class="mb-3">
+                <i class="fas fa-table me-2"></i>
+                إحصائيات مفصلة
+            </h5>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>الموظف</th>
+                            <th>القسم</th>
+                            <th>أيام الحضور</th>
+                            <th>أيام الغياب</th>
+                            <th>مرات التأخير</th>
+                            <th>ساعات العمل</th>
+                            <th>الوقت الإضافي</th>
+                            <th>معدل الحضور</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for stat in employee_stats %}
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-2">
+                                        <i class="fas fa-user text-white"></i>
+                                    </div>
+                                    {{ stat.employee_name }}
+                                </div>
+                            </td>
+                            <td>{{ stat.department_name }}</td>
+                            <td>
+                                <span class="badge bg-success">{{ stat.present_days }}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-danger">{{ stat.absent_days }}</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-warning">{{ stat.late_count }}</span>
+                            </td>
+                            <td>{{ stat.total_hours|floatformat:1 }} ساعة</td>
+                            <td>{{ stat.overtime_hours|floatformat:1 }} ساعة</td>
+                            <td>
+                                <div class="progress" style="height: 20px;">
+                                    <div class="progress-bar" role="progressbar" style="width: {{ stat.attendance_rate }}%">
+                                        {{ stat.attendance_rate|floatformat:1 }}%
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4">
+                                <i class="fas fa-chart-bar fa-2x text-muted mb-2 d-block"></i>
+                                لا توجد بيانات للفترة المحددة
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Department Summary -->
+<div class="row">
+    <div class="col-12">
+        <div class="chart-container">
+            <h5 class="mb-3">
+                <i class="fas fa-building me-2"></i>
+                ملخص الأقسام
+            </h5>
+            <div class="row">
+                {% for dept_stat in department_stats %}
+                <div class="col-md-4 mb-3">
+                    <div class="card border-0 bg-light">
+                        <div class="card-body">
+                            <h6 class="card-title">{{ dept_stat.department_name }}</h6>
+                            <div class="row text-center">
+                                <div class="col-4">
+                                    <div class="text-success fw-bold">{{ dept_stat.present_count }}</div>
+                                    <small class="text-muted">حاضر</small>
+                                </div>
+                                <div class="col-4">
+                                    <div class="text-danger fw-bold">{{ dept_stat.absent_count }}</div>
+                                    <small class="text-muted">غائب</small>
+                                </div>
+                                <div class="col-4">
+                                    <div class="text-warning fw-bold">{{ dept_stat.late_count }}</div>
+                                    <small class="text-muted">متأخر</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Attendance Trend Chart
+const attendanceCtx = document.getElementById('attendanceChart').getContext('2d');
+const attendanceChart = new Chart(attendanceCtx, {
+    type: 'line',
+    data: {
+        labels: {{ chart_labels|safe }},
+        datasets: [{
+            label: 'حاضر',
+            data: {{ present_data|safe }},
+            borderColor: '#28a745',
+            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+            tension: 0.4
+        }, {
+            label: 'غائب',
+            data: {{ absent_data|safe }},
+            borderColor: '#dc3545',
+            backgroundColor: 'rgba(220, 53, 69, 0.1)',
+            tension: 0.4
+        }, {
+            label: 'متأخر',
+            data: {{ late_data|safe }},
+            borderColor: '#ffc107',
+            backgroundColor: 'rgba(255, 193, 7, 0.1)',
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'top',
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// Status Distribution Chart
+const statusCtx = document.getElementById('statusChart').getContext('2d');
+const statusChart = new Chart(statusCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['حاضر', 'غائب', 'متأخر', 'انصراف مبكر'],
+        datasets: [{
+            data: {{ status_distribution|safe }},
+            backgroundColor: [
+                '#28a745',
+                '#dc3545',
+                '#ffc107',
+                '#17a2b8'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom',
+            }
+        }
+    }
+});
+
+function showDetailedReport(reportType) {
+    // Implement detailed report functionality
+    alert('سيتم عرض تقرير ' + reportType + ' المفصل قريباً');
+}
+
+function exportReport() {
+    const params = new URLSearchParams(window.location.search);
+    params.set('export', 'excel');
+    window.location.href = '{% url "attendance:reports" %}?' + params.toString();
+}
+
+// Auto-update date fields based on report type
+document.getElementById('report_type').addEventListener('change', function() {
+    const reportType = this.value;
+    const today = new Date();
+    const dateFrom = document.getElementById('date_from');
+    const dateTo = document.getElementById('date_to');
+    
+    switch(reportType) {
+        case 'daily':
+            dateFrom.value = today.toISOString().split('T')[0];
+            dateTo.value = today.toISOString().split('T')[0];
+            break;
+        case 'weekly':
+            const weekStart = new Date(today.setDate(today.getDate() - today.getDay()));
+            const weekEnd = new Date(today.setDate(today.getDate() - today.getDay() + 6));
+            dateFrom.value = weekStart.toISOString().split('T')[0];
+            dateTo.value = weekEnd.toISOString().split('T')[0];
+            break;
+        case 'monthly':
+            const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+            const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            dateFrom.value = monthStart.toISOString().split('T')[0];
+            dateTo.value = monthEnd.toISOString().split('T')[0];
+            break;
+    }
+});
+</script>
+{% endblock %}

@@ -53,7 +53,7 @@ INSTALLED_APPS = [
     'accounts',
     'meetings',
     'tasks',
-    'Hr',  # Temporarily enabled to allow project to boot while we split apps
+    # 'Hr',  # Removed - replaced with modular HR applications
     'inventory',
     'administrator',
     'Purchase_orders',

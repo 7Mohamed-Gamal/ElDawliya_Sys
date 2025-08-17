@@ -260,33 +260,127 @@ class AttendanceRecord(models.Model):
 
 # Schema-specific models to match provided SQL tables
 class AttendanceRules(models.Model):
+    """نموذج قواعد الحضور حسب مخطط قاعدة البيانات"""
     rule_id = models.AutoField(primary_key=True, db_column='RuleID')
-    rule_name = models.CharField(max_length=100, db_column='RuleName', blank=True, null=True)
-    shift_start = models.TimeField(db_column='ShiftStart', blank=True, null=True)
-    shift_end = models.TimeField(db_column='ShiftEnd', blank=True, null=True)
-    late_threshold = models.IntegerField(db_column='LateThreshold', blank=True, null=True)
-    early_threshold = models.IntegerField(db_column='EarlyThreshold', blank=True, null=True)
-    overtime_start_after = models.TimeField(db_column='OvertimeStartAfter', blank=True, null=True)
-    week_end_days = models.CharField(max_length=20, db_column='WeekEndDays', blank=True, null=True)
-    is_default = models.BooleanField(db_column='IsDefault', default=False)
+    rule_name = models.CharField(max_length=100, db_column='RuleName', blank=True, null=True, verbose_name='اسم القاعدة')
+    shift_start = models.TimeField(db_column='ShiftStart', blank=True, null=True, verbose_name='بداية الوردية')
+    shift_end = models.TimeField(db_column='ShiftEnd', blank=True, null=True, verbose_name='نهاية الوردية')
+    late_threshold = models.IntegerField(db_column='LateThreshold', blank=True, null=True, verbose_name='حد التأخير (دقائق)')
+    early_threshold = models.IntegerField(db_column='EarlyThreshold', blank=True, null=True, verbose_name='حد المغادرة المبكرة (دقائق)')
+    overtime_start_after = models.TimeField(db_column='OvertimeStartAfter', blank=True, null=True, verbose_name='بداية الوقت الإضافي')
+    week_end_days = models.CharField(max_length=20, db_column='WeekEndDays', blank=True, null=True, verbose_name='أيام نهاية الأسبوع')
+    is_default = models.BooleanField(db_column='IsDefault', default=False, verbose_name='افتراضية')
 
     class Meta:
         db_table = 'AttendanceRules'
         verbose_name = 'قاعدة حضور'
         verbose_name_plural = 'قواعد الحضور'
 
+    def __str__(self):
+        return self.rule_name or f'قاعدة {self.rule_id}'
+
+    def clean(self):
+        """التحقق من صحة البيانات"""
+        from django.core.exceptions import ValidationError
+        
+        if self.shift_start and self.shift_end:
+            if self.shift_start >= self.shift_end:
+                raise ValidationError('وقت بداية الوردية يجب أن يكون قبل وقت النهاية')
+        
+        if self.late_threshold and self.late_threshold < 0:
+            raise ValidationError('حد التأخير يجب أن يكون رقماً موجباً')
+        
+        if self.early_threshold and self.early_threshold < 0:
+            raise ValidationError('حد المغادرة المبكرة يجب أن يكون رقماً موجباً')
+
 
 class EmployeeAttendance(models.Model):
+    """نموذج سجلات حضور الموظفين حسب مخطط قاعدة البيانات"""
     att_id = models.BigAutoField(primary_key=True, db_column='AttID')
-    emp = models.ForeignKey(Employee, on_delete=models.CASCADE, db_column='EmpID')
-    att_date = models.DateField(db_column='AttDate', blank=True, null=True)
-    check_in = models.DateTimeField(db_column='CheckIn', blank=True, null=True)
-    check_out = models.DateTimeField(db_column='CheckOut', blank=True, null=True)
+    emp = models.ForeignKey(Employee, on_delete=models.CASCADE, db_column='EmpID', verbose_name='الموظف')
+    att_date = models.DateField(db_column='AttDate', blank=True, null=True, verbose_name='التاريخ')
+    check_in = models.DateTimeField(db_column='CheckIn', blank=True, null=True, verbose_name='وقت الدخول')
+    check_out = models.DateTimeField(db_column='CheckOut', blank=True, null=True, verbose_name='وقت الخروج')
     # WorkMinutes computed via RunSQL migration
-    status = models.CharField(max_length=20, db_column='Status', blank=True, null=True)
-    rule = models.ForeignKey(AttendanceRules, on_delete=models.SET_NULL, db_column='RuleID', blank=True, null=True)
+    status = models.CharField(max_length=20, db_column='Status', blank=True, null=True, verbose_name='الحالة')
+    rule = models.ForeignKey(AttendanceRules, on_delete=models.SET_NULL, db_column='RuleID', blank=True, null=True, verbose_name='قاعدة الحضور')
 
     class Meta:
         db_table = 'EmployeeAttendance'
         verbose_name = 'سجل حضور'
         verbose_name_plural = 'سجلات الحضور'
+        unique_together = ['emp', 'att_date']
+
+    def __str__(self):
+        return f'{self.emp} - {self.att_date}'
+
+    def calculate_work_minutes(self):
+        """حساب دقائق العمل"""
+        if self.check_in and self.check_out:
+            duration = self.check_out - self.check_in
+            return int(duration.total_seconds() / 60)
+        return 0
+
+    def calculate_late_minutes(self):
+        """حساب دقائق التأخير"""
+        if not self.check_in or not self.rule or not self.rule.shift_start:
+            return 0
+        
+        from datetime import datetime, time
+        shift_start_datetime = datetime.combine(self.att_date, self.rule.shift_start)
+        
+        if self.check_in > shift_start_datetime:
+            late_duration = self.check_in - shift_start_datetime
+            return int(late_duration.total_seconds() / 60)
+        return 0
+
+    def calculate_early_leave_minutes(self):
+        """حساب دقائق المغادرة المبكرة"""
+        if not self.check_out or not self.rule or not self.rule.shift_end:
+            return 0
+        
+        from datetime import datetime
+        shift_end_datetime = datetime.combine(self.att_date, self.rule.shift_end)
+        
+        if self.check_out < shift_end_datetime:
+            early_duration = shift_end_datetime - self.check_out
+            return int(early_duration.total_seconds() / 60)
+        return 0
+
+    def calculate_overtime_minutes(self):
+        """حساب دقائق الوقت الإضافي"""
+        if not self.check_out or not self.rule or not self.rule.overtime_start_after:
+            return 0
+        
+        from datetime import datetime
+        overtime_start_datetime = datetime.combine(self.att_date, self.rule.overtime_start_after)
+        
+        if self.check_out > overtime_start_datetime:
+            overtime_duration = self.check_out - overtime_start_datetime
+            return int(overtime_duration.total_seconds() / 60)
+        return 0
+
+    def get_status_display_arabic(self):
+        """عرض الحالة باللغة العربية"""
+        status_map = {
+            'Present': 'حاضر',
+            'Absent': 'غائب',
+            'Late': 'متأخر',
+            'EarlyLeave': 'مغادرة مبكرة',
+            'Holiday': 'عطلة',
+            'Leave': 'إجازة'
+        }
+        return status_map.get(self.status, self.status or 'غير محدد')
+
+    def clean(self):
+        """التحقق من صحة البيانات"""
+        from django.core.exceptions import ValidationError
+        
+        if self.check_in and self.check_out:
+            if self.check_in >= self.check_out:
+                raise ValidationError('وقت الدخول يجب أن يكون قبل وقت الخروج')
+        
+        if self.att_date:
+            from datetime import date
+            if self.att_date > date.today():
+                raise ValidationError('لا يمكن تسجيل حضور لتاريخ مستقبلي')

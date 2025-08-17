@@ -12,7 +12,8 @@ from datetime import datetime, timedelta
 import json
 
 from accounts.models import Users_Login_New
-from Hr.models import Employee, Department
+# Temporarily disabled - will be replaced with new modular HR apps
+# from Hr.models import Employee, Department
 from tasks.models import Task
 from meetings.models import Meeting
 from inventory.models import TblProducts

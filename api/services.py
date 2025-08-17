@@ -16,8 +16,9 @@ except ImportError:
     genai = None
 
 from .models import GeminiConversation, GeminiMessage
-from Hr.models.employee.employee_models import Employee
-from Hr.models.core.department_models import Department
+# Temporarily disabled - will be replaced with new modular HR apps
+# from Hr.models.employee.employee_models import Employee
+# from Hr.models.core.department_models import Department
 from inventory.models import TblProducts, TblCategories
 from tasks.models import Task
 from meetings.models import Meeting

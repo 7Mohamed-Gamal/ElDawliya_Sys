@@ -7,8 +7,10 @@ from django.db.models import F
 # استيراد النماذج من التطبيقات الأخرى
 # Temporarily disabled due to model conflicts
 # from Hr.models.task_models import EmployeeTask, TaskStep
-from Hr.models.employee.employee_models import Employee
-from Hr.models.leave.leave_request_models import LeaveRequest
+# Temporarily disabled - will be replaced with new modular HR apps
+# from Hr.models.employee.employee_models import Employee
+# from Hr.models.leave.leave_request_models import LeaveRequest
+# from Hr.models import Car
 
 # استيراد ملفات الإشارات الإضافية
 from .signals_meetings import *
@@ -16,7 +18,6 @@ from .signals_tasks import *
 from .signals_inventory import *
 from .signals_purchase import *
 from .signals_inventory_purchase import *
-from Hr.models import Car
 from meetings.models import Meeting, Attendee
 from tasks.models import Task, TaskStep as MeetingTaskStep
 from inventory.models import TblProducts, TblInvoiceitems
@@ -60,187 +61,9 @@ def employee_task_notification(sender, instance, created, **kwargs):
             )
 
 
-@receiver(post_save, sender=TaskStep)
-def task_step_notification(sender, instance, created, **kwargs):
-    """إنشاء تنبيه عند إضافة خطوة جديدة للمهمة"""
-    if created:
-        # الحصول على المهمة المرتبطة
-        try:
-            # Temporarily disabled due to model conflicts
-            # task = EmployeeTask.objects.get(pk=instance.task_id)
-            pass
-
-            # إنشاء تنبيه للمستخدم الذي قام بتكليف المهمة
-            if task.assigned_by:
-                create_hr_notification(
-                    user=task.assigned_by,
-                    title=_('تم إضافة خطوة جديدة للمهمة'),
-                    message=_(f'تم إضافة خطوة جديدة للمهمة: {task.title}'),
-                    priority='low',
-                    content_object=task,
-                    url=f'/Hr/tasks/{task.pk}/'
-                )
-        except Exception:
-            pass
-
-
-@receiver(post_save, sender=LeaveRequest)
-def employee_leave_notification(sender, instance, created, **kwargs):
-    """إنشاء تنبيه عند إنشاء أو تحديث طلب إجازة"""
-    if created:
-        # إنشاء تنبيه للمدير
-        # Note: Need to update this logic for new Employee model structure
-        # managers = Employee.objects.filter(is_manager=True)
-        for manager in managers:
-            if hasattr(manager, 'user') and manager.user:
-                create_hr_notification(
-                    user=manager.user,
-                    title=_('طلب إجازة جديد'),
-                    message=_(f'تم تقديم طلب إجازة جديد من قبل: {instance.employee.emp_full_name}'),
-                    priority='medium',
-                    content_object=instance,
-                    url=f'/Hr/leaves/{instance.pk}/'
-                )
-    else:
-        # إذا تم تغيير حالة الإجازة
-        if instance.status in ['approved', 'rejected'] and hasattr(instance.employee, 'user') and instance.employee.user:
-            status_text = _('الموافقة على') if instance.status == 'approved' else _('رفض')
-            create_hr_notification(
-                user=instance.employee.user,
-                title=_(f'تم {status_text} طلب الإجازة'),
-                message=_(f'تم {status_text} طلب الإجازة الخاص بك من تاريخ {instance.start_date} إلى {instance.end_date}'),
-                priority='high',
-                content_object=instance,
-                url=f'/Hr/leaves/{instance.pk}/'
-            )
-
-
-@receiver(pre_save, sender=Employee)
-def employee_health_card_expiry_notification(sender, instance, **kwargs):
-    """إنشاء تنبيه عند اقتراب انتهاء البطاقة الصحية"""
-    # التحقق من وجود القيمة الأصلية للموظف (في حالة التعديل)
-    if instance.pk:
-        try:
-            old_instance = Employee.objects.get(pk=instance.pk)
-
-            # التحقق من تغيير تاريخ انتهاء البطاقة الصحية أو تعيين تاريخ جديد
-            if (old_instance.health_card_expiration_date != instance.health_card_expiration_date and
-                    instance.health_card_expiration_date is not None):
-
-                # إنشاء تنبيه للمستخدم المسؤول عن الموارد البشرية
-                hr_managers = Employee.objects.filter(is_manager=True)
-                for manager in hr_managers:
-                    if hasattr(manager, 'user') and manager.user:
-                        create_hr_notification(
-                            user=manager.user,
-                            title=_('تحديث تاريخ انتهاء البطاقة الصحية'),
-                            message=_(f'تم تحديث تاريخ انتهاء البطاقة الصحية للموظف {instance.emp_full_name} إلى {instance.health_card_expiration_date}'),
-                            priority='medium',
-                            content_object=instance,
-                            url=f'/Hr/employees/detail/{instance.emp_id}/'
-                        )
-
-                # إنشاء تنبيه للموظف نفسه
-                if hasattr(instance, 'user') and instance.user:
-                    create_hr_notification(
-                        user=instance.user,
-                        title=_('تحديث تاريخ انتهاء البطاقة الصحية'),
-                        message=_(f'تم تحديث تاريخ انتهاء البطاقة الصحية الخاصة بك إلى {instance.health_card_expiration_date}'),
-                        priority='medium',
-                        content_object=instance,
-                        url=f'/Hr/employees/profile/'
-                    )
-        except Employee.DoesNotExist:
-            pass
-
-
-@receiver(pre_save, sender=Employee)
-def employee_contract_expiry_notification(sender, instance, **kwargs):
-    """إنشاء تنبيه عند اقتراب انتهاء العقد"""
-    if instance.pk:
-        try:
-            old_instance = Employee.objects.get(pk=instance.pk)
-
-            # التحقق من تغيير تاريخ انتهاء العقد أو تعيين تاريخ جديد
-            if (old_instance.contract_expiry_date != instance.contract_expiry_date and
-                    instance.contract_expiry_date is not None):
-
-                # إنشاء تنبيه للمستخدمين المسؤولين عن الموارد البشرية
-                hr_managers = Employee.objects.filter(is_manager=True)
-                for manager in hr_managers:
-                    if hasattr(manager, 'user') and manager.user:
-                        create_hr_notification(
-                            user=manager.user,
-                            title=_('تحديث تاريخ انتهاء العقد'),
-                            message=_(f'تم تحديث تاريخ انتهاء عقد الموظف {instance.emp_full_name} إلى {instance.contract_expiry_date}'),
-                            priority='medium',
-                            content_object=instance,
-                            url=f'/Hr/employees/detail/{instance.emp_id}/'
-                        )
-
-                # إنشاء تنبيه للموظف نفسه
-                if hasattr(instance, 'user') and instance.user:
-                    create_hr_notification(
-                        user=instance.user,
-                        title=_('تحديث تاريخ انتهاء العقد'),
-                        message=_(f'تم تحديث تاريخ انتهاء عقدك إلى {instance.contract_expiry_date}'),
-                        priority='medium',
-                        content_object=instance,
-                        url=f'/Hr/employees/profile/'
-                    )
-        except Employee.DoesNotExist:
-            pass
-
-
-@receiver(pre_save, sender=Car)
-def car_license_expiry_notification(sender, instance, **kwargs):
-    """إنشاء تنبيه عند اقتراب انتهاء رخصة السيارة"""
-    if instance.pk:
-        try:
-            old_instance = Car.objects.get(pk=instance.pk)
-
-            # التحقق من تغيير تاريخ انتهاء رخصة السيارة أو تعيين تاريخ جديد
-            if (old_instance.car_license_expiration_date != instance.car_license_expiration_date and
-                    instance.car_license_expiration_date is not None):
-
-                # إنشاء تنبيه للمستخدمين المسؤولين عن الموارد البشرية
-                hr_managers = Employee.objects.filter(is_manager=True)
-                for manager in hr_managers:
-                    if hasattr(manager, 'user') and manager.user:
-                        create_hr_notification(
-                            user=manager.user,
-                            title=_('تحديث تاريخ انتهاء رخصة السيارة'),
-                            message=_(f'تم تحديث تاريخ انتهاء رخصة السيارة {instance.car_name} إلى {instance.car_license_expiration_date}'),
-                            priority='medium',
-                            content_object=instance,
-                            url=f'/Hr/cars/detail/{instance.car_id}/'
-                        )
-        except Car.DoesNotExist:
-            pass
-
-
-@receiver(pre_save, sender=Car)
-def driver_license_expiry_notification(sender, instance, **kwargs):
-    """إنشاء تنبيه عند اقتراب انتهاء رخصة السائق"""
-    if instance.pk:
-        try:
-            old_instance = Car.objects.get(pk=instance.pk)
-
-            # التحقق من تغيير تاريخ انتهاء رخصة السائق أو تعيين تاريخ جديد
-            if (old_instance.driver_license_expiration_date != instance.driver_license_expiration_date and
-                    instance.driver_license_expiration_date is not None):
-
-                # إنشاء تنبيه للمستخدمين المسؤولين عن الموارد البشرية
-                hr_managers = Employee.objects.filter(is_manager=True)
-                for manager in hr_managers:
-                    if hasattr(manager, 'user') and manager.user:
-                        create_hr_notification(
-                            user=manager.user,
-                            title=_('تحديث تاريخ انتهاء رخصة السائق'),
-                            message=_(f'تم تحديث تاريخ انتهاء رخصة السائق {instance.driver_name} إلى {instance.driver_license_expiration_date}'),
-                            priority='medium',
-                            content_object=instance,
-                            url=f'/Hr/cars/detail/{instance.car_id}/'
-                        )
-        except Car.DoesNotExist:
-            pass
+# Temporarily disabled - will be replaced with new modular HR apps
+# @receiver(post_save, sender=TaskStep)
+# @receiver(post_save, sender=LeaveRequest)
+# @receiver(pre_save, sender=Employee)
+# @receiver(pre_save, sender=Car)
+# All HR-related signals temporarily disabled until new modular apps are created

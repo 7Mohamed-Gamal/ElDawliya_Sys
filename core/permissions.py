@@ -12,8 +12,8 @@ from django.core.cache import cache
 from typing import Dict, List, Optional, Any
 import logging
 
-# Import models from all modules
-from Hr.models import Employee, Department
+# Temporarily disabled - will be replaced with new modular HR apps
+# from Hr.models import Employee, Department
 from tasks.models import Task
 from meetings.models import Meeting
 from inventory.models import TblProducts
@@ -224,23 +224,13 @@ class UnifiedPermissionService:
         except (Task.DoesNotExist, Exception):
             return False
     
-    def get_user_accessible_departments(self) -> List[Department]:
-        """
-        Get list of departments user can access
-        جلب قائمة الأقسام التي يمكن للمستخدم الوصول إليها
-        """
-        if not self.user or not self.user.is_authenticated:
-            return []
-        
-        if self.user.is_superuser or self.has_module_permission('hr', 'view'):
-            return list(Department.objects.all())
-        
-        # Get user's department
-        user_employee = Employee.objects.filter(user=self.user).first()
-        if user_employee:
-            return [user_employee.department]
-        
-        return []
+    # def get_user_accessible_departments(self) -> List[Department]:
+    #     """
+    #     Get list of departments user can access
+    #     جلب قائمة الأقسام التي يمكن للمستخدم الوصول إليها
+    #     """
+    #     # Temporarily disabled - will be replaced with new modular HR apps
+    #     return []
     
     def get_user_permissions_summary(self) -> Dict[str, Dict[str, bool]]:
         """

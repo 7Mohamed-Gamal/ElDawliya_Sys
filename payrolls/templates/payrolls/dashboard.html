@@ -1,0 +1,488 @@
+{% extends 'payrolls/base.html' %}
+{% load static %}
+
+{% block title %}لوحة تحكم الرواتب{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active">لوحة التحكم</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+    }
+    .salary-card {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        margin-bottom: 15px;
+        transition: transform 0.3s ease;
+    }
+    .salary-card:hover {
+        transform: translateY(-3px);
+    }
+    .salary-amount {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #17a2b8;
+    }
+    .quick-action-btn {
+        height: 120px;
+        border-radius: 15px;
+        border: none;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+    }
+    .quick-action-btn:hover {
+        transform: scale(1.05);
+    }
+    .payroll-status {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 0.9rem;
+    }
+    .status-draft { background: #ffc107; color: #000; }
+    .status-confirmed { background: #28a745; color: white; }
+    .status-paid { background: #17a2b8; color: white; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-tachometer-alt me-2"></i>
+            لوحة تحكم الرواتب
+        </h1>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row">
+    <div class="col-md-3">
+        <div class="stat-card text-center">
+            <i class="fas fa-users fa-2x mb-3"></i>
+            <div class="stat-number">{{ stats.total_employees }}</div>
+            <div>إجمالي الموظفين</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card text-center">
+            <i class="fas fa-money-bill-wave fa-2x mb-3"></i>
+            <div class="stat-number">{{ stats.total_payroll|floatformat:0 }}</div>
+            <div>إجمالي الرواتب</div>
+            <small>{{ stats.currency }}</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card text-center">
+            <i class="fas fa-calculator fa-2x mb-3"></i>
+            <div class="stat-number">{{ stats.average_salary|floatformat:0 }}</div>
+            <div>متوسط الراتب</div>
+            <small>{{ stats.currency }}</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card text-center">
+            <i class="fas fa-play-circle fa-2x mb-3"></i>
+            <div class="stat-number">{{ stats.pending_runs }}</div>
+            <div>تشغيلات معلقة</div>
+            <small>تحتاج تأكيد</small>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mt-4">
+    <div class="col-12">
+        <h3 class="mb-3">الإجراءات السريعة</h3>
+    </div>
+    <div class="col-md-3">
+        <button class="btn btn-info quick-action-btn w-100" data-bs-toggle="modal" data-bs-target="#newPayrollRunModal">
+            <i class="fas fa-play fa-2x d-block mb-2"></i>
+            تشغيل رواتب جديد
+        </button>
+    </div>
+    <div class="col-md-3">
+        <a href="{% url 'payrolls:salary_list' %}" class="btn btn-success quick-action-btn w-100 d-flex flex-column justify-content-center align-items-center text-decoration-none">
+            <i class="fas fa-list fa-2x mb-2"></i>
+            إدارة الرواتب
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a href="{% url 'payrolls:payslips' %}" class="btn btn-warning quick-action-btn w-100 d-flex flex-column justify-content-center align-items-center text-decoration-none">
+            <i class="fas fa-file-invoice fa-2x mb-2"></i>
+            كشوف الرواتب
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a href="{% url 'payrolls:reports' %}" class="btn btn-primary quick-action-btn w-100 d-flex flex-column justify-content-center align-items-center text-decoration-none">
+            <i class="fas fa-chart-bar fa-2x mb-2"></i>
+            التقارير
+        </a>
+    </div>
+</div>
+
+<!-- Recent Payroll Runs and Salary Overview -->
+<div class="row mt-5">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    آخر تشغيلات الرواتب
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for run in recent_runs %}
+                <div class="salary-card">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <i class="fas fa-calendar-alt text-info fa-2x mb-2"></i>
+                                    <div class="fw-bold">{{ run.month_year }}</div>
+                                    <small class="text-muted">{{ run.run_date|date:"Y/m/d" }}</small>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="text-center">
+                                    <div class="fw-bold text-primary">{{ run.employee_count }}</div>
+                                    <small class="text-muted">موظف</small>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <div class="salary-amount">{{ run.total_amount|floatformat:0 }}</div>
+                                    <small class="text-muted">{{ stats.currency }}</small>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="text-center">
+                                    {% if run.status == 'Draft' %}
+                                        <span class="payroll-status status-draft">مسودة</span>
+                                    {% elif run.status == 'Confirmed' %}
+                                        <span class="payroll-status status-confirmed">مؤكد</span>
+                                    {% elif run.status == 'Paid' %}
+                                        <span class="payroll-status status-paid">مدفوع</span>
+                                    {% else %}
+                                        <span class="payroll-status">{{ run.status }}</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-info" onclick="viewPayrollRun({{ run.run_id }})" title="عرض">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    {% if run.status == 'Draft' %}
+                                    <button class="btn btn-outline-success" onclick="confirmPayrollRun({{ run.run_id }})" title="تأكيد">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    {% endif %}
+                                    <button class="btn btn-outline-primary" onclick="printPayrollRun({{ run.run_id }})" title="طباعة">
+                                        <i class="fas fa-print"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-4">
+                    <i class="fas fa-money-bill-wave fa-2x text-muted mb-2 d-block"></i>
+                    <p class="text-muted">لا توجد تشغيلات رواتب حديثة</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Current Month Summary -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-calendar me-2"></i>
+                    ملخص الشهر الحالي
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="text-center">
+                    <h5 class="text-info">{{ current_month }}</h5>
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="text-success fw-bold">{{ current_month_stats.processed }}</div>
+                            <small class="text-muted">معالج</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-warning fw-bold">{{ current_month_stats.pending }}</div>
+                            <small class="text-muted">معلق</small>
+                        </div>
+                    </div>
+                    <div class="progress mt-3" style="height: 8px;">
+                        <div class="progress-bar bg-info" style="width: {{ current_month_stats.progress }}%"></div>
+                    </div>
+                    <small class="text-muted">{{ current_month_stats.progress }}% مكتمل</small>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Salary Distribution -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    توزيع الرواتب
+                </h6>
+            </div>
+            <div class="card-body">
+                <canvas id="salaryDistributionChart" height="200"></canvas>
+            </div>
+        </div>
+        
+        <!-- Upcoming Payments -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-clock me-2"></i>
+                    المدفوعات القادمة
+                </h6>
+            </div>
+            <div class="card-body">
+                {% for payment in upcoming_payments %}
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div>
+                        <div class="fw-bold">{{ payment.month_year }}</div>
+                        <small class="text-muted">{{ payment.employee_count }} موظف</small>
+                    </div>
+                    <div class="text-end">
+                        <div class="fw-bold text-info">{{ payment.amount|floatformat:0 }}</div>
+                        <small class="text-muted">{{ stats.currency }}</small>
+                    </div>
+                </div>
+                {% if not forloop.last %}<hr class="my-2">{% endif %}
+                {% empty %}
+                <p class="text-muted text-center">لا توجد مدفوعات قادمة</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Department Salary Summary -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-building me-2"></i>
+                    ملخص رواتب الأقسام
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for dept in department_salaries %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title">{{ dept.department_name }}</h6>
+                                <div class="row text-center">
+                                    <div class="col-4">
+                                        <div class="text-primary fw-bold">{{ dept.employee_count }}</div>
+                                        <small class="text-muted">موظف</small>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="text-success fw-bold">{{ dept.total_salary|floatformat:0 }}</div>
+                                        <small class="text-muted">إجمالي</small>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="text-info fw-bold">{{ dept.average_salary|floatformat:0 }}</div>
+                                        <small class="text-muted">متوسط</small>
+                                    </div>
+                                </div>
+                                <div class="progress mt-2" style="height: 8px;">
+                                    <div class="progress-bar bg-info" style="width: {{ dept.percentage }}%"></div>
+                                </div>
+                                <small class="text-muted">{{ dept.percentage }}% من الإجمالي</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Payroll Run Modal -->
+<div class="modal fade" id="newPayrollRunModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تشغيل رواتب جديد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newPayrollRunForm">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="month_year" class="form-label">الشهر والسنة *</label>
+                        <input type="month" class="form-control" name="month_year" id="month_year" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="run_date" class="form-label">تاريخ التشغيل *</label>
+                        <input type="date" class="form-control" name="run_date" id="run_date" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="department_filter" class="form-label">تصفية حسب القسم</label>
+                        <select class="form-select" name="department_filter" id="department_filter">
+                            <option value="">جميع الأقسام</option>
+                            {% for dept in departments %}
+                            <option value="{{ dept.dept_id }}">{{ dept.dept_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="include_overtime" id="include_overtime" checked>
+                            <label class="form-check-label" for="include_overtime">
+                                تضمين الوقت الإضافي
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="include_deductions" id="include_deductions" checked>
+                            <label class="form-check-label" for="include_deductions">
+                                تضمين الخصومات
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-info" onclick="submitPayrollRun()">تشغيل الرواتب</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Set current month as default
+const now = new Date();
+const currentMonth = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+document.getElementById('month_year').value = currentMonth;
+
+// Set today's date as default
+document.getElementById('run_date').value = new Date().toISOString().split('T')[0];
+
+// Salary Distribution Chart
+const salaryCtx = document.getElementById('salaryDistributionChart');
+if (salaryCtx) {
+    new Chart(salaryCtx.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: ['الراتب الأساسي', 'البدلات', 'الوقت الإضافي', 'الخصومات'],
+            datasets: [{
+                data: {{ salary_distribution|safe }},
+                backgroundColor: [
+                    '#17a2b8',
+                    '#28a745',
+                    '#ffc107',
+                    '#dc3545'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        font: {
+                            size: 10
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function submitPayrollRun() {
+    const form = document.getElementById('newPayrollRunForm');
+    const formData = new FormData(form);
+    
+    fetch('{% url "payrolls:create_payroll_run" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('حدث خطأ: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ في الاتصال');
+    });
+}
+
+function viewPayrollRun(runId) {
+    window.location.href = `{% url "payrolls:payroll_run_detail" 0 %}`.replace('0', runId);
+}
+
+function confirmPayrollRun(runId) {
+    if (confirm('هل أنت متأكد من تأكيد هذا التشغيل؟ لن يمكن التراجع عن هذا الإجراء.')) {
+        fetch(`{% url "payrolls:confirm_payroll_run" 0 %}`.replace('0', runId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('حدث خطأ: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('حدث خطأ في الاتصال');
+        });
+    }
+}
+
+function printPayrollRun(runId) {
+    window.open(`{% url "payrolls:print_payroll_run" 0 %}`.replace('0', runId), '_blank');
+}
+</script>
+{% endblock %}

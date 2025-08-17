@@ -19,8 +19,8 @@ import time
 from typing import Dict, List, Optional, Any, Tuple
 from contextlib import contextmanager
 
-# Import models for optimization analysis
-from Hr.models import Employee, Department
+# Temporarily disabled - will be replaced with new modular HR apps
+# from Hr.models import Employee, Department
 from tasks.models import Task
 from meetings.models import Meeting
 from inventory.models import TblProducts

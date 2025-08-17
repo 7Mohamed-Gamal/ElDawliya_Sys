@@ -15,15 +15,18 @@ from typing import Dict, List, Optional, Any
 import logging
 import json
 
-# Temporary decouple from Hr to allow project to start while rebuilding HR
-try:
-    from Hr.models import Employee, Department  # Legacy
-except Exception:
-    from django.contrib.auth import get_user_model
-    Employee = get_user_model()  # Placeholder
-    class Department:
-        id: int = 0
-        dept_name: str = ""
+# Temporarily disabled - will be replaced with new modular HR apps
+# from Hr.models import Employee, Department  # Legacy
+from django.contrib.auth import get_user_model
+
+# Temporary placeholders until new modular HR apps are created
+Employee = get_user_model()  # Placeholder
+
+class Department:
+    """Temporary placeholder class"""
+    def __init__(self):
+        self.id = 0
+        self.dept_name = ""
 from tasks.models import Task
 from meetings.models import Meeting, MeetingTask
 from inventory.models import TblProducts

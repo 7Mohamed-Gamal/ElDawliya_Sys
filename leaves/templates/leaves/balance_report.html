@@ -1,0 +1,439 @@
+{% extends 'leaves/base.html' %}
+{% load static %}
+
+{% block title %}تقرير أرصدة الإجازات{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active">أرصدة الإجازات</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .balance-card {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        transition: transform 0.3s ease;
+    }
+    .balance-card:hover {
+        transform: translateY(-3px);
+    }
+    .employee-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        margin-right: 15px;
+    }
+    .balance-progress {
+        height: 8px;
+        border-radius: 4px;
+        background-color: #e9ecef;
+        overflow: hidden;
+    }
+    .balance-bar {
+        height: 100%;
+        transition: width 0.6s ease;
+    }
+    .filter-section {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .summary-card {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>
+                <i class="fas fa-chart-pie me-2"></i>
+                تقرير أرصدة الإجازات
+            </h1>
+            <div>
+                <button class="btn btn-primary" onclick="exportBalances()">
+                    <i class="fas fa-download me-1"></i>
+                    تصدير التقرير
+                </button>
+                <button class="btn btn-success" onclick="printReport()">
+                    <i class="fas fa-print me-1"></i>
+                    طباعة
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Section -->
+<div class="row">
+    <div class="col-12">
+        <div class="filter-section">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="department" class="form-label">القسم</label>
+                    <select class="form-select" name="department" id="department">
+                        <option value="">جميع الأقسام</option>
+                        {% for dept in departments %}
+                        <option value="{{ dept.dept_id }}" {% if request.GET.department == dept.dept_id|stringformat:"s" %}selected{% endif %}>
+                            {{ dept.dept_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label for="leave_type" class="form-label">نوع الإجازة</label>
+                    <select class="form-select" name="leave_type" id="leave_type">
+                        <option value="">جميع الأنواع</option>
+                        {% for leave_type in leave_types %}
+                        <option value="{{ leave_type.leave_type_id }}" {% if request.GET.leave_type == leave_type.leave_type_id|stringformat:"s" %}selected{% endif %}>
+                            {{ leave_type.leave_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="year" class="form-label">السنة</label>
+                    <select class="form-select" name="year" id="year">
+                        {% for year in years %}
+                        <option value="{{ year }}" {% if request.GET.year == year|stringformat:"s" or year == current_year %}selected{% endif %}>
+                            {{ year }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="status_filter" class="form-label">حالة الرصيد</label>
+                    <select class="form-select" name="status_filter" id="status_filter">
+                        <option value="">جميع الحالات</option>
+                        <option value="available" {% if request.GET.status_filter == 'available' %}selected{% endif %}>متاح</option>
+                        <option value="low" {% if request.GET.status_filter == 'low' %}selected{% endif %}>منخفض</option>
+                        <option value="exhausted" {% if request.GET.status_filter == 'exhausted' %}selected{% endif %}>مستنفد</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search me-1"></i>
+                            بحث
+                        </button>
+                        <a href="{% url 'leaves:balance_report' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times me-1"></i>
+                            مسح
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row">
+    <div class="col-md-3">
+        <div class="summary-card text-center">
+            <i class="fas fa-users fa-2x mb-2"></i>
+            <div class="h4">{{ total_employees }}</div>
+            <div>إجمالي الموظفين</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="summary-card text-center">
+            <i class="fas fa-calendar-check fa-2x mb-2"></i>
+            <div class="h4">{{ total_available_days }}</div>
+            <div>أيام متاحة</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="summary-card text-center">
+            <i class="fas fa-calendar-times fa-2x mb-2"></i>
+            <div class="h4">{{ total_used_days }}</div>
+            <div>أيام مستخدمة</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="summary-card text-center">
+            <i class="fas fa-percentage fa-2x mb-2"></i>
+            <div class="h4">{{ average_usage }}%</div>
+            <div>متوسط الاستخدام</div>
+        </div>
+    </div>
+</div>
+
+<!-- Balance Details -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-table me-2"></i>
+                    تفاصيل أرصدة الإجازات
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>الموظف</th>
+                                <th>القسم</th>
+                                <th>نوع الإجازة</th>
+                                <th>الرصيد السنوي</th>
+                                <th>المستخدم</th>
+                                <th>المتاح</th>
+                                <th>نسبة الاستخدام</th>
+                                <th>الحالة</th>
+                                <th>آخر إجازة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for balance in balances %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="employee-avatar">
+                                            {{ balance.employee.full_name|first }}
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold">{{ balance.employee.full_name }}</div>
+                                            <small class="text-muted">{{ balance.employee.emp_code }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ balance.employee.department.dept_name }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">{{ balance.leave_type.leave_name }}</span>
+                                    {% if balance.leave_type.is_paid %}
+                                        <small class="text-success d-block">مدفوعة</small>
+                                    {% else %}
+                                        <small class="text-muted d-block">غير مدفوعة</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="fw-bold text-primary">
+                                        {% if balance.annual_entitlement %}
+                                            {{ balance.annual_entitlement }} يوم
+                                        {% else %}
+                                            غير محدود
+                                        {% endif %}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="fw-bold text-danger">{{ balance.used_days }} يوم</span>
+                                </td>
+                                <td>
+                                    <span class="fw-bold text-success">{{ balance.available_days }} يوم</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="balance-progress flex-grow-1 me-2">
+                                            <div class="balance-bar bg-{% if balance.usage_percentage > 80 %}danger{% elif balance.usage_percentage > 60 %}warning{% else %}success{% endif %}" 
+                                                 style="width: {{ balance.usage_percentage }}%"></div>
+                                        </div>
+                                        <span class="fw-bold">{{ balance.usage_percentage }}%</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if balance.status == 'available' %}
+                                        <span class="badge bg-success">متاح</span>
+                                    {% elif balance.status == 'low' %}
+                                        <span class="badge bg-warning">منخفض</span>
+                                    {% elif balance.status == 'exhausted' %}
+                                        <span class="badge bg-danger">مستنفد</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ balance.status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if balance.last_leave_date %}
+                                        <span class="fw-bold">{{ balance.last_leave_date|date:"Y/m/d" }}</span>
+                                        <small class="text-muted d-block">{{ balance.last_leave_date|timesince }} مضت</small>
+                                    {% else %}
+                                        <span class="text-muted">لا توجد</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center py-5">
+                                    <i class="fas fa-chart-pie fa-3x text-muted mb-3 d-block"></i>
+                                    <h5 class="text-muted">لا توجد بيانات أرصدة</h5>
+                                    <p class="text-muted">لم يتم العثور على بيانات أرصدة تطابق معايير البحث</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+{% if balances %}
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-doughnut me-2"></i>
+                    توزيع حالات الأرصدة
+                </h6>
+            </div>
+            <div class="card-body">
+                <canvas id="balanceStatusChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    الاستخدام حسب نوع الإجازة
+                </h6>
+            </div>
+            <div class="card-body">
+                <canvas id="leaveTypeUsageChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Department Summary -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-building me-2"></i>
+                    ملخص الأقسام
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for dept_summary in department_summaries %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title">{{ dept_summary.department_name }}</h6>
+                                <div class="row text-center">
+                                    <div class="col-4">
+                                        <div class="text-primary fw-bold">{{ dept_summary.total_employees }}</div>
+                                        <small class="text-muted">موظف</small>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="text-success fw-bold">{{ dept_summary.available_days }}</div>
+                                        <small class="text-muted">متاح</small>
+                                    </div>
+                                    <div class="col-4">
+                                        <div class="text-danger fw-bold">{{ dept_summary.used_days }}</div>
+                                        <small class="text-muted">مستخدم</small>
+                                    </div>
+                                </div>
+                                <div class="progress mt-2" style="height: 8px;">
+                                    <div class="progress-bar bg-info" style="width: {{ dept_summary.usage_percentage }}%"></div>
+                                </div>
+                                <small class="text-muted">{{ dept_summary.usage_percentage }}% استخدام</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Balance Status Chart
+const balanceStatusCtx = document.getElementById('balanceStatusChart');
+if (balanceStatusCtx) {
+    new Chart(balanceStatusCtx.getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: ['متاح', 'منخفض', 'مستنفد'],
+            datasets: [{
+                data: {{ status_distribution|safe }},
+                backgroundColor: [
+                    '#28a745',
+                    '#ffc107',
+                    '#dc3545'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                }
+            }
+        }
+    });
+}
+
+// Leave Type Usage Chart
+const leaveTypeUsageCtx = document.getElementById('leaveTypeUsageChart');
+if (leaveTypeUsageCtx) {
+    new Chart(leaveTypeUsageCtx.getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: {{ leave_type_labels|safe }},
+            datasets: [{
+                label: 'أيام مستخدمة',
+                data: {{ leave_type_usage|safe }},
+                backgroundColor: 'rgba(40, 167, 69, 0.8)',
+                borderColor: 'rgba(40, 167, 69, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+}
+
+function exportBalances() {
+    const params = new URLSearchParams(window.location.search);
+    params.set('export', 'excel');
+    window.location.href = '{% url "leaves:balance_report" %}?' + params.toString();
+}
+
+function printReport() {
+    window.print();
+}
+</script>
+{% endblock %}

@@ -54,8 +54,9 @@ schema_view = get_schema_view(
 router = DefaultRouter()
 router.register(r'users', views.UserViewSet, basename='user')
 router.register(r'api-keys', views.APIKeyViewSet, basename='apikey')
-router.register(r'employees', views.EmployeeViewSet, basename='employee')
-router.register(r'departments', views.DepartmentViewSet, basename='department')
+# Temporarily disabled - will be replaced with new modular HR apps
+# router.register(r'employees', views.EmployeeViewSet, basename='employee')
+# router.register(r'departments', views.DepartmentViewSet, basename='department')
 router.register(r'products', views.ProductViewSet, basename='product')
 router.register(r'categories', views.CategoryViewSet, basename='category')
 router.register(r'tasks', views.TaskViewSet, basename='task')

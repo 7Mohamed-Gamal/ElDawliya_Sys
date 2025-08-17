@@ -1,0 +1,460 @@
+{% extends 'employees/base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+    {% if employee.emp_id %}
+        تعديل الموظف - {{ employee.first_name }} {{ employee.last_name }}
+    {% else %}
+        إضافة موظف جديد
+    {% endif %}
+{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'employees:employee_list' %}">قائمة الموظفين</a></li>
+{% if employee.emp_id %}
+    <li class="breadcrumb-item"><a href="{% url 'employees:employee_detail' employee.emp_id %}">{{ employee.first_name }} {{ employee.last_name }}</a></li>
+    <li class="breadcrumb-item active">تعديل</li>
+{% else %}
+    <li class="breadcrumb-item active">إضافة موظف جديد</li>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>
+        <i class="fas fa-user-plus me-2"></i>
+        {% if employee.emp_id %}
+            تعديل بيانات الموظف
+        {% else %}
+            إضافة موظف جديد
+        {% endif %}
+    </h2>
+    <a href="{% url 'employees:employee_list' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left me-1"></i>
+        العودة للقائمة
+    </a>
+</div>
+
+<form method="post" enctype="multipart/form-data" id="employeeForm">
+    {% csrf_token %}
+    
+    <!-- Personal Information Card -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-user me-2"></i>
+                البيانات الشخصية
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.emp_code.id_for_label }}" class="form-label">
+                        كود الموظف <span class="text-danger">*</span>
+                    </label>
+                    {{ form.emp_code|add_class:"form-control" }}
+                    {% if form.emp_code.errors %}
+                        <div class="text-danger small mt-1">{{ form.emp_code.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.gender.id_for_label }}" class="form-label">
+                        الجنس <span class="text-danger">*</span>
+                    </label>
+                    <select name="{{ form.gender.name }}" id="{{ form.gender.id_for_label }}" class="form-select" required>
+                        <option value="">اختر الجنس</option>
+                        <option value="M" {% if form.gender.value == "M" %}selected{% endif %}>ذكر</option>
+                        <option value="F" {% if form.gender.value == "F" %}selected{% endif %}>أنثى</option>
+                    </select>
+                    {% if form.gender.errors %}
+                        <div class="text-danger small mt-1">{{ form.gender.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-3 mb-3">
+                    <label for="{{ form.first_name.id_for_label }}" class="form-label">
+                        الاسم الأول
+                    </label>
+                    {{ form.first_name|add_class:"form-control" }}
+                    {% if form.first_name.errors %}
+                        <div class="text-danger small mt-1">{{ form.first_name.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="{{ form.second_name.id_for_label }}" class="form-label">
+                        الاسم الثاني
+                    </label>
+                    {{ form.second_name|add_class:"form-control" }}
+                    {% if form.second_name.errors %}
+                        <div class="text-danger small mt-1">{{ form.second_name.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="{{ form.third_name.id_for_label }}" class="form-label">
+                        الاسم الثالث
+                    </label>
+                    {{ form.third_name|add_class:"form-control" }}
+                    {% if form.third_name.errors %}
+                        <div class="text-danger small mt-1">{{ form.third_name.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="{{ form.last_name.id_for_label }}" class="form-label">
+                        اسم العائلة
+                    </label>
+                    {{ form.last_name|add_class:"form-control" }}
+                    {% if form.last_name.errors %}
+                        <div class="text-danger small mt-1">{{ form.last_name.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="{{ form.birth_date.id_for_label }}" class="form-label">
+                        تاريخ الميلاد
+                    </label>
+                    {{ form.birth_date|add_class:"form-control" }}
+                    {% if form.birth_date.errors %}
+                        <div class="text-danger small mt-1">{{ form.birth_date.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="{{ form.nationality.id_for_label }}" class="form-label">
+                        الجنسية
+                    </label>
+                    {{ form.nationality|add_class:"form-control" }}
+                    {% if form.nationality.errors %}
+                        <div class="text-danger small mt-1">{{ form.nationality.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="{{ form.national_id.id_for_label }}" class="form-label">
+                        رقم الهوية
+                    </label>
+                    {{ form.national_id|add_class:"form-control" }}
+                    {% if form.national_id.errors %}
+                        <div class="text-danger small mt-1">{{ form.national_id.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.passport_no.id_for_label }}" class="form-label">
+                        رقم الجواز
+                    </label>
+                    {{ form.passport_no|add_class:"form-control" }}
+                    {% if form.passport_no.errors %}
+                        <div class="text-danger small mt-1">{{ form.passport_no.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.address.id_for_label }}" class="form-label">
+                        العنوان
+                    </label>
+                    {{ form.address|add_class:"form-control" }}
+                    {% if form.address.errors %}
+                        <div class="text-danger small mt-1">{{ form.address.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Work Information Card -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-briefcase me-2"></i>
+                بيانات العمل
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="{{ form.job.id_for_label }}" class="form-label">
+                        الوظيفة <span class="text-danger">*</span>
+                    </label>
+                    {{ form.job|add_class:"form-select" }}
+                    {% if form.job.errors %}
+                        <div class="text-danger small mt-1">{{ form.job.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="{{ form.dept.id_for_label }}" class="form-label">
+                        القسم <span class="text-danger">*</span>
+                    </label>
+                    {{ form.dept|add_class:"form-select" }}
+                    {% if form.dept.errors %}
+                        <div class="text-danger small mt-1">{{ form.dept.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="{{ form.branch.id_for_label }}" class="form-label">
+                        الفرع <span class="text-danger">*</span>
+                    </label>
+                    {{ form.branch|add_class:"form-select" }}
+                    {% if form.branch.errors %}
+                        <div class="text-danger small mt-1">{{ form.branch.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="{{ form.manager.id_for_label }}" class="form-label">
+                        المدير المباشر
+                    </label>
+                    {{ form.manager|add_class:"form-select" }}
+                    {% if form.manager.errors %}
+                        <div class="text-danger small mt-1">{{ form.manager.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="{{ form.hire_date.id_for_label }}" class="form-label">
+                        تاريخ التوظيف
+                    </label>
+                    {{ form.hire_date|add_class:"form-control" }}
+                    {% if form.hire_date.errors %}
+                        <div class="text-danger small mt-1">{{ form.hire_date.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="{{ form.join_date.id_for_label }}" class="form-label">
+                        تاريخ المباشرة
+                    </label>
+                    {{ form.join_date|add_class:"form-control" }}
+                    {% if form.join_date.errors %}
+                        <div class="text-danger small mt-1">{{ form.join_date.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label for="{{ form.probation_end.id_for_label }}" class="form-label">
+                        انتهاء فترة التجربة
+                    </label>
+                    {{ form.probation_end|add_class:"form-control" }}
+                    {% if form.probation_end.errors %}
+                        <div class="text-danger small mt-1">{{ form.probation_end.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="{{ form.emp_status.id_for_label }}" class="form-label">
+                        حالة الموظف
+                    </label>
+                    <select name="{{ form.emp_status.name }}" id="{{ form.emp_status.id_for_label }}" class="form-select">
+                        <option value="Active" {% if form.emp_status.value == "Active" %}selected{% endif %}>نشط</option>
+                        <option value="OnLeave" {% if form.emp_status.value == "OnLeave" %}selected{% endif %}>في إجازة</option>
+                        <option value="Terminated" {% if form.emp_status.value == "Terminated" %}selected{% endif %}>منتهي الخدمة</option>
+                        <option value="Resigned" {% if form.emp_status.value == "Resigned" %}selected{% endif %}>مستقيل</option>
+                    </select>
+                    {% if form.emp_status.errors %}
+                        <div class="text-danger small mt-1">{{ form.emp_status.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label for="{{ form.termination_date.id_for_label }}" class="form-label">
+                        تاريخ انتهاء الخدمة
+                    </label>
+                    {{ form.termination_date|add_class:"form-control" }}
+                    {% if form.termination_date.errors %}
+                        <div class="text-danger small mt-1">{{ form.termination_date.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Information Card -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-phone me-2"></i>
+                بيانات الاتصال
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.email.id_for_label }}" class="form-label">
+                        البريد الإلكتروني
+                    </label>
+                    {{ form.email|add_class:"form-control" }}
+                    {% if form.email.errors %}
+                        <div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>
+                    {% endif %}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.mobile.id_for_label }}" class="form-label">
+                        رقم الهاتف
+                    </label>
+                    {{ form.mobile|add_class:"form-control" }}
+                    {% if form.mobile.errors %}
+                        <div class="text-danger small mt-1">{{ form.mobile.errors.0 }}</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Information Card -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">
+                <i class="fas fa-sticky-note me-2"></i>
+                معلومات إضافية
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label for="{{ form.notes.id_for_label }}" class="form-label">
+                    ملاحظات
+                </label>
+                {{ form.notes|add_class:"form-control" }}
+                {% if form.notes.errors %}
+                    <div class="text-danger small mt-1">{{ form.notes.errors.0 }}</div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="card">
+        <div class="card-body">
+            <div class="d-flex justify-content-between">
+                <div>
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-save me-1"></i>
+                        {% if employee.emp_id %}
+                            حفظ التعديلات
+                        {% else %}
+                            إضافة الموظف
+                        {% endif %}
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary btn-lg ms-2" onclick="resetForm()">
+                        <i class="fas fa-undo me-1"></i>
+                        إعادة تعيين
+                    </button>
+                </div>
+                <div>
+                    <a href="{% url 'employees:employee_list' %}" class="btn btn-outline-danger btn-lg">
+                        <i class="fas fa-times me-1"></i>
+                        إلغاء
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .text-danger {
+        font-size: 0.875rem;
+    }
+    
+    .card-header h5 {
+        color: #495057;
+    }
+    
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+    
+    .btn-lg {
+        padding: 0.75rem 1.5rem;
+        font-size: 1rem;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Set date input types
+document.addEventListener('DOMContentLoaded', function() {
+    // Set date inputs
+    const dateInputs = ['{{ form.birth_date.id_for_label }}', '{{ form.hire_date.id_for_label }}', 
+                       '{{ form.join_date.id_for_label }}', '{{ form.probation_end.id_for_label }}', 
+                       '{{ form.termination_date.id_for_label }}'];
+    
+    dateInputs.forEach(function(inputId) {
+        const input = document.getElementById(inputId);
+        if (input) {
+            input.type = 'date';
+        }
+    });
+    
+    // Auto-generate employee code if empty
+    const empCodeInput = document.getElementById('{{ form.emp_code.id_for_label }}');
+    if (empCodeInput && !empCodeInput.value) {
+        generateEmployeeCode();
+    }
+});
+
+function generateEmployeeCode() {
+    // Generate a simple employee code (you can customize this logic)
+    const timestamp = Date.now().toString().slice(-6);
+    const empCodeInput = document.getElementById('{{ form.emp_code.id_for_label }}');
+    if (empCodeInput && !empCodeInput.value) {
+        empCodeInput.value = 'EMP' + timestamp;
+    }
+}
+
+function resetForm() {
+    if (confirm('هل أنت متأكد من إعادة تعيين النموذج؟\n\nسيتم فقدان جميع البيانات المدخلة.')) {
+        document.getElementById('employeeForm').reset();
+    }
+}
+
+// Form validation
+document.getElementById('employeeForm').addEventListener('submit', function(e) {
+    const requiredFields = ['{{ form.emp_code.id_for_label }}', '{{ form.job.id_for_label }}', 
+                           '{{ form.dept.id_for_label }}', '{{ form.branch.id_for_label }}'];
+    
+    let isValid = true;
+    let firstInvalidField = null;
+    
+    requiredFields.forEach(function(fieldId) {
+        const field = document.getElementById(fieldId);
+        if (field && !field.value.trim()) {
+            field.classList.add('is-invalid');
+            isValid = false;
+            if (!firstInvalidField) {
+                firstInvalidField = field;
+            }
+        } else if (field) {
+            field.classList.remove('is-invalid');
+        }
+    });
+    
+    if (!isValid) {
+        e.preventDefault();
+        if (firstInvalidField) {
+            firstInvalidField.focus();
+        }
+        alert('يرجى ملء جميع الحقول المطلوبة.');
+    }
+});
+
+// Remove validation classes on input
+document.querySelectorAll('.form-control, .form-select').forEach(function(element) {
+    element.addEventListener('input', function() {
+        this.classList.remove('is-invalid');
+    });
+});
+</script>
+{% endblock %}

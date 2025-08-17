@@ -2,9 +2,9 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import APIKey, GeminiConversation, GeminiMessage, APIUsageLog
 
-# Import models from other apps
-from Hr.models.employee.employee_models import Employee
-from Hr.models.core.department_models import Department
+# Temporarily disabled - will be replaced with new modular HR apps
+# from Hr.models.employee.employee_models import Employee
+# from Hr.models.core.department_models import Department
 from inventory.models import TblProducts, TblCategories, TblSuppliers
 from tasks.models import Task
 from meetings.models import Meeting
@@ -59,24 +59,24 @@ class APIUsageLogSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'timestamp']
 
 
-# HR Serializers
-class DepartmentSerializer(serializers.ModelSerializer):
-    """Serializer for Department model"""
-    class Meta:
-        model = Department
-        fields = ['id', 'dept_name', 'dept_description', 'dept_manager', 'created_at']
+# HR Serializers - temporarily disabled
+# class DepartmentSerializer(serializers.ModelSerializer):
+#     """Serializer for Department model"""
+#     class Meta:
+#         model = Department
+#         fields = ['id', 'dept_name', 'dept_description', 'dept_manager', 'created_at']
 
 
-class EmployeeSerializer(serializers.ModelSerializer):
-    """Serializer for Employee model"""
-    department = DepartmentSerializer(read_only=True)
+# class EmployeeSerializer(serializers.ModelSerializer):
+#     """Serializer for Employee model"""
+#     department = DepartmentSerializer(read_only=True)
 
-    class Meta:
-        model = Employee
-        fields = [
-            'id', 'emp_name', 'emp_email', 'emp_phone', 'emp_position',
-            'department', 'emp_hire_date', 'emp_salary', 'emp_status'
-        ]
+#     class Meta:
+#         model = Employee
+#         fields = [
+#             'id', 'emp_name', 'emp_email', 'emp_phone', 'emp_position',
+#             'department', 'emp_hire_date', 'emp_salary', 'emp_status'
+#         ]
 
 
 # Inventory Serializers

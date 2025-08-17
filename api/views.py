@@ -15,8 +15,7 @@ from drf_yasg import openapi
 from .models import APIKey, GeminiConversation, GeminiMessage, APIUsageLog, AIProvider, AIConfiguration
 from .serializers import (
     UserSerializer, APIKeySerializer, GeminiConversationSerializer,
-    GeminiMessageSerializer, APIUsageLogSerializer, EmployeeSerializer,
-    DepartmentSerializer, ProductSerializer, CategorySerializer,
+    GeminiMessageSerializer, APIUsageLogSerializer, ProductSerializer, CategorySerializer,
     TaskSerializer, MeetingSerializer, GeminiChatRequestSerializer,
     GeminiChatResponseSerializer, GeminiAnalysisRequestSerializer,
     GeminiAnalysisResponseSerializer
@@ -25,9 +24,10 @@ from .services import GeminiService, DataAnalysisService
 from .authentication import APIKeyAuthentication
 from .permissions import HasAPIAccess
 
-# Import models from other apps
-from Hr.models.employee.employee_models import Employee
-from Hr.models.core.department_models import Department
+# Temporarily disabled - will be replaced with new modular HR apps
+# from Hr.models.employee.employee_models import Employee
+# from Hr.models.core.department_models import Department
+# EmployeeSerializer and DepartmentSerializer temporarily removed
 from inventory.models import TblProducts, TblCategories
 from tasks.models import Task
 from meetings.models import Meeting
@@ -123,46 +123,14 @@ class UserViewSet(APIUsageLogMixin, viewsets.ReadOnlyModelViewSet):
             return User.objects.filter(id=self.request.user.id)
 
 
-# HR Views
-class EmployeeViewSet(APIUsageLogMixin, viewsets.ReadOnlyModelViewSet):
-    """ViewSet for employee data"""
-    serializer_class = EmployeeSerializer
-    permission_classes = [IsAuthenticated, HasAPIAccess]
-    pagination_class = StandardResultsSetPagination
-    throttle_classes = [UserRateThrottle]
+# HR Views - temporarily disabled
+# class EmployeeViewSet(APIUsageLogMixin, viewsets.ReadOnlyModelViewSet):
+#     """ViewSet for employee data"""
+#     # Temporarily disabled - will be replaced with new modular HR apps
 
-    def get_queryset(self):
-        """Return employees with optional filtering"""
-        queryset = Employee.objects.all()
-
-        # Filter by department
-        department = self.request.query_params.get('department', None)
-        if department:
-            queryset = queryset.filter(department__dept_name__icontains=department)
-
-        # Filter by status
-        status_filter = self.request.query_params.get('status', None)
-        if status_filter:
-            queryset = queryset.filter(emp_status=status_filter)
-
-        # Search by name
-        search = self.request.query_params.get('search', None)
-        if search:
-            queryset = queryset.filter(
-                Q(emp_name__icontains=search) |
-                Q(emp_email__icontains=search)
-            )
-
-        return queryset.select_related('department')
-
-
-class DepartmentViewSet(APIUsageLogMixin, viewsets.ReadOnlyModelViewSet):
-    """ViewSet for department data"""
-    queryset = Department.objects.all()
-    serializer_class = DepartmentSerializer
-    permission_classes = [IsAuthenticated, HasAPIAccess]
-    pagination_class = StandardResultsSetPagination
-    throttle_classes = [UserRateThrottle]
+# class DepartmentViewSet(APIUsageLogMixin, viewsets.ReadOnlyModelViewSet):
+#     """ViewSet for department data"""
+#     # Temporarily disabled - will be replaced with new modular HR apps
 
 
 # Inventory Views

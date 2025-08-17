@@ -1,0 +1,1166 @@
+{% extends 'payrolls/base.html' %}
+{% load static %}
+
+{% block title %}تقارير الرواتب{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active">تقارير الرواتب</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .report-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s;
+        overflow: hidden;
+    }
+
+    .report-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .report-header {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 15px 15px 0 0;
+    }
+
+    .report-icon {
+        font-size: 3rem;
+        opacity: 0.8;
+    }
+
+    .filter-section {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+        border: 1px solid #e9ecef;
+    }
+
+    .chart-container {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+
+    .stat-card {
+        background: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 20px;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+
+    .stat-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+
+    .table-responsive {
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .table th {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        border: none;
+        font-weight: 600;
+    }
+
+    .table td {
+        vertical-align: middle;
+        border-color: #f8f9fa;
+    }
+
+    .export-buttons {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+
+    .btn-export {
+        margin: 5px;
+        border-radius: 25px;
+        padding: 10px 20px;
+        font-weight: 600;
+    }
+
+    .progress-custom {
+        height: 25px;
+        border-radius: 15px;
+        background: #e9ecef;
+    }
+
+    .progress-bar-custom {
+        border-radius: 15px;
+        background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+    }
+
+    .department-summary {
+        background: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .salary-range-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-left: 8px;
+    }
+
+    .range-low {
+        background-color: #dc3545;
+    }
+
+    .range-medium {
+        background-color: #ffc107;
+    }
+
+    .range-high {
+        background-color: #28a745;
+    }
+
+    .range-executive {
+        background-color: #6f42c1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">
+            <i class="fas fa-chart-bar me-3"></i>تقارير الرواتب
+        </h2>
+        <p class="text-muted mb-0">تحليل شامل لبيانات الرواتب والمكافآت</p>
+    </div>
+    <div>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#customReportModal">
+            <i class="fas fa-plus me-2"></i>تقرير مخصص
+        </button>
+    </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-number">{{ total_employees|default:0 }}</div>
+            <div class="stat-label">إجمالي الموظفين</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-number">{{ total_payroll|floatformat:0|default:0 }}</div>
+            <div class="stat-label">إجمالي الرواتب (ريال)</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-number">{{ average_salary|floatformat:0|default:0 }}</div>
+            <div class="stat-label">متوسط الراتب (ريال)</div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="stat-card">
+            <div class="stat-number">{{ current_month_runs|default:0 }}</div>
+            <div class="stat-label">دورات الرواتب هذا الشهر</div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters Section -->
+<div class="filter-section">
+    <form method="get" id="reportFilters">
+        <div class="row">
+            <div class="col-md-3">
+                <label for="department" class="form-label">القسم</label>
+                <select class="form-select" name="department" id="department">
+                    <option value="">جميع الأقسام</option>
+                    {% for dept in departments %}
+                    <option value="{{ dept.dept_id }}" {% if request.GET.department==dept.dept_id|stringformat:"s"
+                        %}selected{% endif %}>
+                        {{ dept.dept_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="date_from" class="form-label">من تاريخ</label>
+                <input type="date" class="form-control" name="date_from" id="date_from"
+                    value="{{ request.GET.date_from }}">
+            </div>
+            <div class="col-md-3">
+                <label for="date_to" class="form-label">إلى تاريخ</label>
+                <input type="date" class="form-control" name="date_to" id="date_to" value="{{ request.GET.date_to }}">
+            </div>
+            <div class="col-md-3">
+                <label for="report_type" class="form-label">نوع التقرير</label>
+                <select class="form-select" name="report_type" id="report_type">
+                    <option value="summary" {% if request.GET.report_type=='summary' %}selected{% endif %}>ملخص عام
+                    </option>
+                    <option value="detailed" {% if request.GET.report_type=='detailed' %}selected{% endif %}>تفصيلي
+                    </option>
+                    <option value="comparison" {% if request.GET.report_type=='comparison' %}selected{% endif %}>مقارنة
+                    </option>
+                    <option value="analysis" {% if request.GET.report_type=='analysis' %}selected{% endif %}>تحليل متقدم
+                    </option>
+                </select>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-md-12">
+                <button type="submit" class="btn btn-primary me-2">
+                    <i class="fas fa-search me-2"></i>تطبيق الفلاتر
+                </button>
+                <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
+                    <i class="fas fa-times me-2"></i>مسح الفلاتر
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Export Options -->
+<div class="export-buttons">
+    <h6 class="mb-3">
+        <i class="fas fa-download me-2"></i>تصدير التقارير
+    </h6>
+    <button class="btn btn-success btn-export" onclick="exportReport('excel')">
+        <i class="fas fa-file-excel me-2"></i>Excel
+    </button>
+    <button class="btn btn-danger btn-export" onclick="exportReport('pdf')">
+        <i class="fas fa-file-pdf me-2"></i>PDF
+    </button>
+    <button class="btn btn-info btn-export" onclick="exportReport('csv')">
+        <i class="fas fa-file-csv me-2"></i>CSV
+    </button>
+    <button class="btn btn-warning btn-export" onclick="printReport()">
+        <i class="fas fa-print me-2"></i>طباعة
+    </button>
+</div>
+
+<!-- Charts Section -->
+<div class="row mb-4">
+    <!-- Salary Distribution Chart -->
+    <div class="col-lg-6">
+        <div class="chart-container">
+            <h6 class="mb-3">
+                <i class="fas fa-chart-pie me-2"></i>توزيع الرواتب حسب القسم
+            </h6>
+            <canvas id="salaryDistributionChart" height="300"></canvas>
+        </div>
+    </div>
+
+    <!-- Monthly Trend Chart -->
+    <div class="col-lg-6">
+        <div class="chart-container">
+            <h6 class="mb-3">
+                <i class="fas fa-chart-line me-2"></i>اتجاه الرواتب الشهري
+            </h6>
+            <canvas id="monthlyTrendChart" height="300"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Department Summary -->
+<div class="row mb-4">
+    {% for dept_summary in department_summaries %}
+    <div class="col-lg-4 col-md-6">
+        <div class="department-summary">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="mb-0">{{ dept_summary.department_name }}</h6>
+                <span class="badge bg-primary">{{ dept_summary.employee_count }} موظف</span>
+            </div>
+
+            <div class="mb-3">
+                <div class="d-flex justify-content-between mb-1">
+                    <span>إجمالي الرواتب</span>
+                    <strong>{{ dept_summary.total_salary|floatformat:0 }} ريال</strong>
+                </div>
+                <div class="progress progress-custom">
+                    <div class="progress-bar progress-bar-custom" style="width: {{ dept_summary.salary_percentage }}%">
+                    </div>
+                </div>
+            </div>
+
+            <div class="row text-center">
+                <div class="col-6">
+                    <div class="h6 mb-0">{{ dept_summary.avg_salary|floatformat:0 }}</div>
+                    <small class="text-muted">متوسط الراتب</small>
+                </div>
+                <div class="col-6">
+                    <div class="h6 mb-0">{{ dept_summary.max_salary|floatformat:0 }}</div>
+                    <small class="text-muted">أعلى راتب</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Detailed Reports Table -->
+<div class="row">
+    <div class="col-12">
+        <div class="card report-card">
+            <div class="report-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-1">
+                            <i class="fas fa-table me-2"></i>تقرير تفصيلي للرواتب
+                        </h5>
+                        <p class="mb-0 opacity-75">عرض شامل لجميع بيانات الرواتب</p>
+                    </div>
+                    <div class="report-icon">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="payrollTable">
+                        <thead>
+                            <tr>
+                                <th>الموظف</th>
+                                <th>القسم</th>
+                                <th>المنصب</th>
+                                <th>الراتب الأساسي</th>
+                                <th>البدلات</th>
+                                <th>الخصومات</th>
+                                <th>صافي الراتب</th>
+                                <th>تاريخ الدفع</th>
+                                <th>الحالة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for payroll in payroll_records %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div
+                                            class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-2">
+                                            <i class="fas fa-user text-white"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold">{{ payroll.employee.first_name }} {{
+                                                payroll.employee.last_name }}</div>
+                                            <small class="text-muted">{{ payroll.employee.emp_code }}</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ payroll.employee.dept.dept_name|default:"غير محدد" }}</td>
+                                <td>{{ payroll.employee.job.job_title|default:"غير محدد" }}</td>
+                                <td>
+                                    <span class="fw-bold">{{ payroll.basic_salary|floatformat:2 }}</span>
+                                    <span class="salary-range-indicator range-{{ payroll.salary_range }}"></span>
+                                </td>
+                                <td class="text-success">+{{ payroll.total_allowances|floatformat:2 }}</td>
+                                <td class="text-danger">-{{ payroll.total_deductions|floatformat:2 }}</td>
+                                <td>
+                                    <span class="fw-bold text-primary">{{ payroll.net_salary|floatformat:2 }}
+                                        ريال</span>
+                                </td>
+                                <td>{{ payroll.pay_date|date:"d/m/Y" }}</td>
+                                <td>
+                                    {% if payroll.status == 'paid' %}
+                                    <span class="badge bg-success">مدفوع</span>
+                                    {% elif payroll.status == 'pending' %}
+                                    <span class="badge bg-warning">معلق</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">مسودة</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-sm btn-outline-primary"
+                                            onclick="viewPayslip({{ payroll.payroll_id }})" title="عرض قسيمة الراتب">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-success"
+                                            onclick="downloadPayslip({{ payroll.payroll_id }})"
+                                            title="تحميل قسيمة الراتب">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                        {% if payroll.status != 'paid' %}
+                                        <button class="btn btn-sm btn-outline-warning"
+                                            onclick="editPayroll({{ payroll.payroll_id }})" title="تعديل">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="10" class="text-center py-4">
+                                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+                                    <p class="text-muted">لا توجد سجلات رواتب متاحة</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if is_paginated %}
+                <nav aria-label="تنقل الصفحات" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link"
+                                href="?page={{ page_obj.previous_page_number }}{% if request.GET.department %}&department={{ request.GET.department }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">السابق</a>
+                        </li>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %} <li
+                            class="page-item">
+                            <a class="page-link"
+                                href="?page={{ num }}{% if request.GET.department %}&department={{ request.GET.department }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">{{
+                                num }}</a>
+                            </li>
+                            {% endif %}
+                            {% endfor %}
+
+                            {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link"
+                                    href="?page={{ page_obj.next_page_number }}{% if request.GET.department %}&department={{ request.GET.department }}{% endif %}{% if request.GET.date_from %}&date_from={{ request.GET.date_from }}{% endif %}{% if request.GET.date_to %}&date_to={{ request.GET.date_to }}{% endif %}">التالي</a>
+                            </li>
+                            {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Salary Analysis Cards -->
+<div class="row mt-4">
+    <div class="col-lg-4">
+        <div class="card report-card">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>تحليل نطاقات الرواتب
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span><span class="salary-range-indicator range-low"></span>أقل من 5,000 ريال</span>
+                        <span class="fw-bold">{{ salary_ranges.low_count|default:0 }}</span>
+                    </div>
+                    <div class="progress progress-custom mb-2" style="height: 8px;">
+                        <div class="progress-bar bg-danger" style="width: {{ salary_ranges.low_percentage }}%"></div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span><span class="salary-range-indicator range-medium"></span>5,000 - 10,000 ريال</span>
+                        <span class="fw-bold">{{ salary_ranges.medium_count|default:0 }}</span>
+                    </div>
+                    <div class="progress progress-custom mb-2" style="height: 8px;">
+                        <div class="progress-bar bg-warning" style="width: {{ salary_ranges.medium_percentage }}%">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span><span class="salary-range-indicator range-high"></span>10,000 - 20,000 ريال</span>
+                        <span class="fw-bold">{{ salary_ranges.high_count|default:0 }}</span>
+                    </div>
+                    <div class="progress progress-custom mb-2" style="height: 8px;">
+                        <div class="progress-bar bg-success" style="width: {{ salary_ranges.high_percentage }}%"></div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span><span class="salary-range-indicator range-executive"></span>أكثر من 20,000 ريال</span>
+                        <span class="fw-bold">{{ salary_ranges.executive_count|default:0 }}</span>
+                    </div>
+                    <div class="progress progress-custom" style="height: 8px;">
+                        <div class="progress-bar bg-purple" style="width: {{ salary_ranges.executive_percentage }}%">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card report-card">
+            <div class="card-header bg-success text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-trending-up me-2"></i>إحصائيات الأداء
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <div class="h4 text-success">{{ performance_stats.growth_rate|floatformat:1|default:0 }}%</div>
+                    <small class="text-muted">نمو الرواتب السنوي</small>
+                </div>
+
+                <hr>
+
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="h6 mb-0">{{ performance_stats.avg_increase|floatformat:0|default:0 }}</div>
+                        <small class="text-muted">متوسط الزيادة</small>
+                    </div>
+                    <div class="col-6">
+                        <div class="h6 mb-0">{{ performance_stats.promotion_rate|floatformat:1|default:0 }}%</div>
+                        <small class="text-muted">معدل الترقيات</small>
+                    </div>
+                </div>
+
+                <hr>
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <span>كفاءة النظام</span>
+                    <span class="fw-bold text-success">{{ performance_stats.efficiency|floatformat:0|default:95
+                        }}%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card report-card">
+            <div class="card-header bg-warning text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>تنبيهات مهمة
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if alerts %}
+                {% for alert in alerts %}
+                <div class="alert alert-{{ alert.type }} alert-sm mb-2">
+                    <i class="fas fa-{{ alert.icon }} me-2"></i>
+                    {{ alert.message }}
+                </div>
+                {% endfor %}
+                {% else %}
+                <div class="text-center text-muted">
+                    <i class="fas fa-check-circle fa-2x mb-2"></i>
+                    <p class="mb-0">لا توجد تنبيهات</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Report Modal -->
+<div class="modal fade" id="customReportModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-cog me-2"></i>إنشاء تقرير مخصص
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="customReportForm">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">اسم التقرير</label>
+                            <input type="text" class="form-control" name="report_name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">نوع التقرير</label>
+                            <select class="form-select" name="custom_report_type" required>
+                                <option value="">-- اختر النوع --</option>
+                                <option value="salary_summary">ملخص الرواتب</option>
+                                <option value="department_analysis">تحليل الأقسام</option>
+                                <option value="employee_performance">أداء الموظفين</option>
+                                <option value="cost_analysis">تحليل التكاليف</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">من تاريخ</label>
+                            <input type="date" class="form-control" name="custom_date_from" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">إلى تاريخ</label>
+                            <input type="date" class="form-control" name="custom_date_to" required>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">الأقسام المطلوبة</label>
+                        <select class="form-select" name="custom_departments" multiple>
+                            {% for dept in departments %}
+                            <option value="{{ dept.dept_id }}">{{ dept.dept_name }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted">اتركه فارغاً لتشمل جميع الأقسام</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">الحقول المطلوبة</label>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="fields" value="basic_salary"
+                                        checked>
+                                    <label class="form-check-label">الراتب الأساسي</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="fields" value="allowances"
+                                        checked>
+                                    <label class="form-check-label">البدلات</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="fields" value="deductions"
+                                        checked>
+                                    <label class="form-check-label">الخصومات</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" onclick="generateCustomReport()">
+                    <i class="fas fa-chart-bar me-2"></i>إنشاء التقرير
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block
+extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Initialize charts and functionality when page loads
+    document.addEventListener('DOMContentLoaded', function () {
+        initializeCharts();
+        initializeDataTable();
+    });
+
+    // Initialize Chart.js charts
+    function initializeCharts() {
+        // Salary Distribution Chart
+        const salaryCtx = document.getElementById('salaryDistributionChart');
+        if (salaryCtx) {
+            new Chart(salaryCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: [
+                        {% for dept in department_summaries %}
+                    '{{ dept.department_name }}',
+                    {% endfor %}
+                ],
+        datasets: [{
+            data: [
+                {% for dept in department_summaries %}
+                        {{ dept.total_salary |default: 0 }},
+    {% endfor %}
+                    ],
+    backgroundColor: [
+        '#28a745', '#17a2b8', '#ffc107', '#dc3545',
+        '#6f42c1', '#fd7e14', '#20c997', '#e83e8c'
+    ],
+        borderWidth: 2,
+            borderColor: '#fff'
+                }]
+            },
+    options: {
+        responsive: true,
+            maintainAspectRatio: false,
+                plugins: {
+            legend: {
+                position: 'bottom',
+                    labels: {
+                    padding: 20,
+                        usePointStyle: true,
+                            font: {
+                        family: 'Cairo',
+                            size: 12
+                    }
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        const value = context.parsed;
+                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                        const percentage = ((value / total) * 100).toFixed(1);
+                        return context.label + ': ' + value.toLocaleString() + ' ريال (' + percentage + '%)';
+                    }
+                }
+            }
+        }
+    }
+        });
+    }
+
+    // Monthly Trend Chart
+    const trendCtx = document.getElementById('monthlyTrendChart');
+    if (trendCtx) {
+        new Chart(trendCtx, {
+            type: 'line',
+            data: {
+                labels: [
+                    {% for month in monthly_data %}
+                    '{{ month.month_name }}',
+                    {% endfor %}
+                ],
+    datasets: [{
+        label: 'إجمالي الرواتب',
+        data: [
+            {% for month in monthly_data %}
+                        {{ month.total_salary |default: 0 }},
+    {% endfor %}
+    ],
+        borderColor: '#28a745',
+            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                borderWidth: 3,
+                    fill: true,
+                        tension: 0.4,
+                            pointBackgroundColor: '#28a745',
+                                pointBorderColor: '#fff',
+                                    pointBorderWidth: 2,
+                                        pointRadius: 6
+                }, {
+        label: 'متوسط الراتب',
+            data: [
+                {% for month in monthly_data %}
+    { { month.avg_salary |default: 0 } },
+    {% endfor %}
+                    ],
+    borderColor: '#17a2b8',
+        backgroundColor: 'rgba(23, 162, 184, 0.1)',
+            borderWidth: 3,
+                fill: false,
+                    tension: 0.4,
+                        pointBackgroundColor: '#17a2b8',
+                            pointBorderColor: '#fff',
+                                pointBorderWidth: 2,
+                                    pointRadius: 6
+                }]
+            },
+    options: {
+        responsive: true,
+            maintainAspectRatio: false,
+                plugins: {
+            legend: {
+                position: 'top',
+                    labels: {
+                    padding: 20,
+                        usePointStyle: true,
+                            font: {
+                        family: 'Cairo',
+                            size: 12
+                    }
+                }
+            },
+            tooltip: {
+                mode: 'index',
+                    intersect: false,
+                        callbacks: {
+                    label: function(context) {
+                        return context.dataset.label + ': ' + context.parsed.y.toLocaleString() + ' ريال';
+                    }
+                }
+            }
+        },
+        scales: {
+            x: {
+                grid: {
+                    display: false
+                },
+                ticks: {
+                    font: {
+                        family: 'Cairo'
+                    }
+                }
+            },
+            y: {
+                beginAtZero: true,
+                    grid: {
+                    color: 'rgba(0,0,0,0.1)'
+                },
+                ticks: {
+                    font: {
+                        family: 'Cairo'
+                    },
+                    callback: function(value) {
+                        return value.toLocaleString() + ' ريال';
+                    }
+                }
+            }
+        },
+        interaction: {
+            mode: 'nearest',
+                axis: 'x',
+                    intersect: false
+        }
+    }
+        });
+    }
+}
+
+    // Initialize DataTable for payroll records
+    function initializeDataTable() {
+        const table = document.getElementById('payrollTable');
+        if (table && typeof DataTable !== 'undefined') {
+            new DataTable(table, {
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/ar.json'
+                },
+                responsive: true,
+                pageLength: 25,
+                order: [[7, 'desc']], // Sort by pay date descending
+                columnDefs: [
+                    { orderable: false, targets: [9] }, // Disable sorting for actions column
+                    { className: 'text-center', targets: [8, 9] }
+                ]
+            });
+        }
+    }
+
+    // Export functionality
+    function exportReport(format) {
+        const filters = getActiveFilters();
+        const url = `{% url 'payrolls:export_reports' %}?format=${format}&${filters}`;
+
+        // Show loading indicator
+        showLoadingIndicator('جاري تصدير التقرير...');
+
+        // Create download link
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `payroll_report_${new Date().toISOString().split('T')[0]}.${format}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Hide loading indicator after delay
+        setTimeout(() => {
+            hideLoadingIndicator();
+            showAlert('تم تصدير التقرير بنجاح', 'success');
+        }, 2000);
+    }
+
+    // Print report
+    function printReport() {
+        const printContent = document.querySelector('.main-content').innerHTML;
+        const originalContent = document.body.innerHTML;
+
+        // Create print styles
+        const printStyles = `
+        <style>
+            @media print {
+                body { font-family: 'Cairo', sans-serif; }
+                .no-print { display: none !important; }
+                .card { break-inside: avoid; }
+                .table { font-size: 12px; }
+                .chart-container { height: 300px !important; }
+            }
+        </style>
+    `;
+
+        document.body.innerHTML = printStyles + printContent;
+        window.print();
+        document.body.innerHTML = originalContent;
+
+        // Reinitialize after print
+        setTimeout(() => {
+            initializeCharts();
+            initializeDataTable();
+        }, 100);
+    }
+
+    // Get active filters for export
+    function getActiveFilters() {
+        const form = document.getElementById('reportFilters');
+        const formData = new FormData(form);
+        const params = new URLSearchParams();
+
+        for (let [key, value] of formData.entries()) {
+            if (value) {
+                params.append(key, value);
+            }
+        }
+
+        return params.toString();
+    }
+
+    // Clear all filters
+    function clearFilters() {
+        const form = document.getElementById('reportFilters');
+        form.reset();
+        form.submit();
+    }
+
+    // Generate custom report
+    function generateCustomReport() {
+        const form = document.getElementById('customReportForm');
+        const formData = new FormData(form);
+
+        // Validate form
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+
+        // Show loading
+        showLoadingIndicator('جاري إنشاء التقرير المخصص...');
+
+        // Submit form data
+        fetch('{% url "payrolls:generate_custom_report" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                hideLoadingIndicator();
+
+                if (data.success) {
+                    // Close modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('customReportModal'));
+                    modal.hide();
+
+                    // Show success message
+                    showAlert('تم إنشاء التقرير المخصص بنجاح', 'success');
+
+                    // Optionally redirect to report or download
+                    if (data.download_url) {
+                        window.open(data.download_url, '_blank');
+                    }
+                } else {
+                    showAlert(data.message || 'حدث خطأ في إنشاء التقرير', 'danger');
+                }
+            })
+            .catch(error => {
+                hideLoadingIndicator();
+                console.error('Error:', error);
+                showAlert('حدث خطأ في الاتصال', 'danger');
+            });
+    }
+
+    // Payslip actions
+    function viewPayslip(payrollId) {
+        const url = `{% url 'payrolls:view_payslip' 0 %}`.replace('0', payrollId);
+        window.open(url, '_blank', 'width=800,height=600');
+    }
+
+    function downloadPayslip(payrollId) {
+        const url = `{% url 'payrolls:download_payslip' 0 %}`.replace('0', payrollId);
+
+        showLoadingIndicator('جاري تحميل قسيمة الراتب...');
+
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `payslip_${payrollId}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        setTimeout(() => {
+            hideLoadingIndicator();
+            showAlert('تم تحميل قسيمة الراتب بنجاح', 'success');
+        }, 1500);
+    }
+
+    function editPayroll(payrollId) {
+        const url = `{% url 'payrolls:edit_payroll' 0 %}`.replace('0', payrollId);
+        window.location.href = url;
+    }
+
+    // Utility functions
+    function showLoadingIndicator(message) {
+        // Remove existing loader
+        const existingLoader = document.getElementById('loadingIndicator');
+        if (existingLoader) {
+            existingLoader.remove();
+        }
+
+        // Create loading indicator
+        const loader = document.createElement('div');
+        loader.id = 'loadingIndicator';
+        loader.className = 'position-fixed top-50 start-50 translate-middle bg-white p-4 rounded shadow-lg';
+        loader.style.zIndex = '9999';
+        loader.innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border text-primary mb-3" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <div>${message}</div>
+        </div>
+    `;
+
+        document.body.appendChild(loader);
+    }
+
+    function hideLoadingIndicator() {
+        const loader = document.getElementById('loadingIndicator');
+        if (loader) {
+            loader.remove();
+        }
+    }
+
+    function showAlert(message, type) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+        alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+        document.body.appendChild(alertDiv);
+
+        // Auto-dismiss after 5 seconds
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.remove();
+            }
+        }, 5000);
+    }
+
+    // Real-time updates (if WebSocket is available)
+    function initializeRealTimeUpdates() {
+        if (typeof WebSocket !== 'undefined') {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws/payrolls/`;
+
+            try {
+                const socket = new WebSocket(wsUrl);
+
+                socket.onmessage = function (event) {
+                    const data = JSON.parse(event.data);
+
+                    if (data.type === 'payroll_update') {
+                        // Refresh specific parts of the page
+                        updatePayrollStats(data.stats);
+                        showAlert('تم تحديث بيانات الرواتب', 'info');
+                    }
+                };
+
+                socket.onclose = function (event) {
+                    console.log('WebSocket connection closed');
+                };
+
+            } catch (error) {
+                console.log('WebSocket not available');
+            }
+        }
+    }
+
+    function updatePayrollStats(stats) {
+        // Update stat cards with new data
+        if (stats.total_employees) {
+            document.querySelector('.stat-card:nth-child(1) .stat-number').textContent = stats.total_employees;
+        }
+        if (stats.total_payroll) {
+            document.querySelector('.stat-card:nth-child(2) .stat-number').textContent = stats.total_payroll.toLocaleString();
+        }
+        if (stats.average_salary) {
+            document.querySelector('.stat-card:nth-child(3) .stat-number').textContent = stats.average_salary.toLocaleString();
+        }
+        if (stats.current_month_runs) {
+            document.querySelector('.stat-card:nth-child(4) .stat-number').textContent = stats.current_month_runs;
+        }
+    }
+
+    // Initialize real-time updates
+    document.addEventListener('DOMContentLoaded', function () {
+        initializeRealTimeUpdates();
+    });
+
+    // Auto-refresh functionality
+    let autoRefreshInterval;
+
+    function startAutoRefresh(intervalMinutes = 5) {
+        stopAutoRefresh(); // Clear any existing interval
+
+        autoRefreshInterval = setInterval(() => {
+            // Refresh page data without full reload
+            fetch(window.location.href, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.stats) {
+                        updatePayrollStats(data.stats);
+                    }
+                })
+                .catch(error => {
+                    console.log('Auto-refresh failed:', error);
+                });
+        }, intervalMinutes * 60 * 1000);
+    }
+
+    function stopAutoRefresh() {
+        if (autoRefreshInterval) {
+            clearInterval(autoRefreshInterval);
+            autoRefreshInterval = null;
+        }
+    }
+
+    // Start auto-refresh on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        startAutoRefresh(5); // Refresh every 5 minutes
+    });
+
+    // Stop auto-refresh when page is hidden
+    document.addEventListener('visibilitychange', function () {
+        if (document.hidden) {
+            stopAutoRefresh();
+        } else {
+            startAutoRefresh(5);
+        }
+    });
+</script>
+{% endblock %}

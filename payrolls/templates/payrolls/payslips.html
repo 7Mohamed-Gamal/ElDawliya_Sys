@@ -1,0 +1,584 @@
+{% extends 'payrolls/base.html' %}
+{% load static %}
+
+{% block title %}كشوف الرواتب{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active">كشوف الرواتب</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .payslip-card {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        transition: transform 0.3s ease;
+        overflow: hidden;
+    }
+    .payslip-card:hover {
+        transform: translateY(-3px);
+    }
+    .payslip-header {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 20px;
+    }
+    .payslip-body {
+        padding: 20px;
+    }
+    .salary-breakdown {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px;
+        margin: 10px 0;
+    }
+    .amount-positive {
+        color: #28a745;
+        font-weight: bold;
+    }
+    .amount-negative {
+        color: #dc3545;
+        font-weight: bold;
+    }
+    .amount-neutral {
+        color: #17a2b8;
+        font-weight: bold;
+    }
+    .filter-card {
+        background: #f8f9fa;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .payslip-status {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 0.85rem;
+    }
+    .status-generated { background: #17a2b8; color: white; }
+    .status-sent { background: #28a745; color: white; }
+    .status-viewed { background: #ffc107; color: #000; }
+    .status-downloaded { background: #6f42c1; color: white; }
+    .net-salary {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #28a745;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>
+                <i class="fas fa-file-invoice me-2"></i>
+                كشوف الرواتب
+            </h1>
+            <div>
+                <button class="btn btn-success" onclick="generatePayslips()">
+                    <i class="fas fa-plus me-1"></i>
+                    إنشاء كشوف
+                </button>
+                <button class="btn btn-info" onclick="sendPayslips()">
+                    <i class="fas fa-paper-plane me-1"></i>
+                    إرسال كشوف
+                </button>
+                <button class="btn btn-primary" onclick="exportPayslips()">
+                    <i class="fas fa-download me-1"></i>
+                    تصدير
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-file-invoice fa-2x text-success mb-2"></i>
+                <h4 class="text-success">{{ stats.total_payslips }}</h4>
+                <p class="text-muted mb-0">إجمالي الكشوف</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-paper-plane fa-2x text-info mb-2"></i>
+                <h4 class="text-info">{{ stats.sent_payslips }}</h4>
+                <p class="text-muted mb-0">مرسلة</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-eye fa-2x text-warning mb-2"></i>
+                <h4 class="text-warning">{{ stats.viewed_payslips }}</h4>
+                <p class="text-muted mb-0">مشاهدة</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-download fa-2x text-primary mb-2"></i>
+                <h4 class="text-primary">{{ stats.downloaded_payslips }}</h4>
+                <p class="text-muted mb-0">محملة</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="row">
+    <div class="col-12">
+        <div class="filter-card">
+            <form method="get" class="row g-3">
+                <div class="col-md-3">
+                    <label for="employee" class="form-label">الموظف</label>
+                    <select class="form-select" name="employee" id="employee">
+                        <option value="">جميع الموظفين</option>
+                        {% for emp in employees %}
+                        <option value="{{ emp.emp_id }}" {% if request.GET.employee == emp.emp_id|stringformat:"s" %}selected{% endif %}>
+                            {{ emp.full_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="month_year" class="form-label">الشهر والسنة</label>
+                    <input type="month" class="form-control" name="month_year" id="month_year" value="{{ request.GET.month_year }}">
+                </div>
+                <div class="col-md-2">
+                    <label for="department" class="form-label">القسم</label>
+                    <select class="form-select" name="department" id="department">
+                        <option value="">جميع الأقسام</option>
+                        {% for dept in departments %}
+                        <option value="{{ dept.dept_id }}" {% if request.GET.department == dept.dept_id|stringformat:"s" %}selected{% endif %}>
+                            {{ dept.dept_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="status" class="form-label">الحالة</label>
+                    <select class="form-select" name="status" id="status">
+                        <option value="">جميع الحالات</option>
+                        <option value="Generated" {% if request.GET.status == 'Generated' %}selected{% endif %}>مُنشأ</option>
+                        <option value="Sent" {% if request.GET.status == 'Sent' %}selected{% endif %}>مرسل</option>
+                        <option value="Viewed" {% if request.GET.status == 'Viewed' %}selected{% endif %}>مشاهد</option>
+                        <option value="Downloaded" {% if request.GET.status == 'Downloaded' %}selected{% endif %}>محمل</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="payroll_run" class="form-label">تشغيل الرواتب</label>
+                    <select class="form-select" name="payroll_run" id="payroll_run">
+                        <option value="">جميع التشغيلات</option>
+                        {% for run in payroll_runs %}
+                        <option value="{{ run.run_id }}" {% if request.GET.payroll_run == run.run_id|stringformat:"s" %}selected{% endif %}>
+                            {{ run.month_year }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <label class="form-label">&nbsp;</label>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i>
+                        </button>
+                        <a href="{% url 'payrolls:payslips' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i>
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Payslips -->
+<div class="row">
+    {% for payslip in payslips %}
+    <div class="col-md-6 col-lg-4">
+        <div class="payslip-card">
+            <div class="payslip-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-1">{{ payslip.employee.full_name }}</h6>
+                        <small>{{ payslip.employee.emp_code }}</small>
+                    </div>
+                    <div class="text-end">
+                        {% if payslip.status == 'Generated' %}
+                            <span class="badge bg-info">مُنشأ</span>
+                        {% elif payslip.status == 'Sent' %}
+                            <span class="badge bg-success">مرسل</span>
+                        {% elif payslip.status == 'Viewed' %}
+                            <span class="badge bg-warning text-dark">مشاهد</span>
+                        {% elif payslip.status == 'Downloaded' %}
+                            <span class="badge bg-primary">محمل</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="mt-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <small>{{ payslip.month_year }}</small>
+                        </div>
+                        <div class="text-end">
+                            <div class="net-salary">{{ payslip.net_salary|floatformat:2 }}</div>
+                            <small>{{ payslip.currency|default:"SAR" }}</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="payslip-body">
+                <div class="salary-breakdown">
+                    <div class="row">
+                        <div class="col-6">
+                            <small class="text-muted">الراتب الأساسي</small>
+                            <div class="amount-positive">{{ payslip.basic_salary|floatformat:2 }}</div>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">البدلات</small>
+                            <div class="amount-positive">{{ payslip.total_allowances|floatformat:2 }}</div>
+                        </div>
+                    </div>
+                    <hr class="my-2">
+                    <div class="row">
+                        <div class="col-6">
+                            <small class="text-muted">الخصومات</small>
+                            <div class="amount-negative">{{ payslip.total_deductions|floatformat:2 }}</div>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted">الضرائب</small>
+                            <div class="amount-negative">{{ payslip.total_taxes|floatformat:2 }}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div>
+                        <small class="text-muted">
+                            <i class="fas fa-calendar me-1"></i>{{ payslip.generated_date|date:"Y/m/d" }}
+                        </small>
+                        {% if payslip.sent_date %}
+                        <br><small class="text-muted">
+                            <i class="fas fa-paper-plane me-1"></i>{{ payslip.sent_date|date:"Y/m/d" }}
+                        </small>
+                        {% endif %}
+                    </div>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-info" onclick="viewPayslip({{ payslip.payslip_id }})" title="عرض">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-outline-primary" onclick="downloadPayslip({{ payslip.payslip_id }})" title="تحميل">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        {% if payslip.status == 'Generated' %}
+                        <button class="btn btn-outline-success" onclick="sendPayslip({{ payslip.payslip_id }})" title="إرسال">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                        {% endif %}
+                        <button class="btn btn-outline-warning" onclick="printPayslip({{ payslip.payslip_id }})" title="طباعة">
+                            <i class="fas fa-print"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="sharePayslip({{ payslip.payslip_id }})" title="مشاركة">
+                            <i class="fas fa-share"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="text-center py-5">
+            <i class="fas fa-file-invoice fa-4x text-muted mb-3"></i>
+            <h4 class="text-muted">لا توجد كشوف رواتب</h4>
+            <p class="text-muted">لم يتم العثور على كشوف تطابق معايير البحث</p>
+            <button class="btn btn-success" onclick="generatePayslips()">
+                <i class="fas fa-plus me-1"></i>
+                إنشاء كشوف جديدة
+            </button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if is_paginated %}
+<div class="row mt-4">
+    <div class="col-12">
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if request.GET.employee %}&employee={{ request.GET.employee }}{% endif %}{% if request.GET.month_year %}&month_year={{ request.GET.month_year }}{% endif %}{% if request.GET.department %}&department={{ request.GET.department }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.payroll_run %}&payroll_run={{ request.GET.payroll_run }}{% endif %}">
+                            الأولى
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.employee %}&employee={{ request.GET.employee }}{% endif %}{% if request.GET.month_year %}&month_year={{ request.GET.month_year }}{% endif %}{% if request.GET.department %}&department={{ request.GET.department }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.payroll_run %}&payroll_run={{ request.GET.payroll_run }}{% endif %}">
+                            السابقة
+                        </a>
+                    </li>
+                {% endif %}
+                
+                <li class="page-item active">
+                    <span class="page-link">
+                        صفحة {{ page_obj.number }} من {{ page_obj.paginator.num_pages }}
+                    </span>
+                </li>
+                
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.employee %}&employee={{ request.GET.employee }}{% endif %}{% if request.GET.month_year %}&month_year={{ request.GET.month_year }}{% endif %}{% if request.GET.department %}&department={{ request.GET.department }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.payroll_run %}&payroll_run={{ request.GET.payroll_run }}{% endif %}">
+                            التالية
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.employee %}&employee={{ request.GET.employee }}{% endif %}{% if request.GET.month_year %}&month_year={{ request.GET.month_year }}{% endif %}{% if request.GET.department %}&department={{ request.GET.department }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}{% if request.GET.payroll_run %}&payroll_run={{ request.GET.payroll_run }}{% endif %}">
+                            الأخيرة
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endif %}
+
+<!-- Generate Payslips Modal -->
+<div class="modal fade" id="generatePayslipsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">إنشاء كشوف رواتب</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="generatePayslipsForm">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="modal_payroll_run" class="form-label">تشغيل الرواتب *</label>
+                        <select class="form-select" name="payroll_run" id="modal_payroll_run" required>
+                            <option value="">-- اختر تشغيل الرواتب --</option>
+                            {% for run in confirmed_payroll_runs %}
+                            <option value="{{ run.run_id }}">{{ run.month_year }} - {{ run.total_amount|floatformat:0 }} {{ run.currency }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="modal_template" class="form-label">قالب كشف الراتب</label>
+                        <select class="form-select" name="template" id="modal_template">
+                            <option value="standard">القالب الأساسي</option>
+                            <option value="detailed">القالب المفصل</option>
+                            <option value="simple">القالب البسيط</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="auto_send" id="modal_auto_send">
+                            <label class="form-check-label" for="modal_auto_send">
+                                إرسال تلقائي بعد الإنشاء
+                            </label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="include_attachments" id="modal_include_attachments" checked>
+                            <label class="form-check-label" for="modal_include_attachments">
+                                تضمين المرفقات
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-success" onclick="submitGeneratePayslips()">
+                    <i class="fas fa-plus me-1"></i>
+                    إنشاء الكشوف
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Payslip Details Modal -->
+<div class="modal fade" id="payslipDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تفاصيل كشف الراتب</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="payslipDetailsContent">
+                <!-- Content will be loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                <button type="button" class="btn btn-primary" onclick="downloadCurrentPayslip()">
+                    <i class="fas fa-download me-1"></i>
+                    تحميل PDF
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentPayslipId = null;
+
+function generatePayslips() {
+    const modal = new bootstrap.Modal(document.getElementById('generatePayslipsModal'));
+    modal.show();
+}
+
+function submitGeneratePayslips() {
+    const form = document.getElementById('generatePayslipsForm');
+    const formData = new FormData(form);
+    
+    // Show loading state
+    const submitBtn = event.target;
+    const originalText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>جاري الإنشاء...';
+    submitBtn.disabled = true;
+    
+    fetch('{% url "payrolls:generate_payslips" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('حدث خطأ: ' + data.message);
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ في الاتصال');
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    });
+}
+
+function viewPayslip(payslipId) {
+    currentPayslipId = payslipId;
+    fetch(`{% url "payrolls:payslip_detail" 0 %}`.replace('0', payslipId))
+    .then(response => response.text())
+    .then(html => {
+        document.getElementById('payslipDetailsContent').innerHTML = html;
+        const modal = new bootstrap.Modal(document.getElementById('payslipDetailsModal'));
+        modal.show();
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ في جلب التفاصيل');
+    });
+}
+
+function downloadPayslip(payslipId) {
+    window.open(`{% url "payrolls:download_payslip" 0 %}`.replace('0', payslipId), '_blank');
+}
+
+function downloadCurrentPayslip() {
+    if (currentPayslipId) {
+        downloadPayslip(currentPayslipId);
+    }
+}
+
+function sendPayslip(payslipId) {
+    if (confirm('هل تريد إرسال كشف الراتب للموظف؟')) {
+        fetch(`{% url "payrolls:send_payslip" 0 %}`.replace('0', payslipId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('حدث خطأ: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('حدث خطأ في الاتصال');
+        });
+    }
+}
+
+function sendPayslips() {
+    if (confirm('هل تريد إرسال جميع كشوف الرواتب المُنشأة؟')) {
+        fetch('{% url "payrolls:send_all_payslips" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(`تم إرسال ${data.sent_count} كشف راتب بنجاح`);
+                location.reload();
+            } else {
+                alert('حدث خطأ: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('حدث خطأ في الاتصال');
+        });
+    }
+}
+
+function printPayslip(payslipId) {
+    window.open(`{% url "payrolls:print_payslip" 0 %}`.replace('0', payslipId), '_blank');
+}
+
+function sharePayslip(payslipId) {
+    // Generate shareable link
+    const shareUrl = `${window.location.origin}{% url "payrolls:shared_payslip" 0 %}`.replace('0', payslipId);
+    
+    if (navigator.share) {
+        navigator.share({
+            title: 'كشف راتب',
+            url: shareUrl
+        });
+    } else {
+        // Fallback: copy to clipboard
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            alert('تم نسخ رابط المشاركة');
+        });
+    }
+}
+
+function exportPayslips() {
+    const params = new URLSearchParams(window.location.search);
+    params.set('export', 'excel');
+    window.location.href = '{% url "payrolls:payslips" %}?' + params.toString();
+}
+</script>
+{% endblock %}

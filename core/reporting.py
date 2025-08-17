@@ -23,8 +23,8 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any, Tuple
 import logging
 
-# Import models for reporting
-from Hr.models import Employee, Department
+# Temporarily disabled - will be replaced with new modular HR apps
+# from Hr.models import Employee, Department
 from tasks.models import Task
 from meetings.models import Meeting
 from inventory.models import TblProducts
