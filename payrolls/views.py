@@ -99,8 +99,9 @@ def dashboard(request):
     }
     
     return render(request, 'payrolls/dashboard.html', context)
-@
-login_required
+
+
+@login_required
 def salary_list(request):
     """قائمة رواتب الموظفين"""
     salaries = EmployeeSalary.objects.select_related('emp').filter(is_current=True)
@@ -501,8 +502,10 @@ def process_payroll_run(request, run_id):
         'payroll_run': payroll_run,
     }
     
-    return render(request, 'payrolls/process_payroll_confirm.html', context)# كشوف الرو
-اتب
+    return render(request, 'payrolls/process_payroll_confirm.html', context)
+
+
+# كشوف الرواتب
 @login_required
 def payslips(request):
     """قائمة كشوف الرواتب"""

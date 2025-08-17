@@ -47,6 +47,8 @@ urlpatterns = [
     path('core/', include('core.urls')),  # مسارات النظام الأساسي
     path('companies/', include('companies.urls')),  # مسارات الشركات
     path('leaves/', include('leaves.urls')),  # مسارات الإجازات
+    path('evaluations/', include('evaluations.urls')),  # مسارات التقييمات
+    path('payrolls/', include('payrolls.urls')),  # مسارات الرواتب
     path('insurance/', include('insurance.urls')),
     path('training/', include('training.urls')),
     path('disciplinary/', include('disciplinary.urls')),

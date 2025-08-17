@@ -90,7 +90,7 @@ class EmployeeEvaluationForm(forms.ModelForm):
     
     class Meta:
         model = EmployeeEvaluation
-        fields = ['emp', 'period', 'manager_id', 'score', 'notes', 'eval_date']
+        fields = ['emp', 'period', 'manager_id', 'score', 'notes', 'eval_date', 'status']
         
         widgets = {
             'emp': forms.Select(attrs={
@@ -118,6 +118,9 @@ class EmployeeEvaluationForm(forms.ModelForm):
             'eval_date': forms.DateInput(attrs={
                 'class': 'form-control',
                 'type': 'date'
+            }),
+            'status': forms.Select(attrs={
+                'class': 'form-select'
             })
         }
         
@@ -127,7 +130,8 @@ class EmployeeEvaluationForm(forms.ModelForm):
             'manager_id': 'المدير المقيم',
             'score': 'الدرجة',
             'notes': 'ملاحظات',
-            'eval_date': 'تاريخ التقييم'
+            'eval_date': 'تاريخ التقييم',
+            'status': 'الحالة'
         }
 
     def __init__(self, *args, **kwargs):

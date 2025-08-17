@@ -459,14 +459,15 @@ def export_evaluations(request):
     writer = csv.writer(response)
     writer.writerow(['الموظف', 'الفترة', 'الدرجة', 'تاريخ التقييم', 'المقيم', 'الملاحظات'])
     
-    evaluations = EmployeeEvaluation.objects.select_related('emp', 'period').all()
+    evaluations = EmployeeEvaluation.objects.select_related('employee', 'period', 'manager').all()
     for evaluation in evaluations:
+        manager_name = f"{evaluation.manager.first_name} {evaluation.manager.last_name}" if evaluation.manager else 'غير محدد'
         writer.writerow([
-            f"{evaluation.emp.first_name} {evaluation.emp.last_name}",
+            f"{evaluation.employee.first_name} {evaluation.employee.last_name}",
             evaluation.period.period_name,
             evaluation.score or 'غير مكتمل',
             evaluation.eval_date or 'غير محدد',
-            evaluation.manager_id or 'غير محدد',
+            manager_name,
             evaluation.notes or ''
         ])
     
@@ -481,7 +482,7 @@ def performance_comparison(request):
     # أفضل الموظفين
     top_employees = EmployeeEvaluation.objects.filter(
         score__isnull=False
-    ).select_related('emp').order_by('-score')[:10]
+    ).select_related('employee').order_by('-score')[:10]
     
     # مقارنة الأقسام
     department_comparison = Department.objects.annotate(
@@ -516,7 +517,7 @@ def my_evaluations(request):
     
     # تقييمات الموظف
     my_evaluations = EmployeeEvaluation.objects.filter(
-        emp=employee
+        employee=employee
     ).select_related('period').order_by('-eval_date')
     
     # إحصائيات شخصية
@@ -547,13 +548,13 @@ def my_performance(request):
     
     # تطور الأداء عبر الوقت
     performance_trend = EmployeeEvaluation.objects.filter(
-        emp=employee,
+        employee=employee,
         score__isnull=False
     ).order_by('eval_date')
     
     # مقارنة مع متوسط القسم
     department_avg = EmployeeEvaluation.objects.filter(
-        emp__dept=employee.dept,
+        employee__dept=employee.dept,
         score__isnull=False
     ).aggregate(avg_score=Avg('score'))['avg_score']
     
@@ -580,7 +581,7 @@ def employee_performance_ajax(request, emp_id):
         employee = Employee.objects.get(emp_id=emp_id)
         
         evaluations = EmployeeEvaluation.objects.filter(
-            emp=employee,
+            employee=employee,
             score__isnull=False
         ).order_by('eval_date')
         
@@ -651,9 +652,9 @@ def bulk_create_evaluations(request):
                 employee = get_object_or_404(Employee, emp_id=emp_id)
                 
                 # التحقق من عدم وجود تقييم مسبق
-                if not EmployeeEvaluation.objects.filter(emp=employee, period=period).exists():
+                if not EmployeeEvaluation.objects.filter(employee=employee, period=period).exists():
                     EmployeeEvaluation.objects.create(
-                        emp=employee,
+                        employee=employee,
                         period=period
                     )
                     created_count += 1
