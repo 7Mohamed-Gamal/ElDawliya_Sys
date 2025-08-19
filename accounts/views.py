@@ -299,49 +299,53 @@ def search_hr_data(query, user, limit):
     results = []
 
     try:
-        # Import HR models
-        from Hr.models import Employee, Department
+        # Import models from new apps
+        from employees.models import Employee
+        from org.models import Department
 
         # Search employees
         employees = Employee.objects.filter(
-            Q(emp_first_name__icontains=query) |
-            Q(emp_second_name__icontains=query) |
-            Q(emp_full_name__icontains=query) |
-            Q(emp_id__icontains=query)
-        ).filter(working_condition='سارى')[:limit//2]
+            Q(first_name__icontains=query) |
+            Q(second_name__icontains=query) |
+            Q(third_name__icontains=query) |
+            Q(last_name__icontains=query) |
+            Q(emp_code__icontains=query)
+        ).filter(emp_status='Active')[:limit//2]
 
         for emp in employees:
+            # Create full name
+            full_name = f"{emp.first_name} {emp.second_name or ''} {emp.third_name or ''} {emp.last_name or ''}".strip()
+            
             results.append({
                 'module': 'hr',
                 'type': 'employee',
-                'title': emp.emp_full_name,
-                'description': f'موظف - {emp.department.dept_name if emp.department else "بدون قسم"}',
-                'url': f'/Hr/employees/{emp.emp_id}/',
+                'title': full_name,
+                'description': f'موظف - {emp.dept.dept_name if emp.dept else "بدون قسم"}',
+                'url': f'/employees/list/#employee-{emp.emp_id}',
                 'icon': 'fas fa-user',
                 'meta': [
-                    f'الرقم: {emp.emp_id}',
-                    f'القسم: {emp.department.dept_name if emp.department else "غير محدد"}'
+                    f'الكود: {emp.emp_code}',
+                    f'القسم: {emp.dept.dept_name if emp.dept else "غير محدد"}'
                 ],
-                'score': calculate_relevance_score(query, emp.emp_full_name)
+                'score': calculate_relevance_score(query, full_name)
             })
 
         # Search departments
         departments = Department.objects.filter(
-            Q(dept_name__icontains=query) |
-            Q(dept_code__icontains=query)
-        )[:limit//2]
+            Q(dept_name__icontains=query)
+        ).filter(is_active=True)[:limit//2]
 
         for dept in departments:
             results.append({
                 'module': 'hr',
                 'type': 'department',
                 'title': dept.dept_name,
-                'description': f'قسم - {dept.dept_code}',
-                'url': f'/Hr/departments/{dept.dept_code}/',
+                'description': f'قسم - {dept.branch.branch_name if dept.branch else "بدون فرع"}',
+                'url': f'/org/#department-{dept.dept_id}',
                 'icon': 'fas fa-building',
                 'meta': [
-                    f'الكود: {dept.dept_code}',
-                    f'عدد الموظفين: {dept.employee_set.count()}'
+                    f'المعرف: {dept.dept_id}',
+                    f'الفرع: {dept.branch.branch_name if dept.branch else "غير محدد"}'
                 ],
                 'score': calculate_relevance_score(query, dept.dept_name)
             })
