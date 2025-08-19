@@ -115,16 +115,16 @@ class EmployeeEvaluationAdmin(admin.ModelAdmin):
     list_filter = [
         'status',
         'period',
-        'employee__dept',
+        'emp__dept',
         'eval_date',
         'created_at',
         'score',
     ]
     
     search_fields = [
-        'employee__first_name',
-        'employee__last_name',
-        'employee__emp_code',
+        'emp__first_name',
+        'emp__last_name',
+        'emp__emp_code',
         'notes'
     ]
     
@@ -136,7 +136,7 @@ class EmployeeEvaluationAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('معلومات التقييم', {
-            'fields': ('employee', 'period', 'manager', 'status')
+            'fields': ('emp', 'period', 'manager_id', 'status')
         }),
         ('تفاصيل التقييم', {
             'fields': ('score', 'performance_level_display', 'eval_date', 'notes')
@@ -147,27 +147,32 @@ class EmployeeEvaluationAdmin(admin.ModelAdmin):
         }),
     )
     
-    autocomplete_fields = ['employee', 'manager']
+    autocomplete_fields = ['emp']
     
     def employee_info(self, obj):
         """معلومات الموظف"""
-        if obj.employee:
+        if obj.emp:
             return format_html(
                 '<strong>{}</strong><br><small>{}</small>',
-                f"{obj.employee.first_name} {obj.employee.last_name}",
-                obj.employee.emp_code
+                f"{obj.emp.first_name} {obj.emp.last_name}",
+                obj.emp.emp_code
             )
         return '-'
     employee_info.short_description = 'الموظف'
     
     def manager_info(self, obj):
         """معلومات المدير"""
-        if obj.manager:
-            return format_html(
-                '{}<br><small>{}</small>',
-                f"{obj.manager.first_name} {obj.manager.last_name}",
-                obj.manager.emp_code
-            )
+        if obj.manager_id:
+            try:
+                from employees.models import Employee
+                manager = Employee.objects.get(emp_id=obj.manager_id)
+                return format_html(
+                    '{}<br><small>{}</small>',
+                    f"{manager.first_name} {manager.last_name}",
+                    manager.emp_code
+                )
+            except Employee.DoesNotExist:
+                return f"Manager ID: {obj.manager_id}"
         return '-'
     manager_info.short_description = 'المدير المقيم'
     
@@ -261,12 +266,12 @@ class EmployeeEvaluationAdmin(admin.ModelAdmin):
             'مستوى الأداء', 'الحالة', 'تاريخ التقييم', 'الملاحظات'
         ])
         
-        for evaluation in queryset.select_related('employee', 'period', 'manager'):
+        for evaluation in queryset.select_related('emp', 'period'):
             writer.writerow([
-                f"{evaluation.employee.first_name} {evaluation.employee.last_name}",
-                evaluation.employee.emp_code,
+                f"{evaluation.emp.first_name} {evaluation.emp.last_name}" if evaluation.emp else '',
+                evaluation.emp.emp_code if evaluation.emp else '',
                 evaluation.period.period_name,
-                f"{evaluation.manager.first_name} {evaluation.manager.last_name}" if evaluation.manager else '',
+                evaluation.get_manager_name(),
                 evaluation.score or '',
                 evaluation.performance_level if evaluation.score else '',
                 evaluation.get_status_display(),
@@ -280,7 +285,7 @@ class EmployeeEvaluationAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         """تحسين الاستعلامات"""
         return super().get_queryset(request).select_related(
-            'employee', 'period', 'manager'
+            'emp', 'period'
         )
 
 

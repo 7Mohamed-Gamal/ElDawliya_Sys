@@ -80,3 +80,14 @@ class EmployeeEvaluation(models.Model):
             return 'مقبول'
         else:
             return 'ضعيف'
+    
+    def get_manager_name(self):
+        """الحصول على اسم المدير"""
+        if self.manager_id:
+            try:
+                from employees.models import Employee
+                manager = Employee.objects.get(emp_id=self.manager_id)
+                return f"{manager.first_name} {manager.last_name}"
+            except Employee.DoesNotExist:
+                return f"Manager ID: {self.manager_id}"
+        return ''
