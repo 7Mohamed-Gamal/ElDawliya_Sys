@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'storages',
     'django_cleanup',
     # Core apps
+    'hr.apps.HrConfig',  # Main HR system hub
     'core.apps.CoreConfig',
     'api.apps.ApiConfig',  # API application
     'accounts',

@@ -1,348 +1,735 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="{{ current_language }}" dir="{{ text_direction }}">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}ElDawliya System{% endblock %}</title>
-    <!-- Bootstrap RTL CSS -->
+    <title>{% block title %}نظام الدولية للموارد البشرية{% endblock %}</title>
+    
+    <!-- Bootstrap 5 RTL -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- ElDawliya Design System -->
-    <link rel="stylesheet" href="{% static 'css/style.css' %}">
-    <link rel="stylesheet" href="{% static 'css/theme-toggle.css' %}">
-    <!-- RTL CSS -->
-    <link rel="stylesheet" href="{% static 'css/rtl.css' %}">
-
-    <!-- Theme Detection Script (Inline for immediate execution) -->
-    <script>
-        // Prevent flash of unstyled content
-        (function() {
-            const theme = localStorage.getItem('eldawliya-theme') ||
-                         (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-            document.documentElement.setAttribute('data-theme', theme);
-        })();
-    </script>
-    <!-- Google Fonts -->
-    {% if system_settings.font_family == 'cairo' %}
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    {% elif system_settings.font_family == 'tajawal' %}
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
-    {% elif system_settings.font_family == 'almarai' %}
-    <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&display=swap" rel="stylesheet">
-    {% elif system_settings.font_family == 'ibm-plex-sans-arabic' %}
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    {% elif system_settings.font_family == 'noto-sans-arabic' %}
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    {% else %}
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    {% endif %}
     
+    <!-- Google Fonts - Arabic Support -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
     <style>
         :root {
-            --font-family: 
-                {% if system_settings.font_family == 'cairo' %}'Cairo'
-                {% elif system_settings.font_family == 'tajawal' %}'Tajawal'
-                {% elif system_settings.font_family == 'almarai' %}'Almarai'
-                {% elif system_settings.font_family == 'ibm-plex-sans-arabic' %}'IBM Plex Sans Arabic'
-                {% elif system_settings.font_family == 'noto-sans-arabic' %}'Noto Sans Arabic'
-                {% else %}'Cairo'{% endif %}, sans-serif;
+            --primary: #2563eb;
+            --secondary: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #06b6d4;
+            --purple: #8b5cf6;
+            --indigo: #6366f1;
+            --dark: #1e293b;
+            --light: #f8fafc;
+        }
+
+        * {
+            font-family: 'Cairo', sans-serif;
         }
 
         body {
-            font-family: var(--font-family), system-ui, -apple-system, sans-serif;
-            text-align: right;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
         }
 
-        /* RTL specific styles */
+        .sidebar {
+            background: linear-gradient(135deg, var(--dark) 0%, #334155 100%);
+            min-height: 100vh;
+            width: 280px;
+            position: fixed;
+            top: 0;
+            right: 0;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            box-shadow: -2px 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar.collapsed {
+            width: 80px;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .sidebar-header .logo {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar.collapsed .logo-text {
+            display: none;
+        }
+
+        .sidebar-nav {
+            padding: 1rem 0;
+        }
+
+        .nav-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .nav-section-title {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 0.5rem 1.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .sidebar.collapsed .nav-section-title {
+            display: none;
+        }
+
+        .nav-item {
+            margin: 0.25rem 0;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.75rem 1.5rem;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            border-radius: 0;
+            position: relative;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            transform: translateX(-3px);
+        }
+
+        .nav-link.active {
+            background: linear-gradient(135deg, var(--primary), #1d4ed8);
+            color: white;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+        }
+
+        .nav-link.active::before {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: white;
+        }
+
+        .nav-icon {
+            width: 20px;
+            margin-left: 1rem;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .sidebar.collapsed .nav-text {
+            display: none;
+        }
+
+        .nav-badge {
+            background: var(--danger);
+            color: white;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 50px;
+            margin-right: auto;
+        }
+
+        .sidebar.collapsed .nav-badge {
+            display: none;
+        }
+
+        .main-content {
+            margin-right: 280px;
+            transition: all 0.3s ease;
+            min-height: 100vh;
+        }
+
+        .main-content.expanded {
+            margin-right: 80px;
+        }
+
+        .top-navbar {
+            background: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            border-radius: 0 0 15px 15px;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            color: var(--dark);
+            text-decoration: none;
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--primary);
+        }
+
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            color: var(--dark);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-toggle:hover {
+            background: var(--light);
+        }
+
+        .content-wrapper {
+            padding: 2rem;
+        }
+
         .dropdown-menu {
-            text-align: right;
+            border: none;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
         }
 
-        .form-check {
-            padding-right: 1.5em;
-            padding-left: 0;
+        .dropdown-item {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            margin: 0.25rem;
+            transition: all 0.3s ease;
         }
 
-        .form-check .form-check-input {
-            float: right;
-            margin-right: -1.5em;
-            margin-left: 0;
+        .dropdown-item:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateX(-2px);
         }
 
-        .input-group > :not(:first-child):not(.dropdown-menu):not(.valid-tooltip):not(.valid-feedback):not(.invalid-tooltip):not(.invalid-feedback) {
-            margin-right: -1px;
-            border-top-right-radius: 0;
-            border-bottom-right-radius: 0;
-            border-top-left-radius: 0.375rem;
-            border-bottom-left-radius: 0.375rem;
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            background: var(--danger);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid white;
         }
 
-        .input-group:not(.has-validation) > :not(:last-child):not(.dropdown-toggle):not(.dropdown-menu):not(.form-floating) {
-            border-top-left-radius: 0;
-            border-bottom-left-radius: 0;
-            border-top-right-radius: 0.375rem;
-            border-bottom-right-radius: 0.375rem;
+        .breadcrumb-custom {
+            background: none;
+            padding: 0;
+            margin-bottom: 1.5rem;
+        }
+
+        .breadcrumb-custom .breadcrumb-item a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .breadcrumb-custom .breadcrumb-item.active {
+            color: var(--secondary);
+        }
+
+        .footer {
+            background: white;
+            padding: 2rem;
+            margin-top: 3rem;
+            border-radius: 15px 15px 0 0;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            color: var(--secondary);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(100%);
+            }
+            
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-right: 0;
+            }
+            
+            .content-wrapper {
+                padding: 1rem;
+            }
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.3s ease;
+        }
+
+        .loading-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
+
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- Enhanced Modern Navigation Bar -->
-    <nav class="navbar navbar-expand-lg" role="navigation" aria-label="التنقل الرئيسي">
-        <div class="container-fluid">
-            <!-- Brand Section -->
-            <a class="navbar-brand" href="{% url 'home_dashboard' %}" aria-label="الصفحة الرئيسية">
-                <div class="sidebar-brand-icon">
-                    <i class="fas fa-building" aria-hidden="true"></i>
-                </div>
-                <div class="navbar-brand-text">
-                    <div class="sidebar-brand-title">نظام الدولية</div>
-                    <div class="sidebar-brand-subtitle">إدارة متكاملة</div>
-                </div>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay hidden" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="{% url 'hr:dashboard' %}" class="logo">
+                <i class="fas fa-building me-2"></i>
+                <span class="logo-text">نظام الدولية</span>
             </a>
+        </div>
 
-            <!-- Mobile Navigation Toggle -->
-            <button class="navbar-toggler" type="button" aria-controls="navbarNav" aria-expanded="false" aria-label="تبديل التنقل">
-                <span class="navbar-toggler-icon" aria-hidden="true">
-                    <i class="fas fa-bars"></i>
-                </span>
-            </button>
+        <div class="sidebar-nav">
+            <!-- Dashboard Section -->
+            <div class="nav-section">
+                <div class="nav-section-title">الرئيسية</div>
+                <div class="nav-item">
+                    <a href="{% url 'hr:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                        <i class="fas fa-tachometer-alt nav-icon"></i>
+                        <span class="nav-text">لوحة التحكم</span>
+                    </a>
+                </div>
+            </div>
 
-            <!-- Navigation Menu -->
-            <ul class="navbar-nav" id="navbarNav" role="menubar">
-                <!-- Quick Access Links -->
-                <li class="nav-item" role="none">
-                    <a class="nav-link" href="{% url 'home_dashboard' %}" role="menuitem">
-                        <i class="nav-link-icon fas fa-home" aria-hidden="true"></i>
-                        <span>الرئيسية</span>
+            <!-- Employee Management -->
+            <div class="nav-section">
+                <div class="nav-section-title">إدارة الموظفين</div>
+                <div class="nav-item">
+                    <a href="{% url 'employees:list' %}" class="nav-link {% if 'employees' in request.resolver_match.app_name %}active{% endif %}">
+                        <i class="fas fa-users nav-icon"></i>
+                        <span class="nav-text">الموظفين</span>
+                        <span class="nav-badge">{{ total_employees|default:0 }}</span>
                     </a>
-                </li>
-                <li class="nav-item" role="none">
-                    <a class="nav-link" href="{% url 'meetings:list' %}" role="menuitem">
-                        <i class="nav-link-icon fas fa-users" aria-hidden="true"></i>
-                        <span>الاجتماعات</span>
+                </div>
+                <div class="nav-item">
+                    <a href="{% url 'employees:departments' %}" class="nav-link">
+                        <i class="fas fa-building nav-icon"></i>
+                        <span class="nav-text">الأقسام</span>
                     </a>
-                </li>
-                <li class="nav-item" role="none">
-                    <a class="nav-link" href="{% url 'tasks:list' %}" role="menuitem">
-                        <i class="nav-link-icon fas fa-tasks" aria-hidden="true"></i>
-                        <span>المهام</span>
+                </div>
+                <div class="nav-item">
+                    <a href="{% url 'employees:positions' %}" class="nav-link">
+                        <i class="fas fa-briefcase nav-icon"></i>
+                        <span class="nav-text">المناصب</span>
                     </a>
-                </li>
+                </div>
+            </div>
 
-                <!-- Notifications -->
-                {% if user.is_authenticated %}
-                <li class="nav-item" role="none">
-                    <a class="nav-link position-relative" href="{% url 'notifications:user_notifications' %}" role="menuitem" aria-label="التنبيهات">
-                        <i class="nav-link-icon fas fa-bell" aria-hidden="true"></i>
-                        <span>التنبيهات</span>
-                        <!-- Notification badge (if needed) -->
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem; display: none;">
-                            <span class="visually-hidden">تنبيهات جديدة</span>
-                        </span>
+            <!-- Attendance & Time -->
+            <div class="nav-section">
+                <div class="nav-section-title">الحضور والوقت</div>
+                <div class="nav-item">
+                    <a href="{% url 'attendance:dashboard' %}" class="nav-link {% if 'attendance' in request.resolver_match.app_name %}active{% endif %}">
+                        <i class="fas fa-clock nav-icon"></i>
+                        <span class="nav-text">الحضور والانصراف</span>
+                        <span class="nav-badge">{{ present_today|default:0 }}</span>
                     </a>
-                </li>
-                {% endif %}
-
-                <!-- Global Search -->
-                {% if user.is_authenticated %}
-                <li class="nav-item" role="none">
-                    <button class="nav-link global-search-trigger" type="button" aria-label="البحث العام" title="البحث في جميع أنحاء النظام (Ctrl+K)">
-                        <i class="nav-link-icon fas fa-search" aria-hidden="true"></i>
-                        <span>بحث</span>
-                    </button>
-                </li>
-                {% endif %}
-
-                <!-- User Dropdown -->
-                {% if user.is_authenticated %}
-                <li class="nav-item dropdown" role="none">
-                    <a class="nav-link dropdown-toggle" href="#" role="menuitem" aria-haspopup="true" aria-expanded="false" aria-label="قائمة المستخدم">
-                        <i class="nav-link-icon fas fa-user" aria-hidden="true"></i>
-                        <span>{{ user.get_full_name|default:user.username }}</span>
+                </div>
+                <div class="nav-item">
+                    <a href="{% url 'attendance:zk_devices' %}" class="nav-link">
+                        <i class="fas fa-fingerprint nav-icon"></i>
+                        <span class="nav-text">أجهزة البصمة</span>
                     </a>
-                    <ul class="dropdown-menu" role="menu" aria-hidden="true">
-                        <li role="none">
-                            <a class="dropdown-item" href="#" role="menuitem">
-                                <i class="dropdown-item-icon fas fa-user-cog" aria-hidden="true"></i>
-                                <span>الملف الشخصي</span>
-                            </a>
-                        </li>
-                        <li role="none">
-                            <a class="dropdown-item" href="#" role="menuitem">
-                                <i class="dropdown-item-icon fas fa-cog" aria-hidden="true"></i>
-                                <span>الإعدادات</span>
-                            </a>
-                        </li>
-                        <li role="none">
-                            <hr class="dropdown-divider">
-                        </li>
-                        <li role="none">
-                            <a class="dropdown-item" href="{% url 'accounts:logout' %}" role="menuitem">
-                                <i class="dropdown-item-icon fas fa-sign-out-alt" aria-hidden="true"></i>
-                                <span>تسجيل الخروج</span>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-                {% else %}
-                <li class="nav-item" role="none">
-                    <a class="nav-link" href="{% url 'accounts:login' %}" role="menuitem">
-                        <i class="nav-link-icon fas fa-sign-in-alt" aria-hidden="true"></i>
-                        <span>تسجيل الدخول</span>
+                </div>
+                <div class="nav-item">
+                    <a href="{% url 'attendance:schedules' %}" class="nav-link">
+                        <i class="fas fa-calendar-alt nav-icon"></i>
+                        <span class="nav-text">جداول العمل</span>
                     </a>
-                </li>
-                {% endif %}
+                </div>
+            </div>
 
-                <!-- Theme Toggle -->
-                <li class="nav-item" role="none">
-                    <button class="nav-link theme-toggle-btn" type="button" aria-label="تبديل المظهر" title="تبديل بين المظهر الفاتح والداكن">
-                        <i class="nav-link-icon fas fa-moon theme-icon" aria-hidden="true"></i>
-                        <span class="theme-text">المظهر الداكن</span>
-                    </button>
-                </li>
-            </ul>
+            <!-- Leave Management -->
+            <div class="nav-section">
+                <div class="nav-section-title">إدارة الإجازات</div>
+                <div class="nav-item">
+                    <a href="{% url 'leaves:dashboard' %}" class="nav-link {% if 'leaves' in request.resolver_match.app_name %}active{% endif %}">
+                        <i class="fas fa-calendar-times nav-icon"></i>
+                        <span class="nav-text">الإجازات</span>
+                        <span class="nav-badge">{{ pending_leaves|default:0 }}</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{% url 'leaves:types' %}" class="nav-link">
+                        <i class="fas fa-list nav-icon"></i>
+                        <span class="nav-text">أنواع الإجازات</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{% url 'leaves:balance' %}" class="nav-link">
+                        <i class="fas fa-chart-pie nav-icon"></i>
+                        <span class="nav-text">أرصدة الإجازات</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Payroll Management -->
+            <div class="nav-section">
+                <div class="nav-section-title">إدارة المرتبات</div>
+                <div class="nav-item">
+                    <a href="{% url 'payrolls:dashboard' %}" class="nav-link {% if 'payrolls' in request.resolver_match.app_name %}active{% endif %}">
+                        <i class="fas fa-money-bill-wave nav-icon"></i>
+                        <span class="nav-text">المرتبات</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{% url 'payrolls:salary_list' %}" class="nav-link">
+                        <i class="fas fa-coins nav-icon"></i>
+                        <span class="nav-text">هيكل المرتبات</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{% url 'payrolls:payroll_runs' %}" class="nav-link">
+                        <i class="fas fa-play-circle nav-icon"></i>
+                        <span class="nav-text">تشغيل المرتبات</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Financial Management -->
+            <div class="nav-section">
+                <div class="nav-section-title">الإدارة المالية</div>
+                <div class="nav-item">
+                    <a href="{% url 'loans:dashboard' %}" class="nav-link {% if 'loans' in request.resolver_match.app_name %}active{% endif %}">
+                        <i class="fas fa-hand-holding-usd nav-icon"></i>
+                        <span class="nav-text">القروض</span>
+                        <span class="nav-badge">{{ active_loans|default:0 }}</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{% url 'insurance:dashboard' %}" class="nav-link {% if 'insurance' in request.resolver_match.app_name %}active{% endif %}">
+                        <i class="fas fa-shield-alt nav-icon"></i>
+                        <span class="nav-text">التأمين</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{% url 'banks:list' %}" class="nav-link {% if 'banks' in request.resolver_match.app_name %}active{% endif %}">
+                        <i class="fas fa-university nav-icon"></i>
+                        <span class="nav-text">البنوك</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Performance & Development -->
+            <div class="nav-section">
+                <div class="nav-section-title">الأداء والتطوير</div>
+                <div class="nav-item">
+                    <a href="{% url 'evaluations:dashboard' %}" class="nav-link {% if 'evaluations' in request.resolver_match.app_name %}active{% endif %}">
+                        <i class="fas fa-star nav-icon"></i>
+                        <span class="nav-text">تقييم الأداء</span>
+                        <span class="nav-badge">{{ pending_evaluations|default:0 }}</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{% url 'training:dashboard' %}" class="nav-link {% if 'training' in request.resolver_match.app_name %}active{% endif %}">
+                        <i class="fas fa-graduation-cap nav-icon"></i>
+                        <span class="nav-text">التدريب</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Reports & Analytics -->
+            <div class="nav-section">
+                <div class="nav-section-title">التقارير والتحليلات</div>
+                <div class="nav-item">
+                    <a href="{% url 'reports:dashboard' %}" class="nav-link {% if 'reports' in request.resolver_match.app_name %}active{% endif %}">
+                        <i class="fas fa-chart-bar nav-icon"></i>
+                        <span class="nav-text">التقارير</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{% url 'reports:analytics' %}" class="nav-link">
+                        <i class="fas fa-chart-line nav-icon"></i>
+                        <span class="nav-text">التحليلات</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- System Settings -->
+            <div class="nav-section">
+                <div class="nav-section-title">الإعدادات</div>
+                <div class="nav-item">
+                    <a href="{% url 'admin:index' %}" class="nav-link">
+                        <i class="fas fa-cogs nav-icon"></i>
+                        <span class="nav-text">إدارة النظام</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{% url 'hr:settings' %}" class="nav-link">
+                        <i class="fas fa-sliders-h nav-icon"></i>
+                        <span class="nav-text">إعدادات HR</span>
+                    </a>
+                </div>
+            </div>
         </div>
     </nav>
 
-    <!-- Navigation Overlay for Mobile -->
-    <div class="navbar-overlay" aria-hidden="true"></div>
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <!-- Top Navbar -->
+        <nav class="top-navbar">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <button class="sidebar-toggle me-3" id="sidebarToggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <a href="{% url 'hr:dashboard' %}" class="navbar-brand">
+                        نظام الدولية للموارد البشرية
+                    </a>
+                </div>
 
-    <!-- Breadcrumb Navigation -->
-    {% block breadcrumb %}
-        {% if breadcrumb_items or page_title %}
-            {% include 'components/breadcrumb.html' %}
-        {% endif %}
-    {% endblock %}
+                <div class="user-menu">
+                    <!-- Notifications -->
+                    <div class="dropdown">
+                        <button class="btn btn-link position-relative" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-bell fa-lg text-muted"></i>
+                            {% if notifications_count > 0 %}
+                            <span class="notification-badge">{{ notifications_count }}</span>
+                            {% endif %}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><h6 class="dropdown-header">الإشعارات</h6></li>
+                            {% for notification in recent_notifications %}
+                            <li><a class="dropdown-item" href="{{ notification.url }}">{{ notification.message }}</a></li>
+                            {% empty %}
+                            <li><span class="dropdown-item text-muted">لا توجد إشعارات جديدة</span></li>
+                            {% endfor %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-center" href="{% url 'hr:notifications' %}">عرض الكل</a></li>
+                        </ul>
+                    </div>
 
-    <!-- Enhanced Messages -->
-    <div class="container-fluid">
-        {% if messages %}
-            <div class="row">
-                <div class="col-12">
-                    {% for message in messages %}
-                        <div class="alert alert-{% if message.tags == 'error' %}error{% elif message.tags == 'warning' %}warning{% elif message.tags == 'success' %}success{% else %}info{% endif %} alert-dismissible fade show" role="alert">
-                            <div class="alert-icon">
-                                {% if message.tags == 'error' %}
-                                    <i class="fas fa-exclamation-circle"></i>
-                                {% elif message.tags == 'warning' %}
-                                    <i class="fas fa-exclamation-triangle"></i>
-                                {% elif message.tags == 'success' %}
-                                    <i class="fas fa-check-circle"></i>
-                                {% else %}
-                                    <i class="fas fa-info-circle"></i>
-                                {% endif %}
-                            </div>
-                            <div class="alert-content">
-                                <div class="alert-title">
-                                    {% if message.tags == 'error' %}خطأ
-                                    {% elif message.tags == 'warning' %}تحذير
-                                    {% elif message.tags == 'success' %}نجح
-                                    {% else %}معلومات
-                                    {% endif %}
-                                </div>
-                                <div class="alert-message">{{ message }}</div>
-                            </div>
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="إغلاق"></button>
-                        </div>
-                    {% endfor %}
+                    <!-- User Dropdown -->
+                    <div class="dropdown">
+                        <button class="btn btn-link d-flex align-items-center" type="button" data-bs-toggle="dropdown">
+                            <img src="{{ user.profile.photo.url|default:'/static/img/default-avatar.png' }}" 
+                                 alt="{{ user.get_full_name }}" 
+                                 class="user-avatar me-2">
+                            <span class="fw-medium">{{ user.get_full_name|default:user.username }}</span>
+                            <i class="fas fa-chevron-down ms-2"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="{% url 'hr:profile' %}">
+                                <i class="fas fa-user me-2"></i>الملف الشخصي
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'hr:my_payslips' %}">
+                                <i class="fas fa-file-invoice me-2"></i>كشوف المرتبات
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'hr:my_leaves' %}">
+                                <i class="fas fa-calendar-alt me-2"></i>إجازاتي
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'hr:settings' %}">
+                                <i class="fas fa-cog me-2"></i>الإعدادات
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'logout' %}">
+                                <i class="fas fa-sign-out-alt me-2"></i>تسجيل الخروج
+                            </a></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
-        {% endif %}
-    </div>
+        </nav>
 
-    <!-- Main Content -->
-    <main class="main-content" role="main">
-        <div class="container-fluid">
-            {% block content %}
-            {% endblock %}
+        <!-- Breadcrumb -->
+        {% block breadcrumb %}
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-custom">
+                <li class="breadcrumb-item"><a href="{% url 'hr:dashboard' %}">الرئيسية</a></li>
+                {% block breadcrumb_items %}{% endblock %}
+            </ol>
+        </nav>
+        {% endblock %}
+
+        <!-- Content Wrapper -->
+        <div class="content-wrapper">
+            <!-- Messages -->
+            {% if messages %}
+            <div class="alert-container">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Main Content -->
+            {% block content %}{% endblock %}
         </div>
-    </main>
 
-    <!-- Modern Footer -->
-    <footer class="mt-8 py-6" style="background: linear-gradient(135deg, var(--secondary-800) 0%, var(--secondary-900) 100%); color: var(--white);">
-        <div class="container">
+        <!-- Footer -->
+        <footer class="footer">
             <div class="row">
                 <div class="col-md-6">
-                    <div class="d-flex align-items-center mb-3">
-                        <div class="sidebar-brand-icon me-3">
-                            <i class="fas fa-building"></i>
-                        </div>
-                        <div>
-                            <h5 class="mb-1 text-white">نظام الدولية إنترناشونال</h5>
-                            <p class="mb-0 text-sm opacity-75">حلول إدارية متكاملة</p>
-                        </div>
-                    </div>
-                    <p class="text-sm opacity-75">&copy; {{ "now"|date:"Y" }} نظام الدولية إنترناشونال للطباعة. جميع الحقوق محفوظة.</p>
+                    <p class="mb-0">&copy; {{ current_year }} نظام الدولية للموارد البشرية. جميع الحقوق محفوظة.</p>
                 </div>
                 <div class="col-md-6 text-md-end">
-                    <div class="mb-3">
-                        <a href="#" class="text-white text-decoration-none me-4 hover:text-primary-300">
-                            <i class="fas fa-shield-alt me-1"></i>سياسة الخصوصية
-                        </a>
-                        <a href="#" class="text-white text-decoration-none hover:text-primary-300">
-                            <i class="fas fa-file-contract me-1"></i>شروط الاستخدام
-                        </a>
-                    </div>
-                    <p class="text-sm opacity-75">
-                        مدعوم بواسطة <a href="https://www.eldawliya.com" class="text-primary-300 text-decoration-none font-medium">ElDawliya</a>
-                    </p>
+                    <p class="mb-0">الإصدار 1.0.0 | تطوير فريق الدولية</p>
                 </div>
             </div>
-        </div>
-    </footer>
+        </footer>
+    </main>
 
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <!-- Bootstrap Bundle with Popper -->
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Toastify JS -->
-    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-    <!-- Enhanced Navigation System -->
-    <script src="{% static 'js/navigation.js' %}"></script>
-    <!-- Component Library -->
-    <script src="{% static 'js/components.js' %}"></script>
-    <!-- Global Search System -->
-    <script src="{% static 'js/global-search.js' %}"></script>
-    <!-- ElDawliya Theme System -->
-    <script src="{% static 'js/theme-toggle.js' %}"></script>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+
     <!-- Custom JavaScript -->
     <script>
-        // Apply RTL specific JavaScript adjustments
-        document.addEventListener('DOMContentLoaded', function() {
-            // Set RTL for all elements that need it
-            document.querySelectorAll('.dropdown-menu').forEach(menu => {
-                menu.style.textAlign = 'right';
+        // Sidebar Toggle
+        document.getElementById('sidebarToggle').addEventListener('click', function() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('expanded');
+        });
+
+        // Mobile Sidebar Toggle
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('show');
+        }
+
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
             });
+        }, 5000);
 
-            // Adjust data tables for RTL if you're using them
-            if (typeof $.fn.DataTable !== 'undefined') {
-                $.extend(true, $.fn.DataTable.defaults, {
-                    language: {
-                        url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Arabic.json'
-                    }
-                });
-            }
+        // Loading overlay functions
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+        }
 
-            // Fix any RTL issues with third-party plugins
-            document.querySelectorAll('.fc-header-toolbar').forEach(toolbar => {
-                toolbar.style.direction = 'rtl';
-            });
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.add('hidden');
+        }
 
-            // Initialize tooltips with RTL support
-            const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
-            if (tooltipTriggerList.length > 0) {
-                tooltipTriggerList.forEach(tooltipTriggerEl => {
-                    new bootstrap.Tooltip(tooltipTriggerEl, {
-                        placement: 'auto',
-                        container: 'body'
-                    });
-                });
+        // AJAX Setup with CSRF
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", $('[name=csrfmiddlewaretoken]').val());
+                }
             }
         });
+
+        // Auto-refresh notifications every 5 minutes
+        setInterval(function() {
+            fetch('{% url "hr:notifications_count" %}')
+                .then(response => response.json())
+                .then(data => {
+                    const badge = document.querySelector('.notification-badge');
+                    if (data.count > 0) {
+                        if (badge) {
+                            badge.textContent = data.count;
+                        } else {
+                            // Create badge if it doesn't exist
+                            const bellIcon = document.querySelector('.fa-bell').parentElement;
+                            const newBadge = document.createElement('span');
+                            newBadge.className = 'notification-badge';
+                            newBadge.textContent = data.count;
+                            bellIcon.appendChild(newBadge);
+                        }
+                    } else if (badge) {
+                        badge.remove();
+                    }
+                })
+                .catch(error => console.log('Error fetching notifications:', error));
+        }, 300000); // 5 minutes
+
+        // Page loading handling
+        document.addEventListener('DOMContentLoaded', function() {
+            hideLoading();
+        });
+
+        // Form submission loading
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', function() {
+                showLoading();
+            });
+        });
+
+        // Link navigation loading
+        document.querySelectorAll('a[href]:not([href^="#"]):not([href^="javascript:"]):not([target="_blank"])').forEach(link => {
+            link.addEventListener('click', function() {
+                showLoading();
+            });
+        });
     </script>
+
     {% block extra_js %}{% endblock %}
 </body>
 </html>

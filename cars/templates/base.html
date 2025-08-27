@@ -114,12 +114,12 @@
                 </div>
                 <ul class="sidebar-menu">
                     <li class="sidebar-menu-item">
-                        <a href="{% url 'home' %}" class="nav-link {% if request.path == '/' %}active{% endif %}">
+                        <a href="{% url 'accounts:home' %}" class="nav-link {% if request.path == '/' %}active{% endif %}">
                             <i class="fas fa-home"></i> الرئيسية
                         </a>
                     </li>
                     <li class="sidebar-menu-item">
-                        <a href="{% url 'cars:home' %}" class="nav-link {% if request.path == '/cars/' %}active{% endif %}">
+                        <a href="{% url 'cars:dashboard' %}" class="nav-link {% if request.path == '/cars/' %}active{% endif %}">
                             <i class="fas fa-tachometer-alt"></i> لوحة التحكم
                         </a>
                     </li>
@@ -129,7 +129,7 @@
                         </a>
                     </li>
                     <li class="sidebar-menu-item">
-                        <a href="{% url 'cars:car_add' %}" class="nav-link {% if request.path == '/cars/add/' %}active{% endif %}">
+                        <a href="{% url 'cars:add_car' %}" class="nav-link {% if request.path == '/cars/add/' %}active{% endif %}">
                             <i class="fas fa-plus-circle"></i> إضافة سيارة
                         </a>
                     </li>
@@ -139,7 +139,7 @@
                         </a>
                     </li>
                     <li class="sidebar-menu-item">
-                        <a href="{% url 'cars:supplier_add' %}" class="nav-link {% if request.path == '/suppliers/add/' %}active{% endif %}">
+                        <a href="{% url 'cars:add_supplier' %}" class="nav-link {% if request.path == '/suppliers/add/' %}active{% endif %}">
                             <i class="fas fa-user-plus"></i> إضافة مورد
                         </a>
                     </li>
@@ -148,23 +148,14 @@
                             <i class="fas fa-route"></i> الرحلات
                         </a>
                     </li>
-                    <li class="sidebar-menu-item">
-                        <a href="{% url 'cars:employee_list' %}" class="nav-link {% if '/employees/' in request.path %}active{% endif %}">
-                            <i class="fas fa-id-card"></i> الموظفين
-                        </a>
-                    </li>
-                    <li class="sidebar-menu-item">
-                        <a href="{% url 'cars:average_price' %}" class="nav-link {% if request.path == '/average-price/' %}active{% endif %}">
-                            <i class="fas fa-calculator"></i> حساب متوسط السعر
-                        </a>
-                    </li>
+
                     <li class="sidebar-menu-item">
                         <a href="{% url 'cars:reports' %}" class="nav-link {% if request.path == '/reports/' %}active{% endif %}">
                             <i class="fas fa-chart-bar"></i> التقارير
                         </a>
                     </li>
                     <li class="sidebar-menu-item">
-                        <a href="{% url 'cars:settings_edit' %}" class="nav-link {% if request.path == '/settings/' %}active{% endif %}">
+                        <a href="{% url 'cars:settings' %}" class="nav-link {% if request.path == '/settings/' %}active{% endif %}">
                             <i class="fas fa-cog"></i> الإعدادات
                         </a>
                     </li>
@@ -176,14 +167,14 @@
                 <!-- Top Navbar -->
                 <nav class="navbar navbar-expand-lg navbar-light">
                     <div class="container-fluid">
-                        <a class="navbar-brand" href="{% url 'cars:home' %}">نظام إدارة نشاط النقل</a>
+                        <a class="navbar-brand" href="{% url 'cars:dashboard' %}">نظام إدارة نشاط النقل</a>
                         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                             <span class="navbar-toggler-icon"></span>
                         </button>
                         <div class="collapse navbar-collapse" id="navbarNav">
                             <ul class="navbar-nav ms-auto">
                                 <li class="nav-item">
-                                    <a class="nav-link" href="{% url 'home' %}">
+                                    <a class="nav-link" href="{% url 'accounts:home' %}">
                                         <i class="fas fa-home"></i> الرئيسية
                                     </a>
                                 </li>

@@ -1,215 +1,149 @@
-{% extends "attendance/base_attendance.html" %}
+{% extends 'base.html' %}
 {% load static %}
+{% load i18n %}
 
 {% block title %}لوحة تحكم الحضور والانصراف{% endblock %}
 
-{% block breadcrumb_items %}
-<li class="breadcrumb-item active">لوحة التحكم</li>
+{% block extra_css %}
+<link rel=\"stylesheet\" href=\"{% static 'attendance/css/dashboard.css' %}\">
+<link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css\">
+<link rel=\"stylesheet\" href=\"https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.css\">
 {% endblock %}
 
 {% block content %}
-<!-- Header -->
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0 text-gray-800">لوحة تحكم الحضور والانصراف</h1>
-    <div>
-        <a href="{% url 'attendance:mark_attendance' %}" class="btn btn-primary">
-            <i class="fas fa-fingerprint me-2"></i>تسجيل حضور/انصراف
-        </a>
+<div class=\"container-fluid\">
+    <!-- Page Header -->
+    <div class=\"row mb-4\">
+        <div class=\"col-12\">
+            <div class=\"d-flex justify-content-between align-items-center\">
+                <h1 class=\"h3 mb-0 text-gray-800\">
+                    <i class=\"fas fa-clock text-primary\"></i>
+                    لوحة تحكم الحضور والانصراف
+                </h1>
+                <div class=\"d-flex gap-2\">
+                    <span class=\"badge bg-info fs-6\">{{ now|date:\"Y-m-d\" }}</span>
+                    <span class=\"badge bg-success fs-6\">{{ now|date:\"H:i\" }}</span>
+                </div>
+            </div>
+        </div>
     </div>
-</div>
 
-<!-- Statistics Cards -->
-<div class="row mb-4">
-    <div class="col-md-6 col-lg-3 mb-4">
-        <div class="card bg-success text-white h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="mb-0">الحاضرون اليوم</h6>
-                        <h2 class="mt-2 mb-0">{{ today_stats.present|default:0 }}</h2>
-                        <small class="opacity-75">من إجمالي {{ total_employees|default:0 }} موظف</small>
-                    </div>
-                    <div class="icon-circle bg-white text-success">
-                        <i class="fas fa-user-check fa-2x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-6 col-lg-3 mb-4">
-        <div class="card bg-danger text-white h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="mb-0">الغائبون اليوم</h6>
-                        <h2 class="mt-2 mb-0">{{ today_stats.absent|default:0 }}</h2>
-                        <small class="opacity-75">{{ absence_percentage|default:0 }}% من الموظفين</small>
-                    </div>
-                    <div class="icon-circle bg-white text-danger">
-                        <i class="fas fa-user-times fa-2x"></i>
+    <!-- Quick Stats Cards -->
+    <div class=\"row mb-4\">
+        <!-- Today's Present -->
+        <div class=\"col-xl-3 col-md-6 mb-4\">
+            <div class=\"card border-left-success shadow h-100 py-2\">
+                <div class=\"card-body\">
+                    <div class=\"row no-gutters align-items-center\">
+                        <div class=\"col mr-2\">
+                            <div class=\"text-xs font-weight-bold text-success text-uppercase mb-1\">
+                                الحضور اليوم
+                            </div>
+                            <div class=\"h5 mb-0 font-weight-bold text-gray-800\">{{ today_stats.present }}</div>
+                        </div>
+                        <div class=\"col-auto\">
+                            <i class=\"fas fa-user-check fa-2x text-gray-300\"></i>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-    
-    <div class="col-md-6 col-lg-3 mb-4">
-        <div class="card bg-warning text-white h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="mb-0">متأخرون اليوم</h6>
-                        <h2 class="mt-2 mb-0">{{ today_stats.late|default:0 }}</h2>
-                        <small class="opacity-75">متوسط التأخير {{ avg_late_minutes|default:0 }} دقيقة</small>
-                    </div>
-                    <div class="icon-circle bg-white text-warning">
-                        <i class="fas fa-clock fa-2x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-6 col-lg-3 mb-4">
-        <div class="card bg-info text-white h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="mb-0">في إجازة اليوم</h6>
-                        <h2 class="mt-2 mb-0">{{ today_stats.leave|default:0 }}</h2>
-                        <small class="opacity-75">إجازات مخططة</small>
-                    </div>
-                    <div class="icon-circle bg-white text-info">
-                        <i class="fas fa-calendar-alt fa-2x"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- User's Today's Attendance -->
-{% if request.user.employee %}
-<div class="card shadow-sm mb-4">
-    <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
-        <h5 class="mb-0">
-            <i class="fas fa-user-clock me-2"></i>
-            حالة حضورك اليوم
-        </h5>
-        <a href="{% url 'attendance:mark_attendance' %}" class="btn btn-primary">
-            <i class="fas fa-fingerprint me-2"></i>
-            تسجيل حضور/انصراف
-        </a>
-    </div>
-    <div class="card-body">
-        <div class="row">
-            <div class="col-md-6">
-                {% if user_attendance %}
-                <div class="h5 mb-3">
-                    <span class="text-muted">آخر تسجيل:</span>
-                    {% if user_attendance.record_type == 'check_in' %}
-                    <span class="badge bg-success">تسجيل حضور</span>
-                    {% elif user_attendance.record_type == 'check_out' %}
-                    <span class="badge bg-info">تسجيل انصراف</span>
-                    {% endif %}
-                    <span class="text-primary">{{ user_attendance.time|time:"h:i a" }}</span>
-                </div>
-                {% if user_attendance.late_minutes > 0 %}
-                <div class="text-warning">
-                    <i class="fas fa-exclamation-triangle me-1"></i>
-                    تأخير {{ user_attendance.late_minutes }} دقيقة
-                </div>
-                {% endif %}
-                {% else %}
-                <div class="text-muted">
-                    <i class="fas fa-info-circle me-1"></i>
-                    لم يتم تسجيل حضور اليوم
-                </div>
-                {% endif %}
-            </div>
-            
-            {% if work_schedule %}
-            <div class="col-md-6">
-                <h6 class="text-muted mb-3">جدول العمل الخاص بك:</h6>
-                <div class="d-flex justify-content-between mb-2">
-                    <span>وقت الحضور:</span>
-                    <strong>{{ work_schedule.start_time|time:"h:i a" }}</strong>
-                </div>
-                <div class="d-flex justify-content-between">
-                    <span>وقت الانصراف:</span>
-                    <strong>{{ work_schedule.end_time|time:"h:i a" }}</strong>
-                </div>
-            </div>
-            {% endif %}
-        </div>
-    </div>
-</div>
-{% endif %}
-{% endblock %}
-<!-- Quick Actions -->
-<div class="row mb-4">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-bolt me-2"></i>الإجراءات السريعة
-                </h5>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3 mb-3">
-                        <a href="{% url 'attendance:mark_attendance' %}" class="btn btn-primary btn-lg w-100">
-                            <i class="fas fa-fingerprint fa-2x mb-2"></i>
-                            <br>تسجيل حضور/انصراف
-                        </a>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <a href="{% url 'attendance:record_list' %}" class="btn btn-info btn-lg w-100">
-                            <i class="fas fa-list fa-2x mb-2"></i>
-                            <br>سجلات الحضور
-                        </a>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <a href="{% url 'attendance:reports' %}" class="btn btn-success btn-lg w-100">
-                            <i class="fas fa-chart-bar fa-2x mb-2"></i>
-                            <br>التقارير
-                        </a>
-                    </div>
-                    <div class="col-md-3 mb-3">
-                        <a href="{% url 'attendance:rules_list' %}" class="btn btn-warning btn-lg w-100">
-                            <i class="fas fa-cogs fa-2x mb-2"></i>
-                            <br>إدارة القواعد
-                        </a>
+        <!-- Today's Absent -->
+        <div class=\"col-xl-3 col-md-6 mb-4\">
+            <div class=\"card border-left-danger shadow h-100 py-2\">
+                <div class=\"card-body\">
+                    <div class=\"row no-gutters align-items-center\">
+                        <div class=\"col mr-2\">
+                            <div class=\"text-xs font-weight-bold text-danger text-uppercase mb-1\">
+                                الغياب اليوم
+                            </div>
+                            <div class=\"h5 mb-0 font-weight-bold text-gray-800\">{{ today_stats.absent }}</div>
+                        </div>
+                        <div class=\"col-auto\">
+                            <i class=\"fas fa-user-times fa-2x text-gray-300\"></i>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
 
-<!-- Recent Activity and Charts -->
-<div class="row">
-    <!-- Recent Attendance Records -->
-    <div class="col-lg-8 mb-4">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">
-                    <i class="fas fa-clock me-2"></i>آخر تسجيلات الحضور
-                </h5>
-                <a href="{% url 'attendance:record_list' %}" class="btn btn-outline-primary btn-sm">
-                    عرض الكل
-                </a>
+        <!-- Today's Late -->
+        <div class=\"col-xl-3 col-md-6 mb-4\">
+            <div class=\"card border-left-warning shadow h-100 py-2\">
+                <div class=\"card-body\">
+                    <div class=\"row no-gutters align-items-center\">
+                        <div class=\"col mr-2\">
+                            <div class=\"text-xs font-weight-bold text-warning text-uppercase mb-1\">
+                                التأخير اليوم
+                            </div>
+                            <div class=\"h5 mb-0 font-weight-bold text-gray-800\">{{ today_stats.late }}</div>
+                        </div>
+                        <div class=\"col-auto\">
+                            <i class=\"fas fa-clock fa-2x text-gray-300\"></i>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                {% if recent_records %}
-                    <div class="table-responsive">
-                        <table class="table table-hover">
+        </div>
+
+        <!-- Total Employees -->
+        <div class=\"col-xl-3 col-md-6 mb-4\">
+            <div class=\"card border-left-info shadow h-100 py-2\">
+                <div class=\"card-body\">
+                    <div class=\"row no-gutters align-items-center\">
+                        <div class=\"col mr-2\">
+                            <div class=\"text-xs font-weight-bold text-info text-uppercase mb-1\">
+                                إجمالي الموظفين
+                            </div>
+                            <div class=\"h5 mb-0 font-weight-bold text-gray-800\">{{ total_employees }}</div>
+                        </div>
+                        <div class=\"col-auto\">
+                            <i class=\"fas fa-users fa-2x text-gray-300\"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Row -->
+    <div class=\"row\">
+        <!-- Left Column -->
+        <div class=\"col-lg-8\">
+            <!-- Weekly Attendance Chart -->
+            <div class=\"card shadow mb-4\">
+                <div class=\"card-header py-3\">
+                    <h6 class=\"m-0 font-weight-bold text-primary\">
+                        <i class=\"fas fa-chart-line\"></i>
+                        إحصائيات الحضور الأسبوعية
+                    </h6>
+                </div>
+                <div class=\"card-body\">
+                    <canvas id=\"weeklyAttendanceChart\" width=\"100\" height=\"40\"></canvas>
+                </div>
+            </div>
+
+            <!-- Recent Attendance Records -->
+            <div class=\"card shadow mb-4\">
+                <div class=\"card-header py-3 d-flex flex-row align-items-center justify-content-between\">
+                    <h6 class=\"m-0 font-weight-bold text-primary\">
+                        <i class=\"fas fa-list\"></i>
+                        آخر سجلات الحضور
+                    </h6>
+                    <a href=\"{% url 'attendance:record_list' %}\" class=\"btn btn-sm btn-primary\">
+                        <i class=\"fas fa-eye\"></i> عرض الكل
+                    </a>
+                </div>
+                <div class=\"card-body\">
+                    <div class=\"table-responsive\">
+                        <table class=\"table table-bordered\" width=\"100%\" cellspacing=\"0\">
                             <thead>
                                 <tr>
                                     <th>الموظف</th>
-                                    <th>النوع</th>
-                                    <th>الوقت</th>
+                                    <th>التاريخ</th>
+                                    <th>وقت الدخول</th>
+                                    <th>وقت الخروج</th>
                                     <th>الحالة</th>
                                 </tr>
                             </thead>
@@ -217,170 +151,267 @@
                                 {% for record in recent_records %}
                                 <tr>
                                     <td>
-                                        <div class="d-flex align-items-center">
-                                            <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2">
-                                                {{ record.employee.first_name|first }}{{ record.employee.last_name|first }}
+                                        <div class=\"d-flex align-items-center\">
+                                            <div class=\"avatar-sm me-2\">
+                                                <div class=\"avatar-title rounded-circle bg-primary text-white\">
+                                                    {{ record.emp.first_name|first }}{{ record.emp.last_name|first }}
+                                                </div>
                                             </div>
                                             <div>
-                                                <strong>{{ record.employee.first_name }} {{ record.employee.last_name }}</strong>
+                                                <strong>{{ record.emp.first_name }} {{ record.emp.last_name }}</strong>
                                                 <br>
-                                                <small class="text-muted">{{ record.employee.dept.dept_name|default:"غير محدد" }}</small>
+                                                <small class=\"text-muted\">{{ record.emp.emp_code }}</small>
                                             </div>
                                         </div>
                                     </td>
+                                    <td>{{ record.att_date|date:\"Y-m-d\" }}</td>
                                     <td>
-                                        {% if record.record_type == 'check_in' %}
-                                            <span class="badge bg-success">حضور</span>
-                                        {% elif record.record_type == 'check_out' %}
-                                            <span class="badge bg-info">انصراف</span>
+                                        {% if record.check_in %}
+                                            <span class=\"text-success\">
+                                                <i class=\"fas fa-sign-in-alt\"></i>
+                                                {{ record.check_in|date:\"H:i\" }}
+                                            </span>
+                                        {% else %}
+                                            <span class=\"text-muted\">-</span>
                                         {% endif %}
                                     </td>
-                                    <td>{{ record.time|time:"h:i A" }}</td>
                                     <td>
-                                        {% if record.is_late %}
-                                            <span class="badge bg-warning">متأخر</span>
-                                        {% elif record.is_early %}
-                                            <span class="badge bg-primary">مبكر</span>
+                                        {% if record.check_out %}
+                                            <span class=\"text-danger\">
+                                                <i class=\"fas fa-sign-out-alt\"></i>
+                                                {{ record.check_out|date:\"H:i\" }}
+                                            </span>
                                         {% else %}
-                                            <span class="badge bg-success">في الوقت</span>
+                                            <span class=\"text-muted\">-</span>
                                         {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if record.status == 'Present' %}
+                                            <span class=\"badge bg-success\">حاضر</span>
+                                        {% elif record.status == 'Absent' %}
+                                            <span class=\"badge bg-danger\">غائب</span>
+                                        {% elif record.status == 'Late' %}
+                                            <span class=\"badge bg-warning\">متأخر</span>
+                                        {% elif record.status == 'EarlyLeave' %}
+                                            <span class=\"badge bg-info\">مغادرة مبكرة</span>
+                                        {% elif record.status == 'Holiday' %}
+                                            <span class=\"badge bg-secondary\">عطلة</span>
+                                        {% elif record.status == 'Leave' %}
+                                            <span class=\"badge bg-primary\">إجازة</span>
+                                        {% else %}
+                                            <span class=\"badge bg-light text-dark\">{{ record.status }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan=\"5\" class=\"text-center text-muted py-4\">
+                                        <i class=\"fas fa-info-circle\"></i>
+                                        لا توجد سجلات حضور اليوم
                                     </td>
                                 </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
                     </div>
-                {% else %}
-                    <div class="text-center py-4">
-                        <i class="fas fa-clock fa-3x text-muted mb-3"></i>
-                        <h5 class="text-muted">لا توجد تسجيلات حديثة</h5>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class=\"col-lg-4\">
+            <!-- Quick Actions -->
+            <div class=\"card shadow mb-4\">
+                <div class=\"card-header py-3\">
+                    <h6 class=\"m-0 font-weight-bold text-primary\">
+                        <i class=\"fas fa-bolt\"></i>
+                        إجراءات سريعة
+                    </h6>
+                </div>
+                <div class=\"card-body\">
+                    <div class=\"d-grid gap-2\">
+                        <a href=\"{% url 'attendance:check_in' %}\" class=\"btn btn-success\">
+                            <i class=\"fas fa-sign-in-alt\"></i> تسجيل دخول
+                        </a>
+                        <a href=\"{% url 'attendance:check_out' %}\" class=\"btn btn-danger\">
+                            <i class=\"fas fa-sign-out-alt\"></i> تسجيل خروج
+                        </a>
+                        <a href=\"{% url 'attendance:add_record' %}\" class=\"btn btn-primary\">
+                            <i class=\"fas fa-plus\"></i> إضافة سجل حضور
+                        </a>
+                        <a href=\"{% url 'attendance:reports' %}\" class=\"btn btn-info\">
+                            <i class=\"fas fa-chart-bar\"></i> التقارير
+                        </a>
                     </div>
-                {% endif %}
+                </div>
+            </div>
+
+            <!-- User Attendance Status -->
+            {% if user_attendance %}
+            <div class=\"card shadow mb-4\">
+                <div class=\"card-header py-3\">
+                    <h6 class=\"m-0 font-weight-bold text-primary\">
+                        <i class=\"fas fa-user\"></i>
+                        حضورك اليوم
+                    </h6>
+                </div>
+                <div class=\"card-body\">
+                    <div class=\"text-center\">
+                        {% if user_attendance.status == 'Present' %}
+                            <div class=\"mb-3\">
+                                <i class=\"fas fa-check-circle fa-3x text-success\"></i>
+                            </div>
+                            <h5 class=\"text-success\">حاضر</h5>
+                        {% elif user_attendance.status == 'Late' %}
+                            <div class=\"mb-3\">
+                                <i class=\"fas fa-clock fa-3x text-warning\"></i>
+                            </div>
+                            <h5 class=\"text-warning\">متأخر</h5>
+                        {% else %}
+                            <div class=\"mb-3\">
+                                <i class=\"fas fa-times-circle fa-3x text-danger\"></i>
+                            </div>
+                            <h5 class=\"text-danger\">{{ user_attendance.get_status_display_arabic }}</h5>
+                        {% endif %}
+                        
+                        <div class=\"mt-3\">
+                            {% if user_attendance.check_in %}
+                                <p class=\"mb-1\">
+                                    <strong>وقت الدخول:</strong>
+                                    <span class=\"text-success\">{{ user_attendance.check_in|date:\"H:i\" }}</span>
+                                </p>
+                            {% endif %}
+                            {% if user_attendance.check_out %}
+                                <p class=\"mb-1\">
+                                    <strong>وقت الخروج:</strong>
+                                    <span class=\"text-danger\">{{ user_attendance.check_out|date:\"H:i\" }}</span>
+                                </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Work Schedule -->
+            {% if work_schedule %}
+            <div class=\"card shadow mb-4\">
+                <div class=\"card-header py-3\">
+                    <h6 class=\"m-0 font-weight-bold text-primary\">
+                        <i class=\"fas fa-calendar-alt\"></i>
+                        جدول العمل
+                    </h6>
+                </div>
+                <div class=\"card-body\">
+                    <div class=\"row text-center\">
+                        <div class=\"col-6\">
+                            <div class=\"border-end\">
+                                <i class=\"fas fa-sunrise text-warning\"></i>
+                                <h6 class=\"mt-2\">بداية العمل</h6>
+                                <h5 class=\"text-success\">{{ work_schedule.start_time }}</h5>
+                            </div>
+                        </div>
+                        <div class=\"col-6\">
+                            <i class=\"fas fa-sunset text-orange\"></i>
+                            <h6 class=\"mt-2\">نهاية العمل</h6>
+                            <h5 class=\"text-danger\">{{ work_schedule.end_time }}</h5>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Department Statistics -->
+            <div class=\"card shadow mb-4\">
+                <div class=\"card-header py-3\">
+                    <h6 class=\"m-0 font-weight-bold text-primary\">
+                        <i class=\"fas fa-building\"></i>
+                        إحصائيات الأقسام
+                    </h6>
+                </div>
+                <div class=\"card-body\">
+                    {% for dept in department_stats %}
+                    <div class=\"d-flex justify-content-between align-items-center mb-3\">
+                        <div>
+                            <h6 class=\"mb-0\">{{ dept.dept_name }}</h6>
+                            <small class=\"text-muted\">{{ dept.total_employees }} موظف</small>
+                        </div>
+                        <div class=\"text-end\">
+                            <span class=\"badge bg-success me-1\">{{ dept.present_count }}</span>
+                            <span class=\"badge bg-danger me-1\">{{ dept.absent_count }}</span>
+                            <span class=\"badge bg-warning\">{{ dept.late_count }}</span>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class=\"text-muted text-center\">لا توجد بيانات للأقسام</p>
+                    {% endfor %}
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Department Summary -->
-    <div class="col-lg-4 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-building me-2"></i>ملخص الأقسام
-                </h5>
-            </div>
-            <div class="card-body">
-                {% if department_stats %}
-                    {% for dept in department_stats %}
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div>
-                            <strong>{{ dept.dept_name }}</strong>
-                            <br>
-                            <small class="text-muted">{{ dept.total_employees }} موظف</small>
-                        </div>
-                        <div class="text-end">
-                            <div class="row text-center">
-                                <div class="col-4">
-                                    <div class="text-success fw-bold">{{ dept.present_count }}</div>
-                                    <small class="text-muted">حاضر</small>
-                                </div>
-                                <div class="col-4">
-                                    <div class="text-danger fw-bold">{{ dept.absent_count }}</div>
-                                    <small class="text-muted">غائب</small>
-                                </div>
-                                <div class="col-4">
-                                    <div class="text-warning fw-bold">{{ dept.late_count }}</div>
-                                    <small class="text-muted">متأخر</small>
-                                </div>
+    <!-- ZK Devices Status (Admin Only) -->
+    {% if user.is_superuser %}
+    <div class=\"row\">
+        <div class=\"col-12\">
+            <div class=\"card shadow mb-4\">
+                <div class=\"card-header py-3 d-flex flex-row align-items-center justify-content-between\">
+                    <h6 class=\"m-0 font-weight-bold text-primary\">
+                        <i class=\"fas fa-fingerprint\"></i>
+                        حالة أجهزة ZK
+                    </h6>
+                    <div>
+                        <a href=\"{% url 'attendance:zk_devices_list' %}\" class=\"btn btn-sm btn-outline-primary me-2\">
+                            <i class=\"fas fa-cog\"></i> إدارة الأجهزة
+                        </a>
+                        <button type=\"button\" class=\"btn btn-sm btn-success\" onclick=\"syncAllDevices()\">
+                            <i class=\"fas fa-sync\"></i> مزامنة الكل
+                        </button>
+                    </div>
+                </div>
+                <div class=\"card-body\">
+                    <div id=\"zkDevicesStatus\">
+                        <div class=\"text-center py-3\">
+                            <div class=\"spinner-border text-primary\" role=\"status\">
+                                <span class=\"visually-hidden\">جاري التحميل...</span>
                             </div>
                         </div>
                     </div>
-                    {% if not forloop.last %}<hr>{% endif %}
-                    {% endfor %}
-                {% else %}
-                    <div class="text-center py-4">
-                        <i class="fas fa-building fa-3x text-muted mb-3"></i>
-                        <h5 class="text-muted">لا توجد بيانات</h5>
-                    </div>
-                {% endif %}
+                </div>
             </div>
         </div>
     </div>
+    {% endif %}
 </div>
-
-<!-- Weekly Attendance Chart -->
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-chart-line me-2"></i>إحصائيات الحضور الأسبوعية
-                </h5>
-            </div>
-            <div class="card-body">
-                <canvas id="weeklyAttendanceChart" height="100"></canvas>
-            </div>
-        </div>
-    </div>
-</div>
-
-{% block extra_css %}
-<style>
-    .icon-circle {
-        width: 60px;
-        height: 60px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .avatar-sm {
-        width: 40px;
-        height: 40px;
-        font-size: 14px;
-        font-weight: 600;
-    }
-    .btn-lg {
-        padding: 1rem;
-        text-align: center;
-        min-height: 120px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-    }
-</style>
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src=\"https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js\"></script>
 <script>
 // Weekly Attendance Chart
 const ctx = document.getElementById('weeklyAttendanceChart').getContext('2d');
-const weeklyChart = new Chart(ctx, {
+const weeklyAttendanceChart = new Chart(ctx, {
     type: 'line',
     data: {
-        labels: ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'],
+        labels: ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'],
         datasets: [{
             label: 'حاضر',
-            data: {{ weekly_present_data|default:"[0,0,0,0,0,0,0]"|safe }},
-            borderColor: '#28a745',
-            backgroundColor: 'rgba(40, 167, 69, 0.1)',
-            tension: 0.4,
-            fill: true
+            data: {{ weekly_present_data|safe }},
+            borderColor: 'rgb(75, 192, 192)',
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            tension: 0.1
         }, {
             label: 'غائب',
-            data: {{ weekly_absent_data|default:"[0,0,0,0,0,0,0]"|safe }},
-            borderColor: '#dc3545',
-            backgroundColor: 'rgba(220, 53, 69, 0.1)',
-            tension: 0.4,
-            fill: true
+            data: {{ weekly_absent_data|safe }},
+            borderColor: 'rgb(255, 99, 132)',
+            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            tension: 0.1
         }, {
             label: 'متأخر',
-            data: {{ weekly_late_data|default:"[0,0,0,0,0,0,0]"|safe }},
-            borderColor: '#ffc107',
-            backgroundColor: 'rgba(255, 193, 7, 0.1)',
-            tension: 0.4,
-            fill: true
+            data: {{ weekly_late_data|safe }},
+            borderColor: 'rgb(255, 205, 86)',
+            backgroundColor: 'rgba(255, 205, 86, 0.2)',
+            tension: 0.1
         }]
     },
     options: {
@@ -388,6 +419,10 @@ const weeklyChart = new Chart(ctx, {
         plugins: {
             legend: {
                 position: 'top',
+            },
+            title: {
+                display: true,
+                text: 'إحصائيات الحضور الأسبوعية'
             }
         },
         scales: {
@@ -398,34 +433,80 @@ const weeklyChart = new Chart(ctx, {
     }
 });
 
-// Auto-refresh every 5 minutes
-setInterval(function() {
-    location.reload();
-}, 300000);
-
-// Real-time clock
-function updateClock() {
-    const now = new Date();
-    const timeString = now.toLocaleTimeString('ar-EG');
-    const dateString = now.toLocaleDateString('ar-EG', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-    });
-    
-    // Update if clock element exists
-    const clockElement = document.getElementById('live-clock');
-    if (clockElement) {
-        clockElement.innerHTML = `
-            <div class="h4 mb-0">${timeString}</div>
-            <small class="text-muted">${dateString}</small>
-        `;
+// Function to sync all ZK devices (Admin only)
+function syncAllDevices() {
+    if (confirm('هل تريد مزامنة جميع أجهزة ZK؟ قد تستغرق هذه العملية بعض الوقت.')) {
+        fetch('{% url \"attendance:zk_sync_all\" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('تم بدء عملية المزامنة بنجاح!');
+                location.reload();
+            } else {
+                alert('خطأ في عملية المزامنة: ' + (data.error || 'خطأ غير معروف'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('حدث خطأ في الاتصال');
+        });
     }
 }
 
-// Update clock every second
-setInterval(updateClock, 1000);
-updateClock(); // Initial call
+// Load ZK devices status (Admin only)
+{% if user.is_superuser %}
+function loadZKDevicesStatus() {
+    // This would load ZK devices status via AJAX
+    // Implementation depends on the specific ZK devices endpoint
+    document.getElementById('zkDevicesStatus').innerHTML = `
+        <div class=\"row\">
+            <div class=\"col-md-3\">
+                <div class=\"text-center\">
+                    <i class=\"fas fa-check-circle fa-2x text-success\"></i>
+                    <h6 class=\"mt-2\">جهاز المدخل الرئيسي</h6>
+                    <small class=\"text-success\">متصل</small>
+                </div>
+            </div>
+            <div class=\"col-md-3\">
+                <div class=\"text-center\">
+                    <i class=\"fas fa-times-circle fa-2x text-danger\"></i>
+                    <h6 class=\"mt-2\">جهاز المخرج</h6>
+                    <small class=\"text-danger\">غير متصل</small>
+                </div>
+            </div>
+            <div class=\"col-md-3\">
+                <div class=\"text-center\">
+                    <i class=\"fas fa-check-circle fa-2x text-success\"></i>
+                    <h6 class=\"mt-2\">جهاز القسم الإداري</h6>
+                    <small class=\"text-success\">متصل</small>
+                </div>
+            </div>
+            <div class=\"col-md-3\">
+                <div class=\"text-center\">
+                    <i class=\"fas fa-exclamation-triangle fa-2x text-warning\"></i>
+                    <h6 class=\"mt-2\">جهاز المصنع</h6>
+                    <small class=\"text-warning\">صيانة</small>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Load ZK devices status on page load
+document.addEventListener('DOMContentLoaded', function() {
+    loadZKDevicesStatus();
+});
+{% endif %}
+
+// Auto refresh page every 5 minutes
+setInterval(function() {
+    location.reload();
+}, 300000); // 5 minutes
 </script>
 {% endblock %}

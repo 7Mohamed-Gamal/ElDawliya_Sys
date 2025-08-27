@@ -2,7 +2,10 @@ from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Sum
+from django.utils import timezone
+from decimal import Decimal
+from datetime import datetime, time, date, timedelta
 # Use the new Employees app model
 from employees.models import Employee
 
@@ -384,3 +387,184 @@ class EmployeeAttendance(models.Model):
             from datetime import date
             if self.att_date > date.today():
                 raise ValidationError('لا يمكن تسجيل حضور لتاريخ مستقبلي')
+
+
+class ZKDevice(models.Model):
+    """نموذج أجهزة ZK للحضور والانصراف"""
+    DEVICE_STATUS_CHOICES = [
+        ('active', 'نشط'),
+        ('inactive', 'غير نشط'),
+        ('maintenance', 'صيانة'),
+    ]
+    
+    device_id = models.AutoField(primary_key=True, verbose_name='معرف الجهاز')
+    device_name = models.CharField(max_length=100, verbose_name='اسم الجهاز')
+    device_serial = models.CharField(max_length=50, unique=True, verbose_name='الرقم التسلسلي')
+    ip_address = models.GenericIPAddressField(verbose_name='عنوان IP')
+    port = models.PositiveIntegerField(default=4370, verbose_name='المنفذ')
+    location = models.CharField(max_length=200, blank=True, null=True, verbose_name='الموقع')
+    status = models.CharField(max_length=20, choices=DEVICE_STATUS_CHOICES, default='active', verbose_name='الحالة')
+    timezone = models.CharField(max_length=50, default='Asia/Riyadh', verbose_name='المنطقة الزمنية')
+    last_sync = models.DateTimeField(blank=True, null=True, verbose_name='آخر مزامنة')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')
+    
+    class Meta:
+        verbose_name = 'جهاز ZK'
+        verbose_name_plural = 'أجهزة ZK'
+        
+    def __str__(self):
+        return f'{self.device_name} ({self.ip_address})'
+    
+    def is_online(self):
+        """فحص حالة الاتصال بالجهاز"""
+        import socket
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            result = sock.connect_ex((self.ip_address, self.port))
+            sock.close()
+            return result == 0
+        except:
+            return False
+
+
+class ZKAttendanceRaw(models.Model):
+    """نموذج البيانات الخام من أجهزة ZK"""
+    PUNCH_TYPE_CHOICES = [
+        ('0', 'Check In'),
+        ('1', 'Check Out'),
+        ('2', 'Break Out'),
+        ('3', 'Break In'),
+        ('4', 'Overtime In'),
+        ('5', 'Overtime Out'),
+    ]
+    
+    raw_id = models.BigAutoField(primary_key=True, verbose_name='معرف السجل')
+    device = models.ForeignKey(ZKDevice, on_delete=models.CASCADE, verbose_name='الجهاز')
+    user_id = models.CharField(max_length=20, verbose_name='معرف المستخدم في الجهاز')
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, blank=True, null=True, verbose_name='الموظف')
+    timestamp = models.DateTimeField(verbose_name='الوقت والتاريخ')
+    punch_type = models.CharField(max_length=2, choices=PUNCH_TYPE_CHOICES, default='0', verbose_name='نوع البصمة')
+    verification_type = models.CharField(max_length=10, blank=True, null=True, verbose_name='نوع التحقق')
+    work_code = models.CharField(max_length=10, blank=True, null=True, verbose_name='كود العمل')
+    is_processed = models.BooleanField(default=False, verbose_name='تم المعالجة')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
+    
+    class Meta:
+        verbose_name = 'بيانات ZK خام'
+        verbose_name_plural = 'البيانات الخام من ZK'
+        unique_together = ['device', 'user_id', 'timestamp', 'punch_type']
+        ordering = ['-timestamp']
+        
+    def __str__(self):
+        emp_name = self.employee.emp_code if self.employee else self.user_id
+        return f'{emp_name} - {self.timestamp} ({self.get_punch_type_display()})'
+    
+    def get_punch_type_display_arabic(self):
+        """عرض نوع البصمة باللغة العربية"""
+        type_map = {
+            '0': 'دخول',
+            '1': 'خروج',
+            '2': 'خروج للاستراحة',
+            '3': 'عودة من الاستراحة',
+            '4': 'دخول وقت إضافي',
+            '5': 'خروج وقت إضافي',
+        }
+        return type_map.get(self.punch_type, 'غير محدد')
+
+
+class AttendanceProcessingLog(models.Model):
+    """نموذج سجل معالجة بيانات الحضور"""
+    STATUS_CHOICES = [
+        ('success', 'نجح'),
+        ('failed', 'فشل'),
+        ('partial', 'جزئي'),
+    ]
+    
+    log_id = models.BigAutoField(primary_key=True, verbose_name='معرف السجل')
+    device = models.ForeignKey(ZKDevice, on_delete=models.CASCADE, verbose_name='الجهاز')
+    process_date = models.DateField(verbose_name='تاريخ المعالجة')
+    records_fetched = models.PositiveIntegerField(default=0, verbose_name='السجلات المجلبة')
+    records_processed = models.PositiveIntegerField(default=0, verbose_name='السجلات المعالجة')
+    records_failed = models.PositiveIntegerField(default=0, verbose_name='السجلات الفاشلة')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, verbose_name='الحالة')
+    error_message = models.TextField(blank=True, null=True, verbose_name='رسالة الخطأ')
+    processing_time = models.DurationField(blank=True, null=True, verbose_name='وقت المعالجة')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
+    
+    class Meta:
+        verbose_name = 'سجل معالجة الحضور'
+        verbose_name_plural = 'سجلات معالجة الحضور'
+        ordering = ['-created_at']
+        
+    def __str__(self):
+        return f'{self.device.device_name} - {self.process_date} ({self.get_status_display()})'
+    
+    @property
+    def success_rate(self):
+        """حساب نسبة النجاح"""
+        if self.records_fetched > 0:
+            return (self.records_processed / self.records_fetched) * 100
+        return 0
+
+
+class EmployeeDeviceMapping(models.Model):
+    """نموذج ربط الموظفين بأجهزة ZK"""
+    mapping_id = models.AutoField(primary_key=True, verbose_name='معرف الربط')
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, verbose_name='الموظف')
+    device = models.ForeignKey(ZKDevice, on_delete=models.CASCADE, verbose_name='الجهاز')
+    device_user_id = models.CharField(max_length=20, verbose_name='معرف المستخدم في الجهاز')
+    is_active = models.BooleanField(default=True, verbose_name='نشط')
+    enrollment_date = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ التسجيل')
+    last_used = models.DateTimeField(blank=True, null=True, verbose_name='آخر استخدام')
+    
+    class Meta:
+        verbose_name = 'ربط موظف بجهاز'
+        verbose_name_plural = 'ربط الموظفين بالأجهزة'
+        unique_together = ['device', 'device_user_id']
+        
+    def __str__(self):
+        return f'{self.employee.emp_code} - {self.device.device_name} ({self.device_user_id})'
+
+
+class AttendanceSummary(models.Model):
+    """نموذج ملخص الحضور الشهري"""
+    summary_id = models.BigAutoField(primary_key=True, verbose_name='معرف الملخص')
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, verbose_name='الموظف')
+    year = models.PositiveIntegerField(verbose_name='السنة')
+    month = models.PositiveIntegerField(verbose_name='الشهر')
+    total_work_days = models.PositiveIntegerField(default=0, verbose_name='إجمالي أيام العمل')
+    present_days = models.PositiveIntegerField(default=0, verbose_name='أيام الحضور')
+    absent_days = models.PositiveIntegerField(default=0, verbose_name='أيام الغياب')
+    leave_days = models.DecimalField(max_digits=5, decimal_places=1, default=0, verbose_name='أيام الإجازة')
+    late_days = models.PositiveIntegerField(default=0, verbose_name='أيام التأخير')
+    early_leave_days = models.PositiveIntegerField(default=0, verbose_name='أيام المغادرة المبكرة')
+    total_work_hours = models.DecimalField(max_digits=8, decimal_places=2, default=0, verbose_name='إجمالي ساعات العمل')
+    overtime_hours = models.DecimalField(max_digits=8, decimal_places=2, default=0, verbose_name='ساعات إضافية')
+    late_minutes = models.PositiveIntegerField(default=0, verbose_name='إجمالي دقائق التأخير')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')
+    
+    class Meta:
+        verbose_name = 'ملخص حضور'
+        verbose_name_plural = 'ملخصات الحضور'
+        unique_together = ['employee', 'year', 'month']
+        ordering = ['-year', '-month', 'employee__emp_code']
+        
+    def __str__(self):
+        return f'{self.employee.emp_code} - {self.year}/{self.month:02d}'
+    
+    @property
+    def attendance_rate(self):
+        """حساب نسبة الحضور"""
+        if self.total_work_days > 0:
+            return (self.present_days / self.total_work_days) * 100
+        return 0
+    
+    @property
+    def punctuality_rate(self):
+        """حساب نسبة الالتزام بالوقت"""
+        if self.present_days > 0:
+            return ((self.present_days - self.late_days) / self.present_days) * 100
+        return 0

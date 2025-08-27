@@ -14,7 +14,7 @@ class EmployeeSalaryForm(forms.ModelForm):
     class Meta:
         model = EmployeeSalary
         fields = [
-            'emp', 'basic_salary', 'housing_allow', 'transport', 'other_allow',
+            'emp', 'basic_salary', 'housing_allow', 'transport_allow', 'other_allow',
             'gosi_deduction', 'tax_deduction', 'currency', 'effective_date',
             'end_date', 'is_current'
         ]
@@ -35,7 +35,7 @@ class EmployeeSalaryForm(forms.ModelForm):
                 'step': '0.01',
                 'min': '0'
             }),
-            'transport': forms.NumberInput(attrs={
+            'transport_allow': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'بدل النقل',
                 'step': '0.01',
@@ -83,7 +83,7 @@ class EmployeeSalaryForm(forms.ModelForm):
             'emp': 'الموظف',
             'basic_salary': 'الراتب الأساسي',
             'housing_allow': 'بدل السكن',
-            'transport': 'بدل النقل',
+            'transport_allow': 'بدل النقل',
             'other_allow': 'بدلات أخرى',
             'gosi_deduction': 'استقطاع GOSI',
             'tax_deduction': 'استقطاع الضريبة',
@@ -247,8 +247,8 @@ class PayrollDetailForm(forms.ModelForm):
     class Meta:
         model = PayrollDetail
         fields = [
-            'run', 'emp', 'basic_salary', 'housing', 'transport', 'overtime',
-            'gosi', 'tax', 'loan_deduction', 'net_salary', 'paid_date'
+            'run', 'emp', 'basic_salary', 'housing_allowance', 'transport_allowance', 'overtime_amount',
+            'gosi_deduction', 'tax_deduction', 'loan_deduction', 'net_salary', 'paid_date'
         ]
         
         widgets = {
@@ -263,27 +263,27 @@ class PayrollDetailForm(forms.ModelForm):
                 'step': '0.01',
                 'min': '0'
             }),
-            'housing': forms.NumberInput(attrs={
+            'housing_allowance': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
                 'min': '0'
             }),
-            'transport': forms.NumberInput(attrs={
+            'transport_allowance': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
                 'min': '0'
             }),
-            'overtime': forms.NumberInput(attrs={
+            'overtime_amount': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
                 'min': '0'
             }),
-            'gosi': forms.NumberInput(attrs={
+            'gosi_deduction': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
                 'min': '0'
             }),
-            'tax': forms.NumberInput(attrs={
+            'tax_deduction': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'step': '0.01',
                 'min': '0'
@@ -318,15 +318,15 @@ class PayrollDetailForm(forms.ModelForm):
         cleaned_data = super().clean()
         
         basic_salary = cleaned_data.get('basic_salary') or Decimal('0')
-        housing = cleaned_data.get('housing') or Decimal('0')
-        transport = cleaned_data.get('transport') or Decimal('0')
-        overtime = cleaned_data.get('overtime') or Decimal('0')
-        gosi = cleaned_data.get('gosi') or Decimal('0')
-        tax = cleaned_data.get('tax') or Decimal('0')
+        housing_allowance = cleaned_data.get('housing_allowance') or Decimal('0')
+        transport_allowance = cleaned_data.get('transport_allowance') or Decimal('0')
+        overtime_amount = cleaned_data.get('overtime_amount') or Decimal('0')
+        gosi_deduction = cleaned_data.get('gosi_deduction') or Decimal('0')
+        tax_deduction = cleaned_data.get('tax_deduction') or Decimal('0')
         loan_deduction = cleaned_data.get('loan_deduction') or Decimal('0')
         
         # حساب الراتب الصافي
-        net_salary = basic_salary + housing + transport + overtime - gosi - tax - loan_deduction
+        net_salary = basic_salary + housing_allowance + transport_allowance + overtime_amount - gosi_deduction - tax_deduction - loan_deduction
         cleaned_data['net_salary'] = net_salary
         
         return cleaned_data

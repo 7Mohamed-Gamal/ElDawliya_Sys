@@ -5,13 +5,24 @@ from django.core.paginator import Paginator
 from django.db.models import Q, Count, Sum, Avg
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
+from django.db import transaction
 from datetime import date, datetime, timedelta
 from decimal import Decimal
-from .models import EmployeeSalary, PayrollRun, PayrollDetail
+import json
+import logging
+
+from .models import (
+    EmployeeSalary, PayrollRun, PayrollDetail, 
+    PayrollBonus, PayrollDeduction, PayrollCalculationRule
+)
 from employees.models import Employee
 from org.models import Department
 from .forms import EmployeeSalaryForm, PayrollRunForm, PayrollDetailForm
+from .services import PayrollCalculationService, PayrollRunService, PayrollReportService
+
+logger = logging.getLogger(__name__)
 
 
 @login_required
@@ -831,8 +842,7 @@ def payroll_analytics(request):
     
     # اتجاهات التكلفة الشهرية
     monthly_costs = PayrollRun.objects.annotate(
-        total_cost=Sum('payrolldetail__net_salary'),
-        employee_count=Count('payrolldetail')
+        total_cost=Sum('payrolldetail__net_salary')
     ).order_by('-run_date')[:12]
     
     context = {
@@ -840,4 +850,335 @@ def payroll_analytics(request):
         'monthly_costs': monthly_costs,
     }
     
-    return render(request, 'payrolls/payroll_analytics.html', context)
+    return render(request, 'payrolls/analytics.html', context)
+
+
+# ==== Enhanced Payroll Processing Views Using Services ====
+
+@login_required
+def advanced_payroll_processing(request, run_id):
+    """معالجة متقدمة للرواتب باستخدام الخدمات"""
+    payroll_run = get_object_or_404(PayrollRun, run_id=run_id)
+    payroll_service = PayrollRunService()
+    
+    if request.method == 'POST':
+        try:
+            # فلتر الموظفين (اختياري)
+            employee_filter = {}
+            
+            department_id = request.POST.get('department_id')
+            if department_id:
+                employee_filter['dept_id'] = department_id
+            
+            employee_status = request.POST.get('employee_status')
+            if employee_status:
+                employee_filter['emp_status'] = employee_status
+            
+            # معالجة الرواتب
+            result = payroll_service.process_payroll_run(payroll_run, employee_filter)
+            
+            if result['success']:
+                messages.success(
+                    request, 
+                    f'تم معالجة {result["processed_employees"]} موظف من أصل {result["total_employees"]} بنجاح.'
+                )
+                
+                if result['errors']:
+                    for error in result['errors'][:5]:  # عرض أول 5 أخطاء فقط
+                        messages.warning(request, error)
+            
+        except Exception as e:
+            messages.error(request, f'حدث خطأ أثناء معالجة الرواتب: {str(e)}')
+            logger.error(f'Payroll processing error: {str(e)}')
+        
+        return redirect('payrolls:payroll_run_detail', run_id=run_id)
+    
+    # بيانات النموذج
+    departments = Department.objects.filter(is_active=True).order_by('dept_name')
+    
+    context = {
+        'payroll_run': payroll_run,
+        'departments': departments,
+    }
+    
+    return render(request, 'payrolls/advanced_processing.html', context)
+
+
+@login_required
+@require_http_methods(["POST"])
+def approve_payroll_run_view(request, run_id):
+    """اعتماد تشغيل الرواتب"""
+    payroll_run = get_object_or_404(PayrollRun, run_id=run_id)
+    payroll_service = PayrollRunService()
+    
+    try:
+        # الحصول على بيانات الموظف المعتمد
+        approved_by = None
+        if hasattr(request.user, 'employee'):
+            approved_by = request.user.employee
+        
+        payroll_service.approve_payroll_run(payroll_run, approved_by)
+        messages.success(request, f'تم اعتماد تشغيل الرواتب لشهر {payroll_run.month_year} بنجاح.')
+        
+    except Exception as e:
+        messages.error(request, f'حدث خطأ أثناء اعتماد تشغيل الرواتب: {str(e)}')
+        logger.error(f'Payroll approval error: {str(e)}')
+    
+    return redirect('payrolls:payroll_run_detail', run_id=run_id)
+
+
+@login_required
+@require_http_methods(["POST"])
+def mark_payroll_paid_view(request, run_id):
+    """تحديد تشغيل الرواتب كمدفوع"""
+    payroll_run = get_object_or_404(PayrollRun, run_id=run_id)
+    payroll_service = PayrollRunService()
+    
+    try:
+        # الحصول على بيانات الموظف المؤكد
+        confirmed_by = None
+        if hasattr(request.user, 'employee'):
+            confirmed_by = request.user.employee
+        
+        payroll_service.mark_payroll_as_paid(payroll_run, confirmed_by)
+        messages.success(request, f'تم تحديد تشغيل الرواتب لشهر {payroll_run.month_year} كمدفوع.')
+        
+    except Exception as e:
+        messages.error(request, f'حدث خطأ أثناء تحديد حالة الدفع: {str(e)}')
+        logger.error(f'Payroll payment marking error: {str(e)}')
+    
+    return redirect('payrolls:payroll_run_detail', run_id=run_id)
+
+
+@login_required
+@require_http_methods(["POST"])
+def cancel_payroll_run_view(request, run_id):
+    """إلغاء تشغيل الرواتب"""
+    payroll_run = get_object_or_404(PayrollRun, run_id=run_id)
+    payroll_service = PayrollRunService()
+    
+    try:
+        payroll_service.cancel_payroll_run(payroll_run)
+        messages.success(request, f'تم إلغاء تشغيل الرواتب لشهر {payroll_run.month_year} بنجاح.')
+        
+    except Exception as e:
+        messages.error(request, f'حدث خطأ أثناء إلغاء تشغيل الرواتب: {str(e)}')
+        logger.error(f'Payroll cancellation error: {str(e)}')
+    
+    return redirect('payrolls:payroll_runs')
+
+
+@login_required
+def create_advanced_payroll_run(request):
+    """إنشاء تشغيل رواتب متقدم"""
+    payroll_service = PayrollRunService()
+    
+    if request.method == 'POST':
+        try:
+            month_year = request.POST.get('month_year')
+            payroll_type = request.POST.get('payroll_type', 'monthly')
+            
+            # الحصول على بيانات الموظف المنشئ
+            created_by = None
+            if hasattr(request.user, 'employee'):
+                created_by = request.user.employee
+            
+            payroll_run = payroll_service.create_payroll_run(
+                month_year=month_year,
+                payroll_type=payroll_type,
+                created_by=created_by
+            )
+            
+            messages.success(
+                request, 
+                f'تم إنشاء تشغيل الرواتب لشهر {payroll_run.month_year} بنجاح.'
+            )
+            
+            return redirect('payrolls:payroll_run_detail', run_id=payroll_run.run_id)
+            
+        except ValueError as e:
+            messages.error(request, str(e))
+        except Exception as e:
+            messages.error(request, f'حدث خطأ أثناء إنشاء تشغيل الرواتب: {str(e)}')
+            logger.error(f'Payroll run creation error: {str(e)}')
+    
+    # تحديد الشهر الافتراضي
+    today = date.today()
+    default_month_year = today.strftime('%Y-%m')
+    
+    payroll_types = PayrollRun.PAYROLL_TYPES
+    
+    context = {
+        'default_month_year': default_month_year,
+        'payroll_types': payroll_types,
+        'title': 'إنشاء تشغيل رواتب جديد'
+    }
+    
+    return render(request, 'payrolls/create_advanced_payroll_run.html', context)
+
+
+@login_required
+def detailed_payslip_view(request, payslip_id):
+    """عرض كشف راتب مفصل"""
+    payroll_detail = get_object_or_404(PayrollDetail, payroll_detail_id=payslip_id)
+    report_service = PayrollReportService()
+    
+    # إنشاء كشف راتب مفصل
+    payslip_data = report_service.generate_employee_payslip(payroll_detail)
+    
+    context = {
+        'payroll_detail': payroll_detail,
+        'payslip_data': payslip_data,
+    }
+    
+    return render(request, 'payrolls/detailed_payslip.html', context)
+
+
+@login_required
+def payroll_summary_report(request, run_id):
+    """تقرير ملخص الرواتب"""
+    payroll_run = get_object_or_404(PayrollRun, run_id=run_id)
+    report_service = PayrollReportService()
+    
+    # إنشاء تقرير الملخص
+    summary_data = report_service.generate_payroll_summary_report(payroll_run)
+    
+    # تفاصيل إضافية
+    department_breakdown = PayrollDetail.objects.filter(
+        run=payroll_run
+    ).values(
+        'emp__dept__dept_name'
+    ).annotate(
+        employee_count=Count('payroll_detail_id'),
+        total_basic=Sum('basic_salary'),
+        total_allowances=Sum('total_allowances'),
+        total_deductions=Sum('total_deductions'),
+        total_net=Sum('net_salary')
+    ).order_by('-total_net')
+    
+    context = {
+        'payroll_run': payroll_run,
+        'summary_data': summary_data,
+        'department_breakdown': department_breakdown,
+    }
+    
+    return render(request, 'payrolls/payroll_summary_report.html', context)
+
+
+@login_required
+@csrf_exempt
+def recalculate_employee_payroll(request, run_id, emp_id):
+    """إعادة حساب راتب موظف محدد"""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    try:
+        payroll_run = get_object_or_404(PayrollRun, run_id=run_id)
+        employee = get_object_or_404(Employee, emp_id=emp_id)
+        
+        if payroll_run.status not in ['draft', 'calculating', 'review']:
+            return JsonResponse(
+                {'error': 'لا يمكن إعادة حساب الرواتب في هذه الحالة'}, 
+                status=400
+            )
+        
+        calculation_service = PayrollCalculationService()
+        
+        # إعادة حساب راتب الموظف
+        payroll_detail = calculation_service.calculate_employee_payroll(
+            employee, payroll_run
+        )
+        
+        if payroll_detail:
+            return JsonResponse({
+                'success': True,
+                'message': f'تم إعادة حساب راتب {employee.emp_full_name} بنجاح',
+                'net_salary': float(payroll_detail.net_salary),
+                'gross_salary': float(payroll_detail.gross_salary),
+                'total_deductions': float(payroll_detail.total_deductions)
+            })
+        else:
+            return JsonResponse(
+                {'error': 'فشل في إعادة حساب الراتب'}, 
+                status=400
+            )
+    
+    except Exception as e:
+        logger.error(f'Employee payroll recalculation error: {str(e)}')
+        return JsonResponse(
+            {'error': f'حدث خطأ أثناء إعادة الحساب: {str(e)}'}, 
+            status=500
+        )
+
+
+@login_required
+def payroll_processing_status(request, run_id):
+    """حالة معالجة الرواتب (AJAX)"""
+    try:
+        payroll_run = get_object_or_404(PayrollRun, run_id=run_id)
+        
+        # حساب نسبة الإنجاز
+        progress = payroll_run.processing_progress
+        
+        data = {
+            'status': payroll_run.status,
+            'progress': progress,
+            'processed_employees': payroll_run.processed_employees,
+            'total_employees': payroll_run.total_employees,
+            'total_net_amount': float(payroll_run.total_net_amount),
+            'is_complete': progress >= 100
+        }
+        
+        return JsonResponse(data)
+        
+    except PayrollRun.DoesNotExist:
+        return JsonResponse({'error': 'تشغيل الرواتب غير موجود'}, status=404)
+    except Exception as e:
+        logger.error(f'Payroll status check error: {str(e)}')
+        return JsonResponse({'error': 'حدث خطأ أثناء فحص الحالة'}, status=500)
+
+
+@login_required
+def employee_payroll_preview(request, run_id, emp_id):
+    """معاينة راتب موظف قبل المعالجة"""
+    try:
+        payroll_run = get_object_or_404(PayrollRun, run_id=run_id)
+        employee = get_object_or_404(Employee, emp_id=emp_id)
+        
+        calculation_service = PayrollCalculationService()
+        
+        # حساب معاينة للراتب
+        preview_detail = calculation_service.calculate_employee_payroll(
+            employee, payroll_run
+        )
+        
+        if preview_detail:
+            data = {
+                'employee_name': employee.emp_full_name,
+                'basic_salary': float(preview_detail.basic_salary),
+                'total_allowances': float(preview_detail.total_allowances),
+                'overtime_amount': float(preview_detail.overtime_amount),
+                'bonus_amount': float(preview_detail.bonus_amount),
+                'gross_salary': float(preview_detail.gross_salary),
+                'total_deductions': float(preview_detail.total_deductions),
+                'net_salary': float(preview_detail.net_salary),
+                'worked_days': float(preview_detail.worked_days),
+                'absent_days': float(preview_detail.absent_days),
+                'leave_days': float(preview_detail.leave_days),
+                'overtime_hours': float(preview_detail.overtime_hours),
+                'calculation_notes': preview_detail.calculation_notes
+            }
+            
+            return JsonResponse(data)
+        else:
+            return JsonResponse(
+                {'error': 'لا يمكن حساب راتب هذا الموظف'}, 
+                status=400
+            )
+    
+    except Exception as e:
+        logger.error(f'Employee payroll preview error: {str(e)}')
+        return JsonResponse(
+            {'error': f'حدث خطأ أثناء المعاينة: {str(e)}'}, 
+            status=500
+        )

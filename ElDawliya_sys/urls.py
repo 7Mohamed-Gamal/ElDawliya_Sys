@@ -33,6 +33,7 @@ urlpatterns = [
     path('meetings/', include('meetings.urls')),  # مسارات تطبيق الاجتماعات
     path('tasks/', include('tasks.urls')),  # مسارات تطبيق المهام
     # path('Hr/', include('Hr.urls')), # Disabled: legacy HR app removed
+    path('hr/', include('hr.urls')),  # مسارات نظام الموارد البشرية
     path('org/', include('org.urls')),
     path('employees/', include('employees.urls')),
 
@@ -49,6 +50,8 @@ urlpatterns = [
     path('leaves/', include('leaves.urls')),  # مسارات الإجازات
     path('evaluations/', include('evaluations.urls')),  # مسارات التقييمات
     path('payrolls/', include('payrolls.urls')),  # مسارات الرواتب
+    path('banks/', include('banks.urls')),  # مسارات البنوك
+    path('reports/', include('reports.urls')),  # مسارات التقارير
     path('insurance/', include('insurance.urls')),
     path('training/', include('training.urls')),
     path('disciplinary/', include('disciplinary.urls')),
