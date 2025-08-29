@@ -9,7 +9,7 @@ urlpatterns = [
     path('dashboard/', views.dashboard, name='main_dashboard'),
     
     # Attendance Records
-    path('records/', views.record_list, name='record_list'),
+    path('records/', views.AttendanceRecordListView.as_view(), name='record_list'),
     path('records/add/', views.add_record, name='add_record'),
     path('records/<int:record_id>/', views.record_detail, name='record_detail'),
     path('records/<int:record_id>/edit/', views.edit_record, name='edit_record'),

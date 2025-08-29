@@ -329,12 +329,7 @@ def dashboard(request):
     return attendance_dashboard(request)
 
 
-@login_required
-def record_list(request):
-    """قائمة سجلات الحضور"""
-    view = AttendanceRecordListView()
-    view.request = request
-    return view.get(request)
+# Function wrapper removed - now using AttendanceRecordListView.as_view() directly in URLs
 
 
 @login_required

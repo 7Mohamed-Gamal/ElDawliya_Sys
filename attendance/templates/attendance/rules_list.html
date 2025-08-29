@@ -91,7 +91,7 @@
         <p class="text-muted mb-0">إدارة أوقات العمل وقواعد الحضور للموظفين</p>
     </div>
     <div>
-        <a href="{% url 'attendance:rules_create' %}" class="btn btn-primary">
+        <a href="{% url 'attendance:add_rule' %}" class="btn btn-primary">
             <i class="fas fa-plus me-2"></i>إضافة قاعدة جديدة
         </a>
     </div>
@@ -266,7 +266,7 @@
                         {% endif %}
                     </div>
                     <div class="btn-group" role="group">
-                        <a href="{% url 'attendance:rules_edit' rule.pk %}" 
+                        <a href="{% url 'attendance:update_rule' rule.pk %}"
                            class="btn btn-sm btn-outline-primary" title="تعديل">
                             <i class="fas fa-edit"></i>
                         </a>
@@ -279,7 +279,7 @@
                                 onclick="setAsDefault({{ rule.pk }})" title="تعيين كافتراضي">
                             <i class="fas fa-star"></i>
                         </button>
-                        <a href="{% url 'attendance:rules_delete' rule.pk %}" 
+                        <a href="{% url 'attendance:delete_rule' rule.pk %}"
                            class="btn btn-sm btn-outline-danger" 
                            onclick="return confirm('هل أنت متأكد من حذف هذه القاعدة؟')" title="حذف">
                             <i class="fas fa-trash"></i>
@@ -297,7 +297,7 @@
                 <i class="fas fa-cogs fa-4x text-muted mb-3"></i>
                 <h4 class="text-muted">لا توجد قواعد حضور</h4>
                 <p class="text-muted mb-4">ابدأ بإنشاء قاعدة حضور جديدة لتنظيم أوقات العمل</p>
-                <a href="{% url 'attendance:rules_create' %}" class="btn btn-primary">
+                <a href="{% url 'attendance:add_rule' %}" class="btn btn-primary">
                     <i class="fas fa-plus me-2"></i>إنشاء قاعدة جديدة
                 </a>
             </div>

@@ -157,7 +157,7 @@
                             <td>
                                 <span class=\"badge bg-light text-dark\">{{ device.ip_address }}:{{ device.port }}</span>
                             </td>
-                            <td>{{ device.location|default:\"-\" }}</td>
+                            <td>{{ device.location|default:"-" }}</td>
                             <td>
                                 {% if device.status == 'active' %}
                                     <span class=\"badge bg-success\">نشط</span>
@@ -178,7 +178,7 @@
                             </td>
                             <td id=\"last-sync-{{ device.device_id }}\">
                                 {% if device.last_sync %}
-                                    <small>{{ device.last_sync|date:\"Y-m-d H:i\" }}</small>
+                                    <small>{{ device.last_sync|date:"Y-m-d H:i" }}</small>
                                 {% else %}
                                     <span class=\"text-muted\">لم يتم</span>
                                 {% endif %}
@@ -200,11 +200,11 @@
                                             title=\"مزامنة البيانات\">
                                         <i class=\"fas fa-sync\"></i>
                                     </button>
-                                    <a href=\"{% url 'attendance:zk_device_info' device.device_id %}\" 
+                                    <a href=\"{% url 'attendance:zk_device_info' device.device_id %}\"
                                        class=\"btn btn-sm btn-outline-info\" title=\"معلومات الجهاز\">
                                         <i class=\"fas fa-info\"></i>
                                     </a>
-                                    <a href=\"{% url 'attendance:zk_device_edit' device.device_id %}\" 
+                                    <a href=\"{% url 'attendance:zk_device_edit' device.device_id %}\"
                                        class=\"btn btn-sm btn-outline-warning\" title=\"تعديل\">
                                         <i class=\"fas fa-edit\"></i>
                                     </a>
@@ -490,7 +490,7 @@ function syncAllDevices() {
         syncModal.show();
         document.getElementById('syncMessage').textContent = 'جاري مزامنة جميع الأجهزة...';
         
-        fetch('{% url \"attendance:zk_sync_all\" %}', {
+        fetch('{% url "attendance:zk_sync_all" %}', {
             method: 'POST',
             headers: {
                 'X-CSRFToken': '{{ csrf_token }}',
