@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}الوظائف - نظام الدولية{% endblock %}
+
+{% block extra_css %}
+<style>
+.jobs-header {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 30px rgba(245, 158, 11, 0.2);
+}
+
+.job-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    border: 1px solid #e5e7eb;
+}
+
+.job-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.job-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+}
+
+.salary-badge {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 500;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Jobs Header -->
+        <div class="jobs-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="h2 mb-2">
+                        <i class="fas fa-briefcase me-3"></i>
+                        الوظائف
+                    </h1>
+                    <p class="mb-0 opacity-90">
+                        إدارة الوظائف والمناصب في الشركة
+                    </p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <a href="#" class="btn btn-light btn-lg">
+                        <i class="fas fa-plus me-2"></i>
+                        إضافة وظيفة جديدة
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <form method="get" class="d-flex">
+            <input type="text" name="search" class="form-control me-2" 
+                   placeholder="البحث في الوظائف..." value="{{ search }}">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-search"></i>
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Jobs List -->
+<div class="row">
+    {% for job in jobs %}
+    <div class="col-xl-4 col-md-6">
+        <div class="job-card">
+            <div class="job-icon">
+                <i class="fas fa-briefcase"></i>
+            </div>
+            <h5 class="mb-2">{{ job.job_title }}</h5>
+            
+            {% if job.description %}
+            <p class="text-muted mb-3">{{ job.description|truncatewords:15 }}</p>
+            {% endif %}
+            
+            <div class="mb-3">
+                {% if job.basic_salary %}
+                <div class="salary-badge">
+                    <i class="fas fa-money-bill-wave me-1"></i>
+                    {{ job.basic_salary|floatformat:0 }} ريال
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="row text-center mb-3">
+                <div class="col-6">
+                    <div class="fw-bold text-primary">{{ job.job_level|default:"غير محدد" }}</div>
+                    <small class="text-muted">المستوى</small>
+                </div>
+                <div class="col-6">
+                    <div class="fw-bold text-success">{{ job.employee_set.count|default:0 }}</div>
+                    <small class="text-muted">موظف</small>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="badge bg-{{ job.is_active|yesno:'success,secondary' }}">
+                        {{ job.is_active|yesno:'نشط,غير نشط' }}
+                    </span>
+                </div>
+                <div>
+                    <a href="{% url 'org:job_detail' job.job_id %}" 
+                       class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-eye me-1"></i>
+                        عرض التفاصيل
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="text-center py-5">
+            <i class="fas fa-briefcase fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">لا توجد وظائف</h4>
+            {% if search %}
+            <p class="text-muted">لم يتم العثور على وظائف تطابق البحث "{{ search }}"</p>
+            <a href="{% url 'org:jobs' %}" class="btn btn-primary">عرض جميع الوظائف</a>
+            {% else %}
+            <p class="text-muted">لم يتم إضافة أي وظائف بعد</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if jobs.has_other_pages %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if jobs.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if search %}&search={{ search }}{% endif %}">الأولى</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ jobs.previous_page_number }}{% if search %}&search={{ search }}{% endif %}">السابقة</a>
+                    </li>
+                {% endif %}
+
+                <li class="page-item active">
+                    <span class="page-link">{{ jobs.number }} من {{ jobs.paginator.num_pages }}</span>
+                </li>
+
+                {% if jobs.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ jobs.next_page_number }}{% if search %}&search={{ search }}{% endif %}">التالية</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ jobs.paginator.num_pages }}{% if search %}&search={{ search }}{% endif %}">الأخيرة</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

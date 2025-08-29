@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}الأقسام - نظام الدولية{% endblock %}
+
+{% block extra_css %}
+<style>
+.departments-header {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 30px rgba(139, 92, 246, 0.2);
+}
+
+.department-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    border: 1px solid #e5e7eb;
+}
+
+.department-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.department-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    color: white;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Departments Header -->
+        <div class="departments-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="h2 mb-2">
+                        <i class="fas fa-building me-3"></i>
+                        الأقسام
+                    </h1>
+                    <p class="mb-0 opacity-90">
+                        إدارة أقسام الشركة والهيكل التنظيمي
+                    </p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <a href="#" class="btn btn-light btn-lg">
+                        <i class="fas fa-plus me-2"></i>
+                        إضافة قسم جديد
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <form method="get" class="d-flex">
+            <input type="text" name="search" class="form-control me-2" 
+                   placeholder="البحث في الأقسام..." value="{{ search }}">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-search"></i>
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Departments List -->
+<div class="row">
+    {% for department in departments %}
+    <div class="col-xl-4 col-md-6">
+        <div class="department-card">
+            <div class="department-icon">
+                <i class="fas fa-building"></i>
+            </div>
+            <h5 class="mb-2">{{ department.dept_name }}</h5>
+            <p class="text-muted mb-3">
+                <i class="fas fa-map-marker-alt me-1"></i>
+                {{ department.branch.branch_name }}
+            </p>
+            
+            {% if department.parent_dept %}
+            <p class="text-muted mb-3">
+                <i class="fas fa-sitemap me-1"></i>
+                تابع لـ: {{ department.parent_dept.dept_name }}
+            </p>
+            {% endif %}
+            
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <small class="text-muted">عدد الموظفين:</small>
+                    <div class="fw-bold">{{ department.employee_set.count|default:0 }}</div>
+                </div>
+                <div>
+                    <a href="{% url 'org:department_detail' department.dept_id %}" 
+                       class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-eye me-1"></i>
+                        عرض التفاصيل
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="text-center py-5">
+            <i class="fas fa-building fa-3x text-muted mb-3"></i>
+            <h4 class="text-muted">لا توجد أقسام</h4>
+            {% if search %}
+            <p class="text-muted">لم يتم العثور على أقسام تطابق البحث "{{ search }}"</p>
+            <a href="{% url 'org:departments' %}" class="btn btn-primary">عرض جميع الأقسام</a>
+            {% else %}
+            <p class="text-muted">لم يتم إضافة أي أقسام بعد</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Pagination -->
+{% if departments.has_other_pages %}
+<div class="row">
+    <div class="col-12">
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if departments.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1{% if search %}&search={{ search }}{% endif %}">الأولى</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ departments.previous_page_number }}{% if search %}&search={{ search }}{% endif %}">السابقة</a>
+                    </li>
+                {% endif %}
+
+                <li class="page-item active">
+                    <span class="page-link">{{ departments.number }} من {{ departments.paginator.num_pages }}</span>
+                </li>
+
+                {% if departments.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ departments.next_page_number }}{% if search %}&search={{ search }}{% endif %}">التالية</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ departments.paginator.num_pages }}{% if search %}&search={{ search }}{% endif %}">الأخيرة</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

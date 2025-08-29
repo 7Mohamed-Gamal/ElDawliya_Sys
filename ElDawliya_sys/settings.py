@@ -78,6 +78,7 @@ INSTALLED_APPS = [
     'tickets.apps.TicketsConfig',
     'workflow.apps.WorkflowConfig',
     'syssettings.apps.SyssettingsConfig',
+    'reports.apps.ReportsConfig',  # Reports and analytics system
     'rbac.apps.RbacConfig',
 ]
 

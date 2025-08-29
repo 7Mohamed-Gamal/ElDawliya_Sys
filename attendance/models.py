@@ -257,8 +257,64 @@ class AttendanceRecord(models.Model):
         """Calculate total work duration in minutes"""
         if self.check_in and self.check_out:
             total_minutes = (self.check_out - self.check_in).total_seconds() / 60
-            return total_minutes - self.break_minutes
+            return max(0, total_minutes - self.break_minutes)
         return 0
+
+    @property
+    def work_hours(self):
+        """Get work duration in hours"""
+        return self.calculate_work_duration() / 60
+
+    @property
+    def is_late(self):
+        """Check if employee was late"""
+        return self.late_minutes > 0
+
+    @property
+    def is_early_leave(self):
+        """Check if employee left early"""
+        return self.early_leave_minutes > 0
+
+    @property
+    def has_overtime(self):
+        """Check if employee worked overtime"""
+        return self.overtime_minutes > 0
+
+    def calculate_attendance_metrics(self):
+        """Calculate comprehensive attendance metrics"""
+        profile = getattr(self.employee, 'attendance_profile', None)
+        if not profile:
+            return {}
+
+        expected_hours = float(profile.work_hours_per_day)
+        actual_hours = self.work_hours
+
+        return {
+            'expected_hours': expected_hours,
+            'actual_hours': actual_hours,
+            'efficiency_rate': (actual_hours / expected_hours * 100) if expected_hours > 0 else 0,
+            'late_minutes': self.late_minutes,
+            'early_leave_minutes': self.early_leave_minutes,
+            'overtime_minutes': self.overtime_minutes,
+            'net_work_minutes': self.calculate_work_duration()
+        }
+
+    def clean(self):
+        """Validate attendance record"""
+        from django.core.exceptions import ValidationError
+
+        if self.check_in and self.check_out:
+            if self.check_in >= self.check_out:
+                raise ValidationError('وقت الدخول يجب أن يكون قبل وقت الخروج')
+
+        if self.late_minutes < 0:
+            raise ValidationError('دقائق التأخير لا يمكن أن تكون سالبة')
+
+        if self.early_leave_minutes < 0:
+            raise ValidationError('دقائق المغادرة المبكرة لا يمكن أن تكون سالبة')
+
+        if self.overtime_minutes < 0:
+            raise ValidationError('دقائق الوقت الإضافي لا يمكن أن تكون سالبة')
 
 
 # Schema-specific models to match provided SQL tables

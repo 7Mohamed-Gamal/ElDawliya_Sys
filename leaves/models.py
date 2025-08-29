@@ -242,7 +242,29 @@ class LeaveBalance(models.Model):
     @property
     def remaining_days(self):
         """حساب الأيام المتبقية"""
-        return self.allocated_days + self.carried_forward - self.used_days
+        return max(Decimal('0'), self.allocated_days + self.carried_forward - self.used_days)
+
+    def can_take_leave(self, days_requested):
+        """التحقق من إمكانية أخذ الإجازة المطلوبة"""
+        return self.remaining_days >= Decimal(str(days_requested))
+
+    def use_leave_days(self, days_used):
+        """استخدام أيام الإجازة وتحديث الرصيد"""
+        if self.can_take_leave(days_used):
+            self.used_days += Decimal(str(days_used))
+            self.save()
+            return True
+        return False
+
+    def restore_leave_days(self, days_to_restore):
+        """استرداد أيام الإجازة (عند إلغاء الإجازة)"""
+        self.used_days = max(Decimal('0'), self.used_days - Decimal(str(days_to_restore)))
+        self.save()
+
+    def calculate_carry_forward_eligible(self, max_carry_forward_percentage=30):
+        """حساب الأيام المؤهلة للترحيل للسنة القادمة"""
+        max_carry_forward = (self.allocated_days * Decimal(str(max_carry_forward_percentage))) / Decimal('100')
+        return min(self.remaining_days, max_carry_forward)
 
     @property
     def utilization_percentage(self):

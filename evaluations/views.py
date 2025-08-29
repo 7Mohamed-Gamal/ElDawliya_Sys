@@ -7,10 +7,13 @@ from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 from datetime import date, datetime, timedelta
+import logging
 from .models import EvaluationPeriod, EmployeeEvaluation
 from employees.models import Employee
 from org.models import Department
 from .forms import EvaluationPeriodForm, EmployeeEvaluationForm
+
+logger = logging.getLogger(__name__)
 
 
 @login_required
@@ -25,10 +28,14 @@ def dashboard(request):
     pending_evaluations = EmployeeEvaluation.objects.filter(score__isnull=True).count()
     
     # الفترة النشطة الحالية
-    active_period = EvaluationPeriod.objects.filter(
-        start_date__lte=today,
-        end_date__gte=today
-    ).first()
+    try:
+        active_period = EvaluationPeriod.objects.filter(
+            start_date__lte=today,
+            end_date__gte=today
+        ).first()
+    except Exception as e:
+        logger.error(f"Error fetching active evaluation period: {str(e)}")
+        active_period = None
     
     # إحصائيات الفترة النشطة
     active_period_stats = None
@@ -50,8 +57,8 @@ def dashboard(request):
     
     # إحصائيات الأقسام
     department_stats = Department.objects.annotate(
-        evaluation_count=Count('employee__employeeevaluation'),
-        avg_score=Avg('employee__employeeevaluation__score')
+        evaluation_count=Count('employee__evaluations'),
+        avg_score=Avg('employee__evaluations__score')
     ).filter(evaluation_count__gt=0).order_by('-avg_score')[:5]
     
     # توزيع الدرجات
@@ -270,9 +277,9 @@ def print_evaluation(request, eval_id):
 def periods(request):
     """قائمة فترات التقييم"""
     periods = EvaluationPeriod.objects.annotate(
-        evaluation_count=Count('employeeevaluation'),
-        completed_count=Count('employeeevaluation', filter=Q(employeeevaluation__score__isnull=False)),
-        avg_score=Avg('employeeevaluation__score')
+        evaluation_count=Count('evaluations'),
+        completed_count=Count('evaluations', filter=Q(evaluations__score__isnull=False)),
+        avg_score=Avg('evaluations__score')
     ).order_by('-start_date')
     
     context = {
@@ -414,10 +421,10 @@ def reports(request):
     
     # إحصائيات الأقسام
     department_stats = Department.objects.annotate(
-        evaluation_count=Count('employee__employeeevaluation'),
-        completed_count=Count('employee__employeeevaluation', 
-                            filter=Q(employee__employeeevaluation__score__isnull=False)),
-        avg_score=Avg('employee__employeeevaluation__score')
+        evaluation_count=Count('employee__evaluations'),
+        completed_count=Count('employee__evaluations',
+                            filter=Q(employee__evaluations__score__isnull=False)),
+        avg_score=Avg('employee__evaluations__score')
     ).filter(evaluation_count__gt=0).order_by('-avg_score')
     
     # أفضل الموظفين
@@ -459,15 +466,14 @@ def export_evaluations(request):
     writer = csv.writer(response)
     writer.writerow(['الموظف', 'الفترة', 'الدرجة', 'تاريخ التقييم', 'المقيم', 'الملاحظات'])
     
-    evaluations = EmployeeEvaluation.objects.select_related('employee', 'period', 'manager').all()
+    evaluations = EmployeeEvaluation.objects.select_related('emp', 'period').all()
     for evaluation in evaluations:
-        manager_name = f"{evaluation.manager.first_name} {evaluation.manager.last_name}" if evaluation.manager else 'غير محدد'
         writer.writerow([
-            f"{evaluation.employee.first_name} {evaluation.employee.last_name}",
+            evaluation.emp.get_full_name(),
             evaluation.period.period_name,
             evaluation.score or 'غير مكتمل',
             evaluation.eval_date or 'غير محدد',
-            manager_name,
+            'غير محدد',  # Manager info not available in current model
             evaluation.notes or ''
         ])
     
@@ -482,18 +488,18 @@ def performance_comparison(request):
     # أفضل الموظفين
     top_employees = EmployeeEvaluation.objects.filter(
         score__isnull=False
-    ).select_related('employee').order_by('-score')[:10]
-    
+    ).select_related('emp').order_by('-score')[:10]
+
     # مقارنة الأقسام
     department_comparison = Department.objects.annotate(
-        avg_score=Avg('employee__employeeevaluation__score'),
-        evaluation_count=Count('employee__employeeevaluation')
+        avg_score=Avg('employee__evaluations__score'),
+        evaluation_count=Count('employee__evaluations')
     ).filter(evaluation_count__gt=0).order_by('-avg_score')
-    
+
     # مقارنة الفترات
     period_comparison = EvaluationPeriod.objects.annotate(
-        avg_score=Avg('employeeevaluation__score'),
-        evaluation_count=Count('employeeevaluation')
+        avg_score=Avg('evaluations__score'),
+        evaluation_count=Count('evaluations')
     ).filter(evaluation_count__gt=0).order_by('-start_date')
     
     context = {
@@ -517,7 +523,7 @@ def my_evaluations(request):
     
     # تقييمات الموظف
     my_evaluations = EmployeeEvaluation.objects.filter(
-        employee=employee
+        emp=employee
     ).select_related('period').order_by('-eval_date')
     
     # إحصائيات شخصية
@@ -548,16 +554,16 @@ def my_performance(request):
     
     # تطور الأداء عبر الوقت
     performance_trend = EmployeeEvaluation.objects.filter(
-        employee=employee,
+        emp=employee,
         score__isnull=False
     ).order_by('eval_date')
-    
+
     # مقارنة مع متوسط القسم
     department_avg = EmployeeEvaluation.objects.filter(
-        employee__dept=employee.dept,
+        emp__dept=employee.dept,
         score__isnull=False
     ).aggregate(avg_score=Avg('score'))['avg_score']
-    
+
     # مقارنة مع متوسط الشركة
     company_avg = EmployeeEvaluation.objects.filter(
         score__isnull=False
@@ -581,7 +587,7 @@ def employee_performance_ajax(request, emp_id):
         employee = Employee.objects.get(emp_id=emp_id)
         
         evaluations = EmployeeEvaluation.objects.filter(
-            employee=employee,
+            emp=employee,
             score__isnull=False
         ).order_by('eval_date')
         
@@ -652,9 +658,9 @@ def bulk_create_evaluations(request):
                 employee = get_object_or_404(Employee, emp_id=emp_id)
                 
                 # التحقق من عدم وجود تقييم مسبق
-                if not EmployeeEvaluation.objects.filter(employee=employee, period=period).exists():
+                if not EmployeeEvaluation.objects.filter(emp=employee, period=period).exists():
                     EmployeeEvaluation.objects.create(
-                        employee=employee,
+                        emp=employee,
                         period=period
                     )
                     created_count += 1
@@ -691,19 +697,19 @@ def performance_analytics(request):
     
     # توزيع الأداء حسب الأقسام
     department_distribution = Department.objects.annotate(
-        excellent=Count('employee__employeeevaluation', 
-                       filter=Q(employee__employeeevaluation__score__gte=90)),
-        very_good=Count('employee__employeeevaluation', 
-                       filter=Q(employee__employeeevaluation__score__gte=80, 
-                               employee__employeeevaluation__score__lt=90)),
-        good=Count('employee__employeeevaluation', 
-                  filter=Q(employee__employeeevaluation__score__gte=70, 
-                           employee__employeeevaluation__score__lt=80)),
-        acceptable=Count('employee__employeeevaluation', 
-                        filter=Q(employee__employeeevaluation__score__gte=60, 
-                                 employee__employeeevaluation__score__lt=70)),
-        poor=Count('employee__employeeevaluation', 
-                  filter=Q(employee__employeeevaluation__score__lt=60))
+        excellent=Count('employee__evaluations',
+                       filter=Q(employee__evaluations__score__gte=90)),
+        very_good=Count('employee__evaluations',
+                       filter=Q(employee__evaluations__score__gte=80,
+                               employee__evaluations__score__lt=90)),
+        good=Count('employee__evaluations',
+                  filter=Q(employee__evaluations__score__gte=70,
+                           employee__evaluations__score__lt=80)),
+        acceptable=Count('employee__evaluations',
+                        filter=Q(employee__evaluations__score__gte=60,
+                                 employee__evaluations__score__lt=70)),
+        poor=Count('employee__evaluations',
+                  filter=Q(employee__evaluations__score__lt=60))
     ).filter(is_active=True)
     
     context = {

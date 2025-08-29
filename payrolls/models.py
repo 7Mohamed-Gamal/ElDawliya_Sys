@@ -96,10 +96,60 @@ class EmployeeSalary(models.Model):
             return self.basic_salary
         elif self.salary_type == 'monthly':
             # افتراض 8 ساعات يومياً × 22 يوم عمل شهرياً
-            return self.basic_salary / (8 * 22)
+            return self.basic_salary / Decimal('176')  # 8 * 22
         elif self.salary_type == 'daily':
-            return self.basic_salary / 8
-        return 0
+            return self.basic_salary / Decimal('8')
+        return Decimal('0')
+
+    def calculate_overtime_rate(self):
+        """حساب معدل الوقت الإضافي"""
+        return self.calculate_hourly_rate() * self.overtime_rate
+
+    def calculate_weekend_rate(self):
+        """حساب معدل عمل نهاية الأسبوع"""
+        return self.calculate_hourly_rate() * self.weekend_rate
+
+    def calculate_holiday_rate(self):
+        """حساب معدل عمل العطل"""
+        return self.calculate_hourly_rate() * self.holiday_rate
+
+    def calculate_monthly_deductions(self, attendance_data=None):
+        """حساب الخصومات الشهرية بناءً على الحضور"""
+        total_deductions = self.total_deductions
+
+        if attendance_data and self.deduct_absent_days:
+            daily_rate = self.calculate_daily_rate()
+            absent_days = attendance_data.get('absent_days', 0)
+            total_deductions += daily_rate * Decimal(str(absent_days))
+
+        if attendance_data and self.deduct_late_minutes:
+            hourly_rate = self.calculate_hourly_rate()
+            late_minutes = attendance_data.get('late_minutes', 0)
+            late_deduction = (hourly_rate / Decimal('60')) * Decimal(str(late_minutes))
+            total_deductions += late_deduction
+
+        return total_deductions
+
+    def calculate_monthly_earnings(self, overtime_hours=0, weekend_hours=0, holiday_hours=0):
+        """حساب الأرباح الشهرية مع الوقت الإضافي"""
+        base_earnings = self.gross_salary
+
+        # إضافة الوقت الإضافي
+        if overtime_hours > 0:
+            overtime_amount = self.calculate_overtime_rate() * Decimal(str(overtime_hours))
+            base_earnings += overtime_amount
+
+        # إضافة عمل نهاية الأسبوع
+        if weekend_hours > 0:
+            weekend_amount = self.calculate_weekend_rate() * Decimal(str(weekend_hours))
+            base_earnings += weekend_amount
+
+        # إضافة عمل العطل
+        if holiday_hours > 0:
+            holiday_amount = self.calculate_holiday_rate() * Decimal(str(holiday_hours))
+            base_earnings += holiday_amount
+
+        return base_earnings
     
     def calculate_daily_rate(self):
         """حساب الأجر اليومي"""

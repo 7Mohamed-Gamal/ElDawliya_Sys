@@ -38,7 +38,79 @@ class Employee(models.Model):
         verbose_name_plural = 'الموظفون'
 
     def __str__(self):
-        return f"{self.emp_code}"
+        return f"{self.emp_code} - {self.get_full_name()}"
+
+    def get_full_name(self):
+        """Get employee's full name"""
+        names = [self.first_name, self.second_name, self.third_name, self.last_name]
+        return ' '.join([name for name in names if name])
+
+    @property
+    def full_name(self):
+        """Property for full name"""
+        return self.get_full_name()
+
+    @property
+    def emp_full_name(self):
+        """Alias for compatibility with other modules"""
+        return self.get_full_name()
+
+    @property
+    def age(self):
+        """Calculate employee age"""
+        if self.birth_date:
+            from datetime import date
+            today = date.today()
+            return today.year - self.birth_date.year - ((today.month, today.day) < (self.birth_date.month, self.birth_date.day))
+        return None
+
+    @property
+    def years_of_service(self):
+        """Calculate years of service"""
+        if self.hire_date:
+            from datetime import date
+            today = date.today()
+            return today.year - self.hire_date.year - ((today.month, today.day) < (self.hire_date.month, self.hire_date.day))
+        return None
+
+    @property
+    def is_active(self):
+        """Check if employee is active"""
+        return self.emp_status == 'Active'
+
+    @property
+    def is_on_probation(self):
+        """Check if employee is still on probation"""
+        if self.probation_end:
+            from datetime import date
+            return date.today() <= self.probation_end
+        return False
+
+    def clean(self):
+        """Validate employee data"""
+        from django.core.exceptions import ValidationError
+        from datetime import date
+
+        # Validate dates
+        if self.birth_date and self.birth_date > date.today():
+            raise ValidationError('تاريخ الميلاد لا يمكن أن يكون في المستقبل')
+
+        if self.hire_date and self.hire_date > date.today():
+            raise ValidationError('تاريخ التوظيف لا يمكن أن يكون في المستقبل')
+
+        if self.join_date and self.hire_date and self.join_date < self.hire_date:
+            raise ValidationError('تاريخ الالتحاق لا يمكن أن يكون قبل تاريخ التوظيف')
+
+        if self.probation_end and self.hire_date and self.probation_end < self.hire_date:
+            raise ValidationError('تاريخ انتهاء فترة التجربة لا يمكن أن يكون قبل تاريخ التوظيف')
+
+        if self.termination_date and self.hire_date and self.termination_date < self.hire_date:
+            raise ValidationError('تاريخ إنهاء الخدمة لا يمكن أن يكون قبل تاريخ التوظيف')
+
+    def save(self, *args, **kwargs):
+        """Override save to perform validations"""
+        self.full_clean()
+        super().save(*args, **kwargs)
 
 
 class EmployeeBankAccount(models.Model):

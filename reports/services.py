@@ -12,7 +12,12 @@ from django.template.loader import render_to_string
 from django.http import HttpResponse
 from datetime import date, datetime, timedelta
 from decimal import Decimal
-import pandas as pd
+try:
+    import pandas as pd
+    PANDAS_AVAILABLE = True
+except ImportError:
+    pd = None
+    PANDAS_AVAILABLE = False
 import json
 import logging
 from io import BytesIO
@@ -30,7 +35,7 @@ from attendance.models import EmployeeAttendance, AttendanceSummary
 from leaves.models import EmployeeLeave, LeaveBalance, LeaveType
 from payrolls.models import PayrollRun, PayrollDetail, EmployeeSalary
 from loans.models import EmployeeLoan, LoanInstallment
-from training.models import TrainingProgram
+from training.models import TrainingCourse
 from evaluations.models import EmployeeEvaluation
 
 logger = logging.getLogger(__name__)

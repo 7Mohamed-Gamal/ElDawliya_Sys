@@ -1,0 +1,374 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}الحضور والانصراف - نظام الدولية{% endblock %}
+
+{% block extra_css %}
+<style>
+.attendance-dashboard-header {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 30px rgba(59, 130, 246, 0.2);
+}
+
+.attendance-stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    border: 1px solid #e5e7eb;
+}
+
+.attendance-stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.attendance-stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin-bottom: 1rem;
+}
+
+.attendance-stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.attendance-stat-label {
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+}
+
+.quick-attendance-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+}
+
+.attendance-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    border-radius: 10px;
+    text-decoration: none;
+    color: white;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    margin-bottom: 0.5rem;
+}
+
+.attendance-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    color: white;
+    text-decoration: none;
+}
+
+.recent-attendance-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.recent-attendance-item:last-child {
+    border-bottom: none;
+}
+
+.attendance-status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.status-present {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-absent {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.status-late {
+    background: #fef3c7;
+    color: #92400e;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Attendance Dashboard Header -->
+        <div class="attendance-dashboard-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="h2 mb-2">
+                        <i class="fas fa-clock me-3"></i>
+                        الحضور والانصراف
+                    </h1>
+                    <p class="mb-0 opacity-90">
+                        إدارة وتتبع حضور الموظفين وأوقات العمل
+                    </p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <div class="d-flex flex-column align-items-md-end">
+                        <div class="mb-2">
+                            <span class="badge bg-light text-dark px-3 py-2">
+                                <i class="fas fa-calendar-alt me-1"></i>
+                                {{ today|date:"Y/m/d" }}
+                            </span>
+                        </div>
+                        <div>
+                            <span class="badge bg-light text-dark px-3 py-2">
+                                <i class="fas fa-clock me-1"></i>
+                                {{ now|time:"H:i" }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Key Statistics -->
+<div class="row">
+    <div class="col-xl-3 col-md-6">
+        <div class="attendance-stat-card">
+            <div class="attendance-stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                <i class="fas fa-user-check text-white"></i>
+            </div>
+            <div class="attendance-stat-value text-success">{{ present_today|default:0 }}</div>
+            <div class="attendance-stat-label">حاضر اليوم</div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="attendance-stat-card">
+            <div class="attendance-stat-icon" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+                <i class="fas fa-user-times text-white"></i>
+            </div>
+            <div class="attendance-stat-value text-danger">{{ absent_today|default:0 }}</div>
+            <div class="attendance-stat-label">غائب اليوم</div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="attendance-stat-card">
+            <div class="attendance-stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                <i class="fas fa-clock text-white"></i>
+            </div>
+            <div class="attendance-stat-value text-warning">{{ late_today|default:0 }}</div>
+            <div class="attendance-stat-label">متأخر اليوم</div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="attendance-stat-card">
+            <div class="attendance-stat-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                <i class="fas fa-percentage text-white"></i>
+            </div>
+            <div class="attendance-stat-value text-purple">{{ attendance_rate|default:0|floatformat:1 }}%</div>
+            <div class="attendance-stat-label">معدل الحضور</div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions and Recent Activity -->
+<div class="row">
+    <div class="col-xl-4">
+        <div class="quick-attendance-card">
+            <h5 class="mb-3">
+                <i class="fas fa-bolt me-2"></i>
+                إجراءات سريعة
+            </h5>
+            
+            <a href="{% url 'attendance:mark' %}" class="attendance-action-btn" style="background: linear-gradient(135deg, #10b981, #059669);">
+                <i class="fas fa-clock me-2"></i>
+                تسجيل حضور
+            </a>
+            
+            <a href="{% url 'attendance:record_list' %}" class="attendance-action-btn" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+                <i class="fas fa-list me-2"></i>
+                عرض السجلات
+            </a>
+            
+            <a href="{% url 'attendance:reports' %}" class="attendance-action-btn" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                <i class="fas fa-chart-bar me-2"></i>
+                التقارير
+            </a>
+            
+            <a href="{% url 'attendance:rules_list' %}" class="attendance-action-btn" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                <i class="fas fa-cogs me-2"></i>
+                قواعد الحضور
+            </a>
+        </div>
+    </div>
+    
+    <div class="col-xl-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    آخر سجلات الحضور
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for record in recent_attendance %}
+                <div class="recent-attendance-item">
+                    <div class="me-3">
+                        <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                            <i class="fas fa-user"></i>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1">
+                        <h6 class="mb-1">{{ record.employee.get_full_name }}</h6>
+                        <p class="text-muted mb-0">
+                            <i class="fas fa-clock me-1"></i>
+                            دخول: {{ record.check_in|time:"H:i" }}
+                            {% if record.check_out %}
+                            | خروج: {{ record.check_out|time:"H:i" }}
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div>
+                        {% if record.record_type == 'present' %}
+                            <span class="attendance-status-badge status-present">حاضر</span>
+                        {% elif record.record_type == 'absent' %}
+                            <span class="attendance-status-badge status-absent">غائب</span>
+                        {% elif record.late_minutes > 0 %}
+                            <span class="attendance-status-badge status-late">متأخر</span>
+                        {% else %}
+                            <span class="attendance-status-badge status-present">حاضر</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-clock fa-3x mb-3 opacity-50"></i>
+                    <p>لا توجد سجلات حضور حديثة</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Additional Features -->
+<div class="row mt-4">
+    <div class="col-xl-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    إحصائيات الأسبوع
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="mb-2">
+                            <div class="h4 text-success mb-0">{{ week_present|default:0 }}</div>
+                            <small class="text-muted">حاضر</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="mb-2">
+                            <div class="h4 text-danger mb-0">{{ week_absent|default:0 }}</div>
+                            <small class="text-muted">غائب</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="mb-2">
+                            <div class="h4 text-warning mb-0">{{ week_late|default:0 }}</div>
+                            <small class="text-muted">متأخر</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-devices me-2"></i>
+                    أجهزة الحضور
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <div class="text-center">
+                            <div class="h4 text-success mb-0">{{ active_devices|default:0 }}</div>
+                            <small class="text-muted">جهاز نشط</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center">
+                            <div class="h4 text-info mb-0">{{ total_devices|default:0 }}</div>
+                            <small class="text-muted">إجمالي الأجهزة</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <a href="#" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-sync me-1"></i>
+                        مزامنة الأجهزة
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-refresh dashboard every 2 minutes
+setInterval(function() {
+    location.reload();
+}, 120000);
+
+// Real-time clock
+function updateClock() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('ar-SA', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+    });
+    
+    const clockElements = document.querySelectorAll('.current-time');
+    clockElements.forEach(element => {
+        element.textContent = timeString;
+    });
+}
+
+// Update clock every second
+setInterval(updateClock, 1000);
+updateClock(); // Initial call
+</script>
+{% endblock %}

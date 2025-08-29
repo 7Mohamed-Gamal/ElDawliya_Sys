@@ -6,7 +6,10 @@
 """
 
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
+from django.conf import settings
+
+User = get_user_model()
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from datetime import date, datetime
@@ -92,7 +95,7 @@ class ReportTemplate(models.Model):
     # Access control
     is_public = models.BooleanField(default=True, verbose_name='متاح للجميع')
     allowed_roles = models.JSONField(default=list, verbose_name='الأدوار المسموحة')
-    allowed_users = models.ManyToManyField(User, blank=True, verbose_name='المستخدمون المسموحون')
+    allowed_users = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True, verbose_name='المستخدمون المسموحون')
     
     # Metadata
     is_active = models.BooleanField(default=True, verbose_name='نشط')
@@ -255,7 +258,7 @@ class ReportAccessLog(models.Model):
     
     log_id = models.AutoField(primary_key=True)
     report = models.ForeignKey(GeneratedReport, on_delete=models.CASCADE, verbose_name='التقرير')
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, verbose_name='المستخدم')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, verbose_name='المستخدم')
     employee = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, verbose_name='الموظف')
     
     access_type = models.CharField(max_length=20, choices=ACCESS_TYPES, verbose_name='نوع الوصول')

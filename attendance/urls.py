@@ -28,6 +28,7 @@ urlpatterns = [
     path('check-out/', views.check_out, name='check_out'),
     path('record-attendance/', views.record_attendance, name='record_attendance'),
     path('mark-attendance/', views.mark_attendance, name='mark_attendance'),
+    path('mark/', views.mark_attendance, name='mark'),
     
     # Employee Profile and Personal Views
     path('profile/', views.profile, name='profile'),

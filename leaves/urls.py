@@ -10,6 +10,7 @@ urlpatterns = [
     # Leave requests
     path('requests/', views.leave_list, name='leave_list'),
     path('requests/create/', views.create_request, name='create_request'),
+    path('create/', views.create_request, name='create'),
     path('requests/<int:leave_id>/', views.leave_detail, name='leave_detail'),
     path('requests/<int:leave_id>/edit/', views.edit_leave, name='edit_leave'),
     path('requests/<int:leave_id>/delete/', views.delete_leave, name='delete_leave'),
