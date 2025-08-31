@@ -343,13 +343,53 @@
         </div>
 
         <div class="sidebar-nav">
+            <!-- Main System Navigation -->
+            <div class="nav-section">
+                <div class="nav-section-title">النظام الرئيسي</div>
+                <div class="nav-item">
+                    <a href="{% url 'accounts:home' %}" class="nav-link">
+                        <i class="fas fa-home nav-icon"></i>
+                        <span class="nav-text">الصفحة الرئيسية</span>
+                    </a>
+                </div>
+            </div>
+
             <!-- Dashboard Section -->
             <div class="nav-section">
-                <div class="nav-section-title">الرئيسية</div>
+                <div class="nav-section-title">الموارد البشرية</div>
                 <div class="nav-item">
                     <a href="{% url 'hr:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
                         <i class="fas fa-tachometer-alt nav-icon"></i>
                         <span class="nav-text">لوحة التحكم</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Organizational Structure -->
+            <div class="nav-section">
+                <div class="nav-section-title">الهيكل التنظيمي</div>
+                <div class="nav-item">
+                    <a href="{% url 'companies:list' %}" class="nav-link {% if 'companies' in request.resolver_match.app_name %}active{% endif %}">
+                        <i class="fas fa-building nav-icon"></i>
+                        <span class="nav-text">الشركات</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{% url 'org:branches' %}" class="nav-link">
+                        <i class="fas fa-code-branch nav-icon"></i>
+                        <span class="nav-text">الأفرع</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{% url 'org:departments' %}" class="nav-link">
+                        <i class="fas fa-sitemap nav-icon"></i>
+                        <span class="nav-text">الأقسام</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{% url 'org:jobs' %}" class="nav-link">
+                        <i class="fas fa-briefcase nav-icon"></i>
+                        <span class="nav-text">الوظائف</span>
                     </a>
                 </div>
             </div>
@@ -362,18 +402,6 @@
                         <i class="fas fa-users nav-icon"></i>
                         <span class="nav-text">الموظفين</span>
                         <span class="nav-badge">{{ total_employees|default:0 }}</span>
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="{% url 'org:departments' %}" class="nav-link">
-                        <i class="fas fa-building nav-icon"></i>
-                        <span class="nav-text">الأقسام</span>
-                    </a>
-                </div>
-                <div class="nav-item">
-                    <a href="{% url 'org:jobs' %}" class="nav-link">
-                        <i class="fas fa-briefcase nav-icon"></i>
-                        <span class="nav-text">الوظائف</span>
                     </a>
                 </div>
             </div>

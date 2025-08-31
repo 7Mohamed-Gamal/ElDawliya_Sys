@@ -182,79 +182,72 @@
 {% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-12">
-        <!-- HR Dashboard Header -->
-        <div class="hr-dashboard-header">
-            <div class="row align-items-center">
-                <div class="col-md-8">
-                    <h1 class="h2 mb-2">
-                        <i class="fas fa-users-cog me-3"></i>
-                        لوحة تحكم الموارد البشرية
-                    </h1>
-                    <p class="mb-0 opacity-90">
-                        نظرة شاملة على جميع أنشطة الموارد البشرية
-                    </p>
-                </div>
-                <div class="col-md-4 text-md-end">
-                    <div class="d-flex flex-column align-items-md-end">
-                        <div class="mb-2">
-                            <span class="badge bg-light text-dark px-3 py-2">
-                                <i class="fas fa-calendar-alt me-1"></i>
-                                {{ today|date:"Y/m/d" }}
-                            </span>
-                        </div>
-                        <div>
-                            <span class="badge bg-light text-dark px-3 py-2">
-                                <i class="fas fa-clock me-1"></i>
-                                {{ now|time:"H:i" }}
-                            </span>
-                        </div>
-                    </div>
+<div class="container-fluid">
+    <!-- HR Dashboard Header -->
+    <div class="hr-dashboard-header">
+        <div class="row align-items-center">
+            <div class="col-lg-8 col-md-7">
+                <h1 class="h2 mb-2">
+                    <i class="fas fa-users-cog me-3"></i>
+                    لوحة تحكم الموارد البشرية
+                </h1>
+                <p class="mb-0 opacity-90">
+                    نظرة شاملة على جميع أنشطة الموارد البشرية
+                </p>
+            </div>
+            <div class="col-lg-4 col-md-5">
+                <div class="d-flex flex-column flex-md-row align-items-md-end justify-content-md-end gap-2">
+                    <span class="badge bg-light text-dark px-3 py-2">
+                        <i class="fas fa-calendar-alt me-1"></i>
+                        {{ today|date:"Y/m/d" }}
+                    </span>
+                    <span class="badge bg-light text-dark px-3 py-2">
+                        <i class="fas fa-clock me-1"></i>
+                        {{ now|time:"H:i" }}
+                    </span>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<!-- Key Statistics -->
-<div class="row">
-    <div class="col-xl-3 col-md-6">
-        <div class="hr-stat-card">
-            <div class="hr-stat-icon" style="background: linear-gradient(135deg, var(--hr-success), #059669);">
-                <i class="fas fa-users text-white"></i>
-            </div>
-            <div class="hr-stat-value text-success">{{ total_employees|default:0 }}</div>
-            <div class="hr-stat-label">إجمالي الموظفين</div>
-            <div class="hr-stat-change text-success">
-                <i class="fas fa-arrow-up me-1"></i>
-                +{{ new_employees_this_month|default:0 }} هذا الشهر
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-xl-3 col-md-6">
-        <div class="hr-stat-card">
-            <div class="hr-stat-icon" style="background: linear-gradient(135deg, var(--hr-primary), var(--hr-secondary));">
-                <i class="fas fa-user-check text-white"></i>
-            </div>
-            <div class="hr-stat-value text-primary">{{ present_today|default:0 }}</div>
-            <div class="hr-stat-label">حاضر اليوم</div>
-            <div class="hr-stat-change text-success">
-                <i class="fas fa-percentage me-1"></i>
-                {{ attendance_rate|default:0|floatformat:1 }}% معدل الحضور
+    <!-- Key Statistics -->
+    <div class="row g-4 mb-4">
+        <div class="col-xl-3 col-lg-6 col-md-6">
+            <div class="hr-stat-card">
+                <div class="hr-stat-icon" style="background: linear-gradient(135deg, var(--hr-success), #059669);">
+                    <i class="fas fa-users text-white"></i>
+                </div>
+                <div class="hr-stat-value text-success">{{ total_employees|default:0 }}</div>
+                <div class="hr-stat-label">إجمالي الموظفين</div>
+                <div class="hr-stat-change text-success">
+                    <i class="fas fa-arrow-up me-1"></i>
+                    +{{ new_employees_this_month|default:0 }} هذا الشهر
+                </div>
             </div>
         </div>
-    </div>
-    
-    <div class="col-xl-3 col-md-6">
-        <div class="hr-stat-card">
-            <div class="hr-stat-icon" style="background: linear-gradient(135deg, var(--hr-warning), #d97706);">
-                <i class="fas fa-calendar-times text-white"></i>
+
+        <div class="col-xl-3 col-lg-6 col-md-6">
+            <div class="hr-stat-card">
+                <div class="hr-stat-icon" style="background: linear-gradient(135deg, var(--hr-primary), var(--hr-secondary));">
+                    <i class="fas fa-user-check text-white"></i>
+                </div>
+                <div class="hr-stat-value text-primary">{{ present_today|default:0 }}</div>
+                <div class="hr-stat-label">حاضر اليوم</div>
+                <div class="hr-stat-change text-success">
+                    <i class="fas fa-percentage me-1"></i>
+                    {{ attendance_rate|default:0|floatformat:1 }}% معدل الحضور
+                </div>
             </div>
-            <div class="hr-stat-value text-warning">{{ pending_leaves|default:0 }}</div>
-            <div class="hr-stat-label">إجازات في الانتظار</div>
-            <div class="hr-stat-change text-info">
+        </div>
+
+        <div class="col-xl-3 col-lg-6 col-md-6">
+            <div class="hr-stat-card">
+                <div class="hr-stat-icon" style="background: linear-gradient(135deg, var(--hr-warning), #d97706);">
+                    <i class="fas fa-calendar-times text-white"></i>
+                </div>
+                <div class="hr-stat-value text-warning">{{ pending_leaves|default:0 }}</div>
+                <div class="hr-stat-label">إجازات في الانتظار</div>
+                <div class="hr-stat-change text-info">
                 <i class="fas fa-clock me-1"></i>
                 {{ approved_leaves|default:0 }} معتمدة
             </div>

@@ -68,7 +68,7 @@
                     </p>
                 </div>
                 <div class="col-md-4 text-md-end">
-                    <a href="#" class="btn btn-light btn-lg">
+                    <a href="{% url 'org:job_add' %}" class="btn btn-light btn-lg">
                         <i class="fas fa-plus me-2"></i>
                         إضافة وظيفة جديدة
                     </a>
@@ -120,7 +120,7 @@
                     <small class="text-muted">المستوى</small>
                 </div>
                 <div class="col-6">
-                    <div class="fw-bold text-success">{{ job.employee_set.count|default:0 }}</div>
+                    <div class="fw-bold text-success">{{ job.employee_count|default:0 }}</div>
                     <small class="text-muted">موظف</small>
                 </div>
             </div>

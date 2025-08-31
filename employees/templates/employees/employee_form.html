@@ -1,4 +1,4 @@
-{% extends 'employees/base.html' %}
+{% extends 'base.html' %}
 {% load static %}
 {% load widget_tweaks %}
 
@@ -10,398 +10,710 @@
     {% endif %}
 {% endblock %}
 
-{% block breadcrumb_items %}
-<li class="breadcrumb-item"><a href="{% url 'employees:employee_list' %}">قائمة الموظفين</a></li>
-{% if employee.emp_id %}
-    <li class="breadcrumb-item"><a href="{% url 'employees:employee_detail' employee.emp_id %}">{{ employee.first_name }} {{ employee.last_name }}</a></li>
-    <li class="breadcrumb-item active">تعديل</li>
-{% else %}
-    <li class="breadcrumb-item active">إضافة موظف جديد</li>
-{% endif %}
-{% endblock %}
-
-{% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>
-        <i class="fas fa-user-plus me-2"></i>
-        {% if employee.emp_id %}
-            تعديل بيانات الموظف
-        {% else %}
-            إضافة موظف جديد
-        {% endif %}
-    </h2>
-    <a href="{% url 'employees:employee_list' %}" class="btn btn-outline-secondary">
-        <i class="fas fa-arrow-left me-1"></i>
-        العودة للقائمة
-    </a>
-</div>
-
-<form method="post" enctype="multipart/form-data" id="employeeForm">
-    {% csrf_token %}
-    
-    <!-- Personal Information Card -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5 class="mb-0">
-                <i class="fas fa-user me-2"></i>
-                البيانات الشخصية
-            </h5>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="{{ form.emp_code.id_for_label }}" class="form-label">
-                        كود الموظف <span class="text-danger">*</span>
-                    </label>
-                    {{ form.emp_code|add_class:"form-control" }}
-                    {% if form.emp_code.errors %}
-                        <div class="text-danger small mt-1">{{ form.emp_code.errors.0 }}</div>
-                    {% endif %}
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="{{ form.gender.id_for_label }}" class="form-label">
-                        الجنس <span class="text-danger">*</span>
-                    </label>
-                    <select name="{{ form.gender.name }}" id="{{ form.gender.id_for_label }}" class="form-select" required>
-                        <option value="">اختر الجنس</option>
-                        <option value="M" {% if form.gender.value == "M" %}selected{% endif %}>ذكر</option>
-                        <option value="F" {% if form.gender.value == "F" %}selected{% endif %}>أنثى</option>
-                    </select>
-                    {% if form.gender.errors %}
-                        <div class="text-danger small mt-1">{{ form.gender.errors.0 }}</div>
-                    {% endif %}
-                </div>
-            </div>
-            
-            <div class="row">
-                <div class="col-md-3 mb-3">
-                    <label for="{{ form.first_name.id_for_label }}" class="form-label">
-                        الاسم الأول
-                    </label>
-                    {{ form.first_name|add_class:"form-control" }}
-                    {% if form.first_name.errors %}
-                        <div class="text-danger small mt-1">{{ form.first_name.errors.0 }}</div>
-                    {% endif %}
-                </div>
-                <div class="col-md-3 mb-3">
-                    <label for="{{ form.second_name.id_for_label }}" class="form-label">
-                        الاسم الثاني
-                    </label>
-                    {{ form.second_name|add_class:"form-control" }}
-                    {% if form.second_name.errors %}
-                        <div class="text-danger small mt-1">{{ form.second_name.errors.0 }}</div>
-                    {% endif %}
-                </div>
-                <div class="col-md-3 mb-3">
-                    <label for="{{ form.third_name.id_for_label }}" class="form-label">
-                        الاسم الثالث
-                    </label>
-                    {{ form.third_name|add_class:"form-control" }}
-                    {% if form.third_name.errors %}
-                        <div class="text-danger small mt-1">{{ form.third_name.errors.0 }}</div>
-                    {% endif %}
-                </div>
-                <div class="col-md-3 mb-3">
-                    <label for="{{ form.last_name.id_for_label }}" class="form-label">
-                        اسم العائلة
-                    </label>
-                    {{ form.last_name|add_class:"form-control" }}
-                    {% if form.last_name.errors %}
-                        <div class="text-danger small mt-1">{{ form.last_name.errors.0 }}</div>
-                    {% endif %}
-                </div>
-            </div>
-            
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <label for="{{ form.birth_date.id_for_label }}" class="form-label">
-                        تاريخ الميلاد
-                    </label>
-                    {{ form.birth_date|add_class:"form-control" }}
-                    {% if form.birth_date.errors %}
-                        <div class="text-danger small mt-1">{{ form.birth_date.errors.0 }}</div>
-                    {% endif %}
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label for="{{ form.nationality.id_for_label }}" class="form-label">
-                        الجنسية
-                    </label>
-                    {{ form.nationality|add_class:"form-control" }}
-                    {% if form.nationality.errors %}
-                        <div class="text-danger small mt-1">{{ form.nationality.errors.0 }}</div>
-                    {% endif %}
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label for="{{ form.national_id.id_for_label }}" class="form-label">
-                        رقم الهوية
-                    </label>
-                    {{ form.national_id|add_class:"form-control" }}
-                    {% if form.national_id.errors %}
-                        <div class="text-danger small mt-1">{{ form.national_id.errors.0 }}</div>
-                    {% endif %}
-                </div>
-            </div>
-            
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="{{ form.passport_no.id_for_label }}" class="form-label">
-                        رقم الجواز
-                    </label>
-                    {{ form.passport_no|add_class:"form-control" }}
-                    {% if form.passport_no.errors %}
-                        <div class="text-danger small mt-1">{{ form.passport_no.errors.0 }}</div>
-                    {% endif %}
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="{{ form.address.id_for_label }}" class="form-label">
-                        العنوان
-                    </label>
-                    {{ form.address|add_class:"form-control" }}
-                    {% if form.address.errors %}
-                        <div class="text-danger small mt-1">{{ form.address.errors.0 }}</div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Work Information Card -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5 class="mb-0">
-                <i class="fas fa-briefcase me-2"></i>
-                بيانات العمل
-            </h5>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <label for="{{ form.job.id_for_label }}" class="form-label">
-                        الوظيفة <span class="text-danger">*</span>
-                    </label>
-                    {{ form.job|add_class:"form-select" }}
-                    {% if form.job.errors %}
-                        <div class="text-danger small mt-1">{{ form.job.errors.0 }}</div>
-                    {% endif %}
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label for="{{ form.dept.id_for_label }}" class="form-label">
-                        القسم <span class="text-danger">*</span>
-                    </label>
-                    {{ form.dept|add_class:"form-select" }}
-                    {% if form.dept.errors %}
-                        <div class="text-danger small mt-1">{{ form.dept.errors.0 }}</div>
-                    {% endif %}
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label for="{{ form.branch.id_for_label }}" class="form-label">
-                        الفرع <span class="text-danger">*</span>
-                    </label>
-                    {{ form.branch|add_class:"form-select" }}
-                    {% if form.branch.errors %}
-                        <div class="text-danger small mt-1">{{ form.branch.errors.0 }}</div>
-                    {% endif %}
-                </div>
-            </div>
-            
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <label for="{{ form.manager.id_for_label }}" class="form-label">
-                        المدير المباشر
-                    </label>
-                    {{ form.manager|add_class:"form-select" }}
-                    {% if form.manager.errors %}
-                        <div class="text-danger small mt-1">{{ form.manager.errors.0 }}</div>
-                    {% endif %}
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label for="{{ form.hire_date.id_for_label }}" class="form-label">
-                        تاريخ التوظيف
-                    </label>
-                    {{ form.hire_date|add_class:"form-control" }}
-                    {% if form.hire_date.errors %}
-                        <div class="text-danger small mt-1">{{ form.hire_date.errors.0 }}</div>
-                    {% endif %}
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label for="{{ form.join_date.id_for_label }}" class="form-label">
-                        تاريخ المباشرة
-                    </label>
-                    {{ form.join_date|add_class:"form-control" }}
-                    {% if form.join_date.errors %}
-                        <div class="text-danger small mt-1">{{ form.join_date.errors.0 }}</div>
-                    {% endif %}
-                </div>
-            </div>
-            
-            <div class="row">
-                <div class="col-md-4 mb-3">
-                    <label for="{{ form.probation_end.id_for_label }}" class="form-label">
-                        انتهاء فترة التجربة
-                    </label>
-                    {{ form.probation_end|add_class:"form-control" }}
-                    {% if form.probation_end.errors %}
-                        <div class="text-danger small mt-1">{{ form.probation_end.errors.0 }}</div>
-                    {% endif %}
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label for="{{ form.emp_status.id_for_label }}" class="form-label">
-                        حالة الموظف
-                    </label>
-                    <select name="{{ form.emp_status.name }}" id="{{ form.emp_status.id_for_label }}" class="form-select">
-                        <option value="Active" {% if form.emp_status.value == "Active" %}selected{% endif %}>نشط</option>
-                        <option value="OnLeave" {% if form.emp_status.value == "OnLeave" %}selected{% endif %}>في إجازة</option>
-                        <option value="Terminated" {% if form.emp_status.value == "Terminated" %}selected{% endif %}>منتهي الخدمة</option>
-                        <option value="Resigned" {% if form.emp_status.value == "Resigned" %}selected{% endif %}>مستقيل</option>
-                    </select>
-                    {% if form.emp_status.errors %}
-                        <div class="text-danger small mt-1">{{ form.emp_status.errors.0 }}</div>
-                    {% endif %}
-                </div>
-                <div class="col-md-4 mb-3">
-                    <label for="{{ form.termination_date.id_for_label }}" class="form-label">
-                        تاريخ انتهاء الخدمة
-                    </label>
-                    {{ form.termination_date|add_class:"form-control" }}
-                    {% if form.termination_date.errors %}
-                        <div class="text-danger small mt-1">{{ form.termination_date.errors.0 }}</div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Contact Information Card -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5 class="mb-0">
-                <i class="fas fa-phone me-2"></i>
-                بيانات الاتصال
-            </h5>
-        </div>
-        <div class="card-body">
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="{{ form.email.id_for_label }}" class="form-label">
-                        البريد الإلكتروني
-                    </label>
-                    {{ form.email|add_class:"form-control" }}
-                    {% if form.email.errors %}
-                        <div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>
-                    {% endif %}
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label for="{{ form.mobile.id_for_label }}" class="form-label">
-                        رقم الهاتف
-                    </label>
-                    {{ form.mobile|add_class:"form-control" }}
-                    {% if form.mobile.errors %}
-                        <div class="text-danger small mt-1">{{ form.mobile.errors.0 }}</div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Additional Information Card -->
-    <div class="card mb-4">
-        <div class="card-header">
-            <h5 class="mb-0">
-                <i class="fas fa-sticky-note me-2"></i>
-                معلومات إضافية
-            </h5>
-        </div>
-        <div class="card-body">
-            <div class="mb-3">
-                <label for="{{ form.notes.id_for_label }}" class="form-label">
-                    ملاحظات
-                </label>
-                {{ form.notes|add_class:"form-control" }}
-                {% if form.notes.errors %}
-                    <div class="text-danger small mt-1">{{ form.notes.errors.0 }}</div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-
-    <!-- Form Actions -->
-    <div class="card">
-        <div class="card-body">
-            <div class="d-flex justify-content-between">
-                <div>
-                    <button type="submit" class="btn btn-primary btn-lg">
-                        <i class="fas fa-save me-1"></i>
-                        {% if employee.emp_id %}
-                            حفظ التعديلات
-                        {% else %}
-                            إضافة الموظف
-                        {% endif %}
-                    </button>
-                    <button type="button" class="btn btn-outline-secondary btn-lg ms-2" onclick="resetForm()">
-                        <i class="fas fa-undo me-1"></i>
-                        إعادة تعيين
-                    </button>
-                </div>
-                <div>
-                    <a href="{% url 'employees:employee_list' %}" class="btn btn-outline-danger btn-lg">
-                        <i class="fas fa-times me-1"></i>
-                        إلغاء
-                    </a>
-                </div>
-            </div>
-        </div>
-    </div>
-</form>
-{% endblock %}
-
 {% block extra_css %}
 <style>
-    .form-label {
+    .form-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        padding: 2rem;
+        margin-top: 2rem;
+    }
+
+    .form-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f8f9fa;
+    }
+
+    .form-header h2 {
+        color: #2c3e50;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-header p {
+        color: #6c757d;
+        margin: 0;
+    }
+
+    .form-section {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .form-section-title {
         font-weight: 600;
         color: #495057;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #dee2e6;
+        display: flex;
+        align-items: center;
     }
-    
+
+    .form-section-title i {
+        margin-left: 0.5rem;
+        width: 20px;
+        text-align: center;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .form-control, .form-select {
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,123,255,0.3);
+    }
+
+    .btn-secondary, .btn-outline-secondary {
+        border-radius: 8px;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+    }
+
+    .alert {
+        border-radius: 8px;
+        border: none;
+    }
+
     .text-danger {
         font-size: 0.875rem;
+        margin-top: 0.25rem;
     }
-    
-    .card-header h5 {
-        color: #495057;
+
+    .required-field::after {
+        content: " *";
+        color: #dc3545;
     }
-    
-    .form-control:focus,
-    .form-select:focus {
-        border-color: #0d6efd;
-        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
-    }
-    
-    .btn-lg {
-        padding: 0.75rem 1.5rem;
-        font-size: 1rem;
+
+    @media (max-width: 768px) {
+        .form-container {
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .form-section {
+            padding: 1rem;
+        }
+
+        .btn-primary, .btn-secondary, .btn-outline-secondary {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
     }
 </style>
 {% endblock %}
 
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h3 mb-0">
+                        {% if employee.emp_id %}
+                            تعديل بيانات الموظف
+                        {% else %}
+                            إضافة موظف جديد
+                        {% endif %}
+                    </h1>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+                            <li class="breadcrumb-item"><a href="{% url 'employees:employee_list' %}">قائمة الموظفين</a></li>
+                            {% if employee.emp_id %}
+                                <li class="breadcrumb-item"><a href="{% url 'employees:employee_detail' employee.emp_id %}">{{ employee.first_name }} {{ employee.last_name }}</a></li>
+                                <li class="breadcrumb-item active">تعديل</li>
+                            {% else %}
+                                <li class="breadcrumb-item active">إضافة موظف جديد</li>
+                            {% endif %}
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Container -->
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-md-12">
+            <div class="form-container">
+                <div class="form-header">
+                    <h2>
+                        <i class="fas fa-user-plus text-primary me-2"></i>
+                        {% if employee.emp_id %}
+                            تعديل بيانات الموظف
+                        {% else %}
+                            إضافة موظف جديد
+                        {% endif %}
+                    </h2>
+                    <p>املأ البيانات التالية لإضافة موظف جديد إلى النظام</p>
+                </div>
+
+                <!-- Messages -->
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <!-- Form -->
+                <form method="post" enctype="multipart/form-data" id="employeeForm" novalidate>
+                    {% csrf_token %}
+
+                    <!-- Personal Information Section -->
+                    <div class="form-section">
+                        <h5 class="form-section-title">
+                            <i class="fas fa-user text-primary"></i>
+                            البيانات الشخصية
+                        </h5>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.emp_code.id_for_label }}" class="form-label required-field">
+                                        كود الموظف
+                                    </label>
+                                    {{ form.emp_code|add_class:"form-control" }}
+                                    {% if form.emp_code.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.emp_code.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.gender.id_for_label }}" class="form-label required-field">
+                                        الجنس
+                                    </label>
+                                    <select name="{{ form.gender.name }}" id="{{ form.gender.id_for_label }}" class="form-select" required>
+                                        <option value="">اختر الجنس</option>
+                                        <option value="M" {% if form.gender.value == "M" %}selected{% endif %}>ذكر</option>
+                                        <option value="F" {% if form.gender.value == "F" %}selected{% endif %}>أنثى</option>
+                                    </select>
+                                    {% if form.gender.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.gender.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="{{ form.first_name.id_for_label }}" class="form-label">
+                                        الاسم الأول
+                                    </label>
+                                    {{ form.first_name|add_class:"form-control" }}
+                                    {% if form.first_name.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.first_name.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="{{ form.second_name.id_for_label }}" class="form-label">
+                                        الاسم الثاني
+                                    </label>
+                                    {{ form.second_name|add_class:"form-control" }}
+                                    {% if form.second_name.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.second_name.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="{{ form.third_name.id_for_label }}" class="form-label">
+                                        الاسم الثالث
+                                    </label>
+                                    {{ form.third_name|add_class:"form-control" }}
+                                    {% if form.third_name.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.third_name.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="{{ form.last_name.id_for_label }}" class="form-label">
+                                        اسم العائلة
+                                    </label>
+                                    {{ form.last_name|add_class:"form-control" }}
+                                    {% if form.last_name.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.last_name.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.birth_date.id_for_label }}" class="form-label">
+                                        تاريخ الميلاد
+                                    </label>
+                                    {{ form.birth_date|add_class:"form-control" }}
+                                    {% if form.birth_date.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.birth_date.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.nationality.id_for_label }}" class="form-label">
+                                        الجنسية
+                                    </label>
+                                    {{ form.nationality|add_class:"form-control" }}
+                                    {% if form.nationality.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.nationality.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.national_id.id_for_label }}" class="form-label">
+                                        رقم الهوية الوطنية
+                                    </label>
+                                    {{ form.national_id|add_class:"form-control" }}
+                                    {% if form.national_id.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.national_id.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="{{ form.passport_no.id_for_label }}" class="form-label">
+                                        رقم جواز السفر
+                                    </label>
+                                    {{ form.passport_no|add_class:"form-control" }}
+                                    {% if form.passport_no.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.passport_no.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Contact Information Section -->
+                    <div class="form-section">
+                        <h5 class="form-section-title">
+                            <i class="fas fa-address-book text-success"></i>
+                            معلومات الاتصال
+                        </h5>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.mobile.id_for_label }}" class="form-label">
+                                        رقم الجوال
+                                    </label>
+                                    {{ form.mobile|add_class:"form-control" }}
+                                    {% if form.mobile.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.mobile.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.email.id_for_label }}" class="form-label">
+                                        البريد الإلكتروني
+                                    </label>
+                                    {{ form.email|add_class:"form-control" }}
+                                    {% if form.email.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.email.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="{{ form.address.id_for_label }}" class="form-label">
+                                        العنوان
+                                    </label>
+                                    {{ form.address|add_class:"form-control" }}
+                                    {% if form.address.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.address.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Employment Details Section -->
+                    <div class="form-section">
+                        <h5 class="form-section-title">
+                            <i class="fas fa-briefcase text-warning"></i>
+                            بيانات العمل
+                        </h5>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.job.id_for_label }}" class="form-label required-field">
+                                        الوظيفة
+                                    </label>
+                                    {{ form.job|add_class:"form-select" }}
+                                    {% if form.job.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.job.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.dept.id_for_label }}" class="form-label required-field">
+                                        القسم
+                                    </label>
+                                    {{ form.dept|add_class:"form-select" }}
+                                    {% if form.dept.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.dept.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.branch.id_for_label }}" class="form-label required-field">
+                                        الفرع
+                                    </label>
+                                    {{ form.branch|add_class:"form-select" }}
+                                    {% if form.branch.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.branch.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.manager.id_for_label }}" class="form-label">
+                                        المدير المباشر
+                                    </label>
+                                    {{ form.manager|add_class:"form-select" }}
+                                    {% if form.manager.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.manager.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.hire_date.id_for_label }}" class="form-label">
+                                        تاريخ التوظيف
+                                    </label>
+                                    {{ form.hire_date|add_class:"form-control" }}
+                                    {% if form.hire_date.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.hire_date.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.join_date.id_for_label }}" class="form-label">
+                                        تاريخ المباشرة
+                                    </label>
+                                    {{ form.join_date|add_class:"form-control" }}
+                                    {% if form.join_date.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.join_date.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.probation_end.id_for_label }}" class="form-label">
+                                        انتهاء فترة التجربة
+                                    </label>
+                                    {{ form.probation_end|add_class:"form-control" }}
+                                    {% if form.probation_end.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.probation_end.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.emp_status.id_for_label }}" class="form-label">
+                                        حالة الموظف
+                                    </label>
+                                    <select name="{{ form.emp_status.name }}" id="{{ form.emp_status.id_for_label }}" class="form-select">
+                                        <option value="Active" {% if form.emp_status.value == "Active" %}selected{% endif %}>نشط</option>
+                                        <option value="OnLeave" {% if form.emp_status.value == "OnLeave" %}selected{% endif %}>في إجازة</option>
+                                        <option value="Terminated" {% if form.emp_status.value == "Terminated" %}selected{% endif %}>منتهي الخدمة</option>
+                                        <option value="Resigned" {% if form.emp_status.value == "Resigned" %}selected{% endif %}>مستقيل</option>
+                                    </select>
+                                    {% if form.emp_status.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.emp_status.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.termination_date.id_for_label }}" class="form-label">
+                                        تاريخ انتهاء الخدمة
+                                    </label>
+                                    {{ form.termination_date|add_class:"form-control" }}
+                                    {% if form.termination_date.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.termination_date.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Additional Information Section -->
+                    <div class="form-section">
+                        <h5 class="form-section-title">
+                            <i class="fas fa-sticky-note text-info"></i>
+                            معلومات إضافية
+                        </h5>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                        ملاحظات
+                                    </label>
+                                    {{ form.notes|add_class:"form-control" }}
+                                    {% if form.notes.errors %}
+                                        <div class="text-danger">
+                                            {% for error in form.notes.errors %}
+                                                <small>{{ error }}</small>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between flex-wrap gap-2">
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>
+                                        {% if employee.emp_id %}
+                                            حفظ التعديلات
+                                        {% else %}
+                                            إضافة الموظف
+                                        {% endif %}
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary" onclick="resetForm()">
+                                        <i class="fas fa-undo me-2"></i>
+                                        إعادة تعيين
+                                    </button>
+                                </div>
+                                <div>
+                                    <a href="{% url 'employees:employee_list' %}" class="btn btn-secondary">
+                                        <i class="fas fa-arrow-right me-2"></i>
+                                        إلغاء
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
 {% block extra_js %}
 <script>
-// Set date input types
 document.addEventListener('DOMContentLoaded', function() {
-    // Set date inputs
-    const dateInputs = ['{{ form.birth_date.id_for_label }}', '{{ form.hire_date.id_for_label }}', 
-                       '{{ form.join_date.id_for_label }}', '{{ form.probation_end.id_for_label }}', 
+    // Set date input types
+    const dateInputs = ['{{ form.birth_date.id_for_label }}', '{{ form.hire_date.id_for_label }}',
+                       '{{ form.join_date.id_for_label }}', '{{ form.probation_end.id_for_label }}',
                        '{{ form.termination_date.id_for_label }}'];
-    
+
     dateInputs.forEach(function(inputId) {
         const input = document.getElementById(inputId);
         if (input) {
             input.type = 'date';
         }
     });
-    
+
+    // Auto-focus on first input
+    const firstInput = document.querySelector('input[type="text"]');
+    if (firstInput) {
+        firstInput.focus();
+    }
+
     // Auto-generate employee code if empty
     const empCodeInput = document.getElementById('{{ form.emp_code.id_for_label }}');
     if (empCodeInput && !empCodeInput.value) {
         generateEmployeeCode();
+    }
+
+    // Form validation feedback
+    const form = document.getElementById('employeeForm');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const requiredFields = form.querySelectorAll('[required]');
+            let isValid = true;
+
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    field.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    field.classList.remove('is-invalid');
+                }
+            });
+
+            if (!isValid) {
+                e.preventDefault();
+                const firstInvalid = form.querySelector('.is-invalid');
+                if (firstInvalid) {
+                    firstInvalid.focus();
+                    firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+        });
     }
 });
 
@@ -417,38 +729,10 @@ function generateEmployeeCode() {
 function resetForm() {
     if (confirm('هل أنت متأكد من إعادة تعيين النموذج؟\n\nسيتم فقدان جميع البيانات المدخلة.')) {
         document.getElementById('employeeForm').reset();
+        // Re-generate employee code after reset
+        generateEmployeeCode();
     }
 }
-
-// Form validation
-document.getElementById('employeeForm').addEventListener('submit', function(e) {
-    const requiredFields = ['{{ form.emp_code.id_for_label }}', '{{ form.job.id_for_label }}', 
-                           '{{ form.dept.id_for_label }}', '{{ form.branch.id_for_label }}'];
-    
-    let isValid = true;
-    let firstInvalidField = null;
-    
-    requiredFields.forEach(function(fieldId) {
-        const field = document.getElementById(fieldId);
-        if (field && !field.value.trim()) {
-            field.classList.add('is-invalid');
-            isValid = false;
-            if (!firstInvalidField) {
-                firstInvalidField = field;
-            }
-        } else if (field) {
-            field.classList.remove('is-invalid');
-        }
-    });
-    
-    if (!isValid) {
-        e.preventDefault();
-        if (firstInvalidField) {
-            firstInvalidField.focus();
-        }
-        alert('يرجى ملء جميع الحقول المطلوبة.');
-    }
-});
 
 // Remove validation classes on input
 document.querySelectorAll('.form-control, .form-select').forEach(function(element) {

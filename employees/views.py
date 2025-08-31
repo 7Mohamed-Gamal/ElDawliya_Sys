@@ -108,7 +108,7 @@ def add_employee(request):
         if form.is_valid():
             employee = form.save()
             messages.success(request, f'تم إضافة الموظف {employee.first_name} {employee.last_name} بنجاح.')
-            return redirect('employees:employee_detail', emp_id=employee.emp_id)
+            return redirect('employees:detail', emp_id=employee.emp_id)
         else:
             messages.error(request, 'يرجى تصحيح الأخطاء أدناه.')
     else:
@@ -132,7 +132,7 @@ def edit_employee(request, emp_id):
         if form.is_valid():
             employee = form.save()
             messages.success(request, f'تم تحديث بيانات الموظف {employee.first_name} {employee.last_name} بنجاح.')
-            return redirect('employees:employee_detail', emp_id=employee.emp_id)
+            return redirect('employees:detail', emp_id=employee.emp_id)
         else:
             messages.error(request, 'يرجى تصحيح الأخطاء أدناه.')
     else:
