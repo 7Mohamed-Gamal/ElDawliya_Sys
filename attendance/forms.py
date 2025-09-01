@@ -177,11 +177,16 @@ class EmployeeAttendanceForm(forms.ModelForm):
 
 class ZKDeviceForm(forms.ModelForm):
     """نموذج إضافة/تعديل جهاز ZK"""
-    
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make timezone field optional
+        self.fields['timezone'].required = False
+
     class Meta:
         model = ZKDevice
         fields = [
-            'device_name', 'device_serial', 'ip_address', 
+            'device_name', 'device_serial', 'ip_address',
             'port', 'location', 'status', 'timezone'
         ]
         

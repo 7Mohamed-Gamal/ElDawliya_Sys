@@ -460,7 +460,7 @@ class ZKDevice(models.Model):
     port = models.PositiveIntegerField(default=4370, verbose_name='المنفذ')
     location = models.CharField(max_length=200, blank=True, null=True, verbose_name='الموقع')
     status = models.CharField(max_length=20, choices=DEVICE_STATUS_CHOICES, default='active', verbose_name='الحالة')
-    timezone = models.CharField(max_length=50, default='Asia/Riyadh', verbose_name='المنطقة الزمنية')
+    timezone = models.CharField(max_length=50, default='Asia/Riyadh', blank=True, verbose_name='المنطقة الزمنية')
     last_sync = models.DateTimeField(blank=True, null=True, verbose_name='آخر مزامنة')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')

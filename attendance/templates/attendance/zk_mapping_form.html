@@ -1,0 +1,937 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+{% load widget_tweaks %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<style>
+    .zk-form-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+    }
+
+    .form-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .form-section {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid #e9ecef;
+    }
+
+    .section-title {
+        color: #2c3e50;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #667eea;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .form-label .required {
+        color: #dc3545;
+        font-size: 0.875rem;
+    }
+
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s ease;
+        font-size: 0.95rem;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+
+    .form-control.is-invalid, .form-select.is-invalid {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    }
+
+    .form-control.is-valid, .form-select.is-valid {
+        border-color: #28a745;
+        box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+    }
+
+    .invalid-feedback {
+        display: block;
+        width: 100%;
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
+        color: #dc3545;
+        background: #f8d7da;
+        padding: 0.5rem;
+        border-radius: 6px;
+        border: 1px solid #f5c6cb;
+    }
+
+    .valid-feedback {
+        display: block;
+        width: 100%;
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
+        color: #155724;
+        background: #d4edda;
+        padding: 0.5rem;
+        border-radius: 6px;
+        border: 1px solid #c3e6cb;
+    }
+
+    .form-help {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 0.25rem;
+        font-style: italic;
+    }
+
+    .form-check {
+        background: white;
+        border-radius: 8px;
+        padding: 1rem;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+
+    .form-check:hover {
+        border-color: #667eea;
+        background: #f8f9ff;
+    }
+
+    .form-check-input {
+        width: 1.25rem;
+        height: 1.25rem;
+        margin-top: 0;
+        margin-right: 0.75rem;
+    }
+
+    .form-check-input:checked {
+        background-color: #667eea;
+        border-color: #667eea;
+    }
+
+    .form-check-label {
+        font-weight: 500;
+        color: #2c3e50;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-save {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 0.75rem 2rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 10px rgba(40, 167, 69, 0.3);
+    }
+
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(40, 167, 69, 0.4);
+        color: white;
+    }
+
+    .btn-cancel {
+        background: linear-gradient(135deg, #6c757d, #5a6268);
+        border: none;
+        color: white;
+        font-weight: 600;
+        padding: 0.75rem 2rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 10px rgba(108, 117, 125, 0.3);
+    }
+
+    .btn-cancel:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(108, 117, 125, 0.4);
+        color: white;
+    }
+
+    .btn-loading {
+        position: relative;
+        pointer-events: none;
+    }
+
+    .btn-loading::after {
+        content: '';
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        top: 50%;
+        left: 50%;
+        margin-left: -8px;
+        margin-top: -8px;
+        border: 2px solid transparent;
+        border-top-color: currentColor;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .form-actions {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+        border: 1px solid #dee2e6;
+    }
+
+    .device-info-card {
+        background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 0.5rem;
+        border: 1px solid #90caf9;
+        display: none;
+    }
+
+    .device-info-card.show {
+        display: block;
+        animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .employee-info-card {
+        background: linear-gradient(135deg, #f3e5f5, #e1bee7);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 0.5rem;
+        border: 1px solid #ce93d8;
+        display: none;
+    }
+
+    .employee-info-card.show {
+        display: block;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .info-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .info-value {
+        color: #495057;
+        font-family: 'Courier New', monospace;
+    }
+
+    /* Select2 customization */
+    .select2-container--bootstrap-5 .select2-selection {
+        border-radius: 8px !important;
+        border: 2px solid #e9ecef !important;
+        min-height: calc(2.25rem + 2px) !important;
+    }
+
+    .select2-container--bootstrap-5.select2-container--focus .select2-selection {
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+    }
+
+    .select2-container--bootstrap-5 .select2-dropdown {
+        border-radius: 8px !important;
+        border: 2px solid #667eea !important;
+    }
+
+    @media (max-width: 768px) {
+        .zk-form-header {
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .form-container {
+            padding: 1.5rem;
+        }
+
+        .form-section {
+            padding: 1rem;
+        }
+
+        .form-actions {
+            text-align: center;
+        }
+
+        .btn-save, .btn-cancel {
+            width: 100%;
+            margin-bottom: 0.5rem;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .form-container {
+            padding: 1rem;
+        }
+
+        .form-section {
+            padding: 0.75rem;
+        }
+
+        .section-title {
+            font-size: 1rem;
+        }
+
+        .form-label {
+            font-size: 0.9rem;
+        }
+
+        .form-control, .form-select {
+            font-size: 0.9rem;
+            padding: 0.625rem 0.875rem;
+        }
+    }
+
+    /* Animation for form validation */
+    .shake {
+        animation: shake 0.5s ease-in-out;
+    }
+
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        75% { transform: translateX(5px); }
+    }
+
+    /* Success animation */
+    .success-bounce {
+        animation: successBounce 0.6s ease-in-out;
+    }
+
+    @keyframes successBounce {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="zk-form-header">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h1 class="h2 mb-2">
+                            <i class="fas fa-plus-circle me-3"></i>
+                            {{ title }}
+                        </h1>
+                        <p class="mb-0 opacity-90">
+                            إنشاء ربط جديد بين موظف وجهاز الحضور والانصراف البيومتري
+                        </p>
+                        <nav aria-label="breadcrumb" class="mt-2">
+                            <ol class="breadcrumb bg-transparent p-0 mb-0">
+                                <li class="breadcrumb-item"><a href="{% url 'accounts:home' %}" class="text-white-50">الرئيسية</a></li>
+                                <li class="breadcrumb-item"><a href="{% url 'attendance:zk_devices_list' %}" class="text-white-50">أجهزة ZK</a></li>
+                                <li class="breadcrumb-item"><a href="{% url 'attendance:zk_employee_mapping' %}" class="text-white-50">ربط الموظفين</a></li>
+                                <li class="breadcrumb-item active text-white">إضافة ربط جديد</li>
+                            </ol>
+                        </nav>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <div class="d-flex gap-2 justify-content-md-end justify-content-center">
+                            <a href="{% url 'attendance:zk_employee_mapping' %}" class="btn btn-light btn-sm">
+                                <i class="fas fa-arrow-right me-1"></i>
+                                العودة للقائمة
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Container -->
+    <div class="row">
+        <div class="col-12">
+            <div class="form-container">
+                <form method="post" id="mappingForm" novalidate>
+                    {% csrf_token %}
+
+                    <!-- Employee Selection Section -->
+                    <div class="form-section">
+                        <h5 class="section-title">
+                            <i class="fas fa-user text-primary"></i>
+                            معلومات الموظف
+                        </h5>
+
+                        <div class="form-group">
+                            <label for="{{ form.employee.id_for_label }}" class="form-label">
+                                <i class="fas fa-user-tie"></i>
+                                {{ form.employee.label }}
+                                <span class="required">*</span>
+                            </label>
+                            {{ form.employee|add_class:"form-control" }}
+                            {% if form.employee.errors %}
+                                <div class="invalid-feedback">
+                                    <i class="fas fa-exclamation-circle me-1"></i>
+                                    {{ form.employee.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-help">
+                                اختر الموظف الذي تريد ربطه بجهاز ZK
+                            </div>
+
+                            <!-- Employee Info Card (will be populated by JavaScript) -->
+                            <div class="employee-info-card" id="employeeInfoCard">
+                                <div class="info-item">
+                                    <span class="info-label">كود الموظف:</span>
+                                    <span class="info-value" id="employeeCode">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">القسم:</span>
+                                    <span class="info-value" id="employeeDept">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">المنصب:</span>
+                                    <span class="info-value" id="employeePosition">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Device Selection Section -->
+                    <div class="form-section">
+                        <h5 class="section-title">
+                            <i class="fas fa-fingerprint text-info"></i>
+                            معلومات الجهاز
+                        </h5>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.device.id_for_label }}" class="form-label">
+                                        <i class="fas fa-desktop"></i>
+                                        {{ form.device.label }}
+                                        <span class="required">*</span>
+                                    </label>
+                                    {{ form.device|add_class:"form-select" }}
+                                    {% if form.device.errors %}
+                                        <div class="invalid-feedback">
+                                            <i class="fas fa-exclamation-circle me-1"></i>
+                                            {{ form.device.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-help">
+                                        اختر جهاز ZK المراد ربط الموظف به
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.device_user_id.id_for_label }}" class="form-label">
+                                        <i class="fas fa-hashtag"></i>
+                                        {{ form.device_user_id.label }}
+                                        <span class="required">*</span>
+                                    </label>
+                                    {{ form.device_user_id|add_class:"form-control" }}
+                                    {% if form.device_user_id.errors %}
+                                        <div class="invalid-feedback">
+                                            <i class="fas fa-exclamation-circle me-1"></i>
+                                            {{ form.device_user_id.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                    <div class="form-help">
+                                        معرف المستخدم الفريد في الجهاز (رقم فقط)
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Device Info Card (will be populated by JavaScript) -->
+                        <div class="device-info-card" id="deviceInfoCard">
+                            <div class="info-item">
+                                <span class="info-label">عنوان IP:</span>
+                                <span class="info-value" id="deviceIP">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">المنفذ:</span>
+                                <span class="info-value" id="devicePort">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">الحالة:</span>
+                                <span class="info-value" id="deviceStatus">-</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">الموقع:</span>
+                                <span class="info-value" id="deviceLocation">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Status Section -->
+                    <div class="form-section">
+                        <h5 class="section-title">
+                            <i class="fas fa-toggle-on text-success"></i>
+                            إعدادات الربط
+                        </h5>
+
+                        <div class="form-group">
+                            <div class="form-check">
+                                {{ form.is_active }}
+                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                    <i class="fas fa-check-circle text-success"></i>
+                                    {{ form.is_active.label }}
+                                </label>
+                            </div>
+                            {% if form.is_active.errors %}
+                                <div class="invalid-feedback">
+                                    <i class="fas fa-exclamation-circle me-1"></i>
+                                    {{ form.is_active.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-help">
+                                تفعيل الربط يسمح للموظف باستخدام الجهاز فوراً
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Errors -->
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger" role="alert">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>خطأ في النموذج:</strong>
+                        {% for error in form.non_field_errors %}
+                            <div>{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap">
+                            <div class="mb-2 mb-md-0">
+                                <small class="text-muted">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    جميع الحقول المطلوبة مميزة بعلامة <span class="text-danger">*</span>
+                                </small>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'attendance:zk_employee_mapping' %}" class="btn btn-cancel">
+                                    <i class="fas fa-times me-2"></i>
+                                    إلغاء
+                                </a>
+                                <button type="submit" class="btn btn-save" id="saveBtn">
+                                    <i class="fas fa-save me-2"></i>
+                                    حفظ الربط
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Select2 for employee dropdown
+    $('#{{ form.employee.id_for_label }}').select2({
+        theme: 'bootstrap-5',
+        placeholder: 'اختر الموظف',
+        allowClear: true,
+        dir: 'rtl',
+        language: {
+            noResults: function() {
+                return 'لا توجد نتائج';
+            },
+            searching: function() {
+                return 'جاري البحث...';
+            },
+            loadingMore: function() {
+                return 'جاري تحميل المزيد...';
+            }
+        }
+    });
+
+    // Initialize form validation
+    initializeFormValidation();
+
+    // Initialize real-time feedback
+    initializeRealTimeFeedback();
+
+    // Initialize info cards
+    initializeInfoCards();
+});
+
+// Form validation
+function initializeFormValidation() {
+    const form = document.getElementById('mappingForm');
+    const saveBtn = document.getElementById('saveBtn');
+
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        if (validateForm()) {
+            // Show loading state
+            saveBtn.classList.add('btn-loading');
+            saveBtn.disabled = true;
+
+            // Submit form after a short delay to show loading animation
+            setTimeout(() => {
+                form.submit();
+            }, 500);
+        } else {
+            // Shake form on validation error
+            form.classList.add('shake');
+            setTimeout(() => {
+                form.classList.remove('shake');
+            }, 500);
+        }
+    });
+}
+
+// Real-time form validation
+function validateForm() {
+    let isValid = true;
+    const requiredFields = ['{{ form.employee.id_for_label }}', '{{ form.device.id_for_label }}', '{{ form.device_user_id.id_for_label }}'];
+
+    requiredFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        const value = field.value.trim();
+
+        if (!value) {
+            markFieldInvalid(field, 'هذا الحقل مطلوب');
+            isValid = false;
+        } else {
+            markFieldValid(field);
+        }
+    });
+
+    // Validate device_user_id format (numbers only)
+    const deviceUserIdField = document.getElementById('{{ form.device_user_id.id_for_label }}');
+    const deviceUserId = deviceUserIdField.value.trim();
+
+    if (deviceUserId && !/^\d+$/.test(deviceUserId)) {
+        markFieldInvalid(deviceUserIdField, 'يجب أن يحتوي على أرقام فقط');
+        isValid = false;
+    }
+
+    return isValid;
+}
+
+// Mark field as invalid
+function markFieldInvalid(field, message) {
+    field.classList.remove('is-valid');
+    field.classList.add('is-invalid');
+
+    // Remove existing feedback
+    const existingFeedback = field.parentNode.querySelector('.invalid-feedback.dynamic');
+    if (existingFeedback) {
+        existingFeedback.remove();
+    }
+
+    // Add new feedback
+    const feedback = document.createElement('div');
+    feedback.className = 'invalid-feedback dynamic';
+    feedback.innerHTML = `<i class="fas fa-exclamation-circle me-1"></i>${message}`;
+    field.parentNode.appendChild(feedback);
+}
+
+// Mark field as valid
+function markFieldValid(field) {
+    field.classList.remove('is-invalid');
+    field.classList.add('is-valid');
+
+    // Remove existing feedback
+    const existingFeedback = field.parentNode.querySelector('.invalid-feedback.dynamic');
+    if (existingFeedback) {
+        existingFeedback.remove();
+    }
+}
+
+// Real-time feedback
+function initializeRealTimeFeedback() {
+    const employeeField = document.getElementById('{{ form.employee.id_for_label }}');
+    const deviceField = document.getElementById('{{ form.device.id_for_label }}');
+    const deviceUserIdField = document.getElementById('{{ form.device_user_id.id_for_label }}');
+
+    // Employee field validation
+    employeeField.addEventListener('change', function() {
+        if (this.value) {
+            markFieldValid(this);
+            updateEmployeeInfo(this.value);
+        } else {
+            markFieldInvalid(this, 'يرجى اختيار موظف');
+            hideEmployeeInfo();
+        }
+    });
+
+    // Device field validation
+    deviceField.addEventListener('change', function() {
+        if (this.value) {
+            markFieldValid(this);
+            updateDeviceInfo(this.value);
+        } else {
+            markFieldInvalid(this, 'يرجى اختيار جهاز');
+            hideDeviceInfo();
+        }
+    });
+
+    // Device User ID validation
+    deviceUserIdField.addEventListener('input', function() {
+        const value = this.value.trim();
+
+        if (!value) {
+            markFieldInvalid(this, 'هذا الحقل مطلوب');
+        } else if (!/^\d+$/.test(value)) {
+            markFieldInvalid(this, 'يجب أن يحتوي على أرقام فقط');
+        } else {
+            markFieldValid(this);
+            checkUserIdAvailability(value);
+        }
+    });
+
+    // Real-time character counter for device user ID
+    deviceUserIdField.addEventListener('input', function() {
+        const maxLength = 20; // Based on model field
+        const currentLength = this.value.length;
+
+        // Remove existing counter
+        const existingCounter = this.parentNode.querySelector('.char-counter');
+        if (existingCounter) {
+            existingCounter.remove();
+        }
+
+        // Add counter
+        const counter = document.createElement('div');
+        counter.className = 'char-counter form-help';
+        counter.innerHTML = `${currentLength}/${maxLength} حرف`;
+
+        if (currentLength > maxLength * 0.8) {
+            counter.style.color = '#ffc107';
+        }
+        if (currentLength >= maxLength) {
+            counter.style.color = '#dc3545';
+        }
+
+        this.parentNode.appendChild(counter);
+    });
+}
+
+// Initialize info cards
+function initializeInfoCards() {
+    // Initially hide info cards
+    hideEmployeeInfo();
+    hideDeviceInfo();
+}
+
+// Update employee info card
+function updateEmployeeInfo(employeeId) {
+    if (!employeeId) {
+        hideEmployeeInfo();
+        return;
+    }
+
+    // Get employee option text
+    const employeeOption = document.querySelector(`#{{ form.employee.id_for_label }} option[value="${employeeId}"]`);
+    if (employeeOption) {
+        const employeeName = employeeOption.textContent;
+
+        // Show employee info card with animation
+        const infoCard = document.getElementById('employeeInfoCard');
+
+        // Simulate fetching employee data (in real implementation, make AJAX call)
+        document.getElementById('employeeCode').textContent = employeeId;
+        document.getElementById('employeeDept').textContent = 'قسم الموارد البشرية'; // Placeholder
+        document.getElementById('employeePosition').textContent = 'موظف'; // Placeholder
+
+        infoCard.classList.add('show');
+    }
+}
+
+// Hide employee info card
+function hideEmployeeInfo() {
+    const infoCard = document.getElementById('employeeInfoCard');
+    infoCard.classList.remove('show');
+}
+
+// Update device info card
+function updateDeviceInfo(deviceId) {
+    if (!deviceId) {
+        hideDeviceInfo();
+        return;
+    }
+
+    // Get device option text
+    const deviceOption = document.querySelector(`#{{ form.device.id_for_label }} option[value="${deviceId}"]`);
+    if (deviceOption) {
+        const deviceName = deviceOption.textContent;
+
+        // Show device info card with animation
+        const infoCard = document.getElementById('deviceInfoCard');
+
+        // Simulate fetching device data (in real implementation, make AJAX call)
+        document.getElementById('deviceIP').textContent = '192.168.1.100'; // Placeholder
+        document.getElementById('devicePort').textContent = '4370'; // Placeholder
+        document.getElementById('deviceStatus').textContent = 'نشط'; // Placeholder
+        document.getElementById('deviceLocation').textContent = 'المدخل الرئيسي'; // Placeholder
+
+        infoCard.classList.add('show');
+    }
+}
+
+// Hide device info card
+function hideDeviceInfo() {
+    const infoCard = document.getElementById('deviceInfoCard');
+    infoCard.classList.remove('show');
+}
+
+// Check user ID availability
+function checkUserIdAvailability(userId) {
+    const deviceId = document.getElementById('{{ form.device.id_for_label }}').value;
+
+    if (!deviceId || !userId) return;
+
+    // Simulate checking availability (in real implementation, make AJAX call)
+    setTimeout(() => {
+        // For demo purposes, assume user ID "123" is already taken
+        if (userId === '123') {
+            const field = document.getElementById('{{ form.device_user_id.id_for_label }}');
+            markFieldInvalid(field, 'معرف المستخدم مستخدم بالفعل في هذا الجهاز');
+        }
+    }, 500);
+}
+
+// Show notification function
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'info'} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'error' ? 'exclamation-circle' : type === 'success' ? 'check-circle' : 'info-circle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    // Add to page
+    document.body.appendChild(notification);
+
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+// Auto-save draft functionality (optional)
+function initializeAutoSave() {
+    const form = document.getElementById('mappingForm');
+    const formData = new FormData(form);
+
+    // Save form data to localStorage every 30 seconds
+    setInterval(() => {
+        const currentData = new FormData(form);
+        const dataObj = {};
+
+        for (let [key, value] of currentData.entries()) {
+            dataObj[key] = value;
+        }
+
+        localStorage.setItem('zk_mapping_draft', JSON.stringify(dataObj));
+    }, 30000);
+}
+
+// Load draft data on page load
+function loadDraftData() {
+    const draftData = localStorage.getItem('zk_mapping_draft');
+
+    if (draftData) {
+        try {
+            const data = JSON.parse(draftData);
+
+            // Ask user if they want to restore draft
+            if (confirm('تم العثور على بيانات محفوظة مسبقاً. هل تريد استعادتها؟')) {
+                Object.keys(data).forEach(key => {
+                    const field = document.querySelector(`[name="${key}"]`);
+                    if (field) {
+                        field.value = data[key];
+
+                        // Trigger change event for select2 fields
+                        if (field.classList.contains('select2')) {
+                            $(field).trigger('change');
+                        }
+                    }
+                });
+
+                showNotification('تم استعادة البيانات المحفوظة', 'success');
+            }
+        } catch (e) {
+            console.error('Error loading draft data:', e);
+        }
+    }
+}
+
+// Clear draft data on successful submit
+function clearDraftData() {
+    localStorage.removeItem('zk_mapping_draft');
+}
+
+// Initialize auto-save (uncomment if needed)
+// initializeAutoSave();
+// loadDraftData();
+</script>
+{% endblock %}

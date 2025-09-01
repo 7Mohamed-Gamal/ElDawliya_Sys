@@ -1,4 +1,4 @@
-{% extends 'employees/base.html' %}
+{% extends 'base.html' %}
 {% load static %}
 
 {% block title %}قائمة الموظفين - نظام الدولية{% endblock %}
@@ -101,7 +101,17 @@
                             <td>
                                 <div class="d-flex align-items-center">
                                     <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2">
-                                        {{ employee.first_name|first }}{{ employee.last_name|first }}
+                                        {% if employee.first_name and employee.last_name %}
+                                            {{ employee.first_name|first }}{{ employee.last_name|first }}
+                                        {% elif employee.first_name %}
+                                            {{ employee.first_name|first }}{{ employee.first_name|slice:"1:2"|default:"" }}
+                                        {% elif employee.last_name %}
+                                            {{ employee.last_name|first }}{{ employee.last_name|slice:"1:2"|default:"" }}
+                                        {% elif employee.emp_code %}
+                                            {{ employee.emp_code|first }}{{ employee.emp_code|slice:"1:2"|default:"" }}
+                                        {% else %}
+                                            ??
+                                        {% endif %}
                                     </div>
                                     <div>
                                         <strong>{{ employee.first_name }} {{ employee.last_name }}</strong>
@@ -143,7 +153,7 @@
                                        class="btn btn-outline-info btn-sm" title="عرض التفاصيل">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <a href="{% url 'employees:employee_edit' employee.emp_id %}" 
+                                    <a href="{% url 'employees:edit' employee.emp_id %}"
                                        class="btn btn-outline-primary btn-sm" title="تعديل">
                                         <i class="fas fa-edit"></i>
                                     </a>

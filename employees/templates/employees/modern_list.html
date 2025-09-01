@@ -1,4 +1,4 @@
-{% extends 'employees/base.html' %}
+{% extends 'base.html' %}
 {% load static %}
 
 {% block title %}إدارة الموظفين - نظام الدولية{% endblock %}
@@ -518,7 +518,17 @@
         <div class="employee-card">
             <div class="employee-header text-center">
                 <div class="employee-avatar status-{{ employee.emp_status|lower }}">
-                    {{ employee.first_name.0 }}{{ employee.last_name.0 }}
+                    {% if employee.first_name and employee.last_name %}
+                        {{ employee.first_name|first }}{{ employee.last_name|first }}
+                    {% elif employee.first_name %}
+                        {{ employee.first_name|first }}{{ employee.first_name|slice:"1:2"|default:"" }}
+                    {% elif employee.last_name %}
+                        {{ employee.last_name|first }}{{ employee.last_name|slice:"1:2"|default:"" }}
+                    {% elif employee.emp_code %}
+                        {{ employee.emp_code|first }}{{ employee.emp_code|slice:"1:2"|default:"" }}
+                    {% else %}
+                        ??
+                    {% endif %}
                 </div>
                 <div class="employee-name">{{ employee.first_name }} {{ employee.last_name }}</div>
                 <div class="employee-position">

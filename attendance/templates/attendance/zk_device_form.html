@@ -371,7 +371,7 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="{{ form.timezone.id_for_label }}" class="form-label required-field">
+                                    <label for="{{ form.timezone.id_for_label }}" class="form-label">
                                         المنطقة الزمنية
                                     </label>
                                     {{ form.timezone }}
@@ -382,6 +382,9 @@
                                             {% endfor %}
                                         </div>
                                     {% endif %}
+                                    <small class="form-text text-muted">
+                                        اختياري - سيتم استخدام المنطقة الزمنية الافتراضية إذا لم يتم تحديدها
+                                    </small>
                                 </div>
                             </div>
                         </div>
@@ -443,7 +446,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Form validation on submit
     form.addEventListener('submit', function(e) {
         let isValid = true;
-        const requiredFields = form.querySelectorAll('[required]');
+        // Get required fields but exclude timezone field
+        const requiredFields = Array.from(form.querySelectorAll('[required]')).filter(field =>
+            field.id !== '{{ form.timezone.id_for_label }}'
+        );
 
         requiredFields.forEach(field => {
             if (!field.value.trim()) {

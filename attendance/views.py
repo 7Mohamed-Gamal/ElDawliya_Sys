@@ -2,7 +2,8 @@ from datetime import datetime, date, timedelta
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Q, Count, Sum, Avg
+from django.db.models import Q, Count, Sum, Avg, Value, CharField
+from django.db.models.functions import Concat, Coalesce
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.utils import timezone
@@ -43,7 +44,18 @@ class AttendanceRecordListView(LoginRequiredMixin, ListView):
     paginate_by = 30
 
     def get_queryset(self):
-        queryset = AttendanceRecord.objects.select_related('employee')
+        queryset = AttendanceRecord.objects.select_related('employee').annotate(
+            employee_display_name=Concat(
+                Coalesce('employee__first_name', Value('')),
+                Value(' '),
+                Coalesce('employee__second_name', Value('')),
+                Value(' '),
+                Coalesce('employee__third_name', Value('')),
+                Value(' '),
+                Coalesce('employee__last_name', Value('')),
+                output_field=CharField()
+            )
+        )
         date_from = self.request.GET.get('date_from')
         date_to = self.request.GET.get('date_to')
         employee_id = self.request.GET.get('employee')
@@ -58,7 +70,7 @@ class AttendanceRecordListView(LoginRequiredMixin, ListView):
         if record_type:
             queryset = queryset.filter(record_type=record_type)
 
-        return queryset.order_by('-date', 'employee__emp_full_name')
+        return queryset.order_by('-date', 'employee_display_name')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -71,7 +83,13 @@ class AttendanceRecordListView(LoginRequiredMixin, ListView):
 def mark_attendance(request):
     """View for marking attendance"""
     if request.method == 'POST':
-        employee = get_object_or_404(Employee, user=request.user)
+        # Check if admin is marking attendance for another employee
+        employee_id = request.POST.get('employee_id')
+        if employee_id and request.user.is_staff:
+            employee = get_object_or_404(Employee, emp_id=employee_id)
+        else:
+            employee = get_object_or_404(Employee, user=request.user)
+
         record_type = request.POST.get('record_type')
 
         # Check if employee has already marked attendance for today
@@ -97,8 +115,23 @@ def mark_attendance(request):
         messages.success(request, _('تم تسجيل الحضور/الانصراف بنجاح'))
         return redirect('attendance:dashboard')
 
+    # Get active employees for staff users
+    employees = Employee.objects.filter(emp_status='Active').annotate(
+        display_name=Concat(
+            Coalesce('first_name', Value('')),
+            Value(' '),
+            Coalesce('second_name', Value('')),
+            Value(' '),
+            Coalesce('third_name', Value('')),
+            Value(' '),
+            Coalesce('last_name', Value('')),
+            output_field=CharField()
+        )
+    ).order_by('display_name')
+
     return render(request, 'attendance/mark_attendance.html', {
-        'record_types': AttendanceRecord.RECORD_TYPE_CHOICES
+        'record_types': AttendanceRecord.RECORD_TYPE_CHOICES,
+        'employees': employees
     })
 
 
@@ -187,7 +220,7 @@ def attendance_dashboard(request):
     departments = Department.objects.filter(is_active=True)
     
     for dept in departments:
-        dept_employees = Employee.objects.filter(department=dept, emp_status='Active')
+        dept_employees = Employee.objects.filter(dept=dept, emp_status='Active')
         dept_attendance = EmployeeAttendance.objects.filter(
             emp__in=dept_employees,
             att_date=today
@@ -1015,11 +1048,22 @@ def zk_device_test(request, device_id):
 def zk_device_sync(request, device_id):
     """مزامنة بيانات جهاز ZK"""
     device = get_object_or_404(ZKDevice, device_id=device_id)
-    
+
     if request.method == 'POST':
-        days = int(request.POST.get('days', 7))
+        import json
+        try:
+            # Try to parse JSON data first
+            if request.content_type == 'application/json':
+                data = json.loads(request.body)
+                days = int(data.get('days', 7))
+            else:
+                # Fallback to form data
+                days = int(request.POST.get('days', 7))
+        except (json.JSONDecodeError, ValueError):
+            days = 7
+
         result = manual_sync_device(device_id, days)
-        
+
         if result['success']:
             messages.success(
                 request,
@@ -1031,7 +1075,7 @@ def zk_device_sync(request, device_id):
                 request,
                 f'فشلت عملية المزامنة: {result.get("error_message", "خطأ غير معروف")}'
             )
-        
+
         return JsonResponse(result)
     
     context = {

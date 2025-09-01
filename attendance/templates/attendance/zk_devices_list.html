@@ -252,6 +252,11 @@
     @media (max-width: 768px) {
         .zk-devices-header {
             padding: 1.5rem;
+            text-align: center;
+        }
+
+        .zk-devices-header h1 {
+            font-size: 1.5rem;
         }
 
         .device-details {
@@ -260,16 +265,130 @@
 
         .device-actions {
             justify-content: center;
+            gap: 0.25rem;
         }
 
         .device-actions .btn {
             flex: 1;
-            min-width: 120px;
+            min-width: 100px;
+            font-size: 0.875rem;
+            padding: 0.5rem 0.75rem;
         }
 
         .stat-card {
             margin-bottom: 1rem;
         }
+
+        .device-header {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .device-icon {
+            margin-right: 0;
+            margin-bottom: 1rem;
+        }
+
+        .device-info {
+            margin-bottom: 1rem;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .zk-devices-header {
+            padding: 1rem;
+        }
+
+        .devices-container {
+            padding: 1rem;
+        }
+
+        .device-card {
+            padding: 1rem;
+        }
+
+        .device-actions .btn {
+            min-width: 80px;
+            font-size: 0.8rem;
+            padding: 0.4rem 0.6rem;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+        }
+
+        .detail-item {
+            padding: 0.5rem;
+            font-size: 0.875rem;
+        }
+    }
+
+    /* Enhanced hover effects */
+    .device-card {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .device-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Loading states */
+    .btn-loading {
+        position: relative;
+        pointer-events: none;
+    }
+
+    .btn-loading::after {
+        content: '';
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        top: 50%;
+        left: 50%;
+        margin-left: -8px;
+        margin-top: -8px;
+        border: 2px solid transparent;
+        border-top-color: currentColor;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Status indicators */
+    .status-indicator {
+        position: relative;
+        display: inline-block;
+    }
+
+    .status-indicator::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #28a745;
+        animation: pulse 2s infinite;
+    }
+
+    .status-indicator.offline::before {
+        background: #dc3545;
+    }
+
+    .status-indicator.maintenance::before {
+        background: #ffc107;
+    }
+
+    @keyframes pulse {
+        0% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.5; transform: scale(1.2); }
+        100% { opacity: 1; transform: scale(1); }
     }
 </style>
 {% endblock %}
@@ -508,44 +627,53 @@
     </div>
 
     <!-- Quick Actions -->
-    <div class=\"row\">
-        <div class=\"col-md-4\">
-            <div class=\"card border-left-primary shadow h-100\">
-                <div class=\"card-body\">
-                    <h6 class=\"font-weight-bold text-primary mb-3\">
-                        <i class=\"fas fa-database\"></i> البيانات الخام
-                    </h6>
-                    <p class=\"text-muted\">عرض وإدارة البيانات الخام من أجهزة ZK</p>
-                    <a href=\"{% url 'attendance:zk_raw_data' %}\" class=\"btn btn-primary btn-sm\">
-                        <i class=\"fas fa-eye\"></i> عرض البيانات
+    <div class="row mt-4">
+        <div class="col-md-4 mb-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <i class="fas fa-database text-primary fa-lg"></i>
+                        </div>
+                    </div>
+                    <h6 class="fw-bold text-primary mb-3">البيانات الخام</h6>
+                    <p class="text-muted small mb-3">عرض وإدارة البيانات الخام من أجهزة ZK</p>
+                    <a href="{% url 'attendance:zk_raw_data' %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-eye me-1"></i> عرض البيانات
                     </a>
                 </div>
             </div>
         </div>
-        
-        <div class=\"col-md-4\">
-            <div class=\"card border-left-success shadow h-100\">
-                <div class=\"card-body\">
-                    <h6 class=\"font-weight-bold text-success mb-3\">
-                        <i class=\"fas fa-link\"></i> ربط الموظفين
-                    </h6>
-                    <p class=\"text-muted\">ربط الموظفين بأجهزة ZK</p>
-                    <a href=\"{% url 'attendance:zk_employee_mapping' %}\" class=\"btn btn-success btn-sm\">
-                        <i class=\"fas fa-users\"></i> إدارة الربط
+
+        <div class="col-md-4 mb-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <div class="rounded-circle bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <i class="fas fa-link text-success fa-lg"></i>
+                        </div>
+                    </div>
+                    <h6 class="fw-bold text-success mb-3">ربط الموظفين</h6>
+                    <p class="text-muted small mb-3">ربط الموظفين بأجهزة ZK</p>
+                    <a href="{% url 'attendance:zk_employee_mapping' %}" class="btn btn-success btn-sm">
+                        <i class="fas fa-users me-1"></i> إدارة الربط
                     </a>
                 </div>
             </div>
         </div>
-        
-        <div class=\"col-md-4\">
-            <div class=\"card border-left-info shadow h-100\">
-                <div class=\"card-body\">
-                    <h6 class=\"font-weight-bold text-info mb-3\">
-                        <i class=\"fas fa-list-alt\"></i> سجلات المعالجة
-                    </h6>
-                    <p class=\"text-muted\">عرض سجلات معالجة البيانات</p>
-                    <a href=\"{% url 'attendance:zk_processing_logs' %}\" class=\"btn btn-info btn-sm\">
-                        <i class=\"fas fa-clipboard-list\"></i> عرض السجلات
+
+        <div class="col-md-4 mb-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <div class="rounded-circle bg-info bg-opacity-10 d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <i class="fas fa-list-alt text-info fa-lg"></i>
+                        </div>
+                    </div>
+                    <h6 class="fw-bold text-info mb-3">سجلات المعالجة</h6>
+                    <p class="text-muted small mb-3">عرض سجلات معالجة البيانات</p>
+                    <a href="{% url 'attendance:zk_processing_logs' %}" class="btn btn-info btn-sm">
+                        <i class="fas fa-clipboard-list me-1"></i> عرض السجلات
                     </a>
                 </div>
             </div>
@@ -554,29 +682,36 @@
 </div>
 
 <!-- Delete Confirmation Modal -->
-<div class=\"modal fade\" id=\"deleteModal\" tabindex=\"-1\" aria-labelledby=\"deleteModalLabel\" aria-hidden=\"true\">
-    <div class=\"modal-dialog\">
-        <div class=\"modal-content\">
-            <div class=\"modal-header\">
-                <h5 class=\"modal-title\" id=\"deleteModalLabel\">
-                    <i class=\"fas fa-exclamation-triangle text-danger\"></i>
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
                     تأكيد الحذف
                 </h5>
-                <button type=\"button\" class=\"btn-close\" data-bs-dismiss=\"modal\" aria-label=\"Close\"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class=\"modal-body\">
-                <p>هل أنت متأكد من حذف الجهاز <strong id=\"deviceNameToDelete\"></strong>؟</p>
-                <p class=\"text-danger\">
-                    <i class=\"fas fa-warning\"></i>
-                    تحذير: سيتم حذف جميع البيانات المرتبطة بهذا الجهاز!
-                </p>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <i class="fas fa-exclamation-triangle text-danger fa-3x mb-3"></i>
+                    <h6>هل أنت متأكد من حذف الجهاز؟</h6>
+                </div>
+                <div class="alert alert-warning">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>الجهاز:</strong> <span id="deviceNameToDelete"></span>
+                </div>
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>تحذير:</strong> سيتم حذف جميع البيانات المرتبطة بهذا الجهاز نهائياً!
+                </div>
             </div>
-            <div class=\"modal-footer\">
-                <button type=\"button\" class=\"btn btn-secondary\" data-bs-dismiss=\"modal\">
-                    <i class=\"fas fa-times\"></i> إلغاء
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i> إلغاء
                 </button>
-                <button type=\"button\" class=\"btn btn-danger\" id=\"confirmDeleteBtn\">
-                    <i class=\"fas fa-trash\"></i> حذف
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-2"></i> حذف نهائياً
                 </button>
             </div>
         </div>
@@ -584,25 +719,28 @@
 </div>
 
 <!-- Sync Progress Modal -->
-<div class=\"modal fade\" id=\"syncModal\" tabindex=\"-1\" aria-labelledby=\"syncModalLabel\" aria-hidden=\"true\">
-    <div class=\"modal-dialog\">
-        <div class=\"modal-content\">
-            <div class=\"modal-header\">
-                <h5 class=\"modal-title\" id=\"syncModalLabel\">
-                    <i class=\"fas fa-sync fa-spin text-primary\"></i>
+<div class="modal fade" id="syncModal" tabindex="-1" aria-labelledby="syncModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="syncModalLabel">
+                    <i class="fas fa-sync fa-spin me-2"></i>
                     جاري المزامنة
                 </h5>
             </div>
-            <div class=\"modal-body\">
-                <div class=\"text-center\">
-                    <div class=\"spinner-border text-primary mb-3\" role=\"status\">
-                        <span class=\"visually-hidden\">جاري المزامنة...</span>
+            <div class="modal-body">
+                <div class="text-center py-4">
+                    <div class="mb-4">
+                        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                            <span class="visually-hidden">جاري المزامنة...</span>
+                        </div>
                     </div>
-                    <p id=\"syncMessage\">جاري مزامنة البيانات، يرجى الانتظار...</p>
-                    <div class=\"progress\">
-                        <div class=\"progress-bar progress-bar-striped progress-bar-animated\" 
-                             role=\"progressbar\" style=\"width: 100%\"></div>
+                    <h6 id="syncMessage" class="mb-3">جاري مزامنة البيانات، يرجى الانتظار...</h6>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
+                             role="progressbar" style="width: 100%"></div>
                     </div>
+                    <small class="text-muted mt-2 d-block">قد تستغرق هذه العملية بضع دقائق</small>
                 </div>
             </div>
         </div>
@@ -744,9 +882,13 @@ function updateOverviewStats() {
     }
     {% endfor %}
     
-    document.getElementById('connectedDevicesCount').textContent = connectedCount;
-    document.getElementById('unprocessedDataCount').textContent = totalUnprocessed;
-    document.getElementById('lastSyncTime').textContent = new Date().toLocaleString('ar-EG');
+    const connectedElement = document.getElementById('connectedDevicesCount');
+    const unprocessedElement = document.getElementById('unprocessedDataCount');
+    const offlineElement = document.getElementById('offlineDevices');
+
+    if (connectedElement) connectedElement.textContent = connectedCount;
+    if (unprocessedElement) unprocessedElement.textContent = totalUnprocessed;
+    if (offlineElement) offlineElement.textContent = {{ devices|length }} - connectedCount;
 }
 
 // Test device connection
@@ -869,16 +1011,45 @@ function deleteDevice(deviceId) {
     .then(response => {
         if (response.ok) {
             deleteModal.hide();
-            document.getElementById(`device-row-${deviceId}`).remove();
-            alert('تم حذف الجهاز بنجاح');
+            const deviceCard = document.getElementById(`device-card-${deviceId}`);
+            if (deviceCard) {
+                deviceCard.remove();
+                // Update statistics
+                updateOverviewStats();
+                // Show success message
+                showNotification('تم حذف الجهاز بنجاح', 'success');
+            }
         } else {
-            alert('فشل في حذف الجهاز');
+            showNotification('فشل في حذف الجهاز', 'error');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('حدث خطأ في حذف الجهاز');
+        showNotification('حدث خطأ في حذف الجهاز', 'error');
     });
+}
+
+// Show notification function
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'info'} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'error' ? 'exclamation-circle' : type === 'success' ? 'check-circle' : 'info-circle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    // Add to page
+    document.body.appendChild(notification);
+
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
 }
 </script>
 {% endblock %}

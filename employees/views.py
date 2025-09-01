@@ -3,8 +3,13 @@ from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q, Count
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+from django.utils.decorators import method_decorator
+from django.conf import settings
+import os
+import mimetypes
 from .models import Employee, EmployeeBankAccount, EmployeeDocument
 from org.models import Department, Job, Branch
 from .forms import EmployeeForm
@@ -638,14 +643,169 @@ def delete_document(request, doc_id):
     """حذف مستند"""
     document = get_object_or_404(EmployeeDocument, doc_id=doc_id)
     emp_id = document.emp.emp_id
-    
+
     try:
         document.delete()
         messages.success(request, 'تم حذف المستند بنجاح.')
+        return JsonResponse({'success': True, 'message': 'تم حذف المستند بنجاح.'})
     except Exception as e:
         messages.error(request, f'حدث خطأ أثناء حذف المستند: {str(e)}')
-    
-    return redirect('employees:employee_documents', emp_id=emp_id)
+        return JsonResponse({'success': False, 'message': f'حدث خطأ أثناء حذف المستند: {str(e)}'})
+
+
+@login_required
+def download_document(request, doc_id):
+    """تحميل مستند"""
+    document = get_object_or_404(EmployeeDocument, doc_id=doc_id)
+
+    if document.file_data:
+        response = HttpResponse(document.file_data, content_type='application/octet-stream')
+        filename = f"{document.doc_name or document.doc_type}.{document.file_ext or 'bin'}"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+    else:
+        messages.error(request, 'الملف غير موجود.')
+        return redirect('employees:detail', emp_id=document.emp.emp_id)
+
+
+@login_required
+def preview_document(request, doc_id):
+    """معاينة مستند"""
+    document = get_object_or_404(EmployeeDocument, doc_id=doc_id)
+
+    if document.file_data:
+        # تحديد نوع المحتوى بناءً على امتداد الملف
+        content_type = 'application/octet-stream'
+        if document.file_ext:
+            if document.file_ext.lower() == 'pdf':
+                content_type = 'application/pdf'
+            elif document.file_ext.lower() in ['jpg', 'jpeg']:
+                content_type = 'image/jpeg'
+            elif document.file_ext.lower() == 'png':
+                content_type = 'image/png'
+            elif document.file_ext.lower() == 'gif':
+                content_type = 'image/gif'
+
+        response = HttpResponse(document.file_data, content_type=content_type)
+        filename = f"{document.doc_name or document.doc_type}.{document.file_ext or 'bin'}"
+        response['Content-Disposition'] = f'inline; filename="{filename}"'
+        return response
+    else:
+        messages.error(request, 'الملف غير موجود.')
+        return redirect('employees:detail', emp_id=document.emp.emp_id)
+
+
+@login_required
+@require_http_methods(["POST"])
+def ajax_upload_document(request, emp_id):
+    """رفع مستند عبر AJAX"""
+    import logging
+    from .forms import EmployeeDocumentForm
+
+    logger = logging.getLogger(__name__)
+
+    try:
+        employee = get_object_or_404(Employee, emp_id=emp_id)
+        logger.info(f"Processing document upload for employee {emp_id}")
+
+        if request.method == 'POST':
+            logger.info(f"POST data: {request.POST}")
+            logger.info(f"FILES data: {list(request.FILES.keys())}")
+
+            form = EmployeeDocumentForm(request.POST, request.FILES)
+            if form.is_valid():
+                logger.info("Form is valid, processing upload")
+
+                document = form.save(commit=False)
+                document.emp = employee
+
+                # معالجة الملف المرفوع
+                file_upload = form.cleaned_data.get('file_upload')
+                if file_upload:
+                    logger.info(f"Processing file: {file_upload.name}, size: {file_upload.size}")
+
+                    document.file_data = file_upload.read()
+                    document.file_ext = file_upload.name.split('.')[-1].lower()
+
+                    # حساب حجم الملف
+                    file_size = len(document.file_data)
+                    logger.info(f"File size after reading: {file_size} bytes")
+
+                    # التحقق من حجم الملف (10 ميجابايت كحد أقصى)
+                    if file_size > 10 * 1024 * 1024:
+                        logger.warning(f"File too large: {file_size} bytes")
+                        return JsonResponse({
+                            'success': False,
+                            'message': 'حجم الملف يجب أن يكون أقل من 10 ميجابايت.'
+                        })
+                else:
+                    logger.warning("No file uploaded")
+                    return JsonResponse({
+                        'success': False,
+                        'message': 'لم يتم اختيار ملف للرفع.'
+                    })
+
+                # حفظ المستند
+                document.save()
+                logger.info(f"Document saved successfully with ID: {document.doc_id}")
+
+                # إرجاع بيانات المستند الجديد
+                return JsonResponse({
+                    'success': True,
+                    'message': 'تم رفع المستند بنجاح.',
+                    'document': {
+                        'id': document.doc_id,
+                        'type': document.doc_type,
+                        'name': document.doc_name or 'غير محدد',
+                        'upload_date': document.upload_date.strftime('%d/%m/%Y'),
+                        'file_ext': document.file_ext,
+                        'notes': document.notes or ''
+                    }
+                })
+            else:
+                logger.error(f"Form validation failed: {form.errors}")
+                return JsonResponse({
+                    'success': False,
+                    'message': 'يرجى تصحيح الأخطاء في النموذج.',
+                    'errors': form.errors
+                })
+
+        return JsonResponse({'success': False, 'message': 'طريقة الطلب غير صحيحة.'})
+
+    except Exception as e:
+        logger.error(f"Error in ajax_upload_document: {str(e)}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'message': f'حدث خطأ أثناء رفع المستند: {str(e)}'
+        })
+
+
+@login_required
+def test_upload_endpoint(request, emp_id):
+    """Test endpoint to verify upload functionality"""
+    if request.method == 'GET':
+        return JsonResponse({
+            'status': 'ok',
+            'emp_id': emp_id,
+            'method': request.method,
+            'user': str(request.user),
+            'csrf_token': request.META.get('CSRF_COOKIE')
+        })
+    elif request.method == 'POST':
+        return JsonResponse({
+            'status': 'post_received',
+            'emp_id': emp_id,
+            'post_data': dict(request.POST),
+            'files': list(request.FILES.keys()),
+            'user': str(request.user)
+        })
+
+
+@login_required
+def test_upload_page(request, emp_id):
+    """Test page for document upload debugging"""
+    employee = get_object_or_404(Employee, emp_id=emp_id)
+    return render(request, 'employees/test_upload.html', {'employee': employee})
 
 
 # Error Handlers

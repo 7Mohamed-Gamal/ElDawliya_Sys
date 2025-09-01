@@ -1,0 +1,857 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}البيانات الخام من أجهزة ZK{% endblock %}
+
+{% block extra_css %}
+<style>
+    .zk-raw-data-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+    }
+
+    .filters-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .data-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        padding: 2rem;
+    }
+
+    .filter-card {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid #e9ecef;
+    }
+
+    .stats-row {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 0.5rem;
+    }
+
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .raw-data-table {
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .raw-data-table thead {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+    }
+
+    .raw-data-table thead th {
+        border: none;
+        padding: 1rem 0.75rem;
+        font-weight: 600;
+        text-align: center;
+    }
+
+    .raw-data-table tbody td {
+        padding: 0.875rem 0.75rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f3f4;
+        text-align: center;
+    }
+
+    .raw-data-table tbody tr:hover {
+        background-color: #f8f9fa;
+        transform: scale(1.01);
+        transition: all 0.2s ease;
+    }
+
+    .punch-type-badge {
+        padding: 0.375rem 0.75rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.75rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .punch-type-in {
+        background: linear-gradient(135deg, #d4edda, #c3e6cb);
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .punch-type-out {
+        background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .punch-type-break {
+        background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+
+    .punch-type-overtime {
+        background: linear-gradient(135deg, #d1ecf1, #bee5eb);
+        color: #0c5460;
+        border: 1px solid #bee5eb;
+    }
+
+    .processed-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .processed-yes {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .processed-no {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .device-badge {
+        background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+        color: #1565c0;
+        padding: 0.25rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+
+    .employee-info {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .employee-name {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .employee-code {
+        font-size: 0.75rem;
+        color: #6c757d;
+        background: #f8f9fa;
+        padding: 0.125rem 0.5rem;
+        border-radius: 8px;
+    }
+
+    .timestamp-info {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .timestamp-date {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .timestamp-time {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #6c757d;
+    }
+
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        color: #dee2e6;
+    }
+
+    .pagination-container {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-top: 2rem;
+    }
+
+    .export-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-export {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        border: none;
+        color: white;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .btn-export:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(40,167,69,0.3);
+        color: white;
+    }
+
+    @media (max-width: 768px) {
+        .zk-raw-data-header {
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .data-container {
+            padding: 1rem;
+        }
+
+        .raw-data-table {
+            font-size: 0.875rem;
+        }
+
+        .raw-data-table thead th,
+        .raw-data-table tbody td {
+            padding: 0.5rem 0.25rem;
+        }
+
+        .employee-info,
+        .timestamp-info {
+            font-size: 0.8rem;
+        }
+
+        .export-buttons {
+            justify-content: center;
+        }
+
+        .stats-row {
+            padding: 0.75rem;
+        }
+
+        .stat-number {
+            font-size: 1.25rem;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .raw-data-table {
+            font-size: 0.75rem;
+        }
+
+        .punch-type-badge,
+        .processed-badge,
+        .device-badge {
+            font-size: 0.65rem;
+            padding: 0.2rem 0.4rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="zk-raw-data-header">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h1 class="h2 mb-2">
+                            <i class="fas fa-database me-3"></i>
+                            البيانات الخام من أجهزة ZK
+                        </h1>
+                        <p class="mb-0 opacity-90">
+                            عرض وإدارة البيانات الخام المستلمة من أجهزة الحضور والانصراف
+                        </p>
+                        <nav aria-label="breadcrumb" class="mt-2">
+                            <ol class="breadcrumb bg-transparent p-0 mb-0">
+                                <li class="breadcrumb-item"><a href="{% url 'accounts:home' %}" class="text-white-50">الرئيسية</a></li>
+                                <li class="breadcrumb-item"><a href="{% url 'attendance:zk_devices_list' %}" class="text-white-50">أجهزة ZK</a></li>
+                                <li class="breadcrumb-item active text-white">البيانات الخام</li>
+                            </ol>
+                        </nav>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <div class="export-buttons justify-content-md-end justify-content-center">
+                            <button type="button" class="btn btn-export btn-sm" onclick="exportData('csv')">
+                                <i class="fas fa-file-csv me-1"></i>
+                                تصدير CSV
+                            </button>
+                            <button type="button" class="btn btn-export btn-sm" onclick="exportData('excel')">
+                                <i class="fas fa-file-excel me-1"></i>
+                                تصدير Excel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="row">
+        <div class="col-12">
+            <div class="filters-container">
+                <h5 class="mb-3">
+                    <i class="fas fa-filter text-primary me-2"></i>
+                    تصفية البيانات
+                </h5>
+                <form method="get" class="filter-card">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <label for="device" class="form-label">الجهاز</label>
+                            <select class="form-select" id="device" name="device">
+                                <option value="">جميع الأجهزة</option>
+                                {% for device in devices %}
+                                <option value="{{ device.device_id }}" {% if current_filters.device == device.device_id|stringformat:"s" %}selected{% endif %}>
+                                    {{ device.device_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="date_from" class="form-label">من تاريخ</label>
+                            <input type="date" class="form-control" id="date_from" name="date_from" value="{{ current_filters.date_from }}">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="date_to" class="form-label">إلى تاريخ</label>
+                            <input type="date" class="form-control" id="date_to" name="date_to" value="{{ current_filters.date_to }}">
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <label for="processed" class="form-label">حالة المعالجة</label>
+                            <select class="form-select" id="processed" name="processed">
+                                <option value="">الكل</option>
+                                <option value="true" {% if current_filters.processed == 'true' %}selected{% endif %}>تم المعالجة</option>
+                                <option value="false" {% if current_filters.processed == 'false' %}selected{% endif %}>لم يتم المعالجة</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 text-center">
+                            <button type="submit" class="btn btn-primary me-2">
+                                <i class="fas fa-search me-1"></i>
+                                تصفية
+                            </button>
+                            <a href="{% url 'attendance:zk_raw_data' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i>
+                                إلغاء التصفية
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    {% if page_obj %}
+    <div class="row">
+        <div class="col-12">
+            <div class="stats-row">
+                <div class="row">
+                    <div class="col-md-3 col-6">
+                        <div class="stat-item">
+                            <div class="stat-number">{{ page_obj.paginator.count }}</div>
+                            <div class="stat-label">إجمالي السجلات</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="stat-item">
+                            <div class="stat-number">{{ page_obj.paginator.num_pages }}</div>
+                            <div class="stat-label">عدد الصفحات</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="stat-item">
+                            <div class="stat-number">{{ page_obj.number }}</div>
+                            <div class="stat-label">الصفحة الحالية</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="stat-item">
+                            <div class="stat-number">{{ page_obj|length }}</div>
+                            <div class="stat-label">سجلات هذه الصفحة</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Raw Data Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="data-container">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="mb-0">
+                        <i class="fas fa-table text-primary me-2"></i>
+                        البيانات الخام
+                    </h4>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-primary btn-sm" onclick="refreshData()">
+                            <i class="fas fa-refresh me-1"></i>
+                            تحديث
+                        </button>
+                    </div>
+                </div>
+
+                {% if page_obj %}
+                <div class="table-responsive">
+                    <table class="table raw-data-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>الجهاز</th>
+                                <th>الموظف</th>
+                                <th>التاريخ والوقت</th>
+                                <th>نوع البصمة</th>
+                                <th>نوع التحقق</th>
+                                <th>حالة المعالجة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in page_obj %}
+                            <tr>
+                                <td>
+                                    <span class="device-badge">
+                                        {{ record.device.device_name }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="employee-info">
+                                        {% if record.employee %}
+                                            <span class="employee-name">{{ record.employee.first_name }} {{ record.employee.last_name }}</span>
+                                            <span class="employee-code">{{ record.employee.emp_code }}</span>
+                                        {% else %}
+                                            <span class="text-muted">غير مربوط</span>
+                                            <span class="employee-code">ID: {{ record.user_id }}</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="timestamp-info">
+                                        <span class="timestamp-date">{{ record.timestamp|date:"Y-m-d" }}</span>
+                                        <span class="timestamp-time">{{ record.timestamp|date:"H:i:s" }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if record.punch_type == '0' %}
+                                        <span class="punch-type-badge punch-type-in">
+                                            <i class="fas fa-sign-in-alt"></i>
+                                            {{ record.get_punch_type_display_arabic }}
+                                        </span>
+                                    {% elif record.punch_type == '1' %}
+                                        <span class="punch-type-badge punch-type-out">
+                                            <i class="fas fa-sign-out-alt"></i>
+                                            {{ record.get_punch_type_display_arabic }}
+                                        </span>
+                                    {% elif record.punch_type in '2,3' %}
+                                        <span class="punch-type-badge punch-type-break">
+                                            <i class="fas fa-coffee"></i>
+                                            {{ record.get_punch_type_display_arabic }}
+                                        </span>
+                                    {% elif record.punch_type in '4,5' %}
+                                        <span class="punch-type-badge punch-type-overtime">
+                                            <i class="fas fa-clock"></i>
+                                            {{ record.get_punch_type_display_arabic }}
+                                        </span>
+                                    {% else %}
+                                        <span class="punch-type-badge">
+                                            <i class="fas fa-question"></i>
+                                            {{ record.get_punch_type_display_arabic }}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="text-muted">{{ record.verification_type|default:"غير محدد" }}</span>
+                                </td>
+                                <td>
+                                    {% if record.is_processed %}
+                                        <span class="processed-badge processed-yes">
+                                            <i class="fas fa-check"></i>
+                                            تم المعالجة
+                                        </span>
+                                    {% else %}
+                                        <span class="processed-badge processed-no">
+                                            <i class="fas fa-times"></i>
+                                            لم يتم المعالجة
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        {% if not record.is_processed %}
+                                        <button type="button" class="btn btn-outline-primary btn-sm"
+                                                onclick="processRecord({{ record.raw_id }})" title="معالجة السجل">
+                                            <i class="fas fa-cog"></i>
+                                        </button>
+                                        {% endif %}
+                                        <button type="button" class="btn btn-outline-info btn-sm"
+                                                onclick="viewRecord({{ record.raw_id }})" title="عرض التفاصيل">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-outline-danger btn-sm"
+                                                onclick="deleteRecord({{ record.raw_id }})" title="حذف السجل">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if page_obj.has_other_pages %}
+                <div class="pagination-container">
+                    <nav aria-label="صفحات البيانات الخام">
+                        <ul class="pagination justify-content-center mb-0">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if current_filters.device %}device={{ current_filters.device }}&{% endif %}{% if current_filters.date_from %}date_from={{ current_filters.date_from }}&{% endif %}{% if current_filters.date_to %}date_to={{ current_filters.date_to }}&{% endif %}{% if current_filters.processed %}processed={{ current_filters.processed }}&{% endif %}page={{ page_obj.previous_page_number }}">
+                                        <i class="fas fa-chevron-right"></i>
+                                        السابق
+                                    </a>
+                                </li>
+                            {% endif %}
+
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?{% if current_filters.device %}device={{ current_filters.device }}&{% endif %}{% if current_filters.date_from %}date_from={{ current_filters.date_from }}&{% endif %}{% if current_filters.date_to %}date_to={{ current_filters.date_to }}&{% endif %}{% if current_filters.processed %}processed={{ current_filters.processed }}&{% endif %}page={{ num }}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if current_filters.device %}device={{ current_filters.device }}&{% endif %}{% if current_filters.date_from %}date_from={{ current_filters.date_from }}&{% endif %}{% if current_filters.date_to %}date_to={{ current_filters.date_to }}&{% endif %}{% if current_filters.processed %}processed={{ current_filters.processed }}&{% endif %}page={{ page_obj.next_page_number }}">
+                                        التالي
+                                        <i class="fas fa-chevron-left"></i>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <h5>لا توجد بيانات خام</h5>
+                    <p>لم يتم العثور على أي بيانات خام تطابق معايير البحث المحددة.</p>
+                    <a href="{% url 'attendance:zk_devices_list' %}" class="btn btn-primary">
+                        <i class="fas fa-sync me-2"></i>
+                        مزامنة الأجهزة
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Record Details Modal -->
+<div class="modal fade" id="recordDetailsModal" tabindex="-1" aria-labelledby="recordDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="recordDetailsModalLabel">
+                    <i class="fas fa-info-circle me-2"></i>
+                    تفاصيل السجل
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="recordDetailsContent">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">جاري التحميل...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    تأكيد الحذف
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <i class="fas fa-exclamation-triangle text-danger fa-3x mb-3"></i>
+                    <h6>هل أنت متأكد من حذف هذا السجل؟</h6>
+                </div>
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>تحذير:</strong> سيتم حذف السجل نهائياً ولا يمكن التراجع عن هذا الإجراء!
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i> إلغاء
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-2"></i> حذف نهائياً
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Process Progress Modal -->
+<div class="modal fade" id="processModal" tabindex="-1" aria-labelledby="processModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="processModalLabel">
+                    <i class="fas fa-cog fa-spin me-2"></i>
+                    جاري المعالجة
+                </h5>
+            </div>
+            <div class="modal-body">
+                <div class="text-center py-4">
+                    <div class="mb-4">
+                        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                            <span class="visually-hidden">جاري المعالجة...</span>
+                        </div>
+                    </div>
+                    <h6 id="processMessage" class="mb-3">جاري معالجة السجل، يرجى الانتظار...</h6>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
+                             role="progressbar" style="width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+
+// Global variables for modals
+let currentRecordId = null;
+const recordDetailsModal = new bootstrap.Modal(document.getElementById('recordDetailsModal'));
+const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+const processModal = new bootstrap.Modal(document.getElementById('processModal'));
+
+// View record details
+function viewRecord(recordId) {
+    currentRecordId = recordId;
+    const content = document.getElementById('recordDetailsContent');
+
+    // Show loading
+    content.innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">جاري التحميل...</span>
+            </div>
+        </div>
+    `;
+
+    recordDetailsModal.show();
+
+    // Fetch record details (placeholder - implement actual API call)
+    setTimeout(() => {
+        content.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-primary mb-3">معلومات السجل</h6>
+                    <div class="mb-2"><strong>معرف السجل:</strong> ${recordId}</div>
+                    <div class="mb-2"><strong>تاريخ الإنشاء:</strong> ${new Date().toLocaleString('ar-EG')}</div>
+                    <div class="mb-2"><strong>حالة المعالجة:</strong> <span class="badge bg-warning">قيد الانتظار</span></div>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-primary mb-3">معلومات إضافية</h6>
+                    <div class="mb-2"><strong>كود العمل:</strong> غير محدد</div>
+                    <div class="mb-2"><strong>نوع التحقق:</strong> بصمة الإصبع</div>
+                    <div class="mb-2"><strong>ملاحظات:</strong> لا توجد ملاحظات</div>
+                </div>
+            </div>
+        `;
+    }, 1000);
+}
+
+// Process record
+function processRecord(recordId) {
+    currentRecordId = recordId;
+    processModal.show();
+
+    // Simulate processing (implement actual API call)
+    setTimeout(() => {
+        processModal.hide();
+        showNotification('تم معالجة السجل بنجاح!', 'success');
+
+        // Update the row to show processed status
+        const row = document.querySelector(`tr:has(button[onclick="processRecord(${recordId})"])`);
+        if (row) {
+            const statusCell = row.cells[5]; // Assuming status is in 6th column (index 5)
+            statusCell.innerHTML = `
+                <span class="processed-badge processed-yes">
+                    <i class="fas fa-check"></i>
+                    تم المعالجة
+                </span>
+            `;
+
+            // Remove process button
+            const processBtn = row.querySelector(`button[onclick="processRecord(${recordId})"]`);
+            if (processBtn) {
+                processBtn.remove();
+            }
+        }
+    }, 2000);
+}
+
+// Delete record
+function deleteRecord(recordId) {
+    currentRecordId = recordId;
+    deleteModal.show();
+
+    document.getElementById('confirmDeleteBtn').onclick = function() {
+        // Implement actual delete API call
+        fetch(`/attendance/zk/raw-data/${recordId}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                deleteModal.hide();
+
+                // Remove the row
+                const row = document.querySelector(`tr:has(button[onclick="deleteRecord(${recordId})"])`);
+                if (row) {
+                    row.remove();
+                    showNotification('تم حذف السجل بنجاح!', 'success');
+                }
+            } else {
+                showNotification('فشل في حذف السجل', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('حدث خطأ أثناء حذف السجل', 'error');
+        });
+    };
+}
+
+// Export data
+function exportData(format) {
+    const params = new URLSearchParams(window.location.search);
+    params.set('export', format);
+
+    showNotification(`جاري تصدير البيانات بصيغة ${format.toUpperCase()}...`, 'info');
+
+    // Create download link
+    const link = document.createElement('a');
+    link.href = `${window.location.pathname}?${params.toString()}`;
+    link.download = `zk_raw_data.${format}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setTimeout(() => {
+        showNotification('تم تصدير البيانات بنجاح!', 'success');
+    }, 1000);
+}
+
+// Refresh data
+function refreshData() {
+    showNotification('جاري تحديث البيانات...', 'info');
+    setTimeout(() => {
+        location.reload();
+    }, 1000);
+}
+
+// Show notification function
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'info'} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'error' ? 'exclamation-circle' : type === 'success' ? 'check-circle' : 'info-circle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    // Add to page
+    document.body.appendChild(notification);
+
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+// Auto-refresh every 30 seconds (optional)
+setInterval(() => {
+    const autoRefresh = localStorage.getItem('zk_raw_data_auto_refresh');
+    if (autoRefresh === 'true') {
+        refreshData();
+    }
+}, 30000);
+</script>
+{% endblock %}

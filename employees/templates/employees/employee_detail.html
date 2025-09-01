@@ -1,59 +1,393 @@
-{% extends 'employees/base.html' %}
+{% extends 'base.html' %}
 {% load static %}
 
 {% block title %}{{ employee.first_name }} {{ employee.last_name }} - تفاصيل الموظف{% endblock %}
 
-{% block breadcrumb_items %}
-<li class="breadcrumb-item"><a href="{% url 'employees:employee_list' %}">قائمة الموظفين</a></li>
-<li class="breadcrumb-item active">{{ employee.first_name }} {{ employee.last_name }}</li>
+{% block extra_css %}
+<style>
+    .employee-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+    }
+
+    .employee-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        backdrop-filter: blur(10px);
+    }
+
+    .employee-name {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .employee-title {
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-bottom: 1rem;
+    }
+
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 25px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-right: 0.5rem;
+    }
+
+    .status-active {
+        background: linear-gradient(135deg, #d4edda, #c3e6cb);
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .status-leave {
+        background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+
+    .status-terminated {
+        background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .employee-tabs {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    .nav-tabs {
+        border-bottom: none;
+        background: #f8f9fa;
+        padding: 1rem 1rem 0;
+    }
+
+    .nav-tabs .nav-link {
+        border: none;
+        border-radius: 10px 10px 0 0;
+        color: #6c757d;
+        font-weight: 600;
+        padding: 1rem 1.5rem;
+        margin-right: 0.25rem;
+        transition: all 0.3s ease;
+    }
+
+    .nav-tabs .nav-link:hover {
+        background: rgba(102, 126, 234, 0.1);
+        color: #667eea;
+    }
+
+    .nav-tabs .nav-link.active {
+        background: white;
+        color: #667eea;
+        border-bottom: 3px solid #667eea;
+    }
+
+    .tab-content {
+        padding: 2rem;
+    }
+
+    .info-section {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .info-section-title {
+        color: #495057;
+        font-weight: 700;
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .info-item:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: #495057;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-width: 150px;
+    }
+
+    .info-value {
+        color: #6c757d;
+        font-weight: 500;
+        text-align: left;
+    }
+
+    .document-card {
+        background: white;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    .document-card:hover {
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
+
+    .document-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        margin-right: 1rem;
+    }
+
+    .document-pdf { background: linear-gradient(135deg, #dc3545, #c82333); }
+    .document-image { background: linear-gradient(135deg, #28a745, #20c997); }
+    .document-doc { background: linear-gradient(135deg, #007bff, #0056b3); }
+    .document-default { background: linear-gradient(135deg, #6c757d, #5a6268); }
+
+    @media (max-width: 768px) {
+        .employee-header {
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .employee-avatar {
+            width: 80px;
+            height: 80px;
+            font-size: 2rem;
+            margin: 0 auto 1rem;
+        }
+
+        .employee-name {
+            font-size: 1.5rem;
+        }
+
+        .action-buttons {
+            justify-content: center;
+            margin-top: 1rem;
+        }
+
+        .nav-tabs {
+            flex-wrap: wrap;
+        }
+
+        .nav-tabs .nav-link {
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .tab-content {
+            padding: 1rem;
+        }
+
+        .info-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .info-label {
+            min-width: auto;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .nav-tabs .nav-link {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.8rem;
+        }
+
+        .info-section {
+            padding: 1rem;
+        }
+    }
+
+    /* Document Upload Modal Styles */
+    .modal-content {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border-radius: 15px 15px 0 0;
+        border-bottom: none;
+    }
+
+    .modal-header .btn-close {
+        filter: invert(1);
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+
+    .progress {
+        height: 8px;
+        border-radius: 4px;
+        background-color: #f8f9fa;
+    }
+
+    .progress-bar {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+
+    .alert {
+        border-radius: 8px;
+        border: none;
+    }
+
+    .alert-success {
+        background: linear-gradient(135deg, #d4edda, #c3e6cb);
+        color: #155724;
+    }
+
+    .alert-danger {
+        background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+        color: #721c24;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
 <!-- Employee Header -->
-<div class="card mb-4">
-    <div class="card-body">
+<div class="employee-header">
+    <div class="container-fluid">
         <div class="row align-items-center">
-            <div class="col-md-8">
-                <div class="d-flex align-items-center">
-                    <div class="avatar-lg bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-3">
-                        <i class="fas fa-user fa-2x"></i>
-                    </div>
-                    <div>
-                        <h3 class="mb-1">{{ employee.first_name }} {{ employee.second_name }} {{ employee.third_name }} {{ employee.last_name }}</h3>
-                        <p class="text-muted mb-1">{{ employee.job.job_title }} - {{ employee.dept.dept_name }}</p>
-                        <p class="mb-0">
-                            <span class="badge bg-secondary me-2">{{ employee.emp_code }}</span>
-                            {% if employee.emp_status == "Active" %}
-                                <span class="badge bg-success">نشط</span>
-                            {% elif employee.emp_status == "OnLeave" %}
-                                <span class="badge bg-warning">في إجازة</span>
-                            {% elif employee.emp_status == "Terminated" %}
-                                <span class="badge bg-danger">منتهي الخدمة</span>
+            <div class="col-lg-8">
+                <div class="row align-items-center">
+                    <div class="col-md-3 text-center text-md-start">
+                        <div class="employee-avatar">
+                            {% if employee.first_name and employee.last_name %}
+                                {{ employee.first_name|first }}{{ employee.last_name|first }}
+                            {% elif employee.first_name %}
+                                {{ employee.first_name|first }}{{ employee.first_name|slice:"1:2"|default:"" }}
+                            {% elif employee.emp_code %}
+                                {{ employee.emp_code|first }}{{ employee.emp_code|slice:"1:2"|default:"" }}
                             {% else %}
-                                <span class="badge bg-secondary">{{ employee.emp_status }}</span>
+                                <i class="fas fa-user"></i>
                             {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-9">
+                        <h1 class="employee-name">
+                            {{ employee.first_name|default:"" }} {{ employee.second_name|default:"" }}
+                            {{ employee.third_name|default:"" }} {{ employee.last_name|default:"" }}
+                        </h1>
+                        <p class="employee-title">
+                            {{ employee.job.job_title|default:"غير محدد" }} • {{ employee.dept.dept_name|default:"غير محدد" }}
                         </p>
+                        <div class="d-flex flex-wrap align-items-center">
+                            <span class="status-badge bg-light text-dark me-2 mb-2">
+                                <i class="fas fa-id-card"></i>
+                                {{ employee.emp_code }}
+                            </span>
+                            {% if employee.emp_status == "Active" %}
+                                <span class="status-badge status-active mb-2">
+                                    <i class="fas fa-check-circle"></i>
+                                    نشط
+                                </span>
+                            {% elif employee.emp_status == "OnLeave" %}
+                                <span class="status-badge status-leave mb-2">
+                                    <i class="fas fa-calendar-times"></i>
+                                    في إجازة
+                                </span>
+                            {% elif employee.emp_status == "Terminated" %}
+                                <span class="status-badge status-terminated mb-2">
+                                    <i class="fas fa-times-circle"></i>
+                                    منتهي الخدمة
+                                </span>
+                            {% else %}
+                                <span class="status-badge bg-light text-dark mb-2">
+                                    <i class="fas fa-question-circle"></i>
+                                    {{ employee.emp_status }}
+                                </span>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4 text-end">
-                <div class="btn-group" role="group">
-                    <a href="{% url 'employees:employee_edit' employee.emp_id %}" class="btn btn-primary">
-                        <i class="fas fa-edit me-1"></i>
+            <div class="col-lg-4 text-center text-lg-end">
+                <div class="action-buttons">
+                    <a href="{% url 'employees:edit' employee.emp_id %}" class="btn btn-primary">
+                        <i class="fas fa-edit me-2"></i>
                         تعديل البيانات
                     </a>
-                    <button type="button" class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split" 
-                            data-bs-toggle="dropdown">
-                        <span class="visually-hidden">المزيد</span>
-                    </button>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="#"><i class="fas fa-print me-2"></i>طباعة البيانات</a></li>
-                        <li><a class="dropdown-item" href="#"><i class="fas fa-file-pdf me-2"></i>تصدير PDF</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item text-danger" href="#" onclick="confirmDelete()">
-                            <i class="fas fa-trash me-2"></i>حذف الموظف
-                        </a></li>
-                    </ul>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-outline-light dropdown-toggle" data-bs-toggle="dropdown">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-print me-2"></i>طباعة البيانات</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-file-pdf me-2"></i>تصدير PDF</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-envelope me-2"></i>إرسال بريد إلكتروني</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="#" onclick="confirmDelete()">
+                                <i class="fas fa-trash me-2"></i>حذف الموظف
+                            </a></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
@@ -61,93 +395,172 @@
 </div>
 
 <!-- Employee Details Tabs -->
-<div class="card">
-    <div class="card-header">
-        <ul class="nav nav-tabs card-header-tabs" id="employeeTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="personal-tab" data-bs-toggle="tab" data-bs-target="#personal" 
-                        type="button" role="tab">
-                    <i class="fas fa-user me-1"></i>
-                    البيانات الشخصية
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="work-tab" data-bs-toggle="tab" data-bs-target="#work" 
-                        type="button" role="tab">
-                    <i class="fas fa-briefcase me-1"></i>
-                    بيانات العمل
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="contact-tab" data-bs-toggle="tab" data-bs-target="#contact" 
-                        type="button" role="tab">
-                    <i class="fas fa-phone me-1"></i>
-                    بيانات الاتصال
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents" 
-                        type="button" role="tab">
-                    <i class="fas fa-file-alt me-1"></i>
-                    المستندات
-                </button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="bank-tab" data-bs-toggle="tab" data-bs-target="#bank" 
-                        type="button" role="tab">
-                    <i class="fas fa-university me-1"></i>
-                    البيانات البنكية
-                </button>
-            </li>
-        </ul>
-    </div>
-    <div class="card-body">
-        <div class="tab-content" id="employeeTabsContent">
-            <!-- Personal Information Tab -->
-            <div class="tab-pane fade show active" id="personal" role="tabpanel">
-                <div class="row">
-                    <div class="col-md-6">
-                        <table class="table table-borderless">
-                            <tr>
-                                <th width="40%">الاسم الأول:</th>
-                                <td>{{ employee.first_name|default:"غير محدد" }}</td>
-                            </tr>
-                            <tr>
-                                <th>الاسم الثاني:</th>
-                                <td>{{ employee.second_name|default:"غير محدد" }}</td>
-                            </tr>
-                            <tr>
-                                <th>الاسم الثالث:</th>
-                                <td>{{ employee.third_name|default:"غير محدد" }}</td>
-                            </tr>
-                            <tr>
-                                <th>اسم العائلة:</th>
-                                <td>{{ employee.last_name|default:"غير محدد" }}</td>
-                            </tr>
-                            <tr>
-                                <th>الجنس:</th>
-                                <td>
-                                    {% if employee.gender == "M" %}
-                                        <i class="fas fa-mars text-primary me-1"></i>ذكر
-                                    {% elif employee.gender == "F" %}
-                                        <i class="fas fa-venus text-danger me-1"></i>أنثى
-                                    {% else %}
-                                        غير محدد
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            <tr>
-                                <th>تاريخ الميلاد:</th>
-                                <td>{{ employee.birth_date|default:"غير محدد" }}</td>
-                            </tr>
-                        </table>
+<div class="employee-tabs">
+    <ul class="nav nav-tabs" id="employeeTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="personal-tab" data-bs-toggle="tab" data-bs-target="#personal"
+                    type="button" role="tab">
+                <i class="fas fa-user me-2"></i>
+                البيانات الشخصية
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="work-tab" data-bs-toggle="tab" data-bs-target="#work"
+                    type="button" role="tab">
+                <i class="fas fa-briefcase me-2"></i>
+                بيانات التوظيف
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="contact-tab" data-bs-toggle="tab" data-bs-target="#contact"
+                    type="button" role="tab">
+                <i class="fas fa-phone me-2"></i>
+                معلومات الاتصال
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="documents-tab" data-bs-toggle="tab" data-bs-target="#documents"
+                    type="button" role="tab">
+                <i class="fas fa-file-alt me-2"></i>
+                المستندات
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="bank-tab" data-bs-toggle="tab" data-bs-target="#bank"
+                    type="button" role="tab">
+                <i class="fas fa-university me-2"></i>
+                البيانات البنكية
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="employeeTabsContent">
+        <!-- Personal Information Tab -->
+        <div class="tab-pane fade show active" id="personal" role="tabpanel">
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="info-section">
+                        <h6 class="info-section-title">
+                            <i class="fas fa-user text-primary"></i>
+                            الاسم الكامل
+                        </h6>
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-tag text-muted"></i>
+                                الاسم الأول
+                            </div>
+                            <div class="info-value">{{ employee.first_name|default:"غير محدد" }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-tag text-muted"></i>
+                                الاسم الثاني
+                            </div>
+                            <div class="info-value">{{ employee.second_name|default:"غير محدد" }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-tag text-muted"></i>
+                                الاسم الثالث
+                            </div>
+                            <div class="info-value">{{ employee.third_name|default:"غير محدد" }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-tag text-muted"></i>
+                                اسم العائلة
+                            </div>
+                            <div class="info-value">{{ employee.last_name|default:"غير محدد" }}</div>
+                        </div>
                     </div>
-                    <div class="col-md-6">
-                        <table class="table table-borderless">
-                            <tr>
-                                <th width="40%">الجنسية:</th>
-                                <td>{{ employee.nationality|default:"غير محدد" }}</td>
-                            </tr>
+
+                    <div class="info-section">
+                        <h6 class="info-section-title">
+                            <i class="fas fa-info-circle text-info"></i>
+                            المعلومات الأساسية
+                        </h6>
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-venus-mars text-muted"></i>
+                                الجنس
+                            </div>
+                            <div class="info-value">
+                                {% if employee.gender == "M" %}
+                                    <span class="text-primary"><i class="fas fa-mars me-1"></i>ذكر</span>
+                                {% elif employee.gender == "F" %}
+                                    <span class="text-danger"><i class="fas fa-venus me-1"></i>أنثى</span>
+                                {% else %}
+                                    غير محدد
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-birthday-cake text-muted"></i>
+                                تاريخ الميلاد
+                            </div>
+                            <div class="info-value">{{ employee.birth_date|date:"d/m/Y"|default:"غير محدد" }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-flag text-muted"></i>
+                                الجنسية
+                            </div>
+                            <div class="info-value">{{ employee.nationality|default:"غير محدد" }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="info-section">
+                        <h6 class="info-section-title">
+                            <i class="fas fa-id-card text-success"></i>
+                            الوثائق الرسمية
+                        </h6>
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-id-badge text-muted"></i>
+                                الرقم القومي
+                            </div>
+                            <div class="info-value">{{ employee.national_id|default:"غير محدد" }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-passport text-muted"></i>
+                                رقم الجواز
+                            </div>
+                            <div class="info-value">{{ employee.passport_no|default:"غير محدد" }}</div>
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <h6 class="info-section-title">
+                            <i class="fas fa-map-marker-alt text-warning"></i>
+                            العنوان
+                        </h6>
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-home text-muted"></i>
+                                العنوان الكامل
+                            </div>
+                            <div class="info-value">{{ employee.address|default:"غير محدد" }}</div>
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <h6 class="info-section-title">
+                            <i class="fas fa-sticky-note text-secondary"></i>
+                            ملاحظات
+                        </h6>
+                        <div class="info-item">
+                            <div class="info-value">
+                                {{ employee.notes|default:"لا توجد ملاحظات"|linebreaks }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
                             <tr>
                                 <th>رقم الهوية:</th>
                                 <td>{{ employee.national_id|default:"غير محدد" }}</td>
@@ -169,272 +582,754 @@
                 </div>
             </div>
 
-            <!-- Work Information Tab -->
-            <div class="tab-pane fade" id="work" role="tabpanel">
-                <div class="row">
-                    <div class="col-md-6">
-                        <table class="table table-borderless">
-                            <tr>
-                                <th width="40%">كود الموظف:</th>
-                                <td><span class="badge bg-secondary">{{ employee.emp_code }}</span></td>
-                            </tr>
-                            <tr>
-                                <th>الوظيفة:</th>
-                                <td>{{ employee.job.job_title }}</td>
-                            </tr>
-                            <tr>
-                                <th>القسم:</th>
-                                <td>{{ employee.dept.dept_name }}</td>
-                            </tr>
-                            <tr>
-                                <th>الفرع:</th>
-                                <td>{{ employee.branch.branch_name }}</td>
-                            </tr>
-                            <tr>
-                                <th>المدير المباشر:</th>
-                                <td>
-                                    {% if employee.manager %}
-                                        <a href="{% url 'employees:detail' employee.manager.emp_id %}">
-                                            {{ employee.manager.first_name }} {{ employee.manager.last_name }}
-                                        </a>
-                                    {% else %}
-                                        غير محدد
-                                    {% endif %}
-                                </td>
-                            </tr>
-                        </table>
+        <!-- Work Information Tab -->
+        <div class="tab-pane fade" id="work" role="tabpanel">
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="info-section">
+                        <h6 class="info-section-title">
+                            <i class="fas fa-briefcase text-primary"></i>
+                            معلومات الوظيفة
+                        </h6>
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-id-badge text-muted"></i>
+                                كود الموظف
+                            </div>
+                            <div class="info-value">
+                                <span class="badge bg-secondary">{{ employee.emp_code }}</span>
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-user-tie text-muted"></i>
+                                المسمى الوظيفي
+                            </div>
+                            <div class="info-value">{{ employee.job.job_title|default:"غير محدد" }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-building text-muted"></i>
+                                القسم
+                            </div>
+                            <div class="info-value">{{ employee.dept.dept_name|default:"غير محدد" }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-map-marker-alt text-muted"></i>
+                                الفرع
+                            </div>
+                            <div class="info-value">{{ employee.branch.branch_name|default:"غير محدد" }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-user-friends text-muted"></i>
+                                المدير المباشر
+                            </div>
+                            <div class="info-value">
+                                {% if employee.manager %}
+                                    <a href="{% url 'employees:detail' employee.manager.emp_id %}" class="text-primary text-decoration-none">
+                                        <i class="fas fa-external-link-alt me-1"></i>
+                                        {{ employee.manager.first_name }} {{ employee.manager.last_name }}
+                                    </a>
+                                {% else %}
+                                    غير محدد
+                                {% endif %}
+                            </div>
+                        </div>
                     </div>
-                    <div class="col-md-6">
-                        <table class="table table-borderless">
-                            <tr>
-                                <th width="40%">تاريخ التوظيف:</th>
-                                <td>{{ employee.hire_date|default:"غير محدد" }}</td>
-                            </tr>
-                            <tr>
-                                <th>تاريخ المباشرة:</th>
-                                <td>{{ employee.join_date|default:"غير محدد" }}</td>
-                            </tr>
-                            <tr>
-                                <th>انتهاء فترة التجربة:</th>
-                                <td>{{ employee.probation_end|default:"غير محدد" }}</td>
-                            </tr>
-                            <tr>
-                                <th>حالة الموظف:</th>
-                                <td>
-                                    {% if employee.emp_status == "Active" %}
-                                        <span class="badge bg-success">نشط</span>
-                                    {% elif employee.emp_status == "OnLeave" %}
-                                        <span class="badge bg-warning">في إجازة</span>
-                                    {% elif employee.emp_status == "Terminated" %}
-                                        <span class="badge bg-danger">منتهي الخدمة</span>
-                                    {% else %}
-                                        <span class="badge bg-secondary">{{ employee.emp_status }}</span>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            <tr>
-                                <th>تاريخ انتهاء الخدمة:</th>
-                                <td>{{ employee.termination_date|default:"غير محدد" }}</td>
-                            </tr>
-                        </table>
+
+                    <div class="info-section">
+                        <h6 class="info-section-title">
+                            <i class="fas fa-chart-line text-success"></i>
+                            حالة التوظيف
+                        </h6>
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-toggle-on text-muted"></i>
+                                الحالة الحالية
+                            </div>
+                            <div class="info-value">
+                                {% if employee.emp_status == "Active" %}
+                                    <span class="status-badge status-active">
+                                        <i class="fas fa-check-circle"></i>
+                                        نشط
+                                    </span>
+                                {% elif employee.emp_status == "OnLeave" %}
+                                    <span class="status-badge status-leave">
+                                        <i class="fas fa-calendar-times"></i>
+                                        في إجازة
+                                    </span>
+                                {% elif employee.emp_status == "Terminated" %}
+                                    <span class="status-badge status-terminated">
+                                        <i class="fas fa-times-circle"></i>
+                                        منتهي الخدمة
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ employee.emp_status }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Contact Information Tab -->
-            <div class="tab-pane fade" id="contact" role="tabpanel">
-                <div class="row">
-                    <div class="col-md-6">
-                        <table class="table table-borderless">
-                            <tr>
-                                <th width="40%">البريد الإلكتروني:</th>
-                                <td>
-                                    {% if employee.email %}
-                                        <a href="mailto:{{ employee.email }}">
-                                            <i class="fas fa-envelope me-1"></i>
-                                            {{ employee.email }}
-                                        </a>
-                                    {% else %}
-                                        غير محدد
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            <tr>
-                                <th>رقم الهاتف:</th>
-                                <td>
-                                    {% if employee.mobile %}
-                                        <a href="tel:{{ employee.mobile }}">
-                                            <i class="fas fa-phone me-1"></i>
-                                            {{ employee.mobile }}
-                                        </a>
-                                    {% else %}
-                                        غير محدد
-                                    {% endif %}
-                                </td>
-                            </tr>
-                        </table>
+                <div class="col-lg-6">
+                    <div class="info-section">
+                        <h6 class="info-section-title">
+                            <i class="fas fa-calendar-alt text-info"></i>
+                            التواريخ المهمة
+                        </h6>
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-calendar-plus text-muted"></i>
+                                تاريخ التوظيف
+                            </div>
+                            <div class="info-value">{{ employee.hire_date|date:"d/m/Y"|default:"غير محدد" }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-calendar-check text-muted"></i>
+                                تاريخ المباشرة
+                            </div>
+                            <div class="info-value">{{ employee.join_date|date:"d/m/Y"|default:"غير محدد" }}</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-hourglass-end text-muted"></i>
+                                انتهاء فترة التجربة
+                            </div>
+                            <div class="info-value">{{ employee.probation_end|date:"d/m/Y"|default:"غير محدد" }}</div>
+                        </div>
+                        {% if employee.termination_date %}
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-calendar-times text-muted"></i>
+                                تاريخ انتهاء الخدمة
+                            </div>
+                            <div class="info-value">{{ employee.termination_date|date:"d/m/Y" }}</div>
+                        </div>
+                        {% endif %}
                     </div>
-                    <div class="col-md-6">
-                        <table class="table table-borderless">
-                            <tr>
-                                <th width="40%">العنوان الكامل:</th>
-                                <td>{{ employee.address|default:"غير محدد" }}</td>
-                            </tr>
-                        </table>
+
+                    {% if employee.hire_date %}
+                    <div class="info-section">
+                        <h6 class="info-section-title">
+                            <i class="fas fa-clock text-warning"></i>
+                            مدة الخدمة
+                        </h6>
+                        <div class="info-item">
+                            <div class="info-value">
+                                {% now "Y-m-d" as today %}
+                                {% if employee.termination_date %}
+                                    من {{ employee.hire_date|date:"d/m/Y" }} إلى {{ employee.termination_date|date:"d/m/Y" }}
+                                {% else %}
+                                    منذ {{ employee.hire_date|date:"d/m/Y" }} حتى الآن
+                                {% endif %}
+                            </div>
+                        </div>
                     </div>
+                    {% endif %}
                 </div>
             </div>
+        </div>
 
-            <!-- Documents Tab -->
-            <div class="tab-pane fade" id="documents" role="tabpanel">
-                {% if employee.employeedocument_set.all %}
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>نوع المستند</th>
-                                    <th>اسم المستند</th>
-                                    <th>تاريخ الرفع</th>
-                                    <th>ملاحظات</th>
-                                    <th>الإجراءات</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for document in employee.employeedocument_set.all %}
-                                <tr>
-                                    <td>{{ document.doc_type }}</td>
-                                    <td>{{ document.doc_name|default:"غير محدد" }}</td>
-                                    <td>{{ document.upload_date|date:"Y-m-d H:i" }}</td>
-                                    <td>{{ document.notes|default:"لا توجد ملاحظات" }}</td>
-                                    <td>
-                                        <div class="btn-group" role="group">
-                                            <button type="button" class="btn btn-outline-primary btn-sm" title="تحميل">
-                                                <i class="fas fa-download"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-outline-danger btn-sm" title="حذف">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+        <!-- Contact Information Tab -->
+        <div class="tab-pane fade" id="contact" role="tabpanel">
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="info-section">
+                        <h6 class="info-section-title">
+                            <i class="fas fa-phone text-primary"></i>
+                            معلومات الاتصال
+                        </h6>
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-envelope text-muted"></i>
+                                البريد الإلكتروني
+                            </div>
+                            <div class="info-value">
+                                {% if employee.email %}
+                                    <a href="mailto:{{ employee.email }}" class="text-primary text-decoration-none">
+                                        <i class="fas fa-external-link-alt me-1"></i>
+                                        {{ employee.email }}
+                                    </a>
+                                {% else %}
+                                    غير محدد
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-mobile-alt text-muted"></i>
+                                رقم الهاتف المحمول
+                            </div>
+                            <div class="info-value">
+                                {% if employee.mobile %}
+                                    <a href="tel:{{ employee.mobile }}" class="text-primary text-decoration-none">
+                                        <i class="fas fa-phone me-1"></i>
+                                        {{ employee.mobile }}
+                                    </a>
+                                {% else %}
+                                    غير محدد
+                                {% endif %}
+                            </div>
+                        </div>
                     </div>
-                {% else %}
-                    <div class="text-center py-4">
-                        <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
-                        <h5 class="text-muted">لا توجد مستندات</h5>
-                        <p class="text-muted">لم يتم رفع أي مستندات لهذا الموظف بعد.</p>
-                        <button type="button" class="btn btn-primary">
-                            <i class="fas fa-plus me-1"></i>
-                            إضافة مستند
-                        </button>
+
+                    <div class="info-section">
+                        <h6 class="info-section-title">
+                            <i class="fas fa-map-marker-alt text-success"></i>
+                            العنوان
+                        </h6>
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-home text-muted"></i>
+                                العنوان الكامل
+                            </div>
+                            <div class="info-value">{{ employee.address|default:"غير محدد" }}</div>
+                        </div>
                     </div>
-                {% endif %}
+                </div>
+
+                <div class="col-lg-6">
+                    <div class="info-section">
+                        <h6 class="info-section-title">
+                            <i class="fas fa-share-alt text-info"></i>
+                            إجراءات سريعة
+                        </h6>
+                        <div class="d-flex flex-column gap-2">
+                            {% if employee.email %}
+                            <a href="mailto:{{ employee.email }}" class="btn btn-outline-primary">
+                                <i class="fas fa-envelope me-2"></i>
+                                إرسال بريد إلكتروني
+                            </a>
+                            {% endif %}
+                            {% if employee.mobile %}
+                            <a href="tel:{{ employee.mobile }}" class="btn btn-outline-success">
+                                <i class="fas fa-phone me-2"></i>
+                                اتصال هاتفي
+                            </a>
+                            <a href="https://wa.me/{{ employee.mobile|slice:'1:' }}" target="_blank" class="btn btn-outline-success">
+                                <i class="fab fa-whatsapp me-2"></i>
+                                واتساب
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if employee.address %}
+                    <div class="info-section">
+                        <h6 class="info-section-title">
+                            <i class="fas fa-map text-warning"></i>
+                            الخريطة
+                        </h6>
+                        <div class="d-flex flex-column gap-2">
+                            <a href="https://maps.google.com/?q={{ employee.address|urlencode }}" target="_blank" class="btn btn-outline-info">
+                                <i class="fas fa-map-marked-alt me-2"></i>
+                                عرض على خرائط جوجل
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
+        </div>
 
-            <!-- Bank Information Tab -->
-            <div class="tab-pane fade" id="bank" role="tabpanel">
-                {% if employee.employeebankaccount_set.all %}
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>البنك</th>
-                                    <th>رقم الحساب</th>
-                                    <th>رقم الآيبان</th>
-                                    <th>الإجراءات</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for account in employee.employeebankaccount_set.all %}
-                                <tr>
-                                    <td>{{ account.bank.bank_name|default:"غير محدد" }}</td>
-                                    <td>{{ account.account_no|default:"غير محدد" }}</td>
-                                    <td>{{ account.iban|default:"غير محدد" }}</td>
-                                    <td>
-                                        <div class="btn-group" role="group">
-                                            <button type="button" class="btn btn-outline-primary btn-sm" title="تعديل">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-outline-danger btn-sm" title="حذف">
-                                                <i class="fas fa-trash"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+        <!-- Documents Tab -->
+        <div class="tab-pane fade" id="documents" role="tabpanel">
+            {% if employee.employeedocument_set.all %}
+                <div class="row">
+                    {% for document in employee.employeedocument_set.all %}
+                    <div class="col-lg-6 col-xl-4 mb-3">
+                        <div class="document-card">
+                            <div class="d-flex align-items-center">
+                                <div class="document-icon
+                                    {% if document.doc_file.name|slice:'-4:' == '.pdf' %}document-pdf
+                                    {% elif document.doc_file.name|slice:'-4:' in '.jpg,.png,.gif' %}document-image
+                                    {% elif document.doc_file.name|slice:'-4:' in '.doc,.docx' %}document-doc
+                                    {% else %}document-default{% endif %}">
+                                    {% if document.doc_file.name|slice:'-4:' == '.pdf' %}
+                                        <i class="fas fa-file-pdf"></i>
+                                    {% elif document.doc_file.name|slice:'-4:' in '.jpg,.png,.gif' %}
+                                        <i class="fas fa-file-image"></i>
+                                    {% elif document.doc_file.name|slice:'-4:' in '.doc,.docx' %}
+                                        <i class="fas fa-file-word"></i>
+                                    {% else %}
+                                        <i class="fas fa-file"></i>
+                                    {% endif %}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">{{ document.doc_type }}</h6>
+                                    <p class="text-muted mb-1 small">{{ document.doc_name|default:"غير محدد" }}</p>
+                                    <p class="text-muted mb-0 small">
+                                        <i class="fas fa-calendar me-1"></i>
+                                        {{ document.upload_date|date:"d/m/Y" }}
+                                    </p>
+                                </div>
+                            </div>
+                            {% if document.notes %}
+                            <div class="mt-2">
+                                <small class="text-muted">{{ document.notes }}</small>
+                            </div>
+                            {% endif %}
+                            <div class="mt-3 d-flex gap-2">
+                                <a href="{% url 'employees:download_document' document.doc_id %}" class="btn btn-outline-primary btn-sm flex-fill" title="تحميل">
+                                    <i class="fas fa-download me-1"></i>
+                                    تحميل
+                                </a>
+                                <a href="{% url 'employees:preview_document' document.doc_id %}" target="_blank" class="btn btn-outline-secondary btn-sm" title="معاينة">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <button type="button" class="btn btn-outline-danger btn-sm" title="حذف" onclick="deleteDocument({{ document.doc_id }})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                {% else %}
-                    <div class="text-center py-4">
-                        <i class="fas fa-university fa-3x text-muted mb-3"></i>
-                        <h5 class="text-muted">لا توجد حسابات بنكية</h5>
-                        <p class="text-muted">لم يتم إضافة أي حسابات بنكية لهذا الموظف بعد.</p>
-                        <button type="button" class="btn btn-primary">
-                            <i class="fas fa-plus me-1"></i>
-                            إضافة حساب بنكي
-                        </button>
+                    {% endfor %}
+                </div>
+
+                <div class="text-center mt-4">
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal">
+                        <i class="fas fa-plus me-2"></i>
+                        إضافة مستند جديد
+                    </button>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-file-alt fa-4x text-muted opacity-50"></i>
                     </div>
-                {% endif %}
+                    <h5 class="text-muted mb-3">لا توجد مستندات</h5>
+                    <p class="text-muted mb-4">لم يتم رفع أي مستندات لهذا الموظف بعد.</p>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#uploadDocumentModal">
+                        <i class="fas fa-plus me-2"></i>
+                        إضافة أول مستند
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Bank Information Tab -->
+        <div class="tab-pane fade" id="bank" role="tabpanel">
+            {% if employee.employeebankaccount_set.all %}
+                <div class="row">
+                    {% for account in employee.employeebankaccount_set.all %}
+                    <div class="col-lg-6 mb-4">
+                        <div class="info-section">
+                            <h6 class="info-section-title">
+                                <i class="fas fa-university text-primary"></i>
+                                {{ account.bank.bank_name|default:"بنك غير محدد" }}
+                            </h6>
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-credit-card text-muted"></i>
+                                    رقم الحساب
+                                </div>
+                                <div class="info-value">
+                                    <code>{{ account.account_no|default:"غير محدد" }}</code>
+                                </div>
+                            </div>
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-barcode text-muted"></i>
+                                    رقم الآيبان
+                                </div>
+                                <div class="info-value">
+                                    <code>{{ account.iban|default:"غير محدد" }}</code>
+                                </div>
+                            </div>
+                            {% if account.swift_code %}
+                            <div class="info-item">
+                                <div class="info-label">
+                                    <i class="fas fa-code text-muted"></i>
+                                    رمز SWIFT
+                                </div>
+                                <div class="info-value">
+                                    <code>{{ account.swift_code }}</code>
+                                </div>
+                            </div>
+                            {% endif %}
+                            <div class="mt-3 d-flex gap-2">
+                                <button type="button" class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-edit me-1"></i>
+                                    تعديل
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm">
+                                    <i class="fas fa-copy me-1"></i>
+                                    نسخ
+                                </button>
+                                <button type="button" class="btn btn-outline-danger btn-sm">
+                                    <i class="fas fa-trash me-1"></i>
+                                    حذف
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="text-center mt-4">
+                    <button type="button" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>
+                        إضافة حساب بنكي جديد
+                    </button>
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-4">
+                        <i class="fas fa-university fa-4x text-muted opacity-50"></i>
+                    </div>
+                    <h5 class="text-muted mb-3">لا توجد حسابات بنكية</h5>
+                    <p class="text-muted mb-4">لم يتم إضافة أي حسابات بنكية لهذا الموظف بعد.</p>
+                    <button type="button" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>
+                        إضافة أول حساب بنكي
+                    </button>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Document Upload Modal -->
+<div class="modal fade" id="uploadDocumentModal" tabindex="-1" aria-labelledby="uploadDocumentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="uploadDocumentModalLabel">
+                    <i class="fas fa-upload me-2"></i>
+                    رفع مستند جديد
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+            </div>
+            <div class="modal-body">
+                <form id="uploadDocumentForm" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="doc_type" class="form-label">نوع المستند <span class="text-danger">*</span></label>
+                                <select class="form-select" id="doc_type" name="doc_type" required>
+                                    <option value="">اختر نوع المستند</option>
+                                    <option value="identity">بطاقة الهوية</option>
+                                    <option value="passport">جواز السفر</option>
+                                    <option value="contract">عقد العمل</option>
+                                    <option value="certificate">شهادة علمية</option>
+                                    <option value="license">رخصة قيادة</option>
+                                    <option value="medical">تقرير طبي</option>
+                                    <option value="other">أخرى</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="doc_name" class="form-label">اسم المستند</label>
+                                <input type="text" class="form-control" id="doc_name" name="doc_name" placeholder="اسم المستند (اختياري)">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="file_upload" class="form-label">الملف <span class="text-danger">*</span></label>
+                        <input type="file" class="form-control" id="file_upload" name="file_upload"
+                               accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.gif" required>
+                        <div class="form-text">
+                            الحد الأقصى لحجم الملف: 10 ميجابايت. الأنواع المدعومة: PDF, DOC, DOCX, JPG, PNG, GIF
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">ملاحظات</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="ملاحظات حول المستند (اختياري)"></textarea>
+                    </div>
+
+                    <!-- Upload Progress -->
+                    <div id="uploadProgress" class="mb-3" style="display: none;">
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                        </div>
+                        <small class="text-muted mt-1">جاري رفع الملف...</small>
+                    </div>
+
+                    <!-- Alert Messages -->
+                    <div id="uploadAlert" class="alert" style="display: none;"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>
+                    إلغاء
+                </button>
+                <button type="button" class="btn btn-primary" id="uploadDocumentBtn">
+                    <i class="fas fa-upload me-2"></i>
+                    رفع المستند
+                </button>
             </div>
         </div>
     </div>
 </div>
 {% endblock %}
 
-{% block extra_css %}
-<style>
-    .avatar-lg {
-        width: 80px;
-        height: 80px;
-    }
-    
-    .table th {
-        font-weight: 600;
-        color: #495057;
-        border: none;
-        padding: 0.5rem 0;
-    }
-    
-    .table td {
-        border: none;
-        padding: 0.5rem 0;
-    }
-    
-    .nav-tabs .nav-link {
-        border: none;
-        color: #6c757d;
-    }
-    
-    .nav-tabs .nav-link.active {
-        background-color: transparent;
-        border-bottom: 2px solid #0d6efd;
-        color: #0d6efd;
-    }
-</style>
-{% endblock %}
-
 {% block extra_js %}
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Tab switching with smooth transitions
+    const tabLinks = document.querySelectorAll('#employeeTabs .nav-link');
+    tabLinks.forEach(function(tabLink) {
+        tabLink.addEventListener('shown.bs.tab', function(e) {
+            // Add fade-in animation to active tab content
+            const targetPane = document.querySelector(e.target.getAttribute('data-bs-target'));
+            if (targetPane) {
+                targetPane.style.opacity = '0';
+                setTimeout(function() {
+                    targetPane.style.transition = 'opacity 0.3s ease-in-out';
+                    targetPane.style.opacity = '1';
+                }, 50);
+            }
+        });
+    });
+
+    // Copy to clipboard functionality
+    document.querySelectorAll('.btn-outline-secondary').forEach(function(btn) {
+        if (btn.textContent.includes('نسخ')) {
+            btn.addEventListener('click', function() {
+                const codeElement = this.closest('.info-section').querySelector('code');
+                if (codeElement) {
+                    navigator.clipboard.writeText(codeElement.textContent).then(function() {
+                        // Show success feedback
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = '<i class="fas fa-check me-1"></i>تم النسخ';
+                        btn.classList.remove('btn-outline-secondary');
+                        btn.classList.add('btn-success');
+
+                        setTimeout(function() {
+                            btn.innerHTML = originalText;
+                            btn.classList.remove('btn-success');
+                            btn.classList.add('btn-outline-secondary');
+                        }, 2000);
+                    });
+                }
+            });
+        }
+    });
+
+    // Smooth scroll to top when switching tabs
+    document.querySelectorAll('#employeeTabs .nav-link').forEach(function(tabLink) {
+        tabLink.addEventListener('click', function() {
+            setTimeout(function() {
+                document.querySelector('.employee-tabs').scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }, 100);
+        });
+    });
+});
+
+// Confirm delete function
 function confirmDelete() {
-    if (confirm('هل أنت متأكد من حذف هذا الموظف؟\n\nهذا الإجراء لا يمكن التراجع عنه.')) {
-        // Create form and submit
-        var form = document.createElement('form');
-        form.method = 'POST';
-        form.action = '{% url "employees:delete" employee.emp_id %}';
-        
-        var csrfToken = document.createElement('input');
-        csrfToken.type = 'hidden';
-        csrfToken.name = 'csrfmiddlewaretoken';
-        csrfToken.value = '{{ csrf_token }}';
-        form.appendChild(csrfToken);
-        
-        document.body.appendChild(form);
-        form.submit();
+    if (confirm('هل أنت متأكد من حذف هذا الموظف؟ هذا الإجراء لا يمكن التراجع عنه.')) {
+        // Add delete logic here
+        alert('سيتم تنفيذ عملية الحذف');
     }
 }
+
+// Print employee details
+function printEmployee() {
+    window.print();
+}
+
+// Export to PDF (placeholder)
+function exportToPDF() {
+    alert('سيتم تصدير البيانات إلى PDF');
+}
+
+// Document Upload Functionality
+document.getElementById('uploadDocumentBtn').addEventListener('click', function() {
+    const form = document.getElementById('uploadDocumentForm');
+    const uploadBtn = this;
+    const uploadProgress = document.getElementById('uploadProgress');
+    const uploadAlert = document.getElementById('uploadAlert');
+
+    // Validate form
+    const docType = document.getElementById('doc_type').value;
+    const fileUpload = document.getElementById('file_upload').files[0];
+
+    console.log('Upload button clicked');
+    console.log('Document type:', docType);
+    console.log('File selected:', fileUpload);
+
+    if (!docType) {
+        showUploadAlert('يرجى اختيار نوع المستند.', 'danger');
+        return;
+    }
+
+    if (!fileUpload) {
+        showUploadAlert('يرجى اختيار ملف للرفع.', 'danger');
+        return;
+    }
+
+    // Validate file size (10MB)
+    if (fileUpload.size > 10 * 1024 * 1024) {
+        showUploadAlert('حجم الملف يجب أن يكون أقل من 10 ميجابايت.', 'danger');
+        return;
+    }
+
+    // Validate file type
+    const allowedTypes = ['pdf', 'doc', 'docx', 'jpg', 'jpeg', 'png', 'gif'];
+    const fileExtension = fileUpload.name.split('.').pop().toLowerCase();
+    if (!allowedTypes.includes(fileExtension)) {
+        showUploadAlert('نوع الملف غير مدعوم. الأنواع المدعومة: PDF, DOC, DOCX, JPG, PNG, GIF', 'danger');
+        return;
+    }
+
+    // Show progress
+    uploadBtn.disabled = true;
+    uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>جاري الرفع...';
+    uploadProgress.style.display = 'block';
+    uploadAlert.style.display = 'none';
+
+    // Create FormData manually to ensure proper handling
+    const formData = new FormData();
+
+    // Get CSRF token
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    console.log('CSRF Token:', csrfToken);
+
+    // Add form fields
+    formData.append('csrfmiddlewaretoken', csrfToken);
+    formData.append('doc_type', docType);
+    formData.append('doc_name', document.getElementById('doc_name').value);
+    formData.append('notes', document.getElementById('notes').value);
+    formData.append('file_upload', fileUpload);
+
+    console.log('FormData prepared, sending request...');
+
+    // Upload file
+    fetch(`/employees/{{ employee.emp_id }}/documents/ajax-upload/`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': csrfToken
+        }
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+
+        // Log response text for debugging
+        return response.text().then(text => {
+            console.log('Response text:', text);
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}, response: ${text}`);
+            }
+
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                throw new Error(`Invalid JSON response: ${text}`);
+            }
+        });
+    })
+    .then(data => {
+        console.log('Response data:', data);
+
+        if (data.success) {
+            showUploadAlert('تم رفع المستند بنجاح!', 'success');
+
+            // Reset form
+            form.reset();
+
+            // Close modal after 2 seconds
+            setTimeout(() => {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('uploadDocumentModal'));
+                if (modal) {
+                    modal.hide();
+                }
+                location.reload(); // Refresh to show new document
+            }, 2000);
+        } else {
+            console.error('Upload failed:', data);
+            let errorMessage = data.message || 'حدث خطأ أثناء رفع المستند.';
+
+            // Show detailed errors if available
+            if (data.errors) {
+                console.error('Form errors:', data.errors);
+                errorMessage += '\n\nتفاصيل الأخطاء:\n';
+                for (const [field, errors] of Object.entries(data.errors)) {
+                    errorMessage += `${field}: ${errors.join(', ')}\n`;
+                }
+            }
+
+            showUploadAlert(errorMessage, 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Network error:', error);
+        showUploadAlert('حدث خطأ في الاتصال. يرجى المحاولة مرة أخرى.\n\nتفاصيل الخطأ: ' + error.message, 'danger');
+    })
+    .finally(() => {
+        uploadBtn.disabled = false;
+        uploadBtn.innerHTML = '<i class="fas fa-upload me-2"></i>رفع المستند';
+        uploadProgress.style.display = 'none';
+    });
+});
+
+// Show upload alert
+function showUploadAlert(message, type) {
+    const uploadAlert = document.getElementById('uploadAlert');
+    uploadAlert.className = `alert alert-${type}`;
+    uploadAlert.textContent = message;
+    uploadAlert.style.display = 'block';
+}
+
+// Add document to list (for real-time update)
+function addDocumentToList(document) {
+    // This would add the document to the existing list
+    // For now, we'll just reload the page to show the new document
+    console.log('New document added:', document);
+}
+
+// Delete document
+function deleteDocument(docId) {
+    if (confirm('هل أنت متأكد من حذف هذا المستند؟ هذا الإجراء لا يمكن التراجع عنه.')) {
+        fetch(`/employees/documents/${docId}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('تم حذف المستند بنجاح.');
+                location.reload(); // Refresh to remove deleted document
+            } else {
+                alert('حدث خطأ أثناء حذف المستند: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('حدث خطأ في الاتصال. يرجى المحاولة مرة أخرى.');
+        });
+    }
+}
+
+// Reset upload form when modal is closed
+document.getElementById('uploadDocumentModal').addEventListener('hidden.bs.modal', function() {
+    const form = document.getElementById('uploadDocumentForm');
+    form.reset();
+    document.getElementById('uploadProgress').style.display = 'none';
+    document.getElementById('uploadAlert').style.display = 'none';
+});
 </script>
 {% endblock %}

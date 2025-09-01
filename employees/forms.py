@@ -267,16 +267,18 @@ class EmployeeDocumentForm(forms.ModelForm):
     
     file_upload = forms.FileField(
         label='الملف',
-        required=False,
+        required=True,
         widget=forms.FileInput(attrs={
             'class': 'form-control',
-            'accept': '.pdf,.doc,.docx,.jpg,.jpeg,.png'
-        })
+            'accept': '.pdf,.doc,.docx,.jpg,.jpeg,.png,.gif',
+            'multiple': False
+        }),
+        help_text='الحد الأقصى لحجم الملف: 10 ميجابايت. الأنواع المدعومة: PDF, DOC, DOCX, JPG, PNG, GIF'
     )
     
     class Meta:
         model = EmployeeDocument
-        fields = ['doc_type', 'doc_name', 'notes']
+        fields = ['doc_type', 'doc_name', 'notes']  # file_upload is handled separately
         
         widgets = {
             'doc_type': forms.Select(attrs={
@@ -306,17 +308,28 @@ class EmployeeDocumentForm(forms.ModelForm):
         """التحقق من الملف المرفوع"""
         file = self.cleaned_data.get('file_upload')
         if file:
-            # التحقق من حجم الملف (5 ميجابايت كحد أقصى)
-            if file.size > 5 * 1024 * 1024:
-                raise ValidationError('حجم الملف يجب أن يكون أقل من 5 ميجابايت.')
-            
+            # التحقق من حجم الملف (10 ميجابايت كحد أقصى)
+            if file.size > 10 * 1024 * 1024:
+                raise ValidationError('حجم الملف يجب أن يكون أقل من 10 ميجابايت.')
+
             # التحقق من نوع الملف
-            allowed_extensions = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png']
+            allowed_extensions = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.gif']
             file_extension = '.' + file.name.split('.')[-1].lower()
             if file_extension not in allowed_extensions:
                 raise ValidationError(f'نوع الملف غير مدعوم. الأنواع المدعومة: {", ".join(allowed_extensions)}')
-        
+
+            # التحقق من اسم الملف
+            if len(file.name) > 255:
+                raise ValidationError('اسم الملف طويل جداً.')
+
         return file
+
+    def clean_doc_type(self):
+        """التحقق من نوع المستند"""
+        doc_type = self.cleaned_data.get('doc_type')
+        if not doc_type:
+            raise ValidationError('يرجى اختيار نوع المستند.')
+        return doc_type
 
 
 class EmployeeSearchForm(forms.Form):

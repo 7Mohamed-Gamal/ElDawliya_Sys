@@ -15,6 +15,16 @@ urlpatterns = [
     path('<int:emp_id>/edit/', views.edit_employee, name='edit'),
     path('<int:emp_id>/delete/', views.delete_employee, name='delete'),
 
+    # Document Management URLs
+    path('<int:emp_id>/documents/', views.employee_documents, name='employee_documents'),
+    path('<int:emp_id>/documents/upload/', views.upload_document, name='upload_document'),
+    path('<int:emp_id>/documents/ajax-upload/', views.ajax_upload_document, name='ajax_upload_document'),
+    path('documents/<int:doc_id>/download/', views.download_document, name='download_document'),
+    path('documents/<int:doc_id>/delete/', views.delete_document, name='delete_document'),
+    path('documents/<int:doc_id>/preview/', views.preview_document, name='preview_document'),
+    path('<int:emp_id>/test-upload/', views.test_upload_endpoint, name='test_upload_endpoint'),
+    path('<int:emp_id>/test-upload-page/', views.test_upload_page, name='test_upload_page'),
+
     # Department URLs
     path('departments/', views.department_list, name='department_list'),
     path('departments/add/', views.add_department, name='add_department'),

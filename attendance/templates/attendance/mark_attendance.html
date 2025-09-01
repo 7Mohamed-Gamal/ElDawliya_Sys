@@ -48,15 +48,25 @@
                     <!-- Employee Selection (for admins) -->
                     {% if user.is_staff %}
                     <div class="mb-4">
-                        <label for="employee_select" class="form-label">اختيار الموظف</label>
-                        <select class="form-select" name="employee_id" id="employee_select">
+                        <label for="employee_select" class="form-label">
+                            <i class="fas fa-user me-2"></i>
+                            اختيار الموظف
+                        </label>
+                        <select class="form-select" name="employee_id" id="employee_select" required>
                             <option value="">اختر الموظف...</option>
                             {% for employee in employees %}
                             <option value="{{ employee.emp_id }}">
-                                {{ employee.first_name }} {{ employee.last_name }} - {{ employee.emp_code }}
+                                {{ employee.display_name }} - {{ employee.emp_code }}
+                                {% if employee.dept %}
+                                    ({{ employee.dept.dept_name }})
+                                {% endif %}
                             </option>
                             {% endfor %}
                         </select>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle me-1"></i>
+                            اختر الموظف المراد تسجيل الحضور له
+                        </div>
                     </div>
                     {% endif %}
 
