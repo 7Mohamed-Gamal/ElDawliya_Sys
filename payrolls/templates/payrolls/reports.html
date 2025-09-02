@@ -219,13 +219,13 @@
             <div class="col-md-3">
                 <label for="report_type" class="form-label">نوع التقرير</label>
                 <select class="form-select" name="report_type" id="report_type">
-                    <option value="summary" {% if request.GET.report_type=='summary' %}selected{% endif %}>ملخص عام
+                    <option value="summary" {% if request.GET.report_type == "summary" %}selected{% endif %}>ملخص عام
                     </option>
-                    <option value="detailed" {% if request.GET.report_type=='detailed' %}selected{% endif %}>تفصيلي
+                    <option value="detailed" {% if request.GET.report_type == "detailed" %}selected{% endif %}>تفصيلي
                     </option>
-                    <option value="comparison" {% if request.GET.report_type=='comparison' %}selected{% endif %}>مقارنة
+                    <option value="comparison" {% if request.GET.report_type == "comparison" %}selected{% endif %}>مقارنة
                     </option>
-                    <option value="analysis" {% if request.GET.report_type=='analysis' %}selected{% endif %}>تحليل متقدم
+                    <option value="analysis" {% if request.GET.report_type == "analysis" %}selected{% endif %}>تحليل متقدم
                     </option>
                 </select>
             </div>
@@ -386,9 +386,9 @@
                                 </td>
                                 <td>{{ payroll.pay_date|date:"d/m/Y" }}</td>
                                 <td>
-                                    {% if payroll.status == 'paid' %}
+                                    {% if payroll.status == "paid" %}
                                     <span class="badge bg-success">مدفوع</span>
-                                    {% elif payroll.status == 'pending' %}
+                                    {% elif payroll.status == "pending" %}
                                     <span class="badge bg-warning">معلق</span>
                                     {% else %}
                                     <span class="badge bg-secondary">مسودة</span>
@@ -697,7 +697,7 @@ extra_js %}
         datasets: [{
             data: [
                 {% for dept in department_summaries %}
-                        {{ dept.total_salary |default: 0 }},
+                        {{ dept.total_salary|default:0 }},
     {% endfor %}
                     ],
     backgroundColor: [
@@ -753,7 +753,7 @@ extra_js %}
         label: 'إجمالي الرواتب',
         data: [
             {% for month in monthly_data %}
-                        {{ month.total_salary |default: 0 }},
+                        {{ month.total_salary|default:0 }},
     {% endfor %}
     ],
         borderColor: '#28a745',
@@ -769,7 +769,7 @@ extra_js %}
         label: 'متوسط الراتب',
             data: [
                 {% for month in monthly_data %}
-    { { month.avg_salary |default: 0 } },
+    {{ month.avg_salary|default:0 }},
     {% endfor %}
                     ],
     borderColor: '#17a2b8',
