@@ -51,6 +51,7 @@ urlpatterns = [
     # العمليات الجماعية
     path('bulk/salary-update/', views.bulk_salary_update, name='bulk_salary_update'),
     path('bulk/payslip-generation/', views.bulk_payslip_generation, name='bulk_payslip_generation'),
+    path('generate-payslips/', views.bulk_payslip_generation, name='generate_payslips'),
     
     # AJAX APIs
     path('ajax/calculate-salary/', views.calculate_salary_ajax, name='calculate_salary_ajax'),

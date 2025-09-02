@@ -549,7 +549,7 @@ function confirmPayrollRun(runId) {
 
 function markAsPaid(runId) {
     if (confirm('هل تم دفع جميع الرواتب في هذا التشغيل؟')) {
-        fetch(`{% url "payrolls:mark_as_paid" 0 %}`.replace('0', runId), {
+        fetch(`{% url "payrolls:mark_payroll_paid" 0 %}`.replace('0', runId), {
             method: 'POST',
             headers: {
                 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
@@ -571,7 +571,7 @@ function markAsPaid(runId) {
 }
 
 function printPayrollRun(runId) {
-    window.open(`{% url "payrolls:print_payroll_run" 0 %}`.replace('0', runId), '_blank');
+    window.open(`{% url "payrolls:payroll_summary_report" 0 %}`.replace('0', runId), '_blank');
 }
 
 function deletePayrollRun(runId) {

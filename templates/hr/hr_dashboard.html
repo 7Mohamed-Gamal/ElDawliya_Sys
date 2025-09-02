@@ -4,7 +4,6 @@
 {% block title %}لوحة تحكم الموارد البشرية - نظام الدولية{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.css">
 <style>
 :root {
     --hr-primary: #2563eb;
@@ -15,6 +14,7 @@
     --hr-info: #06b6d4;
 }
 
+/* Ensure content is visible even without external CSS */
 .hr-dashboard-header {
     background: linear-gradient(135deg, var(--hr-primary) 0%, var(--hr-secondary) 100%);
     color: white;
@@ -77,6 +77,7 @@
     text-decoration: none;
     color: inherit;
     border: 1px solid #e5e7eb;
+    display: block;
 }
 
 .hr-module-card:hover {
@@ -95,15 +96,6 @@
     justify-content: center;
     font-size: 20px;
     margin-bottom: 1rem;
-}
-
-.chart-container {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    border: 1px solid #e5e7eb;
 }
 
 .quick-actions {
@@ -178,6 +170,35 @@
     font-size: 0.875rem;
     color: #6b7280;
 }
+
+/* Loading and error states */
+.loading-indicator {
+    text-align: center;
+    padding: 3rem;
+    color: #6b7280;
+}
+
+.error-message {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    padding: 1rem;
+    color: #dc2626;
+    margin: 1rem 0;
+    text-align: center;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .hr-dashboard-header {
+        padding: 1rem;
+        text-align: center;
+    }
+    
+    .hr-stat-card, .hr-module-card {
+        margin-bottom: 1rem;
+    }
+}
 </style>
 {% endblock %}
 
@@ -205,6 +226,9 @@
                         <i class="fas fa-clock me-1"></i>
                         {{ now|time:"H:i" }}
                     </span>
+                    <button id="refresh-btn" class="btn btn-light btn-sm" onclick="refreshDashboard()">
+                        <i class="fas fa-sync-alt"></i> تحديث
+                    </button>
                 </div>
             </div>
         </div>
@@ -217,7 +241,7 @@
                 <div class="hr-stat-icon" style="background: linear-gradient(135deg, var(--hr-success), #059669);">
                     <i class="fas fa-users text-white"></i>
                 </div>
-                <div class="hr-stat-value text-success">{{ total_employees|default:0 }}</div>
+                <div class="hr-stat-value text-success" id="total-employees">{{ total_employees|default:0 }}</div>
                 <div class="hr-stat-label">إجمالي الموظفين</div>
                 <div class="hr-stat-change text-success">
                     <i class="fas fa-arrow-up me-1"></i>
@@ -231,7 +255,7 @@
                 <div class="hr-stat-icon" style="background: linear-gradient(135deg, var(--hr-primary), var(--hr-secondary));">
                     <i class="fas fa-user-check text-white"></i>
                 </div>
-                <div class="hr-stat-value text-primary">{{ present_today|default:0 }}</div>
+                <div class="hr-stat-value text-primary" id="present-today">{{ present_today|default:0 }}</div>
                 <div class="hr-stat-label">حاضر اليوم</div>
                 <div class="hr-stat-change text-success">
                     <i class="fas fa-percentage me-1"></i>
@@ -245,312 +269,338 @@
                 <div class="hr-stat-icon" style="background: linear-gradient(135deg, var(--hr-warning), #d97706);">
                     <i class="fas fa-calendar-times text-white"></i>
                 </div>
-                <div class="hr-stat-value text-warning">{{ pending_leaves|default:0 }}</div>
+                <div class="hr-stat-value text-warning" id="pending-leaves">{{ pending_leaves|default:0 }}</div>
                 <div class="hr-stat-label">إجازات في الانتظار</div>
                 <div class="hr-stat-change text-info">
-                <i class="fas fa-clock me-1"></i>
-                {{ approved_leaves|default:0 }} معتمدة
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-xl-3 col-md-6">
-        <div class="hr-stat-card">
-            <div class="hr-stat-icon" style="background: linear-gradient(135deg, var(--hr-info), #0891b2);">
-                <i class="fas fa-money-bill-wave text-white"></i>
-            </div>
-            <div class="hr-stat-value text-info">{{ total_payroll|default:0|floatformat:0 }}</div>
-            <div class="hr-stat-label">إجمالي الرواتب (ريال)</div>
-            <div class="hr-stat-change text-success">
-                <i class="fas fa-chart-line me-1"></i>
-                هذا الشهر
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- HR Modules -->
-<div class="row">
-    <div class="col-12">
-        <h3 class="mb-4">
-            <i class="fas fa-th-large me-2"></i>
-            أنظمة الموارد البشرية
-        </h3>
-    </div>
-</div>
-
-<div class="row">
-    <!-- Attendance Module -->
-    <div class="col-xl-4 col-md-6">
-        <a href="{% url 'attendance:dashboard' %}" class="hr-module-card">
-            <div class="hr-module-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
-                <i class="fas fa-clock text-white"></i>
-            </div>
-            <h5 class="mb-2">الحضور والانصراف</h5>
-            <p class="text-muted mb-3">إدارة وتتبع حضور الموظفين وأوقات العمل</p>
-            <div class="row">
-                <div class="col-6">
-                    <small class="text-muted">حاضر اليوم</small>
-                    <div class="fw-bold text-success">{{ present_today|default:0 }}</div>
-                </div>
-                <div class="col-6">
-                    <small class="text-muted">متأخر</small>
-                    <div class="fw-bold text-warning">{{ late_today|default:0 }}</div>
+                    <i class="fas fa-clock me-1"></i>
+                    {{ approved_leaves|default:0 }} معتمدة
                 </div>
             </div>
-        </a>
-    </div>
-    
-    <!-- Leaves Module -->
-    <div class="col-xl-4 col-md-6">
-        <a href="{% url 'leaves:dashboard' %}" class="hr-module-card">
-            <div class="hr-module-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
-                <i class="fas fa-calendar-alt text-white"></i>
-            </div>
-            <h5 class="mb-2">إدارة الإجازات</h5>
-            <p class="text-muted mb-3">طلبات الإجازات وإدارة أرصدة الموظفين</p>
-            <div class="row">
-                <div class="col-6">
-                    <small class="text-muted">في الانتظار</small>
-                    <div class="fw-bold text-warning">{{ pending_leaves|default:0 }}</div>
-                </div>
-                <div class="col-6">
-                    <small class="text-muted">معتمدة</small>
-                    <div class="fw-bold text-success">{{ approved_leaves|default:0 }}</div>
-                </div>
-            </div>
-        </a>
-    </div>
-    
-    <!-- Payroll Module -->
-    <div class="col-xl-4 col-md-6">
-        <a href="{% url 'payrolls:dashboard' %}" class="hr-module-card">
-            <div class="hr-module-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
-                <i class="fas fa-coins text-white"></i>
-            </div>
-            <h5 class="mb-2">إدارة الرواتب</h5>
-            <p class="text-muted mb-3">حساب ومعالجة رواتب الموظفين</p>
-            <div class="row">
-                <div class="col-6">
-                    <small class="text-muted">تشغيلات نشطة</small>
-                    <div class="fw-bold text-primary">{{ active_payroll_runs|default:0 }}</div>
-                </div>
-                <div class="col-6">
-                    <small class="text-muted">متوسط الراتب</small>
-                    <div class="fw-bold text-info">{{ avg_salary|default:0|floatformat:0 }}</div>
-                </div>
-            </div>
-        </a>
-    </div>
-    
-    <!-- Employees Module -->
-    <div class="col-xl-4 col-md-6">
-        <a href="{% url 'employees:list' %}" class="hr-module-card">
-            <div class="hr-module-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
-                <i class="fas fa-users text-white"></i>
-            </div>
-            <h5 class="mb-2">إدارة الموظفين</h5>
-            <p class="text-muted mb-3">ملفات الموظفين والبيانات الشخصية</p>
-            <div class="row">
-                <div class="col-6">
-                    <small class="text-muted">نشط</small>
-                    <div class="fw-bold text-success">{{ active_employees|default:0 }}</div>
-                </div>
-                <div class="col-6">
-                    <small class="text-muted">إجمالي</small>
-                    <div class="fw-bold text-primary">{{ total_employees|default:0 }}</div>
-                </div>
-            </div>
-        </a>
-    </div>
-    
-    <!-- Reports Module -->
-    <div class="col-xl-4 col-md-6">
-        <a href="{% url 'reports:dashboard' %}" class="hr-module-card">
-            <div class="hr-module-icon" style="background: linear-gradient(135deg, #06b6d4, #0891b2);">
-                <i class="fas fa-chart-bar text-white"></i>
-            </div>
-            <h5 class="mb-2">التقارير والتحليلات</h5>
-            <p class="text-muted mb-3">تقارير شاملة وتحليلات متقدمة</p>
-            <div class="row">
-                <div class="col-6">
-                    <small class="text-muted">تقارير جاهزة</small>
-                    <div class="fw-bold text-success">{{ available_reports|default:0 }}</div>
-                </div>
-                <div class="col-6">
-                    <small class="text-muted">مجدولة</small>
-                    <div class="fw-bold text-info">{{ scheduled_reports|default:0 }}</div>
-                </div>
-            </div>
-        </a>
-    </div>
-    
-    <!-- Training Module -->
-    <div class="col-xl-4 col-md-6">
-        <a href="{% url 'training:dashboard' %}" class="hr-module-card">
-            <div class="hr-module-icon" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
-                <i class="fas fa-graduation-cap text-white"></i>
-            </div>
-            <h5 class="mb-2">التدريب والتطوير</h5>
-            <p class="text-muted mb-3">برامج التدريب وتطوير المهارات</p>
-            <div class="row">
-                <div class="col-6">
-                    <small class="text-muted">برامج نشطة</small>
-                    <div class="fw-bold text-primary">{{ active_trainings|default:0 }}</div>
-                </div>
-                <div class="col-6">
-                    <small class="text-muted">مسجلين</small>
-                    <div class="fw-bold text-success">{{ enrolled_trainees|default:0 }}</div>
-                </div>
-            </div>
-        </a>
-    </div>
-</div>
-
-<!-- Charts and Analytics -->
-<div class="row mt-4">
-    <div class="col-xl-8">
-        <div class="chart-container">
-            <h5 class="mb-3">
-                <i class="fas fa-chart-line me-2"></i>
-                اتجاهات الحضور الشهرية
-            </h5>
-            <canvas id="attendanceChart" height="300"></canvas>
-        </div>
-    </div>
-    
-    <div class="col-xl-4">
-        <div class="quick-actions">
-            <h5 class="mb-3">
-                <i class="fas fa-bolt me-2"></i>
-                إجراءات سريعة
-            </h5>
-            
-            <a href="{% url 'employees:add' %}" class="quick-action-btn" style="background: linear-gradient(135deg, var(--hr-success), #059669);">
-                <i class="fas fa-user-plus me-2"></i>
-                إضافة موظف جديد
-            </a>
-            
-            <a href="{% url 'attendance:mark' %}" class="quick-action-btn" style="background: linear-gradient(135deg, var(--hr-primary), var(--hr-secondary));">
-                <i class="fas fa-clock me-2"></i>
-                تسجيل حضور
-            </a>
-            
-            <a href="{% url 'leaves:create' %}" class="quick-action-btn" style="background: linear-gradient(135deg, var(--hr-warning), #d97706);">
-                <i class="fas fa-calendar-plus me-2"></i>
-                طلب إجازة
-            </a>
-            
-            <a href="{% url 'payrolls:create_payroll_run' %}" class="quick-action-btn" style="background: linear-gradient(135deg, var(--hr-info), #0891b2);">
-                <i class="fas fa-money-bill me-2"></i>
-                تشغيل رواتب
-            </a>
         </div>
         
-        <div class="recent-activity">
-            <h5 class="mb-3">
-                <i class="fas fa-history me-2"></i>
-                النشاطات الأخيرة
-            </h5>
-            
-            {% for activity in recent_activities %}
-            <div class="activity-item">
-                <div class="activity-icon" style="background: {{ activity.color }};">
-                    <i class="{{ activity.icon }} text-white"></i>
+        <div class="col-xl-3 col-md-6">
+            <div class="hr-stat-card">
+                <div class="hr-stat-icon" style="background: linear-gradient(135deg, var(--hr-info), #0891b2);">
+                    <i class="fas fa-money-bill-wave text-white"></i>
                 </div>
-                <div class="activity-content">
-                    <div class="activity-title">{{ activity.title }}</div>
-                    <div class="activity-time">{{ activity.time|timesince }} مضت</div>
+                <div class="hr-stat-value text-info">{{ total_payroll|default:0|floatformat:0 }}</div>
+                <div class="hr-stat-label">إجمالي الرواتب (جنيه مصري)</div>
+                <div class="hr-stat-change text-success">
+                    <i class="fas fa-chart-line me-1"></i>
+                    هذا الشهر
                 </div>
             </div>
-            {% empty %}
-            <div class="text-center text-muted py-4">
-                <i class="fas fa-inbox fa-3x mb-3 opacity-50"></i>
-                <p>لا توجد نشاطات حديثة</p>
+        </div>
+    </div>
+
+    <!-- HR Modules -->
+    <div class="row">
+        <div class="col-12">
+            <h3 class="mb-4">
+                <i class="fas fa-th-large me-2"></i>
+                أنظمة الموارد البشرية
+            </h3>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Attendance Module -->
+        <div class="col-xl-4 col-md-6">
+            <a href="{% url 'attendance:dashboard' %}" class="hr-module-card">
+                <div class="hr-module-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+                    <i class="fas fa-clock text-white"></i>
+                </div>
+                <h5 class="mb-2">الحضور والانصراف</h5>
+                <p class="text-muted mb-3">إدارة وتتبع حضور الموظفين وأوقات العمل</p>
+                <div class="row">
+                    <div class="col-6">
+                        <small class="text-muted">حاضر اليوم</small>
+                        <div class="fw-bold text-success">{{ present_today|default:0 }}</div>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted">متأخر</small>
+                        <div class="fw-bold text-warning">{{ late_today|default:0 }}</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Leaves Module -->
+        <div class="col-xl-4 col-md-6">
+            <a href="{% url 'leaves:dashboard' %}" class="hr-module-card">
+                <div class="hr-module-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                    <i class="fas fa-calendar-alt text-white"></i>
+                </div>
+                <h5 class="mb-2">إدارة الإجازات</h5>
+                <p class="text-muted mb-3">طلبات الإجازات وإدارة أرصدة الموظفين</p>
+                <div class="row">
+                    <div class="col-6">
+                        <small class="text-muted">في الانتظار</small>
+                        <div class="fw-bold text-warning">{{ pending_leaves|default:0 }}</div>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted">معتمدة</small>
+                        <div class="fw-bold text-success">{{ approved_leaves|default:0 }}</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Payroll Module -->
+        <div class="col-xl-4 col-md-6">
+            <a href="{% url 'payrolls:dashboard' %}" class="hr-module-card">
+                <div class="hr-module-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                    <i class="fas fa-coins text-white"></i>
+                </div>
+                <h5 class="mb-2">إدارة الرواتب</h5>
+                <p class="text-muted mb-3">حساب ومعالجة رواتب الموظفين</p>
+                <div class="row">
+                    <div class="col-6">
+                        <small class="text-muted">تشغيلات نشطة</small>
+                        <div class="fw-bold text-primary">{{ active_payroll_runs|default:0 }}</div>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted">متوسط الراتب</small>
+                        <div class="fw-bold text-info">{{ avg_salary|default:0|floatformat:0 }}</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Employees Module -->
+        <div class="col-xl-4 col-md-6">
+            <a href="{% url 'employees:list' %}" class="hr-module-card">
+                <div class="hr-module-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                    <i class="fas fa-users text-white"></i>
+                </div>
+                <h5 class="mb-2">إدارة الموظفين</h5>
+                <p class="text-muted mb-3">ملفات الموظفين والبيانات الشخصية</p>
+                <div class="row">
+                    <div class="col-6">
+                        <small class="text-muted">نشط</small>
+                        <div class="fw-bold text-success">{{ active_employees|default:0 }}</div>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted">إجمالي</small>
+                        <div class="fw-bold text-primary">{{ total_employees|default:0 }}</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Reports Module -->
+        <div class="col-xl-4 col-md-6">
+            <a href="{% url 'attendance:reports' %}" class="hr-module-card">
+                <div class="hr-module-icon" style="background: linear-gradient(135deg, #06b6d4, #0891b2);">
+                    <i class="fas fa-chart-bar text-white"></i>
+                </div>
+                <h5 class="mb-2">التقارير والتحليلات</h5>
+                <p class="text-muted mb-3">تقارير شاملة وتحليلات متقدمة</p>
+                <div class="row">
+                    <div class="col-6">
+                        <small class="text-muted">تقارير جاهزة</small>
+                        <div class="fw-bold text-success">{{ available_reports|default:0 }}</div>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted">مجدولة</small>
+                        <div class="fw-bold text-info">{{ scheduled_reports|default:0 }}</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Training Module -->
+        <div class="col-xl-4 col-md-6">
+            <a href="{% url 'training:dashboard' %}" class="hr-module-card">
+                <div class="hr-module-icon" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+                    <i class="fas fa-graduation-cap text-white"></i>
+                </div>
+                <h5 class="mb-2">التدريب والتطوير</h5>
+                <p class="text-muted mb-3">برامج التدريب وتطوير المهارات</p>
+                <div class="row">
+                    <div class="col-6">
+                        <small class="text-muted">برامج نشطة</small>
+                        <div class="fw-bold text-primary">{{ active_trainings|default:0 }}</div>
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted">مسجلين</small>
+                        <div class="fw-bold text-success">{{ enrolled_trainees|default:0 }}</div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Quick Actions and Recent Activity -->
+    <div class="row mt-4">
+        <div class="col-xl-6">
+            <div class="quick-actions">
+                <h5 class="mb-3">
+                    <i class="fas fa-bolt me-2"></i>
+                    إجراءات سريعة
+                </h5>
+
+                <a href="{% url 'employees:add' %}" class="quick-action-btn" style="background: linear-gradient(135deg, var(--hr-success), #059669);">
+                    <i class="fas fa-user-plus me-2"></i>
+                    إضافة موظف جديد
+                </a>
+
+                <a href="{% url 'attendance:mark' %}" class="quick-action-btn" style="background: linear-gradient(135deg, var(--hr-primary), var(--hr-secondary));">
+                    <i class="fas fa-clock me-2"></i>
+                    تسجيل حضور
+                </a>
+
+                <a href="{% url 'leaves:dashboard' %}" class="quick-action-btn" style="background: linear-gradient(135deg, var(--hr-warning), #d97706);">
+                    <i class="fas fa-calendar-plus me-2"></i>
+                    إدارة الإجازات
+                </a>
+
+                <a href="{% url 'payrolls:dashboard' %}" class="quick-action-btn" style="background: linear-gradient(135deg, var(--hr-info), #0891b2);">
+                    <i class="fas fa-money-bill me-2"></i>
+                    إدارة الرواتب
+                </a>
+
+                <a href="{% url 'employees:health_insurance_providers_list' %}" class="quick-action-btn" style="background: linear-gradient(135deg, #10b981, #059669);">
+                    <i class="fas fa-heartbeat me-2"></i>
+                    إدارة التأمين الصحي
+                </a>
+
+                <a href="{% url 'employees:social_insurance_job_titles_list' %}" class="quick-action-btn" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                    <i class="fas fa-shield-alt me-2"></i>
+                    التأمينات الاجتماعية
+                </a>
+
+                <a href="{% url 'employees:salary_components_list' %}" class="quick-action-btn" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                    <i class="fas fa-coins me-2"></i>
+                    مكونات الراتب
+                </a>
+
+                <a href="{% url 'employees:vehicles_list' %}" class="quick-action-btn" style="background: linear-gradient(135deg, #06b6d4, #0891b2);">
+                    <i class="fas fa-bus me-2"></i>
+                    إدارة المركبات
+                </a>
+
+                <a href="{% url 'employees:work_schedules_list' %}" class="quick-action-btn" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+                    <i class="fas fa-clock me-2"></i>
+                    جداول العمل
+                </a>
+
+                <a href="{% url 'employees:evaluation_criteria_list' %}" class="quick-action-btn" style="background: linear-gradient(135deg, #84cc16, #65a30d);">
+                    <i class="fas fa-chart-line me-2"></i>
+                    معايير التقييم
+                </a>
             </div>
-            {% endfor %}
+        </div>
+
+        <div class="col-xl-6">
+            <div class="recent-activity">
+                <h5 class="mb-3">
+                    <i class="fas fa-history me-2"></i>
+                    النشاطات الأخيرة
+                </h5>
+
+                {% for activity in recent_activities %}
+                <div class="activity-item">
+                    <div class="activity-icon" style="background: {{ activity.color }};">
+                        <i class="{{ activity.icon }} text-white"></i>
+                    </div>
+                    <div class="activity-content">
+                        <div class="activity-title">{{ activity.title }}</div>
+                        <div class="activity-time">{{ activity.time|timesince }} مضت</div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-inbox fa-3x mb-3 opacity-50"></i>
+                    <p>لا توجد نشاطات حديثة</p>
+                </div>
+                {% endfor %}
+            </div>
         </div>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
 <script>
-// Attendance Chart
-const ctx = document.getElementById('attendanceChart').getContext('2d');
-const attendanceChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-        labels: {{ chart_labels|safe }},
-        datasets: [{
-            label: 'الحضور',
-            data: {{ attendance_data|safe }},
-            borderColor: 'rgb(37, 99, 235)',
-            backgroundColor: 'rgba(37, 99, 235, 0.1)',
-            borderWidth: 3,
-            fill: true,
-            tension: 0.4
-        }, {
-            label: 'الغياب',
-            data: {{ absence_data|safe }},
-            borderColor: 'rgb(239, 68, 68)',
-            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-            borderWidth: 3,
-            fill: true,
-            tension: 0.4
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                position: 'top',
-                labels: {
-                    usePointStyle: true,
-                    padding: 20
-                }
+// Simple, robust dashboard functionality
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('HR Dashboard loaded successfully');
+
+    // Add loading states to buttons
+    const buttons = document.querySelectorAll('.quick-action-btn, .hr-module-card');
+    buttons.forEach(button => {
+        button.addEventListener('click', function() {
+            const icon = this.querySelector('i');
+            if (icon) {
+                icon.className = 'fas fa-spinner fa-spin me-2';
             }
-        },
-        scales: {
-            y: {
-                beginAtZero: true,
-                grid: {
-                    color: 'rgba(0, 0, 0, 0.1)'
-                }
-            },
-            x: {
-                grid: {
-                    color: 'rgba(0, 0, 0, 0.1)'
-                }
-            }
-        },
-        elements: {
-            point: {
-                radius: 6,
-                hoverRadius: 8
-            }
-        }
-    }
+        });
+    });
 });
 
-// Auto-refresh data every 5 minutes
-setInterval(function() {
+// Manual refresh function
+function refreshDashboard() {
+    const refreshBtn = document.getElementById('refresh-btn');
+    const originalContent = refreshBtn.innerHTML;
+
+    // Show loading state
+    refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التحديث...';
+    refreshBtn.disabled = true;
+
     fetch('{% url "hr:dashboard_data" %}')
-        .then(response => response.json())
-        .then(data => {
-            // Update statistics
-            document.querySelector('.hr-stat-value.text-success').textContent = data.total_employees;
-            document.querySelector('.hr-stat-value.text-primary').textContent = data.present_today;
-            document.querySelector('.hr-stat-value.text-warning').textContent = data.pending_leaves;
-            
-            // Update chart if needed
-            attendanceChart.data.datasets[0].data = data.attendance_data;
-            attendanceChart.data.datasets[1].data = data.absence_data;
-            attendanceChart.update();
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
         })
-        .catch(error => console.log('Error updating dashboard:', error));
-}, 300000); // 5 minutes
+        .then(data => {
+            // Update statistics safely
+            updateStatistic('total-employees', data.total_employees);
+            updateStatistic('present-today', data.present_today);
+            updateStatistic('pending-leaves', data.pending_leaves);
+
+            showMessage('تم تحديث البيانات بنجاح', 'success');
+        })
+        .catch(error => {
+            console.error('Error updating dashboard:', error);
+            showMessage('حدث خطأ أثناء التحديث', 'error');
+        })
+        .finally(() => {
+            // Restore button state
+            refreshBtn.innerHTML = originalContent;
+            refreshBtn.disabled = false;
+        });
+}
+
+function updateStatistic(elementId, value) {
+    const element = document.getElementById(elementId);
+    if (element && value !== undefined) {
+        element.textContent = value;
+    }
+}
+
+function showMessage(message, type) {
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const alertHtml = `
+        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+
+    // Insert at the top of the container
+    const container = document.querySelector('.container-fluid');
+    container.insertAdjacentHTML('afterbegin', alertHtml);
+
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+        const alert = container.querySelector('.alert');
+        if (alert) {
+            alert.remove();
+        }
+    }, 3000);
+}
 </script>
 {% endblock %}

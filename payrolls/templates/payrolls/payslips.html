@@ -498,7 +498,7 @@ function viewPayslip(payslipId) {
 }
 
 function downloadPayslip(payslipId) {
-    window.open(`{% url "payrolls:download_payslip" 0 %}`.replace('0', payslipId), '_blank');
+    window.open(`{% url "payrolls:print_payslip" 0 %}`.replace('0', payslipId), '_blank');
 }
 
 function downloadCurrentPayslip() {
@@ -509,12 +509,17 @@ function downloadCurrentPayslip() {
 
 function sendPayslip(payslipId) {
     if (confirm('هل تريد إرسال كشف الراتب للموظف؟')) {
-        fetch(`{% url "payrolls:send_payslip" 0 %}`.replace('0', payslipId), {
+        // TODO: Implement send payslip functionality
+        alert('ميزة إرسال كشف الراتب قيد التطوير');
+        return;
+        /*
+        fetch(`/payrolls/payslip/${payslipId}/send/`, {
             method: 'POST',
             headers: {
                 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
             }
         })
+        */
         .then(response => response.json())
         .then(data => {
             if (data.success) {
@@ -532,12 +537,17 @@ function sendPayslip(payslipId) {
 
 function sendPayslips() {
     if (confirm('هل تريد إرسال جميع كشوف الرواتب المُنشأة؟')) {
-        fetch('{% url "payrolls:send_all_payslips" %}', {
+        // TODO: Implement send all payslips functionality
+        alert('ميزة إرسال جميع كشوف الرواتب قيد التطوير');
+        return;
+        /*
+        fetch('/payrolls/payslips/send-all/', {
             method: 'POST',
             headers: {
                 'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
             }
         })
+        */
         .then(response => response.json())
         .then(data => {
             if (data.success) {
@@ -559,8 +569,13 @@ function printPayslip(payslipId) {
 }
 
 function sharePayslip(payslipId) {
+    // TODO: Implement share payslip functionality
+    alert('ميزة مشاركة كشف الراتب قيد التطوير');
+    return;
+    /*
     // Generate shareable link
-    const shareUrl = `${window.location.origin}{% url "payrolls:shared_payslip" 0 %}`.replace('0', payslipId);
+    const shareUrl = `${window.location.origin}/payrolls/payslip/${payslipId}/shared/`;
+    */
     
     if (navigator.share) {
         navigator.share({

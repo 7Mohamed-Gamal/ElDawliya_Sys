@@ -141,4 +141,9 @@ class EmployeeDocument(models.Model):
         verbose_name = 'مستند'
         verbose_name_plural = 'مستندات الموظفين'
 
-# Create your models here.
+# Import extended models for comprehensive HR management
+try:
+    from .models_extended import *
+except ImportError:
+    # Extended models not yet available during initial migration
+    pass

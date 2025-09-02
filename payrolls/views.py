@@ -42,7 +42,7 @@ def dashboard(request):
     ).aggregate(
         total_basic=Sum('basic_salary'),
         total_housing=Sum('housing_allow'),
-        total_transport=Sum('transport'),
+        total_transport=Sum('transport_allow'),
         total_other=Sum('other_allow'),
         total_gosi=Sum('gosi_deduction'),
         total_tax=Sum('tax_deduction')
@@ -199,7 +199,7 @@ def salary_detail(request, salary_id):
     # حساب إجمالي البدلات والاستقطاعات
     total_allowances = (
         (salary.housing_allow or 0) +
-        (salary.transport or 0) +
+        (salary.transport_allow or 0) +
         (salary.other_allow or 0)
     )
     
@@ -282,7 +282,7 @@ def copy_salary(request, salary_id):
             emp=original_salary.emp,
             basic_salary=original_salary.basic_salary,
             housing_allow=original_salary.housing_allow,
-            transport=original_salary.transport,
+            transport_allow=original_salary.transport_allow,
             other_allow=original_salary.other_allow,
             gosi_deduction=original_salary.gosi_deduction,
             tax_deduction=original_salary.tax_deduction,
@@ -324,8 +324,8 @@ def salary_history(request, salary_id):
 def payroll_runs(request):
     """قائمة تشغيلات الرواتب"""
     runs = PayrollRun.objects.annotate(
-        employee_count=Count('payrolldetail'),
-        total_net_salary=Sum('payrolldetail__net_salary')
+        employee_count=Count('payroll_details'),
+        total_net_salary=Sum('payroll_details__net_salary')
     ).order_by('-run_date')
     
     # فلترة حسب الحالة
@@ -484,7 +484,7 @@ def process_payroll_run(request, run_id):
                 # حساب الراتب الصافي
                 basic_salary = salary.basic_salary or 0
                 housing = salary.housing_allow or 0
-                transport = salary.transport or 0
+                transport = salary.transport_allow or 0
                 overtime = 0  # يمكن حسابه من سجلات الحضور
                 gosi = salary.gosi_deduction or 0
                 tax = salary.tax_deduction or 0
@@ -496,11 +496,11 @@ def process_payroll_run(request, run_id):
                     run=payroll_run,
                     emp=salary.emp,
                     basic_salary=basic_salary,
-                    housing=housing,
-                    transport=transport,
-                    overtime=overtime,
-                    gosi=gosi,
-                    tax=tax,
+                    housing_allowance=housing,
+                    transport_allowance=transport,
+                    overtime_amount=overtime,
+                    gosi_deduction=gosi,
+                    tax_deduction=tax,
                     loan_deduction=loan_deduction,
                     net_salary=net_salary
                 )
@@ -616,7 +616,7 @@ def my_salary(request):
     # حساب التفاصيل
     total_allowances = (
         (current_salary.housing_allow or 0) +
-        (current_salary.transport or 0) +
+        (current_salary.transport_allow or 0) +
         (current_salary.other_allow or 0)
     )
     
@@ -655,7 +655,7 @@ def reports(request):
     # إجمالي الرواتب الشهرية
     monthly_totals = EmployeeSalary.objects.filter(is_current=True).aggregate(
         total_basic=Sum('basic_salary'),
-        total_allowances=Sum('housing_allow') + Sum('transport') + Sum('other_allow'),
+        total_allowances=Sum('housing_allow') + Sum('transport_allow') + Sum('other_allow'),
         total_deductions=Sum('gosi_deduction') + Sum('tax_deduction')
     )
     
@@ -668,8 +668,8 @@ def reports(request):
     
     # اتجاهات الرواتب الشهرية
     monthly_trends = PayrollRun.objects.annotate(
-        total_net_salary=Sum('payrolldetail__net_salary'),
-        employee_count=Count('payrolldetail')
+        total_net_salary=Sum('payroll_details__net_salary'),
+        employee_count=Count('payroll_details')
     ).order_by('-run_date')[:12]
     
     context = {
@@ -699,17 +699,17 @@ def export_payroll(request):
         net_salary = (
             (salary.basic_salary or 0) +
             (salary.housing_allow or 0) +
-            (salary.transport or 0) +
+            (salary.transport_allow or 0) +
             (salary.other_allow or 0) -
             (salary.gosi_deduction or 0) -
             (salary.tax_deduction or 0)
         )
-        
+
         writer.writerow([
             f"{salary.emp.first_name} {salary.emp.last_name}",
             salary.basic_salary or 0,
             salary.housing_allow or 0,
-            salary.transport or 0,
+            salary.transport_allow or 0,
             salary.other_allow or 0,
             salary.gosi_deduction or 0,
             salary.tax_deduction or 0,
@@ -761,7 +761,7 @@ def employee_salary_ajax(request, emp_id):
                 'employee_name': f"{employee.first_name} {employee.last_name}",
                 'basic_salary': float(current_salary.basic_salary or 0),
                 'housing_allow': float(current_salary.housing_allow or 0),
-                'transport': float(current_salary.transport or 0),
+                'transport_allow': float(current_salary.transport_allow or 0),
                 'other_allow': float(current_salary.other_allow or 0),
                 'gosi_deduction': float(current_salary.gosi_deduction or 0),
                 'tax_deduction': float(current_salary.tax_deduction or 0),
@@ -842,7 +842,7 @@ def payroll_analytics(request):
     
     # اتجاهات التكلفة الشهرية
     monthly_costs = PayrollRun.objects.annotate(
-        total_cost=Sum('payrolldetail__net_salary')
+        total_cost=Sum('payroll_details__net_salary')
     ).order_by('-run_date')[:12]
     
     context = {

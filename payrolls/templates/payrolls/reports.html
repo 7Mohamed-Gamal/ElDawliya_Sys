@@ -175,13 +175,13 @@
     <div class="col-lg-3 col-md-6">
         <div class="stat-card">
             <div class="stat-number">{{ total_payroll|floatformat:0|default:0 }}</div>
-            <div class="stat-label">إجمالي الرواتب (ريال)</div>
+            <div class="stat-label">إجمالي الرواتب (جنيه مصري)</div>
         </div>
     </div>
     <div class="col-lg-3 col-md-6">
         <div class="stat-card">
             <div class="stat-number">{{ average_salary|floatformat:0|default:0 }}</div>
-            <div class="stat-label">متوسط الراتب (ريال)</div>
+            <div class="stat-label">متوسط الراتب (جنيه مصري)</div>
         </div>
     </div>
     <div class="col-lg-3 col-md-6">
@@ -201,8 +201,7 @@
                 <select class="form-select" name="department" id="department">
                     <option value="">جميع الأقسام</option>
                     {% for dept in departments %}
-                    <option value="{{ dept.dept_id }}" {% if request.GET.department==dept.dept_id|stringformat:"s"
-                        %}selected{% endif %}>
+                    <option value="{{ dept.dept_id }}" {% if request.GET.department == dept.dept_id|stringformat:"s" %}selected{% endif %}>
                         {{ dept.dept_name }}
                     </option>
                     {% endfor %}

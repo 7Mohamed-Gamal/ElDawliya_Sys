@@ -1,0 +1,709 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}تعديل بيانات الموظف - {{ employee.get_full_name }}{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'css/employee-comprehensive.css' %}" rel="stylesheet">
+<style>
+.nav-tabs .nav-link {
+    color: #495057;
+    border: 1px solid transparent;
+    border-top-left-radius: 0.375rem;
+    border-top-right-radius: 0.375rem;
+}
+
+.nav-tabs .nav-link:hover {
+    border-color: #e9ecef #e9ecef #dee2e6;
+    isolation: isolate;
+}
+
+.nav-tabs .nav-link.active {
+    color: #495057;
+    background-color: #fff;
+    border-color: #dee2e6 #dee2e6 #fff;
+}
+
+.tab-content {
+    border: 1px solid #dee2e6;
+    border-top: none;
+    padding: 1.5rem;
+    background-color: #fff;
+}
+
+.form-section {
+    margin-bottom: 2rem;
+}
+
+.form-section h5 {
+    color: #495057;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.readonly-field {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+}
+
+.calculation-result {
+    background-color: #e7f3ff;
+    border: 1px solid #b3d9ff;
+    padding: 0.75rem;
+    border-radius: 0.375rem;
+    margin-top: 1rem;
+}
+
+.employee-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 0.5rem;
+    margin-bottom: 2rem;
+}
+
+.employee-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 3px solid rgba(255,255,255,0.3);
+}
+
+.balance-card {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.balance-card h6 {
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.balance-value {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #28a745;
+}
+
+.loan-card {
+    background: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 0.375rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Employee Header -->
+    <div class="employee-header">
+        <div class="row align-items-center">
+            <div class="col-auto">
+                {% if employee.photo %}
+                    <img src="data:image/jpeg;base64,{{ employee.photo|default:'' }}" 
+                         alt="{{ employee.get_full_name }}" class="employee-avatar">
+                {% else %}
+                    <div class="employee-avatar bg-light d-flex align-items-center justify-content-center">
+                        <i class="fas fa-user fa-2x text-muted"></i>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="col">
+                <h2 class="mb-1">{{ employee.get_full_name }}</h2>
+                <p class="mb-0">
+                    <i class="fas fa-id-badge me-2"></i>{{ employee.emp_code }}
+                    <span class="mx-3">|</span>
+                    <i class="fas fa-building me-2"></i>{{ employee.dept.name|default:'غير محدد' }}
+                    <span class="mx-3">|</span>
+                    <i class="fas fa-briefcase me-2"></i>{{ employee.job.name|default:'غير محدد' }}
+                </p>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'employees:employee_list' %}" class="btn btn-light">
+                    <i class="fas fa-arrow-right me-2"></i>العودة للقائمة
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-tabs" id="employeeTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if active_tab == 'health_insurance' %}active{% endif %}" 
+                    id="health-insurance-tab" data-bs-toggle="tab" data-bs-target="#health-insurance" 
+                    type="button" role="tab">
+                <i class="fas fa-heartbeat me-2"></i>التأمين الصحي
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if active_tab == 'social_insurance' %}active{% endif %}" 
+                    id="social-insurance-tab" data-bs-toggle="tab" data-bs-target="#social-insurance" 
+                    type="button" role="tab">
+                <i class="fas fa-shield-alt me-2"></i>التأمينات الاجتماعية
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if active_tab == 'payroll_components' %}active{% endif %}" 
+                    id="payroll-components-tab" data-bs-toggle="tab" data-bs-target="#payroll-components" 
+                    type="button" role="tab">
+                <i class="fas fa-money-bill-wave me-2"></i>مكونات الراتب
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if active_tab == 'leave_balances' %}active{% endif %}" 
+                    id="leave-balances-tab" data-bs-toggle="tab" data-bs-target="#leave-balances" 
+                    type="button" role="tab">
+                <i class="fas fa-calendar-alt me-2"></i>أرصدة الإجازات
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if active_tab == 'transport' %}active{% endif %}" 
+                    id="transport-tab" data-bs-toggle="tab" data-bs-target="#transport" 
+                    type="button" role="tab">
+                <i class="fas fa-bus me-2"></i>النقل
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if active_tab == 'performance' %}active{% endif %}" 
+                    id="performance-tab" data-bs-toggle="tab" data-bs-target="#performance" 
+                    type="button" role="tab">
+                <i class="fas fa-chart-line me-2"></i>تقييم الأداء
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if active_tab == 'work_setup' %}active{% endif %}" 
+                    id="work-setup-tab" data-bs-toggle="tab" data-bs-target="#work-setup" 
+                    type="button" role="tab">
+                <i class="fas fa-cogs me-2"></i>إعدادات العمل
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="employeeTabsContent">
+        <!-- Health Insurance Tab -->
+        <div class="tab-pane fade {% if active_tab == 'health_insurance' %}show active{% endif %}" 
+             id="health-insurance" role="tabpanel">
+            <form method="post" id="health-insurance-form">
+                {% csrf_token %}
+                <input type="hidden" name="active_tab" value="health_insurance">
+                
+                <div class="form-section">
+                    <h5><i class="fas fa-heartbeat me-2"></i>بيانات التأمين الصحي</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">مقدم الخدمة</label>
+                                {{ health_insurance_form.provider }}
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">حالة التأمين</label>
+                                {{ health_insurance_form.insurance_status }}
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">نوع التأمين</label>
+                                {{ health_insurance_form.insurance_type }}
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">رقم التأمين</label>
+                                {{ health_insurance_form.insurance_number }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">تاريخ البداية</label>
+                                {{ health_insurance_form.start_date }}
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">تاريخ الانتهاء</label>
+                                {{ health_insurance_form.expiry_date }}
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">عدد المعالين</label>
+                                {{ health_insurance_form.num_dependents }}
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">أسماء المعالين</label>
+                                {{ health_insurance_form.dependent_names }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">القسط الشهري</label>
+                                {{ health_insurance_form.monthly_premium }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">مساهمة الموظف</label>
+                                {{ health_insurance_form.employee_contribution }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">مساهمة الشركة</label>
+                                {{ health_insurance_form.company_contribution }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">تفاصيل التغطية</label>
+                        {{ health_insurance_form.coverage_details }}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">ملاحظات</label>
+                        {{ health_insurance_form.notes }}
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>حفظ التغييرات
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Social Insurance Tab -->
+        <div class="tab-pane fade {% if active_tab == 'social_insurance' %}show active{% endif %}" 
+             id="social-insurance" role="tabpanel">
+            <form method="post" id="social-insurance-form">
+                {% csrf_token %}
+                <input type="hidden" name="active_tab" value="social_insurance">
+                
+                <div class="form-section">
+                    <h5><i class="fas fa-shield-alt me-2"></i>بيانات التأمينات الاجتماعية</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">حالة التأمين</label>
+                                {{ social_insurance_form.insurance_status }}
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">تاريخ بداية الاشتراك</label>
+                                {{ social_insurance_form.start_date }}
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    {{ social_insurance_form.subscription_confirmed }}
+                                    <label class="form-check-label">تأكيد الاشتراك</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">المسمى الوظيفي في التأمينات</label>
+                                {{ social_insurance_form.job_title }}
+                                <small class="form-text text-muted">
+                                    <a href="{% url 'employees:social_insurance_job_titles_list' %}" target="_blank">
+                                        إدارة المسميات الوظيفية
+                                    </a>
+                                </small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">رقم التأمينات الاجتماعية</label>
+                                {{ social_insurance_form.social_insurance_number }}
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">الأجر الشهري</label>
+                                {{ social_insurance_form.monthly_wage }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if social_insurance_form.employee_deduction %}
+                    <div class="calculation-result">
+                        <h6>الحسابات التلقائية:</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong>خصم الموظف:</strong> {{ social_insurance_form.employee_deduction.value|floatformat:2 }} ريال
+                            </div>
+                            <div class="col-md-6">
+                                <strong>مساهمة الشركة:</strong> {{ social_insurance_form.company_contribution.value|floatformat:2 }} ريال
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <label class="form-label">ملاحظات</label>
+                        {{ social_insurance_form.notes }}
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>حفظ التغييرات
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Payroll Components Tab -->
+        <div class="tab-pane fade {% if active_tab == 'payroll_components' %}show active{% endif %}"
+             id="payroll-components" role="tabpanel">
+            <form method="post" id="payroll-components-form">
+                {% csrf_token %}
+                <input type="hidden" name="active_tab" value="payroll_components">
+
+                <div class="form-section">
+                    <h5><i class="fas fa-money-bill-wave me-2"></i>مكونات الراتب</h5>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6>البدلات</h6>
+                            {{ salary_components_formset.management_form }}
+                            {% for form in salary_components_formset %}
+                                {% if form.instance.component.component_type == 'allowance' %}
+                                <div class="salary-component-form border p-3 mb-2">
+                                    {{ form.as_p }}
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            <h6>الخصومات</h6>
+                            {% for form in salary_components_formset %}
+                                {% if form.instance.component.component_type == 'deduction' %}
+                                <div class="salary-component-form border p-3 mb-2">
+                                    {{ form.as_p }}
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+
+                            <div class="calculation-result mt-3">
+                                <h6>الخصومات التلقائية:</h6>
+                                <button type="button" id="calculate-deductions" class="btn btn-sm btn-outline-primary mb-2">
+                                    حساب الخصومات
+                                </button>
+                                <div class="row">
+                                    <div class="col-6">خصم التأمينات:</div>
+                                    <div class="col-6"><span id="insurance-deduction">0.00</span> ريال</div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-6">خصم الضرائب:</div>
+                                    <div class="col-6"><span id="tax-deduction">0.00</span> ريال</div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-6">خصم السلف:</div>
+                                    <div class="col-6"><span id="loan-deductions">0.00</span> ريال</div>
+                                </div>
+                                <hr>
+                                <div class="row fw-bold">
+                                    <div class="col-6">إجمالي الخصومات:</div>
+                                    <div class="col-6"><span id="total-deductions">0.00</span> ريال</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>حفظ التغييرات
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Leave Balances Tab -->
+        <div class="tab-pane fade {% if active_tab == 'leave_balances' %}show active{% endif %}"
+             id="leave-balances" role="tabpanel">
+            <div class="form-section">
+                <h5><i class="fas fa-calendar-alt me-2"></i>أرصدة الإجازات</h5>
+
+                <div class="row">
+                    {% for balance in leave_balances %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="balance-card">
+                            <h6>{{ balance.leave_type.leave_name }}</h6>
+                            <div class="balance-value">{{ balance.current_balance|floatformat:1 }}</div>
+                            <small class="text-muted">
+                                مستحق: {{ balance.accrued_balance|floatformat:1 }} |
+                                مستخدم: {{ balance.used_balance|floatformat:1 }}
+                            </small>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            لا توجد أرصدة إجازات محددة لهذا الموظف
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                {% if active_loans %}
+                <h6 class="mt-4">السلف النشطة</h6>
+                <div class="row">
+                    {% for loan in active_loans %}
+                    <div class="col-md-6">
+                        <div class="loan-card">
+                            <h6>{{ loan.loan_type.type_name }}</h6>
+                            <div class="row">
+                                <div class="col-6">المبلغ المعتمد:</div>
+                                <div class="col-6">{{ loan.approved_amount|floatformat:2 }} ريال</div>
+                            </div>
+                            <div class="row">
+                                <div class="col-6">القسط الشهري:</div>
+                                <div class="col-6">{{ loan.installment_amt|floatformat:2 }} ريال</div>
+                            </div>
+                            <div class="row">
+                                <div class="col-6">الحالة:</div>
+                                <div class="col-6">{{ loan.status }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Transport Tab -->
+        <div class="tab-pane fade {% if active_tab == 'transport' %}show active{% endif %}"
+             id="transport" role="tabpanel">
+            <form method="post" id="transport-form">
+                {% csrf_token %}
+                <input type="hidden" name="active_tab" value="transport">
+
+                <div class="form-section">
+                    <h5><i class="fas fa-bus me-2"></i>بيانات النقل</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">المركبة</label>
+                                {{ transport_form.vehicle }}
+                                <small class="form-text text-muted">
+                                    <a href="{% url 'employees:vehicles_list' %}" target="_blank">إدارة المركبات</a>
+                                </small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">نقطة التجميع</label>
+                                {{ transport_form.pickup_point }}
+                                <small class="form-text text-muted">
+                                    <a href="{% url 'employees:pickup_points_list' %}" target="_blank">إدارة نقاط التجميع</a>
+                                </small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">وقت التجميع</label>
+                                {{ transport_form.pickup_time }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">اسم المشرف</label>
+                                {{ transport_form.supervisor_name }}
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">هاتف المشرف</label>
+                                {{ transport_form.supervisor_phone }}
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">اسم السائق</label>
+                                {{ transport_form.driver_name }}
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">هاتف السائق</label>
+                                {{ transport_form.driver_phone }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">تاريخ السريان</label>
+                                {{ transport_form.effective_date }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">تاريخ الانتهاء</label>
+                                {{ transport_form.end_date }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">ملاحظات</label>
+                        {{ transport_form.notes }}
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>حفظ التغييرات
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Performance Tab -->
+        <div class="tab-pane fade {% if active_tab == 'performance' %}show active{% endif %}"
+             id="performance" role="tabpanel">
+            <div class="form-section">
+                <h5><i class="fas fa-chart-line me-2"></i>تقييمات الأداء</h5>
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6>التقييمات الأخيرة</h6>
+                    <a href="{% url 'employees:performance_evaluation_create' employee.emp_id %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus me-2"></i>إضافة تقييم جديد
+                    </a>
+                </div>
+
+                {% for evaluation in recent_evaluations %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h6 class="card-title">
+                                    تقييم {{ evaluation.evaluation_date }}
+                                    <span class="badge bg-{{ evaluation.status|yesno:'success,warning,danger' }} ms-2">
+                                        {{ evaluation.get_status_display }}
+                                    </span>
+                                </h6>
+                                <p class="card-text">
+                                    <strong>المقيم:</strong> {{ evaluation.evaluator.get_full_name }}<br>
+                                    <strong>فترة التقييم:</strong> {{ evaluation.evaluation_period_start }} - {{ evaluation.evaluation_period_end }}<br>
+                                    <strong>الدرجة الإجمالية:</strong> {{ evaluation.overall_score|floatformat:1 }}
+                                </p>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <a href="{% url 'employees:performance_evaluation_detail' evaluation.evaluation_id %}"
+                                   class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-eye me-2"></i>عرض التفاصيل
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    لا توجد تقييمات أداء لهذا الموظف
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Work Setup Tab -->
+        <div class="tab-pane fade {% if active_tab == 'work_setup' %}show active{% endif %}"
+             id="work-setup" role="tabpanel">
+            <form method="post" id="work-setup-form">
+                {% csrf_token %}
+                <input type="hidden" name="active_tab" value="work_setup">
+
+                <div class="form-section">
+                    <h5><i class="fas fa-cogs me-2"></i>إعدادات العمل</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">جدول العمل</label>
+                                {{ work_setup_form.work_schedule }}
+                                <small class="form-text text-muted">
+                                    <a href="{% url 'employees:work_schedules_list' %}" target="_blank">إدارة جداول العمل</a>
+                                </small>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">معدل العمل الإضافي</label>
+                                {{ work_setup_form.overtime_rate }}
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">معدل خصم التأخير</label>
+                                {{ work_setup_form.late_deduction_rate }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">معدل خصم الغياب</label>
+                                {{ work_setup_form.absence_deduction_rate }}
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">تاريخ السريان</label>
+                                {{ work_setup_form.effective_date }}
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">تاريخ الانتهاء</label>
+                                {{ work_setup_form.end_date }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">ملاحظات</label>
+                        {{ work_setup_form.notes }}
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>حفظ التغييرات
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Handle vehicle selection to auto-populate details
+    $('#id_vehicle').change(function() {
+        var vehicleId = $(this).val();
+        if (vehicleId) {
+            $.ajax({
+                url: '{% url "employees:get_vehicle_details" 0 %}'.replace('0', vehicleId),
+                type: 'GET',
+                success: function(data) {
+                    $('#id_supervisor_name').val(data.supervisor_name);
+                    $('#id_supervisor_phone').val(data.supervisor_phone);
+                    $('#id_driver_name').val(data.driver_name);
+                    $('#id_driver_phone').val(data.driver_phone);
+                },
+                error: function() {
+                    alert('حدث خطأ في جلب بيانات المركبة');
+                }
+            });
+        }
+    });
+
+    // Calculate salary deductions
+    $('#calculate-deductions').click(function() {
+        $.ajax({
+            url: '{% url "employees:calculate_salary_deductions" employee.emp_id %}',
+            type: 'GET',
+            success: function(data) {
+                $('#insurance-deduction').text(data.insurance_deduction.toFixed(2));
+                $('#tax-deduction').text(data.tax_deduction.toFixed(2));
+                $('#loan-deductions').text(data.loan_deductions.toFixed(2));
+                $('#total-deductions').text(data.total_deductions.toFixed(2));
+            },
+            error: function() {
+                alert('حدث خطأ في حساب الخصومات');
+            }
+        });
+    });
+
+    // Auto-save functionality
+    $('.auto-save').on('change', function() {
+        var form = $(this).closest('form');
+        // Implement auto-save logic here
+    });
+});
+</script>
+{% endblock %}

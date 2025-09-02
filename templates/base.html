@@ -41,7 +41,7 @@
 
         .sidebar {
             background: linear-gradient(135deg, var(--dark) 0%, #334155 100%);
-            min-height: 100vh;
+            height: 100vh;
             width: 280px;
             position: fixed;
             top: 0;
@@ -49,16 +49,24 @@
             z-index: 1000;
             transition: all 0.3s ease;
             box-shadow: -2px 0 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
 
         .sidebar.collapsed {
             width: 80px;
         }
 
+        .sidebar.collapsed .sidebar-nav {
+            padding: 1rem 0.5rem;
+        }
+
         .sidebar-header {
             padding: 1.5rem;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             text-align: center;
+            flex-shrink: 0;
         }
 
         .sidebar-header .logo {
@@ -75,6 +83,29 @@
 
         .sidebar-nav {
             padding: 1rem 0;
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+        }
+
+        /* Custom scrollbar for webkit browsers */
+        .sidebar-nav::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
         }
 
         .nav-section {
@@ -323,6 +354,46 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        /* Mobile responsive sidebar */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(100%);
+                transition: transform 0.3s ease;
+            }
+
+            .sidebar.show {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-right: 0;
+            }
+
+            .main-content.expanded {
+                margin-right: 0;
+            }
+        }
+
+        /* Smooth scrolling for sidebar navigation */
+        .sidebar-nav {
+            scroll-behavior: smooth;
+        }
+
+        /* Focus styles for better accessibility */
+        .nav-link:focus {
+            outline: 2px solid rgba(255, 255, 255, 0.5);
+            outline-offset: 2px;
+        }
+
+        /* Improved hover effects for better UX */
+        .nav-section {
+            transition: all 0.2s ease;
+        }
+
+        .nav-section:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
     </style>
 
     {% block extra_css %}{% endblock %}
@@ -561,7 +632,7 @@
         <nav class="top-navbar">
             <div class="d-flex justify-content-between align-items-center">
                 <div class="d-flex align-items-center">
-                    <button class="sidebar-toggle me-3" id="sidebarToggle">
+                    <button class="sidebar-toggle me-3" id="sidebarToggle" onclick="handleSidebarToggle()">
                         <i class="fas fa-bars"></i>
                     </button>
                     <a href="{% url 'hr:dashboard' %}" class="navbar-brand">
@@ -672,19 +743,141 @@
 
     <!-- Custom JavaScript -->
     <script>
-        // Sidebar Toggle
-        document.getElementById('sidebarToggle').addEventListener('click', function() {
+        // Unified Sidebar Toggle Function
+        function handleSidebarToggle() {
+            if (window.innerWidth <= 768) {
+                toggleMobileSidebar();
+            } else {
+                toggleDesktopSidebar();
+            }
+        }
+
+        // Desktop Sidebar Toggle
+        function toggleDesktopSidebar() {
             const sidebar = document.getElementById('sidebar');
             const mainContent = document.getElementById('mainContent');
-            
+
             sidebar.classList.toggle('collapsed');
             mainContent.classList.toggle('expanded');
+
+            // Save sidebar state
+            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+        }
+
+        // Restore sidebar state on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+
+            if (isCollapsed && window.innerWidth > 768) {
+                sidebar.classList.add('collapsed');
+                mainContent.classList.add('expanded');
+            }
         });
 
         // Mobile Sidebar Toggle
         function toggleMobileSidebar() {
             const sidebar = document.getElementById('sidebar');
             sidebar.classList.toggle('show');
+
+            // Add overlay for mobile
+            if (window.innerWidth <= 768) {
+                let overlay = document.getElementById('sidebarOverlay');
+                if (!overlay) {
+                    overlay = document.createElement('div');
+                    overlay.id = 'sidebarOverlay';
+                    overlay.className = 'sidebar-overlay';
+                    overlay.style.cssText = `
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(0, 0, 0, 0.5);
+                        z-index: 999;
+                        opacity: 0;
+                        visibility: hidden;
+                        transition: all 0.3s ease;
+                    `;
+                    document.body.appendChild(overlay);
+
+                    overlay.addEventListener('click', function() {
+                        sidebar.classList.remove('show');
+                        overlay.style.opacity = '0';
+                        overlay.style.visibility = 'hidden';
+                    });
+                }
+
+                if (sidebar.classList.contains('show')) {
+                    overlay.style.opacity = '1';
+                    overlay.style.visibility = 'visible';
+                } else {
+                    overlay.style.opacity = '0';
+                    overlay.style.visibility = 'hidden';
+                }
+            }
+        }
+
+        // Enhanced sidebar scrolling for active items
+        function scrollToActiveNavItem() {
+            const activeItem = document.querySelector('.nav-link.active');
+            const sidebarNav = document.querySelector('.sidebar-nav');
+
+            if (activeItem && sidebarNav) {
+                const itemTop = activeItem.offsetTop;
+                const itemHeight = activeItem.offsetHeight;
+                const navHeight = sidebarNav.offsetHeight;
+                const scrollTop = sidebarNav.scrollTop;
+
+                // Check if item is not fully visible
+                if (itemTop < scrollTop || itemTop + itemHeight > scrollTop + navHeight) {
+                    sidebarNav.scrollTo({
+                        top: itemTop - navHeight / 2 + itemHeight / 2,
+                        behavior: 'smooth'
+                    });
+                }
+            }
+        }
+
+        // Keyboard navigation for sidebar
+        function initSidebarKeyboardNavigation() {
+            const sidebarNav = document.querySelector('.sidebar-nav');
+            const navLinks = sidebarNav.querySelectorAll('.nav-link');
+
+            navLinks.forEach((link, index) => {
+                link.addEventListener('keydown', function(e) {
+                    let targetIndex = index;
+
+                    switch(e.key) {
+                        case 'ArrowDown':
+                            e.preventDefault();
+                            targetIndex = Math.min(index + 1, navLinks.length - 1);
+                            break;
+                        case 'ArrowUp':
+                            e.preventDefault();
+                            targetIndex = Math.max(index - 1, 0);
+                            break;
+                        case 'Home':
+                            e.preventDefault();
+                            targetIndex = 0;
+                            break;
+                        case 'End':
+                            e.preventDefault();
+                            targetIndex = navLinks.length - 1;
+                            break;
+                    }
+
+                    if (targetIndex !== index) {
+                        navLinks[targetIndex].focus();
+                        // Ensure focused item is visible
+                        navLinks[targetIndex].scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'nearest'
+                        });
+                    }
+                });
+            });
         }
 
         // Auto-hide alerts after 5 seconds
@@ -741,6 +934,24 @@
         // Page loading handling
         document.addEventListener('DOMContentLoaded', function() {
             hideLoading();
+
+            // Initialize sidebar enhancements
+            scrollToActiveNavItem();
+            initSidebarKeyboardNavigation();
+
+            // Handle window resize for mobile sidebar
+            window.addEventListener('resize', function() {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('sidebarOverlay');
+
+                if (window.innerWidth > 768) {
+                    sidebar.classList.remove('show');
+                    if (overlay) {
+                        overlay.style.opacity = '0';
+                        overlay.style.visibility = 'hidden';
+                    }
+                }
+            });
         });
 
         // Form submission loading
