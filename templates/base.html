@@ -187,6 +187,46 @@
             display: none;
         }
 
+        /* AI-specific navigation styles */
+        .ai-badge {
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            color: white;
+            font-size: 0.65rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 50px;
+            margin-right: auto;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+        }
+
+        .nav-external {
+            font-size: 0.8rem;
+            margin-right: auto;
+            opacity: 0.7;
+        }
+
+        /* AI section special styling */
+        .nav-section:has(.ai-badge) .nav-section-title {
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+        }
+
+        /* AI navigation hover effects */
+        .nav-link:has(.ai-badge):hover {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(99, 102, 241, 0.1));
+            transform: translateX(-5px);
+        }
+
+        .nav-link:has(.ai-badge):hover .ai-badge {
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.5);
+            transform: scale(1.05);
+        }
+
         .main-content {
             margin-right: 280px;
             transition: all 0.3s ease;
@@ -603,6 +643,51 @@
                     <a href="{% url 'reports:analytics' %}" class="nav-link">
                         <i class="fas fa-chart-line nav-icon"></i>
                         <span class="nav-text">التحليلات</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Artificial Intelligence -->
+            <div class="nav-section">
+                <div class="nav-section-title">الذكاء الاصطناعي</div>
+                <div class="nav-item">
+                    <a href="{% url 'api:dashboard' %}" class="nav-link {% if 'api' in request.resolver_match.app_name and request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                        <i class="fas fa-robot nav-icon"></i>
+                        <span class="nav-text">لوحة تحكم AI</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{% url 'api:ai_chat' %}" class="nav-link {% if 'api' in request.resolver_match.app_name and 'chat' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-comments nav-icon"></i>
+                        <span class="nav-text">المحادثة الذكية</span>
+                        <span class="nav-badge ai-badge">AI</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{% url 'api:data_analysis' %}" class="nav-link {% if 'api' in request.resolver_match.app_name and 'analysis' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-brain nav-icon"></i>
+                        <span class="nav-text">التحليل الذكي</span>
+                        <span class="nav-badge ai-badge">Smart</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{% url 'payrolls:payroll_analytics' %}" class="nav-link {% if 'payrolls' in request.resolver_match.app_name and 'analytics' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-chart-pie nav-icon"></i>
+                        <span class="nav-text">تحليلات الرواتب</span>
+                        <span class="nav-badge ai-badge">Analytics</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{% url 'api:ai_settings' %}" class="nav-link {% if 'api' in request.resolver_match.app_name and 'settings' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-cogs nav-icon"></i>
+                        <span class="nav-text">إعدادات AI</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/api/v1/docs/" target="_blank" class="nav-link">
+                        <i class="fas fa-book nav-icon"></i>
+                        <span class="nav-text">وثائق API</span>
+                        <i class="fas fa-external-link-alt nav-external"></i>
                     </a>
                 </div>
             </div>

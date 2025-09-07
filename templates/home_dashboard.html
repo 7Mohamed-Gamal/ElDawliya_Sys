@@ -475,6 +475,137 @@
             margin-left: 0.25rem !important;
         }
     }
+
+    /* AI Chat Interface Button Styles */
+    .ai-quick-access {
+        margin: 2rem 0;
+    }
+
+    .ai-chat-button {
+        text-decoration: none;
+        display: block;
+        transition: all 0.3s ease;
+    }
+
+    .ai-chat-button:hover {
+        text-decoration: none;
+        transform: translateY(-5px);
+    }
+
+    .ai-chat-card {
+        background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+        border-radius: 20px;
+        padding: 2rem;
+        color: white;
+        box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .ai-chat-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        transform: rotate(45deg);
+        transition: all 0.3s ease;
+    }
+
+    .ai-chat-button:hover .ai-chat-card {
+        box-shadow: 0 15px 40px rgba(139, 92, 246, 0.4);
+        transform: scale(1.02);
+    }
+
+    .ai-chat-button:hover .ai-chat-card::before {
+        top: -30%;
+        right: -30%;
+    }
+
+    .ai-chat-icon {
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+
+    .ai-chat-icon i {
+        font-size: 3rem;
+        color: white;
+        text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
+    .ai-chat-content {
+        text-align: center;
+        position: relative;
+        z-index: 2;
+    }
+
+    .ai-chat-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: white;
+    }
+
+    .ai-chat-subtitle {
+        font-size: 1rem;
+        margin-bottom: 1.5rem;
+        opacity: 0.9;
+        line-height: 1.5;
+    }
+
+    .ai-chat-badge {
+        display: inline-flex;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-weight: 600;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .ai-chat-badge .badge-text {
+        margin-left: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .ai-chat-badge i {
+        font-size: 0.8rem;
+        transition: transform 0.3s ease;
+    }
+
+    .ai-chat-button:hover .ai-chat-badge i {
+        transform: translateX(-3px);
+    }
+
+    /* Responsive adjustments for AI Chat button */
+    @media (max-width: 768px) {
+        .ai-chat-card {
+            padding: 1.5rem;
+        }
+
+        .ai-chat-icon i {
+            font-size: 2.5rem;
+        }
+
+        .ai-chat-title {
+            font-size: 1.3rem;
+        }
+
+        .ai-chat-subtitle {
+            font-size: 0.9rem;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -623,6 +754,30 @@
                     <div class="welcome-section" id="welcome-section">
                         <h2 class="mb-3">مرحباً بك في نظام الشركة الدولية</h2>
                         <p>اختر قسماً من القائمة الجانبية للوصول إلى الخدمات المتاحة</p>
+
+                        <!-- AI Chat Interface Quick Access -->
+                        <div class="ai-quick-access mt-4 mb-4">
+                            <div class="row justify-content-center">
+                                <div class="col-md-8 col-lg-6">
+                                    <a href="{% url 'api:ai_chat' %}" class="ai-chat-button">
+                                        <div class="ai-chat-card">
+                                            <div class="ai-chat-icon">
+                                                <i class="fas fa-robot"></i>
+                                            </div>
+                                            <div class="ai-chat-content">
+                                                <h4 class="ai-chat-title">المساعد الذكي</h4>
+                                                <p class="ai-chat-subtitle">تحدث مع الذكاء الاصطناعي للحصول على المساعدة والإجابات الفورية</p>
+                                                <div class="ai-chat-badge">
+                                                    <span class="badge-text">AI Chat</span>
+                                                    <i class="fas fa-arrow-left"></i>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="mt-4">
                             <i class="fas fa-arrow-right fa-2x text-primary"></i>
                         </div>

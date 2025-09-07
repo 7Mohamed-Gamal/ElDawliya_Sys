@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import requests
 from typing import Dict, List, Optional, Any
 from django.conf import settings
 from django.db.models import Count, Q
@@ -14,6 +15,14 @@ try:
 except ImportError:
     GEMINI_AVAILABLE = False
     genai = None
+
+# Try to import OpenAI
+try:
+    import openai
+    OPENAI_AVAILABLE = True
+except ImportError:
+    OPENAI_AVAILABLE = False
+    openai = None
 
 from .models import GeminiConversation, GeminiMessage
 # Temporarily disabled - will be replaced with new modular HR apps
@@ -574,3 +583,286 @@ class DataAnalysisService:
             if any(keyword in line for keyword in ['توصية', 'يُنصح', 'يجب', 'يمكن تحسين']):
                 recommendations.append(line.strip())
         return recommendations[:5]  # Return top 5 recommendations
+
+
+class OllamaService:
+    """Service class for interacting with Ollama AI (Local)"""
+
+    def __init__(self, user=None):
+        self.user = user
+        self.api_url = 'http://localhost:11434'  # Default Ollama URL
+        self.model_name = 'llama2'
+        self.config_source = 'none'
+        self.is_configured = False
+
+        # Try to get user configuration
+        if user:
+            try:
+                from .models import AIConfiguration, AIProvider
+
+                # Try to get the Ollama provider
+                try:
+                    provider = AIProvider.objects.get(name='ollama')
+                    logger.info(f"Found Ollama provider: {provider.id}")
+
+                    # Try to get user's Ollama configuration
+                    config = AIConfiguration.objects.filter(
+                        user=user,
+                        provider=provider,
+                        is_active=True
+                    ).order_by('-is_default').first()
+
+                    if config:
+                        # For Ollama, api_key field can store the base URL
+                        if config.api_key:
+                            self.api_url = config.api_key
+                        self.model_name = config.model_name or 'llama2'
+                        self.config_source = 'user_config'
+                        logger.info(f"Using Ollama configuration for user {user.username}, URL: {self.api_url}, model: {self.model_name}")
+                    else:
+                        logger.warning(f"No active Ollama configuration found for user {user.username}")
+
+                except AIProvider.DoesNotExist:
+                    logger.warning("Ollama provider does not exist in the database")
+
+            except Exception as e:
+                logger.warning(f"Error getting user Ollama configuration: {str(e)}")
+
+        # Test connection to Ollama
+        self.is_configured = self._test_connection()
+
+    def _test_connection(self) -> bool:
+        """Test connection to Ollama service"""
+        try:
+            response = requests.get(f"{self.api_url}/api/tags", timeout=5)
+            if response.status_code == 200:
+                logger.info(f"Ollama service is available at {self.api_url}")
+                return True
+            else:
+                logger.warning(f"Ollama service returned status {response.status_code}")
+                return False
+        except requests.exceptions.RequestException as e:
+            logger.warning(f"Cannot connect to Ollama service at {self.api_url}: {str(e)}")
+            return False
+
+    def is_available(self) -> bool:
+        """Check if Ollama service is available"""
+        return self.is_configured
+
+    def generate_response(self, prompt: str, temperature: float = 0.7, max_tokens: int = 1000) -> Dict[str, Any]:
+        """Generate a response using Ollama AI"""
+        if not self.is_configured:
+            return {
+                'success': False,
+                'error': f'Ollama AI is not available at {self.api_url}',
+                'response': None,
+                'tokens_used': 0
+            }
+
+        try:
+            # Prepare the request payload
+            payload = {
+                'model': self.model_name,
+                'prompt': prompt,
+                'stream': False,
+                'options': {
+                    'temperature': temperature,
+                    'num_predict': max_tokens
+                }
+            }
+
+            # Make the API call
+            response = requests.post(
+                f"{self.api_url}/api/generate",
+                json=payload,
+                timeout=60  # Ollama can be slow
+            )
+
+            if response.status_code == 200:
+                result = response.json()
+                response_text = result.get('response', '')
+
+                # Estimate tokens (rough approximation)
+                tokens_used = len(response_text.split()) + len(prompt.split())
+
+                logger.info(f"Ollama response generated successfully, estimated tokens: {tokens_used}")
+
+                return {
+                    'success': True,
+                    'response': response_text,
+                    'tokens_used': tokens_used,
+                    'model': self.model_name
+                }
+            else:
+                error_msg = f"Ollama API returned status {response.status_code}: {response.text}"
+                logger.error(error_msg)
+                return {
+                    'success': False,
+                    'error': error_msg,
+                    'response': None,
+                    'tokens_used': 0
+                }
+
+        except requests.exceptions.Timeout:
+            error_msg = "Ollama request timed out"
+            logger.error(error_msg)
+            return {
+                'success': False,
+                'error': error_msg,
+                'response': None,
+                'tokens_used': 0
+            }
+        except Exception as e:
+            error_msg = f"Error calling Ollama API: {str(e)}"
+            logger.error(error_msg)
+            return {
+                'success': False,
+                'error': error_msg,
+                'response': None,
+                'tokens_used': 0
+            }
+
+    def get_available_models(self) -> List[str]:
+        """Get list of available models from Ollama"""
+        if not self.is_configured:
+            return []
+
+        try:
+            response = requests.get(f"{self.api_url}/api/tags", timeout=10)
+            if response.status_code == 200:
+                data = response.json()
+                models = [model['name'] for model in data.get('models', [])]
+                logger.info(f"Available Ollama models: {models}")
+                return models
+            else:
+                logger.warning(f"Failed to get Ollama models: {response.status_code}")
+                return []
+        except Exception as e:
+            logger.error(f"Error getting Ollama models: {str(e)}")
+            return []
+
+
+class UnifiedAIService:
+    """Unified service for handling multiple AI providers"""
+
+    def __init__(self, user=None):
+        self.user = user
+        self.active_provider = None
+        self.active_service = None
+
+        # Initialize available services
+        self.services = {
+            'gemini': GeminiService(user=user),
+            'ollama': OllamaService(user=user),
+        }
+
+        # Find the default or first available provider
+        self._initialize_active_provider()
+
+    def _initialize_active_provider(self):
+        """Initialize the active AI provider"""
+        if not self.user:
+            # Try Ollama first for anonymous users (local)
+            if self.services['ollama'].is_available():
+                self.active_provider = 'ollama'
+                self.active_service = self.services['ollama']
+                return
+            elif self.services['gemini'].is_available():
+                self.active_provider = 'gemini'
+                self.active_service = self.services['gemini']
+                return
+        else:
+            # For authenticated users, check their default configuration
+            try:
+                from .models import AIConfiguration
+
+                # Get user's default configuration
+                default_config = AIConfiguration.objects.filter(
+                    user=self.user,
+                    is_default=True,
+                    is_active=True
+                ).select_related('provider').first()
+
+                if default_config:
+                    provider_name = default_config.provider.name
+                    if provider_name in self.services and self.services[provider_name].is_available():
+                        self.active_provider = provider_name
+                        self.active_service = self.services[provider_name]
+                        logger.info(f"Using default provider {provider_name} for user {self.user.username}")
+                        return
+
+                # If no default or default not available, find first available
+                for provider_name, service in self.services.items():
+                    if service.is_available():
+                        self.active_provider = provider_name
+                        self.active_service = service
+                        logger.info(f"Using first available provider {provider_name} for user {self.user.username}")
+                        return
+
+            except Exception as e:
+                logger.error(f"Error initializing AI provider for user {self.user.username}: {str(e)}")
+
+        # No provider available
+        logger.warning("No AI provider is available")
+
+    def is_available(self) -> bool:
+        """Check if any AI service is available"""
+        return self.active_service is not None and self.active_service.is_available()
+
+    def get_active_provider(self) -> Optional[str]:
+        """Get the name of the active provider"""
+        return self.active_provider
+
+    def generate_response(self, prompt: str, temperature: float = 0.7, max_tokens: int = 1000) -> Dict[str, Any]:
+        """Generate a response using the active AI provider"""
+        if not self.is_available():
+            return {
+                'success': False,
+                'error': 'No AI provider is available',
+                'response': None,
+                'tokens_used': 0
+            }
+
+        result = self.active_service.generate_response(prompt, temperature, max_tokens)
+        result['provider'] = self.active_provider
+        return result
+
+    def chat_with_context(self, message: str, conversation_id: Optional[str] = None,
+                         temperature: float = 0.7, max_tokens: int = 1000) -> Dict[str, Any]:
+        """Chat with context using the active provider"""
+        if not self.is_available():
+            return {
+                'success': False,
+                'error': 'No AI provider is available',
+                'response': None,
+                'tokens_used': 0
+            }
+
+        # For now, use Gemini's chat_with_context if available, otherwise use simple generate_response
+        if self.active_provider == 'gemini' and hasattr(self.active_service, 'chat_with_context'):
+            result = self.active_service.chat_with_context(
+                user=self.user,
+                message=message,
+                conversation_id=conversation_id,
+                temperature=temperature,
+                max_tokens=max_tokens
+            )
+        else:
+            # For other providers, use simple response generation
+            result = self.generate_response(message, temperature, max_tokens)
+            if result['success']:
+                result['conversation_id'] = conversation_id or 'simple_chat'
+
+        result['provider'] = self.active_provider
+        return result
+
+    def get_available_providers(self) -> List[Dict[str, Any]]:
+        """Get list of available providers with their status"""
+        providers = []
+        for name, service in self.services.items():
+            providers.append({
+                'name': name,
+                'available': service.is_available(),
+                'is_active': name == self.active_provider
+            })
+        return providers

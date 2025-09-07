@@ -122,22 +122,22 @@ def ai_chat_api(request):
             if not message:
                 return JsonResponse({'error': 'Message is required'}, status=400)
 
-            # Use Gemini service with user's configurations
-            gemini_service = GeminiService(user=request.user)
-            
-            # Debug info
-            is_configured = gemini_service.is_configured
-            api_key_exists = bool(gemini_service.api_key)
-            model_name = gemini_service.model_name
+            # Use Unified AI service with user's configurations
+            from .services import UnifiedAIService
+            ai_service = UnifiedAIService(user=request.user)
 
-            if not gemini_service.is_available():
+            # Debug info
+            active_provider = ai_service.get_active_provider()
+            is_available = ai_service.is_available()
+
+            if not ai_service.is_available():
+                available_providers = ai_service.get_available_providers()
                 return JsonResponse({
-                    'error': f'Gemini AI is not available. Debug: configured={is_configured}, api_exists={api_key_exists}, model={model_name}'
+                    'error': f'No AI provider is available. Active: {active_provider}, Available providers: {available_providers}'
                 }, status=503)
 
             try:
-                result = gemini_service.chat_with_context(
-                    user=request.user,
+                result = ai_service.chat_with_context(
                     message=message,
                     conversation_id=conversation_id
                 )
@@ -411,6 +411,68 @@ def test_ai_config(request):
                     return JsonResponse({
                         'success': False,
                         'error': 'مكتبة OpenAI غير مثبتة. قم بتثبيتها باستخدام: pip install openai'
+                    })
+
+            elif config.provider.name == 'ollama':
+                # اختبار Ollama
+                try:
+                    import requests
+
+                    # Use api_key field as base URL, or default
+                    api_url = config.api_key if config.api_key else 'http://localhost:11434'
+
+                    # Test connection first
+                    try:
+                        test_response = requests.get(f"{api_url}/api/tags", timeout=5)
+                        if test_response.status_code != 200:
+                            return JsonResponse({
+                                'success': False,
+                                'error': f'لا يمكن الاتصال بخدمة Ollama على {api_url}. تأكد من تشغيل Ollama.'
+                            })
+                    except requests.exceptions.RequestException:
+                        return JsonResponse({
+                            'success': False,
+                            'error': f'لا يمكن الاتصال بخدمة Ollama على {api_url}. تأكد من تشغيل Ollama.'
+                        })
+
+                    # Make the actual test request
+                    payload = {
+                        'model': config.model_name,
+                        'prompt': test_message,
+                        'stream': False,
+                        'options': {
+                            'temperature': config.temperature,
+                            'num_predict': config.max_tokens
+                        }
+                    }
+
+                    response = requests.post(
+                        f"{api_url}/api/generate",
+                        json=payload,
+                        timeout=30
+                    )
+
+                    if response.status_code == 200:
+                        result = response.json()
+                        response_text = result.get('response', '')
+
+                        return JsonResponse({
+                            'success': True,
+                            'response': response_text,
+                            'provider': config.provider.display_name,
+                            'model': config.model_name,
+                            'api_url': api_url
+                        })
+                    else:
+                        return JsonResponse({
+                            'success': False,
+                            'error': f'خطأ من Ollama: {response.status_code} - {response.text}'
+                        })
+
+                except Exception as e:
+                    return JsonResponse({
+                        'success': False,
+                        'error': f'خطأ في اختبار Ollama: {str(e)}'
                     })
 
             else:
