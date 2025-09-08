@@ -135,8 +135,15 @@
     <!-- Navigation Tabs -->
     <ul class="nav nav-tabs" id="employeeTabs" role="tablist">
         <li class="nav-item" role="presentation">
-            <button class="nav-link {% if active_tab == 'health_insurance' %}active{% endif %}" 
-                    id="health-insurance-tab" data-bs-toggle="tab" data-bs-target="#health-insurance" 
+            <button class="nav-link {% if active_tab == 'basic_info' %}active{% endif %}"
+                    id="basic-info-tab" data-bs-toggle="tab" data-bs-target="#basic-info"
+                    type="button" role="tab">
+                <i class="fas fa-user me-2"></i>البيانات الأساسية
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if active_tab == 'health_insurance' %}active{% endif %}"
+                    id="health-insurance-tab" data-bs-toggle="tab" data-bs-target="#health-insurance"
                     type="button" role="tab">
                 <i class="fas fa-heartbeat me-2"></i>التأمين الصحي
             </button>
@@ -163,15 +170,22 @@
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link {% if active_tab == 'transport' %}active{% endif %}" 
-                    id="transport-tab" data-bs-toggle="tab" data-bs-target="#transport" 
+            <button class="nav-link {% if active_tab == 'transport' %}active{% endif %}"
+                    id="transport-tab" data-bs-toggle="tab" data-bs-target="#transport"
                     type="button" role="tab">
                 <i class="fas fa-bus me-2"></i>النقل
             </button>
         </li>
         <li class="nav-item" role="presentation">
-            <button class="nav-link {% if active_tab == 'performance' %}active{% endif %}" 
-                    id="performance-tab" data-bs-toggle="tab" data-bs-target="#performance" 
+            <button class="nav-link {% if active_tab == 'vehicle' %}active{% endif %}"
+                    id="vehicle-tab" data-bs-toggle="tab" data-bs-target="#vehicle"
+                    type="button" role="tab">
+                <i class="fas fa-car me-2"></i>السيارة المخصصة
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link {% if active_tab == 'performance' %}active{% endif %}"
+                    id="performance-tab" data-bs-toggle="tab" data-bs-target="#performance"
                     type="button" role="tab">
                 <i class="fas fa-chart-line me-2"></i>تقييم الأداء
             </button>
@@ -187,13 +201,171 @@
 
     <!-- Tab Content -->
     <div class="tab-content" id="employeeTabsContent">
+        <!-- Basic Employee Information Tab -->
+        <div class="tab-pane fade {% if active_tab == 'basic_info' %}show active{% endif %}"
+             id="basic-info" role="tabpanel">
+            <form method="post" id="basic-info-form" enctype="multipart/form-data">
+                {% csrf_token %}
+                <input type="hidden" name="active_tab" value="basic_info">
+
+                <div class="form-section">
+                    <h5><i class="fas fa-user me-2"></i>المعلومات الشخصية</h5>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label">رقم الموظف</label>
+                                <input type="text" class="form-control" value="{{ employee.emp_code }}" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label">الاسم الأول</label>
+                                <input type="text" class="form-control" name="first_name" value="{{ employee.first_name|default:'' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label">الاسم الثاني</label>
+                                <input type="text" class="form-control" name="second_name" value="{{ employee.second_name|default:'' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label">الاسم الثالث</label>
+                                <input type="text" class="form-control" name="third_name" value="{{ employee.third_name|default:'' }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label">اسم العائلة</label>
+                                <input type="text" class="form-control" name="last_name" value="{{ employee.last_name|default:'' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label">الجنس</label>
+                                <select class="form-select" name="gender">
+                                    <option value="M" {% if employee.gender == 'M' %}selected{% endif %}>ذكر</option>
+                                    <option value="F" {% if employee.gender == 'F' %}selected{% endif %}>أنثى</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label">تاريخ الميلاد</label>
+                                <input type="date" class="form-control" name="birth_date" value="{{ employee.birth_date|date:'Y-m-d' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label">الجنسية</label>
+                                <input type="text" class="form-control" name="nationality" value="{{ employee.nationality|default:'' }}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h5><i class="fas fa-id-card me-2"></i>الوثائق الشخصية</h5>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">رقم الهوية الوطنية</label>
+                                <input type="text" class="form-control" name="national_id" value="{{ employee.national_id|default:'' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">رقم جواز السفر</label>
+                                <input type="text" class="form-control" name="passport_no" value="{{ employee.passport_no|default:'' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">رقم الجوال</label>
+                                <input type="text" class="form-control" name="mobile" value="{{ employee.mobile|default:'' }}">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">البريد الإلكتروني</label>
+                                <input type="email" class="form-control" name="email" value="{{ employee.email|default:'' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">العنوان</label>
+                                <textarea class="form-control" name="address" rows="2">{{ employee.address|default:'' }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h5><i class="fas fa-briefcase me-2"></i>معلومات العمل</h5>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label">تاريخ التوظيف</label>
+                                <input type="date" class="form-control" name="hire_date" value="{{ employee.hire_date|date:'Y-m-d' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label">تاريخ الالتحاق</label>
+                                <input type="date" class="form-control" name="join_date" value="{{ employee.join_date|date:'Y-m-d' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label">انتهاء فترة التجربة</label>
+                                <input type="date" class="form-control" name="probation_end" value="{{ employee.probation_end|date:'Y-m-d' }}">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                <label class="form-label">حالة الموظف</label>
+                                <select class="form-select" name="emp_status">
+                                    <option value="Active" {% if employee.emp_status == 'Active' %}selected{% endif %}>نشط</option>
+                                    <option value="Inactive" {% if employee.emp_status == 'Inactive' %}selected{% endif %}>غير نشط</option>
+                                    <option value="Terminated" {% if employee.emp_status == 'Terminated' %}selected{% endif %}>منتهي الخدمة</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label class="form-label">ملاحظات</label>
+                                <textarea class="form-control" name="notes" rows="3">{{ employee.notes|default:'' }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>حفظ البيانات الأساسية
+                    </button>
+                </div>
+            </form>
+        </div>
+
         <!-- Health Insurance Tab -->
-        <div class="tab-pane fade {% if active_tab == 'health_insurance' %}show active{% endif %}" 
+        <div class="tab-pane fade {% if active_tab == 'health_insurance' %}show active{% endif %}"
              id="health-insurance" role="tabpanel">
+            {% if health_insurance_form %}
             <form method="post" id="health-insurance-form">
                 {% csrf_token %}
                 <input type="hidden" name="active_tab" value="health_insurance">
-                
+
                 <div class="form-section">
                     <h5><i class="fas fa-heartbeat me-2"></i>بيانات التأمين الصحي</h5>
                     <div class="row">
@@ -273,15 +445,25 @@
                     </button>
                 </div>
             </form>
+            {% else %}
+            <div class="alert alert-warning">
+                <h5><i class="fas fa-exclamation-triangle me-2"></i>تعذر تحميل بيانات التأمين الصحي</h5>
+                <p>حدث خطأ أثناء تحميل بيانات التأمين الصحي. يرجى إعادة تحميل الصفحة أو الاتصال بالدعم التقني.</p>
+                <button type="button" class="btn btn-outline-primary" onclick="location.reload()">
+                    <i class="fas fa-refresh me-2"></i>إعادة تحميل الصفحة
+                </button>
+            </div>
+            {% endif %}
         </div>
 
         <!-- Social Insurance Tab -->
-        <div class="tab-pane fade {% if active_tab == 'social_insurance' %}show active{% endif %}" 
+        <div class="tab-pane fade {% if active_tab == 'social_insurance' %}show active{% endif %}"
              id="social-insurance" role="tabpanel">
+            {% if social_insurance_form %}
             <form method="post" id="social-insurance-form">
                 {% csrf_token %}
                 <input type="hidden" name="active_tab" value="social_insurance">
-                
+
                 <div class="form-section">
                     <h5><i class="fas fa-shield-alt me-2"></i>بيانات التأمينات الاجتماعية</h5>
                     <div class="row">
@@ -348,6 +530,15 @@
                     </button>
                 </div>
             </form>
+            {% else %}
+            <div class="alert alert-warning">
+                <h5><i class="fas fa-exclamation-triangle me-2"></i>تعذر تحميل بيانات التأمينات الاجتماعية</h5>
+                <p>حدث خطأ أثناء تحميل بيانات التأمينات الاجتماعية. يرجى إعادة تحميل الصفحة أو الاتصال بالدعم التقني.</p>
+                <button type="button" class="btn btn-outline-primary" onclick="location.reload()">
+                    <i class="fas fa-refresh me-2"></i>إعادة تحميل الصفحة
+                </button>
+            </div>
+            {% endif %}
         </div>
 
         <!-- Payroll Components Tab -->
@@ -602,6 +793,7 @@
         <!-- Work Setup Tab -->
         <div class="tab-pane fade {% if active_tab == 'work_setup' %}show active{% endif %}"
              id="work-setup" role="tabpanel">
+            {% if work_setup_form %}
             <form method="post" id="work-setup-form">
                 {% csrf_token %}
                 <input type="hidden" name="active_tab" value="work_setup">
@@ -654,6 +846,15 @@
                     </button>
                 </div>
             </form>
+            {% else %}
+            <div class="alert alert-warning">
+                <h5><i class="fas fa-exclamation-triangle me-2"></i>تعذر تحميل إعدادات العمل</h5>
+                <p>حدث خطأ أثناء تحميل إعدادات العمل. يرجى إعادة تحميل الصفحة أو الاتصال بالدعم التقني.</p>
+                <button type="button" class="btn btn-outline-primary" onclick="location.reload()">
+                    <i class="fas fa-refresh me-2"></i>إعادة تحميل الصفحة
+                </button>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>

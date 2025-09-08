@@ -175,7 +175,7 @@ class EmployeeTransportForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['vehicle'].queryset = Vehicle.objects.filter(is_available=True)
+        self.fields['vehicle'].queryset = Vehicle.objects.filter(vehicle_status='active')
         self.fields['pickup_point'].queryset = PickupPoint.objects.filter(is_active=True)
         
         # Add vehicle details display

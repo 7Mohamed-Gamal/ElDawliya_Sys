@@ -1,15 +1,19 @@
 """
 Extended Employee Views for Comprehensive HR Management
 """
+import logging
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from django.db import transaction
+from django.db.models import Q
 from django.core.paginator import Paginator
 from django.utils import timezone
 from datetime import date, timedelta
 from decimal import Decimal
+
+logger = logging.getLogger(__name__)
 
 from .models import Employee
 from .models_extended import (
@@ -39,58 +43,201 @@ def comprehensive_employee_edit(request, emp_id):
     employee = get_object_or_404(Employee, emp_id=emp_id)
     
     # Get or create related records
-    health_insurance, _ = ExtendedEmployeeHealthInsurance.objects.get_or_create(
-        emp=employee,
+    # First, ensure we have a default health insurance provider
+    default_provider, created = ExtendedHealthInsuranceProvider.objects.get_or_create(
+        provider_code='DEFAULT',
         defaults={
-            'insurance_status': 'inactive',
-            'insurance_type': 'basic',
-            'insurance_number': f'HI-{employee.emp_id}',
-            'start_date': date.today(),
-            'expiry_date': date.today() + timedelta(days=365),
-            'num_dependents': 0,
+            'provider_name': 'مقدم خدمة افتراضي',
+            'contact_person': 'غير محدد',
+            'phone': '',
+            'email': '',
+            'address': '',
+            'is_active': True,
         }
     )
 
-    social_insurance, _ = ExtendedEmployeeSocialInsurance.objects.get_or_create(
-        emp=employee,
+    if created:
+        logger.info(f"Created default health insurance provider: {default_provider.provider_name}")
+
+    # Now create or get the health insurance record with the provider
+    try:
+        health_insurance, created = ExtendedEmployeeHealthInsurance.objects.get_or_create(
+            emp=employee,
+            defaults={
+                'provider': default_provider,
+                'insurance_status': 'inactive',
+                'insurance_type': 'basic',
+                'insurance_number': f'HI-{employee.emp_id}-{timezone.now().strftime("%Y%m%d")}',
+                'start_date': date.today(),
+                'expiry_date': date.today() + timedelta(days=365),
+                'num_dependents': 0,
+                'monthly_premium': Decimal('0.00'),
+                'employee_contribution': Decimal('0.00'),
+                'company_contribution': Decimal('0.00'),
+            }
+        )
+
+        if created:
+            logger.info(f"Created health insurance record for employee {employee.emp_code}")
+
+    except Exception as e:
+        logger.error(f"Error creating health insurance record for employee {employee.emp_code}: {str(e)}")
+        # If we can't create the record, we'll handle it gracefully
+        health_insurance = None
+
+    # Ensure we have a default social insurance job title
+    default_job_title, created = SocialInsuranceJobTitle.objects.get_or_create(
+        job_code='DEFAULT',
         defaults={
-            'insurance_status': 'inactive',
-            'start_date': date.today(),
-            'subscription_confirmed': False,
-            'monthly_wage': Decimal('0.00'),
+            'job_title': 'مسمى وظيفي افتراضي',
+            'insurable_wage_amount': Decimal('0.00'),
+            'employee_deduction_percentage': Decimal('9.00'),  # Standard Saudi rate
+            'company_contribution_percentage': Decimal('12.00'),  # Standard Saudi rate
         }
     )
+
+    if created:
+        logger.info(f"Created default social insurance job title: {default_job_title.job_title}")
+
+    # Now create or get the social insurance record
+    try:
+        social_insurance, created = ExtendedEmployeeSocialInsurance.objects.get_or_create(
+            emp=employee,
+            defaults={
+                'insurance_status': 'inactive',
+                'start_date': date.today(),
+                'subscription_confirmed': False,
+                'job_title_id': default_job_title.id,  # Use job_title_id instead of job_title
+                'social_insurance_number': f'SI-{employee.emp_id}-{timezone.now().strftime("%Y%m%d")}',
+                'monthly_wage': Decimal('0.00'),
+                'employee_deduction': Decimal('0.00'),
+                'company_contribution': Decimal('0.00'),
+            }
+        )
+
+        if created:
+            logger.info(f"Created social insurance record for employee {employee.emp_code}")
+
+    except Exception as e:
+        logger.error(f"Error creating social insurance record for employee {employee.emp_code}: {str(e)}")
+        # If we can't create the record, we'll handle it gracefully
+        social_insurance = None
     
     transport_record = EmployeeTransport.objects.filter(
         emp=employee, is_active=True
     ).first()
-    
-    work_setup, _ = EmployeeWorkSetup.objects.get_or_create(
-        emp=employee,
-        is_active=True,
+
+    # Ensure we have a default work schedule
+    from datetime import time
+    default_work_schedule, created = WorkSchedule.objects.get_or_create(
+        schedule_code='DEFAULT',
         defaults={
-            'effective_date': date.today(),
-            'overtime_rate': Decimal('1.5'),
-            'late_deduction_rate': Decimal('0.0'),
-            'absence_deduction_rate': Decimal('1.0'),
+            'schedule_name': 'جدول عمل افتراضي',
+            'daily_hours': Decimal('8.00'),
+            'weekly_hours': Decimal('40.00'),
+            'start_time': time(8, 0),  # 8:00 AM
+            'end_time': time(16, 0),   # 4:00 PM
+            'break_duration': 60,      # 60 minutes break
+            'is_flexible': False,
+            'overtime_applicable': True,
+            'is_active': True,
+            'description': 'جدول العمل الافتراضي للنظام - 8 ساعات يومياً من 8 صباحاً إلى 4 عصراً',
         }
     )
+
+    if created:
+        logger.info(f"Created default work schedule: {default_work_schedule.schedule_name}")
+
+    # Now create or get the work setup record with the work schedule
+    try:
+        work_setup, created = EmployeeWorkSetup.objects.get_or_create(
+            emp=employee,
+            is_active=True,
+            defaults={
+                'work_schedule': default_work_schedule,
+                'effective_date': date.today(),
+                'overtime_rate': Decimal('1.5'),
+                'late_deduction_rate': Decimal('0.0'),
+                'absence_deduction_rate': Decimal('1.0'),
+                'notes': 'إعدادات العمل الافتراضية',
+            }
+        )
+
+        if created:
+            logger.info(f"Created work setup record for employee {employee.emp_code}")
+
+    except Exception as e:
+        logger.error(f"Error creating work setup record for employee {employee.emp_code}: {str(e)}")
+        # If we can't create the record, we'll handle it gracefully
+        work_setup = None
     
     if request.method == 'POST':
-        tab = request.POST.get('active_tab', 'health_insurance')
-        
-        if tab == 'health_insurance':
-            form = EmployeeHealthInsuranceForm(request.POST, instance=health_insurance)
-            if form.is_valid():
-                form.save()
-                messages.success(request, 'تم حفظ بيانات التأمين الصحي بنجاح')
+        tab = request.POST.get('active_tab', 'basic_info')
+
+        if tab == 'basic_info':
+            # Handle basic employee information update
+            employee.first_name = request.POST.get('first_name', employee.first_name)
+            employee.second_name = request.POST.get('second_name', employee.second_name)
+            employee.third_name = request.POST.get('third_name', employee.third_name)
+            employee.last_name = request.POST.get('last_name', employee.last_name)
+            employee.gender = request.POST.get('gender', employee.gender)
+            employee.nationality = request.POST.get('nationality', employee.nationality)
+            employee.national_id = request.POST.get('national_id', employee.national_id)
+            employee.passport_no = request.POST.get('passport_no', employee.passport_no)
+            employee.mobile = request.POST.get('mobile', employee.mobile)
+            employee.email = request.POST.get('email', employee.email)
+            employee.address = request.POST.get('address', employee.address)
+            employee.emp_status = request.POST.get('emp_status', employee.emp_status)
+            employee.notes = request.POST.get('notes', employee.notes)
+
+            # Handle date fields
+            birth_date = request.POST.get('birth_date')
+            if birth_date:
+                employee.birth_date = birth_date
+
+            hire_date = request.POST.get('hire_date')
+            if hire_date:
+                employee.hire_date = hire_date
+
+            join_date = request.POST.get('join_date')
+            if join_date:
+                employee.join_date = join_date
+
+            probation_end = request.POST.get('probation_end')
+            if probation_end:
+                employee.probation_end = probation_end
+
+            try:
+                employee.save()
+                messages.success(request, 'تم حفظ البيانات الأساسية بنجاح')
+                return redirect('employees:comprehensive_edit', emp_id=emp_id)
+            except Exception as e:
+                messages.error(request, f'حدث خطأ أثناء حفظ البيانات: {str(e)}')
+
+        elif tab == 'health_insurance':
+            if health_insurance:
+                form = EmployeeHealthInsuranceForm(request.POST, instance=health_insurance)
+                if form.is_valid():
+                    form.save()
+                    messages.success(request, 'تم حفظ بيانات التأمين الصحي بنجاح')
+                    return redirect('employees:comprehensive_edit', emp_id=emp_id)
+                else:
+                    messages.error(request, 'يرجى تصحيح الأخطاء في نموذج التأمين الصحي')
+            else:
+                messages.error(request, 'لا يمكن حفظ بيانات التأمين الصحي. يرجى المحاولة مرة أخرى.')
                 return redirect('employees:comprehensive_edit', emp_id=emp_id)
         
         elif tab == 'social_insurance':
-            form = EmployeeSocialInsuranceForm(request.POST, instance=social_insurance)
-            if form.is_valid():
-                form.save()
-                messages.success(request, 'تم حفظ بيانات التأمينات الاجتماعية بنجاح')
+            if social_insurance:
+                form = EmployeeSocialInsuranceForm(request.POST, instance=social_insurance)
+                if form.is_valid():
+                    form.save()
+                    messages.success(request, 'تم حفظ بيانات التأمينات الاجتماعية بنجاح')
+                    return redirect('employees:comprehensive_edit', emp_id=emp_id)
+                else:
+                    messages.error(request, 'يرجى تصحيح الأخطاء في نموذج التأمينات الاجتماعية')
+            else:
+                messages.error(request, 'لا يمكن حفظ بيانات التأمينات الاجتماعية. يرجى المحاولة مرة أخرى.')
                 return redirect('employees:comprehensive_edit', emp_id=emp_id)
         
         elif tab == 'payroll_components':
@@ -113,18 +260,24 @@ def comprehensive_employee_edit(request, emp_id):
                 return redirect('employees:comprehensive_edit', emp_id=emp_id)
         
         elif tab == 'work_setup':
-            form = EmployeeWorkSetupForm(request.POST, instance=work_setup)
-            if form.is_valid():
-                form.save()
-                messages.success(request, 'تم حفظ إعدادات العمل بنجاح')
+            if work_setup:
+                form = EmployeeWorkSetupForm(request.POST, instance=work_setup)
+                if form.is_valid():
+                    form.save()
+                    messages.success(request, 'تم حفظ إعدادات العمل بنجاح')
+                    return redirect('employees:comprehensive_edit', emp_id=emp_id)
+                else:
+                    messages.error(request, 'يرجى تصحيح الأخطاء في نموذج إعدادات العمل')
+            else:
+                messages.error(request, 'لا يمكن حفظ إعدادات العمل. يرجى المحاولة مرة أخرى.')
                 return redirect('employees:comprehensive_edit', emp_id=emp_id)
     
     # Prepare forms for GET request
-    health_insurance_form = EmployeeHealthInsuranceForm(instance=health_insurance)
-    social_insurance_form = EmployeeSocialInsuranceForm(instance=social_insurance)
+    health_insurance_form = EmployeeHealthInsuranceForm(instance=health_insurance) if health_insurance else None
+    social_insurance_form = EmployeeSocialInsuranceForm(instance=social_insurance) if social_insurance else None
     salary_components_formset = EmployeeSalaryComponentFormSet(instance=employee)
     transport_form = EmployeeTransportForm(instance=transport_record)
-    work_setup_form = EmployeeWorkSetupForm(instance=work_setup)
+    work_setup_form = EmployeeWorkSetupForm(instance=work_setup) if work_setup else None
     
     # Get leave balances
     leave_balances = EmployeeLeaveBalance.objects.filter(
@@ -151,7 +304,7 @@ def comprehensive_employee_edit(request, emp_id):
         'leave_balances': leave_balances,
         'active_loans': active_loans,
         'recent_evaluations': recent_evaluations,
-        'active_tab': request.GET.get('tab', 'health_insurance'),
+        'active_tab': request.GET.get('tab', 'basic_info'),
     }
     
     return render(request, 'employees/comprehensive_edit.html', context)
@@ -400,7 +553,35 @@ def salary_component_edit(request, component_id):
 @login_required
 def vehicles_list(request):
     """قائمة المركبات"""
-    vehicles = Vehicle.objects.all().order_by('vehicle_number')
+    vehicles = Vehicle.objects.all()
+
+    # Search functionality
+    search = request.GET.get('search')
+    if search:
+        vehicles = vehicles.filter(
+            Q(vehicle_number__icontains=search) |
+            Q(vehicle_model__icontains=search) |
+            Q(driver_name__icontains=search) |
+            Q(supervisor_name__icontains=search)
+        )
+
+    # Status filter
+    status = request.GET.get('status')
+    if status:
+        vehicles = vehicles.filter(vehicle_status=status)
+
+    # Year filter
+    year = request.GET.get('year')
+    if year:
+        vehicles = vehicles.filter(vehicle_year=year)
+
+    # Order by vehicle_number
+    vehicles = vehicles.order_by('vehicle_number')
+
+    # Get unique years for filter dropdown
+    years = Vehicle.objects.values_list('vehicle_year', flat=True).distinct().order_by('-vehicle_year')
+
+    # Pagination
     paginator = Paginator(vehicles, 25)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -408,6 +589,8 @@ def vehicles_list(request):
     context = {
         'page_obj': page_obj,
         'title': 'إدارة المركبات',
+        'years': years,
+        'status_choices': Vehicle.VEHICLE_STATUS_CHOICES,
     }
     return render(request, 'employees/vehicles_list.html', context)
 
@@ -458,7 +641,28 @@ def vehicle_edit(request, vehicle_id):
 @login_required
 def pickup_points_list(request):
     """قائمة نقاط التجميع"""
-    pickup_points = PickupPoint.objects.all().order_by('point_code')
+    pickup_points = PickupPoint.objects.all()
+
+    # Search functionality
+    search = request.GET.get('search')
+    if search:
+        pickup_points = pickup_points.filter(
+            Q(point_name__icontains=search) |
+            Q(point_code__icontains=search) |
+            Q(address__icontains=search)
+        )
+
+    # Status filter
+    status = request.GET.get('status')
+    if status == 'active':
+        pickup_points = pickup_points.filter(is_active=True)
+    elif status == 'inactive':
+        pickup_points = pickup_points.filter(is_active=False)
+
+    # Order by point_code
+    pickup_points = pickup_points.order_by('point_code')
+
+    # Pagination
     paginator = Paginator(pickup_points, 25)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)

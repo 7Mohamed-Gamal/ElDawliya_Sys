@@ -144,9 +144,21 @@ class ExtendedEmployeeSocialInsurance(models.Model):
 
     def save(self, *args, **kwargs):
         # Calculate deductions automatically
-        if self.job_title and self.monthly_wage:
-            self.employee_deduction = self.monthly_wage * (self.job_title.employee_deduction_percentage / 100)
-            self.company_contribution = self.monthly_wage * (self.job_title.company_contribution_percentage / 100)
+        if self.job_title_id and self.monthly_wage:
+            try:
+                # Get the job title if it exists
+                if hasattr(self, '_job_title_cache'):
+                    job_title = self._job_title_cache
+                else:
+                    job_title = SocialInsuranceJobTitle.objects.get(id=self.job_title_id)
+                    self._job_title_cache = job_title
+
+                self.employee_deduction = self.monthly_wage * (job_title.employee_deduction_percentage / 100)
+                self.company_contribution = self.monthly_wage * (job_title.company_contribution_percentage / 100)
+            except SocialInsuranceJobTitle.DoesNotExist:
+                # If job title doesn't exist, set deductions to 0
+                self.employee_deduction = Decimal('0.00')
+                self.company_contribution = Decimal('0.00')
         super().save(*args, **kwargs)
 
 

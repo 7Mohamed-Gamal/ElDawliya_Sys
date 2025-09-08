@@ -129,26 +129,9 @@ def add_employee(request):
 
 @login_required
 def edit_employee(request, emp_id):
-    """تعديل بيانات موظف"""
-    employee = get_object_or_404(Employee, emp_id=emp_id)
-    
-    if request.method == 'POST':
-        form = EmployeeForm(request.POST, instance=employee)
-        if form.is_valid():
-            employee = form.save()
-            messages.success(request, f'تم تحديث بيانات الموظف {employee.first_name} {employee.last_name} بنجاح.')
-            return redirect('employees:detail', emp_id=employee.emp_id)
-        else:
-            messages.error(request, 'يرجى تصحيح الأخطاء أدناه.')
-    else:
-        form = EmployeeForm(instance=employee)
-    
-    context = {
-        'form': form,
-        'employee': employee,
-    }
-    
-    return render(request, 'employees/employee_form.html', context)
+    """تعديل بيانات موظف - يعيد التوجيه للتعديل الشامل"""
+    # Redirect to comprehensive edit for better user experience
+    return redirect('employees:comprehensive_edit', emp_id=emp_id)
 
 
 @login_required
