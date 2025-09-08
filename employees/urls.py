@@ -159,5 +159,26 @@ urlpatterns = [
     path('performance-evaluation/edit/<int:evaluation_id>/',
          views_extended.performance_evaluation_edit,
          name='performance_evaluation_edit'),
+
+    # Leave Balances Management
+    path('initialize-leave-balances/<int:emp_id>/',
+         views_extended.initialize_leave_balances,
+         name='initialize_leave_balances'),
+
+    # Document Management
+    path('upload-document/',
+         views_extended.upload_document,
+         name='upload_document'),
+    path('delete-document/',
+         views_extended.delete_document,
+         name='delete_document'),
+
+    # Salary Components Management
+    path('add-salary-component/',
+         views_extended.add_salary_component,
+         name='add_salary_component'),
+    path('remove-salary-component/',
+         views_extended.remove_salary_component,
+         name='remove_salary_component'),
 ]
 

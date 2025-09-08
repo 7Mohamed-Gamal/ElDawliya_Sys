@@ -22,7 +22,7 @@ from .models_extended import (
     SalaryComponent, EmployeeSalaryComponent,
     EmployeeLeaveBalance, Vehicle, PickupPoint, EmployeeTransport,
     EvaluationCriteria, EmployeePerformanceEvaluation, EvaluationScore,
-    WorkSchedule, EmployeeWorkSetup
+    WorkSchedule, EmployeeWorkSetup, ExtendedEmployeeDocument, EmployeeDocumentCategory
 )
 from .forms_extended import (
     EmployeeHealthInsuranceForm, EmployeeSocialInsuranceForm,
@@ -110,6 +110,7 @@ def comprehensive_employee_edit(request, emp_id):
                 'job_title_id': default_job_title.id,  # Use job_title_id instead of job_title
                 'social_insurance_number': f'SI-{employee.emp_id}-{timezone.now().strftime("%Y%m%d")}',
                 'monthly_wage': Decimal('0.00'),
+                'deduction_percentage': Decimal('9.0'),  # Add default deduction percentage
                 'employee_deduction': Decimal('0.00'),
                 'company_contribution': Decimal('0.00'),
             }
@@ -240,12 +241,66 @@ def comprehensive_employee_edit(request, emp_id):
                 messages.error(request, 'لا يمكن حفظ بيانات التأمينات الاجتماعية. يرجى المحاولة مرة أخرى.')
                 return redirect('employees:comprehensive_edit', emp_id=emp_id)
         
-        elif tab == 'payroll_components':
-            formset = EmployeeSalaryComponentFormSet(request.POST, instance=employee)
-            if formset.is_valid():
-                formset.save()
-                messages.success(request, 'تم حفظ مكونات الراتب بنجاح')
-                return redirect('employees:comprehensive_edit', emp_id=emp_id)
+        elif tab == 'salary_components':
+            # Handle salary components form submission
+            try:
+                action = request.POST.get('action')
+
+                if action == 'add_component':
+                    # Handle adding new salary component
+                    component_id = request.POST.get('component_id')
+                    amount = request.POST.get('amount')
+                    calculation_type = request.POST.get('calculation_type', 'fixed')
+                    notes = request.POST.get('notes', '')
+
+                    if component_id and amount:
+                        component = get_object_or_404(SalaryComponent, component_id=component_id)
+
+                        # Check if this component already exists for this employee
+                        existing_component = EmployeeSalaryComponent.objects.filter(
+                            emp=employee, component=component
+                        ).first()
+
+                        if existing_component:
+                            # Update existing component
+                            existing_component.amount = Decimal(amount)
+                            existing_component.calculation_type = calculation_type
+                            existing_component.notes = notes
+                            existing_component.save()
+                            messages.success(request, f'تم تحديث {component.component_name} بنجاح')
+                        else:
+                            # Create new component
+                            EmployeeSalaryComponent.objects.create(
+                                emp=employee,
+                                component=component,
+                                amount=Decimal(amount),
+                                calculation_type=calculation_type,
+                                notes=notes
+                            )
+                            messages.success(request, f'تم إضافة {component.component_name} بنجاح')
+                    else:
+                        messages.error(request, 'يرجى ملء جميع الحقول المطلوبة')
+
+                elif action == 'remove_component':
+                    # Handle removing salary component
+                    component_id = request.POST.get('component_id')
+                    if component_id:
+                        try:
+                            component_to_remove = EmployeeSalaryComponent.objects.get(
+                                emp_salary_component_id=component_id, emp=employee
+                            )
+                            component_name = component_to_remove.component.component_name
+                            component_to_remove.delete()
+                            messages.success(request, f'تم حذف {component_name} بنجاح')
+                        except EmployeeSalaryComponent.DoesNotExist:
+                            messages.error(request, 'المكون المطلوب حذفه غير موجود')
+                    else:
+                        messages.error(request, 'لم يتم تحديد المكون المطلوب حذفه')
+
+            except Exception as e:
+                logger.error(f"Error updating salary components for employee {emp_id}: {str(e)}")
+                messages.error(request, f'حدث خطأ أثناء تحديث مكونات الراتب: {str(e)}')
+            return redirect('employees:comprehensive_edit', emp_id=emp_id)
         
         elif tab == 'transport':
             if transport_record:
@@ -259,6 +314,29 @@ def comprehensive_employee_edit(request, emp_id):
                 messages.success(request, 'تم حفظ بيانات النقل بنجاح')
                 return redirect('employees:comprehensive_edit', emp_id=emp_id)
         
+        elif tab == 'leave_balances':
+            # Handle leave balances update
+            updated_count = 0
+            for balance in EmployeeLeaveBalance.objects.filter(emp=employee, year=date.today().year):
+                opening_balance = request.POST.get(f'opening_balance_{balance.id}')
+                accrued_balance = request.POST.get(f'accrued_balance_{balance.id}')
+                carried_forward = request.POST.get(f'carried_forward_{balance.id}')
+
+                if opening_balance is not None:
+                    balance.opening_balance = Decimal(opening_balance)
+                if accrued_balance is not None:
+                    balance.accrued_balance = Decimal(accrued_balance)
+                if carried_forward is not None:
+                    balance.carried_forward = Decimal(carried_forward)
+
+                # Recalculate current balance
+                balance.current_balance = balance.opening_balance + balance.accrued_balance + balance.carried_forward - balance.used_balance
+                balance.save()
+                updated_count += 1
+
+            messages.success(request, f'تم تحديث {updated_count} رصيد إجازة بنجاح')
+            return redirect('employees:comprehensive_edit', emp_id=emp_id)
+
         elif tab == 'work_setup':
             if work_setup:
                 form = EmployeeWorkSetupForm(request.POST, instance=work_setup)
@@ -273,11 +351,18 @@ def comprehensive_employee_edit(request, emp_id):
                 return redirect('employees:comprehensive_edit', emp_id=emp_id)
     
     # Prepare forms for GET request
-    health_insurance_form = EmployeeHealthInsuranceForm(instance=health_insurance) if health_insurance else None
-    social_insurance_form = EmployeeSocialInsuranceForm(instance=social_insurance) if social_insurance else None
-    salary_components_formset = EmployeeSalaryComponentFormSet(instance=employee)
+    health_insurance_form = EmployeeHealthInsuranceForm(instance=health_insurance) if health_insurance else EmployeeHealthInsuranceForm()
+    social_insurance_form = EmployeeSocialInsuranceForm(instance=social_insurance) if social_insurance else EmployeeSocialInsuranceForm()
+
+    # Get salary components for this employee
+    salary_components = EmployeeSalaryComponent.objects.filter(emp=employee).select_related('component')
+
+    # Get available salary components
+    available_allowances = SalaryComponent.objects.filter(component_type='allowance', is_active=True)
+    available_deductions = SalaryComponent.objects.filter(component_type='deduction', is_active=True)
+
     transport_form = EmployeeTransportForm(instance=transport_record)
-    work_setup_form = EmployeeWorkSetupForm(instance=work_setup) if work_setup else None
+    work_setup_form = EmployeeWorkSetupForm(instance=work_setup) if work_setup else EmployeeWorkSetupForm()
     
     # Get leave balances
     leave_balances = EmployeeLeaveBalance.objects.filter(
@@ -293,17 +378,31 @@ def comprehensive_employee_edit(request, emp_id):
     recent_evaluations = EmployeePerformanceEvaluation.objects.filter(
         emp=employee
     ).order_by('-evaluation_date')[:5]
+
+    # Get employee documents
+    employee_documents = ExtendedEmployeeDocument.objects.filter(
+        emp=employee
+    ).order_by('-created_at')
+
+    # Get document categories
+    document_categories = EmployeeDocumentCategory.objects.filter(
+        is_active=True
+    ).order_by('sort_order', 'category_name')
     
     context = {
         'employee': employee,
         'health_insurance_form': health_insurance_form,
         'social_insurance_form': social_insurance_form,
-        'salary_components_formset': salary_components_formset,
+        'salary_components': salary_components,
+        'available_allowances': available_allowances,
+        'available_deductions': available_deductions,
         'transport_form': transport_form,
         'work_setup_form': work_setup_form,
         'leave_balances': leave_balances,
         'active_loans': active_loans,
         'recent_evaluations': recent_evaluations,
+        'employee_documents': employee_documents,
+        'document_categories': document_categories,
         'active_tab': request.GET.get('tab', 'basic_info'),
     }
     
@@ -414,11 +513,31 @@ def health_insurance_provider_create(request):
 @login_required
 def social_insurance_job_titles_list(request):
     """قائمة مسميات الوظائف في التأمينات الاجتماعية"""
-    job_titles = SocialInsuranceJobTitle.objects.all().order_by('job_code')
+    job_titles = SocialInsuranceJobTitle.objects.all()
+
+    # Search functionality
+    search = request.GET.get('search')
+    if search:
+        job_titles = job_titles.filter(
+            Q(job_code__icontains=search) |
+            Q(job_title__icontains=search)
+        )
+
+    # Status filter
+    status = request.GET.get('status')
+    if status == 'active':
+        job_titles = job_titles.filter(is_active=True)
+    elif status == 'inactive':
+        job_titles = job_titles.filter(is_active=False)
+
+    # Order by job_code
+    job_titles = job_titles.order_by('job_code')
+
+    # Pagination
     paginator = Paginator(job_titles, 25)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    
+
     context = {
         'page_obj': page_obj,
         'title': 'مسميات الوظائف في التأمينات الاجتماعية',
@@ -925,3 +1044,322 @@ def performance_evaluation_edit(request, evaluation_id):
         'submit_text': 'حفظ التغييرات',
     }
     return render(request, 'employees/performance_evaluation_edit.html', context)
+
+
+@login_required
+def initialize_leave_balances(request, emp_id):
+    """تهيئة أرصدة الإجازات للموظف"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'طريقة الطلب غير صحيحة'})
+
+    try:
+        employee = get_object_or_404(Employee, emp_id=emp_id)
+        current_year = date.today().year
+
+        # Check if employee already has leave balances for current year
+        existing_balances = EmployeeLeaveBalance.objects.filter(
+            emp=employee, year=current_year
+        ).count()
+
+        if existing_balances > 0:
+            return JsonResponse({
+                'success': False,
+                'message': f'الموظف لديه بالفعل {existing_balances} رصيد إجازة لعام {current_year}'
+            })
+
+        # Get all active leave types
+        try:
+            from leaves.models import LeaveType
+            leave_types = LeaveType.objects.filter(is_active=True)
+        except ImportError:
+            return JsonResponse({
+                'success': False,
+                'message': 'تطبيق الإجازات غير متوفر في النظام.'
+            })
+
+        if not leave_types.exists():
+            return JsonResponse({
+                'success': False,
+                'message': 'لا توجد أنواع إجازات نشطة في النظام. يرجى إضافة أنواع الإجازات أولاً من قسم إدارة الإجازات.'
+            })
+
+        created_balances = []
+
+        # Create default leave balances for each leave type
+        for leave_type in leave_types:
+            # Set default balances based on leave type
+            if 'سنوية' in leave_type.leave_name or 'Annual' in leave_type.leave_name:
+                opening_balance = Decimal('21.0')  # 21 days annual leave (Saudi standard)
+                accrued_balance = Decimal('21.0')
+            elif 'مرضية' in leave_type.leave_name or 'Sick' in leave_type.leave_name:
+                opening_balance = Decimal('30.0')  # 30 days sick leave (Saudi standard)
+                accrued_balance = Decimal('30.0')
+            elif 'طارئة' in leave_type.leave_name or 'Emergency' in leave_type.leave_name:
+                opening_balance = Decimal('5.0')   # 5 days emergency leave
+                accrued_balance = Decimal('5.0')
+            elif 'أمومة' in leave_type.leave_name or 'Maternity' in leave_type.leave_name:
+                opening_balance = Decimal('70.0')  # 70 days maternity leave (Saudi standard)
+                accrued_balance = Decimal('70.0')
+            elif 'أبوة' in leave_type.leave_name or 'Paternity' in leave_type.leave_name:
+                opening_balance = Decimal('3.0')   # 3 days paternity leave (Saudi standard)
+                accrued_balance = Decimal('3.0')
+            else:
+                # Default for other leave types
+                opening_balance = Decimal('10.0')
+                accrued_balance = Decimal('10.0')
+
+            # Create the leave balance record
+            leave_balance = EmployeeLeaveBalance.objects.create(
+                emp=employee,
+                leave_type=leave_type,
+                year=current_year,
+                opening_balance=opening_balance,
+                accrued_balance=accrued_balance,
+                used_balance=Decimal('0.0'),
+                carried_forward=Decimal('0.0'),
+                current_balance=opening_balance + accrued_balance,
+                notes=f'تم إنشاء الرصيد تلقائياً في {timezone.now().strftime("%Y-%m-%d %H:%M")}'
+            )
+
+            created_balances.append({
+                'leave_type': leave_type.leave_name,
+                'balance': float(leave_balance.current_balance)
+            })
+
+        # Log the action
+        logger.info(f"Initialized {len(created_balances)} leave balances for employee {employee.emp_code}")
+
+        return JsonResponse({
+            'success': True,
+            'message': f'تم إنشاء {len(created_balances)} رصيد إجازة بنجاح',
+            'created_balances': created_balances
+        })
+
+    except Employee.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'الموظف غير موجود'})
+    except Exception as e:
+        logger.error(f"Error initializing leave balances for employee {emp_id}: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'message': f'حدث خطأ أثناء تهيئة أرصدة الإجازات: {str(e)}'
+        })
+
+
+@login_required
+def upload_document(request):
+    """رفع وثيقة جديدة للموظف"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'طريقة الطلب غير صحيحة'})
+
+    try:
+        emp_id = request.POST.get('emp_id')
+        employee = get_object_or_404(Employee, emp_id=emp_id)
+
+        # Get form data
+        category_id = request.POST.get('document_category')
+        document_name = request.POST.get('document_name')
+        document_file = request.FILES.get('document_file')
+        document_date = request.POST.get('document_date')
+        expiry_date = request.POST.get('expiry_date')
+        notes = request.POST.get('document_notes')
+
+        # Validate required fields
+        if not all([category_id, document_name, document_file]):
+            return JsonResponse({
+                'success': False,
+                'message': 'يرجى ملء جميع الحقول المطلوبة'
+            })
+
+        # Get category
+        category = get_object_or_404(EmployeeDocumentCategory, category_id=category_id)
+
+        # Validate file
+        file_extension = document_file.name.split('.')[-1].lower()
+        allowed_extensions = category.get_allowed_extensions_list()
+
+        if file_extension not in allowed_extensions:
+            return JsonResponse({
+                'success': False,
+                'message': f'نوع الملف غير مسموح. الأنواع المسموحة: {", ".join(allowed_extensions)}'
+            })
+
+        # Check file size
+        max_size_mb = category.max_file_size_mb
+        if document_file.size > max_size_mb * 1024 * 1024:
+            return JsonResponse({
+                'success': False,
+                'message': f'حجم الملف كبير جداً. الحد الأقصى المسموح: {max_size_mb} ميجابايت'
+            })
+
+        # Create document record
+        document = ExtendedEmployeeDocument.objects.create(
+            emp=employee,
+            category=category,
+            document_name=document_name,
+            document_file=document_file,
+            document_date=document_date if document_date else None,
+            expiry_date=expiry_date if expiry_date else None,
+            notes=notes,
+            uploaded_by=request.user
+        )
+
+        logger.info(f"Document uploaded successfully: {document.document_name} for employee {employee.emp_code}")
+
+        return JsonResponse({
+            'success': True,
+            'message': 'تم رفع الوثيقة بنجاح',
+            'document_id': document.document_id
+        })
+
+    except Exception as e:
+        logger.error(f"Error uploading document: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'message': f'حدث خطأ أثناء رفع الوثيقة: {str(e)}'
+        })
+
+
+@login_required
+def delete_document(request):
+    """حذف وثيقة الموظف"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'طريقة الطلب غير صحيحة'})
+
+    try:
+        document_id = request.POST.get('document_id')
+        document = get_object_or_404(ExtendedEmployeeDocument, document_id=document_id)
+
+        # Check permissions (optional - you can add more sophisticated permission checking)
+        # For now, any logged-in user can delete documents
+
+        # Delete the file from storage
+        if document.document_file:
+            try:
+                document.document_file.delete(save=False)
+            except Exception as e:
+                logger.warning(f"Could not delete file {document.document_file.name}: {str(e)}")
+
+        # Delete the database record
+        document_name = document.document_name
+        employee_code = document.emp.emp_code
+        document.delete()
+
+        logger.info(f"Document deleted successfully: {document_name} for employee {employee_code}")
+
+        return JsonResponse({
+            'success': True,
+            'message': 'تم حذف الوثيقة بنجاح'
+        })
+
+    except ExtendedEmployeeDocument.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'الوثيقة غير موجودة'})
+    except Exception as e:
+        logger.error(f"Error deleting document: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'message': f'حدث خطأ أثناء حذف الوثيقة: {str(e)}'
+        })
+
+
+@login_required
+def add_salary_component(request):
+    """إضافة مكون راتب جديد للموظف"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'طريقة الطلب غير صحيحة'})
+
+    try:
+        emp_id = request.POST.get('emp_id')
+        component_id = request.POST.get('component_id')
+        amount = request.POST.get('amount')
+        calculation_type = request.POST.get('calculation_type', 'fixed')
+        notes = request.POST.get('notes', '')
+
+        # Validate required fields
+        if not all([emp_id, component_id, amount]):
+            return JsonResponse({
+                'success': False,
+                'message': 'يرجى ملء جميع الحقول المطلوبة'
+            })
+
+        employee = get_object_or_404(Employee, emp_id=emp_id)
+        component = get_object_or_404(SalaryComponent, component_id=component_id)
+
+        # Check if this component already exists for this employee
+        existing_component = EmployeeSalaryComponent.objects.filter(
+            emp=employee, component=component
+        ).first()
+
+        if existing_component:
+            # Update existing component
+            existing_component.amount = Decimal(amount)
+            existing_component.calculation_type = calculation_type
+            existing_component.notes = notes
+            existing_component.save()
+            message = f'تم تحديث {component.component_name} بنجاح'
+        else:
+            # Create new component
+            new_component = EmployeeSalaryComponent.objects.create(
+                emp=employee,
+                component=component,
+                amount=Decimal(amount),
+                calculation_type=calculation_type,
+                notes=notes
+            )
+            message = f'تم إضافة {component.component_name} بنجاح'
+
+        logger.info(f"Salary component updated: {component.component_name} for employee {employee.emp_code}")
+
+        return JsonResponse({
+            'success': True,
+            'message': message,
+            'component_name': component.component_name,
+            'amount': float(amount)
+        })
+
+    except Exception as e:
+        logger.error(f"Error adding salary component: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'message': f'حدث خطأ أثناء إضافة مكون الراتب: {str(e)}'
+        })
+
+
+@login_required
+def remove_salary_component(request):
+    """حذف مكون راتب للموظف"""
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'message': 'طريقة الطلب غير صحيحة'})
+
+    try:
+        component_id = request.POST.get('component_id')
+
+        if not component_id:
+            return JsonResponse({
+                'success': False,
+                'message': 'لم يتم تحديد المكون المطلوب حذفه'
+            })
+
+        component_to_remove = get_object_or_404(EmployeeSalaryComponent, emp_salary_component_id=component_id)
+
+        # Check permissions (optional - you can add more sophisticated permission checking)
+        # For now, any logged-in user can remove components
+
+        component_name = component_to_remove.component.component_name
+        employee_code = component_to_remove.emp.emp_code
+        component_to_remove.delete()
+
+        logger.info(f"Salary component removed: {component_name} for employee {employee_code}")
+
+        return JsonResponse({
+            'success': True,
+            'message': f'تم حذف {component_name} بنجاح'
+        })
+
+    except EmployeeSalaryComponent.DoesNotExist:
+        return JsonResponse({'success': False, 'message': 'المكون المطلوب حذفه غير موجود'})
+    except Exception as e:
+        logger.error(f"Error removing salary component: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'message': f'حدث خطأ أثناء حذف مكون الراتب: {str(e)}'
+        })

@@ -1,0 +1,259 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}{{ title }} - نظام الدولية{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">
+            <i class="fas fa-shield-alt me-2"></i>{{ title }}
+        </h1>
+        <div class="d-flex gap-2">
+            <a href="{% url 'employees:social_insurance_job_titles_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-2"></i>العودة للقائمة
+            </a>
+        </div>
+    </div>
+
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'employees:dashboard' %}">الرئيسية</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'employees:list' %}">الموظفين</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'employees:social_insurance_job_titles_list' %}">مسميات الوظائف في التأمينات الاجتماعية</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ title }}</li>
+        </ol>
+    </nav>
+
+    <!-- Form Card -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">{{ title }}</h6>
+        </div>
+        <div class="card-body">
+            <form method="post" class="needs-validation" novalidate>
+                {% csrf_token %}
+                
+                <div class="row">
+                    <!-- Job Code -->
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.job_code.id_for_label }}" class="form-label">
+                            {{ form.job_code.label }}
+                            {% if form.job_code.field.required %}
+                                <span class="text-danger">*</span>
+                            {% endif %}
+                        </label>
+                        {{ form.job_code|add_class:"form-control" }}
+                        {% if form.job_code.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.job_code.errors.0 }}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">رمز الوظيفة في نظام التأمينات الاجتماعية</div>
+                    </div>
+
+                    <!-- Job Title -->
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.job_title.id_for_label }}" class="form-label">
+                            {{ form.job_title.label }}
+                            {% if form.job_title.field.required %}
+                                <span class="text-danger">*</span>
+                            {% endif %}
+                        </label>
+                        {{ form.job_title|add_class:"form-control" }}
+                        {% if form.job_title.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.job_title.errors.0 }}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">مسمى الوظيفة في نظام التأمينات الاجتماعية</div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Insurable Wage Amount -->
+                    <div class="col-md-4 mb-3">
+                        <label for="{{ form.insurable_wage_amount.id_for_label }}" class="form-label">
+                            {{ form.insurable_wage_amount.label }}
+                            {% if form.insurable_wage_amount.field.required %}
+                                <span class="text-danger">*</span>
+                            {% endif %}
+                        </label>
+                        <div class="input-group">
+                            {{ form.insurable_wage_amount|add_class:"form-control" }}
+                            <span class="input-group-text">ريال</span>
+                        </div>
+                        {% if form.insurable_wage_amount.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.insurable_wage_amount.errors.0 }}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">مبلغ الأجر الخاضع للتأمين</div>
+                    </div>
+
+                    <!-- Employee Deduction Percentage -->
+                    <div class="col-md-4 mb-3">
+                        <label for="{{ form.employee_deduction_percentage.id_for_label }}" class="form-label">
+                            {{ form.employee_deduction_percentage.label }}
+                            {% if form.employee_deduction_percentage.field.required %}
+                                <span class="text-danger">*</span>
+                            {% endif %}
+                        </label>
+                        <div class="input-group">
+                            {{ form.employee_deduction_percentage|add_class:"form-control" }}
+                            <span class="input-group-text">%</span>
+                        </div>
+                        {% if form.employee_deduction_percentage.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.employee_deduction_percentage.errors.0 }}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">نسبة خصم الموظف (عادة 9%)</div>
+                    </div>
+
+                    <!-- Company Contribution Percentage -->
+                    <div class="col-md-4 mb-3">
+                        <label for="{{ form.company_contribution_percentage.id_for_label }}" class="form-label">
+                            {{ form.company_contribution_percentage.label }}
+                            {% if form.company_contribution_percentage.field.required %}
+                                <span class="text-danger">*</span>
+                            {% endif %}
+                        </label>
+                        <div class="input-group">
+                            {{ form.company_contribution_percentage|add_class:"form-control" }}
+                            <span class="input-group-text">%</span>
+                        </div>
+                        {% if form.company_contribution_percentage.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.company_contribution_percentage.errors.0 }}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">نسبة مساهمة الشركة (عادة 12%)</div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <!-- Is Active -->
+                    <div class="col-md-6 mb-3">
+                        <div class="form-check">
+                            {{ form.is_active|add_class:"form-check-input" }}
+                            <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                {{ form.is_active.label }}
+                            </label>
+                        </div>
+                        {% if form.is_active.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.is_active.errors.0 }}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">تحديد ما إذا كان هذا المسمى الوظيفي نشطاً أم لا</div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">
+                            {{ form.description.label }}
+                        </label>
+                        {{ form.description|add_class:"form-control" }}
+                        {% if form.description.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.description.errors.0 }}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">وصف إضافي للمسمى الوظيفي (اختياري)</div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="row">
+                    <div class="col-12">
+                        <hr class="my-4">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-2"></i>حفظ
+                                </button>
+                                <button type="reset" class="btn btn-outline-secondary ms-2">
+                                    <i class="fas fa-undo me-2"></i>إعادة تعيين
+                                </button>
+                            </div>
+                            <div>
+                                <a href="{% url 'employees:social_insurance_job_titles_list' %}" class="btn btn-secondary">
+                                    <i class="fas fa-times me-2"></i>إلغاء
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Help Card -->
+    <div class="card shadow">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-info">
+                <i class="fas fa-info-circle me-2"></i>معلومات مهمة
+            </h6>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-primary">نسب التأمينات الاجتماعية في السعودية:</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success me-2"></i>نسبة خصم الموظف: 9%</li>
+                        <li><i class="fas fa-check text-success me-2"></i>نسبة مساهمة الشركة: 12%</li>
+                        <li><i class="fas fa-check text-success me-2"></i>إجمالي النسبة: 21%</li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-primary">ملاحظات:</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-info text-info me-2"></i>رمز الوظيفة يجب أن يكون فريداً</li>
+                        <li><i class="fas fa-info text-info me-2"></i>النسب المئوية يجب أن تكون بين 0 و 100</li>
+                        <li><i class="fas fa-info text-info me-2"></i>مبلغ الأجر يجب أن يكون أكبر من صفر</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form validation
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+
+// Auto-calculate percentages
+document.addEventListener('DOMContentLoaded', function() {
+    const employeePercentage = document.getElementById('id_employee_deduction_percentage');
+    const companyPercentage = document.getElementById('id_company_contribution_percentage');
+    
+    if (employeePercentage && companyPercentage) {
+        // Set default values if empty
+        if (!employeePercentage.value) {
+            employeePercentage.value = '9.0';
+        }
+        if (!companyPercentage.value) {
+            companyPercentage.value = '12.0';
+        }
+    }
+});
+</script>
+{% endblock %}

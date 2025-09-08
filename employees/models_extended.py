@@ -2,6 +2,7 @@
 Extended Employee Models for Comprehensive HR Management
 """
 from django.db import models
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
@@ -117,6 +118,7 @@ class ExtendedEmployeeSocialInsurance(models.Model):
         ('active', 'نشط'),
         ('inactive', 'غير نشط'),
         ('suspended', 'معلق'),
+        ('pending', 'في الانتظار'),
     ]
 
     social_insurance_id = models.AutoField(primary_key=True, db_column='SocialInsuranceID')
@@ -128,8 +130,12 @@ class ExtendedEmployeeSocialInsurance(models.Model):
     job_title = models.ForeignKey(SocialInsuranceJobTitle, on_delete=models.PROTECT, verbose_name='المسمى الوظيفي في التأمينات')
     social_insurance_number = models.CharField(max_length=50, unique=True, blank=True, null=True, verbose_name='رقم التأمينات الاجتماعية')
     monthly_wage = models.DecimalField(max_digits=18, decimal_places=2, verbose_name='الأجر الشهري')
+    deduction_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=Decimal('9.0'), verbose_name='نسبة الخصم')
     employee_deduction = models.DecimalField(max_digits=18, decimal_places=2, verbose_name='خصم الموظف')
     company_contribution = models.DecimalField(max_digits=18, decimal_places=2, verbose_name='مساهمة الشركة')
+    s1_field = models.BooleanField(default=False, verbose_name='حقل S1')
+    incoming_document_number = models.CharField(max_length=100, blank=True, null=True, verbose_name='رقم الوثيقة الواردة')
+    incoming_document_date = models.DateField(blank=True, null=True, verbose_name='تاريخ الوثيقة الواردة')
     notes = models.TextField(blank=True, null=True, verbose_name='ملاحظات')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')
@@ -143,22 +149,26 @@ class ExtendedEmployeeSocialInsurance(models.Model):
         return f"{self.emp.get_full_name()} - {self.social_insurance_number or 'غير محدد'}"
 
     def save(self, *args, **kwargs):
-        # Calculate deductions automatically
-        if self.job_title_id and self.monthly_wage:
-            try:
-                # Get the job title if it exists
-                if hasattr(self, '_job_title_cache'):
-                    job_title = self._job_title_cache
-                else:
-                    job_title = SocialInsuranceJobTitle.objects.get(id=self.job_title_id)
-                    self._job_title_cache = job_title
+        # Calculate deductions automatically if we have the required data
+        if self.monthly_wage and self.deduction_percentage:
+            # Calculate employee deduction based on percentage
+            self.employee_deduction = self.monthly_wage * (self.deduction_percentage / 100)
 
-                self.employee_deduction = self.monthly_wage * (job_title.employee_deduction_percentage / 100)
-                self.company_contribution = self.monthly_wage * (job_title.company_contribution_percentage / 100)
-            except SocialInsuranceJobTitle.DoesNotExist:
-                # If job title doesn't exist, set deductions to 0
-                self.employee_deduction = Decimal('0.00')
-                self.company_contribution = Decimal('0.00')
+            # Calculate company contribution
+            if self.job_title_id:
+                try:
+                    job_title = SocialInsuranceJobTitle.objects.get(id=self.job_title_id)
+                    if hasattr(job_title, 'company_contribution_percentage'):
+                        self.company_contribution = self.monthly_wage * (job_title.company_contribution_percentage / 100)
+                    else:
+                        # Default company contribution rate (12% for Saudi)
+                        self.company_contribution = self.monthly_wage * Decimal('0.12')
+                except SocialInsuranceJobTitle.DoesNotExist:
+                    # Default company contribution rate
+                    self.company_contribution = self.monthly_wage * Decimal('0.12')
+            else:
+                # Default company contribution rate
+                self.company_contribution = self.monthly_wage * Decimal('0.12')
         super().save(*args, **kwargs)
 
 
@@ -254,6 +264,87 @@ class EmployeeLeaveBalance(models.Model):
 
     def __str__(self):
         return f"{self.emp.get_full_name()} - {self.leave_type.leave_name} ({self.year})"
+
+
+# =============================================================================
+# EMPLOYEE DOCUMENTS MODELS
+# =============================================================================
+
+class EmployeeDocumentCategory(models.Model):
+    """فئات وثائق الموظفين"""
+    category_id = models.AutoField(primary_key=True, db_column='CategoryID')
+    category_name = models.CharField(max_length=100, verbose_name='اسم الفئة')
+    category_code = models.CharField(max_length=20, unique=True, verbose_name='رمز الفئة')
+    description = models.TextField(blank=True, null=True, verbose_name='الوصف')
+    is_required = models.BooleanField(default=False, verbose_name='مطلوب')
+    max_file_size_mb = models.IntegerField(default=10, verbose_name='الحد الأقصى لحجم الملف (ميجابايت)')
+    allowed_extensions = models.CharField(max_length=200, default='pdf,doc,docx,jpg,jpeg,png', verbose_name='الامتدادات المسموحة')
+    is_active = models.BooleanField(default=True, verbose_name='نشط')
+    sort_order = models.IntegerField(default=0, verbose_name='ترتيب العرض')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')
+
+    class Meta:
+        db_table = 'EmployeeDocumentCategories'
+        verbose_name = 'فئة وثائق الموظف'
+        verbose_name_plural = 'فئات وثائق الموظفين'
+        ordering = ['sort_order', 'category_name']
+
+    def __str__(self):
+        return self.category_name
+
+    def get_allowed_extensions_list(self):
+        """إرجاع قائمة بالامتدادات المسموحة"""
+        return [ext.strip().lower() for ext in self.allowed_extensions.split(',')]
+
+
+class ExtendedEmployeeDocument(models.Model):
+    """وثائق الموظفين"""
+    document_id = models.AutoField(primary_key=True, db_column='DocumentID')
+    emp = models.ForeignKey(Employee, on_delete=models.CASCADE, db_column='EmpID',
+                           related_name='documents', verbose_name='الموظف')
+    category = models.ForeignKey(EmployeeDocumentCategory, on_delete=models.PROTECT,
+                                verbose_name='فئة الوثيقة')
+    document_name = models.CharField(max_length=200, verbose_name='اسم الوثيقة')
+    document_file = models.FileField(upload_to='employee_documents/%Y/%m/', verbose_name='ملف الوثيقة')
+    file_size = models.BigIntegerField(verbose_name='حجم الملف (بايت)')
+    file_extension = models.CharField(max_length=10, verbose_name='امتداد الملف')
+    document_date = models.DateField(blank=True, null=True, verbose_name='تاريخ الوثيقة')
+    expiry_date = models.DateField(blank=True, null=True, verbose_name='تاريخ انتهاء الصلاحية')
+    is_verified = models.BooleanField(default=False, verbose_name='تم التحقق')
+    verified_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True,
+                                   related_name='verified_documents', verbose_name='تم التحقق بواسطة')
+    verified_at = models.DateTimeField(blank=True, null=True, verbose_name='تاريخ التحقق')
+    notes = models.TextField(blank=True, null=True, verbose_name='ملاحظات')
+    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, blank=True, null=True,
+                                   related_name='uploaded_documents', verbose_name='رفع بواسطة')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الرفع')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')
+
+    class Meta:
+        db_table = 'ExtendedEmployeeDocuments'
+        verbose_name = 'وثيقة الموظف الموسعة'
+        verbose_name_plural = 'وثائق الموظفين الموسعة'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.emp.get_full_name()} - {self.document_name}"
+
+    def save(self, *args, **kwargs):
+        if self.document_file:
+            self.file_size = self.document_file.size
+            self.file_extension = self.document_file.name.split('.')[-1].lower()
+        super().save(*args, **kwargs)
+
+    def get_file_size_mb(self):
+        """إرجاع حجم الملف بالميجابايت"""
+        return round(self.file_size / (1024 * 1024), 2)
+
+    def is_expired(self):
+        """التحقق من انتهاء صلاحية الوثيقة"""
+        if self.expiry_date:
+            return timezone.now().date() > self.expiry_date
+        return False
 
     def calculate_current_balance(self):
         """حساب الرصيد الحالي"""
