@@ -2,10 +2,12 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import Q, Count, Sum
+from django.db.models import Q, Count, Sum, F
+from django.db import models
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
+from django import forms
 from datetime import date, datetime, timedelta
 from .models import LeaveType, EmployeeLeave, PublicHoliday
 from employees.models import Employee
@@ -360,13 +362,17 @@ def balance_report(request):
     employee_balances = []
     for emp in employees:
         # هنا يمكن إضافة منطق حساب الأرصدة الفعلي
-        used_days = EmployeeLeave.objects.filter(
+        # Calculate used days using Python instead of database aggregation for SQL Server compatibility
+        approved_leaves = EmployeeLeave.objects.filter(
             emp=emp,
             status='Approved',
             start_date__year=date.today().year
-        ).aggregate(
-            total_days=Sum('leave_id')  # يجب تعديل هذا لحساب الأيام الفعلية
-        )['total_days'] or 0
+        )
+
+        used_days = sum(
+            (leave.end_date - leave.start_date).days + 1
+            for leave in approved_leaves
+        )
         
         employee_balances.append({
             'employee': emp,
@@ -593,14 +599,18 @@ def check_leave_balance(request, emp_id, type_id):
         
         # حساب الأيام المستخدمة هذا العام
         current_year = date.today().year
-        used_days = EmployeeLeave.objects.filter(
+        # Calculate used days using Python instead of database aggregation for SQL Server compatibility
+        approved_leaves = EmployeeLeave.objects.filter(
             emp=employee,
             leave_type=leave_type,
             status='Approved',
             start_date__year=current_year
-        ).aggregate(
-            total=Sum('leave_id')  # يجب تعديل هذا لحساب الأيام الفعلية
-        )['total'] or 0
+        )
+
+        used_days = sum(
+            (leave.end_date - leave.start_date).days + 1
+            for leave in approved_leaves
+        )
         
         remaining_days = leave_type.max_days_per_year - used_days if leave_type.max_days_per_year else float('inf')
         

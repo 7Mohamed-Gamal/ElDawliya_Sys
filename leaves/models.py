@@ -137,10 +137,14 @@ class EmployeeLeave(models.Model):
 
     def clean(self):
         """التحقق من صحة البيانات"""
+        # التحقق من وجود الحقول المطلوبة قبل المتابعة
+        if not hasattr(self, 'emp') or not hasattr(self, 'leave_type') or not self.emp_id or not self.leave_type_id:
+            return
+
         if self.start_date and self.end_date:
             if self.start_date > self.end_date:
                 raise ValidationError('تاريخ بداية الإجازة يجب أن يكون قبل تاريخ النهاية')
-            
+
             # التحقق من عدم تداخل الإجازات
             overlapping_leaves = EmployeeLeave.objects.filter(
                 emp=self.emp,
@@ -148,22 +152,26 @@ class EmployeeLeave(models.Model):
                 start_date__lte=self.end_date,
                 end_date__gte=self.start_date
             ).exclude(pk=self.pk)
-            
+
             if overlapping_leaves.exists():
                 raise ValidationError('يوجد تداخل مع إجازة أخرى معتمدة أو في الانتظار')
-            
+
             # التحقق من الحد الأقصى للأيام
             if self.leave_type.max_days_per_year:
                 year = self.start_date.year
-                total_days_this_year = EmployeeLeave.objects.filter(
+                # Calculate total days using Python instead of database aggregation for SQL Server compatibility
+                approved_leaves = EmployeeLeave.objects.filter(
                     emp=self.emp,
                     leave_type=self.leave_type,
                     status='Approved',
                     start_date__year=year
-                ).exclude(pk=self.pk).aggregate(
-                    total=models.Sum(models.F('end_date') - models.F('start_date') + 1)
-                )['total'] or 0
-                
+                ).exclude(pk=self.pk)
+
+                total_days_this_year = sum(
+                    (leave.end_date - leave.start_date).days + 1
+                    for leave in approved_leaves
+                )
+
                 if total_days_this_year + self.duration_days > self.leave_type.max_days_per_year:
                     raise ValidationError(f'تجاوز الحد الأقصى المسموح ({self.leave_type.max_days_per_year} يوم) لهذا النوع من الإجازات')
 
@@ -276,14 +284,18 @@ class LeaveBalance(models.Model):
 
     def update_used_days(self):
         """تحديث الأيام المستخدمة من الإجازات المعتمدة"""
-        used = EmployeeLeave.objects.filter(
+        # Calculate used days using Python instead of database aggregation for SQL Server compatibility
+        approved_leaves = EmployeeLeave.objects.filter(
             emp=self.emp,
             leave_type=self.leave_type,
             status='Approved',
             start_date__year=self.year
-        ).aggregate(
-            total=models.Sum(models.F('end_date') - models.F('start_date') + 1)
-        )['total'] or 0
+        )
+
+        used = sum(
+            (leave.end_date - leave.start_date).days + 1
+            for leave in approved_leaves
+        )
         
         self.used_days = used
         self.save()
