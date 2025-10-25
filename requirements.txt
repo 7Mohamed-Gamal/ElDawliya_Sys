@@ -1,89 +1,135 @@
-# Core Requirements
+# ElDawliya System Requirements
+
+# ----------------------------------------------------------------
+# Core Framework & Essential Packages
+# ----------------------------------------------------------------
 Django==4.2.22
-django-filter==23.2
-django-crispy-forms==2.0
-crispy-bootstrap5==0.7
-django-bootstrap5==23.3
-django-tables2==2.5.3
-django-widget-tweaks==1.4.12
-
-# Database
-pyodbc==4.0.39
-mssql-django==1.4.1
-django-mssql-backend==2.8.1
-
-# Authentication
-django-allauth==0.54.0
-
-# API
 djangorestframework==3.15.2
-django-cors-headers==4.1.0
-drf-yasg==1.21.7
-djangorestframework-simplejwt==5.3.0
-
-# AI Integration
-google-generativeai==0.8.3
+django-filter==23.2
 python-dotenv==1.0.1
+pytz==2023.3
+requests==2.31.0
+urllib3>=2.0.7
 
-# UI Components
-django-select2==8.1.2
-django-ckeditor==6.5.1
-django-jazzmin==2.6.0
+# ----------------------------------------------------------------
+# Database
+# ----------------------------------------------------------------
+mssql-django==1.4.1
+pyodbc==4.0.39
+# psycopg2-binary>=2.9.0  # Optional: For PostgreSQL support
 
-# Date/Time
-python-dateutil==2.8.2
-
-# django-hijri-date==0.1.3
-
-# Utilities
-Pillow==10.4.0
-django-encrypted-model-fields==0.6.5
-openpyxl==3.1.2
-xlwt==1.3.0
-reportlab==3.6.13
-WeasyPrint==59.0
-django-import-export==3.2.0
-
-# File Management & Storage
-django-storages==1.14.2
-boto3==1.34.0
-django-cleanup==8.0.0
-
-# Advanced Features
+# ----------------------------------------------------------------
+# Asynchronous Tasks & Caching
+# ----------------------------------------------------------------
 celery==5.3.4
 redis==5.0.1
 django-celery-beat==2.5.0
 django-celery-results==2.5.1
-
-# Security & Encryption
-cryptography==43.0.3
-django-otp==1.2.2
-qrcode==7.4.2
-
-# Notifications & Communication
+django-redis==5.4.0
 channels==4.0.0
 channels-redis==4.1.0
-django-notifications-hq==1.8.3
+daphne>=4.0.0
 
-# Advanced Analytics
+# ----------------------------------------------------------------
+# User Interface & Frontend Components
+# ----------------------------------------------------------------
+django-crispy-forms==2.1
+crispy-bootstrap5==0.7
+django-bootstrap5==23.3
+django-tables2==2.5.3
+django-widget-tweaks==1.4.12
+django-select2==8.1.2
+django-ckeditor==6.5.1
+# django-jazzmin==2.6.0  # Admin theme, review for conflicts before enabling
+
+# ----------------------------------------------------------------
+# Authentication & Security
+# ----------------------------------------------------------------
+djangorestframework-simplejwt==5.3.0
+django-allauth==0.54.0
+django-guardian>=2.4.0
+django-otp==1.2.2
+pyotp>=2.9.0
+qrcode==7.4.2
+cryptography==43.0.3
+django-encrypted-model-fields==0.6.5
+django-axes>=6.0.0
+
+# ----------------------------------------------------------------
+# File Handling, Reporting & Media
+# ----------------------------------------------------------------
+Pillow==10.4.0
+django-storages==1.14.2
+boto3==1.34.0  # For AWS S3 storage
+django-cleanup==8.0.0
+openpyxl==3.1.2
+xlsxwriter>=3.1.0
+xlwt==1.3.0
+reportlab==4.0.4
+WeasyPrint==59.0
+python-magic==0.4.27
+django-import-export==3.3.1
+
+# ----------------------------------------------------------------
+# HR Specific Integrations
+# ----------------------------------------------------------------
+pyzk==0.9  # For ZK attendance devices
+
+# ----------------------------------------------------------------
+# Data Science & Analytics
+# ----------------------------------------------------------------
 pandas==2.1.4
 numpy==1.24.4
 matplotlib==3.8.2
 seaborn==0.13.0
+plotly>=5.17.0
+scipy>=1.11.0
 
-# Caching & Performance
-django-redis==5.2.0
-django-debug-toolbar==4.1.0
+# ----------------------------------------------------------------
+# Search & Indexing
+# ----------------------------------------------------------------
+django-haystack>=3.2.0
+whoosh>=2.7.4
+
+# ----------------------------------------------------------------
+# Notifications
+# ----------------------------------------------------------------
+django-notifications-hq==1.8.3
+django-anymail==10.2
+
+# ----------------------------------------------------------------
+# Internationalization & Localization
+# ----------------------------------------------------------------
+python-bidi>=0.4.2
+arabic-reshaper>=3.0.0
+
+# ----------------------------------------------------------------
+# Utilities & Helper Libraries
+# ----------------------------------------------------------------
+python-dateutil==2.8.2
+django-mptt>=0.14.0
+humanize>=4.7.0
+
+# ----------------------------------------------------------------
+# Development & Testing
+# ----------------------------------------------------------------
+django-debug-toolbar==4.2.0
 django-extensions==3.2.3
-
-# Development
-pytest==7.3.1
-pytest-django==4.5.2
-coverage==7.2.7
+pytest==7.4.3
+pytest-django==4.7.0
+coverage==7.3.2
 black==24.3.0
 flake8==6.0.0
+isort>=5.12.0
+pre-commit>=3.3.0
+factory-boy==3.3.0
+faker>=19.0.0
+ipython>=8.14.0
+sentry-sdk==2.8.0  # Error tracking
 
-# Production
+# ----------------------------------------------------------------
+# Production Deployment
+# ----------------------------------------------------------------
 gunicorn==23.0.0
-whitenoise==6.4.0
-sentry-sdk==2.8.0
+whitenoise==6.6.0
+django-environ>=0.10.0
