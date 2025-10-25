@@ -1,22 +1,20 @@
 """
-URLs خاصة بالأقسام
+URLs for Departments
 """
 
 from django.urls import path
-from ..views.department_views_updated import (
-    department_list, department_create, department_edit,
-    department_delete, department_performance, department_detail
-)
+# Correctly import from the new department_views module
+from ..views import department_views as views
 
 app_name = 'departments'
 
 urlpatterns = [
-    # Department patterns
-    path('', department_list, name='department_list'),
-    path('list/', department_list, name='list'),  # Alias for list
-    path('create/', department_create, name='department_create'),
-    path('<int:dept_code>/', department_detail, name='department_detail'),
-    path('<int:dept_code>/edit/', department_edit, name='department_edit'),
-    path('<int:dept_code>/delete/', department_delete, name='department_delete'),
-    path('<int:dept_code>/performance/', department_performance, name='department_performance'),
+    # Department list and creation
+    path('', views.department_list, name='list'),
+    path('create/', views.department_create, name='create'),
+
+    # Department detail and actions using the primary key (pk)
+    path('<int:pk>/', views.department_detail, name='detail'),
+    path('<int:pk>/edit/', views.department_edit, name='edit'),
+    path('<int:pk>/delete/', views.department_delete, name='delete'),
 ]

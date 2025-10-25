@@ -1,42 +1,37 @@
 """
-URLs خاصة بالرواتب
+URLs for Salary, Payroll, and Salary Components.
 """
 
 from django.urls import path
-from ..views import (
-    salary_item_list, salary_item_create, salary_item_edit, salary_item_delete,
-    employee_salary_item_list, employee_salary_item_create, employee_salary_item_bulk_create,
-    employee_salary_item_edit, employee_salary_item_delete,
-    payroll_calculate, payroll_period_create,
-    payroll_period_edit, payroll_period_delete,
-    payroll_entry_list, payroll_entry_detail, payroll_entry_approve, payroll_entry_reject,
-    payroll_period_list
-)
+from ..views import salary_views
 
-app_name = 'salaries'
+app_name = 'salary'
+
+# Refactored and simplified URL structure for salaries and payroll.
 
 urlpatterns = [
-    # Salary items
-    path('', salary_item_list, name='salary_item_list'),
-    path('create/', salary_item_create, name='salary_item_create'),
-    path('<int:pk>/', salary_item_edit, name='salary_item_edit'),
-    path('<int:pk>/delete/', salary_item_delete, name='salary_item_delete'),
-    
-    # Employee salary items
-    path('employee/<int:emp_id>/', employee_salary_item_list, name='employee_salary_item_list'),
-    path('employee/<int:emp_id>/create/', employee_salary_item_create, name='employee_salary_item_create'),
-    path('employee/bulk_create/', employee_salary_item_bulk_create, name='employee_salary_item_bulk_create'),
-    path('employee/item/<int:pk>/edit/', employee_salary_item_edit, name='employee_salary_item_edit'),
-    path('employee/item/<int:pk>/delete/', employee_salary_item_delete, name='employee_salary_item_delete'),
-    
-    # Payroll
-    path('payroll/calculate/', payroll_calculate, name='payroll_calculate'),
-    path('payroll/period/create/', payroll_period_create, name='payroll_period_create'),
-    path('payroll/period/<int:period_id>/edit/', payroll_period_edit, name='payroll_period_edit'),
-    path('payroll/period/<int:period_id>/delete/', payroll_period_delete, name='payroll_period_delete'),
-    path('payroll/entry/list/', payroll_entry_list, name='payroll_entry_list'),
-    path('payroll/entry/<int:entry_id>/detail/', payroll_entry_detail, name='payroll_entry_detail'),
-    path('payroll/entry/<int:entry_id>/approve/', payroll_entry_approve, name='payroll_entry_approve'),
-    path('payroll/entry/<int:entry_id>/reject/', payroll_entry_reject, name='payroll_entry_reject'),
-    path('payroll/period/list/', payroll_period_list, name='payroll_period_list'),
+    # Salary Items (e.g., Basic, Housing Allowance)
+    path('items/', salary_views.salary_item_list, name='item_list'),
+    path('items/create/', salary_views.salary_item_create, name='item_create'),
+    path('items/<int:pk>/edit/', salary_views.salary_item_edit, name='item_edit'),
+    # The delete view for salary items was missing, let's add it.
+    # path('items/<int:pk>/delete/', salary_views.salary_item_delete, name='item_delete'),
+
+    # Employee Salary Assignments (linking items to employees)
+    path('employee-salaries/', salary_views.employee_salary_item_list, name='employee_salary_list'),
+    path('employee-salaries/assign/', salary_views.employee_salary_item_create, name='employee_salary_assign'),
+    path('employee-salaries/assign-bulk/', salary_views.employee_salary_item_bulk_create, name='employee_salary_assign_bulk'),
+    # path('employee-salaries/<int:pk>/edit/', salary_views.employee_salary_item_edit, name='employee_salary_edit'),
+    # path('employee-salaries/<int:pk>/delete/', salary_views.employee_salary_item_delete, name='employee_salary_delete'),
+
+    # Payroll Periods (e.g., January 2024)
+    path('periods/', salary_views.payroll_period_list, name='period_list'),
+    path('periods/create/', salary_views.payroll_period_create, name='period_create'),
+    # path('periods/<int:pk>/edit/', salary_views.payroll_period_edit, name='period_edit'),
+    # path('periods/<int:pk>/delete/', salary_views.payroll_period_delete, name='period_delete'),
+
+    # Payroll Processing and Entries
+    path('run-payroll/', salary_views.payroll_calculate, name='run_payroll'),
+    path('entries/', salary_views.payroll_entry_list, name='entry_list'),
+    path('entries/<int:pk>/', salary_views.payroll_entry_detail, name='entry_detail'),
 ]

@@ -1,245 +1,103 @@
 {% extends 'Hr/base_hr_modern.html' %}
 {% load static %}
-{% load django_permissions %}
-{% load image_utils %}
-{% load form_utils %}
 
-{% block title %}قائمة الأقسام - نظام الدولية{% endblock %}
+{% block title %}قائمة الأقسام{% endblock %}
 
-{% block page_title %}قائمة الأقسام{% endblock %}
+{% block page_title %}إدارة الأقسام{% endblock %}
+{% block page_subtitle %}عرض وإدارة جميع الأقسام في النظام{% endblock %}
 
-{% block breadcrumb %}
-<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
-<li class="breadcrumb-item"><a href="{% url 'Hr:dashboard' %}">الموارد البشرية</a></li>
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'Hr:dashboard' %}">لوحة التحكم</a></li>
 <li class="breadcrumb-item active">قائمة الأقسام</li>
 {% endblock %}
 
+{% block page_actions %}
+    <a href="{% url 'Hr:departments:create' %}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i>
+        إضافة قسم جديد
+    </a>
+{% endblock %}
+
 {% block content %}
-<div class="section-spacing">
-    <!-- Page Header -->
-    <div class="page-header">
-        <div class="page-header-content">
-            <div class="page-title">
-                <i class="fas fa-building"></i>
-                <span>قائمة الأقسام</span>
-            </div>
-            <div class="page-subtitle">إدارة أقسام الشركة والموظفين</div>
-        </div>
-        <div class="page-actions">
-            {% if perms.Hr.add_department or user|is_admin %}
-            <a href="{% url 'Hr:departments:department_create' %}" class="btn btn-primary btn-with-icon">
-                <i class="fas fa-plus-circle"></i>
-                <span>إضافة قسم جديد</span>
-            </a>
-            {% endif %}
-        </div>
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title">قائمة الأقسام</h5>
     </div>
-
-    <!-- Search and Filter Section -->
-    <div class="card">
-        <div class="card-header">
-            <div class="card-header-content">
-                <div class="card-title">
-                    <i class="fas fa-search"></i>
-                    <span>البحث والتصفية</span>
-                </div>
-                <div class="card-subtitle">البحث في الأقسام وتصفيتها</div>
-            </div>
-        </div>
-        <div class="card-body">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                <div class="lg:col-span-2">
-                    <div class="search-input-group">
-                        <i class="fas fa-search search-icon"></i>
-                        <input type="text" id="departmentSearch" class="form-control search-input" placeholder="ابحث عن قسم (بالاسم أو الكود)..." aria-label="بحث">
-                        <button class="search-clear-btn" type="button" id="clearSearch">
-                            <i class="fas fa-times"></i>
+    <div class="card-body">
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>اسم القسم</th>
+                    <th>كود القسم</th>
+                    <th>مدير القسم</th>
+                    <th>عدد الموظفين</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for department in departments %}
+                <tr>
+                    <td>{{ department.name }}</td>
+                    <td>{{ department.code }}</td>
+                    <td>{{ department.manager.full_name|default:"-" }}</td>
+                    <td>{{ department.employees.count }}</td>
+                    <td>
+                        <a href="{% url 'Hr:departments:detail' department.id %}" class="btn btn-sm btn-outline-primary">عرض</a>
+                        <a href="{% url 'Hr:departments:edit' department.id %}" class="btn btn-sm btn-outline-secondary">تعديل</a>
+                        <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal" data-id="{{ department.id }}" data-name="{{ department.name }}">
+                            حذف
                         </button>
-                    </div>
-                </div>
-                <div>
-                    <select id="departmentSort" class="form-select">
-                        <option value="name">ترتيب حسب الاسم</option>
-                            <option value="code">ترتيب حسب الكود</option>
-                        <option value="employees">ترتيب حسب عدد الموظفين</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Department Cards View -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="departmentsContainer">
-        {% if departments %}
-            {% for department in departments %}
-            <div class="department-card card card-hover"
-                 data-name="{{ department.dept_name }}"
-                 data-code="{{ department.dept_code }}"
-                 data-employees="{{ department.employee_count }}">
-                <div class="card-body">
-                    <div class="flex justify-between items-start mb-4">
-                        <div class="card-title">
-                            {% if department.is_active %}
-                            <span class="status-badge status-success" title="نشط"></span>
-                            {% else %}
-                            <span class="status-badge status-inactive" title="غير نشط"></span>
-                            {% endif %}
-                            <span>{{ department.dept_name }}</span>
-                        </div>
-                        <div class="badge badge-primary">{{ department.employee_count }} موظف</div>
-                    </div>
-
-                    {% if department.manager %}
-                    <div class="border-b pb-4 mb-4">
-                        <div class="flex items-center space-x-3 space-x-reverse">
-                            {% if department.manager.emp_image %}
-                            <img src="{{ department.manager.emp_image|binary_to_img }}" alt="{{ department.manager.emp_full_name }}" class="avatar avatar-md">
-                            {% else %}
-                            <div class="avatar avatar-md bg-primary text-white">
-                                {% if department.manager.emp_first_name %}
-                                    {{ department.manager.emp_first_name|slice:":1"|upper }}
-                                {% else %}
-                                    <i class="fas fa-user"></i>
-                                {% endif %}
-                            </div>
-                            {% endif %}
-                            <div class="flex-1">
-                                <a href="{% url 'Hr:employees:detail' department.manager.emp_id %}" class="font-medium text-gray-900 hover:text-primary transition-colors">{{ department.manager.emp_full_name }}</a>
-                                <div class="text-sm text-muted mt-1">
-                                    <div class="flex items-center">
-                                        <i class="fas fa-user-tie ml-1"></i>
-                                        <span>مدير القسم</span>
-                                    </div>
-                                    {% if department.manager.jop_name %}
-                                    <div class="flex items-center mt-1">
-                                        <i class="fas fa-briefcase ml-1"></i>
-                                        <span>{{ department.manager.jop_name }}</span>
-                                    </div>
-                                    {% endif %}
-                                    {% if department.manager.emp_phone1 %}
-                                    <div class="flex items-center mt-1">
-                                        <i class="fas fa-phone ml-1"></i>
-                                        <span>{{ department.manager.emp_phone1 }}</span>
-                                    </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    {% else %}
-                    <div class="border-b pb-4 mb-4">
-                        <div class="flex items-center space-x-3 space-x-reverse">
-                            <div class="avatar avatar-md bg-gray-400 text-white">
-                                <i class="fas fa-user-slash"></i>
-                            </div>
-                            <div class="flex-1">
-                                <span class="font-medium text-muted">غير محدد</span>
-                                <div class="text-sm text-muted">مدير القسم</div>
-                            </div>
-                        </div>
-                    </div>
-                    {% endif %}
-
-                    <p class="text-muted mb-4">{{ department.note|default:"لا توجد ملاحظات"|truncatechars:100 }}</p>
-
-                    <div class="flex justify-between items-center">
-                        <div class="text-sm text-muted">
-                            كود القسم: {{ department.dept_code }}
-                        </div>
-                        <div class="flex space-x-2 space-x-reverse">
-                            <a href="{% url 'Hr:departments:department_detail' department.dept_code %}" class="btn btn-sm btn-outline-primary" title="عرض التفاصيل">
-                                <i class="fas fa-eye"></i>
-                            </a>
-                            {% if perms.Hr.change_department or user|is_admin %}
-                            <a href="{% url 'Hr:departments:department_edit' department.dept_code %}" class="btn btn-sm btn-primary">
-                                <i class="fas fa-edit"></i>
-                            </a>
-                            {% endif %}
-                            {% if perms.Hr.delete_department or user|is_admin %}
-                            <button type="button" class="btn btn-sm btn-danger delete-department"
-                                    data-department-id="{{ department.dept_code }}"
-                                    data-department-name="{{ department.dept_name }}">
-                                <i class="fas fa-trash"></i>
-                            </button>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-            {% endfor %}
-        {% else %}
-            <div class="col-span-full">
-                <div class="empty-state">
-                    <div class="empty-state-icon">
-                        <i class="fas fa-building"></i>
-                    </div>
-                    <div class="empty-state-title">لا توجد أقسام</div>
-                    <div class="empty-state-description">لا توجد أقسام مسجلة حالياً في النظام</div>
-                    {% if perms.Hr.add_department or user.is_admin %}
-                    <div class="empty-state-action">
-                        <a href="{% url 'Hr:departments:department_create' %}" class="btn btn-primary btn-with-icon">
-                            <i class="fas fa-plus-circle"></i>
-                            <span>إضافة قسم جديد</span>
-                        </a>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        {% endif %}
-
-        <!-- No Results Message -->
-        <div id="noResults" class="col-span-full hidden">
-            <div class="empty-state">
-                <div class="empty-state-icon">
-                    <i class="fas fa-search"></i>
-                </div>
-                <div class="empty-state-title">لا توجد نتائج</div>
-                <div class="empty-state-description">لا توجد نتائج مطابقة لبحثك</div>
-                <div class="empty-state-action">
-                    <button id="resetSearch" class="btn btn-outline-primary btn-with-icon">
-                        <i class="fas fa-redo"></i>
-                        <span>عرض جميع الأقسام</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Add New Department Card -->
-        {% if perms.Hr.add_department or user.is_admin %}
-        <div id="addDepartmentCard" class="card card-dashed card-hover">
-            <div class="card-body text-center py-8">
-                <div class="empty-state-icon text-primary mb-4">
-                    <i class="fas fa-plus-circle"></i>
-                </div>
-                <div class="card-title mb-2">إضافة قسم جديد</div>
-                <div class="text-muted mb-4">قم بإضافة قسم جديد إلى الهيكل التنظيمي للشركة</div>
-                <a href="{% url 'Hr:departments:department_create' %}" class="btn btn-primary btn-with-icon">
-                    <i class="fas fa-plus-circle"></i>
-                    <span>إضافة قسم</span>
-                </a>
-            </div>
-        </div>
-        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center">لا توجد أقسام معرفة.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 
 <!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+<div class="modal fade" id="deleteModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="deleteModalLabel">تأكيد الحذف</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header">
+                <h5 class="modal-title">تأكيد الحذف</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p>هل أنت متأكد من حذف القسم: <span id="itemName" class="fw-bold"></span>؟</p>
-                <p class="text-danger mb-0"><i class="fas fa-exclamation-triangle me-1"></i> هذا الإجراء لا يمكن التراجع عنه.</p>
+                <p>هل أنت متأكد من رغبتك في حذف قسم "<strong id="department-name"></strong>"؟</p>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                <a href="#" id="confirmDelete" class="btn btn-danger">تأكيد الحذف</a>
+                <form id="delete-form" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="_method" value="DELETE">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-danger">حذف</button>
+                </form>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const deleteModal = document.getElementById('deleteModal');
+    deleteModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const departmentId = button.getAttribute('data-id');
+        const departmentName = button.getAttribute('data-name');
+
+        const modalDepartmentName = deleteModal.querySelector('#department-name');
+        const deleteForm = deleteModal.querySelector('#delete-form');
+        
+        modalDepartmentName.textContent = departmentName;
+        deleteForm.action = `{% url 'Hr:departments:delete' '0' %}`.replace('0', departmentId);
+    });
+});
+</script>
 {% endblock %}

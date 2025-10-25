@@ -1,12 +1,13 @@
 from django import forms
 from django.utils.translation import gettext_lazy as _
 from Hr.models.salary_models import HrSalaryItem as SalaryItem, HrEmployeeSalaryItem as EmployeeSalaryItem, HrPayrollPeriod as PayrollPeriod
-from Hr.models.legacy_employee import LegacyEmployee as Employee
+from Hr.models.employee.employee_models import Employee
+from Hr.models.core.department_models import Department
 
 
 class SalaryItemForm(forms.ModelForm):
     """
-    نموذج لإنشاء وتعديل بنود الرواتب
+    Form for creating and editing salary items.
     """
     class Meta:
         model = SalaryItem
@@ -22,7 +23,7 @@ class SalaryItemForm(forms.ModelForm):
 
 class EmployeeSalaryItemForm(forms.ModelForm):
     """
-    نموذج لإنشاء وتعديل بنود رواتب الموظفين
+    Form for creating and editing employee salary items.
     """
     class Meta:
         model = EmployeeSalaryItem
@@ -37,26 +38,26 @@ class EmployeeSalaryItemForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Only show active employees
-        self.fields['employee'].queryset = Employee.objects.filter(working_condition='سارى')
-        # Only show active salary items
+        # Use the modern Employee model and its status field
+        self.fields['employee'].queryset = Employee.objects.filter(status=Employee.ACTIVE)
         self.fields['salary_item'].queryset = SalaryItem.objects.filter(is_active=True)
 
 
 class EmployeeSalaryItemBulkForm(forms.Form):
     """
-    نموذج لإنشاء بنود رواتب الموظفين بالجملة
+    Form for bulk creation of employee salary items.
     """
     salary_item = forms.ModelChoiceField(
         queryset=SalaryItem.objects.filter(is_active=True),
         widget=forms.Select(attrs={'class': 'form-select'}),
         label=_('بند الراتب')
     )
-    department = forms.ChoiceField(
-        choices=[],  # Will be populated in __init__
+    department = forms.ModelChoiceField(
+        queryset=Department.objects.filter(is_active=True),
         required=False,
         widget=forms.Select(attrs={'class': 'form-select'}),
-        label=_('القسم')
+        label=_('القسم'),
+        empty_label=_('جميع الأقسام')
     )
     amount = forms.DecimalField(
         widget=forms.NumberInput(attrs={'class': 'form-control money-input'}),
@@ -72,23 +73,15 @@ class EmployeeSalaryItemBulkForm(forms.Form):
         label=_('تاريخ الانتهاء')
     )
     employees = forms.ModelMultipleChoiceField(
-        queryset=Employee.objects.filter(working_condition='سارى'),
+        queryset=Employee.objects.filter(status=Employee.ACTIVE),
         widget=forms.SelectMultiple(attrs={'class': 'form-select', 'size': '10'}),
         label=_('الموظفين')
     )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Get unique departments from active employees
-        departments = Employee.objects.filter(working_condition='سارى').values_list(
-            'department__id', 'department__name'
-        ).distinct()
-        self.fields['department'].choices = [('', _('جميع الأقسام'))] + list(departments)
-
 
 class PayrollCalculationForm(forms.Form):
     """
-    نموذج لحساب الرواتب
+    Form for calculating payroll.
     """
     period = forms.DateField(
         widget=forms.DateInput(attrs={
@@ -114,7 +107,7 @@ class PayrollCalculationForm(forms.Form):
 
 class PayrollPeriodForm(forms.ModelForm):
     """
-    نموذج لإدارة فترات الرواتب
+    Form for managing payroll periods.
     """
     class Meta:
         model = PayrollPeriod
