@@ -6,6 +6,7 @@ from django.db.models import Q, Count, Sum, Avg
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
+from django import forms
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from .models import LoanType, EmployeeLoan, LoanInstallment
