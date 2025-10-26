@@ -763,34 +763,6 @@ def ajax_upload_document(request, emp_id):
         })
 
 
-@login_required
-def test_upload_endpoint(request, emp_id):
-    """Test endpoint to verify upload functionality"""
-    if request.method == 'GET':
-        return JsonResponse({
-            'status': 'ok',
-            'emp_id': emp_id,
-            'method': request.method,
-            'user': str(request.user),
-            'csrf_token': request.META.get('CSRF_COOKIE')
-        })
-    elif request.method == 'POST':
-        return JsonResponse({
-            'status': 'post_received',
-            'emp_id': emp_id,
-            'post_data': dict(request.POST),
-            'files': list(request.FILES.keys()),
-            'user': str(request.user)
-        })
-
-
-@login_required
-def test_upload_page(request, emp_id):
-    """Test page for document upload debugging"""
-    employee = get_object_or_404(Employee, emp_id=emp_id)
-    return render(request, 'employees/test_upload.html', {'employee': employee})
-
-
 # Error Handlers
 def custom_404(request, exception):
     """صفحة خطأ 404 مخصصة"""

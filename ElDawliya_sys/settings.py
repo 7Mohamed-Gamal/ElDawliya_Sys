@@ -5,24 +5,30 @@ import sys
 import django.db.utils
 from dotenv import load_dotenv
 
-load_dotenv()  # هذا السطر مهم جداً
+load_dotenv()  # Load environment variables from .env file
 
-SERVER_IP = '192.168.1.48'
-SERVER_HOSTNAME = 'ELDAWLIYA-SYSTE'
+# Server configuration from environment variables
+SERVER_IP = os.environ.get('SERVER_IP', '127.0.0.1')
+SERVER_HOSTNAME = os.environ.get('SERVER_HOSTNAME', 'localhost')
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-#9^46q1m(@yts%4xkw&%uy&_$$t!drx$-ke^z_*ircyuhk1acs')
+# Generate a new secret key and store it in .env file
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+if not SECRET_KEY:
+    raise ValueError("DJANGO_SECRET_KEY must be set in environment variables or .env file")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 't')
 
-# Allowed hosts
-ALLOWED_HOSTS = ['127.0.0.1', 'DESKTOP-H361157','127.0.0.1:8080', 'localhost', '192.168.1.48', '197.44.104.245']
+# Allowed hosts - should be configured via environment variable
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
-print(f"DEBUG: {DEBUG}")
-print(f"ALLOWED_HOSTS: {ALLOWED_HOSTS}")
+# Log configuration for debugging (only in development)
+if DEBUG:
+    print(f"DEBUG MODE: {DEBUG}")
+    print(f"ALLOWED_HOSTS: {ALLOWED_HOSTS}")
 
 # Application definition
 INSTALLED_APPS = [

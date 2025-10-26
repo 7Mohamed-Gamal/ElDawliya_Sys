@@ -1066,11 +1066,9 @@ def payroll_summary_report(request, run_id):
 
 
 @login_required
-@csrf_exempt
+@require_http_methods(["POST"])
 def recalculate_employee_payroll(request, run_id, emp_id):
     """إعادة حساب راتب موظف محدد"""
-    if request.method != 'POST':
-        return JsonResponse({'error': 'Method not allowed'}, status=405)
     
     try:
         payroll_run = get_object_or_404(PayrollRun, run_id=run_id)
