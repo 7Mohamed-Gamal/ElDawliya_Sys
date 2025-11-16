@@ -33,7 +33,7 @@ jobs:
 
     - name: Run tests with coverage
       run: |
-        python run_tests.py
+        coverage run manage.py test --noinput
         coverage xml
 
     - name: Upload coverage to Codecov

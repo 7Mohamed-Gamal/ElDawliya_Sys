@@ -56,81 +56,47 @@ app.conf.update(
     
     # إعدادات الطوابير
     task_routes={
-        'Hr.tasks.calculate_payroll': {'queue': 'payroll'},
-        'Hr.tasks.generate_report': {'queue': 'reports'},
-        'Hr.tasks.send_notification': {'queue': 'notifications'},
-        'Hr.tasks.process_attendance': {'queue': 'attendance'},
-        'Hr.tasks.backup_data': {'queue': 'maintenance'},
-        'Hr.tasks.sync_external_data': {'queue': 'integration'},
-        'Hr.tasks.cleanup_files': {'queue': 'maintenance'},
-        'Hr.tasks.send_email': {'queue': 'notifications'},
-        'Hr.tasks.generate_analytics': {'queue': 'analytics'},
+        # Attendance tasks
+        'attendance.tasks.sync_all_zk_devices': {'queue': 'integration'},
+        'attendance.tasks.generate_daily_attendance_summary': {'queue': 'reports'},
+        'attendance.tasks.cleanup_old_zk_data': {'queue': 'maintenance'},
+        'attendance.tasks.check_device_connectivity': {'queue': 'integration'},
+        'attendance.tasks.generate_monthly_attendance_report': {'queue': 'reports'},
+        'attendance.tasks.optimize_attendance_data': {'queue': 'maintenance'},
     },
     
-    # إعدادات الجدولة
+    # إعدادات الجدولة (مهام متوفرة فقط)
     beat_schedule={
         # مهام يومية
         'daily-attendance-summary': {
-            'task': 'Hr.tasks.generate_daily_attendance_summary',
-            'schedule': 60.0 * 60.0 * 24.0,  # كل 24 ساعة
-            'options': {'queue': 'reports'}
-        },
-        'daily-backup': {
-            'task': 'Hr.tasks.create_daily_backup',
-            'schedule': 60.0 * 60.0 * 24.0,  # كل 24 ساعة
-            'options': {'queue': 'maintenance'}
-        },
-        'cleanup-temp-files': {
-            'task': 'Hr.tasks.cleanup_temp_files',
-            'schedule': 60.0 * 60.0 * 6.0,  # كل 6 ساعات
-            'options': {'queue': 'maintenance'}
-        },
-        
-        # مهام أسبوعية
-        'weekly-payroll-calculation': {
-            'task': 'Hr.tasks.calculate_weekly_payroll',
-            'schedule': 60.0 * 60.0 * 24.0 * 7.0,  # كل أسبوع
-            'options': {'queue': 'payroll'}
-        },
-        'weekly-performance-report': {
-            'task': 'Hr.tasks.generate_weekly_performance_report',
-            'schedule': 60.0 * 60.0 * 24.0 * 7.0,  # كل أسبوع
+            'task': 'attendance.tasks.generate_daily_attendance_summary',
+            'schedule': 60.0 * 60.0 * 24.0,
             'options': {'queue': 'reports'}
         },
         
         # مهام شهرية
-        'monthly-analytics': {
-            'task': 'Hr.tasks.generate_monthly_analytics',
-            'schedule': 60.0 * 60.0 * 24.0 * 30.0,  # كل شهر
-            'options': {'queue': 'analytics'}
-        },
-        'monthly-archive': {
-            'task': 'Hr.tasks.archive_old_data',
-            'schedule': 60.0 * 60.0 * 24.0 * 30.0,  # كل شهر
-            'options': {'queue': 'maintenance'}
+        'monthly-attendance-report': {
+            'task': 'attendance.tasks.generate_monthly_attendance_report',
+            'schedule': 60.0 * 60.0 * 24.0 * 30.0,
+            'options': {'queue': 'reports'}
         },
         
         # مهام كل ساعة
         'sync-attendance-devices': {
-            'task': 'Hr.tasks.sync_attendance_devices',
-            'schedule': 60.0 * 60.0,  # كل ساعة
+            'task': 'attendance.tasks.sync_all_zk_devices',
+            'schedule': 60.0 * 60.0,
             'options': {'queue': 'integration'}
         },
-        'check-document-expiry': {
-            'task': 'Hr.tasks.check_document_expiry',
-            'schedule': 60.0 * 60.0,  # كل ساعة
-            'options': {'queue': 'notifications'}
+        'check-device-connectivity': {
+            'task': 'attendance.tasks.check_device_connectivity',
+            'schedule': 60.0 * 60.0,
+            'options': {'queue': 'integration'}
         },
         
-        # مهام كل 15 دقيقة
-        'process-pending-notifications': {
-            'task': 'Hr.tasks.process_pending_notifications',
-            'schedule': 60.0 * 15.0,  # كل 15 دقيقة
-            'options': {'queue': 'notifications'}
-        },
-        'monitor-system-health': {
-            'task': 'Hr.tasks.monitor_system_health',
-            'schedule': 60.0 * 15.0,  # كل 15 دقيقة
+        # مهام كل 6 ساعات
+        'cleanup-old-zk-data': {
+            'task': 'attendance.tasks.cleanup_old_zk_data',
+            'schedule': 60.0 * 60.0 * 6.0,
             'options': {'queue': 'maintenance'}
         },
     },

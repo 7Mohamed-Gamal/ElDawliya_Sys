@@ -242,7 +242,6 @@ class PayrollCalculationService:
         try:
             from payrolls.models import EmployeeSalary
             from attendance.models import AttendanceSummary
-            from leaves.models import LeaveRequest
             
             # Get current salary
             salary = EmployeeSalary.objects.filter(

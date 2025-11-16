@@ -130,26 +130,26 @@ WSGI_APPLICATION = 'ElDawliya_sys.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'mssql',
-        'NAME': 'ElDawliya_Sys',
-        'HOST': '192.168.1.48',
-        'PORT': '1433',
-        'USER': 'admin',
-        'PASSWORD': 'hgslduhgfwdv',
+        'NAME': os.environ.get('DB_NAME', 'ElDawliya_Sys'),
+        'HOST': os.environ.get('DB_HOST', '127.0.0.1'),
+        'PORT': os.environ.get('DB_PORT', '1433'),
+        'USER': os.environ.get('DB_USER', ''),
+        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
         'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
-            'Trusted_Connection': 'no',
+            'driver': os.environ.get('DB_DRIVER', 'ODBC Driver 17 for SQL Server'),
+            'Trusted_Connection': os.environ.get('DB_TRUSTED', 'no'),
         },
     },
     'primary': {
         'ENGINE': 'mssql',
-        'NAME': 'ElDawliya_Sys',
-        'HOST': 'ELDAWLIYA-SYSTE',
-        'PORT': '1433',
-        'USER': 'admin',
-        'PASSWORD': 'hgslduhgfwdv',
+        'NAME': os.environ.get('DB_PRIMARY_NAME', os.environ.get('DB_NAME', 'ElDawliya_Sys')),
+        'HOST': os.environ.get('DB_PRIMARY_HOST', 'ELDAWLIYA-SYSTE'),
+        'PORT': os.environ.get('DB_PRIMARY_PORT', os.environ.get('DB_PORT', '1433')),
+        'USER': os.environ.get('DB_PRIMARY_USER', os.environ.get('DB_USER', '')),
+        'PASSWORD': os.environ.get('DB_PRIMARY_PASSWORD', os.environ.get('DB_PASSWORD', '')),
         'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
-            'Trusted_Connection': 'yes',
+            'driver': os.environ.get('DB_PRIMARY_DRIVER', os.environ.get('DB_DRIVER', 'ODBC Driver 17 for SQL Server')),
+            'Trusted_Connection': os.environ.get('DB_PRIMARY_TRUSTED', 'yes'),
         },
     }
 }
