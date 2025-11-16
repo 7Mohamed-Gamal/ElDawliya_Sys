@@ -274,10 +274,11 @@ def attendance_dashboard(request):
 # ==== CRUD for AttendanceRules and EmployeeAttendance (schema-specific) ====
 from .models import AttendanceRules, EmployeeAttendance
 from .forms import AttendanceRulesForm, EmployeeAttendanceForm
+from . import rules_service
 
 @login_required
 def attendance_rules_list(request):
-    items = AttendanceRules.objects.all().order_by('rule_name')
+    items = rules_service.list_rules()
     return render(request, 'attendance/rules_list.html', {'items': items})
 
 @login_required
@@ -285,7 +286,7 @@ def attendance_rules_create(request):
     if request.method == 'POST':
         form = AttendanceRulesForm(request.POST)
         if form.is_valid():
-            form.save()
+            rules_service.create_rule(form.cleaned_data)
             messages.success(request, _('تم إضافة قاعدة حضور'))
             return redirect('attendance:rules_list')
     else:
@@ -298,7 +299,7 @@ def attendance_rules_edit(request, pk):
     if request.method == 'POST':
         form = AttendanceRulesForm(request.POST, instance=item)
         if form.is_valid():
-            form.save()
+            rules_service.update_rule(pk, form.cleaned_data)
             messages.success(request, _('تم تعديل قاعدة الحضور'))
             return redirect('attendance:rules_list')
     else:
@@ -307,11 +308,12 @@ def attendance_rules_edit(request, pk):
 
 @login_required
 def attendance_rules_delete(request, pk):
-    item = get_object_or_404(AttendanceRules, pk=pk)
+    get_object_or_404(AttendanceRules, pk=pk)
     if request.method == 'POST':
-        item.delete()
+        rules_service.delete_rule(pk)
         messages.success(request, _('تم حذف قاعدة الحضور'))
         return redirect('attendance:rules_list')
+    item = rules_service.get_rule(pk)
     return render(request, 'attendance/rules_confirm_delete.html', {'item': item})
 
 

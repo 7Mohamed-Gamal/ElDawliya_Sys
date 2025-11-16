@@ -229,6 +229,12 @@ CSRF_COOKIE_SECURE = False
 CSRF_COOKIE_HTTPONLY = False
 SESSION_COOKIE_SECURE = False
 
+# CSRF trusted origins and CORS from environment
+_env_csv = lambda key: [x.strip() for x in os.environ.get(key, '').split(',') if x.strip()]
+CSRF_TRUSTED_ORIGINS = _env_csv('CSRF_TRUSTED_ORIGINS') or ['http://localhost', 'http://127.0.0.1']
+CORS_ALLOWED_ORIGINS = _env_csv('CORS_ALLOWED_ORIGINS') or ['http://localhost', 'http://127.0.0.1']
+CORS_ALLOW_CREDENTIALS = os.environ.get('CORS_ALLOW_CREDENTIALS', 'True').lower() in ('true', '1', 't')
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Crispy Forms Configuration

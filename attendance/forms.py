@@ -15,7 +15,6 @@ from .models import (
     AttendanceSummary,
     AttendanceRecord,
     LeaveBalance,
-    LeaveType,
     EmployeeAttendanceProfile
 )
 from employees.models import Employee
