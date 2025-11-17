@@ -225,9 +225,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # CSRF Settings
 CSRF_FAILURE_VIEW = 'accounts.views.csrf_failure'
-CSRF_COOKIE_SECURE = False
-CSRF_COOKIE_HTTPONLY = False
-SESSION_COOKIE_SECURE = False
+# Note: CSRF_COOKIE_SECURE, CSRF_COOKIE_HTTPONLY, and SESSION_COOKIE_SECURE
+# are now configured at the end of this file based on DEBUG mode
 
 # CSRF trusted origins and CORS from environment
 _env_csv = lambda key: [x.strip() for x in os.environ.get(key, '').split(',') if x.strip()]
@@ -590,3 +589,90 @@ LOGGING = {
         },
     },
 }
+
+# ============================================================================
+# SECURITY ENHANCEMENTS - Added 2025-11-17
+# ============================================================================
+
+# Production Security Settings
+if not DEBUG:
+    # HTTPS/SSL Settings
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+
+    # Security Headers
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    X_FRAME_OPTIONS = 'DENY'
+
+    # HSTS Settings (HTTP Strict Transport Security)
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
+    # Referrer Policy
+    SECURE_REFERRER_POLICY = 'same-origin'
+else:
+    # Development - Keep cookies accessible for debugging
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+
+# Always secure cookies (even in development for best practices)
+CSRF_COOKIE_HTTPONLY = True
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
+CSRF_COOKIE_SAMESITE = 'Lax'
+
+# Session Security
+SESSION_COOKIE_AGE = 28800  # 8 hours (480 minutes)
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+
+# Content Security Policy (CSP)
+# Note: Adjust based on your actual requirements
+CSP_DEFAULT_SRC = ("'self'",)
+CSP_SCRIPT_SRC = ("'self'", "'unsafe-inline'", "'unsafe-eval'")  # Adjust as needed
+CSP_STYLE_SRC = ("'self'", "'unsafe-inline'")
+CSP_IMG_SRC = ("'self'", "data:", "https:")
+CSP_FONT_SRC = ("'self'", "data:")
+
+# ============================================================================
+# API RATE LIMITING - Added 2025-11-17
+# ============================================================================
+
+# Update REST Framework settings with throttling
+REST_FRAMEWORK.update({
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/hour',      # Anonymous users: 100 requests per hour
+        'user': '1000/hour',     # Authenticated users: 1000 requests per hour
+        'login': '5/minute',     # Login attempts: 5 per minute
+        'sensitive': '10/hour',  # Sensitive operations: 10 per hour
+    },
+})
+
+# ============================================================================
+# ADDITIONAL SECURITY RECOMMENDATIONS
+# ============================================================================
+
+# TODO: Install and configure django-axes for brute force protection
+# INSTALLED_APPS += ['axes']
+# MIDDLEWARE += ['axes.middleware.AxesMiddleware']
+# AXES_FAILURE_LIMIT = 5
+# AXES_COOLOFF_TIME = 1  # hours
+# AXES_LOCK_OUT_BY_COMBINATION_USER_AND_IP = True
+
+# TODO: Implement field encryption for sensitive data
+# Use FIELD_ENCRYPTION_KEY for encrypting salary, national_id, etc.
+
+# TODO: Enable 2FA for sensitive operations
+# HR_SECURITY_SETTINGS['REQUIRE_2FA_FOR_SENSITIVE_OPERATIONS'] = True
+
+# ============================================================================
+# END OF SECURITY ENHANCEMENTS
+# ============================================================================

@@ -1,0 +1,50 @@
+[flake8]
+# Maximum line length
+max-line-length = 120
+
+# Exclude directories
+exclude = 
+    .git,
+    __pycache__,
+    */migrations/*,
+    venv,
+    env,
+    .venv,
+    .pytest_cache,
+    staticfiles,
+    media,
+    node_modules,
+    build,
+    dist,
+    *.egg-info
+
+# Ignore specific errors
+ignore = 
+    E203,  # whitespace before ':'
+    E501,  # line too long (handled by max-line-length)
+    W503,  # line break before binary operator
+    W504,  # line break after binary operator
+    E402,  # module level import not at top of file
+    F401,  # imported but unused (in __init__.py)
+
+# Per-file ignores
+per-file-ignores =
+    __init__.py:F401,F403
+    settings.py:E501
+    */migrations/*.py:E501
+
+# Maximum complexity
+max-complexity = 10
+
+# Show source code for each error
+show-source = True
+
+# Show pep8 error code
+show-pep8 = True
+
+# Count errors
+count = True
+
+# Statistics
+statistics = True
+

@@ -1,0 +1,74 @@
+[run]
+# Measure branch coverage
+branch = True
+
+# Source code to measure
+source = .
+
+# Omit these files from coverage
+omit =
+    */migrations/*
+    */tests/*
+    */test_*.py
+    */__pycache__/*
+    */venv/*
+    */env/*
+    */.venv/*
+    */staticfiles/*
+    */media/*
+    */node_modules/*
+    manage.py
+    */wsgi.py
+    */asgi.py
+    */settings.py
+    */urls.py
+    */admin.py
+    */__init__.py
+    */apps.py
+
+[report]
+# Show missing lines
+show_missing = True
+
+# Precision for coverage percentage
+precision = 2
+
+# Exclude lines from coverage
+exclude_lines =
+    # Have to re-enable the standard pragma
+    pragma: no cover
+    
+    # Don't complain about missing debug-only code
+    def __repr__
+    def __str__
+    
+    # Don't complain if tests don't hit defensive assertion code
+    raise AssertionError
+    raise NotImplementedError
+    
+    # Don't complain if non-runnable code isn't run
+    if __name__ == .__main__.:
+    if TYPE_CHECKING:
+    if settings.DEBUG:
+    
+    # Don't complain about abstract methods
+    @abstractmethod
+    @abc.abstractmethod
+    
+    # Don't complain about pass statements
+    pass
+
+# Ignore errors
+ignore_errors = True
+
+[html]
+# Directory for HTML report
+directory = htmlcov
+
+# Title for HTML report
+title = ElDawliya System - Coverage Report
+
+[xml]
+# Output file for XML report
+output = coverage.xml
+
