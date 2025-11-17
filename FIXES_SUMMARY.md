@@ -132,7 +132,13 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 18. `notifications/signals_inventory_purchase.py` - إشارات مشتريات المخزون (120 سطر)
 19. `api/debug_view.py` - دوال التصحيح (194 سطر)
 
-**إجمالي**: 19 ملف، 2000+ سطر
+### Python 3.13 Support (3)
+20. `install_packages.ps1` - سكريبت تثبيت آلي لـ Python 3.13
+21. `PYTHON_313_INSTALLATION_GUIDE.md` - دليل شامل للتثبيت
+22. `requirements-python312.txt` - متطلبات بديلة لـ Python 3.12
+23. `INSTALLATION_QUICKSTART.md` - دليل التثبيت السريع
+
+**إجمالي**: 23 ملف، 2700+ سطر
 
 ---
 
@@ -149,17 +155,32 @@ python manage.py check
 ## 📝 الخطوات التالية
 
 ### 🔴 عاجلة (يجب تنفيذها الآن)
-1. تثبيت التحديثات الأمنية:
-   ```bash
-   pip install -r requirements.txt --upgrade
-   ```
 
-2. اختبار المشروع:
-   ```bash
-   python manage.py test
-   ```
+#### 1. تثبيت الحزم (Python 3.13)
+```powershell
+# استخدم السكريبت الآلي (موصى به)
+.\install_packages.ps1
 
-3. مراجعة django-allauth (الإصدار الجديد قد يتطلب تعديلات)
+# أو التثبيت اليدوي
+python -m pip install --upgrade pip setuptools wheel
+python -m pip install -r requirements.txt
+```
+
+**ملاحظة**: إذا واجهت مشاكل مع Python 3.13، راجع `PYTHON_313_INSTALLATION_GUIDE.md`
+
+#### 2. تثبيت Microsoft C++ Build Tools (لـ pyodbc)
+```powershell
+winget install Microsoft.VisualStudio.2022.BuildTools
+```
+
+#### 3. اختبار المشروع
+```powershell
+python manage.py check
+python manage.py test
+```
+
+#### 4. مراجعة django-allauth
+الإصدار الجديد 65.3.0 قد يتطلب تعديلات في الإعدادات
 
 ### 🟡 مهمة (خلال أسبوع)
 1. تحسين تغطية الاختبارات (من 5% إلى 70%+)

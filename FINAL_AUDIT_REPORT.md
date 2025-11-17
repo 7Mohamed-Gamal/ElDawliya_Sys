@@ -344,8 +344,12 @@ CSP_STYLE_SRC = ("'self'", "'unsafe-inline'")
 18. ✅ `notifications/signals_inventory_purchase.py` - إشارات مشتريات المخزون (120 سطر)
 19. ✅ `api/debug_view.py` - دوال التصحيح (194 سطر)
 
-**إجمالي الملفات المُنشأة**: 19 ملف
-**إجمالي الأسطر المكتوبة**: 2000+ سطر
+20. ✅ `install_packages.ps1` - سكريبت تثبيت الحزم لـ Python 3.13 (150 سطر)
+21. ✅ `PYTHON_313_INSTALLATION_GUIDE.md` - دليل التثبيت على Python 3.13 (250 سطر)
+22. ✅ `requirements-python312.txt` - متطلبات بديلة لـ Python 3.12 (110 سطر)
+
+**إجمالي الملفات المُنشأة**: 22 ملف
+**إجمالي الأسطر المكتوبة**: 2500+ سطر
 
 ---
 

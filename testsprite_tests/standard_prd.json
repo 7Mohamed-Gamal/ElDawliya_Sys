@@ -1,0 +1,502 @@
+{
+  "meta": {
+    "project": "نظام الدولية (ElDawliya System)",
+    "date": "2025-11-14",
+    "prepared_by": "فريق تطوير نظام الدولية"
+  },
+  "product_overview": "نظام الدولية هو منصة إدارة مؤسسية شاملة ومتكاملة تركز على المؤسسات العربية، تدعم العمليات الإدارية والتشغيلية اليومية مثل الموارد البشرية، المخزون، المشتريات، المهام والاجتماعات، مع تكامل تقنيات الذكاء الاصطناعي لتحليل البيانات واتخاذ القرارات.",
+  "core_goals": [
+    "التحول الرقمي الشامل لعمليات المؤسسات",
+    "تحسين كفاءة إدارة الموارد البشرية والمخزون والمشتريات",
+    "ضمان دقة البيانات وإدارة سجلات التدقيق العالية",
+    "توفير تقارير وتحليلات فورية لدعم اتخاذ القرار",
+    "تعزيز الأمان والخصوصية باستخدام تقنيات متقدمة"
+  ],
+  "key_features": [
+    "نظام موارد بشرية متكامل (إدارة الموظفين، الحضور والانصراف، الإجازات، الرواتب، التقييم، التدريب، القروض، التأمينات، الإجراءات التأديبية، الأصول)",
+    "إدارة المخزون الشاملة (المنتجات، الموردين، حركات الجرد)",
+    "نظام طلبات وأوامر الشراء مع سير عمل الموافقات",
+    "نظام إدارة المهام والمشاريع مع تعقب التقدم والإشعارات",
+    "جدولة الاجتماعات وإدارة قاعات الاجتماعات",
+    "نظام إدارة أسطول السيارات وتتبع الرحلات والصيانة",
+    "نظام الإشعارات الفورية (داخل التطبيق، البريد الإلكتروني، WebSocket)",
+    "سجل تدقيق شامل يراقب جميع العمليات في النظام",
+    "لوحات تحكم وتقرير شاملة مع تصدير متعدد الصيغ",
+    "نظام صلاحيات متقدم باستخدام RBAC",
+    "تكامل API متكامل مع توثيق Swagger وJWT",
+    "تكامل الذكاء الاصطناعي من Google Gemini لتحليل وتوصيات ذكية",
+    "واجهة مستخدم عربية متجاوبة مع دعم RTL",
+    "أنظمة أمان متقدمة (مصادقة، تشفير، سياسات أمنية)",
+    "دعم متعدد الشركات والفروع والهياكل التنظيمية"
+  ],
+  "user_flow_summary": [
+    "المستخدم يقوم بتسجيل الدخول عبر نظام المصادقة JWT",
+    "مدير الموارد البشرية يدير بيانات الموظفين من الإضافة حتى التقييم",
+    "الموظفون يقدمون طلبات إجازات ويشاهدون جداول الرواتب",
+    "مدير المشتريات ينشئ طلبات شراء ويراقب حالة الموافقات",
+    "مدير المخزون يتتبع حركات المنتجات والمخزون",
+    "المستخدم يخطط وينفذ المهام ويراقب حالة التقدم",
+    "جدولة وحضور الاجتماعات مع إمكانية تسجيل الملاحظات",
+    "نظام الإشعارات يخطر المستخدمين بالتحديثات الفورية",
+    "توليد تقارير وتحليلات بيانات متعددة المجالات",
+    "إدارة صلاحيات المستخدمين بحسب الدور والهيكل التنظيمي"
+  ],
+  "validation_criteria": [
+    "تسجيل الدخول آمن باستخدام JWT مع اختبار حالات المصادقة",
+    "دقة وصحة البيانات للموظفين، الإجازات، الحضور، الرواتب",
+    "تكامل سليم مع أجهزة الحضور من ZKTeco وأجهزة أخرى مدعومة",
+    "استقرار وسرعة الاستجابة للAPI أقل من 500 مللي ثانية",
+    "تطبيق سياسات الموافقات وسير العمل بدقة",
+    "تقارير صحيحة وقابلة للتصدير متعدد الصيغ (Excel, PDF, CSV)",
+    "تغطية شاملة لاختبارات واجهات المستخدم والخلفية",
+    "التوافق مع المتصفحات والأجهزة المذكورة في المتطلبات",
+    "تطبيق معايير الأمان وحماية البيانات وفق المواصفات",
+    "تمكين ودعم تعدد الشركات والفروع دون تعارض في البيانات"
+  ],
+  "code_summary": {
+    "tech_stack": [
+      "Python 3.13",
+      "Django 4.2.26",
+      "Django REST Framework 3.15.2",
+      "Microsoft SQL Server",
+      "mssql-django 1.4.1",
+      "pyodbc 5.0.0+",
+      "Celery 5.3.4",
+      "Redis 5.0.1",
+      "Channels 4.0.0",
+      "JWT Authentication (simplejwt 5.5.1)",
+      "Swagger/OpenAPI (drf-yasg)",
+      "pandas 2.2.3+",
+      "numpy 1.26.0+",
+      "matplotlib 3.9.0+",
+      "Google Gemini AI",
+      "Docker",
+      "Gunicorn 23.0.0",
+      "WhiteNoise 6.6.0"
+    ],
+    "features": [
+      {
+        "name": "Authentication & Authorization",
+        "description": "User authentication, JWT tokens, API keys, role-based access control (RBAC)",
+        "files": [
+          "accounts/views.py",
+          "accounts/models.py",
+          "api/authentication.py",
+          "api/permissions.py",
+          "rbac/models.py"
+        ],
+        "api_doc": {
+          "paths": {
+            "/api/v1/auth/token/": {
+              "post": {
+                "summary": "Obtain JWT token pair",
+                "tags": [
+                  "Authentication"
+                ],
+                "requestBody": {
+                  "required": true,
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "type": "object",
+                        "properties": {
+                          "username": {
+                            "type": "string"
+                          },
+                          "password": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/api/v1/auth/token/refresh/": {
+              "post": {
+                "summary": "Refresh JWT access token",
+                "tags": [
+                  "Authentication"
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "Employee Management",
+        "description": "Complete employee lifecycle management including personal info, documents, bank accounts",
+        "files": [
+          "employees/models.py",
+          "employees/views.py",
+          "employees/forms.py",
+          "employees/models_extended.py"
+        ],
+        "api_doc": {
+          "paths": {
+            "/employees/": {
+              "get": {
+                "summary": "List all employees",
+                "tags": [
+                  "Employees"
+                ]
+              },
+              "post": {
+                "summary": "Create new employee",
+                "tags": [
+                  "Employees"
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "Attendance Management",
+        "description": "Track employee attendance, check-in/out, overtime, ZK device integration",
+        "files": [
+          "attendance/models.py",
+          "attendance/views.py",
+          "attendance/zk_service.py",
+          "attendance/rules_service.py"
+        ],
+        "api_doc": {
+          "paths": {
+            "/attendance/": {
+              "get": {
+                "summary": "Get attendance records",
+                "tags": [
+                  "Attendance"
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "Leave Management",
+        "description": "Employee leave requests, approvals, balance tracking, leave types",
+        "files": [
+          "leaves/models.py",
+          "leaves/views.py",
+          "leaves/forms.py"
+        ],
+        "api_doc": {
+          "paths": {
+            "/leaves/": {
+              "get": {
+                "summary": "List leave requests",
+                "tags": [
+                  "Leaves"
+                ]
+              },
+              "post": {
+                "summary": "Submit leave request",
+                "tags": [
+                  "Leaves"
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "Payroll Management",
+        "description": "Salary processing, payroll runs, salary components, deductions",
+        "files": [
+          "payrolls/models.py",
+          "payrolls/views.py",
+          "payrolls/services.py"
+        ],
+        "api_doc": {
+          "paths": {
+            "/payrolls/": {
+              "get": {
+                "summary": "Get payroll data",
+                "tags": [
+                  "Payroll"
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "Inventory Management",
+        "description": "Product catalog, stock tracking, suppliers, customers, vouchers, purchase requests",
+        "files": [
+          "inventory/models.py",
+          "inventory/views/product_views.py",
+          "inventory/voucher_models.py",
+          "inventory/voucher_handlers.py"
+        ],
+        "api_doc": {
+          "paths": {
+            "/api/v1/products/": {
+              "get": {
+                "summary": "List all products",
+                "tags": [
+                  "Inventory"
+                ]
+              }
+            },
+            "/api/v1/categories/": {
+              "get": {
+                "summary": "List product categories",
+                "tags": [
+                  "Inventory"
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "Purchase Orders",
+        "description": "Purchase order workflow, approvals, supplier management",
+        "files": [
+          "Purchase_orders/models.py",
+          "Purchase_orders/views.py",
+          "Purchase_orders/forms.py"
+        ]
+      },
+      {
+        "name": "Task Management",
+        "description": "Task creation, assignment, tracking, progress monitoring",
+        "files": [
+          "tasks/models.py",
+          "tasks/views.py",
+          "employee_tasks/models.py"
+        ],
+        "api_doc": {
+          "paths": {
+            "/api/v1/tasks/": {
+              "get": {
+                "summary": "List tasks",
+                "tags": [
+                  "Tasks"
+                ]
+              },
+              "post": {
+                "summary": "Create new task",
+                "tags": [
+                  "Tasks"
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "Meeting Management",
+        "description": "Schedule meetings, manage attendees, record minutes",
+        "files": [
+          "meetings/models.py",
+          "meetings/views.py",
+          "meetings/forms.py"
+        ],
+        "api_doc": {
+          "paths": {
+            "/api/v1/meetings/": {
+              "get": {
+                "summary": "List meetings",
+                "tags": [
+                  "Meetings"
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "Loan Management",
+        "description": "Employee loans, installments, repayment tracking",
+        "files": [
+          "loans/models.py",
+          "loans/views.py",
+          "loans/forms.py"
+        ]
+      },
+      {
+        "name": "Training Management",
+        "description": "Training courses, employee enrollment, certifications",
+        "files": [
+          "training/models.py",
+          "training/views.py",
+          "training/forms.py"
+        ]
+      },
+      {
+        "name": "Performance Evaluation",
+        "description": "Employee performance reviews, evaluation criteria, scoring",
+        "files": [
+          "evaluations/models.py",
+          "evaluations/views.py",
+          "evaluations/forms.py"
+        ]
+      },
+      {
+        "name": "Insurance Management",
+        "description": "Health and social insurance policies, employee coverage",
+        "files": [
+          "insurance/models.py",
+          "insurance/views.py",
+          "insurance/forms.py"
+        ]
+      },
+      {
+        "name": "Asset Management",
+        "description": "Company assets tracking, assignment to employees",
+        "files": [
+          "assets/models.py",
+          "assets/views.py"
+        ]
+      },
+      {
+        "name": "Vehicle Management",
+        "description": "Company vehicles, maintenance, assignments",
+        "files": [
+          "cars/models.py",
+          "cars/views.py",
+          "cars/forms.py"
+        ]
+      },
+      {
+        "name": "Disciplinary Actions",
+        "description": "Employee disciplinary records, warnings, actions",
+        "files": [
+          "disciplinary/models.py",
+          "disciplinary/views.py",
+          "disciplinary/forms.py"
+        ]
+      },
+      {
+        "name": "Ticketing System",
+        "description": "Support tickets, issue tracking, resolution",
+        "files": [
+          "tickets/models.py",
+          "tickets/views.py"
+        ]
+      },
+      {
+        "name": "Workflow Management",
+        "description": "Approval workflows, process automation",
+        "files": [
+          "workflow/models.py",
+          "workflow/views.py"
+        ]
+      },
+      {
+        "name": "Notifications",
+        "description": "Real-time notifications, WebSocket support, email notifications",
+        "files": [
+          "notifications/models.py",
+          "notifications/views.py",
+          "notifications/consumers.py",
+          "notifications/signals.py"
+        ]
+      },
+      {
+        "name": "Audit Trail",
+        "description": "System audit logs, user activity tracking",
+        "files": [
+          "audit/models.py",
+          "audit/middleware.py",
+          "audit/signals.py"
+        ]
+      },
+      {
+        "name": "Reports & Analytics",
+        "description": "Custom reports, data analytics, dashboard",
+        "files": [
+          "reports/models.py",
+          "reports/views.py",
+          "reports/services.py"
+        ],
+        "api_doc": {
+          "paths": {
+            "/api/v1/reporting/dashboard/": {
+              "get": {
+                "summary": "Get dashboard data",
+                "tags": [
+                  "Reports"
+                ]
+              }
+            },
+            "/api/v1/reporting/generate/": {
+              "post": {
+                "summary": "Generate custom report",
+                "tags": [
+                  "Reports"
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "AI Integration (Gemini)",
+        "description": "AI-powered chat, data analysis using Google Gemini",
+        "files": [
+          "api/services.py",
+          "api/views.py"
+        ],
+        "api_doc": {
+          "paths": {
+            "/api/v1/ai/chat/": {
+              "post": {
+                "summary": "Chat with Gemini AI",
+                "tags": [
+                  "AI"
+                ]
+              }
+            },
+            "/api/v1/ai/analyze/": {
+              "post": {
+                "summary": "Analyze data with AI",
+                "tags": [
+                  "AI"
+                ]
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "System Administration",
+        "description": "System settings, database configuration, user management",
+        "files": [
+          "administrator/views.py",
+          "administrator/models.py",
+          "syssettings/models.py"
+        ]
+      },
+      {
+        "name": "Organization Structure",
+        "description": "Departments, branches, job positions, organizational hierarchy",
+        "files": [
+          "org/models.py",
+          "org/views.py"
+        ]
+      },
+      {
+        "name": "Bank Management",
+        "description": "Bank accounts, transactions, employee banking details",
+        "files": [
+          "banks/models.py",
+          "banks/views.py"
+        ]
+      },
+      {
+        "name": "Company Management",
+        "description": "Multi-company support, company profiles, settings",
+        "files": [
+          "companies/models.py",
+          "companies/views.py",
+          "companies/forms.py"
+        ]
+      }
+    ]
+  }
+}
