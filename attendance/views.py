@@ -17,7 +17,6 @@ from .models import (
     AttendanceRecord,
     EmployeeAttendanceProfile,
     LeaveBalance,
-    LeaveType,
     AttendanceRule,
     WorkSchedule,
     EmployeeAttendance,

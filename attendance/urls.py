@@ -44,6 +44,7 @@ urlpatterns = [
     # Time Tracking
     path('time-tracking/', views.time_tracking, name='time_tracking'),
     path('overtime/', views.overtime_records, name='overtime_records'),
+    path('calculate-overtime/', views.calculate_overtime, name='calculate_overtime'),
     
     # Bulk Operations
     path('bulk/import/', views.bulk_import_attendance, name='bulk_import'),
