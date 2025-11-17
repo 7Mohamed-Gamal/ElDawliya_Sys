@@ -1,4 +1,4 @@
-from typing import Optional, Iterable
+from typing import Optional
 from django.db.models import QuerySet
 
 def get_leave_types() -> QuerySet:
@@ -13,9 +13,9 @@ def get_employee_leaves(employee, start_date=None, end_date=None) -> QuerySet:
     return qs.order_by('-start_date')
 
 def get_leave_balance(employee, leave_type) -> Optional[float]:
-    from attendance.models import LeaveBalance
+    from leaves.models import LeaveBalance
     try:
-        lb = LeaveBalance.objects.get(employee=employee, leave_type_id=getattr(leave_type, 'leave_type_id', None), year=_current_year())
+        lb = LeaveBalance.objects.get(emp=employee, leave_type=leave_type, year=_current_year())
         return float(lb.remaining_days)
     except LeaveBalance.DoesNotExist:
         return None

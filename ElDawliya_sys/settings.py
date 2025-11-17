@@ -236,6 +236,7 @@ CORS_ALLOWED_ORIGINS = _env_csv('CORS_ALLOWED_ORIGINS') or ['http://localhost', 
 CORS_ALLOW_CREDENTIALS = os.environ.get('CORS_ALLOW_CREDENTIALS', 'True').lower() in ('true', '1', 't')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+ATTENDANCE_USE_MODERN_RULES = False
 
 # Crispy Forms Configuration
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"
