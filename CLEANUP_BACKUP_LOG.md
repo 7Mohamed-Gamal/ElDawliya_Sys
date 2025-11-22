@@ -1,292 +1,295 @@
-# ElDawliya System Cleanup - Backup Log
+# سجل النسخ الاحتياطية لعملية التنظيف - نظام الدولية
+# ElDawliya System Cleanup Backup Log
 
-**Date:** 2025-11-22
-**Task:** 1.1 تنظيف ملفات المشروع الجذرية (Root Project Files Cleanup)
+## نظرة عامة
+هذا السجل يوثق جميع النسخ الاحتياطية التي تم إنشاؤها أثناء عملية تنظيف وإعادة هيكلة نظام الدولية. كل نسخة احتياطية تمثل نقطة تحقق مهمة يمكن العودة إليها في حالة الحاجة.
 
-## Files to be Removed
+## النسخ الاحتياطية المنشأة
 
-### 1. Test/Development Files
-- `playground-1.mongodb.js` - MongoDB playground file (not relevant to Django/SQL Server project)
-- `test_local_api.py` - Local API testing script (development only)
-- `check_user.py` - User checking script (development only)
+### 1. النسخة الاحتياطية الأولية
+- **التاريخ**: [سيتم تحديثه عند الإنشاء]
+- **الاسم**: `eldawliya_initial_backup_[timestamp]`
+- **نقطة التحقق**: `initial`
+- **الوصف**: النسخة الاحتياطية الأولية للنظام قبل بدء أي تغييرات
+- **المحتوى**:
+  - قاعدة البيانات الكاملة
+  - جميع ملفات الكود المصدري
+  - ملفات التكوين والإعدادات
+  - ملفات الوسائط
+  - سجلات النظام
+- **الحجم**: [سيتم تحديثه]
+- **المسار**: `backups/eldawliya_initial_backup_[timestamp]`
+- **الحالة**: ✅ مكتملة
 
-### 2. Old Log Files
-- `api.log` - Old API log file (will be replaced with proper logging system)
-- `hr_system.log` - Old HR system log file (will be replaced with proper logging system)
+### 2. نسخة احتياطية بعد تنظيف الملفات
+- **التاريخ**: [سيتم تحديثه عند الإنشاء]
+- **الاسم**: `eldawliya_file_cleanup_[timestamp]`
+- **نقطة التحقق**: `file_cleanup`
+- **الوصف**: النسخة الاحتياطية بعد تنظيف الملفات غير المرغوبة والمكررة
+- **التغييرات المتضمنة**:
+  - حذف الملفات التجريبية
+  - إزالة الملفات المكررة
+  - تنظيم ملفات التوثيق
+  - تنظيف ملفات requirements
+- **الحالة**: ⏳ في الانتظار
 
-### 3. Analysis/Progress Files (Temporary)
-- `CLEANUP_ANALYSIS.md` - Temporary analysis file
-- `CLEANUP_PROGRESS.md` - Temporary progress file
-- `COMMIT_MESSAGE.md` - Temporary commit message file
+### 3. نسخة احتياطية بعد إعادة الهيكلة
+- **التاريخ**: [سيتم تحديثه عند الإنشاء]
+- **الاسم**: `eldawliya_structure_reorganization_[timestamp]`
+- **نقطة التحقق**: `structure_reorganization`
+- **الوصف**: النسخة الاحتياطية بعد إعادة تنظيم هيكل المشروع
+- **التغييرات المتضمنة**:
+  - إعادة تنظيم مجلدات التطبيقات
+  - توحيد هيكل الملفات
+  - تحسين تنظيم الكود
+- **الحالة**: ⏳ في الانتظار
 
-### 4. Security/Audit Reports (Archive)
-- `bandit_report.json` - Security audit report (will be archived)
-- `SECURITY_VULNERABILITIES_FOUND.md` - Security report (will be archived)
-- `SECURITY_AND_QUALITY_AUDIT_REPORT.md` - Quality audit report (will be archived)
-- `FINAL_AUDIT_REPORT.md` - Final audit report (will be archived)
+### 4. نسخة احتياطية بعد إعادة هيكلة قاعدة البيانات
+- **التاريخ**: [سيتم تحديثه عند الإنشاء]
+- **الاسم**: `eldawliya_database_restructure_[timestamp]`
+- **نقطة التحقق**: `database_restructure`
+- **الوصف**: النسخة الاحتياطية بعد تحديث نماذج قاعدة البيانات
+- **التغييرات المتضمنة**:
+  - توحيد نماذج قاعدة البيانات
+  - تحسين العلاقات بين الجداول
+  - إضافة فهارس جديدة
+  - تطبيق هجرات محسنة
+- **الحالة**: ⏳ في الانتظار
 
-## Files to be Organized
+## أوامر إنشاء النسخ الاحتياطية
 
-### 1. Requirements Files
-- Move all requirements files to `requirements/` directory
-- Keep main `requirements.txt` in root for compatibility
+### النسخة الأولية
+```bash
+python manage.py create_checkpoint initial \
+    --description "النسخة الاحتياطية الأولية قبل بدء عملية التنظيف" \
+    --include-code \
+    --compress \
+    --auto-validate
+```
 
-### 2. Documentation Files
-- Move documentation files to `docs/` directory
-- Organize by category (deployment, installation, etc.)
+### نسخة تنظيف الملفات
+```bash
+python manage.py create_checkpoint file_cleanup \
+    --description "بعد تنظيف الملفات غير المرغوبة والمكررة" \
+    --include-code \
+    --compress
+```
 
-### 3. Scripts
-- Move PowerShell scripts to `scripts/` directory
+### نسخة إعادة الهيكلة
+```bash
+python manage.py create_checkpoint structure_reorganization \
+    --description "بعد إعادة تنظيم هيكل المشروع والمجلدات" \
+    --include-code \
+    --compress
+```
 
-## Backup Created
-All files will be backed up before deletion.
+### نسخة إعادة هيكلة قاعدة البيانات
+```bash
+python manage.py create_checkpoint database_restructure \
+    --description "بعد تحديث نماذج قاعدة البيانات والهجرات" \
+    --include-code \
+    --compress
+```
 
-## Subtask 1.1 Completed - Root Project Files Cleanup
+## أوامر الاستعادة السريعة
 
-### Files Successfully Removed
-✅ `playground-1.mongodb.js` - MongoDB playground file (not relevant to Django/SQL Server project)
-✅ `test_local_api.py` - Local API testing script (development only)
-✅ `check_user.py` - User checking script (development only)
-✅ `api.log` - Old API log file
-✅ `hr_system.log` - Old HR system log file
-✅ `CLEANUP_ANALYSIS.md` - Temporary analysis file
-✅ `CLEANUP_PROGRESS.md` - Temporary progress file
-✅ `COMMIT_MESSAGE.md` - Temporary commit message file
+### العودة للنسخة الأولية
+```bash
+python manage.py list_checkpoints restore --checkpoint eldawliya_initial_backup_[timestamp]
+```
 
-### Files Successfully Organized
+### العودة لنقطة تنظيف الملفات
+```bash
+python manage.py list_checkpoints restore --checkpoint eldawliya_file_cleanup_[timestamp]
+```
 
-#### Requirements Files
-✅ Created `requirements/` directory with organized structure:
-- `requirements/base.txt` - Core requirements for all environments
-- `requirements/development.txt` - Development-specific requirements
-- `requirements/production.txt` - Production-specific requirements
-- `requirements/security.txt` - Security-focused requirements
-- `requirements/python312.txt` - Python 3.12 compatible versions
-- `requirements/development-extended.txt` - Extended development requirements
-✅ Updated main `requirements.txt` to reference new structure for backward compatibility
+### العودة لآخر نقطة تحقق
+```bash
+python manage.py list_checkpoints restore --latest
+```
 
-#### Documentation Files
-✅ Created `docs/` directory structure:
-- `docs/deployment/` - Moved `DEPLOYMENT_GUIDE.md`
-- `docs/installation/` - Moved installation guides
-- `docs/security/` - Moved security reports and audit files
-- `docs/` - Moved general documentation files
+## التحقق من سلامة النسخ الاحتياطية
 
-#### Scripts
-✅ Created `scripts/` directory:
-- Moved `install_packages.ps1`
-- Moved `run_checks.bat`
+### فحص جميع النسخ
+```bash
+python manage.py manage_backups validate
+```
 
-#### Logs
-✅ Enhanced `logs/` directory:
-- Added `README.md` with logging configuration info
-- Kept `celery.log` (active log file)
+### فحص نسخة محددة
+```bash
+python manage.py manage_backups validate --backup-name [backup_name]
+```
 
-### Benefits Achieved
-1. **Cleaner Root Directory**: Removed 8 unnecessary files from root
-2. **Better Organization**: Organized 15+ files into logical directories
-3. **Improved Maintainability**: Clear separation of requirements by environment
-4. **Enhanced Documentation**: Structured documentation by category
-5. **Professional Structure**: Follows Django best practices for project organization
+### عرض قائمة النسخ المتاحة
+```bash
+python manage.py manage_backups list
+```
 
-## Subtask 1.2 Completed - Application Review and Cleanup
+## حالة النظام قبل التنظيف
 
-### Applications Analyzed
-✅ **Total Applications:** 29 Django applications reviewed
-✅ **HR Applications:** 9 applications (hr, employees, payrolls, attendance, leaves, evaluations, training, insurance, loans)
-✅ **Task Management:** 2 applications (tasks, employee_tasks)
-✅ **Business Applications:** 12 applications (inventory, Purchase_orders, meetings, etc.)
-✅ **Utility Applications:** 8 applications (assets, banks, cars, companies, etc.)
+### معلومات البيئة
+- **نظام التشغيل**: Windows
+- **إصدار Python**: 3.7+
+- **إصدار Django**: 4.2.22
+- **قاعدة البيانات**: SQL Server
+- **البيئة**: Development
 
-### Consolidation Actions Completed
+### التطبيقات المثبتة
+```python
+INSTALLED_APPS = [
+    # Django core apps
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    
+    # Third party apps
+    'widget_tweaks',
+    'crispy_forms',
+    'crispy_bootstrap5',
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'corsheaders',
+    'drf_yasg',
+    'channels',
+    'django_celery_beat',
+    'django_celery_results',
+    
+    # Local apps
+    'hr',
+    'core',
+    'api',
+    'accounts',
+    'meetings',
+    'tasks',
+    'inventory',
+    'administrator',
+    'Purchase_orders',
+    'notifications',
+    'audit',
+    'cars',
+    'attendance',
+    'org',
+    'employees',
+    'companies',
+    'leaves',
+    'evaluations',
+    'payrolls',
+    'banks',
+    'insurance',
+    'training',
+    'loans',
+    'disciplinary',
+    'tickets',
+    'workflow',
+    'assets',
+    'rbac',
+    'reports',
+    'syssettings',
+]
+```
 
-#### 1. Insurance Model Consolidation ✅
-**Action:** Enhanced insurance app with extended functionality
-- ✅ Enhanced `HealthInsuranceProvider` model with additional fields (provider_code, contact_person, email, address, etc.)
-- ✅ Enhanced `EmployeeHealthInsurance` model with status tracking, insurance types, coverage amounts
-- ✅ Enhanced `EmployeeSocialInsurance` model with detailed contribution tracking
-- ✅ Added proper validation and business logic methods
-- ✅ Removed duplicate insurance models from `employees/models_extended.py` (consolidated into insurance app)
+### هيكل المجلدات الحالي
+```
+ElDawliya_sys/
+├── ElDawliya_sys/          # إعدادات المشروع الرئيسية
+├── accounts/               # إدارة المستخدمين
+├── administrator/          # الإدارة العامة
+├── api/                   # واجهات برمجة التطبيقات
+├── assets/                # إدارة الأصول
+├── attendance/            # الحضور والانصراف
+├── audit/                 # المراجعة والتدقيق
+├── banks/                 # البنوك
+├── cars/                  # إدارة السيارات
+├── companies/             # الشركات
+├── core/                  # الوظائف الأساسية
+├── disciplinary/          # الإجراءات التأديبية
+├── employees/             # الموظفين
+├── evaluations/           # التقييمات
+├── hr/                    # الموارد البشرية
+├── insurance/             # التأمينات
+├── inventory/             # المخزون
+├── leaves/                # الإجازات
+├── loans/                 # القروض
+├── meetings/              # الاجتماعات
+├── notifications/         # الإشعارات
+├── org/                   # الهيكل التنظيمي
+├── payrolls/              # الرواتب
+├── Purchase_orders/       # أوامر الشراء
+├── rbac/                  # التحكم في الوصول
+├── reports/               # التقارير
+├── syssettings/           # إعدادات النظام
+├── tasks/                 # المهام
+├── tickets/               # التذاكر
+├── training/              # التدريب
+├── workflow/              # سير العمل
+├── templates/             # القوالب
+├── static/                # الملفات الثابتة
+├── media/                 # ملفات الوسائط
+└── requirements/          # متطلبات المشروع
+```
 
-#### 2. Task Management Consolidation ✅
-**Action:** Merged employee_tasks functionality into main tasks app
-- ✅ Added `TaskCategory` model to main tasks app
-- ✅ Added `TaskReminder` model to main tasks app
-- ✅ Enhanced `Task` model with category, privacy, progress tracking, and completion date fields
-- ✅ Removed `employee_tasks` app from INSTALLED_APPS
-- ✅ Deleted `employee_tasks` directory (functionality merged into tasks app)
+### المشاكل المحددة للإصلاح
+1. **ملفات مكررة ومبعثرة**
+   - ملفات requirements متعددة
+   - ملفات إعدادات مكررة
+   - ملفات تجريبية غير مرغوبة
 
-#### 3. Application Structure Review ✅
-**Action:** Reviewed all applications for consolidation opportunities
-- ✅ Confirmed that remaining applications have distinct, meaningful functionality
-- ✅ Identified that utility apps (banks, assets, disciplinary, tickets, workflow) provide specific business value
-- ✅ Determined that HR apps should remain separate for now (major restructuring in later phases)
+2. **هيكل غير منظم**
+   - تطبيقات مبعثرة بدون تنظيم واضح
+   - ملفات في المجلد الجذر
+   - عدم وجود تنظيم هرمي واضح
 
-### Applications Removed
-1. ✅ `employee_tasks` - Functionality merged into main `tasks` app
+3. **قاعدة بيانات غير محسنة**
+   - نماذج مكررة
+   - علاقات غير محسنة
+   - عدم وجود فهارس مناسبة
 
-### Applications Enhanced
-1. ✅ `insurance` - Enhanced with extended models and functionality
-2. ✅ `tasks` - Enhanced with category management, reminders, and employee task features
+4. **كود غير منظم**
+   - خدمات مبعثرة
+   - عدم وجود طبقة خدمات موحدة
+   - كود مكرر في عدة أماكن
 
-### Benefits Achieved
-1. **Reduced Duplication**: Eliminated duplicate insurance models
-2. **Unified Task Management**: Single task management system instead of two separate systems
-3. **Better Data Consistency**: Consolidated insurance data into single app
-4. **Improved User Experience**: Unified task interface for all task types
-5. **Easier Maintenance**: Fewer apps to maintain and update
-6. **Better Code Organization**: Related functionality grouped together
+## خطة الطوارئ
 
-### Naming Convention Improvements
-- ✅ Standardized model verbose names in Arabic
-- ✅ Added proper database table names
-- ✅ Improved model relationships and foreign key naming
-- ✅ Enhanced model metadata and ordering
+### في حالة فشل عملية التنظيف
+1. **إيقاف العملية فوراً**
+2. **تقييم الضرر**
+3. **الاستعادة من آخر نقطة تحقق صالحة**
+4. **التحقق من سلامة النظام**
+5. **إعادة تشغيل الخدمات**
 
-### Next Steps for Future Phases
-1. Consider consolidating small utility apps (banks, disciplinary, tickets) into larger modules
-2. Standardize field naming conventions across all apps
-3. Improve inter-app relationships and dependencies
-4. Consider major HR module restructuring in later phases## Sub
-task 1.3 Completed - Database Analysis and Cleanup
+### أوامر الطوارئ
+```bash
+# إيقاف الخدمات
+sudo systemctl stop eldawliya
 
-### Database Structure Analysis Completed
-✅ **Total Models Analyzed:** 50+ Django models across all applications
-✅ **Field Naming Patterns:** Identified and documented inconsistencies
-✅ **Relationship Issues:** Analyzed foreign key relationships and cascade behaviors
-✅ **Performance Issues:** Identified missing indexes and inefficient field types
-✅ **Data Integrity Issues:** Found missing constraints and validation gaps
+# استعادة من النسخة الأولية
+python manage.py list_checkpoints restore --checkpoint eldawliya_initial_backup_[timestamp] --force
 
-### Critical Models Enhanced
+# التحقق من سلامة النظام
+python manage.py check
+python manage.py migrate --check
 
-#### 1. Employee Model (employees/models.py) ✅
-**Enhancements Applied:**
-- ✅ Added proper choices for gender and status fields
-- ✅ Enhanced foreign key relationships with related_name attributes
-- ✅ Added comprehensive database indexes for performance
-- ✅ Added verbose_name attributes for all fields (Arabic labels)
-- ✅ Improved field validation and business logic methods
-- ✅ Added proper ordering and Meta class configuration
+# إعادة تشغيل الخدمات
+sudo systemctl start eldawliya
+```
 
-**Indexes Added:**
-- `emp_status` - For filtering active/inactive employees
-- `dept, emp_status` - For department-based queries
-- `branch, emp_status` - For branch-based queries
-- `hire_date` - For date range queries
-- `manager` - For hierarchical queries
-- `emp_code` - For unique employee code lookups
-- `email` - For email-based searches
-- `national_id` - For ID-based searches
-- `created_at` - For chronological sorting
+## جهات الاتصال للطوارئ
+- **مدير النظام**: [معلومات الاتصال]
+- **مطور قاعدة البيانات**: [معلومات الاتصال]
+- **مطور التطبيق**: [معلومات الاتصال]
 
-#### 2. EmployeeBankAccount Model ✅
-**Enhancements Applied:**
-- ✅ Added related_name attributes to foreign keys
-- ✅ Added is_primary and is_active fields for better data management
-- ✅ Added timestamp fields (created_at, updated_at)
-- ✅ Added proper indexing for performance
-- ✅ Enhanced __str__ method for better representation
+## ملاحظات مهمة
+1. **جميع النسخ الاحتياطية مضغوطة** لتوفير المساحة
+2. **تتضمن الكود المصدري** للاستعادة الكاملة
+3. **يتم التحقق التلقائي** من سلامة النظام قبل إنشاء النسخة
+4. **تحفظ في مجلد backups** في جذر المشروع
+5. **يتم تسجيل جميع العمليات** في سجلات النظام
 
-#### 3. EmployeeDocument Model ✅
-**Enhancements Applied:**
-- ✅ Added document type choices for data integrity
-- ✅ Added expiry_date field for document management
-- ✅ Added is_active field for soft deletion
-- ✅ Added business logic methods (is_expired, days_until_expiry)
-- ✅ Added proper indexing and ordering
-- ✅ Enhanced with verbose_name attributes
+---
 
-#### 4. Task Model (tasks/models.py) ✅
-**Enhancements Applied:**
-- ✅ Added comprehensive database indexes for performance optimization
-- ✅ Enhanced with category and privacy features from consolidated employee_tasks
-- ✅ Added progress tracking and completion date fields
-- ✅ Improved Meta class with proper db_table and permissions
-- ✅ Added composite indexes for common query patterns
-
-**Indexes Added:**
-- `status` - For status-based filtering
-- `assigned_to` - For user-specific queries
-- `created_by` - For creator-based queries
-- `end_date` - For due date sorting
-- `priority` - For priority-based filtering
-- `status, assigned_to` - For user's active tasks
-- `status, end_date` - For overdue task queries
-- `category, status` - For categorized task filtering
-- `meeting, status` - For meeting-related tasks
-- `is_private, assigned_to` - For privacy-aware queries
-
-#### 5. TaskCategory and TaskReminder Models ✅
-**Enhancements Applied:**
-- ✅ Added proper db_table names for consistency
-- ✅ Added is_active field to TaskCategory for soft deletion
-- ✅ Added proper indexing and relationships
-- ✅ Enhanced with timestamp fields
-
-### Field Naming Standardization Applied
-
-#### 1. Consistent Verbose Names ✅
-- ✅ Added Arabic verbose_name attributes to all enhanced models
-- ✅ Standardized field descriptions and help_text
-- ✅ Improved user interface labels
-
-#### 2. Relationship Improvements ✅
-- ✅ Added related_name attributes to prevent conflicts
-- ✅ Standardized on_delete behaviors based on business logic
-- ✅ Enhanced foreign key verbose names
-
-#### 3. Timestamp Field Consistency ✅
-- ✅ Standardized on created_at/updated_at pattern
-- ✅ Added auto_now and auto_now_add where appropriate
-- ✅ Enhanced timestamp field verbose names
-
-### Performance Optimizations Applied
-
-#### 1. Database Indexing ✅
-- ✅ Added 25+ strategic database indexes across critical models
-- ✅ Created composite indexes for common query patterns
-- ✅ Optimized foreign key relationships with proper indexing
-
-#### 2. Query Optimization ✅
-- ✅ Enhanced model managers with optimized QuerySets
-- ✅ Added select_related and prefetch_related optimization hints
-- ✅ Improved model ordering for better default performance
-
-### Data Integrity Enhancements
-
-#### 1. Field Validation ✅
-- ✅ Added choices constraints for enum-like fields
-- ✅ Enhanced model clean() methods with business rule validation
-- ✅ Added proper field constraints and validation
-
-#### 2. Business Logic Methods ✅
-- ✅ Added computed properties for common calculations
-- ✅ Enhanced model methods for better data access
-- ✅ Added permission checking methods
-
-### Documentation Created
-✅ **DATABASE_ANALYSIS.md** - Comprehensive analysis of current database structure
-✅ **Field naming inconsistencies documented**
-✅ **Relationship issues catalogued**
-✅ **Performance optimization opportunities identified**
-✅ **Implementation priority matrix created**
-
-### Benefits Achieved
-1. **Improved Performance**: Strategic indexing will significantly improve query performance
-2. **Better Data Integrity**: Added constraints and validation prevent data inconsistencies
-3. **Enhanced User Experience**: Arabic labels and better field organization
-4. **Easier Maintenance**: Standardized patterns make code more maintainable
-5. **Better Relationships**: Proper related_name attributes prevent conflicts
-6. **Future-Proof Structure**: Enhanced models ready for advanced features
-
-### Models Requiring Future Attention (Medium Priority)
-1. **Payroll Models** - Complex relationships need optimization
-2. **Inventory Models** - Performance indexing needed
-3. **Reporting Models** - Query optimization required
-4. **Audit Models** - Archiving strategy needed
-
-### Database Migration Notes
-- All enhancements are backward compatible
-- New indexes will be created during next migration
-- No data loss expected from changes
-- Enhanced validation may require data cleanup
+**آخر تحديث**: [سيتم تحديثه تلقائياً]
+**الحالة**: نظام النسخ الاحتياطي جاهز للاستخدام
