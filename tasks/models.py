@@ -2,9 +2,53 @@ from django.db import models
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.urls import reverse
+from django.utils.translation import gettext_lazy as _
 from typing import Optional, Dict, Any, Union, List
 from meetings.models import Meeting
 from accounts.models import Users_Login_New
+
+
+class TaskCategory(models.Model):
+    """
+    نموذج لتصنيفات المهام
+    """
+    name = models.CharField(max_length=100, verbose_name=_('اسم التصنيف'))
+    description = models.TextField(blank=True, null=True, verbose_name=_('وصف التصنيف'))
+    color = models.CharField(max_length=20, default='#3498db', verbose_name=_('اللون'))
+    icon = models.CharField(max_length=50, default='fas fa-tasks', verbose_name=_('الأيقونة'))
+    is_active = models.BooleanField(default=True, verbose_name=_('نشط'))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('تاريخ الإنشاء'))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_('تاريخ التحديث'))
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = _('تصنيف المهام')
+        verbose_name_plural = _('تصنيفات المهام')
+        ordering = ['name']
+        db_table = 'task_categories'
+
+
+class TaskReminder(models.Model):
+    """
+    نموذج لتذكيرات المهام
+    """
+    task = models.ForeignKey('Task', on_delete=models.CASCADE, related_name='reminders',
+                           verbose_name=_('المهمة'))
+    reminder_date = models.DateTimeField(verbose_name=_('تاريخ التذكير'))
+    is_sent = models.BooleanField(default=False, verbose_name=_('تم الإرسال'))
+    sent_at = models.DateTimeField(null=True, blank=True, verbose_name=_('تاريخ الإرسال'))
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('تاريخ الإنشاء'))
+
+    def __str__(self):
+        return f"تذكير لـ {self.task.get_display_title()} في {self.reminder_date}"
+
+    class Meta:
+        verbose_name = _('تذكير المهمة')
+        verbose_name_plural = _('تذكيرات المهام')
+        ordering = ['reminder_date']
+        db_table = 'task_reminders'
 
 class TaskQuerySet(models.QuerySet):
     """Custom QuerySet for Task model with optimized queries"""
@@ -81,6 +125,14 @@ class Task(models.Model):
         null=True,
         help_text="عنوان مختصر للمهمة (اختياري)"
     )
+    category = models.ForeignKey(
+        TaskCategory,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='tasks',
+        verbose_name="التصنيف"
+    )
     meeting = models.ForeignKey(
         Meeting,
         on_delete=models.CASCADE,
@@ -88,6 +140,21 @@ class Task(models.Model):
         null=True,
         blank=True,
         verbose_name="الاجتماع المرتبط"
+    )
+    is_private = models.BooleanField(
+        default=False,
+        verbose_name="خاص",
+        help_text="إذا كان خاصًا، فلن يراه إلا المنشئ والمكلف"
+    )
+    progress = models.PositiveIntegerField(
+        default=0,
+        verbose_name="نسبة الإنجاز (%)",
+        help_text="من 0 إلى 100"
+    )
+    completion_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="تاريخ الإنجاز"
     )
     assigned_to = models.ForeignKey(
         Users_Login_New,
@@ -131,6 +198,7 @@ class Task(models.Model):
         verbose_name = "مهمة"
         verbose_name_plural = "المهام"
         ordering = ['-created_at']
+        db_table = 'tasks'
         indexes = [
             models.Index(fields=['status']),
             models.Index(fields=['assigned_to']),
@@ -139,6 +207,9 @@ class Task(models.Model):
             models.Index(fields=['priority']),
             models.Index(fields=['status', 'assigned_to']),
             models.Index(fields=['status', 'end_date']),
+            models.Index(fields=['category', 'status']),
+            models.Index(fields=['meeting', 'status']),
+            models.Index(fields=['is_private', 'assigned_to']),
         ]
         permissions = [
             ("view_dashboard", "Can view tasks dashboard"),

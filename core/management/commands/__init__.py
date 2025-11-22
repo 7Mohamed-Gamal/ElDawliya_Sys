@@ -1,1 +1,1 @@
-# Management commands
+# Core management commands

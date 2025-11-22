@@ -1,1 +1,1 @@
-# Management commands for core module
+# Core management commands
