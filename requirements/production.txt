@@ -1,0 +1,21 @@
+# ElDawliya System - Production Requirements
+# Install with: pip install -r requirements/production.txt
+
+# Include base requirements
+-r base.txt
+
+# ----------------------------------------------------------------
+# Production-Specific Packages
+# ----------------------------------------------------------------
+
+# Additional security packages for production
+django-axes>=6.1.1  # Brute force protection
+django-ratelimit>=4.1.0  # Rate limiting
+django-csp>=3.8  # Content Security Policy
+
+# Enhanced logging and monitoring
+django-structlog>=4.0.0  # Structured logging
+
+# Performance optimizations
+django-cachalot>=2.6.0  # ORM caching
+django-compressor>=4.4  # Static file compression
