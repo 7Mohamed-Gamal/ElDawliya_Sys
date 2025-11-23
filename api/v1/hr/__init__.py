@@ -1,1 +1,1 @@
-# HR API v1 package
+# HR API Module
