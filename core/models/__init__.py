@@ -111,6 +111,21 @@ from .procurement import (
     SupplierQuotationLineItem,
 )
 
+# Project Models
+from .projects import (
+    ProjectCategory,
+    Project,
+    ProjectPhase,
+    ProjectMilestone,
+    ProjectMember,
+    Task,
+    TaskStep,
+    TimeEntry,
+    Meeting,
+    MeetingAttendee,
+    Document,
+)
+
 __all__ = [
     # Base Models
     'BaseModel',
@@ -195,4 +210,17 @@ __all__ = [
     'GoodsReceiptLineItem',
     'SupplierQuotation',
     'SupplierQuotationLineItem',
+    
+    # Project Models
+    'ProjectCategory',
+    'Project',
+    'ProjectPhase',
+    'ProjectMilestone',
+    'ProjectMember',
+    'Task',
+    'TaskStep',
+    'TimeEntry',
+    'Meeting',
+    'MeetingAttendee',
+    'Document',
 ]
