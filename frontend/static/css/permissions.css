@@ -1,0 +1,508 @@
+/* Permissions Management Styles */
+
+.permissions-dashboard {
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+.page-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.page-title {
+    color: #495057;
+    font-weight: 600;
+    margin: 0;
+}
+
+.page-options {
+    margin-right: auto;
+}
+
+/* Statistics Cards */
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* Timeline Styles */
+.timeline {
+    position: relative;
+    padding-right: 1rem;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    right: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 1.5rem;
+    padding-right: 2rem;
+}
+
+.timeline-marker {
+    position: absolute;
+    right: 8px;
+    top: 5px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    z-index: 1;
+}
+
+.timeline-content {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    border-right: 3px solid #007bff;
+}
+
+.timeline-title {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+.timeline-text {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+/* Permission Module Styles */
+.permission-module {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+}
+
+.module-name {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    text-transform: capitalize;
+}
+
+.permissions-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+/* Role Cards */
+.role-card {
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    transition: all 0.2s ease-in-out;
+}
+
+.role-card:hover {
+    border-color: #007bff;
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.1);
+}
+
+.role-header {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    padding: 1rem;
+    border-radius: 10px 10px 0 0;
+}
+
+.role-title {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.role-type {
+    font-size: 0.8rem;
+    opacity: 0.9;
+}
+
+.role-body {
+    padding: 1rem;
+}
+
+.role-stats {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #007bff;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+/* User Role Assignment */
+.user-role-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    background: #fff;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #007bff;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    margin-left: 0.75rem;
+}
+
+.user-details h6 {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #495057;
+}
+
+.user-details small {
+    color: #6c757d;
+}
+
+.role-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Approval Workflow Styles */
+.workflow-card {
+    border-right: 4px solid #dee2e6;
+    margin-bottom: 1rem;
+}
+
+.workflow-card.pending {
+    border-right-color: #ffc107;
+}
+
+.workflow-card.approved {
+    border-right-color: #28a745;
+}
+
+.workflow-card.rejected {
+    border-right-color: #dc3545;
+}
+
+.workflow-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.workflow-title {
+    font-weight: 600;
+    color: #495057;
+    margin: 0;
+}
+
+.workflow-meta {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+.approval-steps {
+    margin-top: 1rem;
+}
+
+.approval-step {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+}
+
+.step-info {
+    flex: 1;
+}
+
+.step-name {
+    font-weight: 500;
+    color: #495057;
+}
+
+.step-approvers {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.step-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Form Styles */
+.form-section {
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: 10px;
+    border: 1px solid #dee2e6;
+    margin-bottom: 1.5rem;
+}
+
+.form-section-title {
+    color: #495057;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.permission-checkbox-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.permission-checkbox {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
+    transition: all 0.2s ease-in-out;
+}
+
+.permission-checkbox:hover {
+    background: #e9ecef;
+}
+
+.permission-checkbox input[type="checkbox"] {
+    margin-left: 0.5rem;
+}
+
+.permission-checkbox label {
+    margin: 0;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+/* Search and Filter Styles */
+.search-filter-bar {
+    background: #fff;
+    padding: 1rem;
+    border-radius: 10px;
+    border: 1px solid #dee2e6;
+    margin-bottom: 1.5rem;
+}
+
+.search-input {
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+}
+
+.filter-select {
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 0.5rem;
+    font-size: 0.9rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    
+    .page-options {
+        margin-right: 0;
+        width: 100%;
+    }
+    
+    .timeline::before {
+        right: 10px;
+    }
+    
+    .timeline-item {
+        padding-right: 1.5rem;
+    }
+    
+    .timeline-marker {
+        right: 3px;
+    }
+    
+    .role-stats {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .user-role-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .role-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+    
+    .permission-checkbox-group {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .permissions-dashboard {
+        background-color: #1a1a1a;
+    }
+    
+    .card {
+        background-color: #2d2d2d;
+        color: #fff;
+    }
+    
+    .timeline-content {
+        background: #3d3d3d;
+        color: #fff;
+    }
+    
+    .permission-module {
+        background: #3d3d3d;
+        border-color: #4d4d4d;
+        color: #fff;
+    }
+    
+    .form-section {
+        background: #2d2d2d;
+        border-color: #4d4d4d;
+        color: #fff;
+    }
+    
+    .search-filter-bar {
+        background: #2d2d2d;
+        border-color: #4d4d4d;
+        color: #fff;
+    }
+}
+
+/* Animation Classes */
+.fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.slide-in-right {
+    animation: slideInRight 0.3s ease-in-out;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Loading States */
+.loading {
+    position: relative;
+    pointer-events: none;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: inherit;
+}
+
+.loading::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #007bff;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    z-index: 1;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

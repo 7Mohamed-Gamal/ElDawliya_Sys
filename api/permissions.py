@@ -9,6 +9,8 @@ from django.contrib.auth.models import Group
 from django.core.cache import cache
 from django.utils import timezone
 
+from core.services.permission_service import HierarchicalPermissionService
+
 logger = logging.getLogger(__name__)
 
 
@@ -315,3 +317,219 @@ class CanUseGeminiAI(permissions.BasePermission):
             return True
         
         return False
+
+
+class HasModulePermission(permissions.BasePermission):
+    """
+    Enhanced permission class using hierarchical permission system
+    فئة الصلاحيات المحسنة باستخدام نظام الصلاحيات الهرمي
+    """
+    
+    def __init__(self, module_name: str = None, action: str = 'view'):
+        self.module_name = module_name
+        self.action = action
+        super().__init__()
+    
+    def has_permission(self, request, view):
+        """
+        Check if user has permission for specific module and action
+        """
+        if not request.user or not request.user.is_authenticated:
+            return False
+        
+        # Get module and action from view if not provided
+        module_name = self.module_name or getattr(view, 'permission_module', None)
+        action = self.action or getattr(view, 'permission_action', 'view')
+        
+        if not module_name:
+            # If no module specified, allow access (backward compatibility)
+            return True
+        
+        # Use hierarchical permission service
+        permission_service = HierarchicalPermissionService(request.user)
+        return permission_service.has_module_permission(module_name, action)
+    
+    def has_object_permission(self, request, view, obj):
+        """
+        Check object-level permissions using hierarchical system
+        """
+        if not request.user or not request.user.is_authenticated:
+            return False
+        
+        # Get module and action from view
+        module_name = self.module_name or getattr(view, 'permission_module', None)
+        action = self.action or getattr(view, 'permission_action', 'view')
+        
+        if not module_name:
+            return True
+        
+        # Use hierarchical permission service for object-level check
+        permission_service = HierarchicalPermissionService(request.user)
+        return permission_service.has_module_permission(module_name, action, obj)
+
+
+class HierarchicalPermission(permissions.BasePermission):
+    """
+    Permission class that uses the full hierarchical permission system
+    فئة الصلاحيات التي تستخدم نظام الصلاحيات الهرمي الكامل
+    """
+    
+    def has_permission(self, request, view):
+        """
+        Check permissions using hierarchical system
+        """
+        if not request.user or not request.user.is_authenticated:
+            return False
+        
+        # Get required permissions from view
+        required_permissions = getattr(view, 'required_permissions', [])
+        
+        if not required_permissions:
+            return True
+        
+        # Use hierarchical permission service
+        permission_service = HierarchicalPermissionService(request.user)
+        
+        # Check all required permissions
+        for permission_codename in required_permissions:
+            if not permission_service.has_permission(permission_codename):
+                return False
+        
+        return True
+    
+    def has_object_permission(self, request, view, obj):
+        """
+        Check object-level permissions using hierarchical system
+        """
+        if not request.user or not request.user.is_authenticated:
+            return False
+        
+        # Get required object permissions from view
+        required_object_permissions = getattr(view, 'required_object_permissions', [])
+        
+        if not required_object_permissions:
+            return True
+        
+        # Use hierarchical permission service
+        permission_service = HierarchicalPermissionService(request.user)
+        
+        # Check all required object permissions
+        for permission_codename in required_object_permissions:
+            if not permission_service.has_permission(permission_codename, obj):
+                return False
+        
+        return True
+
+
+class RoleBasedPermission(permissions.BasePermission):
+    """
+    Permission class based on user roles
+    فئة الصلاحيات القائمة على أدوار المستخدمين
+    """
+    
+    def __init__(self, required_roles: list = None):
+        self.required_roles = required_roles or []
+        super().__init__()
+    
+    def has_permission(self, request, view):
+        """
+        Check if user has any of the required roles
+        """
+        if not request.user or not request.user.is_authenticated:
+            return False
+        
+        # Get required roles from view if not provided
+        required_roles = self.required_roles or getattr(view, 'required_roles', [])
+        
+        if not required_roles:
+            return True
+        
+        # Use hierarchical permission service
+        permission_service = HierarchicalPermissionService(request.user)
+        user_roles = permission_service.get_user_roles()
+        
+        # Check if user has any of the required roles
+        user_role_names = [role.role.name for role in user_roles if role.is_valid()]
+        
+        return any(role_name in user_role_names for role_name in required_roles)
+
+
+class ApprovalRequiredPermission(permissions.BasePermission):
+    """
+    Permission class for operations that require approval
+    فئة الصلاحيات للعمليات التي تتطلب موافقة
+    """
+    
+    def has_permission(self, request, view):
+        """
+        Check if operation requires approval workflow
+        """
+        if not request.user or not request.user.is_authenticated:
+            return False
+        
+        # For write operations on sensitive data, check if approval is required
+        if request.method in ['POST', 'PUT', 'PATCH', 'DELETE']:
+            sensitive_operations = getattr(view, 'sensitive_operations', [])
+            
+            if request.method.lower() in sensitive_operations:
+                # This would typically create an approval workflow
+                # For now, we'll check if user has admin privileges
+                return request.user.is_superuser or request.user.is_staff
+        
+        return True
+
+
+class ConditionalPermission(permissions.BasePermission):
+    """
+    Permission class with conditional access based on context
+    فئة الصلاحيات مع الوصول المشروط بناءً على السياق
+    """
+    
+    def has_permission(self, request, view):
+        """
+        Check permissions based on conditions
+        """
+        if not request.user or not request.user.is_authenticated:
+            return False
+        
+        # Get conditions from view
+        permission_conditions = getattr(view, 'permission_conditions', {})
+        
+        if not permission_conditions:
+            return True
+        
+        # Check time-based conditions
+        if 'time_restrictions' in permission_conditions:
+            time_restrictions = permission_conditions['time_restrictions']
+            current_time = timezone.now().time()
+            
+            if 'start_time' in time_restrictions and 'end_time' in time_restrictions:
+                start_time = time_restrictions['start_time']
+                end_time = time_restrictions['end_time']
+                
+                if not (start_time <= current_time <= end_time):
+                    return False
+        
+        # Check IP-based conditions
+        if 'allowed_ips' in permission_conditions:
+            client_ip = self._get_client_ip(request)
+            allowed_ips = permission_conditions['allowed_ips']
+            
+            if client_ip not in allowed_ips:
+                return False
+        
+        # Check department-based conditions
+        if 'allowed_departments' in permission_conditions:
+            # This would need to be implemented based on your user-department relationship
+            pass
+        
+        return True
+    
+    def _get_client_ip(self, request):
+        """Get client IP address"""
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0]
+        else:
+            ip = request.META.get('REMOTE_ADDR')
+        return ip

@@ -1,20 +1,28 @@
 """
-نماذج التدقيق والسجلات
-Audit and Logging Models
+Audit and Monitoring System Models
+نماذج نظام التدقيق والمراقبة
+
+This module provides comprehensive audit logging and monitoring capabilities
+for tracking all system activities and security events.
 """
+
+import uuid
 import json
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes.fields import GenericForeignKey
+from django.utils import timezone
+from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.translation import gettext_lazy as _
-from .base import BaseModel
+
+User = get_user_model()
 
 
-class AuditLog(BaseModel):
+class AuditLog(models.Model):
     """
-    سجل التدقيق للعمليات
-    Audit log for tracking user actions and system changes
+    Comprehensive audit log for all system activities
+    سجل التدقيق الشامل لجميع أنشطة النظام
     """
     ACTION_TYPES = [
         ('create', _('إنشاء')),
@@ -23,388 +31,524 @@ class AuditLog(BaseModel):
         ('delete', _('حذف')),
         ('login', _('تسجيل دخول')),
         ('logout', _('تسجيل خروج')),
-        ('approve', _('موافقة')),
-        ('reject', _('رفض')),
+        ('permission_grant', _('منح صلاحية')),
+        ('permission_revoke', _('إلغاء صلاحية')),
+        ('role_assign', _('تعيين دور')),
+        ('role_revoke', _('إلغاء دور')),
         ('export', _('تصدير')),
         ('import', _('استيراد')),
-        ('print', _('طباعة')),
-        ('email', _('إرسال بريد')),
-        ('sms', _('إرسال رسالة')),
         ('backup', _('نسخ احتياطي')),
         ('restore', _('استعادة')),
-        ('system', _('عملية نظام')),
+        ('config_change', _('تغيير إعدادات')),
+        ('security_event', _('حدث أمني')),
+        ('api_access', _('وصول API')),
+        ('file_access', _('وصول ملف')),
+        ('report_generate', _('توليد تقرير')),
+        ('system_maintenance', _('صيانة النظام')),
     ]
-    
-    RESULT_TYPES = [
-        ('success', _('نجح')),
-        ('failure', _('فشل')),
-        ('warning', _('تحذير')),
-        ('info', _('معلومات')),
+
+    SEVERITY_LEVELS = [
+        ('low', _('منخفض')),
+        ('medium', _('متوسط')),
+        ('high', _('عالي')),
+        ('critical', _('حرج')),
     ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     
+    # User and session information
     user = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
         blank=True,
         related_name='audit_logs',
-        verbose_name=_('المستخدم'),
-        help_text=_('المستخدم الذي قام بالعملية')
+        verbose_name=_('المستخدم')
     )
-    action = models.CharField(
-        max_length=20,
-        choices=ACTION_TYPES,
-        verbose_name=_('نوع العملية'),
-        help_text=_('نوع العملية التي تم تنفيذها')
-    )
-    resource = models.CharField(
-        max_length=255,
-        verbose_name=_('المورد'),
-        help_text=_('المورد أو الصفحة التي تم الوصول إليها')
-    )
+    session_key = models.CharField(max_length=40, blank=True, verbose_name=_('مفتاح الجلسة'))
+    
+    # Action details
+    action_type = models.CharField(max_length=50, choices=ACTION_TYPES, verbose_name=_('نوع الإجراء'))
+    action_description = models.TextField(verbose_name=_('وصف الإجراء'))
+    
+    # Target object information
     content_type = models.ForeignKey(
-        ContentType,
-        on_delete=models.SET_NULL,
-        null=True,
+        ContentType, 
+        on_delete=models.SET_NULL, 
+        null=True, 
         blank=True,
         verbose_name=_('نوع المحتوى')
     )
-    object_id = models.CharField(
-        max_length=255,
-        null=True,
-        blank=True,
-        verbose_name=_('معرف الكائن')
-    )
+    object_id = models.CharField(max_length=255, blank=True, verbose_name=_('معرف الكائن'))
     content_object = GenericForeignKey('content_type', 'object_id')
+    object_repr = models.CharField(max_length=500, blank=True, verbose_name=_('تمثيل الكائن'))
     
+    # Change tracking
     old_values = models.JSONField(
-        null=True,
-        blank=True,
-        verbose_name=_('القيم القديمة'),
-        help_text=_('القيم قبل التغيير (للتحديثات)')
+        default=dict, 
+        blank=True, 
+        encoder=DjangoJSONEncoder,
+        verbose_name=_('القيم القديمة')
     )
     new_values = models.JSONField(
-        null=True,
-        blank=True,
-        verbose_name=_('القيم الجديدة'),
-        help_text=_('القيم بعد التغيير (للتحديثات)')
+        default=dict, 
+        blank=True, 
+        encoder=DjangoJSONEncoder,
+        verbose_name=_('القيم الجديدة')
     )
-    details = models.JSONField(
-        null=True,
-        blank=True,
-        verbose_name=_('تفاصيل إضافية'),
-        help_text=_('معلومات إضافية حول العملية')
+    
+    # Request information
+    ip_address = models.GenericIPAddressField(null=True, blank=True, verbose_name=_('عنوان IP'))
+    user_agent = models.TextField(blank=True, verbose_name=_('وكيل المستخدم'))
+    request_method = models.CharField(max_length=10, blank=True, verbose_name=_('طريقة الطلب'))
+    request_path = models.CharField(max_length=500, blank=True, verbose_name=_('مسار الطلب'))
+    request_data = models.JSONField(
+        default=dict, 
+        blank=True, 
+        encoder=DjangoJSONEncoder,
+        verbose_name=_('بيانات الطلب')
     )
-    result = models.CharField(
-        max_length=20,
-        choices=RESULT_TYPES,
-        default='success',
-        verbose_name=_('نتيجة العملية')
+    
+    # Response information
+    response_status = models.PositiveIntegerField(null=True, blank=True, verbose_name=_('حالة الاستجابة'))
+    response_time = models.FloatField(null=True, blank=True, verbose_name=_('وقت الاستجابة'))
+    
+    # Security and classification
+    severity = models.CharField(
+        max_length=20, 
+        choices=SEVERITY_LEVELS, 
+        default='low',
+        verbose_name=_('مستوى الخطورة')
     )
-    message = models.TextField(
-        blank=True,
-        null=True,
-        verbose_name=_('الرسالة'),
-        help_text=_('رسالة توضيحية حول العملية')
+    is_suspicious = models.BooleanField(default=False, verbose_name=_('مشبوه'))
+    is_security_relevant = models.BooleanField(default=False, verbose_name=_('متعلق بالأمان'))
+    
+    # Additional metadata
+    module = models.CharField(max_length=100, blank=True, verbose_name=_('الوحدة'))
+    tags = models.JSONField(default=list, blank=True, verbose_name=_('العلامات'))
+    additional_data = models.JSONField(
+        default=dict, 
+        blank=True, 
+        encoder=DjangoJSONEncoder,
+        verbose_name=_('بيانات إضافية')
     )
-    ip_address = models.GenericIPAddressField(
-        null=True,
-        blank=True,
-        verbose_name=_('عنوان IP'),
-        help_text=_('عنوان IP للمستخدم')
-    )
-    user_agent = models.TextField(
-        blank=True,
-        null=True,
-        verbose_name=_('معلومات المتصفح'),
-        help_text=_('معلومات المتصفح والنظام')
-    )
-    session_key = models.CharField(
-        max_length=40,
-        null=True,
-        blank=True,
-        verbose_name=_('مفتاح الجلسة')
-    )
-    duration = models.FloatField(
-        null=True,
-        blank=True,
-        verbose_name=_('مدة العملية'),
-        help_text=_('مدة تنفيذ العملية بالثواني')
-    )
+    
+    # Timestamps
+    timestamp = models.DateTimeField(auto_now_add=True, verbose_name=_('الطابع الزمني'))
     
     class Meta:
         verbose_name = _('سجل التدقيق')
         verbose_name_plural = _('سجلات التدقيق')
-        ordering = ['-created_at']
+        ordering = ['-timestamp']
         indexes = [
-            models.Index(fields=['user', '-created_at']),
-            models.Index(fields=['action', '-created_at']),
-            models.Index(fields=['content_type', 'object_id']),
-            models.Index(fields=['ip_address', '-created_at']),
+            models.Index(fields=['user', 'timestamp']),
+            models.Index(fields=['action_type', 'timestamp']),
+            models.Index(fields=['ip_address', 'timestamp']),
+            models.Index(fields=['is_suspicious', 'timestamp']),
+            models.Index(fields=['is_security_relevant', 'timestamp']),
+            models.Index(fields=['module', 'timestamp']),
+            models.Index(fields=['severity', 'timestamp']),
         ]
-        
+
     def __str__(self):
-        username = self.user.username if self.user else 'نظام'
-        return f"{username} - {self.get_action_display()} - {self.resource}"
-    
+        return f"{self.get_action_type_display()} - {self.user or 'Anonymous'} - {self.timestamp}"
+
     def get_changes_summary(self):
         """Get a summary of changes made"""
-        if not self.old_values or not self.new_values:
+        if not self.old_values and not self.new_values:
             return None
-            
-        changes = {}
-        for field, new_value in self.new_values.items():
-            old_value = self.old_values.get(field)
-            if old_value != new_value:
-                changes[field] = {
-                    'old': old_value,
-                    'new': new_value
-                }
-        return changes
-    
-    @classmethod
-    def log_action(cls, user, action, resource, content_object=None, 
-                   old_values=None, new_values=None, details=None, 
-                   result='success', message=None, request=None):
-        """Helper method to create audit log entries"""
-        log_data = {
-            'user': user,
-            'action': action,
-            'resource': resource,
-            'old_values': old_values,
-            'new_values': new_values,
-            'details': details,
-            'result': result,
-            'message': message,
-        }
         
-        if content_object:
-            log_data['content_object'] = content_object
+        changes = []
+        all_fields = set(self.old_values.keys()) | set(self.new_values.keys())
+        
+        for field in all_fields:
+            old_val = self.old_values.get(field)
+            new_val = self.new_values.get(field)
             
-        if request:
-            log_data.update({
-                'ip_address': cls._get_client_ip(request),
-                'user_agent': request.META.get('HTTP_USER_AGENT', ''),
-                'session_key': request.session.session_key,
-            })
-            
-        return cls.objects.create(**log_data)
-    
-    @staticmethod
-    def _get_client_ip(request):
-        """Get client IP address from request"""
-        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-        if x_forwarded_for:
-            ip = x_forwarded_for.split(',')[0]
-        else:
-            ip = request.META.get('REMOTE_ADDR')
-        return ip
+            if old_val != new_val:
+                changes.append({
+                    'field': field,
+                    'old_value': old_val,
+                    'new_value': new_val
+                })
+        
+        return changes
+
+    def is_failed_login(self):
+        """Check if this is a failed login attempt"""
+        return (self.action_type == 'login' and 
+                self.response_status and 
+                self.response_status >= 400)
+
+    def get_risk_score(self):
+        """Calculate risk score based on various factors"""
+        score = 0
+        
+        # Base score by severity
+        severity_scores = {'low': 1, 'medium': 3, 'high': 7, 'critical': 10}
+        score += severity_scores.get(self.severity, 1)
+        
+        # Add score for suspicious activity
+        if self.is_suspicious:
+            score += 5
+        
+        # Add score for security-relevant actions
+        if self.is_security_relevant:
+            score += 3
+        
+        # Add score for failed operations
+        if self.response_status and self.response_status >= 400:
+            score += 2
+        
+        # Add score for sensitive actions
+        sensitive_actions = ['delete', 'permission_grant', 'role_assign', 'config_change']
+        if self.action_type in sensitive_actions:
+            score += 2
+        
+        return min(score, 10)  # Cap at 10
 
 
-class SystemLog(BaseModel):
+class SecurityEvent(models.Model):
     """
-    سجل النظام للأحداث التقنية
-    System log for technical events and errors
+    Security-specific events and incidents
+    الأحداث والحوادث الأمنية المحددة
     """
-    LOG_LEVELS = [
-        ('debug', _('تصحيح')),
-        ('info', _('معلومات')),
-        ('warning', _('تحذير')),
-        ('error', _('خطأ')),
+    EVENT_TYPES = [
+        ('failed_login', _('فشل تسجيل الدخول')),
+        ('brute_force', _('هجوم القوة الغاشمة')),
+        ('suspicious_activity', _('نشاط مشبوه')),
+        ('unauthorized_access', _('وصول غير مصرح')),
+        ('privilege_escalation', _('تصعيد الصلاحيات')),
+        ('data_breach', _('خرق البيانات')),
+        ('malware_detected', _('اكتشاف برمجيات خبيثة')),
+        ('ddos_attack', _('هجوم DDoS')),
+        ('sql_injection', _('حقن SQL')),
+        ('xss_attempt', _('محاولة XSS')),
+        ('csrf_attack', _('هجوم CSRF')),
+        ('file_upload_threat', _('تهديد رفع الملفات')),
+        ('api_abuse', _('إساءة استخدام API')),
+        ('session_hijacking', _('اختطاف الجلسة')),
+        ('account_takeover', _('استيلاء على الحساب')),
+    ]
+
+    THREAT_LEVELS = [
+        ('info', _('معلوماتي')),
+        ('low', _('منخفض')),
+        ('medium', _('متوسط')),
+        ('high', _('عالي')),
         ('critical', _('حرج')),
     ]
-    
-    CATEGORIES = [
-        ('database', _('قاعدة البيانات')),
-        ('authentication', _('المصادقة')),
-        ('api', _('واجهة برمجة التطبيقات')),
-        ('email', _('البريد الإلكتروني')),
-        ('file_system', _('نظام الملفات')),
-        ('integration', _('التكامل')),
-        ('performance', _('الأداء')),
-        ('security', _('الأمان')),
-        ('backup', _('النسخ الاحتياطي')),
-        ('general', _('عام')),
+
+    STATUS_CHOICES = [
+        ('detected', _('مكتشف')),
+        ('investigating', _('قيد التحقيق')),
+        ('confirmed', _('مؤكد')),
+        ('mitigated', _('تم التخفيف')),
+        ('resolved', _('محلول')),
+        ('false_positive', _('إيجابي خاطئ')),
     ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     
-    level = models.CharField(
-        max_length=20,
-        choices=LOG_LEVELS,
-        default='info',
-        verbose_name=_('مستوى السجل')
-    )
-    category = models.CharField(
-        max_length=50,
-        choices=CATEGORIES,
-        default='general',
-        verbose_name=_('فئة السجل')
-    )
-    module = models.CharField(
-        max_length=100,
-        verbose_name=_('الوحدة'),
-        help_text=_('الوحدة أو التطبيق الذي أنتج السجل')
-    )
-    function = models.CharField(
-        max_length=100,
-        null=True,
+    # Event classification
+    event_type = models.CharField(max_length=50, choices=EVENT_TYPES, verbose_name=_('نوع الحدث'))
+    threat_level = models.CharField(max_length=20, choices=THREAT_LEVELS, verbose_name=_('مستوى التهديد'))
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='detected', verbose_name=_('الحالة'))
+    
+    # Event details
+    title = models.CharField(max_length=200, verbose_name=_('العنوان'))
+    description = models.TextField(verbose_name=_('الوصف'))
+    
+    # Source information
+    source_ip = models.GenericIPAddressField(verbose_name=_('IP المصدر'))
+    source_user_agent = models.TextField(blank=True, verbose_name=_('وكيل المستخدم المصدر'))
+    source_country = models.CharField(max_length=100, blank=True, verbose_name=_('البلد المصدر'))
+    
+    # Target information
+    target_user = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
         blank=True,
-        verbose_name=_('الدالة'),
-        help_text=_('اسم الدالة أو الطريقة')
+        related_name='security_events_targeted',
+        verbose_name=_('المستخدم المستهدف')
     )
-    message = models.TextField(
-        verbose_name=_('الرسالة'),
-        help_text=_('رسالة السجل')
-    )
-    details = models.JSONField(
-        null=True,
+    target_endpoint = models.CharField(max_length=500, blank=True, verbose_name=_('النقطة المستهدفة'))
+    target_resource = models.CharField(max_length=500, blank=True, verbose_name=_('المورد المستهدف'))
+    
+    # Detection information
+    detected_by = models.CharField(max_length=100, verbose_name=_('اكتشف بواسطة'))
+    detection_method = models.CharField(max_length=100, blank=True, verbose_name=_('طريقة الاكتشاف'))
+    confidence_score = models.FloatField(default=0.0, verbose_name=_('درجة الثقة'))
+    
+    # Response information
+    assigned_to = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
         blank=True,
-        verbose_name=_('التفاصيل'),
-        help_text=_('تفاصيل إضافية في تنسيق JSON')
+        related_name='assigned_security_events',
+        verbose_name=_('مخصص لـ')
     )
-    exception_type = models.CharField(
-        max_length=100,
-        null=True,
-        blank=True,
-        verbose_name=_('نوع الاستثناء')
+    response_actions = models.JSONField(default=list, blank=True, verbose_name=_('إجراءات الاستجابة'))
+    mitigation_steps = models.TextField(blank=True, verbose_name=_('خطوات التخفيف'))
+    
+    # Evidence and artifacts
+    evidence = models.JSONField(default=dict, blank=True, verbose_name=_('الأدلة'))
+    artifacts = models.JSONField(default=list, blank=True, verbose_name=_('القطع الأثرية'))
+    
+    # Related audit logs
+    related_logs = models.ManyToManyField(
+        AuditLog, 
+        blank=True, 
+        related_name='security_events',
+        verbose_name=_('السجلات المرتبطة')
     )
-    stack_trace = models.TextField(
-        null=True,
-        blank=True,
-        verbose_name=_('تتبع المكدس'),
-        help_text=_('تتبع المكدس للأخطاء')
-    )
-    user = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='system_logs',
-        verbose_name=_('المستخدم المرتبط')
-    )
-    resolved = models.BooleanField(
-        default=False,
-        verbose_name=_('تم الحل'),
-        help_text=_('هل تم حل هذه المشكلة')
-    )
-    resolved_by = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='resolved_logs',
-        verbose_name=_('حُل بواسطة')
-    )
-    resolved_at = models.DateTimeField(
-        null=True,
-        blank=True,
-        verbose_name=_('تاريخ الحل')
-    )
+    
+    # Timestamps
+    detected_at = models.DateTimeField(auto_now_add=True, verbose_name=_('وقت الاكتشاف'))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_('وقت التحديث'))
+    resolved_at = models.DateTimeField(null=True, blank=True, verbose_name=_('وقت الحل'))
     
     class Meta:
-        verbose_name = _('سجل النظام')
-        verbose_name_plural = _('سجلات النظام')
-        ordering = ['-created_at']
+        verbose_name = _('حدث أمني')
+        verbose_name_plural = _('الأحداث الأمنية')
+        ordering = ['-detected_at']
         indexes = [
-            models.Index(fields=['level', '-created_at']),
-            models.Index(fields=['category', '-created_at']),
-            models.Index(fields=['module', '-created_at']),
-            models.Index(fields=['resolved', '-created_at']),
+            models.Index(fields=['event_type', 'detected_at']),
+            models.Index(fields=['threat_level', 'detected_at']),
+            models.Index(fields=['status', 'detected_at']),
+            models.Index(fields=['source_ip', 'detected_at']),
+            models.Index(fields=['target_user', 'detected_at']),
         ]
-        
+
     def __str__(self):
-        return f"{self.get_level_display()} - {self.module} - {self.message[:50]}"
-    
-    @classmethod
-    def log(cls, level, category, module, message, function=None, 
-            details=None, exception=None, user=None):
-        """Helper method to create system log entries"""
-        log_data = {
-            'level': level,
-            'category': category,
-            'module': module,
-            'function': function,
-            'message': message,
-            'details': details,
-            'user': user,
+        return f"{self.title} - {self.get_threat_level_display()}"
+
+    def get_duration(self):
+        """Get event duration if resolved"""
+        if self.resolved_at:
+            return self.resolved_at - self.detected_at
+        return None
+
+    def is_active(self):
+        """Check if event is still active"""
+        return self.status not in ['resolved', 'false_positive']
+
+    def get_severity_color(self):
+        """Get color code for threat level"""
+        colors = {
+            'info': '#17a2b8',
+            'low': '#28a745',
+            'medium': '#ffc107',
+            'high': '#fd7e14',
+            'critical': '#dc3545'
         }
-        
-        if exception:
-            import traceback
-            log_data.update({
-                'exception_type': type(exception).__name__,
-                'stack_trace': traceback.format_exc(),
-            })
-            
-        return cls.objects.create(**log_data)
+        return colors.get(self.threat_level, '#6c757d')
+
+
+class SystemMetric(models.Model):
+    """
+    System performance and health metrics
+    مقاييس أداء وصحة النظام
+    """
+    METRIC_TYPES = [
+        ('cpu_usage', _('استخدام المعالج')),
+        ('memory_usage', _('استخدام الذاكرة')),
+        ('disk_usage', _('استخدام القرص')),
+        ('network_io', _('إدخال/إخراج الشبكة')),
+        ('database_connections', _('اتصالات قاعدة البيانات')),
+        ('active_sessions', _('الجلسات النشطة')),
+        ('api_requests', _('طلبات API')),
+        ('response_time', _('وقت الاستجابة')),
+        ('error_rate', _('معدل الأخطاء')),
+        ('login_attempts', _('محاولات تسجيل الدخول')),
+        ('failed_logins', _('فشل تسجيل الدخول')),
+        ('user_activity', _('نشاط المستخدمين')),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     
-    def mark_resolved(self, resolved_by=None):
-        """Mark the log entry as resolved"""
-        from django.utils import timezone
-        self.resolved = True
-        self.resolved_by = resolved_by
-        self.resolved_at = timezone.now()
-        self.save(update_fields=['resolved', 'resolved_by', 'resolved_at'])
-
-
-class LoginAttempt(BaseModel):
-    """
-    محاولات تسجيل الدخول
-    Login attempts tracking for security monitoring
-    """
-    username = models.CharField(
-        max_length=150,
-        verbose_name=_('اسم المستخدم')
-    )
-    ip_address = models.GenericIPAddressField(
-        verbose_name=_('عنوان IP')
-    )
-    user_agent = models.TextField(
-        blank=True,
-        null=True,
-        verbose_name=_('معلومات المتصفح')
-    )
-    success = models.BooleanField(
-        default=False,
-        verbose_name=_('نجح'),
-        help_text=_('هل نجحت محاولة تسجيل الدخول')
-    )
-    failure_reason = models.CharField(
-        max_length=100,
-        null=True,
-        blank=True,
-        verbose_name=_('سبب الفشل'),
-        help_text=_('سبب فشل تسجيل الدخول')
-    )
-    session_key = models.CharField(
-        max_length=40,
-        null=True,
-        blank=True,
-        verbose_name=_('مفتاح الجلسة')
-    )
+    # Metric identification
+    metric_type = models.CharField(max_length=50, choices=METRIC_TYPES, verbose_name=_('نوع المقياس'))
+    metric_name = models.CharField(max_length=100, verbose_name=_('اسم المقياس'))
+    
+    # Metric values
+    value = models.FloatField(verbose_name=_('القيمة'))
+    unit = models.CharField(max_length=20, blank=True, verbose_name=_('الوحدة'))
+    
+    # Thresholds
+    warning_threshold = models.FloatField(null=True, blank=True, verbose_name=_('عتبة التحذير'))
+    critical_threshold = models.FloatField(null=True, blank=True, verbose_name=_('العتبة الحرجة'))
+    
+    # Context information
+    host = models.CharField(max_length=100, blank=True, verbose_name=_('المضيف'))
+    service = models.CharField(max_length=100, blank=True, verbose_name=_('الخدمة'))
+    tags = models.JSONField(default=dict, blank=True, verbose_name=_('العلامات'))
+    
+    # Timestamps
+    timestamp = models.DateTimeField(auto_now_add=True, verbose_name=_('الطابع الزمني'))
     
     class Meta:
-        verbose_name = _('محاولة تسجيل دخول')
-        verbose_name_plural = _('محاولات تسجيل الدخول')
+        verbose_name = _('مقياس النظام')
+        verbose_name_plural = _('مقاييس النظام')
+        ordering = ['-timestamp']
+        indexes = [
+            models.Index(fields=['metric_type', 'timestamp']),
+            models.Index(fields=['metric_name', 'timestamp']),
+            models.Index(fields=['host', 'timestamp']),
+            models.Index(fields=['service', 'timestamp']),
+        ]
+
+    def __str__(self):
+        return f"{self.metric_name}: {self.value} {self.unit}"
+
+    def get_status(self):
+        """Get metric status based on thresholds"""
+        if self.critical_threshold and self.value >= self.critical_threshold:
+            return 'critical'
+        elif self.warning_threshold and self.value >= self.warning_threshold:
+            return 'warning'
+        else:
+            return 'normal'
+
+    def is_alerting(self):
+        """Check if metric is in alerting state"""
+        return self.get_status() in ['warning', 'critical']
+
+
+class AlertRule(models.Model):
+    """
+    Rules for generating alerts based on metrics and events
+    قواعد توليد التنبيهات بناءً على المقاييس والأحداث
+    """
+    RULE_TYPES = [
+        ('threshold', _('عتبة')),
+        ('anomaly', _('شذوذ')),
+        ('pattern', _('نمط')),
+        ('correlation', _('ارتباط')),
+    ]
+
+    SEVERITY_LEVELS = [
+        ('info', _('معلوماتي')),
+        ('warning', _('تحذير')),
+        ('critical', _('حرج')),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    # Rule identification
+    name = models.CharField(max_length=200, verbose_name=_('اسم القاعدة'))
+    description = models.TextField(verbose_name=_('الوصف'))
+    rule_type = models.CharField(max_length=20, choices=RULE_TYPES, verbose_name=_('نوع القاعدة'))
+    
+    # Rule configuration
+    conditions = models.JSONField(verbose_name=_('الشروط'))
+    severity = models.CharField(max_length=20, choices=SEVERITY_LEVELS, verbose_name=_('مستوى الخطورة'))
+    
+    # Notification settings
+    notification_channels = models.JSONField(default=list, verbose_name=_('قنوات الإشعار'))
+    notification_template = models.TextField(blank=True, verbose_name=_('قالب الإشعار'))
+    
+    # Rule state
+    is_active = models.BooleanField(default=True, verbose_name=_('نشط'))
+    last_triggered = models.DateTimeField(null=True, blank=True, verbose_name=_('آخر تفعيل'))
+    trigger_count = models.PositiveIntegerField(default=0, verbose_name=_('عدد التفعيلات'))
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('تاريخ الإنشاء'))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_('تاريخ التحديث'))
+    
+    class Meta:
+        verbose_name = _('قاعدة التنبيه')
+        verbose_name_plural = _('قواعد التنبيه')
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+    def evaluate(self, context):
+        """Evaluate rule against given context"""
+        # This would contain the logic to evaluate the rule
+        # Implementation depends on rule type and conditions
+        pass
+
+
+class Alert(models.Model):
+    """
+    Generated alerts from alert rules
+    التنبيهات المولدة من قواعد التنبيه
+    """
+    STATUS_CHOICES = [
+        ('open', _('مفتوح')),
+        ('acknowledged', _('مؤكد')),
+        ('resolved', _('محلول')),
+        ('suppressed', _('مكبوت')),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    # Alert source
+    rule = models.ForeignKey(
+        AlertRule, 
+        on_delete=models.CASCADE, 
+        related_name='alerts',
+        verbose_name=_('القاعدة')
+    )
+    
+    # Alert details
+    title = models.CharField(max_length=200, verbose_name=_('العنوان'))
+    message = models.TextField(verbose_name=_('الرسالة'))
+    severity = models.CharField(max_length=20, choices=AlertRule.SEVERITY_LEVELS, verbose_name=_('مستوى الخطورة'))
+    
+    # Alert state
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='open', verbose_name=_('الحالة'))
+    
+    # Response information
+    acknowledged_by = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='acknowledged_alerts',
+        verbose_name=_('أكد بواسطة')
+    )
+    acknowledged_at = models.DateTimeField(null=True, blank=True, verbose_name=_('وقت التأكيد'))
+    resolved_by = models.ForeignKey(
+        User, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='resolved_alerts',
+        verbose_name=_('حل بواسطة')
+    )
+    resolved_at = models.DateTimeField(null=True, blank=True, verbose_name=_('وقت الحل'))
+    
+    # Context data
+    context_data = models.JSONField(default=dict, blank=True, verbose_name=_('بيانات السياق'))
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('تاريخ الإنشاء'))
+    updated_at = models.DateTimeField(auto_now=True, verbose_name=_('تاريخ التحديث'))
+    
+    class Meta:
+        verbose_name = _('تنبيه')
+        verbose_name_plural = _('التنبيهات')
         ordering = ['-created_at']
         indexes = [
-            models.Index(fields=['username', '-created_at']),
-            models.Index(fields=['ip_address', '-created_at']),
-            models.Index(fields=['success', '-created_at']),
+            models.Index(fields=['status', 'created_at']),
+            models.Index(fields=['severity', 'created_at']),
+            models.Index(fields=['rule', 'created_at']),
         ]
-        
+
     def __str__(self):
-        status = 'نجح' if self.success else 'فشل'
-        return f"{self.username} - {status} - {self.ip_address}"
-    
-    @classmethod
-    def log_attempt(cls, username, ip_address, success, user_agent=None, 
-                    failure_reason=None, session_key=None):
-        """Log a login attempt"""
-        return cls.objects.create(
-            username=username,
-            ip_address=ip_address,
-            success=success,
-            user_agent=user_agent,
-            failure_reason=failure_reason,
-            session_key=session_key
-        )
+        return f"{self.title} - {self.get_severity_display()}"
+
+    def get_duration(self):
+        """Get alert duration"""
+        end_time = self.resolved_at or timezone.now()
+        return end_time - self.created_at
+
+    def is_active(self):
+        """Check if alert is still active"""
+        return self.status in ['open', 'acknowledged']
