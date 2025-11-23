@@ -1,0 +1,64 @@
+{% comment %}
+Enhanced Modal Component
+مكون النافذة المنبثقة المحسنة
+
+Usage:
+{% include 'components/modal.html' with modal_id="confirmModal" title="تأكيد الحذف" size="md" %}
+{% endcomment %}
+
+<div class="modal fade" id="{{ modal_id }}" tabindex="-1" aria-labelledby="{{ modal_id }}Label" aria-hidden="true">
+    <div class="modal-dialog {% if size %}modal-{{ size }}{% endif %} {% if centered %}modal-dialog-centered{% endif %} {% if scrollable %}modal-dialog-scrollable{% endif %}">
+        <div class="modal-content">
+            {% if title or close_button != False %}
+            <div class="modal-header">
+                {% if title %}
+                <h5 class="modal-title" id="{{ modal_id }}Label">
+                    {% if icon %}
+                    <i class="{{ icon }} me-2"></i>
+                    {% endif %}
+                    {{ title }}
+                </h5>
+                {% endif %}
+                {% if close_button != False %}
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="إغلاق"></button>
+                {% endif %}
+            </div>
+            {% endif %}
+            
+            <div class="modal-body">
+                {% if content %}
+                    {{ content|safe }}
+                {% else %}
+                    {% block modal_content %}
+                    <p>محتوى النافذة المنبثقة</p>
+                    {% endblock %}
+                {% endif %}
+            </div>
+            
+            {% if footer != False %}
+            <div class="modal-footer">
+                {% if footer %}
+                    {{ footer|safe }}
+                {% else %}
+                    {% block modal_footer %}
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="button" class="btn btn-primary">حفظ</button>
+                    {% endblock %}
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if backdrop_static %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('{{ modal_id }}');
+    if (modal) {
+        modal.setAttribute('data-bs-backdrop', 'static');
+        modal.setAttribute('data-bs-keyboard', 'false');
+    }
+});
+</script>
+{% endif %}

@@ -1,0 +1,117 @@
+{% comment %}
+Enhanced Form Field Component
+مكون حقل النموذج المحسن
+
+Usage:
+{% include 'components/form_field.html' with field=form.field_name label="التسمية" icon="fas fa-user" required=True %}
+{% endcomment %}
+
+<div class="form-group-enhanced">
+    {% if label %}
+    <label class="form-label-enhanced {% if required %}required{% endif %}" for="{{ field.id_for_label }}">
+        {% if icon %}
+        <i class="form-label-icon {{ icon }}"></i>
+        {% endif %}
+        {{ label }}
+    </label>
+    {% endif %}
+    
+    {% if field.field.widget.input_type == 'select' %}
+        <select class="form-control-enhanced {% if field.errors %}is-invalid{% endif %}" 
+                id="{{ field.id_for_label }}" 
+                name="{{ field.name }}"
+                {% if required %}required{% endif %}
+                {% if field.field.disabled %}disabled{% endif %}>
+            {% for value, text in field.field.choices %}
+            <option value="{{ value }}" {% if value == field.value %}selected{% endif %}>{{ text }}</option>
+            {% endfor %}
+        </select>
+    {% elif field.field.widget.input_type == 'textarea' %}
+        <textarea class="form-control-enhanced {% if field.errors %}is-invalid{% endif %}" 
+                  id="{{ field.id_for_label }}" 
+                  name="{{ field.name }}"
+                  {% if field.field.widget.attrs.rows %}rows="{{ field.field.widget.attrs.rows }}"{% endif %}
+                  {% if field.field.widget.attrs.placeholder %}placeholder="{{ field.field.widget.attrs.placeholder }}"{% endif %}
+                  {% if required %}required{% endif %}
+                  {% if field.field.disabled %}disabled{% endif %}>{{ field.value|default:'' }}</textarea>
+    {% elif field.field.widget.input_type == 'checkbox' %}
+        <div class="form-check">
+            <input type="checkbox" 
+                   class="form-check-input {% if field.errors %}is-invalid{% endif %}" 
+                   id="{{ field.id_for_label }}" 
+                   name="{{ field.name }}"
+                   value="{{ field.field.widget.attrs.value|default:'on' }}"
+                   {% if field.value %}checked{% endif %}
+                   {% if required %}required{% endif %}
+                   {% if field.field.disabled %}disabled{% endif %}>
+            <label class="form-check-label" for="{{ field.id_for_label }}">
+                {{ field.field.widget.attrs.label|default:label }}
+            </label>
+        </div>
+    {% elif field.field.widget.input_type == 'radio' %}
+        <div class="form-radio-group">
+            {% for value, text in field.field.choices %}
+            <div class="form-check">
+                <input type="radio" 
+                       class="form-check-input {% if field.errors %}is-invalid{% endif %}" 
+                       id="{{ field.id_for_label }}_{{ forloop.counter }}" 
+                       name="{{ field.name }}"
+                       value="{{ value }}"
+                       {% if value == field.value %}checked{% endif %}
+                       {% if required %}required{% endif %}
+                       {% if field.field.disabled %}disabled{% endif %}>
+                <label class="form-check-label" for="{{ field.id_for_label }}_{{ forloop.counter }}">
+                    {{ text }}
+                </label>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        {% if input_group %}
+        <div class="input-group-enhanced">
+            <input type="{{ field.field.widget.input_type|default:'text' }}" 
+                   class="form-control-enhanced {% if field.errors %}is-invalid{% endif %}" 
+                   id="{{ field.id_for_label }}" 
+                   name="{{ field.name }}"
+                   value="{{ field.value|default:'' }}"
+                   {% if field.field.widget.attrs.placeholder %}placeholder="{{ field.field.widget.attrs.placeholder }}"{% endif %}
+                   {% if field.field.widget.attrs.min %}min="{{ field.field.widget.attrs.min }}"{% endif %}
+                   {% if field.field.widget.attrs.max %}max="{{ field.field.widget.attrs.max }}"{% endif %}
+                   {% if field.field.widget.attrs.step %}step="{{ field.field.widget.attrs.step }}"{% endif %}
+                   {% if required %}required{% endif %}
+                   {% if field.field.disabled %}disabled{% endif %}>
+            <span class="input-group-text">
+                {% if input_group_icon %}
+                <i class="{{ input_group_icon }}"></i>
+                {% else %}
+                {{ input_group_text }}
+                {% endif %}
+            </span>
+        </div>
+        {% else %}
+        <input type="{{ field.field.widget.input_type|default:'text' }}" 
+               class="form-control-enhanced {% if field.errors %}is-invalid{% endif %}" 
+               id="{{ field.id_for_label }}" 
+               name="{{ field.name }}"
+               value="{{ field.value|default:'' }}"
+               {% if field.field.widget.attrs.placeholder %}placeholder="{{ field.field.widget.attrs.placeholder }}"{% endif %}
+               {% if field.field.widget.attrs.min %}min="{{ field.field.widget.attrs.min }}"{% endif %}
+               {% if field.field.widget.attrs.max %}max="{{ field.field.widget.attrs.max }}"{% endif %}
+               {% if field.field.widget.attrs.step %}step="{{ field.field.widget.attrs.step }}"{% endif %}
+               {% if required %}required{% endif %}
+               {% if field.field.disabled %}disabled{% endif %}>
+        {% endif %}
+    {% endif %}
+    
+    {% if help_text %}
+    <div class="form-text">{{ help_text }}</div>
+    {% endif %}
+    
+    {% if field.errors %}
+    <div class="invalid-feedback">
+        {% for error in field.errors %}
+        {{ error }}
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>

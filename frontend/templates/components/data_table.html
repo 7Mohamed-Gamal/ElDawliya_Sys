@@ -1,0 +1,188 @@
+{% comment %}
+Enhanced Data Table Component
+مكون جدول البيانات المحسن
+
+Usage:
+{% include 'components/data_table.html' with table_id="employees_table" columns=columns data=employees searchable=True sortable=True pagination=True %}
+{% endcomment %}
+
+<div class="table-container">
+    {% if searchable %}
+    <div class="table-search mb-3">
+        <div class="search-input-container">
+            <input type="text" 
+                   class="form-control-enhanced" 
+                   id="search-{{ table_id }}" 
+                   placeholder="البحث في الجدول..."
+                   aria-label="البحث في الجدول">
+            <i class="fas fa-search search-icon"></i>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="table-responsive">
+        <table class="table-enhanced" id="{{ table_id }}" {% if pagination %}data-pagination="true"{% endif %}>
+            <thead>
+                <tr>
+                    {% for column in columns %}
+                    <th {% if sortable and column.sortable %}class="sortable"{% endif %} 
+                        {% if column.width %}style="width: {{ column.width }}"{% endif %}>
+                        {% if column.icon %}
+                        <i class="{{ column.icon }} me-2"></i>
+                        {% endif %}
+                        {{ column.title }}
+                    </th>
+                    {% endfor %}
+                    {% if actions %}
+                    <th class="text-center" style="width: 120px;">الإجراءات</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in data %}
+                <tr {% if row.css_class %}class="{{ row.css_class }}"{% endif %}>
+                    {% for column in columns %}
+                    <td {% if column.css_class %}class="{{ column.css_class }}"{% endif %}>
+                        {% if column.type == 'badge' %}
+                            <span class="badge badge-{{ row|get_item:column.field|get_badge_class }}">
+                                {{ row|get_item:column.field }}
+                            </span>
+                        {% elif column.type == 'avatar' %}
+                            <div class="d-flex align-items-center">
+                                <img src="{{ row|get_item:column.field|default:'/static/images/default-avatar.png' }}" 
+                                     alt="{{ row|get_item:column.name_field|default:'صورة' }}" 
+                                     class="avatar avatar-sm me-2">
+                                {% if column.name_field %}
+                                <span>{{ row|get_item:column.name_field }}</span>
+                                {% endif %}
+                            </div>
+                        {% elif column.type == 'currency' %}
+                            <span class="text-success fw-semibold">
+                                {{ row|get_item:column.field|floatformat:2 }} ر.س
+                            </span>
+                        {% elif column.type == 'date' %}
+                            <span class="text-muted">
+                                {{ row|get_item:column.field|date:"Y-m-d" }}
+                            </span>
+                        {% elif column.type == 'datetime' %}
+                            <span class="text-muted">
+                                {{ row|get_item:column.field|date:"Y-m-d H:i" }}
+                            </span>
+                        {% elif column.type == 'boolean' %}
+                            {% if row|get_item:column.field %}
+                                <i class="fas fa-check-circle text-success"></i>
+                            {% else %}
+                                <i class="fas fa-times-circle text-danger"></i>
+                            {% endif %}
+                        {% elif column.type == 'progress' %}
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar" 
+                                     role="progressbar" 
+                                     style="width: {{ row|get_item:column.field }}%"
+                                     aria-valuenow="{{ row|get_item:column.field }}" 
+                                     aria-valuemin="0" 
+                                     aria-valuemax="100">
+                                </div>
+                            </div>
+                            <small class="text-muted">{{ row|get_item:column.field }}%</small>
+                        {% elif column.type == 'link' %}
+                            <a href="{{ row|get_item:column.url_field }}" 
+                               class="text-primary text-decoration-none">
+                                {{ row|get_item:column.field }}
+                            </a>
+                        {% else %}
+                            {{ row|get_item:column.field|default:'-' }}
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+                    
+                    {% if actions %}
+                    <td class="text-center">
+                        <div class="table-actions">
+                            {% for action in actions %}
+                                {% if action.type == 'view' %}
+                                <button class="table-action-btn btn-view" 
+                                        title="{{ action.title|default:'عرض' }}"
+                                        onclick="{{ action.onclick|default:'viewItem('|add:row.id|add:')' }}">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                {% elif action.type == 'edit' %}
+                                <button class="table-action-btn btn-edit" 
+                                        title="{{ action.title|default:'تعديل' }}"
+                                        onclick="{{ action.onclick|default:'editItem('|add:row.id|add:')' }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                {% elif action.type == 'delete' %}
+                                <button class="table-action-btn btn-delete" 
+                                        title="{{ action.title|default:'حذف' }}"
+                                        onclick="{{ action.onclick|default:'deleteItem('|add:row.id|add:')' }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                {% elif action.type == 'custom' %}
+                                <button class="table-action-btn {{ action.css_class }}" 
+                                        title="{{ action.title }}"
+                                        onclick="{{ action.onclick }}">
+                                    <i class="{{ action.icon }}"></i>
+                                </button>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="{{ columns|length }}{% if actions %}{{ columns|length|add:1 }}{% endif %}" 
+                        class="text-center text-muted py-4">
+                        <i class="fas fa-inbox fa-2x mb-3 d-block"></i>
+                        لا توجد بيانات للعرض
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% if pagination and data %}
+    <div class="table-pagination mt-3 d-flex justify-content-between align-items-center">
+        <div class="pagination-info">
+            <span id="pagination-info-{{ table_id }}">
+                عرض {{ data|length }} عنصر
+            </span>
+        </div>
+        <nav>
+            <ul class="pagination pagination-sm" id="pagination-{{ table_id }}">
+                <!-- Pagination will be generated by JavaScript -->
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.table-container .search-input-container {
+    position: relative;
+    max-width: 300px;
+}
+
+.table-container .search-input-container .search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gray-400);
+    pointer-events: none;
+}
+
+.table-container .form-control-enhanced {
+    padding-left: 40px;
+}
+
+.table-container .progress {
+    min-width: 80px;
+}
+
+.table-container .avatar {
+    flex-shrink: 0;
+}
+</style>

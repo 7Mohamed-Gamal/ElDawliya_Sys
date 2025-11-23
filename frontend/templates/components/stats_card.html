@@ -1,0 +1,56 @@
+{% comment %}
+Stats Card Component
+مكون بطاقة الإحصائيات
+
+Usage:
+{% include 'components/stats_card.html' with title="إجمالي الموظفين" value=1234 icon="fas fa-users" color="primary" change="+12%" change_type="positive" %}
+{% endcomment %}
+
+<div class="stats-card {% if color %}stats-{{ color }}{% endif %}">
+    <div class="stats-header">
+        <h4 class="stats-title">{{ title }}</h4>
+        <div class="stats-icon {% if color %}stats-{{ color }}{% endif %}">
+            <i class="{{ icon|default:'fas fa-chart-bar' }}"></i>
+        </div>
+    </div>
+    
+    <p class="stats-value">
+        {% if prefix %}{{ prefix }}{% endif %}
+        {% if value_type == 'currency' %}
+            {{ value|floatformat:2 }} ر.س
+        {% elif value_type == 'percentage' %}
+            {{ value }}%
+        {% else %}
+            {{ value|default:0 }}
+        {% endif %}
+        {% if suffix %}{{ suffix }}{% endif %}
+    </p>
+    
+    {% if change %}
+    <div class="stats-change {{ change_type|default:'neutral' }}">
+        {% if change_type == 'positive' %}
+            <i class="fas fa-arrow-up"></i>
+        {% elif change_type == 'negative' %}
+            <i class="fas fa-arrow-down"></i>
+        {% else %}
+            <i class="fas fa-minus"></i>
+        {% endif %}
+        <span>{{ change }} {% if change_period %}{{ change_period }}{% else %}من الشهر الماضي{% endif %}</span>
+    </div>
+    {% endif %}
+    
+    {% if description %}
+    <div class="stats-description">
+        <small class="text-muted">{{ description }}</small>
+    </div>
+    {% endif %}
+    
+    {% if link_url %}
+    <div class="stats-link">
+        <a href="{{ link_url }}" class="btn btn-sm btn-ghost">
+            {{ link_text|default:'عرض التفاصيل' }}
+            <i class="fas fa-arrow-left ms-1"></i>
+        </a>
+    </div>
+    {% endif %}
+</div>
