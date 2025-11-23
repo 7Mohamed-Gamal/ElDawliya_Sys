@@ -242,8 +242,8 @@ class Employee(AuditableModel, AddressModel, ContactModel):
         self.full_clean()
         super().save(*args, **kwargs)
 
-clas
-s EmployeeQualification(BaseModel):
+
+class EmployeeQualification(BaseModel):
     """مؤهلات الموظف"""
     QUALIFICATION_TYPES = [
         ('education', _('تعليمي')),

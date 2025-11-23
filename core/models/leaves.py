@@ -112,8 +112,9 @@ class LeaveType(BaseModel):
             return float(self.accrual_rate) if employee.months_of_service == 0 else 0
         
         return 0
-cl
-ass LeaveBalance(BaseModel):
+
+
+class LeaveBalance(BaseModel):
     """أرصدة الإجازات المحسنة"""
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='leave_balances', verbose_name=_('الموظف'))
     leave_type = models.ForeignKey(LeaveType, on_delete=models.CASCADE, related_name='employee_balances', verbose_name=_('نوع الإجازة'))
