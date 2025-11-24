@@ -3,11 +3,14 @@ from django.urls import reverse
 from django.contrib.auth import get_user_model
 
 class AttendanceViewsTests(TestCase):
+    """AttendanceViewsTests class"""
     def setUp(self):
+        """setUp function"""
         User = get_user_model()
         self.user = User.objects.create_user(username='att_user', password='pass12345', Role='admin')
 
     def test_attendance_dashboard_authenticated(self):
+        """test_attendance_dashboard_authenticated function"""
         self.client.force_login(self.user)
         url = reverse('attendance:dashboard')
         resp = self.client.get(url)

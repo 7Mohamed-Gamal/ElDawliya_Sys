@@ -6,9 +6,11 @@ from employees.models_extended import EmployeeDocumentCategory
 
 
 class Command(BaseCommand):
+    """Command class"""
     help = 'Create default employee document categories'
 
     def handle(self, *args, **options):
+        """handle function"""
         categories = [
             {
                 'category_name': 'عقد العمل',
@@ -101,7 +103,7 @@ class Command(BaseCommand):
                 category_code=category_data['category_code'],
                 defaults=category_data
             )
-            
+
             if created:
                 created_count += 1
                 self.stdout.write(

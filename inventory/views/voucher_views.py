@@ -23,12 +23,14 @@ from inventory.voucher_handlers import VoucherHandler
 @method_decorator(login_required, name='dispatch')
 @inventory_class_permission_required('vouchers', 'view')
 class VoucherListView(ListView):
+    """VoucherListView class"""
     model = Voucher
     template_name = 'inventory/voucher_list.html'
     context_object_name = 'vouchers'
     paginate_by = 10
 
     def get_queryset(self):
+        """get_queryset function"""
         queryset = super().get_queryset()
         search_query = self.request.GET.get('search', '')
         voucher_type = self.request.GET.get('voucher_type', '')
@@ -64,6 +66,7 @@ class VoucherListView(ListView):
         return queryset.order_by('-date', '-created_at')
 
     def get_context_data(self, **kwargs):
+        """get_context_data function"""
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'قائمة الأذونات'
         context['search_query'] = self.request.GET.get('search', '')
@@ -72,14 +75,14 @@ class VoucherListView(ListView):
         context['date_to'] = self.request.GET.get('date_to', '')
 
         # إحصائيات الأذونات
-        context['addition_count'] = Voucher.objects.filter(voucher_type='إذن اضافة').count()
-        context['disbursement_count'] = Voucher.objects.filter(voucher_type='إذن صرف').count()
-        context['client_return_count'] = Voucher.objects.filter(voucher_type='اذن مرتجع عميل').count()
-        context['supplier_return_count'] = Voucher.objects.filter(voucher_type='إذن مرتجع مورد').count()
+        context['addition_count'] = Voucher.objects.filter(voucher_type='إذن اضافة').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+        context['disbursement_count'] = Voucher.objects.filter(voucher_type='إذن صرف').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+        context['client_return_count'] = Voucher.objects.filter(voucher_type='اذن مرتجع عميل').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+        context['supplier_return_count'] = Voucher.objects.filter(voucher_type='إذن مرتجع مورد').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
 
         # Add low stock count for sidebar
         low_stock_count = Product.objects.filter(
-            quantity__lt=F('minimum_threshold'),
+            quantity__lt=F('minimum_threshold').prefetch_related()  # TODO: Add appropriate prefetch_related fields,
             minimum_threshold__gt=0
         ).count()
         context['low_stock_count'] = low_stock_count
@@ -89,12 +92,14 @@ class VoucherListView(ListView):
 @method_decorator(login_required, name='dispatch')
 @inventory_class_permission_required('vouchers', 'add')
 class VoucherCreateView(CreateView):
+    """VoucherCreateView class"""
     model = Voucher
     form_class = VoucherForm
     template_name = 'inventory/voucher_form.html'
     success_url = reverse_lazy('inventory:voucher_list')
 
     def get_form(self, form_class=None):
+        """get_form function"""
         form = super().get_form(form_class)
         # Pre-set voucher type if provided in URL
         voucher_type = self.request.GET.get('type', '')
@@ -104,6 +109,7 @@ class VoucherCreateView(CreateView):
         return form
 
     def get_context_data(self, **kwargs):
+        """get_context_data function"""
         context = super().get_context_data(**kwargs)
         voucher_type = self.request.GET.get('type', 'إذن اضافة')
 
@@ -120,16 +126,16 @@ class VoucherCreateView(CreateView):
             context['page_title'] = 'إضافة إذن جديد'
 
         context['today'] = timezone.now().date().strftime('%Y-%m-%d')
-        context['suppliers'] = Supplier.objects.all().order_by('name')
-        context['departments'] = Department.objects.all().order_by('name')
-        context['customers'] = Customer.objects.all().order_by('name')
-        context['products'] = Product.objects.all().order_by('name')
+        context['suppliers'] = Supplier.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
+        context['departments'] = Department.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
+        context['customers'] = Customer.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
+        context['products'] = Product.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
         context['voucher_type'] = voucher_type
         context['voucher_items'] = []
 
         # Add low stock count for sidebar
         low_stock_count = Product.objects.filter(
-            quantity__lt=F('minimum_threshold'),
+            quantity__lt=F('minimum_threshold').prefetch_related()  # TODO: Add appropriate prefetch_related fields,
             minimum_threshold__gt=0
         ).count()
         context['low_stock_count'] = low_stock_count
@@ -137,6 +143,7 @@ class VoucherCreateView(CreateView):
         return context
 
     def form_valid(self, form):
+        """form_valid function"""
         try:
             # Save the form to create the voucher
             response = super().form_valid(form)
@@ -175,12 +182,14 @@ class VoucherCreateView(CreateView):
 @method_decorator(login_required, name='dispatch')
 @inventory_class_permission_required('vouchers', 'edit')
 class VoucherUpdateView(UpdateView):
+    """VoucherUpdateView class"""
     model = Voucher
     form_class = VoucherForm
     template_name = 'inventory/voucher_form.html'
     success_url = reverse_lazy('inventory:voucher_list')
 
     def get_context_data(self, **kwargs):
+        """get_context_data function"""
         context = super().get_context_data(**kwargs)
         voucher = self.get_object()
 
@@ -197,16 +206,16 @@ class VoucherUpdateView(UpdateView):
             context['page_title'] = 'تعديل إذن'
 
         context['today'] = timezone.now().date().strftime('%Y-%m-%d')
-        context['suppliers'] = Supplier.objects.all().order_by('name')
-        context['departments'] = Department.objects.all().order_by('name')
-        context['customers'] = Customer.objects.all().order_by('name')
-        context['products'] = Product.objects.all().order_by('name')
+        context['suppliers'] = Supplier.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
+        context['departments'] = Department.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
+        context['customers'] = Customer.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
+        context['products'] = Product.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
         context['voucher_type'] = voucher.voucher_type
         context['voucher_items'] = voucher.items.all()
 
         # Add low stock count for sidebar
         low_stock_count = Product.objects.filter(
-            quantity__lt=F('minimum_threshold'),
+            quantity__lt=F('minimum_threshold').prefetch_related()  # TODO: Add appropriate prefetch_related fields,
             minimum_threshold__gt=0
         ).count()
         context['low_stock_count'] = low_stock_count
@@ -214,6 +223,7 @@ class VoucherUpdateView(UpdateView):
         return context
 
     def form_valid(self, form):
+        """form_valid function"""
         try:
             voucher = self.get_object()
             old_items = list(voucher.items.all())
@@ -262,11 +272,13 @@ class VoucherUpdateView(UpdateView):
 @method_decorator(login_required, name='dispatch')
 @inventory_class_permission_required('vouchers', 'delete')
 class VoucherDeleteView(DeleteView):
+    """VoucherDeleteView class"""
     model = Voucher
     template_name = 'inventory/voucher_confirm_delete.html'
     success_url = reverse_lazy('inventory:voucher_list')
 
     def delete(self, request, *args, **kwargs):
+        """delete function"""
         try:
             voucher = self.get_object()
             updated_products = VoucherHandler.handle_voucher_deletion(voucher)
@@ -287,6 +299,7 @@ class VoucherDeleteView(DeleteView):
 @method_decorator(login_required, name='dispatch')
 @inventory_class_permission_required('vouchers', 'view')
 class VoucherDetailView(DetailView):
+    """VoucherDetailView class"""
     model = Voucher
     template_name = 'inventory/voucher_detail.html'
     context_object_name = 'voucher'
@@ -320,6 +333,7 @@ class VoucherDetailView(DetailView):
             raise Http404("لا يوجد إذن بهذا الرقم")
 
     def get_context_data(self, **kwargs):
+        """get_context_data function"""
         context = super().get_context_data(**kwargs)
         voucher = self.object
 
@@ -327,7 +341,7 @@ class VoucherDetailView(DetailView):
 
         # الحصول على عناصر الإذن باستخدام استعلام مباشر
         # استخدام استعلام مباشر بدلاً من العلاقة العكسية
-        voucher_items = VoucherItem.objects.filter(voucher=voucher).select_related('product', 'product__unit')
+        voucher_items = VoucherItem.objects.filter(voucher=voucher).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('product', 'product__unit')
 
         # طباعة عدد العناصر للتشخيص
         print(f"Found {voucher_items.count()} items for voucher {voucher.voucher_number}")
@@ -369,7 +383,7 @@ class VoucherDetailView(DetailView):
 
         # Add low stock count for sidebar
         low_stock_count = Product.objects.filter(
-            quantity__lt=F('minimum_threshold'),
+            quantity__lt=F('minimum_threshold').prefetch_related()  # TODO: Add appropriate prefetch_related fields,
             minimum_threshold__gt=0
         ).count()
         context['low_stock_count'] = low_stock_count
@@ -401,7 +415,7 @@ def generate_voucher_number(request):
     count = Voucher.objects.filter(
         date=today,
         voucher_number__startswith=f"{prefix}-{date_part}"
-    ).count() + 1
+    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count() + 1
 
     # Format with leading zeros for the count (e.g., 001, 002, etc.)
     voucher_number = f"{prefix}-{date_part}-{count:03d}"

@@ -13,6 +13,7 @@ class APIKeyModelTest(TestCase):
     """Test cases for APIKey model"""
 
     def setUp(self):
+        """setUp function"""
         self.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
@@ -46,6 +47,7 @@ class GeminiConversationModelTest(TestCase):
     """Test cases for GeminiConversation model"""
 
     def setUp(self):
+        """setUp function"""
         self.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
@@ -76,6 +78,7 @@ class APIAuthenticationTest(APITestCase):
     """Test cases for API authentication"""
 
     def setUp(self):
+        """setUp function"""
         self.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
@@ -110,6 +113,7 @@ class APIEndpointsTest(APITestCase):
     """Test cases for API endpoints"""
 
     def setUp(self):
+        """setUp function"""
         self.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',
@@ -161,6 +165,7 @@ class GeminiAITest(APITestCase):
     """Test cases for Gemini AI functionality"""
 
     def setUp(self):
+        """setUp function"""
         self.user = User.objects.create_user(
             username='testuser',
             email='test@example.com',

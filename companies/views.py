@@ -42,6 +42,7 @@ def company_list(request):
 
 @login_required
 def company_detail(request, pk):
+    """company_detail function"""
     company = get_object_or_404(Company, pk=pk)
     return render(request, 'companies/company_detail.html', {'company': company})
 
@@ -70,6 +71,7 @@ def company_create(request):
 
 @login_required
 def company_edit(request, pk):
+    """company_edit function"""
     company = get_object_or_404(Company, pk=pk)
     if request.method == 'POST':
         form = CompanyForm(request.POST, instance=company)
@@ -84,6 +86,7 @@ def company_edit(request, pk):
 
 @login_required
 def company_delete(request, pk):
+    """company_delete function"""
     company = get_object_or_404(Company, pk=pk)
     if request.method == 'POST':
         company.delete()

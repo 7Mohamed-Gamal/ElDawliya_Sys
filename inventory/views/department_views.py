@@ -14,11 +14,13 @@ from inventory.forms import DepartmentForm
 @method_decorator(login_required, name='dispatch')
 # @inventory_class_permission_required('departments', 'view')
 class DepartmentListView(ListView):
+    """DepartmentListView class"""
     model = Department
     template_name = 'inventory/department_list.html'
     context_object_name = 'departments'
 
     def get_context_data(self, **kwargs):
+        """get_context_data function"""
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'قائمة الأقسام'
         return context
@@ -26,12 +28,14 @@ class DepartmentListView(ListView):
 @method_decorator(login_required, name='dispatch')
 @inventory_class_permission_required('departments', 'add')
 class DepartmentCreateView(CreateView):
+    """DepartmentCreateView class"""
     model = Department
     form_class = DepartmentForm
     template_name = 'inventory/department_form.html'
     success_url = reverse_lazy('inventory:department_list')
 
     def get_context_data(self, **kwargs):
+        """get_context_data function"""
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'إضافة قسم جديد'
         return context
@@ -39,27 +43,32 @@ class DepartmentCreateView(CreateView):
 @method_decorator(login_required, name='dispatch')
 @inventory_class_permission_required('departments', 'edit')
 class DepartmentUpdateView(UpdateView):
+    """DepartmentUpdateView class"""
     model = Department
     form_class = DepartmentForm
     template_name = 'inventory/department_form.html'
     success_url = reverse_lazy('inventory:department_list')
 
     def get_context_data(self, **kwargs):
+        """get_context_data function"""
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'تعديل القسم'
         return context
 
     def form_valid(self, form):
+        """form_valid function"""
         messages.success(self.request, 'تم تعديل القسم بنجاح')
         return super().form_valid(form)
 
 @method_decorator(login_required, name='dispatch')
 @inventory_class_permission_required('departments', 'delete')
 class DepartmentDeleteView(DeleteView):
+    """DepartmentDeleteView class"""
     model = Department
     template_name = 'inventory/department_confirm_delete.html'
     success_url = reverse_lazy('inventory:department_list')
 
     def delete(self, request, *args, **kwargs):
+        """delete function"""
         messages.success(self.request, 'تم حذف القسم بنجاح')
         return super().delete(request, *args, **kwargs)

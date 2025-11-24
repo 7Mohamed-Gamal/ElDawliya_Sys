@@ -7,6 +7,7 @@ from django.contrib.auth.models import Permission
 # Register custom user model with the custom admin site
 # Removed @admin.register decorator to avoid double registration
 class CustomUserAdmin(UserAdmin):
+    """CustomUserAdmin class"""
     list_display = ['username', 'email', 'first_name', 'last_name', 'is_active', 'Role']
     list_filter = ['Role', 'is_active', 'is_staff', 'is_superuser', 'groups']
     fieldsets = (
@@ -21,6 +22,7 @@ class CustomUserAdmin(UserAdmin):
     filter_horizontal = ['groups', 'user_permissions']
 
     def get_form(self, request, obj=None, **kwargs):
+        """get_form function"""
         form = super().get_form(request, obj, **kwargs)
         is_superuser = request.user.is_superuser
 
@@ -35,16 +37,19 @@ class CustomUserAdmin(UserAdmin):
 
 # Register Permission model to allow managing permissions directly
 class PermissionAdmin(admin.ModelAdmin):
+    """PermissionAdmin class"""
     list_display = ['name', 'content_type', 'codename']
     list_filter = ['content_type']
     search_fields = ['name', 'codename']
     ordering = ['content_type__app_label', 'content_type__model', 'codename']
 
     def has_add_permission(self, request):
+        """has_add_permission function"""
         # Don't allow adding permissions manually - they should be created by Django
         return False
 
     def has_delete_permission(self, request, obj=None):
+        """has_delete_permission function"""
         # Don't allow deleting permissions - they should be managed by Django
         return False
 

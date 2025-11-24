@@ -74,7 +74,7 @@ def search_products_api(request):
             stock_status = data.get('stock_status', '').strip()
 
             # بناء الاستعلام الأساسي
-            query = Product.objects.all()
+            query = Product.objects.all().select_related()  # TODO: Add appropriate select_related fields
 
             # تطبيق فلتر البحث بالنص إذا تم توفيره
             if search_term:
@@ -127,7 +127,7 @@ def get_categories_api(request):
     """
     try:
         # جلب جميع التصنيفات مرتبة حسب الاسم
-        categories = Category.objects.all().order_by('name')
+        categories = Category.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
 
         # تحويل النتائج إلى قائمة
         categories_list = []
@@ -151,7 +151,7 @@ def get_units_api(request):
     """
     try:
         # جلب جميع وحدات القياس مرتبة حسب الاسم
-        units = Unit.objects.all().order_by('name')
+        units = Unit.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
 
         # تحويل النتائج إلى قائمة
         units_list = []

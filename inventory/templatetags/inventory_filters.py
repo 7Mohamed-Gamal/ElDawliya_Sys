@@ -10,7 +10,7 @@ register = template.Library()
 def multiply(value, arg):
     """
     Multiplies the value by the argument
-    
+
     Usage:
     {% load inventory_filters %}
     {{ item.price|multiply:item.quantity }}

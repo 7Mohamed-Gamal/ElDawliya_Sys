@@ -26,6 +26,7 @@ class EmployeeHealthInsuranceForm(forms.ModelForm):
     """نموذج التأمين الصحي للموظف"""
 
     class Meta:
+        """Meta class"""
         model = ExtendedEmployeeHealthInsurance
         fields = [
             'provider', 'insurance_status', 'insurance_type', 'insurance_number',
@@ -50,9 +51,10 @@ class EmployeeHealthInsuranceForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         super().__init__(*args, **kwargs)
-        self.fields['provider'].queryset = ExtendedHealthInsuranceProvider.objects.filter(is_active=True)
-        
+        self.fields['provider'].queryset = ExtendedHealthInsuranceProvider.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+
         # Add required field indicators
         for field_name, field in self.fields.items():
             if field.required:
@@ -61,13 +63,14 @@ class EmployeeHealthInsuranceForm(forms.ModelForm):
                     field.widget.attrs['class'] += ' required'
 
     def clean(self):
+        """clean function"""
         cleaned_data = super().clean()
         start_date = cleaned_data.get('start_date')
         expiry_date = cleaned_data.get('expiry_date')
-        
+
         if start_date and expiry_date and start_date >= expiry_date:
             raise ValidationError('تاريخ الانتهاء يجب أن يكون بعد تاريخ البداية')
-        
+
         return cleaned_data
 
 
@@ -75,6 +78,7 @@ class EmployeeSocialInsuranceForm(forms.ModelForm):
     """نموذج التأمينات الاجتماعية للموظف"""
 
     class Meta:
+        """Meta class"""
         model = ExtendedEmployeeSocialInsurance
         fields = [
             'insurance_status', 'start_date', 'subscription_confirmed',
@@ -99,9 +103,10 @@ class EmployeeSocialInsuranceForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         super().__init__(*args, **kwargs)
         # Set queryset for job_title to only active titles
-        self.fields['job_title'].queryset = SocialInsuranceJobTitle.objects.filter(is_active=True)
+        self.fields['job_title'].queryset = SocialInsuranceJobTitle.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
 
         # Add labels
         self.fields['insurance_status'].label = 'حالة التأمين'
@@ -124,6 +129,7 @@ class EmployeeSocialInsuranceForm(forms.ModelForm):
         self.fields['company_contribution'].help_text = 'يتم حسابه تلقائياً بناءً على المسمى الوظيفي'
 
     def clean(self):
+        """clean function"""
         cleaned_data = super().clean()
         monthly_wage = cleaned_data.get('monthly_wage')
         deduction_percentage = cleaned_data.get('deduction_percentage')
@@ -150,6 +156,7 @@ class EmployeeDocumentForm(forms.ModelForm):
     """نموذج وثائق الموظف"""
 
     class Meta:
+        """Meta class"""
         model = ExtendedEmployeeDocument
         fields = [
             'category', 'document_name', 'document_file', 'document_date',
@@ -165,10 +172,11 @@ class EmployeeDocumentForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         super().__init__(*args, **kwargs)
         # Set queryset for category to only active categories
         from .models_extended import EmployeeDocumentCategory
-        self.fields['category'].queryset = EmployeeDocumentCategory.objects.filter(is_active=True)
+        self.fields['category'].queryset = EmployeeDocumentCategory.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
 
         # Add labels
         self.fields['category'].label = 'فئة الوثيقة'
@@ -183,6 +191,7 @@ class EmployeeDocumentForm(forms.ModelForm):
         self.fields['expiry_date'].help_text = 'اختياري - للوثائق التي لها تاريخ انتهاء صلاحية'
 
     def clean_document_file(self):
+        """clean_document_file function"""
         document_file = self.cleaned_data.get('document_file')
         category = self.cleaned_data.get('category')
 
@@ -205,6 +214,7 @@ class EmployeeDocumentCategoryForm(forms.ModelForm):
     """نموذج فئات وثائق الموظف"""
 
     class Meta:
+        """Meta class"""
         model = EmployeeDocumentCategory
         fields = [
             'category_name', 'category_code', 'description', 'is_required',
@@ -222,6 +232,7 @@ class EmployeeDocumentCategoryForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         super().__init__(*args, **kwargs)
 
         # Add labels
@@ -242,8 +253,9 @@ class EmployeeDocumentCategoryForm(forms.ModelForm):
 
 class SalaryComponentForm(forms.ModelForm):
     """نموذج مكون الراتب"""
-    
+
     class Meta:
+        """Meta class"""
         model = SalaryComponent
         fields = [
             'component_name', 'component_code', 'component_type',
@@ -264,8 +276,9 @@ class SalaryComponentForm(forms.ModelForm):
 
 class EmployeeSalaryComponentForm(forms.ModelForm):
     """نموذج مكونات راتب الموظف"""
-    
+
     class Meta:
+        """Meta class"""
         model = EmployeeSalaryComponent
         fields = [
             'component', 'amount', 'percentage', 'effective_date',
@@ -282,14 +295,16 @@ class EmployeeSalaryComponentForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         super().__init__(*args, **kwargs)
-        self.fields['component'].queryset = SalaryComponent.objects.filter(is_active=True)
+        self.fields['component'].queryset = SalaryComponent.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
 
 
 class EmployeeTransportForm(forms.ModelForm):
     """نموذج نقل الموظف"""
-    
+
     class Meta:
+        """Meta class"""
         model = EmployeeTransport
         fields = [
             'vehicle', 'pickup_point', 'pickup_time', 'effective_date',
@@ -306,10 +321,11 @@ class EmployeeTransportForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         super().__init__(*args, **kwargs)
-        self.fields['vehicle'].queryset = Vehicle.objects.filter(vehicle_status='active')
-        self.fields['pickup_point'].queryset = PickupPoint.objects.filter(is_active=True)
-        
+        self.fields['vehicle'].queryset = Vehicle.objects.filter(vehicle_status='active').prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        self.fields['pickup_point'].queryset = PickupPoint.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+
         # Add vehicle details display
         self.fields['supervisor_name'] = forms.CharField(
             widget=forms.TextInput(attrs={'class': 'form-control', 'readonly': True}),
@@ -333,23 +349,25 @@ class EmployeeTransportForm(forms.ModelForm):
         )
 
     def clean(self):
+        """clean function"""
         cleaned_data = super().clean()
         vehicle = cleaned_data.get('vehicle')
-        
+
         if vehicle:
             # Auto-populate vehicle details
             cleaned_data['supervisor_name'] = vehicle.supervisor_name
             cleaned_data['supervisor_phone'] = vehicle.supervisor_phone
             cleaned_data['driver_name'] = vehicle.driver_name
             cleaned_data['driver_phone'] = vehicle.driver_phone
-        
+
         return cleaned_data
 
 
 class EmployeePerformanceEvaluationForm(forms.ModelForm):
     """نموذج تقييم أداء الموظف"""
-    
+
     class Meta:
+        """Meta class"""
         model = EmployeePerformanceEvaluation
         fields = [
             'evaluator', 'evaluation_period_start', 'evaluation_period_end',
@@ -370,14 +388,16 @@ class EmployeePerformanceEvaluationForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         super().__init__(*args, **kwargs)
-        self.fields['evaluator'].queryset = Employee.objects.filter(is_active=True)
+        self.fields['evaluator'].queryset = Employee.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
 
 
 class EmployeeWorkSetupForm(forms.ModelForm):
     """نموذج إعدادات عمل الموظف"""
-    
+
     class Meta:
+        """Meta class"""
         model = EmployeeWorkSetup
         fields = [
             'work_schedule', 'effective_date', 'end_date', 'overtime_rate',
@@ -395,8 +415,9 @@ class EmployeeWorkSetupForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         super().__init__(*args, **kwargs)
-        self.fields['work_schedule'].queryset = WorkSchedule.objects.filter(is_active=True)
+        self.fields['work_schedule'].queryset = WorkSchedule.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
 
 
 # =============================================================================
@@ -407,6 +428,7 @@ class HealthInsuranceProviderForm(forms.ModelForm):
     """نموذج مقدم خدمة التأمين الصحي"""
 
     class Meta:
+        """Meta class"""
         model = ExtendedHealthInsuranceProvider
         fields = [
             'provider_name', 'provider_code', 'contact_person',
@@ -425,8 +447,9 @@ class HealthInsuranceProviderForm(forms.ModelForm):
 
 class SocialInsuranceJobTitleForm(forms.ModelForm):
     """نموذج مسمى وظيفة في التأمينات الاجتماعية"""
-    
+
     class Meta:
+        """Meta class"""
         model = SocialInsuranceJobTitle
         fields = [
             'job_code', 'job_title', 'insurable_wage_amount',
@@ -446,6 +469,7 @@ class VehicleForm(forms.ModelForm):
     """نموذج المركبة"""
 
     class Meta:
+        """Meta class"""
         model = Vehicle
         fields = [
             'vehicle_number', 'vehicle_model', 'vehicle_year', 'capacity',
@@ -475,6 +499,7 @@ class PickupPointForm(forms.ModelForm):
     """نموذج نقطة التجميع"""
 
     class Meta:
+        """Meta class"""
         model = PickupPoint
         fields = [
             'point_name', 'point_code', 'address', 'latitude',
@@ -495,6 +520,7 @@ class WorkScheduleForm(forms.ModelForm):
     """نموذج جدول العمل"""
 
     class Meta:
+        """Meta class"""
         model = WorkSchedule
         fields = [
             'schedule_name', 'schedule_code', 'daily_hours', 'weekly_hours',
@@ -520,6 +546,7 @@ class EvaluationCriteriaForm(forms.ModelForm):
     """نموذج معيار التقييم"""
 
     class Meta:
+        """Meta class"""
         model = EvaluationCriteria
         fields = [
             'criteria_name', 'criteria_code', 'description', 'max_score',

@@ -102,10 +102,12 @@ class SystemSettings(models.Model):
     last_modified = models.DateTimeField(auto_now=True, verbose_name=_('آخر تحديث'))
 
     class Meta:
+        """Meta class"""
         verbose_name = _('إعدادات النظام')
         verbose_name_plural = _('إعدادات النظام')
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.system_name} ({self.company_name})"
 
 class Department(models.Model):
@@ -120,11 +122,13 @@ class Department(models.Model):
     groups = models.ManyToManyField(Group, blank=True, related_name='allowed_departments', verbose_name=_('المجموعات المسموح لها'))
 
     class Meta:
+        """Meta class"""
         verbose_name = _('القسم')
         verbose_name_plural = _('الأقسام')
         ordering = ['order']
 
     def __str__(self):
+        """__str__ function"""
         return self.name
 
 class Module(models.Model):
@@ -141,9 +145,11 @@ class Module(models.Model):
     groups = models.ManyToManyField(Group, blank=True, related_name='allowed_modules', verbose_name=_('المجموعات المسموح لها'))
 
     class Meta:
+        """Meta class"""
         verbose_name = _('الوحدة')
         verbose_name_plural = _('الوحدات')
         ordering = ['department__order', 'order']
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.department.name} - {self.name}"

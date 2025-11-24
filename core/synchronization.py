@@ -25,6 +25,7 @@ Employee = get_user_model()  # Placeholder
 class Department:
     """Temporary placeholder class"""
     def __init__(self):
+        """__init__ function"""
         self.id = 0
         self.dept_name = ""
 from tasks.models import Task
@@ -40,11 +41,12 @@ class SynchronizationService:
     Service for handling real-time data synchronization
     خدمة التعامل مع المزامنة الفورية للبيانات
     """
-    
+
     def __init__(self):
+        """__init__ function"""
         self.sync_log = []
         self.cache_timeout = 300
-    
+
     def sync_employee_data(self, employee: Employee, action: str):
         """
         Synchronize employee data across all modules
@@ -56,13 +58,13 @@ class SynchronizationService:
                 if hasattr(employee, 'user') and employee.user:
                     if action == 'update':
                         # Update task assignments if employee department changed
-                        Task.objects.filter(assigned_to=employee.user).update(
+                        Task.objects.filter(assigned_to=employee.user).prefetch_related()  # TODO: Add appropriate prefetch_related fields.update(
                             updated_at=timezone.now()
                         )
-                    
+
                     elif action == 'delete':
                         # Reassign tasks to department manager or mark as unassigned
-                        tasks_to_reassign = Task.objects.filter(assigned_to=employee.user)
+                        tasks_to_reassign = Task.objects.filter(assigned_to=employee.user).prefetch_related()  # TODO: Add appropriate prefetch_related fields
                         if employee.department and employee.department.manager:
                             if hasattr(employee.department.manager, 'user'):
                                 tasks_to_reassign.update(
@@ -74,26 +76,26 @@ class SynchronizationService:
                                 assigned_to=None,
                                 updated_at=timezone.now()
                             )
-                
+
                 # Update meeting attendances
                 if action == 'delete':
                     # Remove from future meetings
                     future_meetings = Meeting.objects.filter(
-                        date_time__gte=timezone.now(),
+                        date_time__gte=timezone.now().prefetch_related()  # TODO: Add appropriate prefetch_related fields,
                         attendee__employee=employee
                     )
                     for meeting in future_meetings:
                         meeting.attendee_set.filter(employee=employee).delete()
-                
+
                 # Invalidate related caches
                 self._invalidate_employee_caches(employee)
-                
+
                 # Log the synchronization
                 self._log_sync_action('employee', employee.emp_id, action)
-                
+
         except Exception as e:
             logger.error(f"Error synchronizing employee data: {e}")
-    
+
     def sync_department_data(self, department: Department, action: str):
         """
         Synchronize department data across modules
@@ -104,22 +106,22 @@ class SynchronizationService:
                 if action == 'update':
                     # Update all employees in department
                     department.employees.update(updated_at=timezone.now())
-                    
+
                 elif action == 'delete':
                     # Move employees to default department or mark as unassigned
-                    default_dept = Department.objects.filter(dept_name='عام').first()
+                    default_dept = Department.objects.filter(dept_name='عام').prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
                     if default_dept:
                         department.employees.update(department=default_dept)
-                
+
                 # Invalidate related caches
                 self._invalidate_department_caches(department)
-                
+
                 # Log the synchronization
                 self._log_sync_action('department', department.id, action)
-                
+
         except Exception as e:
             logger.error(f"Error synchronizing department data: {e}")
-    
+
     def sync_task_data(self, task: Task, action: str):
         """
         Synchronize task data across modules
@@ -130,22 +132,22 @@ class SynchronizationService:
                 if action in ['create', 'update']:
                     # Update related employee task counts
                     if task.assigned_to:
-                        employee = Employee.objects.filter(user=task.assigned_to).first()
+                        employee = Employee.objects.filter(user=task.assigned_to).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
                         if employee:
                             self._invalidate_employee_caches(employee)
-                
+
                 # Invalidate task-related caches
                 cache.delete_many([
                     f"user_tasks_{task.assigned_to.id}" if task.assigned_to else None,
                     f"task_statistics_{task.assigned_to.id}" if task.assigned_to else None
                 ])
-                
+
                 # Log the synchronization
                 self._log_sync_action('task', task.id, action)
-                
+
         except Exception as e:
             logger.error(f"Error synchronizing task data: {e}")
-    
+
     def sync_meeting_data(self, meeting: Meeting, action: str):
         """
         Synchronize meeting data across modules
@@ -158,23 +160,23 @@ class SynchronizationService:
                     for attendee in meeting.attendee_set.all():
                         if attendee.employee:
                             self._invalidate_employee_caches(attendee.employee)
-                
+
                 elif action == 'delete':
                     # Clean up related meeting tasks
-                    MeetingTask.objects.filter(meeting=meeting).delete()
-                
+                    MeetingTask.objects.filter(meeting=meeting).prefetch_related()  # TODO: Add appropriate prefetch_related fields.delete()
+
                 # Invalidate meeting-related caches
                 cache.delete_many([
                     f"meeting_attendees_{meeting.id}",
                     f"upcoming_meetings"
                 ])
-                
+
                 # Log the synchronization
                 self._log_sync_action('meeting', meeting.id, action)
-                
+
         except Exception as e:
             logger.error(f"Error synchronizing meeting data: {e}")
-    
+
     def sync_inventory_data(self, product: TblProducts, action: str):
         """
         Synchronize inventory data across modules
@@ -186,25 +188,25 @@ class SynchronizationService:
                     # Update related purchase requests
                     related_requests = PurchaseRequest.objects.filter(
                         purchaserequestitem__product=product
-                    ).distinct()
-                    
+                    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.distinct()
+
                     for request in related_requests:
                         request.updated_at = timezone.now()
                         request.save()
-                
+
                 # Invalidate inventory-related caches
                 cache.delete_many([
                     f"product_details_{product.product_id}",
                     "inventory_summary",
                     "low_stock_products"
                 ])
-                
+
                 # Log the synchronization
                 self._log_sync_action('inventory', product.product_id, action)
-                
+
         except Exception as e:
             logger.error(f"Error synchronizing inventory data: {e}")
-    
+
     def _invalidate_employee_caches(self, employee: Employee):
         """Invalidate all caches related to an employee"""
         cache_keys = [
@@ -212,12 +214,12 @@ class SynchronizationService:
             f"employee_tasks_unified_{employee.emp_id}",
             f"employee_analytics_{employee.emp_id}"
         ]
-        
+
         if employee.department:
             cache_keys.append(f"department_analytics_{employee.department.id}")
-        
+
         cache.delete_many(cache_keys)
-    
+
     def _invalidate_department_caches(self, department: Department):
         """Invalidate all caches related to a department"""
         cache_keys = [
@@ -226,7 +228,7 @@ class SynchronizationService:
             "department_summary"
         ]
         cache.delete_many(cache_keys)
-    
+
     def _log_sync_action(self, entity_type: str, entity_id: Any, action: str):
         """Log synchronization action for debugging"""
         log_entry = {
@@ -235,19 +237,19 @@ class SynchronizationService:
             'entity_id': str(entity_id),
             'action': action
         }
-        
+
         self.sync_log.append(log_entry)
-        
+
         # Keep only last 100 entries
         if len(self.sync_log) > 100:
             self.sync_log = self.sync_log[-100:]
-        
+
         logger.info(f"Sync: {entity_type} {entity_id} - {action}")
-    
+
     def get_sync_log(self) -> List[Dict]:
         """Get recent synchronization log"""
         return self.sync_log.copy()
-    
+
     def clear_sync_log(self):
         """Clear synchronization log"""
         self.sync_log.clear()

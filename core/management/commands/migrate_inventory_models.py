@@ -12,9 +12,11 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
+    """Command class"""
     help = 'ترحيل نماذج المخزون والمشتريات إلى الهيكل الجديد الموحد'
 
     def add_arguments(self, parser):
+        """add_arguments function"""
         parser.add_argument(
             '--dry-run',
             action='store_true',
@@ -27,14 +29,15 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        """handle function"""
         self.dry_run = options['dry_run']
         self.verbose = options['verbose']
-        
+
         if self.dry_run:
             self.stdout.write(
                 self.style.WARNING('تشغيل تجريبي - لن يتم حفظ أي تغييرات')
             )
-        
+
         try:
             with transaction.atomic():
                 self.migrate_categories()
@@ -43,10 +46,10 @@ class Command(BaseCommand):
                 self.migrate_warehouses()
                 self.migrate_products()
                 self.migrate_purchase_orders()
-                
+
                 if self.dry_run:
                     raise Exception("Dry run - rolling back changes")
-                    
+
         except Exception as e:
             if "Dry run" in str(e):
                 self.stdout.write(
@@ -65,14 +68,14 @@ class Command(BaseCommand):
     def migrate_categories(self):
         """ترحيل تصنيفات المنتجات"""
         self.stdout.write('ترحيل تصنيفات المنتجات...')
-        
+
         try:
             from inventory.models import TblCategories
             from core.models.inventory import ProductCategory
-            
+
             categories_migrated = 0
-            
-            for old_category in TblCategories.objects.all():
+
+            for old_category in TblCategories.objects.all().select_related()  # TODO: Add appropriate select_related fields:
                 category, created = ProductCategory.objects.get_or_create(
                     code=f"CAT-{old_category.cat_id:04d}",
                     defaults={
@@ -82,16 +85,16 @@ class Command(BaseCommand):
                         'is_active': True,
                     }
                 )
-                
+
                 if created:
                     categories_migrated += 1
                     if self.verbose:
                         self.stdout.write(f'  - تم إنشاء تصنيف: {category.name}')
-            
+
             self.stdout.write(
                 self.style.SUCCESS(f'تم ترحيل {categories_migrated} تصنيف')
             )
-            
+
         except ImportError:
             self.stdout.write(
                 self.style.WARNING('لم يتم العثور على نماذج التصنيفات القديمة')
@@ -100,14 +103,14 @@ class Command(BaseCommand):
     def migrate_units(self):
         """ترحيل وحدات القياس"""
         self.stdout.write('ترحيل وحدات القياس...')
-        
+
         try:
             from inventory.models import TblUnitsSpareparts
             from core.models.inventory import Unit
-            
+
             units_migrated = 0
-            
-            for old_unit in TblUnitsSpareparts.objects.all():
+
+            for old_unit in TblUnitsSpareparts.objects.all().select_related()  # TODO: Add appropriate select_related fields:
                 unit, created = Unit.objects.get_or_create(
                     symbol=f"U{old_unit.unit_id:03d}",
                     defaults={
@@ -118,16 +121,16 @@ class Command(BaseCommand):
                         'is_active': True,
                     }
                 )
-                
+
                 if created:
                     units_migrated += 1
                     if self.verbose:
                         self.stdout.write(f'  - تم إنشاء وحدة: {unit.name}')
-            
+
             self.stdout.write(
                 self.style.SUCCESS(f'تم ترحيل {units_migrated} وحدة قياس')
             )
-            
+
         except ImportError:
             self.stdout.write(
                 self.style.WARNING('لم يتم العثور على نماذج الوحدات القديمة')
@@ -136,16 +139,16 @@ class Command(BaseCommand):
     def migrate_suppliers(self):
         """ترحيل الموردين"""
         self.stdout.write('ترحيل الموردين...')
-        
+
         try:
             from inventory.models import TblSuppliers
             from Purchase_orders.models import Vendor
             from core.models.inventory import Supplier
-            
+
             suppliers_migrated = 0
-            
+
             # ترحيل من TblSuppliers
-            for old_supplier in TblSuppliers.objects.all():
+            for old_supplier in TblSuppliers.objects.all().select_related()  # TODO: Add appropriate select_related fields:
                 supplier, created = Supplier.objects.get_or_create(
                     code=f"SUP-{old_supplier.supplier_id:04d}",
                     defaults={
@@ -157,14 +160,14 @@ class Command(BaseCommand):
                         'is_active': True,
                     }
                 )
-                
+
                 if created:
                     suppliers_migrated += 1
                     if self.verbose:
                         self.stdout.write(f'  - تم إنشاء مورد: {supplier.name}')
-            
+
             # ترحيل من Vendor
-            for old_vendor in Vendor.objects.all():
+            for old_vendor in Vendor.objects.all().select_related()  # TODO: Add appropriate select_related fields:
                 supplier, created = Supplier.objects.get_or_create(
                     name=old_vendor.name,
                     defaults={
@@ -180,16 +183,16 @@ class Command(BaseCommand):
                         'is_active': True,
                     }
                 )
-                
+
                 if created:
                     suppliers_migrated += 1
                     if self.verbose:
                         self.stdout.write(f'  - تم إنشاء مورد: {supplier.name}')
-            
+
             self.stdout.write(
                 self.style.SUCCESS(f'تم ترحيل {suppliers_migrated} مورد')
             )
-            
+
         except ImportError:
             self.stdout.write(
                 self.style.WARNING('لم يتم العثور على نماذج الموردين القديمة')
@@ -198,9 +201,9 @@ class Command(BaseCommand):
     def migrate_warehouses(self):
         """إنشاء مخزن افتراضي"""
         self.stdout.write('إنشاء المخازن الافتراضية...')
-        
+
         from core.models.inventory import Warehouse
-        
+
         # إنشاء مخزن رئيسي افتراضي
         main_warehouse, created = Warehouse.objects.get_or_create(
             code='MAIN-001',
@@ -212,10 +215,10 @@ class Command(BaseCommand):
                 'is_active': True,
             }
         )
-        
+
         if created:
             self.stdout.write(f'  - تم إنشاء المخزن الرئيسي: {main_warehouse.name}')
-        
+
         self.stdout.write(
             self.style.SUCCESS('تم إنشاء المخازن الافتراضية')
         )
@@ -223,23 +226,23 @@ class Command(BaseCommand):
     def migrate_products(self):
         """ترحيل المنتجات"""
         self.stdout.write('ترحيل المنتجات...')
-        
+
         try:
             from inventory.models import TblProducts
             from core.models.inventory import Product, ProductCategory, Unit, Warehouse, StockLevel
-            
+
             products_migrated = 0
-            main_warehouse = Warehouse.objects.filter(is_main_warehouse=True).first()
+            main_warehouse = Warehouse.objects.filter(is_main_warehouse=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
             default_category = ProductCategory.objects.first()
             default_unit = Unit.objects.first()
-            
+
             if not main_warehouse or not default_category or not default_unit:
                 self.stdout.write(
                     self.style.ERROR('يجب إنشاء المخازن والتصنيفات والوحدات أولاً')
                 )
                 return
-            
-            for old_product in TblProducts.objects.all():
+
+            for old_product in TblProducts.objects.all().select_related()  # TODO: Add appropriate select_related fields:
                 # البحث عن التصنيف المناسب
                 category = default_category
                 if old_product.cat_id:
@@ -249,7 +252,7 @@ class Command(BaseCommand):
                         )
                     except ProductCategory.DoesNotExist:
                         pass
-                
+
                 # البحث عن الوحدة المناسبة
                 unit = default_unit
                 if old_product.unit_id:
@@ -259,7 +262,7 @@ class Command(BaseCommand):
                         )
                     except Unit.DoesNotExist:
                         pass
-                
+
                 product, created = Product.objects.get_or_create(
                     code=old_product.product_id,
                     defaults={
@@ -275,10 +278,10 @@ class Command(BaseCommand):
                         'is_active': True,
                     }
                 )
-                
+
                 if created:
                     products_migrated += 1
-                    
+
                     # إنشاء مستوى المخزون
                     stock_level, stock_created = StockLevel.objects.get_or_create(
                         product=product,
@@ -290,14 +293,14 @@ class Command(BaseCommand):
                             'average_cost': old_product.unit_price or Decimal('0'),
                         }
                     )
-                    
+
                     if self.verbose:
                         self.stdout.write(f'  - تم إنشاء منتج: {product.name}')
-            
+
             self.stdout.write(
                 self.style.SUCCESS(f'تم ترحيل {products_migrated} منتج')
             )
-            
+
         except ImportError:
             self.stdout.write(
                 self.style.WARNING('لم يتم العثور على نماذج المنتجات القديمة')
@@ -306,23 +309,23 @@ class Command(BaseCommand):
     def migrate_purchase_orders(self):
         """ترحيل أوامر الشراء"""
         self.stdout.write('ترحيل أوامر الشراء...')
-        
+
         try:
             from Purchase_orders.models import PurchaseRequest as OldPurchaseRequest
             from Purchase_orders.models import PurchaseRequestItem as OldPurchaseRequestItem
             from core.models.procurement import PurchaseRequest, PurchaseRequestLineItem
             from core.models.inventory import Product, Supplier, Warehouse
-            
+
             requests_migrated = 0
-            main_warehouse = Warehouse.objects.filter(is_main_warehouse=True).first()
-            
+            main_warehouse = Warehouse.objects.filter(is_main_warehouse=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+
             if not main_warehouse:
                 self.stdout.write(
                     self.style.ERROR('يجب إنشاء المخازن أولاً')
                 )
                 return
-            
-            for old_request in OldPurchaseRequest.objects.all():
+
+            for old_request in OldPurchaseRequest.objects.all().select_related()  # TODO: Add appropriate select_related fields:
                 # البحث عن المورد
                 supplier = None
                 if old_request.vendor:
@@ -330,7 +333,7 @@ class Command(BaseCommand):
                         supplier = Supplier.objects.get(name=old_request.vendor.name)
                     except Supplier.DoesNotExist:
                         pass
-                
+
                 purchase_request, created = PurchaseRequest.objects.get_or_create(
                     pr_number=old_request.request_number,
                     defaults={
@@ -343,15 +346,15 @@ class Command(BaseCommand):
                         'approved_at': old_request.approval_date,
                     }
                 )
-                
+
                 if created:
                     requests_migrated += 1
-                    
+
                     # ترحيل عناصر الطلب
                     for old_item in old_request.items.all():
                         try:
                             product = Product.objects.get(code=old_item.product.product_id)
-                            
+
                             PurchaseRequestLineItem.objects.get_or_create(
                                 purchase_request=purchase_request,
                                 product=product,
@@ -372,14 +375,14 @@ class Command(BaseCommand):
                                     'specifications': old_item.notes or '',
                                 }
                             )
-                    
+
                     if self.verbose:
                         self.stdout.write(f'  - تم إنشاء طلب شراء: {purchase_request.pr_number}')
-            
+
             self.stdout.write(
                 self.style.SUCCESS(f'تم ترحيل {requests_migrated} طلب شراء')
             )
-            
+
         except ImportError:
             self.stdout.write(
                 self.style.WARNING('لم يتم العثور على نماذج طلبات الشراء القديمة')

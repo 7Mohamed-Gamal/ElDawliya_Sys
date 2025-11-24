@@ -99,7 +99,7 @@ class APIKeyViewSet(APIUsageLogMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Return API keys for the current user"""
-        return APIKey.objects.filter(user=self.request.user)
+        return APIKey.objects.filter(user=self.request.user).prefetch_related()  # TODO: Add appropriate prefetch_related fields
 
     def perform_create(self, serializer):
         """Create API key for the current user"""
@@ -118,9 +118,9 @@ class UserViewSet(APIUsageLogMixin, viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         """Return users based on permissions"""
         if self.request.user.is_staff:
-            return User.objects.all()
+            return User.objects.all().select_related()  # TODO: Add appropriate select_related fields
         else:
-            return User.objects.filter(id=self.request.user.id)
+            return User.objects.filter(id=self.request.user.id).prefetch_related()  # TODO: Add appropriate prefetch_related fields
 
 
 # HR Views - temporarily disabled
@@ -143,7 +143,7 @@ class ProductViewSet(APIUsageLogMixin, viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         """Return products with optional filtering"""
-        queryset = TblProducts.objects.all()
+        queryset = TblProducts.objects.all().select_related()  # TODO: Add appropriate select_related fields
 
         # Filter by category
         category = self.request.query_params.get('category', None)
@@ -166,7 +166,7 @@ class ProductViewSet(APIUsageLogMixin, viewsets.ReadOnlyModelViewSet):
 
 class CategoryViewSet(APIUsageLogMixin, viewsets.ReadOnlyModelViewSet):
     """ViewSet for category data"""
-    queryset = TblCategories.objects.all()
+    queryset = TblCategories.objects.all().select_related()  # TODO: Add appropriate select_related fields
     serializer_class = CategorySerializer
     permission_classes = [IsAuthenticated, HasAPIAccess]
     pagination_class = StandardResultsSetPagination
@@ -183,7 +183,7 @@ class TaskViewSet(APIUsageLogMixin, viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         """Return tasks with optional filtering"""
-        queryset = Task.objects.all()
+        queryset = Task.objects.all().select_related()  # TODO: Add appropriate select_related fields
 
         # Filter by assigned user
         assigned_to = self.request.query_params.get('assigned_to', None)
@@ -213,7 +213,7 @@ class MeetingViewSet(APIUsageLogMixin, viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         """Return meetings with optional filtering"""
-        queryset = Meeting.objects.all()
+        queryset = Meeting.objects.all().select_related()  # TODO: Add appropriate select_related fields
 
         # Filter by organizer
         organizer = self.request.query_params.get('organizer', None)
@@ -238,7 +238,7 @@ class GeminiConversationViewSet(APIUsageLogMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Return conversations for the current user"""
-        return GeminiConversation.objects.filter(user=self.request.user)
+        return GeminiConversation.objects.filter(user=self.request.user).prefetch_related()  # TODO: Add appropriate prefetch_related fields
 
     def perform_create(self, serializer):
         """Create conversation for the current user"""
@@ -366,7 +366,7 @@ def api_usage_stats(request):
     user_logs = APIUsageLog.objects.filter(
         user=request.user,
         timestamp__gte=thirty_days_ago
-    )
+    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
 
     stats = {
         'total_requests': user_logs.count(),

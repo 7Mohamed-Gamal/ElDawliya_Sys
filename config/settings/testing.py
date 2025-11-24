@@ -2,7 +2,8 @@
 Testing settings for ElDawliya System.
 """
 
-from .base import *
+# TODO: Replace wildcard import
+# from .base import specific_items
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -61,10 +62,13 @@ TESTING_MODE = True
 
 # Disable migrations for faster tests
 class DisableMigrations:
+    """DisableMigrations class"""
     def __contains__(self, item):
+        """__contains__ function"""
         return True
-    
+
     def __getitem__(self, item):
+        """__getitem__ function"""
         return None
 
 MIGRATION_MODULES = DisableMigrations()

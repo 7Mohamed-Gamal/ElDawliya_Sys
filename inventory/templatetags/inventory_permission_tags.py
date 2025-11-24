@@ -40,16 +40,16 @@ def has_inventory_module_permission(module_key, permission_type='view'):
     """
     if module_key not in INVENTORY_MODULES:
         return False
-    
+
     # Convertir clave de módulo a nombre de modelo Django
     model_name = INVENTORY_MODULES.get(module_key, module_key)
-    
+
     # Convertir tipo de permiso a formato Django
     django_perm_type = PERMISSION_TYPE_MAP.get(permission_type, permission_type)
-    
+
     # Construir nombre de permiso en formato Django
     permission_name = f'inventory.{django_perm_type}_{model_name}'
-    
+
     # Devolver el nombre del permiso para que se pueda verificar en la plantilla
     return permission_name
 
@@ -64,8 +64,8 @@ def has_inventory_perm(user, permission_name):
     return user.has_perm(permission_name)
 
 @register.simple_tag(takes_context=True)
-def inventory_action_buttons(context, edit_url=None, delete_url=None, print_url=None, back_url=None, 
-                  edit_perm=None, delete_perm=None, print_perm=None, 
+def inventory_action_buttons(context, edit_url=None, delete_url=None, print_url=None, back_url=None,
+                  edit_perm=None, delete_perm=None, print_perm=None,
                   object_id=None, css_class="btn-group"):
     """
     Renderiza un grupo de botones de acción con comprobación de permisos
@@ -74,27 +74,27 @@ def inventory_action_buttons(context, edit_url=None, delete_url=None, print_url=
     user = context.get('user')
     if not user:
         return ""
-        
+
     buttons = []
-    
+
     if back_url:
         buttons.append(f'<a href="{back_url}" class="btn btn-secondary btn-sm">'
                       f'<i class="fas fa-arrow-right"></i> رجوع</a>')
-    
+
     if edit_url and (not edit_perm or user.has_perm(edit_perm)):
         buttons.append(f'<a href="{edit_url}" class="btn btn-primary btn-sm">'
                       f'<i class="fas fa-edit"></i> تعديل</a>')
-    
+
     if delete_url and (not delete_perm or user.has_perm(delete_perm)):
         buttons.append(f'<a href="{delete_url}" class="btn btn-danger btn-sm delete-btn" '
                       f'data-id="{object_id or ""}">'
                       f'<i class="fas fa-trash"></i> حذف</a>')
-    
+
     if print_url and (not print_perm or user.has_perm(print_perm)):
         buttons.append(f'<a href="{print_url}" class="btn btn-info btn-sm" target="_blank">'
                       f'<i class="fas fa-print"></i> طباعة</a>')
-    
+
     if not buttons:
         return ""
-    
+
     return mark_safe(f'<div class="{css_class}">{" ".join(buttons)}</div>')

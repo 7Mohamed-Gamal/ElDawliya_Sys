@@ -112,7 +112,7 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 # Cache Key Prefixes
 CACHE_KEY_PREFIXES = {
     'employee': 'emp',
-    'department': 'dept', 
+    'department': 'dept',
     'attendance': 'att',
     'payroll': 'pay',
     'inventory': 'inv',

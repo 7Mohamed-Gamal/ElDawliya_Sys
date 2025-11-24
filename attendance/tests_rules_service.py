@@ -5,7 +5,9 @@ from attendance.models import AttendanceRules
 
 
 class RulesServiceTests(TestCase):
+    """RulesServiceTests class"""
     def test_create_update_delete_legacy_rule(self):
+        """test_create_update_delete_legacy_rule function"""
         # Force legacy mode
         setattr(settings, 'ATTENDANCE_USE_MODERN_RULES', False)
 

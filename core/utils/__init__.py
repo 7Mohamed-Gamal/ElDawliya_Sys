@@ -1,7 +1,10 @@
 # Core Utilities Package
-from .helpers import *
-from .validators import *
-from .decorators import *
+# TODO: Replace wildcard import
+# from .helpers import specific_items
+# TODO: Replace wildcard import
+# from .validators import specific_items
+# TODO: Replace wildcard import
+# from .decorators import specific_items
 
 __all__ = [
     # Helper functions
@@ -10,12 +13,12 @@ __all__ = [
     'format_phone_number',
     'get_client_ip',
     'send_email_notification',
-    
+
     # Validators
     'validate_saudi_id',
     'validate_phone_number',
     'validate_iban',
-    
+
     # Decorators
     'require_permission',
     'log_action',

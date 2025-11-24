@@ -2,11 +2,13 @@ from django.core.management.base import BaseCommand
 from api.models import AIProvider
 
 class Command(BaseCommand):
+    """Command class"""
     help = 'Sets up default AI providers'
 
     def handle(self, *args, **kwargs):
+        """handle function"""
         # Check if Gemini provider exists
-        gemini_exists = AIProvider.objects.filter(name='gemini').exists()
+        gemini_exists = AIProvider.objects.filter(name='gemini').prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists()
         if not gemini_exists:
             self.stdout.write('Creating Gemini provider...')
             AIProvider.objects.create(
@@ -19,9 +21,9 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS('Successfully created Gemini provider'))
         else:
             self.stdout.write('Gemini provider already exists')
-        
+
         # Check if OpenAI provider exists
-        openai_exists = AIProvider.objects.filter(name='openai').exists()
+        openai_exists = AIProvider.objects.filter(name='openai').prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists()
         if not openai_exists:
             self.stdout.write('Creating OpenAI provider...')
             AIProvider.objects.create(
@@ -34,9 +36,9 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS('Successfully created OpenAI provider'))
         else:
             self.stdout.write('OpenAI provider already exists')
-        
+
         # Display all providers
-        providers = AIProvider.objects.all()
+        providers = AIProvider.objects.all().select_related()  # TODO: Add appropriate select_related fields
         self.stdout.write('\nCurrent AI Providers:')
         for provider in providers:
             self.stdout.write(f'- {provider.name} ({provider.display_name}): {"Active" if provider.is_active else "Inactive"}')

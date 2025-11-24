@@ -42,11 +42,11 @@ def disciplinary_dashboard(request):
     thirty_days_ago = date.today() - timedelta(days=30)
     recent_actions_count = DisciplinaryAction.objects.filter(
         action_date__gte=thirty_days_ago
-    ).count()
+    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
 
     # Active warnings (valid_until in future or null)
     active_warnings = DisciplinaryAction.objects.filter(
-        Q(valid_until__gte=date.today()) | Q(valid_until__isnull=True)
+        Q(valid_until__gte=date.today().prefetch_related()  # TODO: Add appropriate prefetch_related fields) | Q(valid_until__isnull=True)
     ).count()
 
     # Recent disciplinary actions
@@ -136,7 +136,7 @@ def action_detail(request, action_id):
     # Get other actions for the same employee
     employee_actions = DisciplinaryAction.objects.filter(
         emp=action.emp
-    ).exclude(action_id=action_id).order_by('-action_date')[:5]
+    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exclude(action_id=action_id).order_by('-action_date')[:5]
 
     # Check if action is still valid
     is_valid = True
@@ -231,7 +231,7 @@ def employee_history(request, emp_id):
 
     actions = DisciplinaryAction.objects.filter(
         emp=employee
-    ).order_by('-action_date')
+    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('-action_date')
 
     # Statistics
     total_actions = actions.count()
@@ -295,7 +295,7 @@ def reports(request):
     twelve_months_ago = date.today() - timedelta(days=365)
     monthly_actions = DisciplinaryAction.objects.filter(
         action_date__gte=twelve_months_ago
-    ).extra(
+    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.extra(
         select={'month': "MONTH(action_date)", 'year': "YEAR(action_date)"}
     ).values('month', 'year').annotate(
         count=Count('action_id')

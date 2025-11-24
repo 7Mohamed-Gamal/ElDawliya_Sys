@@ -245,24 +245,24 @@ def is_performance_acceptable(metric_name, value, target_type='response_time'):
     elif target_type == 'database':
         target = DATABASE_PERFORMANCE_TARGETS.get(metric_name, 50)
         return value <= target
-    
+
     return True
 
 def get_alert_level(metric_name, value, target_type='response_time'):
     """تحديد مستوى التنبيه بناءً على القيمة"""
     if is_performance_acceptable(metric_name, value, target_type):
         return 'info'
-    
+
     # تحديد مستوى التنبيه بناءً على مدى تجاوز الهدف
     if target_type == 'response_time':
         target = RESPONSE_TIME_TARGETS.get(metric_name, 1000)
         ratio = value / target
-        
+
         if ratio <= 1.2:  # 20% زيادة
             return 'warning'
         elif ratio <= 2.0:  # 100% زيادة
             return 'error'
         else:
             return 'critical'
-    
+
     return 'warning'

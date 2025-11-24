@@ -2,6 +2,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 class Voucher(models.Model):
+    """Voucher class"""
     VOUCHER_TYPES = (
         ('إذن اضافة', 'إذن اضافة'),
         ('إذن صرف', 'إذن صرف'),
@@ -22,17 +23,21 @@ class Voucher(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_("تاريخ التحديث"))
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.voucher_number} - {self.get_voucher_type_display()}"
 
     @property
     def items_count(self):
+        """items_count function"""
         return self.items.count()
 
     class Meta:
+        """Meta class"""
         verbose_name = _("إذن")
         verbose_name_plural = _("الأذونات")
 
 class VoucherItem(models.Model):
+    """VoucherItem class"""
     voucher = models.ForeignKey(Voucher, on_delete=models.CASCADE, related_name="items", verbose_name=_("الإذن"))
     product = models.ForeignKey('Product', on_delete=models.CASCADE, related_name="voucher_items", verbose_name=_("الصنف"))
     quantity_added = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name=_("الكمية المضافة"))
@@ -43,6 +48,7 @@ class VoucherItem(models.Model):
 
     @property
     def total_price(self):
+        """total_price function"""
         if self.quantity_added:
             return self.quantity_added * self.unit_price
         elif self.quantity_disbursed:
@@ -50,8 +56,10 @@ class VoucherItem(models.Model):
         return 0
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.voucher.voucher_number} - {self.product.name}"
 
     class Meta:
+        """Meta class"""
         verbose_name = _("عنصر الإذن")
         verbose_name_plural = _("عناصر الإذن")

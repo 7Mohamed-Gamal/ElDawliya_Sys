@@ -25,11 +25,11 @@ if INVENTORY_PURCHASE_AVAILABLE:
             # Notify purchase managers
             from django.contrib.auth import get_user_model
             User = get_user_model()
-            
+
             purchase_managers = User.objects.filter(
                 groups__name__in=['Purchase Manager', 'مدير المشتريات', 'Inventory Manager', 'مدير المخزون']
-            ).distinct()
-            
+            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.distinct()
+
             for manager in purchase_managers:
                 create_notification(
                     user=manager,
@@ -52,14 +52,14 @@ if INVENTORY_PURCHASE_AVAILABLE:
             # Notify relevant users about status change
             from django.contrib.auth import get_user_model
             User = get_user_model()
-            
+
             status_text = dict(InventoryPurchaseRequest.STATUS_CHOICES).get(instance.status, instance.status)
-            
+
             # Notify inventory managers
             inventory_managers = User.objects.filter(
                 groups__name__in=['Inventory Manager', 'مدير المخزون']
-            ).distinct()
-            
+            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.distinct()
+
             for manager in inventory_managers:
                 create_notification(
                     user=manager,
@@ -83,27 +83,27 @@ if INVENTORY_PURCHASE_AVAILABLE:
             existing_request = InventoryPurchaseRequest.objects.filter(
                 product=instance,
                 status='pending'
-            ).exists()
-            
+            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists()
+
             if not existing_request:
                 # Create automatic purchase request
                 suggested_quantity = instance.maximum_threshold - instance.quantity
-                
+
                 purchase_request = InventoryPurchaseRequest.objects.create(
                     product=instance,
                     quantity=suggested_quantity,
                     status='pending',
                     notes=_('طلب شراء تلقائي - الصنف وصل إلى الحد الأدنى')
                 )
-                
+
                 # Notify purchase managers
                 from django.contrib.auth import get_user_model
                 User = get_user_model()
-                
+
                 purchase_managers = User.objects.filter(
                     groups__name__in=['Purchase Manager', 'مدير المشتريات']
-                ).distinct()
-                
+                ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.distinct()
+
                 for manager in purchase_managers:
                     create_notification(
                         user=manager,

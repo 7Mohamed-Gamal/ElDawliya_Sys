@@ -11,9 +11,11 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
+    """Command class"""
     help = 'Migrate data from old HR models to new unified core models'
-    
+
     def add_arguments(self, parser):
+        """add_arguments function"""
         parser.add_argument(
             '--dry-run',
             action='store_true',
@@ -32,44 +34,45 @@ class Command(BaseCommand):
             default='all',
             help='Specific model to migrate',
         )
-    
+
     def handle(self, *args, **options):
+        """handle function"""
         self.dry_run = options['dry_run']
         self.batch_size = options['batch_size']
         self.model = options['model']
-        
+
         if self.dry_run:
             self.stdout.write(
                 self.style.WARNING('Running in DRY-RUN mode - no changes will be made')
             )
-        
+
         try:
             if self.model == 'all':
                 self.migrate_all_models()
             else:
                 self.migrate_specific_model(self.model)
-                
+
             self.stdout.write(
                 self.style.SUCCESS('Migration completed successfully!')
             )
         except Exception as e:
             logger.error(f"Migration failed: {str(e)}")
             raise CommandError(f'Migration failed: {str(e)}')
-    
+
     def migrate_all_models(self):
         """Migrate all models in the correct order"""
         migration_order = [
             'employees',
-            'salaries', 
+            'salaries',
             'attendance',
             'leaves',
             'evaluations'
         ]
-        
+
         for model_name in migration_order:
             self.stdout.write(f"Migrating {model_name}...")
             self.migrate_specific_model(model_name)
-    
+
     def migrate_specific_model(self, model_name):
         """Migrate a specific model"""
         migration_methods = {
@@ -79,12 +82,12 @@ class Command(BaseCommand):
             'leaves': self.migrate_leaves,
             'evaluations': self.migrate_evaluations,
         }
-        
+
         if model_name in migration_methods:
             migration_methods[model_name]()
         else:
             raise CommandError(f"Unknown model: {model_name}")
-    
+
     def migrate_employees(self):
         """Migrate employee data from old models to new core models"""
         try:
@@ -92,15 +95,15 @@ class Command(BaseCommand):
             from employees.models import Employee as OldEmployee
             from employees.models import EmployeeBankAccount as OldBankAccount
             from employees.models import EmployeeDocument as OldDocument
-            
+
             # Import new models
             from core.models.hr import Employee, EmployeeBankAccount, EmployeeDocument
             from core.models.hr import Department, JobPosition
-            
+
             # Migrate employees
-            old_employees = OldEmployee.objects.all()
+            old_employees = OldEmployee.objects.all().select_related()  # TODO: Add appropriate select_related fields
             migrated_count = 0
-            
+
             for old_emp in old_employees.iterator(chunk_size=self.batch_size):
                 if not self.dry_run:
                     with transaction.atomic():
@@ -112,7 +115,7 @@ class Command(BaseCommand):
                                 'created_at': timezone.now()
                             }
                         )
-                        
+
                         # Create or get job position
                         job_position, _ = JobPosition.objects.get_or_create(
                             title=old_emp.job.job_title if old_emp.job else 'غير محدد',
@@ -122,7 +125,7 @@ class Command(BaseCommand):
                                 'created_at': timezone.now()
                             }
                         )
-                        
+
                         # Create new employee
                         new_emp, created = Employee.objects.get_or_create(
                             emp_code=old_emp.emp_code,
@@ -150,35 +153,35 @@ class Command(BaseCommand):
                                 'updated_at': old_emp.updated_at or timezone.now(),
                             }
                         )
-                        
+
                         if created:
                             migrated_count += 1
-                
+
                 if migrated_count % 50 == 0:
                     self.stdout.write(f"Migrated {migrated_count} employees...")
-            
+
             self.stdout.write(
                 self.style.SUCCESS(f"Successfully migrated {migrated_count} employees")
             )
-            
+
         except Exception as e:
             logger.error(f"Employee migration failed: {str(e)}")
             raise
-    
+
     def migrate_salaries(self):
         """Migrate salary data"""
         try:
             from payrolls.models import EmployeeSalary as OldSalary
             from core.models.hr import EmployeeSalary, Employee
-            
-            old_salaries = OldSalary.objects.all()
+
+            old_salaries = OldSalary.objects.all().select_related()  # TODO: Add appropriate select_related fields
             migrated_count = 0
-            
+
             for old_salary in old_salaries.iterator(chunk_size=self.batch_size):
                 if not self.dry_run:
                     try:
                         employee = Employee.objects.get(emp_code=old_salary.emp.emp_code)
-                        
+
                         new_salary, created = EmployeeSalary.objects.get_or_create(
                             employee=employee,
                             effective_date=old_salary.effective_date or timezone.now().date(),
@@ -194,37 +197,37 @@ class Command(BaseCommand):
                                 'created_at': timezone.now(),
                             }
                         )
-                        
+
                         if created:
                             migrated_count += 1
-                            
+
                     except Employee.DoesNotExist:
                         logger.warning(f"Employee not found for salary: {old_salary.emp.emp_code}")
                         continue
-            
+
             self.stdout.write(
                 self.style.SUCCESS(f"Successfully migrated {migrated_count} salary records")
             )
-            
+
         except Exception as e:
             logger.error(f"Salary migration failed: {str(e)}")
             raise
-    
+
     def migrate_attendance(self):
         """Migrate attendance data"""
         try:
             from attendance.models import EmployeeAttendance as OldAttendance
             from core.models.attendance import AttendanceRecord
             from core.models.hr import Employee
-            
-            old_records = OldAttendance.objects.all()
+
+            old_records = OldAttendance.objects.all().select_related()  # TODO: Add appropriate select_related fields
             migrated_count = 0
-            
+
             for old_record in old_records.iterator(chunk_size=self.batch_size):
                 if not self.dry_run:
                     try:
                         employee = Employee.objects.get(emp_code=old_record.emp.emp_code)
-                        
+
                         new_record, created = AttendanceRecord.objects.get_or_create(
                             employee=employee,
                             attendance_date=old_record.att_date,
@@ -235,22 +238,22 @@ class Command(BaseCommand):
                                 'created_at': timezone.now(),
                             }
                         )
-                        
+
                         if created:
                             migrated_count += 1
-                            
+
                     except Employee.DoesNotExist:
                         logger.warning(f"Employee not found for attendance: {old_record.emp.emp_code}")
                         continue
-            
+
             self.stdout.write(
                 self.style.SUCCESS(f"Successfully migrated {migrated_count} attendance records")
             )
-            
+
         except Exception as e:
             logger.error(f"Attendance migration failed: {str(e)}")
             raise
-    
+
     def migrate_leaves(self):
         """Migrate leave data"""
         try:
@@ -258,9 +261,9 @@ class Command(BaseCommand):
             from leaves.models import EmployeeLeave as OldLeave
             from core.models.leaves import LeaveType, LeaveRecord
             from core.models.hr import Employee
-            
+
             # Migrate leave types first
-            old_leave_types = OldLeaveType.objects.all()
+            old_leave_types = OldLeaveType.objects.all().select_related()  # TODO: Add appropriate select_related fields
             for old_type in old_leave_types:
                 if not self.dry_run:
                     LeaveType.objects.get_or_create(
@@ -273,17 +276,17 @@ class Command(BaseCommand):
                             'created_at': timezone.now(),
                         }
                     )
-            
+
             # Migrate leave records
-            old_leaves = OldLeave.objects.filter(status='Approved')
+            old_leaves = OldLeave.objects.filter(status='Approved').prefetch_related()  # TODO: Add appropriate prefetch_related fields
             migrated_count = 0
-            
+
             for old_leave in old_leaves.iterator(chunk_size=self.batch_size):
                 if not self.dry_run:
                     try:
                         employee = Employee.objects.get(emp_code=old_leave.emp.emp_code)
                         leave_type = LeaveType.objects.get(name=old_leave.leave_type.leave_name)
-                        
+
                         new_record, created = LeaveRecord.objects.get_or_create(
                             employee=employee,
                             start_date=old_leave.start_date,
@@ -295,22 +298,22 @@ class Command(BaseCommand):
                                 'created_at': old_leave.created_at or timezone.now(),
                             }
                         )
-                        
+
                         if created:
                             migrated_count += 1
-                            
+
                     except (Employee.DoesNotExist, LeaveType.DoesNotExist) as e:
                         logger.warning(f"Related object not found for leave: {str(e)}")
                         continue
-            
+
             self.stdout.write(
                 self.style.SUCCESS(f"Successfully migrated {migrated_count} leave records")
             )
-            
+
         except Exception as e:
             logger.error(f"Leave migration failed: {str(e)}")
             raise
-    
+
     def migrate_evaluations(self):
         """Migrate evaluation data"""
         try:
@@ -318,9 +321,9 @@ class Command(BaseCommand):
             from evaluations.models import EmployeeEvaluation as OldEvaluation
             from core.models.evaluations import EvaluationPeriod, EmployeeEvaluation
             from core.models.hr import Employee
-            
+
             # Migrate evaluation periods
-            old_periods = OldPeriod.objects.all()
+            old_periods = OldPeriod.objects.all().select_related()  # TODO: Add appropriate select_related fields
             for old_period in old_periods:
                 if not self.dry_run:
                     EvaluationPeriod.objects.get_or_create(
@@ -333,17 +336,17 @@ class Command(BaseCommand):
                             'created_at': old_period.created_at or timezone.now(),
                         }
                     )
-            
+
             # Migrate evaluations
-            old_evaluations = OldEvaluation.objects.all()
+            old_evaluations = OldEvaluation.objects.all().select_related()  # TODO: Add appropriate select_related fields
             migrated_count = 0
-            
+
             for old_eval in old_evaluations.iterator(chunk_size=self.batch_size):
                 if not self.dry_run:
                     try:
                         employee = Employee.objects.get(emp_code=old_eval.emp.emp_code)
                         period = EvaluationPeriod.objects.get(name=old_eval.period.period_name)
-                        
+
                         new_eval, created = EmployeeEvaluation.objects.get_or_create(
                             employee=employee,
                             period=period,
@@ -356,22 +359,22 @@ class Command(BaseCommand):
                                 'created_at': old_eval.created_at or timezone.now(),
                             }
                         )
-                        
+
                         if created:
                             migrated_count += 1
-                            
+
                     except (Employee.DoesNotExist, EvaluationPeriod.DoesNotExist) as e:
                         logger.warning(f"Related object not found for evaluation: {str(e)}")
                         continue
-            
+
             self.stdout.write(
                 self.style.SUCCESS(f"Successfully migrated {migrated_count} evaluation records")
             )
-            
+
         except Exception as e:
             logger.error(f"Evaluation migration failed: {str(e)}")
             raise
-    
+
     def _map_employee_status(self, old_status):
         """Map old employee status to new status"""
         status_mapping = {
@@ -382,7 +385,7 @@ class Command(BaseCommand):
             'On Leave': 'on_leave',
         }
         return status_mapping.get(old_status, 'active')
-    
+
     def _map_attendance_status(self, old_status):
         """Map old attendance status to new record type"""
         status_mapping = {
@@ -393,7 +396,7 @@ class Command(BaseCommand):
             'Leave': 'leave',
         }
         return status_mapping.get(old_status, 'present')
-    
+
     def _map_evaluation_status(self, old_status):
         """Map old evaluation status to new status"""
         status_mapping = {

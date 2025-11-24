@@ -22,21 +22,532 @@ def sync_all_zk_devices(self):
     try:
         from .zk_service import ZKDataProcessor
         from .models import ZKDevice
-        
+
         # الحصول على جميع الأجهزة النشطة
-        active_devices = ZKDevice.objects.filter(status='active')
-        
+        active_devices = ZKDevice.objects.filter(status='active').prefetch_related()  # TODO: Add appropriate prefetch_related fields
+
         if not active_devices.exists():
             logger.info("لا توجد أجهزة ZK نشطة للمزامنة")
             return {'status': 'success', 'message': 'لا توجد أجهزة نشطة', 'devices_count': 0}
-        
+
         # معالجة كل جهاز
         total_records_fetched = 0
         total_records_processed = 0
         total_devices_processed = 0
         failed_devices = []
-        
+
         for device in active_devices:
             try:
                 # معالجة بيانات الجهاز
-                log = ZKDataProcessor.process_device_data(device)\n                \n                if log.status == 'success':\n                    total_records_fetched += log.records_fetched\n                    total_records_processed += log.records_processed\n                    total_devices_processed += 1\n                    logger.info(f\"تم مزامنة جهاز {device.device_name} بنجاح\")\n                else:\n                    failed_devices.append({\n                        'device_name': device.device_name,\n                        'error': log.error_message\n                    })\n                    logger.error(f\"فشل في مزامنة جهاز {device.device_name}: {log.error_message}\")\n                    \n            except Exception as e:\n                failed_devices.append({\n                    'device_name': device.device_name,\n                    'error': str(e)\n                })\n                logger.error(f\"خطأ في معالجة جهاز {device.device_name}: {str(e)}\")\n        \n        # إرسال تقرير بالبريد الإلكتروني إذا كان مفعلاً\n        if getattr(settings, 'SEND_ATTENDANCE_REPORTS', False):\n            send_sync_report.delay(\n                total_devices_processed,\n                total_records_fetched,\n                total_records_processed,\n                failed_devices\n            )\n        \n        result = {\n            'status': 'success',\n            'devices_processed': total_devices_processed,\n            'total_devices': active_devices.count(),\n            'records_fetched': total_records_fetched,\n            'records_processed': total_records_processed,\n            'failed_devices': failed_devices,\n            'timestamp': timezone.now().isoformat()\n        }\n        \n        logger.info(f\"انتهت مزامنة الأجهزة: {total_devices_processed}/{active_devices.count()} أجهزة\")\n        return result\n        \n    except Exception as e:\n        logger.error(f\"خطأ في مهمة مزامنة الأجهزة: {str(e)}\")\n        return {\n            'status': 'error',\n            'error': str(e),\n            'timestamp': timezone.now().isoformat()\n        }\n\n\n@shared_task\ndef sync_single_device(device_id, days=1):\n    \"\"\"\n    مزامنة جهاز ZK واحد\n    Sync a single ZK device\n    \"\"\"\n    try:\n        from .models import ZKDevice\n        from .zk_service import ZKDataProcessor\n        \n        device = ZKDevice.objects.get(device_id=device_id)\n        \n        # معالجة بيانات الجهاز\n        log = ZKDataProcessor.process_device_data(device)\n        \n        result = {\n            'device_name': device.device_name,\n            'status': log.status,\n            'records_fetched': log.records_fetched,\n            'records_processed': log.records_processed,\n            'records_failed': log.records_failed,\n            'error_message': log.error_message,\n            'timestamp': timezone.now().isoformat()\n        }\n        \n        logger.info(f\"مزامنة جهاز {device.device_name}: {log.status}\")\n        return result\n        \n    except Exception as e:\n        logger.error(f\"خطأ في مزامنة الجهاز {device_id}: {str(e)}\")\n        return {\n            'status': 'error',\n            'error': str(e),\n            'timestamp': timezone.now().isoformat()\n        }\n\n\n@shared_task\ndef generate_daily_attendance_summary():\n    \"\"\"\n    إنشاء ملخص الحضور اليومي\n    Generate daily attendance summary\n    \"\"\"\n    try:\n        from .models import EmployeeAttendance, AttendanceSummary\n        from employees.models import Employee\n        from django.db.models import Count, Q\n        from datetime import date\n        \n        today = date.today()\n        current_month = today.month\n        current_year = today.year\n        \n        # تحديث ملخصات الحضور للشهر الحالي\n        active_employees = Employee.objects.filter(emp_status='Active')\n        updated_count = 0\n        \n        for employee in active_employees:\n            # حساب إحصائيات الموظف للشهر الحالي\n            monthly_records = EmployeeAttendance.objects.filter(\n                emp=employee,\n                att_date__year=current_year,\n                att_date__month=current_month\n            )\n            \n            if monthly_records.exists():\n                stats = monthly_records.aggregate(\n                    total_days=Count('att_id'),\n                    present_days=Count('att_id', filter=Q(status='Present')),\n                    absent_days=Count('att_id', filter=Q(status='Absent')),\n                    late_days=Count('att_id', filter=Q(status='Late'))\n                )\n                \n                # حساب ساعات العمل ودقائق التأخير\n                total_work_hours = 0\n                total_late_minutes = 0\n                \n                for record in monthly_records:\n                    if record.check_in and record.check_out:\n                        work_duration = record.check_out - record.check_in\n                        total_work_hours += work_duration.total_seconds() / 3600\n                    \n                    total_late_minutes += record.calculate_late_minutes()\n                \n                # إنشاء أو تحديث الملخص\n                summary, created = AttendanceSummary.objects.update_or_create(\n                    employee=employee,\n                    year=current_year,\n                    month=current_month,\n                    defaults={\n                        'total_work_days': stats['total_days'],\n                        'present_days': stats['present_days'],\n                        'absent_days': stats['absent_days'],\n                        'late_days': stats['late_days'],\n                        'total_work_hours': round(total_work_hours, 2),\n                        'late_minutes': total_late_minutes\n                    }\n                )\n                \n                if created:\n                    updated_count += 1\n        \n        logger.info(f\"تم تحديث ملخصات الحضور لـ {updated_count} موظف\")\n        \n        return {\n            'status': 'success',\n            'employees_processed': active_employees.count(),\n            'summaries_updated': updated_count,\n            'month': current_month,\n            'year': current_year,\n            'timestamp': timezone.now().isoformat()\n        }\n        \n    except Exception as e:\n        logger.error(f\"خطأ في إنشاء ملخص الحضور اليومي: {str(e)}\")\n        return {\n            'status': 'error',\n            'error': str(e),\n            'timestamp': timezone.now().isoformat()\n        }\n\n\n@shared_task\ndef send_sync_report(devices_processed, records_fetched, records_processed, failed_devices):\n    \"\"\"\n    إرسال تقرير المزامنة بالبريد الإلكتروني\n    Send sync report via email\n    \"\"\"\n    try:\n        subject = f\"تقرير مزامنة أجهزة الحضور - {timezone.now().strftime('%Y-%m-%d %H:%M')}\"\n        \n        message = f\"\"\"\n        تقرير مزامنة أجهزة الحضور\n        \n        النتائج:\n        - عدد الأجهزة المعالجة: {devices_processed}\n        - إجمالي السجلات المسحوبة: {records_fetched}\n        - السجلات المعالجة بنجاح: {records_processed}\n        - الأجهزة الفاشلة: {len(failed_devices)}\n        \n        \"\"\"\n        \n        if failed_devices:\n            message += \"\\n\\nالأجهزة التي فشلت في المزامنة:\\n\"\n            for device in failed_devices:\n                message += f\"- {device['device_name']}: {device['error']}\\n\"\n        \n        message += f\"\\n\\nوقت التقرير: {timezone.now()}\\n\"\n        \n        # قائمة المستلمين\n        recipients = getattr(settings, 'ATTENDANCE_REPORT_RECIPIENTS', [])\n        \n        if recipients:\n            send_mail(\n                subject=subject,\n                message=message,\n                from_email=settings.DEFAULT_FROM_EMAIL,\n                recipient_list=recipients,\n                fail_silently=False\n            )\n            \n            logger.info(f\"تم إرسال تقرير المزامنة إلى {len(recipients)} مستلم\")\n        \n        return {\n            'status': 'success',\n            'recipients_count': len(recipients)\n        }\n        \n    except Exception as e:\n        logger.error(f\"خطأ في إرسال تقرير المزامنة: {str(e)}\")\n        return {\n            'status': 'error',\n            'error': str(e)\n        }\n\n\n@shared_task\ndef cleanup_old_zk_data(days_to_keep=90):\n    \"\"\"\n    تنظيف البيانات القديمة من جدول ZK\n    Cleanup old ZK raw data\n    \"\"\"\n    try:\n        from .models import ZKAttendanceRaw, AttendanceProcessingLog\n        from datetime import timedelta\n        \n        cutoff_date = timezone.now() - timedelta(days=days_to_keep)\n        \n        # حذف البيانات الخام القديمة والمعالجة\n        old_raw_data = ZKAttendanceRaw.objects.filter(\n            timestamp__lt=cutoff_date,\n            is_processed=True\n        )\n        \n        deleted_raw_count = old_raw_data.count()\n        old_raw_data.delete()\n        \n        # حذف سجلات المعالجة القديمة\n        old_logs = AttendanceProcessingLog.objects.filter(\n            created_at__lt=cutoff_date\n        )\n        \n        deleted_logs_count = old_logs.count()\n        old_logs.delete()\n        \n        logger.info(f\"تم حذف {deleted_raw_count} سجل خام و {deleted_logs_count} سجل معالجة\")\n        \n        return {\n            'status': 'success',\n            'deleted_raw_records': deleted_raw_count,\n            'deleted_logs': deleted_logs_count,\n            'cutoff_date': cutoff_date.isoformat(),\n            'timestamp': timezone.now().isoformat()\n        }\n        \n    except Exception as e:\n        logger.error(f\"خطأ في تنظيف البيانات القديمة: {str(e)}\")\n        return {\n            'status': 'error',\n            'error': str(e),\n            'timestamp': timezone.now().isoformat()\n        }\n\n\n@shared_task\ndef check_device_connectivity():\n    \"\"\"\n    فحص اتصال أجهزة ZK\n    Check ZK devices connectivity\n    \"\"\"\n    try:\n        from .models import ZKDevice\n        \n        devices = ZKDevice.objects.filter(status='active')\n        online_devices = []\n        offline_devices = []\n        \n        for device in devices:\n            if device.is_online():\n                online_devices.append(device.device_name)\n            else:\n                offline_devices.append(device.device_name)\n        \n        # إرسال تنبيه إذا كان هناك أجهزة غير متصلة\n        if offline_devices and getattr(settings, 'SEND_CONNECTIVITY_ALERTS', False):\n            send_connectivity_alert.delay(offline_devices)\n        \n        logger.info(f\"فحص الاتصال: {len(online_devices)} متصل، {len(offline_devices)} غير متصل\")\n        \n        return {\n            'status': 'success',\n            'total_devices': devices.count(),\n            'online_devices': online_devices,\n            'offline_devices': offline_devices,\n            'timestamp': timezone.now().isoformat()\n        }\n        \n    except Exception as e:\n        logger.error(f\"خطأ في فحص اتصال الأجهزة: {str(e)}\")\n        return {\n            'status': 'error',\n            'error': str(e),\n            'timestamp': timezone.now().isoformat()\n        }\n\n\n@shared_task\ndef send_connectivity_alert(offline_devices):\n    \"\"\"\n    إرسال تنبيه انقطاع الاتصال\n    Send connectivity alert\n    \"\"\"\n    try:\n        subject = \"تنبيه: أجهزة حضور غير متصلة\"\n        \n        message = f\"\"\"\n        تنبيه: تم اكتشاف أجهزة حضور غير متصلة\n        \n        الأجهزة غير المتصلة:\n        \"\"\"\n        \n        for device in offline_devices:\n            message += f\"- {device}\\n\"\n        \n        message += f\"\\n\\nوقت الفحص: {timezone.now()}\\n\"\n        message += \"يرجى التحقق من حالة الأجهزة والشبكة.\\n\"\n        \n        recipients = getattr(settings, 'CONNECTIVITY_ALERT_RECIPIENTS', [])\n        \n        if recipients:\n            send_mail(\n                subject=subject,\n                message=message,\n                from_email=settings.DEFAULT_FROM_EMAIL,\n                recipient_list=recipients,\n                fail_silently=False\n            )\n            \n            logger.info(f\"تم إرسال تنبيه الاتصال إلى {len(recipients)} مستلم\")\n        \n        return {\n            'status': 'success',\n            'recipients_count': len(recipients)\n        }\n        \n    except Exception as e:\n        logger.error(f\"خطأ في إرسال تنبيه الاتصال: {str(e)}\")\n        return {\n            'status': 'error',\n            'error': str(e)\n        }\n\n\n@shared_task\ndef generate_monthly_attendance_report():\n    \"\"\"\n    إنشاء تقرير الحضور الشهري\n    Generate monthly attendance report\n    \"\"\"\n    try:\n        from .models import AttendanceSummary, EmployeeAttendance\n        from employees.models import Employee\n        from django.db.models import Count, Q, Avg, Sum\n        from datetime import date\n        import calendar\n        \n        today = date.today()\n        # التقرير للشهر الماضي\n        if today.month == 1:\n            report_month = 12\n            report_year = today.year - 1\n        else:\n            report_month = today.month - 1\n            report_year = today.year\n        \n        # إحصائيات عامة\n        total_employees = Employee.objects.filter(emp_status='Active').count()\n        \n        summaries = AttendanceSummary.objects.filter(\n            year=report_year,\n            month=report_month\n        )\n        \n        if summaries.exists():\n            stats = summaries.aggregate(\n                avg_attendance_rate=Avg('attendance_rate'),\n                avg_punctuality_rate=Avg('punctuality_rate'),\n                total_present_days=Sum('present_days'),\n                total_absent_days=Sum('absent_days'),\n                total_late_days=Sum('late_days'),\n                total_work_hours=Sum('total_work_hours')\n            )\n            \n            # إنشاء التقرير\n            month_name = calendar.month_name[report_month]\n            \n            report_content = f\"\"\"\n            تقرير الحضور الشهري - {month_name} {report_year}\n            \n            الإحصائيات العامة:\n            - إجمالي الموظفين: {total_employees}\n            - متوسط نسبة الحضور: {stats['avg_attendance_rate']:.1f}%\n            - متوسط نسبة الالتزام بالوقت: {stats['avg_punctuality_rate']:.1f}%\n            - إجمالي أيام الحضور: {stats['total_present_days']}\n            - إجمالي أيام الغياب: {stats['total_absent_days']}\n            - إجمالي أيام التأخير: {stats['total_late_days']}\n            - إجمالي ساعات العمل: {stats['total_work_hours']:.1f}\n            \n            تاريخ التقرير: {timezone.now()}\n            \"\"\"\n            \n            # إرسال التقرير\n            recipients = getattr(settings, 'MONTHLY_REPORT_RECIPIENTS', [])\n            \n            if recipients:\n                send_mail(\n                    subject=f\"تقرير الحضور الشهري - {month_name} {report_year}\",\n                    message=report_content,\n                    from_email=settings.DEFAULT_FROM_EMAIL,\n                    recipient_list=recipients,\n                    fail_silently=False\n                )\n                \n                logger.info(f\"تم إرسال التقرير الشهري إلى {len(recipients)} مستلم\")\n            \n            return {\n                'status': 'success',\n                'month': report_month,\n                'year': report_year,\n                'total_employees': total_employees,\n                'summaries_count': summaries.count(),\n                'recipients_count': len(recipients)\n            }\n        else:\n            logger.warning(f\"لا توجد ملخصات حضور للشهر {report_month}/{report_year}\")\n            return {\n                'status': 'warning',\n                'message': 'لا توجد بيانات للشهر المحدد'\n            }\n        \n    except Exception as e:\n        logger.error(f\"خطأ في إنشاء التقرير الشهري: {str(e)}\")\n        return {\n            'status': 'error',\n            'error': str(e),\n            'timestamp': timezone.now().isoformat()\n        }\n\n\n# مهام الصيانة والتحسين\n@shared_task\ndef optimize_attendance_data():\n    \"\"\"\n    تحسين بيانات الحضور\n    Optimize attendance data\n    \"\"\"\n    try:\n        from .models import EmployeeAttendance\n        from django.db import connection\n        \n        # تحديث الحالات المفقودة\n        updated_count = 0\n        \n        # البحث عن السجلات بدون حالة\n        records_without_status = EmployeeAttendance.objects.filter(\n            status__isnull=True\n        )\n        \n        for record in records_without_status:\n            if record.check_in and record.check_out:\n                record.status = 'Present'\n            elif record.check_in:\n                record.status = 'Present'  # دخول بدون خروج\n            else:\n                record.status = 'Absent'\n            \n            record.save()\n            updated_count += 1\n        \n        # تحسين فهارس قاعدة البيانات\n        with connection.cursor() as cursor:\n            cursor.execute(\n                \"UPDATE STATISTICS [EmployeeAttendance] WITH FULLSCAN\"\n            )\n        \n        logger.info(f\"تم تحسين {updated_count} سجل حضور\")\n        \n        return {\n            'status': 'success',\n            'updated_records': updated_count,\n            'timestamp': timezone.now().isoformat()\n        }\n        \n    except Exception as e:\n        logger.error(f\"خطأ في تحسين بيانات الحضور: {str(e)}\")\n        return {\n            'status': 'error',\n            'error': str(e),\n            'timestamp': timezone.now().isoformat()\n        }
+                log = ZKDataProcessor.process_device_data(device)
+
+                if log.status == 'success':
+                    total_records_fetched += log.records_fetched
+                    total_records_processed += log.records_processed
+                    total_devices_processed += 1
+                    logger.info(f"تم مزامنة جهاز {device.device_name} بنجاح")
+                else:
+                    failed_devices.append({
+                        'device_name': device.device_name,
+                        'error': log.error_message
+                    })
+                    logger.error(f"فشل في مزامنة جهاز {device.device_name}: {log.error_message}")
+
+            except Exception as e:
+                failed_devices.append({
+                    'device_name': device.device_name,
+                    'error': str(e)
+                })
+                logger.error(f"خطأ في معالجة جهاز {device.device_name}: {str(e)}")
+
+        # إرسال تقرير بالبريد الإلكتروني إذا كان مفعلاً
+        if getattr(settings, 'SEND_ATTENDANCE_REPORTS', False):
+            send_sync_report.delay(
+                total_devices_processed,
+                total_records_fetched,
+                total_records_processed,
+                failed_devices
+            )
+
+        result = {
+            'status': 'success',
+            'devices_processed': total_devices_processed,
+            'total_devices': active_devices.count(),
+            'records_fetched': total_records_fetched,
+            'records_processed': total_records_processed,
+            'failed_devices': failed_devices,
+            'timestamp': timezone.now().isoformat()
+        }
+
+        logger.info(f"انتهت مزامنة الأجهزة: {total_devices_processed}/{active_devices.count()} أجهزة")
+        return result
+
+    except Exception as e:
+        logger.error(f"خطأ في مهمة مزامنة الأجهزة: {str(e)}")
+        return {
+            'status': 'error',
+            'error': str(e),
+            'timestamp': timezone.now().isoformat()
+        }
+
+
+@shared_task
+def sync_single_device(device_id, days=1):
+    """
+    مزامنة جهاز ZK واحد
+    Sync a single ZK device
+    """
+    try:
+        from .models import ZKDevice
+        from .zk_service import ZKDataProcessor
+
+        device = ZKDevice.objects.get(device_id=device_id)
+
+        # معالجة بيانات الجهاز
+        log = ZKDataProcessor.process_device_data(device)
+
+        result = {
+            'device_name': device.device_name,
+            'status': log.status,
+            'records_fetched': log.records_fetched,
+            'records_processed': log.records_processed,
+            'records_failed': log.records_failed,
+            'error_message': log.error_message,
+            'timestamp': timezone.now().isoformat()
+        }
+
+        logger.info(f"مزامنة جهاز {device.device_name}: {log.status}")
+        return result
+
+    except Exception as e:
+        logger.error(f"خطأ في مزامنة الجهاز {device_id}: {str(e)}")
+        return {
+            'status': 'error',
+            'error': str(e),
+            'timestamp': timezone.now().isoformat()
+        }
+
+
+@shared_task
+def generate_daily_attendance_summary():
+    """
+    إنشاء ملخص الحضور اليومي
+    Generate daily attendance summary
+    """
+    try:
+        from .models import EmployeeAttendance, AttendanceSummary
+        from employees.models import Employee
+        from django.db.models import Count, Q
+        from datetime import date
+
+        today = date.today()
+        current_month = today.month
+        current_year = today.year
+
+        # تحديث ملخصات الحضور للشهر الحالي
+        active_employees = Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        updated_count = 0
+
+        for employee in active_employees:
+            # حساب إحصائيات الموظف للشهر الحالي
+            monthly_records = EmployeeAttendance.objects.filter(
+                emp=employee,
+                att_date__year=current_year,
+                att_date__month=current_month
+            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+
+            if monthly_records.exists():
+                stats = monthly_records.aggregate(
+                    total_days=Count('att_id'),
+                    present_days=Count('att_id', filter=Q(status='Present')),
+                    absent_days=Count('att_id', filter=Q(status='Absent')),
+                    late_days=Count('att_id', filter=Q(status='Late'))
+                )
+
+                # حساب ساعات العمل ودقائق التأخير
+                total_work_hours = 0
+                total_late_minutes = 0
+
+                for record in monthly_records:
+                    if record.check_in and record.check_out:
+                        work_duration = record.check_out - record.check_in
+                        total_work_hours += work_duration.total_seconds() / 3600
+
+                    total_late_minutes += record.calculate_late_minutes()
+
+                # إنشاء أو تحديث الملخص
+                summary, created = AttendanceSummary.objects.update_or_create(
+                    employee=employee,
+                    year=current_year,
+                    month=current_month,
+                    defaults={
+                        'total_work_days': stats['total_days'],
+                        'present_days': stats['present_days'],
+                        'absent_days': stats['absent_days'],
+                        'late_days': stats['late_days'],
+                        'total_work_hours': round(total_work_hours, 2),
+                        'late_minutes': total_late_minutes
+                    }
+                )
+
+                if created:
+                    updated_count += 1
+
+        logger.info(f"تم تحديث ملخصات الحضور لـ {updated_count} موظف")
+
+        return {
+            'status': 'success',
+            'employees_processed': active_employees.count(),
+            'summaries_updated': updated_count,
+            'month': current_month,
+            'year': current_year,
+            'timestamp': timezone.now().isoformat()
+        }
+
+    except Exception as e:
+        logger.error(f"خطأ في إنشاء ملخص الحضور اليومي: {str(e)}")
+        return {
+            'status': 'error',
+            'error': str(e),
+            'timestamp': timezone.now().isoformat()
+        }
+
+
+@shared_task
+def send_sync_report(devices_processed, records_fetched, records_processed, failed_devices):
+    """
+    إرسال تقرير المزامنة بالبريد الإلكتروني
+    Send sync report via email
+    """
+    try:
+        subject = f"تقرير مزامنة أجهزة الحضور - {timezone.now().strftime('%Y-%m-%d %H:%M')}"
+
+        message = f"""
+        تقرير مزامنة أجهزة الحضور
+
+        النتائج:
+        - عدد الأجهزة المعالجة: {devices_processed}
+        - إجمالي السجلات المسحوبة: {records_fetched}
+        - السجلات المعالجة بنجاح: {records_processed}
+        - الأجهزة الفاشلة: {len(failed_devices)}
+
+        """
+
+        if failed_devices:
+            message += "\n\nالأجهزة التي فشلت في المزامنة:\n"
+            for device in failed_devices:
+                message += f"- {device['device_name']}: {device['error']}\n"
+
+        message += f"\n\nوقت التقرير: {timezone.now()}\n"
+
+        # قائمة المستلمين
+        recipients = getattr(settings, 'ATTENDANCE_REPORT_RECIPIENTS', [])
+
+        if recipients:
+            send_mail(
+                subject=subject,
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=recipients,
+                fail_silently=False
+            )
+
+            logger.info(f"تم إرسال تقرير المزامنة إلى {len(recipients)} مستلم")
+
+        return {
+            'status': 'success',
+            'recipients_count': len(recipients)
+        }
+
+    except Exception as e:
+        logger.error(f"خطأ في إرسال تقرير المزامنة: {str(e)}")
+        return {
+            'status': 'error',
+            'error': str(e)
+        }
+
+
+@shared_task
+def cleanup_old_zk_data(days_to_keep=90):
+    """
+    تنظيف البيانات القديمة من جدول ZK
+    Cleanup old ZK raw data
+    """
+    try:
+        from .models import ZKAttendanceRaw, AttendanceProcessingLog
+        from datetime import timedelta
+
+        cutoff_date = timezone.now() - timedelta(days=days_to_keep)
+
+        # حذف البيانات الخام القديمة والمعالجة
+        old_raw_data = ZKAttendanceRaw.objects.filter(
+            timestamp__lt=cutoff_date,
+            is_processed=True
+        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+
+        deleted_raw_count = old_raw_data.count()
+        old_raw_data.delete()
+
+        # حذف سجلات المعالجة القديمة
+        old_logs = AttendanceProcessingLog.objects.filter(
+            created_at__lt=cutoff_date
+        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+
+        deleted_logs_count = old_logs.count()
+        old_logs.delete()
+
+        logger.info(f"تم حذف {deleted_raw_count} سجل خام و {deleted_logs_count} سجل معالجة")
+
+        return {
+            'status': 'success',
+            'deleted_raw_records': deleted_raw_count,
+            'deleted_logs': deleted_logs_count,
+            'cutoff_date': cutoff_date.isoformat(),
+            'timestamp': timezone.now().isoformat()
+        }
+
+    except Exception as e:
+        logger.error(f"خطأ في تنظيف البيانات القديمة: {str(e)}")
+        return {
+            'status': 'error',
+            'error': str(e),
+            'timestamp': timezone.now().isoformat()
+        }
+
+
+@shared_task
+def check_device_connectivity():
+    """
+    فحص اتصال أجهزة ZK
+    Check ZK devices connectivity
+    """
+    try:
+        from .models import ZKDevice
+
+        devices = ZKDevice.objects.filter(status='active').prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        online_devices = []
+        offline_devices = []
+
+        for device in devices:
+            if device.is_online():
+                online_devices.append(device.device_name)
+            else:
+                offline_devices.append(device.device_name)
+
+        # إرسال تنبيه إذا كان هناك أجهزة غير متصلة
+        if offline_devices and getattr(settings, 'SEND_CONNECTIVITY_ALERTS', False):
+            send_connectivity_alert.delay(offline_devices)
+
+        logger.info(f"فحص الاتصال: {len(online_devices)} متصل، {len(offline_devices)} غير متصل")
+
+        return {
+            'status': 'success',
+            'total_devices': devices.count(),
+            'online_devices': online_devices,
+            'offline_devices': offline_devices,
+            'timestamp': timezone.now().isoformat()
+        }
+
+    except Exception as e:
+        logger.error(f"خطأ في فحص اتصال الأجهزة: {str(e)}")
+        return {
+            'status': 'error',
+            'error': str(e),
+            'timestamp': timezone.now().isoformat()
+        }
+
+
+@shared_task
+def send_connectivity_alert(offline_devices):
+    """
+    إرسال تنبيه انقطاع الاتصال
+    Send connectivity alert
+    """
+    try:
+        subject = "تنبيه: أجهزة حضور غير متصلة"
+
+        message = f"""
+        تنبيه: تم اكتشاف أجهزة حضور غير متصلة
+
+        الأجهزة غير المتصلة:
+        """
+
+        for device in offline_devices:
+            message += f"- {device}\n"
+
+        message += f"\n\nوقت الفحص: {timezone.now()}\n"
+        message += "يرجى التحقق من حالة الأجهزة والشبكة.\n"
+
+        recipients = getattr(settings, 'CONNECTIVITY_ALERT_RECIPIENTS', [])
+
+        if recipients:
+            send_mail(
+                subject=subject,
+                message=message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=recipients,
+                fail_silently=False
+            )
+
+            logger.info(f"تم إرسال تنبيه الاتصال إلى {len(recipients)} مستلم")
+
+        return {
+            'status': 'success',
+            'recipients_count': len(recipients)
+        }
+
+    except Exception as e:
+        logger.error(f"خطأ في إرسال تنبيه الاتصال: {str(e)}")
+        return {
+            'status': 'error',
+            'error': str(e)
+        }
+
+
+@shared_task
+def generate_monthly_attendance_report():
+    """
+    إنشاء تقرير الحضور الشهري
+    Generate monthly attendance report
+    """
+    try:
+        from .models import AttendanceSummary, EmployeeAttendance
+        from employees.models import Employee
+        from django.db.models import Count, Q, Avg, Sum
+        from datetime import date
+        import calendar
+
+        today = date.today()
+        # التقرير للشهر الماضي
+        if today.month == 1:
+            report_month = 12
+            report_year = today.year - 1
+        else:
+            report_month = today.month - 1
+            report_year = today.year
+
+        # إحصائيات عامة
+        total_employees = Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+
+        summaries = AttendanceSummary.objects.filter(
+            year=report_year,
+            month=report_month
+        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+
+        if summaries.exists():
+            stats = summaries.aggregate(
+                avg_attendance_rate=Avg('attendance_rate'),
+                avg_punctuality_rate=Avg('punctuality_rate'),
+                total_present_days=Sum('present_days'),
+                total_absent_days=Sum('absent_days'),
+                total_late_days=Sum('late_days'),
+                total_work_hours=Sum('total_work_hours')
+            )
+
+            # إنشاء التقرير
+            month_name = calendar.month_name[report_month]
+
+            report_content = f"""
+            تقرير الحضور الشهري - {month_name} {report_year}
+
+            الإحصائيات العامة:
+            - إجمالي الموظفين: {total_employees}
+            - متوسط نسبة الحضور: {stats['avg_attendance_rate']:.1f}%
+            - متوسط نسبة الالتزام بالوقت: {stats['avg_punctuality_rate']:.1f}%
+            - إجمالي أيام الحضور: {stats['total_present_days']}
+            - إجمالي أيام الغياب: {stats['total_absent_days']}
+            - إجمالي أيام التأخير: {stats['total_late_days']}
+            - إجمالي ساعات العمل: {stats['total_work_hours']:.1f}
+
+            تاريخ التقرير: {timezone.now()}
+            """
+
+            # إرسال التقرير
+            recipients = getattr(settings, 'MONTHLY_REPORT_RECIPIENTS', [])
+
+            if recipients:
+                send_mail(
+                    subject=f"تقرير الحضور الشهري - {month_name} {report_year}",
+                    message=report_content,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=recipients,
+                    fail_silently=False
+                )
+
+                logger.info(f"تم إرسال التقرير الشهري إلى {len(recipients)} مستلم")
+
+            return {
+                'status': 'success',
+                'month': report_month,
+                'year': report_year,
+                'total_employees': total_employees,
+                'summaries_count': summaries.count(),
+                'recipients_count': len(recipients)
+            }
+        else:
+            logger.warning(f"لا توجد ملخصات حضور للشهر {report_month}/{report_year}")
+            return {
+                'status': 'warning',
+                'message': 'لا توجد بيانات للشهر المحدد'
+            }
+
+    except Exception as e:
+        logger.error(f"خطأ في إنشاء التقرير الشهري: {str(e)}")
+        return {
+            'status': 'error',
+            'error': str(e),
+            'timestamp': timezone.now().isoformat()
+        }
+
+
+# مهام الصيانة والتحسين
+@shared_task
+def optimize_attendance_data():
+    """
+    تحسين بيانات الحضور
+    Optimize attendance data
+    """
+    try:
+        from .models import EmployeeAttendance
+        from django.db import connection
+
+        # تحديث الحالات المفقودة
+        updated_count = 0
+
+        # البحث عن السجلات بدون حالة
+        records_without_status = EmployeeAttendance.objects.filter(
+            status__isnull=True
+        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+
+        for record in records_without_status:
+            if record.check_in and record.check_out:
+                record.status = 'Present'
+            elif record.check_in:
+                record.status = 'Present'  # دخول بدون خروج
+            else:
+                record.status = 'Absent'
+
+            record.save()
+            updated_count += 1
+
+        # تحسين فهارس قاعدة البيانات
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "UPDATE STATISTICS [EmployeeAttendance] WITH FULLSCAN"
+            )
+
+        logger.info(f"تم تحسين {updated_count} سجل حضور")
+
+        return {
+            'status': 'success',
+            'updated_records': updated_count,
+            'timestamp': timezone.now().isoformat()
+        }
+
+    except Exception as e:
+        logger.error(f"خطأ في تحسين بيانات الحضور: {str(e)}")
+        return {
+            'status': 'error',
+            'error': str(e),
+            'timestamp': timezone.now().isoformat()
+        }

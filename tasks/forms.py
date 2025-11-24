@@ -13,6 +13,7 @@ class TaskStepForm(forms.ModelForm):
     """Enhanced form for creating task steps"""
 
     class Meta:
+        """Meta class"""
         model = TaskStep
         fields = ['description', 'notes', 'completed']
         widgets = {
@@ -38,6 +39,7 @@ class TaskStepForm(forms.ModelForm):
         }
 
     def clean_description(self):
+        """clean_description function"""
         description = self.cleaned_data.get('description')
         if description and len(description.strip()) < 10:
             raise ValidationError('وصف الخطوة يجب أن يكون 10 أحرف على الأقل')
@@ -47,6 +49,7 @@ class TaskForm(forms.ModelForm):
     """Enhanced form for creating and editing tasks"""
 
     class Meta:
+        """Meta class"""
         model = Task
         fields = ['title', 'description', 'assigned_to', 'priority', 'start_date', 'end_date', 'status']
         widgets = {
@@ -96,6 +99,7 @@ class TaskForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
 
@@ -107,11 +111,12 @@ class TaskForm(forms.ModelForm):
 
         # Limit assigned_to choices for non-superusers
         if self.user and not self.user.is_superuser:
-            self.fields['assigned_to'].queryset = User.objects.filter(id=self.user.id)
+            self.fields['assigned_to'].queryset = User.objects.filter(id=self.user.id).prefetch_related()  # TODO: Add appropriate prefetch_related fields
             self.fields['assigned_to'].initial = self.user
             self.fields['assigned_to'].widget.attrs['readonly'] = True
 
     def clean(self):
+        """clean function"""
         cleaned_data = super().clean()
         start_date = cleaned_data.get('start_date')
         end_date = cleaned_data.get('end_date')
@@ -134,6 +139,7 @@ class TaskForm(forms.ModelForm):
         return cleaned_data
 
     def clean_assigned_to(self):
+        """clean_assigned_to function"""
         assigned_to = self.cleaned_data.get('assigned_to')
 
         # Non-superusers can only assign tasks to themselves
@@ -173,7 +179,7 @@ class TaskFilterForm(forms.Form):
     )
 
     assigned_to = forms.ModelChoiceField(
-        queryset=User.objects.filter(is_active=True),
+        queryset=User.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields,
         required=False,
         empty_label='جميع المكلفين',
         widget=forms.Select(attrs={'class': 'form-select'}),
@@ -218,7 +224,7 @@ class BulkTaskUpdateForm(forms.Form):
     )
 
     new_assigned_to = forms.ModelChoiceField(
-        queryset=User.objects.filter(is_active=True),
+        queryset=User.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields,
         required=False,
         widget=forms.Select(attrs={'class': 'form-select'}),
         label='المكلف الجديد'
@@ -230,6 +236,7 @@ class BulkTaskUpdateForm(forms.Form):
     )
 
     def clean(self):
+        """clean function"""
         cleaned_data = super().clean()
         action = cleaned_data.get('action')
 
@@ -265,6 +272,7 @@ class TaskCommentForm(forms.Form):
     )
 
     def clean_comment(self):
+        """clean_comment function"""
         comment = self.cleaned_data.get('comment')
         if comment and len(comment.strip()) < 5:
             raise ValidationError('التعليق يجب أن يكون 5 أحرف على الأقل')
@@ -313,7 +321,7 @@ class UnifiedTaskFilterForm(forms.Form):
     )
 
     assigned_to = forms.ModelChoiceField(
-        queryset=User.objects.filter(is_active=True),
+        queryset=User.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields,
         required=False,
         empty_label='جميع المكلفين',
         widget=forms.Select(attrs={'class': 'form-select'}),
@@ -335,6 +343,7 @@ class UnifiedTaskFilterForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
 
@@ -342,11 +351,11 @@ class UnifiedTaskFilterForm(forms.Form):
         from meetings.models import Meeting
         if user:
             if user.is_superuser:
-                self.fields['meeting'].queryset = Meeting.objects.all()
+                self.fields['meeting'].queryset = Meeting.objects.all().select_related()  # TODO: Add appropriate select_related fields
             else:
                 # Show meetings where user is attendee or has tasks
                 self.fields['meeting'].queryset = Meeting.objects.filter(
-                    Q(attendees__user=user) |
+                    Q(attendees__user=user).prefetch_related()  # TODO: Add appropriate prefetch_related fields |
                     Q(meeting_tasks__assigned_to=user) |
                     Q(tasks__assigned_to=user)
                 ).distinct()
@@ -382,6 +391,7 @@ class UnifiedTaskStepForm(forms.Form):
     )
 
     def clean_description(self):
+        """clean_description function"""
         description = self.cleaned_data.get('description')
         if description and len(description.strip()) < 10:
             raise ValidationError('وصف الخطوة يجب أن يكون 10 أحرف على الأقل')
@@ -392,6 +402,7 @@ class UnifiedTaskStatusForm(forms.Form):
     """Form for updating task status (works for both task types)"""
 
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         task_type = kwargs.pop('task_type', 'regular')
         super().__init__(*args, **kwargs)
 
@@ -438,6 +449,7 @@ class MeetingTaskEditForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         meeting_task = kwargs.pop('meeting_task', None)
         super().__init__(*args, **kwargs)
 
@@ -452,6 +464,7 @@ class MeetingTaskEditForm(forms.Form):
             self.fields['end_date'].initial = meeting_task.end_date
 
     def clean_description(self):
+        """clean_description function"""
         description = self.cleaned_data.get('description')
         if description and len(description.strip()) < 20:
             raise ValidationError('وصف المهمة يجب أن يكون 20 حرف على الأقل')

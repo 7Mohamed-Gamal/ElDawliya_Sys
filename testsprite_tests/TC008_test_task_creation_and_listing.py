@@ -6,6 +6,7 @@ AUTH_CREDENTIALS = ("admin", "hgslduhgfwdv")
 TIMEOUT = 30
 
 def test_task_creation_and_listing():
+    """test_task_creation_and_listing function"""
     auth = HTTPBasicAuth(AUTH_CREDENTIALS[0], AUTH_CREDENTIALS[1])
     headers = {
         "Accept": "application/json",

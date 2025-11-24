@@ -9,7 +9,7 @@ def get_database_config():
     """
     إرجاع إعدادات قاعدة البيانات المحسنة
     """
-    
+
     # إعدادات قاعدة البيانات الأساسية
     default_db_config = {
         'ENGINE': 'mssql',
@@ -24,7 +24,7 @@ def get_database_config():
             'MARS_Connection': 'yes',  # تفعيل Multiple Active Result Sets
             'charset': 'utf8',
             'collation': 'Arabic_CI_AS',  # ترتيب عربي
-            'init_command': \"SET NAMES 'utf8' COLLATE 'utf8_unicode_ci'\",
+            'init_command': "SET NAMES 'utf8' COLLATE 'utf8_unicode_ci'",
             'autocommit': True,
             'isolation_level': 'read committed',
             'timeout': 30,  # مهلة الاتصال
@@ -42,7 +42,7 @@ def get_database_config():
             'COLLATION': 'Arabic_CI_AS',
         }
     }
-    
+
     # إعدادات قاعدة البيانات الاحتياطية
     backup_db_config = {
         'ENGINE': 'mssql',
@@ -57,7 +57,7 @@ def get_database_config():
             'MARS_Connection': 'yes',
             'charset': 'utf8',
             'collation': 'Arabic_CI_AS',
-            'init_command': \"SET NAMES 'utf8' COLLATE 'utf8_unicode_ci'\",
+            'init_command': "SET NAMES 'utf8' COLLATE 'utf8_unicode_ci'",
             'autocommit': True,
             'isolation_level': 'read committed',
             'timeout': 30,
@@ -75,17 +75,17 @@ def get_database_config():
             'COLLATION': 'Arabic_CI_AS',
         }
     }
-    
+
     # إعدادات قاعدة بيانات للقراءة فقط (للتقارير)
     readonly_db_config = default_db_config.copy()
     readonly_db_config['OPTIONS']['readonly'] = True
     readonly_db_config['OPTIONS']['autocommit'] = False
-    
+
     # إعدادات قاعدة بيانات للتحليلات
     analytics_db_config = default_db_config.copy()
     analytics_db_config['NAME'] = os.environ.get('ANALYTICS_DB_NAME', 'ElDawliya_Analytics')
     analytics_db_config['OPTIONS']['pool_size'] = 5  # حجم أصغر للتحليلات
-    
+
     return {
         'default': default_db_config,
         'primary': backup_db_config,
@@ -171,17 +171,17 @@ def validate_database_config():
     required_env_vars = [
         'DB_NAME', 'DB_HOST', 'DB_USER', 'DB_PASSWORD'
     ]
-    
+
     missing_vars = []
     for var in required_env_vars:
         if not os.environ.get(var):
             missing_vars.append(var)
-    
+
     if missing_vars:
         raise ImproperlyConfigured(
-            f\"المتغيرات البيئية التالية مطلوبة: {', '.join(missing_vars)}\"
+            f"المتغيرات البيئية التالية مطلوبة: {', '.join(missing_vars)}"
         )
-    
+
     return True
 
 def get_connection_string(db_name='default'):
@@ -189,19 +189,19 @@ def get_connection_string(db_name='default'):
     إنشاء نص الاتصال بقاعدة البيانات
     """
     config = get_database_config()[db_name]
-    
+
     connection_string = (
-        f\"DRIVER={{{config['OPTIONS']['driver']}}};\"\
-        f\"SERVER={config['HOST']},{config['PORT']};\"\
-        f\"DATABASE={config['NAME']};\"\
-        f\"UID={config['USER']};\"\
-        f\"PWD={config['PASSWORD']};\"\
-        f\"TrustServerCertificate=yes;\"\
-        f\"Encrypt=yes;\"\
-        f\"Connection Timeout={config['OPTIONS']['connection_timeout']};\"\
-        f\"Command Timeout={config['OPTIONS']['command_timeout']};\"\
+        f"DRIVER={{{config['OPTIONS']['driver']}}};"
+        f"SERVER={config['HOST']},{config['PORT']};"
+        f"DATABASE={config['NAME']};"
+        f"UID={config['USER']};"
+        f"PWD={config['PASSWORD']};"
+        f"TrustServerCertificate=yes;"
+        f"Encrypt=yes;"
+        f"Connection Timeout={config['OPTIONS']['connection_timeout']};"
+        f"Command Timeout={config['OPTIONS']['command_timeout']};"
     )
-    
+
     return connection_string
 
 def test_database_connection(db_name='default'):
@@ -209,17 +209,17 @@ def test_database_connection(db_name='default'):
     اختبار الاتصال بقاعدة البيانات
     """
     import pyodbc
-    
+
     try:
         connection_string = get_connection_string(db_name)
         connection = pyodbc.connect(connection_string)
         cursor = connection.cursor()
-        cursor.execute(\"SELECT 1\")
+        cursor.execute("SELECT 1")
         result = cursor.fetchone()
         connection.close()
-        return True, \"الاتصال ناجح\"
+        return True, "الاتصال ناجح"
     except Exception as e:
-        return False, f\"فشل الاتصال: {str(e)}\"
+        return False, f"فشل الاتصال: {str(e)}"
 
 # إعدادات الأداء المتقدمة
 PERFORMANCE_SETTINGS = {

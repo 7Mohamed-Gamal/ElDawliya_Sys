@@ -37,23 +37,23 @@ def has_purchase_module_permission(context, module_key, permission_type='view'):
     user = context.get('user')
     if not user or not hasattr(user, 'has_perm'):
         return False
-        
+
     # Allow superusers, admins, and the Ragab user for purchase functionality
     if user.is_superuser or getattr(user, 'Role', '') == 'admin' or user.username == 'Ragab':
         return True
-        
+
     if module_key not in MODULES:
         return False
-    
+
     # Convert module key to Django model name
     model_name = MODULES.get(module_key, module_key)
-    
+
     # Convert permission type to Django format
     django_perm_type = PERMISSION_TYPE_MAP.get(permission_type, permission_type)
-    
+
     # Build permission name in Django format
     permission_name = f'Purchase_orders.{django_perm_type}_{model_name}'
-    
+
     # Check the user's permission
     return user.has_perm(permission_name)
 
@@ -68,8 +68,8 @@ def has_purchase_perm(user, permission_name):
     return user.has_perm(permission_name)
 
 @register.simple_tag(takes_context=True)
-def purchase_action_buttons(context, edit_url=None, delete_url=None, print_url=None, back_url=None, 
-                  edit_perm=None, delete_perm=None, print_perm=None, 
+def purchase_action_buttons(context, edit_url=None, delete_url=None, print_url=None, back_url=None,
+                  edit_perm=None, delete_perm=None, print_perm=None,
                   object_id=None, css_class="btn-group"):
     """
     Renders a group of action buttons with permission checks
@@ -78,27 +78,27 @@ def purchase_action_buttons(context, edit_url=None, delete_url=None, print_url=N
     user = context.get('user')
     if not user:
         return ""
-        
+
     buttons = []
-    
+
     if back_url:
         buttons.append(f'<a href="{back_url}" class="btn btn-secondary btn-sm">'
                       f'<i class="fas fa-arrow-right"></i> رجوع</a>')
-    
+
     if edit_url and (not edit_perm or user.has_perm(edit_perm)):
         buttons.append(f'<a href="{edit_url}" class="btn btn-primary btn-sm">'
                       f'<i class="fas fa-edit"></i> تعديل</a>')
-    
+
     if delete_url and (not delete_perm or user.has_perm(delete_perm)):
         buttons.append(f'<a href="{delete_url}" class="btn btn-danger btn-sm delete-btn" '
                       f'data-id="{object_id or ""}">'
                       f'<i class="fas fa-trash"></i> حذف</a>')
-    
+
     if print_url and (not print_perm or user.has_perm(print_perm)):
         buttons.append(f'<a href="{print_url}" class="btn btn-info btn-sm" target="_blank">'
                       f'<i class="fas fa-print"></i> طباعة</a>')
-    
+
     if not buttons:
         return ""
-    
+
     return mark_safe(f'<div class="{css_class}">{" ".join(buttons)}</div>')

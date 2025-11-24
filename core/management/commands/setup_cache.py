@@ -11,9 +11,11 @@ import sys
 
 
 class Command(BaseCommand):
+    """Command class"""
     help = 'Set up caching infrastructure (Redis or database cache tables)'
 
     def add_arguments(self, parser):
+        """add_arguments function"""
         parser.add_argument(
             '--force-db-cache',
             action='store_true',
@@ -31,6 +33,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        """handle function"""
         self.stdout.write(self.style.SUCCESS('Setting up caching infrastructure...'))
 
         if options['test_redis']:
@@ -43,7 +46,7 @@ class Command(BaseCommand):
 
         # Check if Redis is available
         redis_available = self.check_redis_availability()
-        
+
         if redis_available and not options['force_db_cache']:
             self.setup_redis_cache()
         else:
@@ -94,13 +97,13 @@ class Command(BaseCommand):
                 return
 
             redis_client = redis.from_url(redis_url)
-            
+
             # Test connection
             redis_client.ping()
             self.stdout.write(
                 self.style.SUCCESS('✓ Redis connection successful')
             )
-            
+
             # Get Redis info
             info = redis_client.info()
             self.stdout.write('\nRedis Information:')
@@ -109,14 +112,14 @@ class Command(BaseCommand):
             self.stdout.write(f"  Connected clients: {info.get('connected_clients', 0)}")
             self.stdout.write(f"  Used memory: {info.get('used_memory_human', '0B')}")
             self.stdout.write(f"  Total commands processed: {info.get('total_commands_processed', 0)}")
-            
+
             # Test basic operations
             test_key = 'eldawliya_test_key'
             test_value = 'test_value'
-            
+
             redis_client.set(test_key, test_value, ex=60)
             retrieved_value = redis_client.get(test_key).decode('utf-8')
-            
+
             if retrieved_value == test_value:
                 self.stdout.write(
                     self.style.SUCCESS('✓ Redis read/write test successful')
@@ -135,12 +138,12 @@ class Command(BaseCommand):
     def setup_redis_cache(self):
         """Set up Redis caching"""
         self.stdout.write('Setting up Redis cache...')
-        
+
         try:
             # Test cache operations
             cache.set('test_key', 'test_value', 60)
             value = cache.get('test_key')
-            
+
             if value == 'test_value':
                 self.stdout.write(
                     self.style.SUCCESS('✓ Redis cache is working correctly')
@@ -150,7 +153,7 @@ class Command(BaseCommand):
                 self.stdout.write(
                     self.style.ERROR('✗ Redis cache test failed')
                 )
-                
+
         except Exception as e:
             self.stdout.write(
                 self.style.ERROR(f'Redis cache setup failed: {e}')
@@ -159,16 +162,16 @@ class Command(BaseCommand):
     def setup_database_cache(self):
         """Set up database cache tables"""
         self.stdout.write('Setting up database cache tables...')
-        
+
         try:
             # Create cache tables
             cache_tables = [
                 'cache_table',
-                'session_cache_table', 
+                'session_cache_table',
                 'query_cache_table',
                 'dashboard_cache_table'
             ]
-            
+
             for table_name in cache_tables:
                 try:
                     call_command('createcachetable', table_name, verbosity=0)
@@ -184,11 +187,11 @@ class Command(BaseCommand):
                         self.stdout.write(
                             self.style.ERROR(f'Failed to create {table_name}: {e}')
                         )
-            
+
             # Test database cache
             cache.set('test_key', 'test_value', 60)
             value = cache.get('test_key')
-            
+
             if value == 'test_value':
                 self.stdout.write(
                     self.style.SUCCESS('✓ Database cache is working correctly')
@@ -198,7 +201,7 @@ class Command(BaseCommand):
                 self.stdout.write(
                     self.style.ERROR('✗ Database cache test failed')
                 )
-                
+
         except Exception as e:
             self.stdout.write(
                 self.style.ERROR(f'Database cache setup failed: {e}')
@@ -207,7 +210,7 @@ class Command(BaseCommand):
     def clear_all_cache(self):
         """Clear all cache data"""
         self.stdout.write('Clearing all cache data...')
-        
+
         try:
             cache.clear()
             self.stdout.write(
@@ -223,11 +226,11 @@ class Command(BaseCommand):
         try:
             from core.services.cache_service import cache_service
             stats = cache_service.get_stats()
-            
+
             self.stdout.write('\nCache Statistics:')
             for key, value in stats.items():
                 self.stdout.write(f"  {key}: {value}")
-                
+
         except Exception as e:
             self.stdout.write(
                 self.style.WARNING(f'Could not retrieve cache stats: {e}')

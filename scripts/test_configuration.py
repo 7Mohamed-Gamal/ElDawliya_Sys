@@ -15,12 +15,12 @@ def test_configuration():
     """Test the new configuration structure."""
     print("🧪 Testing ElDawliya System Configuration Structure")
     print("=" * 55)
-    
+
     # Test 1: Check if settings files exist
     print("\n1. 📁 Checking settings files...")
     settings_dir = project_root / 'ElDawliya_sys' / 'settings'
     required_files = ['__init__.py', 'base.py', 'development.py', 'production.py', 'testing.py', 'config.py']
-    
+
     all_files_exist = True
     for file_name in required_files:
         file_path = settings_dir / file_name
@@ -29,24 +29,24 @@ def test_configuration():
         else:
             print(f"  ❌ {file_name} - Missing!")
             all_files_exist = False
-    
+
     # Test 2: Check .env files
     print("\n2. 🔧 Checking environment files...")
     env_file = project_root / '.env'
     env_example_file = project_root / '.env.example'
-    
+
     if env_file.exists():
         print("  ✅ .env")
     else:
         print("  ❌ .env - Missing!")
         all_files_exist = False
-    
+
     if env_example_file.exists():
         print("  ✅ .env.example")
     else:
         print("  ❌ .env.example - Missing!")
         all_files_exist = False
-    
+
     # Test 3: Check if config manager can be imported
     print("\n3. 🔍 Testing configuration manager...")
     try:
@@ -54,7 +54,7 @@ def test_configuration():
         config_file = settings_dir / 'config.py'
         if config_file.exists():
             print("  ✅ Configuration manager file exists")
-            
+
             # Try to read the file to check for syntax errors
             with open(config_file, 'r', encoding='utf-8') as f:
                 content = f.read()
@@ -66,11 +66,11 @@ def test_configuration():
         else:
             print("  ❌ Configuration manager file missing")
             all_files_exist = False
-    
+
     except Exception as e:
         print(f"  ❌ Configuration manager test failed: {e}")
         all_files_exist = False
-    
+
     # Test 4: Check documentation
     print("\n4. 📚 Checking documentation...")
     config_doc = project_root / 'docs' / 'CONFIGURATION.md'
@@ -78,7 +78,7 @@ def test_configuration():
         print("  ✅ Configuration documentation")
     else:
         print("  ❌ Configuration documentation - Missing!")
-    
+
     # Test 5: Check management command
     print("\n5. 🛠️  Checking management command...")
     validate_cmd = project_root / 'core' / 'management' / 'commands' / 'validate_config.py'
@@ -86,7 +86,7 @@ def test_configuration():
         print("  ✅ validate_config management command")
     else:
         print("  ❌ validate_config management command - Missing!")
-    
+
     # Test 6: Check migration script
     print("\n6. 🔄 Checking migration script...")
     migrate_script = project_root / 'scripts' / 'migrate_configuration.py'
@@ -94,7 +94,7 @@ def test_configuration():
         print("  ✅ Configuration migration script")
     else:
         print("  ❌ Configuration migration script - Missing!")
-    
+
     # Summary
     print("\n" + "=" * 55)
     if all_files_exist:
@@ -108,7 +108,7 @@ def test_configuration():
     else:
         print("❌ Some configuration structure tests failed!")
         print("Please check the missing files and fix the issues.")
-    
+
     return all_files_exist
 
 

@@ -11,7 +11,7 @@ class ProcurementConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'apps.procurement'
     verbose_name = _('إدارة المشتريات')
-    
+
     def ready(self):
         """Import signals when the app is ready."""
         try:

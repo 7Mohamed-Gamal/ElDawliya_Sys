@@ -11,7 +11,7 @@ class AdministrationConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'apps.administration'
     verbose_name = _('الإدارة العامة')
-    
+
     def ready(self):
         """Import signals when the app is ready."""
         try:

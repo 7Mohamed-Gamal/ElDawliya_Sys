@@ -16,9 +16,11 @@ class Vendor(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_('تاريخ التحديث'))
 
     def __str__(self):
+        """__str__ function"""
         return self.name
 
     class Meta:
+        """Meta class"""
         verbose_name = _('مورد')
         verbose_name_plural = _('الموردين')
         ordering = ['name']
@@ -42,9 +44,11 @@ class PurchaseRequest(models.Model):
     notes = models.TextField(blank=True, null=True, verbose_name=_('ملاحظات'))
 
     def __str__(self):
+        """__str__ function"""
         return f"طلب شراء #{self.request_number}"
 
     class Meta:
+        """Meta class"""
         verbose_name = _('طلب شراء')
         verbose_name_plural = _('طلبات الشراء')
         ordering = ['-request_date']
@@ -67,9 +71,11 @@ class PurchaseRequestItem(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_('تاريخ التحديث'))
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.product.product_name} - {self.quantity_requested}"
 
     class Meta:
+        """Meta class"""
         verbose_name = _('عنصر طلب الشراء')
         verbose_name_plural = _('عناصر طلبات الشراء')
         ordering = ['purchase_request', 'created_at']

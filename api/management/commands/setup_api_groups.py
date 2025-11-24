@@ -4,9 +4,11 @@ from django.contrib.contenttypes.models import ContentType
 
 
 class Command(BaseCommand):
+    """Command class"""
     help = 'Setup API user groups and permissions'
 
     def handle(self, *args, **options):
+        """handle function"""
         # Create API user groups
         groups_data = [
             {
@@ -49,10 +51,10 @@ class Command(BaseCommand):
         # Setup permissions for API models
         try:
             from api.models import APIKey, GeminiConversation, GeminiMessage, APIUsageLog
-            
+
             # Get API Users group
             api_users_group = Group.objects.get(name='API_Users')
-            
+
             # Add permissions for API models
             api_content_types = [
                 ContentType.objects.get_for_model(APIKey),
@@ -60,18 +62,18 @@ class Command(BaseCommand):
                 ContentType.objects.get_for_model(GeminiMessage),
                 ContentType.objects.get_for_model(APIUsageLog),
             ]
-            
+
             for content_type in api_content_types:
-                permissions = Permission.objects.filter(content_type=content_type)
+                permissions = Permission.objects.filter(content_type=content_type).prefetch_related()  # TODO: Add appropriate prefetch_related fields
                 for permission in permissions:
                     api_users_group.permissions.add(permission)
-            
+
             self.stdout.write(
                 self.style.SUCCESS(
                     'Successfully setup API permissions'
                 )
             )
-            
+
         except Exception as e:
             self.stdout.write(
                 self.style.ERROR(

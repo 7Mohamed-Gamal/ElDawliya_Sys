@@ -186,22 +186,22 @@ def get_upload_path(instance, filename, category='documents'):
     """
     import datetime
     from django.utils.text import slugify
-    
+
     # تنظيف اسم الملف
     filename = sanitize_filename(filename)
-    
+
     # إنشاء مسار بناءً على التاريخ
     now = datetime.datetime.now()
     year = now.strftime('%Y')
     month = now.strftime('%m')
-    
+
     # إنشاء المسار
     if hasattr(instance, 'employee'):
         employee_id = instance.employee.id
-        path = f\"{category}/{year}/{month}/employee_{employee_id}/{filename}\"
+        path = f"{category}/{year}/{month}/employee_{employee_id}/{filename}"
     else:
-        path = f\"{category}/{year}/{month}/{filename}\"
-    
+        path = f"{category}/{year}/{month}/{filename}"
+
     return path
 
 def sanitize_filename(filename):
@@ -210,58 +210,58 @@ def sanitize_filename(filename):
     """
     import re
     from django.utils.text import slugify
-    
+
     # فصل الاسم والامتداد
     name, ext = os.path.splitext(filename)
-    
+
     # إزالة الأحرف غير المسموحة
     allowed_chars = SECURITY_SETTINGS['allowed_characters']
     name = ''.join(c for c in name if c in allowed_chars)
-    
+
     # تحديد الطول
     max_length = SECURITY_SETTINGS['max_filename_length'] - len(ext)
     if len(name) > max_length:
         name = name[:max_length]
-    
+
     # إضافة الامتداد
-    return f\"{name}{ext}\"
+    return f"{name}{ext}"
 
 def validate_file(file_obj, category='documents'):
     """
     التحقق من صحة الملف
     """
     errors = []
-    
+
     if not file_obj:
         errors.append('لم يتم تحديد ملف')
         return errors
-    
+
     # فحص نوع الملف
     if category not in ALLOWED_FILE_TYPES:
         errors.append(f'نوع الملف غير مدعوم: {category}')
         return errors
-    
+
     file_config = ALLOWED_FILE_TYPES[category]
-    
+
     # فحص الامتداد
     file_ext = os.path.splitext(file_obj.name)[1].lower()
     if file_ext not in file_config['extensions']:
         errors.append(f'امتداد الملف غير مسموح: {file_ext}')
-    
+
     # فحص الحجم
     if file_obj.size > file_config['max_size']:
         max_size_mb = file_config['max_size'] / (1024 * 1024)
         errors.append(f'حجم الملف كبير جداً. الحد الأقصى: {max_size_mb:.1f} MB')
-    
+
     # فحص نوع MIME
     if hasattr(file_obj, 'content_type'):
         if file_obj.content_type not in file_config['mime_types']:
             errors.append(f'نوع الملف غير مسموح: {file_obj.content_type}')
-    
+
     # فحص الملفات المحظورة
     if file_ext in BLOCKED_EXTENSIONS:
         errors.append('نوع الملف محظور لأسباب أمنية')
-    
+
     return errors
 
 def get_file_info(file_path):
@@ -270,13 +270,13 @@ def get_file_info(file_path):
     """
     import mimetypes
     from datetime import datetime
-    
+
     if not os.path.exists(file_path):
         return None
-    
+
     stat = os.stat(file_path)
     mime_type, _ = mimetypes.guess_type(file_path)
-    
+
     return {
         'name': os.path.basename(file_path),
         'size': stat.st_size,
@@ -292,28 +292,28 @@ def format_file_size(size_bytes):
     تنسيق حجم الملف
     """
     if size_bytes == 0:
-        return \"0 B\"
-    
-    size_names = [\"B\", \"KB\", \"MB\", \"GB\", \"TB\"]
+        return "0 B"
+
+    size_names = ["B", "KB", "MB", "GB", "TB"]
     import math
     i = int(math.floor(math.log(size_bytes, 1024)))
     p = math.pow(1024, i)
     s = round(size_bytes / p, 2)
-    return f\"{s} {size_names[i]}\"
+    return f"{s} {size_names[i]}"
 
 def cleanup_temp_files():
     """
     تنظيف الملفات المؤقتة
     """
     import time
-    
+
     temp_dir = os.path.join(MEDIA_ROOT, 'temp')
     if not os.path.exists(temp_dir):
         return
-    
+
     current_time = time.time()
     lifetime = STORAGE_SETTINGS['temp_file_lifetime']
-    
+
     for filename in os.listdir(temp_dir):
         file_path = os.path.join(temp_dir, filename)
         if os.path.isfile(file_path):

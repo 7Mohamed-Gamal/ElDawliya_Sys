@@ -23,7 +23,7 @@ def setup_collations(sender, connection, **kwargs):
 def get_arabic_collation():
     """
     Get the appropriate Arabic collation for the current database.
-    
+
     Returns:
         str: The collation string to use for Arabic text fields.
     """
@@ -38,17 +38,17 @@ def get_arabic_collation():
 def apply_collation_to_field(field_name, collation=None):
     """
     Apply a specific collation to a database field.
-    
+
     Args:
         field_name (str): The name of the field to apply collation to.
         collation (str, optional): The collation to apply. Defaults to Arabic collation.
-    
+
     Returns:
         str: SQL fragment to apply the collation.
     """
     if collation is None:
         collation = get_arabic_collation()
-    
+
     if collation:
         return f"{field_name} COLLATE {collation}"
     return field_name

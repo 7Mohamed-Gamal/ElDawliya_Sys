@@ -15,26 +15,28 @@ from django.conf import settings
 
 class HRSystemConfig(models.Model):
     """إعدادات النظام المركزية"""
-    
+
     key = models.CharField(max_length=100, unique=True, verbose_name='المفتاح')
     value = models.TextField(verbose_name='القيمة')
     description = models.TextField(blank=True, verbose_name='الوصف')
     is_active = models.BooleanField(default=True, verbose_name='نشط')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')
-    
+
     class Meta:
+        """Meta class"""
         verbose_name = 'إعداد النظام'
         verbose_name_plural = 'إعدادات النظام'
         db_table = 'hr_system_config'
-    
+
     def __str__(self):
+        """__str__ function"""
         return f"{self.key}: {self.value[:50]}"
 
 
 class HRSystemLog(models.Model):
     """سجل أحداث النظام"""
-    
+
     ACTION_CHOICES = [
         ('create', 'إنشاء'),
         ('update', 'تحديث'),
@@ -43,7 +45,7 @@ class HRSystemLog(models.Model):
         ('export', 'تصدير'),
         ('import', 'استيراد'),
     ]
-    
+
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, verbose_name='المستخدم')
     action = models.CharField(max_length=20, choices=ACTION_CHOICES, verbose_name='الإجراء')
     module = models.CharField(max_length=50, verbose_name='الوحدة')
@@ -51,12 +53,14 @@ class HRSystemLog(models.Model):
     description = models.TextField(verbose_name='الوصف')
     ip_address = models.GenericIPAddressField(null=True, blank=True, verbose_name='عنوان IP')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الحدث')
-    
+
     class Meta:
+        """Meta class"""
         verbose_name = 'سجل النظام'
         verbose_name_plural = 'سجلات النظام'
         db_table = 'hr_system_log'
         ordering = ['-created_at']
-    
+
     def __str__(self):
+        """__str__ function"""
         return f"{self.user} - {self.action} - {self.module} - {self.created_at}"

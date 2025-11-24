@@ -23,14 +23,14 @@ import json
 def dashboard(request):
     """عرض لوحة تحكم طلبات الشراء"""
     # إحصائيات طلبات الشراء
-    pending_requests = PurchaseRequest.objects.filter(status='pending').count()
-    approved_requests = PurchaseRequest.objects.filter(status='approved').count()
-    rejected_requests = PurchaseRequest.objects.filter(status='rejected').count()
-    completed_requests = PurchaseRequest.objects.filter(status='completed').count()
+    pending_requests = PurchaseRequest.objects.filter(status='pending').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+    approved_requests = PurchaseRequest.objects.filter(status='approved').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+    rejected_requests = PurchaseRequest.objects.filter(status='rejected').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+    completed_requests = PurchaseRequest.objects.filter(status='completed').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
     total_requests = PurchaseRequest.objects.count()
 
     # طلبات الشراء الأخيرة
-    recent_requests = PurchaseRequest.objects.all().order_by('-request_date')[:5]
+    recent_requests = PurchaseRequest.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('-request_date')[:5]
 
     context = {
         'pending_requests': pending_requests,
@@ -47,12 +47,14 @@ def dashboard(request):
 @method_decorator(login_required, name='dispatch')
 @purchase_class_permission_required('purchase_requests', 'view')
 class PurchaseRequestListView(ListView):
+    """PurchaseRequestListView class"""
     model = PurchaseRequest
     template_name = 'Purchase_orders/purchase_request_list.html'
     context_object_name = 'purchase_requests'
     ordering = ['-request_date']
 
     def get_context_data(self, **kwargs):
+        """get_context_data function"""
         context = super().get_context_data(**kwargs)
         context['title'] = 'قائمة طلبات الشراء'
         return context
@@ -60,11 +62,13 @@ class PurchaseRequestListView(ListView):
 @method_decorator(login_required, name='dispatch')
 @purchase_class_permission_required('purchase_requests', 'view')
 class PurchaseRequestDetailView(DetailView):
+    """PurchaseRequestDetailView class"""
     model = PurchaseRequest
     template_name = 'Purchase_orders/purchase_request_detail.html'
     context_object_name = 'purchase_request'
 
     def get_context_data(self, **kwargs):
+        """get_context_data function"""
         context = super().get_context_data(**kwargs)
         context['title'] = f'تفاصيل طلب الشراء #{self.object.request_number}'
         return context
@@ -152,7 +156,7 @@ def create_purchase_request(request):
         form = PurchaseRequestForm(initial={'request_number': request_number})
 
     # إضافة الموردين إلى السياق
-    vendors = Vendor.objects.all()
+    vendors = Vendor.objects.all().select_related()  # TODO: Add appropriate select_related fields
 
     context = {
         'form': form,
@@ -283,7 +287,7 @@ def transfer_product_to_purchase_request(request):
             return JsonResponse({'status': 'error', 'message': error_message}, status=400)
 
         # التحقق من وجود طلب شراء قيد الانتظار
-        pending_request = PurchaseRequest.objects.filter(status='pending').first()
+        pending_request = PurchaseRequest.objects.filter(status='pending').prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
 
         if not pending_request and action == 'add':
             # إنشاء طلب شراء جديد إذا لم يكن هناك طلب قيد الانتظار
@@ -299,7 +303,7 @@ def transfer_product_to_purchase_request(request):
             existing_item = PurchaseRequestItem.objects.filter(
                 purchase_request=pending_request,
                 product=product
-            ).first()
+            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
 
             if existing_item:
                 return JsonResponse({
@@ -344,7 +348,7 @@ def transfer_product_to_purchase_request(request):
                 purchase_request__status='pending',
                 product=product,
                 status='pending'
-            ).first()
+            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
 
             if not item:
                 return JsonResponse({
@@ -401,7 +405,7 @@ def check_product_in_purchase_request(request, product_id):
     item = PurchaseRequestItem.objects.filter(
         purchase_request__status__in=['pending', 'approved'],
         product=product
-    ).first()
+    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
 
     if item:
         return JsonResponse({
@@ -417,7 +421,7 @@ def check_product_in_purchase_request(request, product_id):
 @purchase_module_permission_required('purchase_requests', 'view')
 def pending_approval_list(request):
     """عرض قائمة طلبات الشراء قيد الموافقة"""
-    purchase_requests = PurchaseRequest.objects.filter(status='pending').order_by('-request_date')
+    purchase_requests = PurchaseRequest.objects.filter(status='pending').prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('-request_date')
 
     context = {
         'purchase_requests': purchase_requests,
@@ -430,7 +434,7 @@ def pending_approval_list(request):
 @purchase_module_permission_required('purchase_requests', 'view')
 def approved_requests_list(request):
     """عرض قائمة طلبات الشراء المعتمدة"""
-    purchase_requests = PurchaseRequest.objects.filter(status='approved').order_by('-approval_date')
+    purchase_requests = PurchaseRequest.objects.filter(status='approved').prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('-approval_date')
 
     context = {
         'purchase_requests': purchase_requests,
@@ -443,7 +447,7 @@ def approved_requests_list(request):
 @purchase_module_permission_required('purchase_requests', 'view')
 def rejected_requests_list(request):
     """عرض قائمة طلبات الشراء المرفوضة"""
-    purchase_requests = PurchaseRequest.objects.filter(status='rejected').order_by('-approval_date')
+    purchase_requests = PurchaseRequest.objects.filter(status='rejected').prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('-approval_date')
 
     context = {
         'purchase_requests': purchase_requests,
@@ -456,7 +460,7 @@ def rejected_requests_list(request):
 @purchase_module_permission_required('purchase_requests', 'view')
 def vendors_list(request):
     """عرض قائمة الموردين"""
-    vendors = Vendor.objects.all()
+    vendors = Vendor.objects.all().select_related()  # TODO: Add appropriate select_related fields
 
     context = {
         'vendors': vendors,
@@ -593,14 +597,14 @@ def delete_purchase_request(request, pk):
 def reports(request):
     """عرض تقارير طلبات الشراء"""
     # إحصائيات طلبات الشراء
-    pending_requests = PurchaseRequest.objects.filter(status='pending').count()
-    approved_requests = PurchaseRequest.objects.filter(status='approved').count()
-    rejected_requests = PurchaseRequest.objects.filter(status='rejected').count()
-    completed_requests = PurchaseRequest.objects.filter(status='completed').count()
+    pending_requests = PurchaseRequest.objects.filter(status='pending').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+    approved_requests = PurchaseRequest.objects.filter(status='approved').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+    rejected_requests = PurchaseRequest.objects.filter(status='rejected').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+    completed_requests = PurchaseRequest.objects.filter(status='completed').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
     total_requests = PurchaseRequest.objects.count()
 
     # طلبات الشراء الأخيرة
-    recent_requests = PurchaseRequest.objects.all().order_by('-request_date')[:10]
+    recent_requests = PurchaseRequest.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('-request_date')[:10]
 
     context = {
         'pending_requests': pending_requests,
@@ -624,7 +628,7 @@ def get_products_api(request):
 
         try:
             # جلب البيانات من TblProducts
-            products = TblProducts.objects.all().order_by('product_name')
+            products = TblProducts.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('product_name')
 
             for product in products:
                 product_data = {
@@ -648,7 +652,7 @@ def get_products_api(request):
             # إذا فشل جلب البيانات من TblProducts، جرب من النموذج المحلي
             try:
                 from inventory.models_local import Product
-                local_products = Product.objects.all().order_by('name')
+                local_products = Product.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
 
                 for product in local_products:
                     product_data = {

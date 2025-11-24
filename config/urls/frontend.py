@@ -24,14 +24,14 @@ urlpatterns = [
     path('reset/done/', auth_views.PasswordResetCompleteView.as_view(
         template_name='auth/password_reset_complete.html'
     ), name='password_reset_complete'),
-    
+
     # Dashboard
     path('dashboard/', views.DashboardView.as_view(), name='dashboard'),
-    
+
     # Profile
     path('profile/', views.ProfileView.as_view(), name='profile'),
     path('profile/edit/', views.ProfileEditView.as_view(), name='profile_edit'),
-    
+
     # Module URLs
     path('hr/', include('apps.hr.frontend_urls')),
     path('inventory/', include('apps.inventory.frontend_urls')),
@@ -39,14 +39,14 @@ urlpatterns = [
     path('projects/', include('apps.projects.frontend_urls')),
     path('finance/', include('apps.finance.frontend_urls')),
     path('administration/', include('apps.administration.frontend_urls')),
-    
+
     # Reports
     path('reports/', views.ReportsView.as_view(), name='reports'),
     path('reports/<str:report_type>/', views.ReportDetailView.as_view(), name='report_detail'),
-    
+
     # Settings
     path('settings/', views.SettingsView.as_view(), name='settings'),
-    
+
     # Help and Support
     path('help/', views.HelpView.as_view(), name='help'),
     path('support/', views.SupportView.as_view(), name='support'),

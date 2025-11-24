@@ -9,21 +9,23 @@ from inventory.decorators import MODULES, DEPARTMENT_NAME
 User = get_user_model()
 
 class InventoryPermissionsTestCase(TestCase):
+    """InventoryPermissionsTestCase class"""
     def setUp(self):
+        """setUp function"""
         # Create admin user
         self.admin_user = User.objects.create_user(
             username='admin',
             password='adminpassword',
             Role='admin'
         )
-        
+
         # Create regular user
         self.regular_user = User.objects.create_user(
             username='user',
             password='userpassword',
             Role='user'
         )
-        
+
         # Create inventory department
         self.inventory_department = Department.objects.create(
             name=DEPARTMENT_NAME,
@@ -33,7 +35,7 @@ class InventoryPermissionsTestCase(TestCase):
             order=2,
             is_active=True,
         )
-        
+
         # Create inventory modules
         self.modules = {}
         for module_key, module_name in MODULES.items():
@@ -46,7 +48,7 @@ class InventoryPermissionsTestCase(TestCase):
                 is_active=True,
             )
             self.modules[module_key] = module
-        
+
         # Create permissions for each module
         self.permissions = {}
         for module_key, module in self.modules.items():
@@ -59,83 +61,83 @@ class InventoryPermissionsTestCase(TestCase):
                 )
                 module_perms[perm_type] = perm
             self.permissions[module_key] = module_perms
-        
+
         # Create inventory group
         self.inventory_group = Group.objects.create(name='Inventory Staff')
-        
+
         # Add view permissions for products to inventory group
         self.inventory_group.adminpermission_set.add(self.permissions['products']['view'])
-        
+
         # Add regular user to inventory group
         self.regular_user.groups.add(self.inventory_group)
-        
+
         # Create clients
         self.admin_client = Client()
         self.admin_client.login(username='admin', password='adminpassword')
-        
+
         self.user_client = Client()
         self.user_client.login(username='user', password='userpassword')
-        
+
         self.anonymous_client = Client()
-    
+
     def test_admin_can_access_all_inventory_pages(self):
         """Test that admin users can access all inventory pages"""
         # Test dashboard
         response = self.admin_client.get(reverse('inventory:dashboard'))
         self.assertEqual(response.status_code, 200)
-        
+
         # Test product list
         response = self.admin_client.get(reverse('inventory:product_list'))
         self.assertEqual(response.status_code, 200)
-        
+
         # Test invoice list
         response = self.admin_client.get(reverse('inventory:invoice_list'))
         self.assertEqual(response.status_code, 200)
-    
+
     def test_regular_user_can_access_permitted_pages(self):
         """Test that regular users can access pages they have permission for"""
         # Test product list (should have access)
         response = self.user_client.get(reverse('inventory:product_list'))
         self.assertEqual(response.status_code, 200)
-        
+
         # Test invoice list (should not have access)
         response = self.user_client.get(reverse('inventory:invoice_list'))
         self.assertNotEqual(response.status_code, 200)
-    
+
     def test_anonymous_user_redirected_to_login(self):
         """Test that anonymous users are redirected to login page"""
         # Test product list
         response = self.anonymous_client.get(reverse('inventory:product_list'))
         self.assertRedirects(
-            response, 
+            response,
             f"{reverse('accounts:login')}?next={reverse('inventory:product_list')}"
         )
-    
+
     def test_permission_assignment(self):
         """Test that permissions are correctly assigned to groups"""
         # Add more permissions to inventory group
         self.inventory_group.adminpermission_set.add(self.permissions['invoices']['view'])
-        
+
         # Test invoice list (should now have access)
         response = self.user_client.get(reverse('inventory:invoice_list'))
         self.assertEqual(response.status_code, 200)
-    
+
     def test_template_tags(self):
         """Test that template tags correctly check permissions"""
         from inventory.templatetags.inventory_permission_tags import has_inventory_module_permission
         from django.http import HttpRequest
-        
+
         # Create request objects
         admin_request = HttpRequest()
         admin_request.user = self.admin_user
-        
+
         user_request = HttpRequest()
         user_request.user = self.regular_user
-        
+
         # Admin should have all permissions
         self.assertTrue(has_inventory_module_permission(admin_request, 'products', 'view'))
         self.assertTrue(has_inventory_module_permission(admin_request, 'invoices', 'add'))
-        
+
         # Regular user should only have product view permission
         self.assertTrue(has_inventory_module_permission(user_request, 'products', 'view'))
         self.assertFalse(has_inventory_module_permission(user_request, 'invoices', 'view'))

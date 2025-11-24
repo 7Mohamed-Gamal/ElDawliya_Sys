@@ -20,40 +20,41 @@ sys.path.insert(0, str(project_root))
 
 class FinalMigrationScript:
     """منفذ الهجرة النهائية الشاملة"""
-    
+
     def __init__(self):
+        """__init__ function"""
         self.db_path = project_root / 'db_migration.sqlite3'
         self.backup_path = project_root / 'db_migration_backup.sqlite3'
         self.migration_log = []
-        
+
     def log(self, message):
         """تسجيل رسالة"""
         timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         log_entry = f"[{timestamp}] {message}"
         print(log_entry)
         self.migration_log.append(log_entry)
-        
+
     def create_backup(self):
         """إنشاء نسخة احتياطية"""
         self.log("إنشاء نسخة احتياطية من قاعدة البيانات...")
-        
+
         if self.db_path.exists():
             import shutil
             shutil.copy2(self.db_path, self.backup_path)
             self.log(f"تم إنشاء نسخة احتياطية: {self.backup_path}")
         else:
             self.log("لا توجد قاعدة بيانات موجودة - سيتم إنشاء قاعدة بيانات جديدة")
-            
+
     def create_database_structure(self):
         """إنشاء هيكل قاعدة البيانات الجديد"""
         self.log("إنشاء هيكل قاعدة البيانات الجديد...")
-        
+
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        
+
         try:
             # Create core tables with proper structure
-            
+
             # 1. Departments table
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS core_department (
@@ -70,7 +71,7 @@ class FinalMigrationScript:
                     FOREIGN KEY (parent_id) REFERENCES core_department(id)
                 )
             """)
-            
+
             # 2. Job Positions table
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS core_jobposition (
@@ -88,7 +89,7 @@ class FinalMigrationScript:
                     FOREIGN KEY (department_id) REFERENCES core_department(id)
                 )
             """)
-            
+
             # 3. Employees table
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS core_employee (
@@ -121,7 +122,7 @@ class FinalMigrationScript:
                     FOREIGN KEY (manager_id) REFERENCES core_employee(id)
                 )
             """)
-            
+
             # 4. Product Categories table
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS core_productcategory (
@@ -137,7 +138,7 @@ class FinalMigrationScript:
                     FOREIGN KEY (parent_id) REFERENCES core_productcategory(id)
                 )
             """)
-            
+
             # 5. Products table
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS core_product (
@@ -160,7 +161,7 @@ class FinalMigrationScript:
                     FOREIGN KEY (category_id) REFERENCES core_productcategory(id)
                 )
             """)
-            
+
             # 6. Projects table
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS core_project (
@@ -188,7 +189,7 @@ class FinalMigrationScript:
                     FOREIGN KEY (parent_project_id) REFERENCES core_project(id)
                 )
             """)
-            
+
             # 7. Tasks table
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS core_task (
@@ -219,7 +220,7 @@ class FinalMigrationScript:
                     FOREIGN KEY (parent_task_id) REFERENCES core_task(id)
                 )
             """)
-            
+
             # 8. Meetings table
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS core_meeting (
@@ -244,7 +245,7 @@ class FinalMigrationScript:
                     FOREIGN KEY (project_id) REFERENCES core_project(id)
                 )
             """)
-            
+
             # 9. Audit Log table
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS core_auditlog (
@@ -264,7 +265,7 @@ class FinalMigrationScript:
                     FOREIGN KEY (user_id) REFERENCES core_employee(id)
                 )
             """)
-            
+
             # 10. System Settings table
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS core_systemsetting (
@@ -280,24 +281,24 @@ class FinalMigrationScript:
                     is_public BOOLEAN DEFAULT 0
                 )
             """)
-            
+
             conn.commit()
             self.log("تم إنشاء هيكل قاعدة البيانات بنجاح")
-            
+
         except Exception as e:
             self.log(f"خطأ في إنشاء هيكل قاعدة البيانات: {e}")
             conn.rollback()
             raise
         finally:
             conn.close()
-            
+
     def create_indexes(self):
         """إنشاء الفهارس المحسنة"""
         self.log("إنشاء الفهارس المحسنة...")
-        
+
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        
+
         try:
             indexes = [
                 # Employee indexes
@@ -306,58 +307,58 @@ class FinalMigrationScript:
                 "CREATE INDEX IF NOT EXISTS idx_employees_hire_date ON core_employee(hire_date)",
                 "CREATE INDEX IF NOT EXISTS idx_employees_email ON core_employee(email)",
                 "CREATE INDEX IF NOT EXISTS idx_employees_emp_code ON core_employee(emp_code)",
-                
+
                 # Product indexes
                 "CREATE INDEX IF NOT EXISTS idx_products_category ON core_product(category_id, is_active)",
                 "CREATE INDEX IF NOT EXISTS idx_products_sku ON core_product(sku)",
                 "CREATE INDEX IF NOT EXISTS idx_products_name ON core_product(name)",
-                
+
                 # Task indexes
                 "CREATE INDEX IF NOT EXISTS idx_tasks_status_assigned ON core_task(status, assigned_to_id)",
                 "CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON core_task(due_date)",
                 "CREATE INDEX IF NOT EXISTS idx_tasks_priority ON core_task(priority)",
                 "CREATE INDEX IF NOT EXISTS idx_tasks_project ON core_task(project_id)",
-                
+
                 # Project indexes
                 "CREATE INDEX IF NOT EXISTS idx_projects_status ON core_project(status)",
                 "CREATE INDEX IF NOT EXISTS idx_projects_manager ON core_project(manager_id)",
                 "CREATE INDEX IF NOT EXISTS idx_projects_dates ON core_project(start_date, end_date)",
-                
+
                 # Meeting indexes
                 "CREATE INDEX IF NOT EXISTS idx_meetings_datetime ON core_meeting(start_datetime)",
                 "CREATE INDEX IF NOT EXISTS idx_meetings_organizer ON core_meeting(organizer_id)",
                 "CREATE INDEX IF NOT EXISTS idx_meetings_status ON core_meeting(status)",
-                
+
                 # Audit indexes
                 "CREATE INDEX IF NOT EXISTS idx_audit_user_action ON core_auditlog(user_id, action)",
                 "CREATE INDEX IF NOT EXISTS idx_audit_timestamp ON core_auditlog(timestamp)",
                 "CREATE INDEX IF NOT EXISTS idx_audit_table_record ON core_auditlog(table_name, record_id)",
-                
+
                 # System settings indexes
                 "CREATE INDEX IF NOT EXISTS idx_settings_key ON core_systemsetting(key)",
                 "CREATE INDEX IF NOT EXISTS idx_settings_category ON core_systemsetting(category)",
             ]
-            
+
             for index_sql in indexes:
                 cursor.execute(index_sql)
-                
+
             conn.commit()
             self.log(f"تم إنشاء {len(indexes)} فهرس بنجاح")
-            
+
         except Exception as e:
             self.log(f"خطأ في إنشاء الفهارس: {e}")
             conn.rollback()
             raise
         finally:
             conn.close()
-            
+
     def insert_sample_data(self):
         """إدراج بيانات تجريبية"""
         self.log("إدراج بيانات تجريبية...")
-        
+
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        
+
         try:
             # Insert sample departments
             departments = [
@@ -367,16 +368,16 @@ class FinalMigrationScript:
                 (str(uuid.uuid4()), 'المبيعات والتسويق', 'Sales & Marketing', 'SAL', 'قسم المبيعات والتسويق'),
                 (str(uuid.uuid4()), 'العمليات والإنتاج', 'Operations & Production', 'OPS', 'قسم العمليات والإنتاج'),
             ]
-            
+
             for dept in departments:
                 cursor.execute("""
-                    INSERT OR REPLACE INTO core_department 
+                    INSERT OR REPLACE INTO core_department
                     (id, name, name_en, code, description)
                     VALUES (?, ?, ?, ?, ?)
                 """, dept)
-                
+
             self.log(f"تم إدراج {len(departments)} قسم")
-            
+
             # Insert sample job positions
             job_positions = [
                 (str(uuid.uuid4()), 'مطور برمجيات', 'Software Developer', departments[0][0], 'تطوير وبرمجة التطبيقات'),
@@ -385,16 +386,16 @@ class FinalMigrationScript:
                 (str(uuid.uuid4()), 'محاسب', 'Accountant', departments[2][0], 'المحاسبة والشؤون المالية'),
                 (str(uuid.uuid4()), 'مندوب مبيعات', 'Sales Representative', departments[3][0], 'المبيعات وخدمة العملاء'),
             ]
-            
+
             for job in job_positions:
                 cursor.execute("""
-                    INSERT OR REPLACE INTO core_jobposition 
+                    INSERT OR REPLACE INTO core_jobposition
                     (id, title, title_en, department_id, description)
                     VALUES (?, ?, ?, ?, ?)
                 """, job)
-                
+
             self.log(f"تم إدراج {len(job_positions)} منصب وظيفي")
-            
+
             # Insert sample employees
             employees = [
                 (str(uuid.uuid4()), 'EMP001', 'أحمد', 'محمد', 'Ahmed', 'Mohammed', 'ahmed.mohammed@eldawliya.com', '0501234567', departments[0][0], job_positions[0][0]),
@@ -403,17 +404,17 @@ class FinalMigrationScript:
                 (str(uuid.uuid4()), 'EMP004', 'نورا', 'سالم', 'Nora', 'Salem', 'nora.salem@eldawliya.com', '0501234570', departments[3][0], job_positions[4][0]),
                 (str(uuid.uuid4()), 'EMP005', 'خالد', 'عبدالله', 'Khalid', 'Abdullah', 'khalid.abdullah@eldawliya.com', '0501234571', departments[0][0], job_positions[1][0]),
             ]
-            
+
             for emp in employees:
                 cursor.execute("""
-                    INSERT OR REPLACE INTO core_employee 
-                    (id, emp_code, first_name, last_name, first_name_en, last_name_en, 
+                    INSERT OR REPLACE INTO core_employee
+                    (id, emp_code, first_name, last_name, first_name_en, last_name_en,
                      email, mobile, department_id, job_position_id, hire_date)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, date('now', '-1 year'))
                 """, emp)
-                
+
             self.log(f"تم إدراج {len(employees)} موظف")
-            
+
             # Insert sample system settings
             settings = [
                 (str(uuid.uuid4()), 'company_name', 'شركة الدولية للأنظمة', 'اسم الشركة', 'company', 'string'),
@@ -422,107 +423,107 @@ class FinalMigrationScript:
                 (str(uuid.uuid4()), 'working_hours_per_day', '8', 'ساعات العمل اليومية', 'hr', 'integer'),
                 (str(uuid.uuid4()), 'working_days_per_week', '5', 'أيام العمل الأسبوعية', 'hr', 'integer'),
             ]
-            
+
             for setting in settings:
                 cursor.execute("""
-                    INSERT OR REPLACE INTO core_systemsetting 
+                    INSERT OR REPLACE INTO core_systemsetting
                     (id, key, value, description, category, data_type)
                     VALUES (?, ?, ?, ?, ?, ?)
                 """, setting)
-                
+
             self.log(f"تم إدراج {len(settings)} إعداد نظام")
-            
+
             conn.commit()
             self.log("تم إدراج جميع البيانات التجريبية بنجاح")
-            
+
         except Exception as e:
             self.log(f"خطأ في إدراج البيانات التجريبية: {e}")
             conn.rollback()
             raise
         finally:
             conn.close()
-            
+
     def validate_migration(self):
         """التحقق من صحة الهجرة"""
         self.log("التحقق من صحة الهجرة...")
-        
+
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        
+
         validation_results = {}
-        
+
         try:
             # Check tables exist
             cursor.execute("""
-                SELECT name FROM sqlite_master 
+                SELECT name FROM sqlite_master
                 WHERE type='table' AND name LIKE 'core_%'
             """)
-            
+
             tables = [row[0] for row in cursor.fetchall()]
             expected_tables = [
                 'core_department', 'core_jobposition', 'core_employee',
                 'core_productcategory', 'core_product', 'core_project',
                 'core_task', 'core_meeting', 'core_auditlog', 'core_systemsetting'
             ]
-            
+
             missing_tables = [t for t in expected_tables if t not in tables]
             validation_results['tables'] = {
                 'expected': len(expected_tables),
                 'found': len(tables),
                 'missing': missing_tables
             }
-            
+
             if missing_tables:
                 self.log(f"جداول مفقودة: {missing_tables}")
             else:
                 self.log("✓ جميع الجداول المطلوبة موجودة")
-                
+
             # Check data integrity
             for table in ['core_department', 'core_employee', 'core_systemsetting']:
                 cursor.execute(f"SELECT COUNT(*) FROM {table}")
                 count = cursor.fetchone()[0]
                 validation_results[f'{table}_count'] = count
                 self.log(f"✓ {table}: {count} سجل")
-                
+
             # Check indexes
             cursor.execute("""
-                SELECT name FROM sqlite_master 
+                SELECT name FROM sqlite_master
                 WHERE type='index' AND name LIKE 'idx_%'
             """)
-            
+
             indexes = [row[0] for row in cursor.fetchall()]
             validation_results['indexes_count'] = len(indexes)
             self.log(f"✓ تم إنشاء {len(indexes)} فهرس")
-            
+
             # Overall validation
             is_valid = (
                 len(missing_tables) == 0 and
                 validation_results.get('core_department_count', 0) > 0 and
                 validation_results.get('core_employee_count', 0) > 0
             )
-            
+
             validation_results['is_valid'] = is_valid
-            
+
             if is_valid:
                 self.log("✅ التحقق من الهجرة مكتمل بنجاح")
             else:
                 self.log("❌ فشل في التحقق من الهجرة")
-                
+
             return validation_results
-            
+
         except Exception as e:
             self.log(f"خطأ في التحقق من الهجرة: {e}")
             return {'is_valid': False, 'error': str(e)}
         finally:
             conn.close()
-            
+
     def generate_migration_report(self, validation_results):
         """إنشاء تقرير الهجرة"""
         self.log("إنشاء تقرير الهجرة...")
-        
+
         report_path = project_root / 'logs' / 'final_migration_report.txt'
         report_path.parent.mkdir(exist_ok=True)
-        
+
         report_lines = [
             "=" * 60,
             "تقرير الهجرة الشاملة النهائية - نظام الدولية",
@@ -534,7 +535,7 @@ class FinalMigrationScript:
             "",
             "نتائج التحقق:",
         ]
-        
+
         if validation_results.get('tables'):
             tables_info = validation_results['tables']
             report_lines.extend([
@@ -542,10 +543,10 @@ class FinalMigrationScript:
                 f"الجداول الموجودة: {tables_info['found']}",
                 f"الجداول المفقودة: {len(tables_info['missing'])}",
             ])
-            
+
             if tables_info['missing']:
                 report_lines.append(f"قائمة الجداول المفقودة: {', '.join(tables_info['missing'])}")
-                
+
         report_lines.extend([
             "",
             "إحصائيات البيانات:",
@@ -556,33 +557,33 @@ class FinalMigrationScript:
             "",
             "حالة الهجرة:",
         ])
-        
+
         if validation_results.get('is_valid'):
             report_lines.append("✅ الهجرة مكتملة بنجاح")
         else:
             report_lines.append("❌ الهجرة فشلت أو غير مكتملة")
             if 'error' in validation_results:
                 report_lines.append(f"الخطأ: {validation_results['error']}")
-                
+
         report_lines.extend([
             "",
             "سجل العمليات:",
             ""
         ])
-        
+
         report_lines.extend(self.migration_log)
-        
+
         report_lines.extend([
             "",
             "=" * 60
         ])
-        
+
         # Write report
         with open(report_path, 'w', encoding='utf-8') as f:
             f.write('\n'.join(report_lines))
-            
+
         self.log(f"تم حفظ التقرير في: {report_path}")
-        
+
         # Print summary
         print("\n" + "=" * 60)
         print("ملخص الهجرة:")
@@ -590,33 +591,33 @@ class FinalMigrationScript:
         for line in report_lines[4:20]:  # Print key summary lines
             print(line)
         print("=" * 60)
-        
+
     def run_final_migration(self):
         """تشغيل الهجرة النهائية الشاملة"""
         self.log("بدء الهجرة النهائية الشاملة لنظام الدولية")
         self.log("=" * 50)
-        
+
         try:
             # Step 1: Create backup
             self.create_backup()
-            
+
             # Step 2: Create database structure
             self.create_database_structure()
-            
+
             # Step 3: Create indexes
             self.create_indexes()
-            
+
             # Step 4: Insert sample data
             self.insert_sample_data()
-            
+
             # Step 5: Validate migration
             validation_results = self.validate_migration()
-            
+
             # Step 6: Generate report
             self.generate_migration_report(validation_results)
-            
+
             self.log("=" * 50)
-            
+
             if validation_results.get('is_valid'):
                 self.log("🎉 تمت الهجرة النهائية بنجاح!")
                 self.log("يمكنك الآن استخدام النظام الجديد")
@@ -624,7 +625,7 @@ class FinalMigrationScript:
             else:
                 self.log("⚠️ الهجرة مكتملة مع تحذيرات - راجع التقرير")
                 return False
-                
+
         except Exception as e:
             self.log(f"❌ خطأ في الهجرة النهائية: {e}")
             self.log("يمكنك استعادة النسخة الاحتياطية إذا لزم الأمر")
@@ -635,7 +636,7 @@ def main():
     """الدالة الرئيسية"""
     migration = FinalMigrationScript()
     success = migration.run_final_migration()
-    
+
     # Exit with appropriate code
     sys.exit(0 if success else 1)
 

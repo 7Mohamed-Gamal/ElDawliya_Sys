@@ -40,7 +40,7 @@ def custom_exception_handler(exc, context):
             'status_code': response.status_code,
             'timestamp': context.get('request').META.get('HTTP_X_TIMESTAMP') if context.get('request') else None
         }
-        
+
         # Add request ID if available
         if hasattr(context.get('request'), 'id'):
             custom_response_data['request_id'] = context['request'].id
@@ -105,7 +105,7 @@ def get_arabic_error_message(exc, response_data):
     }
 
     exc_name = exc.__class__.__name__
-    
+
     # Check for specific field errors
     if isinstance(response_data, dict):
         if 'detail' in response_data:
@@ -120,7 +120,7 @@ def get_arabic_error_message(exc, response_data):
                 return 'رمز المصادقة غير صحيح'
             elif 'Token has expired' in str(detail):
                 return 'انتهت صلاحية رمز المصادقة'
-        
+
         # Check for field-specific errors
         field_errors = []
         for field, errors in response_data.items():
@@ -131,7 +131,7 @@ def get_arabic_error_message(exc, response_data):
                         field_errors.append(f"{arabic_field}: {get_arabic_validation_message(error)}")
                 else:
                     field_errors.append(f"{arabic_field}: {get_arabic_validation_message(errors)}")
-        
+
         if field_errors:
             return "أخطاء في الحقول: " + "، ".join(field_errors)
 
@@ -172,7 +172,7 @@ def get_arabic_field_name(field_name):
         'supplier': 'المورد',
         'warehouse': 'المخزن',
     }
-    
+
     return field_names.get(field_name, field_name)
 
 
@@ -201,18 +201,18 @@ def get_arabic_validation_message(error_message):
         'This password is too common.': 'كلمة المرور شائعة جداً',
         'This password is entirely numeric.': 'كلمة المرور تحتوي على أرقام فقط',
     }
-    
+
     error_str = str(error_message)
-    
+
     # Check for exact matches first
     if error_str in validation_messages:
         return validation_messages[error_str]
-    
+
     # Check for partial matches
     for english_msg, arabic_msg in validation_messages.items():
         if english_msg in error_str:
             return arabic_msg
-    
+
     return error_str
 
 
@@ -222,6 +222,7 @@ class APIException(Exception):
     استثناء API مخصص مع دعم العربية
     """
     def __init__(self, message, status_code=status.HTTP_400_BAD_REQUEST, details=None):
+        """__init__ function"""
         self.message = message
         self.status_code = status_code
         self.details = details or {}
@@ -234,6 +235,7 @@ class ValidationException(APIException):
     استثناء التحقق المخصص
     """
     def __init__(self, message, field_errors=None):
+        """__init__ function"""
         super().__init__(message, status.HTTP_400_BAD_REQUEST, field_errors)
 
 
@@ -243,6 +245,7 @@ class PermissionException(APIException):
     استثناء الصلاحيات المخصص
     """
     def __init__(self, message="ليس لديك صلاحية للوصول لهذا المورد"):
+        """__init__ function"""
         super().__init__(message, status.HTTP_403_FORBIDDEN)
 
 
@@ -252,6 +255,7 @@ class AuthenticationException(APIException):
     استثناء المصادقة المخصص
     """
     def __init__(self, message="فشل في المصادقة"):
+        """__init__ function"""
         super().__init__(message, status.HTTP_401_UNAUTHORIZED)
 
 
@@ -261,6 +265,7 @@ class ResourceNotFoundException(APIException):
     استثناء عدم وجود المورد المخصص
     """
     def __init__(self, message="المورد المطلوب غير موجود"):
+        """__init__ function"""
         super().__init__(message, status.HTTP_404_NOT_FOUND)
 
 
@@ -270,4 +275,5 @@ class RateLimitException(APIException):
     استثناء تجاوز الحد المسموح المخصص
     """
     def __init__(self, message="تم تجاوز الحد المسموح من الطلبات"):
+        """__init__ function"""
         super().__init__(message, status.HTTP_429_TOO_MANY_REQUESTS)

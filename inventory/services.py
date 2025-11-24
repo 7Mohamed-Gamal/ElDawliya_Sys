@@ -3,6 +3,7 @@ from django.shortcuts import get_object_or_404
 from .models_local import Product, Voucher, VoucherItem
 
 class InventoryTransactionService:
+    """InventoryTransactionService class"""
     @staticmethod
     def handle_voucher_deletion(voucher):
         """
@@ -11,7 +12,7 @@ class InventoryTransactionService:
         with transaction.atomic():
             for item in voucher.items.all():
                 product = item.product
-                
+
                 if voucher.voucher_type == 'إذن اضافة':
                     # Reverse addition - subtract the added quantity
                     product.quantity -= item.quantity_added or 0
@@ -24,7 +25,7 @@ class InventoryTransactionService:
                 elif voucher.voucher_type == 'إذن مرتجع مورد':
                     # Reverse supplier return - add back the quantity
                     product.quantity += item.quantity_disbursed or 0
-                
+
                 product.save()
 
     @staticmethod
@@ -50,18 +51,18 @@ class InventoryTransactionService:
                     elif voucher.voucher_type == 'إذن مرتجع مورد':
                         old_item.product.quantity += old_item.quantity_disbursed or 0
                     old_item.product.save()
-            
+
             # Delete all current items
             voucher.items.all().delete()
-            
+
             # Process new/updated items
             for item_data in new_items_data:
                 product = get_object_or_404(Product, product_id=item_data['product_id'])
                 quantity = float(item_data['quantity'])
-                
+
                 # Find if this product was in old items
                 old_item = next((item for item in old_items if item.product.product_id == item_data['product_id']), None)
-                
+
                 # Calculate quantity difference if item existed before
                 if old_item:
                     if voucher.voucher_type in ['إذن اضافة', 'اذن مرتجع عميل']:
@@ -78,18 +79,18 @@ class InventoryTransactionService:
                         product.quantity += quantity
                     else:
                         product.quantity -= quantity
-                
+
                 # Create new voucher item
                 item = VoucherItem(voucher=voucher, product=product)
                 if voucher.voucher_type in ['إذن اضافة', 'اذن مرتجع عميل']:
                     item.quantity_added = quantity
                 else:
                     item.quantity_disbursed = quantity
-                    
+
                 if voucher.voucher_type == 'إذن صرف':
                     item.machine = item_data.get('machine', '')
                     item.machine_unit = item_data.get('machine_unit', '')
-                
+
                 product.save()
                 item.save()
 
@@ -102,20 +103,20 @@ class InventoryTransactionService:
             for item_data in items_data:
                 product = get_object_or_404(Product, product_id=item_data['product_id'])
                 quantity = float(item_data['quantity'])
-                
+
                 # Create new voucher item
                 item = VoucherItem(voucher=voucher, product=product)
-                
+
                 if voucher.voucher_type in ['إذن اضافة', 'اذن مرتجع عميل']:
                     item.quantity_added = quantity
                     product.quantity += quantity
                 else:
                     item.quantity_disbursed = quantity
                     product.quantity -= quantity
-                    
+
                 if voucher.voucher_type == 'إذن صرف':
                     item.machine = item_data.get('machine', '')
                     item.machine_unit = item_data.get('machine_unit', '')
-                
+
                 product.save()
                 item.save()

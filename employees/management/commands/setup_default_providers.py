@@ -9,9 +9,11 @@ from employees.models_extended import ExtendedHealthInsuranceProvider, WorkSched
 
 
 class Command(BaseCommand):
+    """Command class"""
     help = 'Set up default health insurance providers and work schedules for the system'
 
     def add_arguments(self, parser):
+        """add_arguments function"""
         parser.add_argument(
             '--force',
             action='store_true',
@@ -19,6 +21,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        """handle function"""
         self.stdout.write(self.style.SUCCESS('Setting up default health insurance providers and work schedules...'))
 
         # Setup health insurance providers
@@ -73,10 +76,10 @@ class Command(BaseCommand):
                 'is_active': True,
             },
         ]
-        
+
         created_count = 0
         updated_count = 0
-        
+
         try:
             with transaction.atomic():
                 for provider_data in providers_data:
@@ -84,7 +87,7 @@ class Command(BaseCommand):
                         provider_code=provider_data['provider_code'],
                         defaults=provider_data
                     )
-                    
+
                     if created:
                         created_count += 1
                         self.stdout.write(
@@ -105,7 +108,7 @@ class Command(BaseCommand):
                             self.stdout.write(
                                 self.style.WARNING(f'- Provider already exists: {provider.provider_name}')
                             )
-                
+
                 self.stdout.write(
                     self.style.SUCCESS(
                         f'✅ Health insurance providers setup completed!'
@@ -228,4 +231,5 @@ class Command(BaseCommand):
             raise
 
     def get_version(self):
+        """get_version function"""
         return '1.0.0'

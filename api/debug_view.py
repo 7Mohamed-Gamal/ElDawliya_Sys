@@ -35,7 +35,7 @@ def api_debug_info(request):
         return Response({
             'error': 'Debug mode is disabled'
         }, status=status.HTTP_403_FORBIDDEN)
-    
+
     return Response({
         'user': {
             'id': request.user.id,
@@ -87,10 +87,10 @@ def debug_database_connection(request):
         return JsonResponse({
             'error': 'Debug mode is disabled'
         }, status=403)
-    
+
     from django.db import connections
     from django.db.utils import OperationalError
-    
+
     results = {}
     for name in connections:
         try:
@@ -111,7 +111,7 @@ def debug_database_connection(request):
                 'status': 'error',
                 'error': str(e)
             }
-    
+
     return JsonResponse({
         'databases': results
     })
@@ -160,7 +160,7 @@ def debug_ai_info(request):
         from api.models import AIConfiguration, AIProvider
 
         # Get all AI providers
-        providers = AIProvider.objects.all()
+        providers = AIProvider.objects.all().select_related()  # TODO: Add appropriate select_related fields
         providers_data = []
         for provider in providers:
             providers_data.append({
@@ -172,7 +172,7 @@ def debug_ai_info(request):
             })
 
         # Get AI configurations
-        configurations = AIConfiguration.objects.all()
+        configurations = AIConfiguration.objects.all().select_related()  # TODO: Add appropriate select_related fields
         configs_data = []
         for config in configurations:
             configs_data.append({

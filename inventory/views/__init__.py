@@ -4,18 +4,33 @@ This file imports all views from their respective modules to maintain backward c
 """
 
 # Import all views from their respective modules
-from .dashboard_views import *
-from .product_views import *
-from .category_views import *
-from .unit_views import *
-from .supplier_views import *
-from .customer_views import *
-from .department_views import *
-from .voucher_views import *
-from .purchase_request_views import *
-from .report_views import *
-from .api_views import *
-from .settings_views import *
-from .utility_views import *
-from .api_functions import *  # Import the new API functions
-from .product_movement_views import *  # Import product movement views
+# TODO: Replace wildcard import
+# from .dashboard_views import specific_items
+# TODO: Replace wildcard import
+# from .product_views import specific_items
+# TODO: Replace wildcard import
+# from .category_views import specific_items
+# TODO: Replace wildcard import
+# from .unit_views import specific_items
+# TODO: Replace wildcard import
+# from .supplier_views import specific_items
+# TODO: Replace wildcard import
+# from .customer_views import specific_items
+# TODO: Replace wildcard import
+# from .department_views import specific_items
+# TODO: Replace wildcard import
+# from .voucher_views import specific_items
+# TODO: Replace wildcard import
+# from .purchase_request_views import specific_items
+# TODO: Replace wildcard import
+# from .report_views import specific_items
+# TODO: Replace wildcard import
+# from .api_views import specific_items
+# TODO: Replace wildcard import
+# from .settings_views import specific_items
+# TODO: Replace wildcard import
+# from .utility_views import specific_items
+# TODO: Replace wildcard import
+# from .api_functions import specific_items  # Import the new API functions
+# TODO: Replace wildcard import
+# from .product_movement_views import specific_items  # Import product movement views

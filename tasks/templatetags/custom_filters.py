@@ -6,7 +6,7 @@ DEPRECATED: يُنصح باستخدام tasks_filters.py بدلاً من هذا 
 """
 # This file is intentionally left empty to avoid naming conflicts.
 # Please use tasks.templatetags.tasks_filters instead.
-# 
+#
 # In your templates, replace:
 # {% load custom_filters %}
 # with:

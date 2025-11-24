@@ -57,12 +57,14 @@ class ProductCategory(BaseModel):
     )
 
     class Meta:
+        """Meta class"""
         verbose_name = _('تصنيف المنتج')
         verbose_name_plural = _('تصنيفات المنتجات')
         ordering = ['sort_order', 'name']
         unique_together = ['name', 'parent_category']
 
     def __str__(self):
+        """__str__ function"""
         if self.parent_category:
             return f"{self.parent_category.name} - {self.name}"
         return self.name
@@ -130,14 +132,17 @@ class Unit(BaseModel):
     )
 
     class Meta:
+        """Meta class"""
         verbose_name = _('وحدة القياس')
         verbose_name_plural = _('وحدات القياس')
         ordering = ['name']
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.name} ({self.symbol})"
 
     def clean(self):
+        """clean function"""
         if self.is_base_unit and self.base_unit:
             raise ValidationError(_('الوحدة الأساسية لا يمكن أن تحتوي على وحدة أساسية أخرى'))
         if not self.is_base_unit and not self.base_unit:
@@ -190,11 +195,13 @@ class Warehouse(BaseModel, AddressModel):
     )
 
     class Meta:
+        """Meta class"""
         verbose_name = _('مخزن')
         verbose_name_plural = _('المخازن')
         ordering = ['name']
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.name} ({self.code})"
 
     @property
@@ -310,11 +317,13 @@ class Supplier(BaseModel, AddressModel, ContactModel):
     )
 
     class Meta:
+        """Meta class"""
         verbose_name = _('مورد')
         verbose_name_plural = _('الموردين')
         ordering = ['name']
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.name} ({self.code})"
 
     def approve(self, user):
@@ -411,7 +420,7 @@ class Product(AuditableModel):
         blank=True,
         verbose_name=_('صورة المنتج')
     )
-    
+
     # Pricing
     cost_price = models.DecimalField(
         max_digits=15,
@@ -429,7 +438,7 @@ class Product(AuditableModel):
         validators=[MinValueValidator(Decimal('0'))],
         verbose_name=_('سعر البيع')
     )
-    
+
     # Stock Management
     tracking_method = models.CharField(
         max_length=20,
@@ -468,7 +477,7 @@ class Product(AuditableModel):
         validators=[MinValueValidator(Decimal('0'))],
         verbose_name=_('كمية إعادة الطلب')
     )
-    
+
     # Quality Control
     requires_inspection = models.BooleanField(
         default=False,
@@ -480,7 +489,7 @@ class Product(AuditableModel):
         blank=True,
         verbose_name=_('مدة الصلاحية (أيام)')
     )
-    
+
     # Supplier Information
     preferred_supplier = models.ForeignKey(
         Supplier,
@@ -490,7 +499,7 @@ class Product(AuditableModel):
         related_name='preferred_products',
         verbose_name=_('المورد المفضل')
     )
-    
+
     # Status
     is_discontinued = models.BooleanField(
         default=False,
@@ -499,6 +508,7 @@ class Product(AuditableModel):
     )
 
     class Meta:
+        """Meta class"""
         verbose_name = _('منتج')
         verbose_name_plural = _('المنتجات')
         ordering = ['name']
@@ -509,13 +519,15 @@ class Product(AuditableModel):
         ]
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.name} ({self.code})"
 
     def clean(self):
+        """clean function"""
         if self.max_stock_level and self.min_stock_level:
             if self.max_stock_level <= self.min_stock_level:
                 raise ValidationError(_('الحد الأقصى يجب أن يكون أكبر من الحد الأدنى'))
-        
+
         if self.reorder_point and self.min_stock_level:
             if self.reorder_point < self.min_stock_level:
                 raise ValidationError(_('نقطة إعادة الطلب يجب أن تكون أكبر من أو تساوي الحد الأدنى'))
@@ -610,6 +622,7 @@ class StockLevel(BaseModel):
     )
 
     class Meta:
+        """Meta class"""
         verbose_name = _('مستوى المخزون')
         verbose_name_plural = _('مستويات المخزون')
         unique_together = ['product', 'warehouse']
@@ -619,6 +632,7 @@ class StockLevel(BaseModel):
         ]
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.product.name} - {self.warehouse.name}: {self.quantity_on_hand}"
 
     @property
@@ -719,7 +733,7 @@ class StockMovement(AuditableModel):
         validators=[MinValueValidator(Decimal('0'))],
         verbose_name=_('إجمالي التكلفة')
     )
-    
+
     # For transfers
     destination_warehouse = models.ForeignKey(
         Warehouse,
@@ -729,7 +743,7 @@ class StockMovement(AuditableModel):
         related_name='incoming_transfers',
         verbose_name=_('المخزن المستقبل')
     )
-    
+
     # Reference documents
     reference_type = models.CharField(
         max_length=50,
@@ -745,7 +759,7 @@ class StockMovement(AuditableModel):
         verbose_name=_('معرف المرجع'),
         help_text=_('معرف المستند المرجعي')
     )
-    
+
     # Batch/Serial tracking
     batch_number = models.CharField(
         max_length=50,
@@ -764,7 +778,7 @@ class StockMovement(AuditableModel):
         blank=True,
         verbose_name=_('تاريخ انتهاء الصلاحية')
     )
-    
+
     # Balance after movement
     balance_after = models.DecimalField(
         max_digits=15,
@@ -775,6 +789,7 @@ class StockMovement(AuditableModel):
     )
 
     class Meta:
+        """Meta class"""
         verbose_name = _('حركة مخزون')
         verbose_name_plural = _('حركات المخزون')
         ordering = ['-movement_date', '-created_at']
@@ -785,19 +800,21 @@ class StockMovement(AuditableModel):
         ]
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.movement_number} - {self.product.name} - {self.quantity}"
 
     def save(self, *args, **kwargs):
+        """save function"""
         # Calculate total cost if not provided
         if self.unit_cost and not self.total_cost:
             self.total_cost = self.quantity * self.unit_cost
-        
+
         # Generate movement number if not provided
         if not self.movement_number:
             self.movement_number = self.generate_movement_number()
-        
+
         super().save(*args, **kwargs)
-        
+
         # Update stock levels after saving
         self.update_stock_levels()
 
@@ -806,7 +823,7 @@ class StockMovement(AuditableModel):
         from django.utils import timezone
         date_str = timezone.now().strftime('%Y%m%d')
         count = StockMovement.objects.filter(
-            movement_date__date=timezone.now().date()
+            movement_date__date=timezone.now().prefetch_related()  # TODO: Add appropriate prefetch_related fields.date()
         ).count() + 1
         return f"MOV-{date_str}-{count:04d}"
 
@@ -817,7 +834,7 @@ class StockMovement(AuditableModel):
             warehouse=self.warehouse,
             defaults={'quantity_on_hand': Decimal('0')}
         )
-        
+
         # Update quantity based on movement type
         if self.movement_type in ['receipt', 'return']:
             stock_level.quantity_on_hand += self.quantity
@@ -828,7 +845,7 @@ class StockMovement(AuditableModel):
         elif self.movement_type == 'transfer':
             # Decrease from source warehouse
             stock_level.quantity_on_hand -= self.quantity
-            
+
             # Increase in destination warehouse
             if self.destination_warehouse:
                 dest_stock, created = StockLevel.objects.get_or_create(
@@ -844,7 +861,7 @@ class StockMovement(AuditableModel):
         elif self.movement_type == 'adjustment':
             # For adjustments, the quantity represents the new balance
             stock_level.quantity_on_hand = self.quantity
-        
+
         # Update last movement date and balance
         stock_level.last_movement_date = self.movement_date
         self.balance_after = stock_level.quantity_on_hand
@@ -910,18 +927,20 @@ class StockTake(AuditableModel):
     )
 
     class Meta:
+        """Meta class"""
         verbose_name = _('جرد مخزون')
         verbose_name_plural = _('جرد المخزون')
         ordering = ['-stock_take_date']
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.stock_take_number} - {self.warehouse.name}"
 
     def complete_stock_take(self, user):
         """Complete stock take and create adjustments"""
         if self.status != 'in_progress':
             raise ValidationError(_('يمكن إكمال الجرد فقط إذا كان قيد التنفيذ'))
-        
+
         # Create adjustment movements for differences
         for item in self.items.all():
             if item.variance_quantity != 0:
@@ -937,7 +956,7 @@ class StockTake(AuditableModel):
                     notes=f"تسوية جرد - {self.stock_take_number}",
                     created_by=user
                 )
-        
+
         self.status = 'completed'
         self.approved_by = user
         self.approved_at = timezone.now()
@@ -999,18 +1018,21 @@ class StockTakeItem(BaseModel):
     )
 
     class Meta:
+        """Meta class"""
         verbose_name = _('عنصر جرد المخزون')
         verbose_name_plural = _('عناصر جرد المخزون')
         unique_together = ['stock_take', 'product']
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.stock_take.stock_take_number} - {self.product.name}"
 
     def save(self, *args, **kwargs):
+        """save function"""
         # Calculate variance
         if self.counted_quantity is not None:
             self.variance_quantity = self.counted_quantity - self.system_quantity
             if self.unit_cost:
                 self.variance_value = self.variance_quantity * self.unit_cost
-        
+
         super().save(*args, **kwargs)

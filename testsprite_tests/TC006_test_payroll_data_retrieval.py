@@ -5,6 +5,7 @@ BASE_URL = "http://localhost:8000"
 TIMEOUT = 30
 
 def test_payroll_data_retrieval():
+    """test_payroll_data_retrieval function"""
     auth = HTTPBasicAuth("admin", "hgslduhgfwdv")
     url = f"{BASE_URL}/payrolls/"
 

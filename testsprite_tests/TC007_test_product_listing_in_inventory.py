@@ -7,6 +7,7 @@ PASSWORD = "hgslduhgfwdv"
 TIMEOUT = 30
 
 def test_product_listing_in_inventory():
+    """test_product_listing_in_inventory function"""
     # Authenticate with basic token (basic HTTP auth in this case)
     auth = HTTPBasicAuth(USERNAME, PASSWORD)
     url = f"{BASE_URL}/api/v1/products/"

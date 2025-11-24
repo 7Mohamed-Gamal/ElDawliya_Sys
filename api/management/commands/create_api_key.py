@@ -7,9 +7,11 @@ User = get_user_model()
 
 
 class Command(BaseCommand):
+    """Command class"""
     help = 'Create an API key for a user'
 
     def add_arguments(self, parser):
+        """add_arguments function"""
         parser.add_argument(
             'username',
             type=str,
@@ -28,6 +30,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        """handle function"""
         username = options['username']
         key_name = options['name']
         expires_days = options.get('expires_days')
@@ -63,7 +66,7 @@ class Command(BaseCommand):
         self.stdout.write(f'Key Name: {key_name}')
         if expires_at:
             self.stdout.write(f'Expires: {expires_at}')
-        
+
         self.stdout.write(
             self.style.WARNING(
                 'Please save this API key securely. It will not be shown again.'

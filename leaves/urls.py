@@ -6,7 +6,7 @@ app_name = 'leaves'
 urlpatterns = [
     # Dashboard
     path('', views.dashboard, name='dashboard'),
-    
+
     # Leave requests
     path('requests/', views.leave_list, name='leave_list'),
     path('requests/create/', views.create_request, name='create_request'),

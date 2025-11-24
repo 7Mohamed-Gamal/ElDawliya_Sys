@@ -16,6 +16,7 @@ from inventory.forms import CategoryForm
 @method_decorator(login_required, name='dispatch')
 @inventory_class_permission_required('categories', 'view')
 class CategoryListView(ListView):
+    """CategoryListView class"""
     model = Category
     template_name = 'inventory/category_list.html'
     context_object_name = 'categories'
@@ -23,6 +24,7 @@ class CategoryListView(ListView):
 @method_decorator(login_required, name='dispatch')
 @inventory_class_permission_required('categories', 'add')
 class CategoryCreateView(CreateView):
+    """CategoryCreateView class"""
     model = Category
     form_class = CategoryForm
     template_name = 'inventory/category_form.html'
@@ -31,6 +33,7 @@ class CategoryCreateView(CreateView):
 @method_decorator(login_required, name='dispatch')
 @inventory_class_permission_required('categories', 'edit')
 class CategoryUpdateView(UpdateView):
+    """CategoryUpdateView class"""
     model = Category
     form_class = CategoryForm
     template_name = 'inventory/category_form.html'
@@ -39,6 +42,7 @@ class CategoryUpdateView(UpdateView):
 @method_decorator(login_required, name='dispatch')
 @inventory_class_permission_required('categories', 'delete')
 class CategoryDeleteView(DeleteView):
+    """CategoryDeleteView class"""
     model = Category
     template_name = 'inventory/category_confirm_delete.html'
     success_url = reverse_lazy('inventory:category_list')
@@ -71,7 +75,7 @@ def category_add_ajax(request):
                 return JsonResponse({'success': False, 'error': 'اسم التصنيف مطلوب'})
 
             # Check if category with this name already exists
-            existing_category = Category.objects.filter(name=name).first()
+            existing_category = Category.objects.filter(name=name).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
             if existing_category:
                 logger.info(f"Category with name '{name}' already exists with ID: {existing_category.id}")
                 return JsonResponse({

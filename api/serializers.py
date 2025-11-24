@@ -15,6 +15,7 @@ User = get_user_model()
 class UserSerializer(serializers.ModelSerializer):
     """Serializer for User model"""
     class Meta:
+        """Meta class"""
         model = User
         fields = ['id', 'username', 'email', 'first_name', 'last_name', 'is_active', 'date_joined']
         read_only_fields = ['id', 'date_joined']
@@ -25,6 +26,7 @@ class APIKeySerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
 
     class Meta:
+        """Meta class"""
         model = APIKey
         fields = ['id', 'user', 'name', 'key', 'is_active', 'created_at', 'last_used', 'expires_at']
         read_only_fields = ['id', 'key', 'created_at', 'last_used']
@@ -33,6 +35,7 @@ class APIKeySerializer(serializers.ModelSerializer):
 class GeminiMessageSerializer(serializers.ModelSerializer):
     """Serializer for Gemini Message model"""
     class Meta:
+        """Meta class"""
         model = GeminiMessage
         fields = ['id', 'role', 'content', 'timestamp', 'tokens_used']
         read_only_fields = ['id', 'timestamp', 'tokens_used']
@@ -44,6 +47,7 @@ class GeminiConversationSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
 
     class Meta:
+        """Meta class"""
         model = GeminiConversation
         fields = ['id', 'user', 'title', 'created_at', 'updated_at', 'is_active', 'messages']
         read_only_fields = ['id', 'created_at', 'updated_at']
@@ -54,6 +58,7 @@ class APIUsageLogSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
 
     class Meta:
+        """Meta class"""
         model = APIUsageLog
         fields = ['id', 'user', 'endpoint', 'method', 'status_code', 'response_time', 'timestamp', 'ip_address']
         read_only_fields = ['id', 'timestamp']
@@ -83,6 +88,7 @@ class APIUsageLogSerializer(serializers.ModelSerializer):
 class CategorySerializer(serializers.ModelSerializer):
     """Serializer for Category model"""
     class Meta:
+        """Meta class"""
         model = TblCategories
         fields = ['cat_id', 'cat_name']
 
@@ -90,6 +96,7 @@ class CategorySerializer(serializers.ModelSerializer):
 class SupplierSerializer(serializers.ModelSerializer):
     """Serializer for Supplier model"""
     class Meta:
+        """Meta class"""
         model = TblSuppliers
         fields = ['supplier_id', 'supplier_name']
 
@@ -99,6 +106,7 @@ class ProductSerializer(serializers.ModelSerializer):
     category = CategorySerializer(source='cat', read_only=True)
 
     class Meta:
+        """Meta class"""
         model = TblProducts
         fields = [
             'product_id', 'product_name', 'initial_balance', 'elwarad',
@@ -114,6 +122,7 @@ class TaskSerializer(serializers.ModelSerializer):
     created_by = UserSerializer(read_only=True)
 
     class Meta:
+        """Meta class"""
         model = Task
         fields = [
             'id', 'title', 'description', 'assigned_to', 'created_by',
@@ -127,6 +136,7 @@ class MeetingSerializer(serializers.ModelSerializer):
     organizer = UserSerializer(read_only=True)
 
     class Meta:
+        """Meta class"""
         model = Meeting
         fields = [
             'id', 'title', 'description', 'organizer', 'date_time',

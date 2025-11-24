@@ -70,7 +70,7 @@ def sum(queryset, attr):
     """Sum the attribute across all objects in the queryset."""
     if not queryset:
         return 0
-    
+
     try:
         return sum(float(getattr(obj, attr, 0) or 0) for obj in queryset)
     except:

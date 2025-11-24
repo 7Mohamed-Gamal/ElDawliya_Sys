@@ -19,7 +19,7 @@ LOGS_DIR.mkdir(exist_ok=True)
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
-    
+
     # Formatters
     'formatters': {
         'verbose': {
@@ -47,7 +47,7 @@ LOGGING = {
             'datefmt': '%Y-%m-%d %H:%M:%S',
         },
     },
-    
+
     # Filters
     'filters': {
         'require_debug_false': {
@@ -61,7 +61,7 @@ LOGGING = {
             'callback': lambda record: not record.getMessage().startswith('/static/'),
         },
     },
-    
+
     # Handlers
     'handlers': {
         # Console handler for development
@@ -71,7 +71,7 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
         },
-        
+
         # Main application log file
         'file_app': {
             'level': 'INFO',
@@ -82,7 +82,7 @@ LOGGING = {
             'formatter': 'verbose',
             'encoding': 'utf-8',
         },
-        
+
         # Error log file
         'file_error': {
             'level': 'ERROR',
@@ -93,7 +93,7 @@ LOGGING = {
             'formatter': 'verbose',
             'encoding': 'utf-8',
         },
-        
+
         # Security log file
         'file_security': {
             'level': 'INFO',
@@ -104,7 +104,7 @@ LOGGING = {
             'formatter': 'security',
             'encoding': 'utf-8',
         },
-        
+
         # Performance log file
         'file_performance': {
             'level': 'INFO',
@@ -115,7 +115,7 @@ LOGGING = {
             'formatter': 'performance',
             'encoding': 'utf-8',
         },
-        
+
         # Database queries log
         'file_db': {
             'level': 'DEBUG',
@@ -126,7 +126,7 @@ LOGGING = {
             'formatter': 'verbose',
             'encoding': 'utf-8',
         },
-        
+
         # Cache operations log
         'file_cache': {
             'level': 'DEBUG',
@@ -137,7 +137,7 @@ LOGGING = {
             'formatter': 'verbose',
             'encoding': 'utf-8',
         },
-        
+
         # API requests log
         'file_api': {
             'level': 'INFO',
@@ -148,7 +148,7 @@ LOGGING = {
             'formatter': 'json',
             'encoding': 'utf-8',
         },
-        
+
         # User activity log
         'file_user_activity': {
             'level': 'INFO',
@@ -159,7 +159,7 @@ LOGGING = {
             'formatter': 'json',
             'encoding': 'utf-8',
         },
-        
+
         # System monitoring log
         'file_monitoring': {
             'level': 'INFO',
@@ -170,7 +170,7 @@ LOGGING = {
             'formatter': 'json',
             'encoding': 'utf-8',
         },
-        
+
         # Email handler for critical errors
         'mail_admins': {
             'level': 'ERROR',
@@ -179,7 +179,7 @@ LOGGING = {
             'formatter': 'verbose',
             'include_html': True,
         },
-        
+
         # Syslog handler for production
         'syslog': {
             'level': 'INFO',
@@ -188,13 +188,13 @@ LOGGING = {
             'address': '/dev/log',  # Unix socket
         },
     },
-    
+
     # Root logger
     'root': {
         'level': 'INFO',
         'handlers': ['console', 'file_app'],
     },
-    
+
     # Loggers
     'loggers': {
         # Django framework loggers
@@ -203,134 +203,134 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
-        
+
         'django.request': {
             'handlers': ['file_error', 'mail_admins'],
             'level': 'ERROR',
             'propagate': False,
         },
-        
+
         'django.security': {
             'handlers': ['file_security', 'mail_admins'],
             'level': 'INFO',
             'propagate': False,
         },
-        
+
         'django.db.backends': {
             'handlers': ['file_db'],
             'level': 'DEBUG',
             'propagate': False,
         },
-        
+
         # Application loggers
         'core': {
             'handlers': ['console', 'file_app'],
             'level': 'INFO',
             'propagate': False,
         },
-        
+
         'core.services.cache_service': {
             'handlers': ['file_cache'],
             'level': 'DEBUG',
             'propagate': False,
         },
-        
+
         'core.services.query_optimizer': {
             'handlers': ['file_performance'],
             'level': 'INFO',
             'propagate': False,
         },
-        
+
         'core.services.monitoring_service': {
             'handlers': ['file_monitoring'],
             'level': 'INFO',
             'propagate': False,
         },
-        
+
         # HR module loggers
         'Hr': {
             'handlers': ['console', 'file_app'],
             'level': 'INFO',
             'propagate': False,
         },
-        
+
         'employees': {
             'handlers': ['file_app', 'file_user_activity'],
             'level': 'INFO',
             'propagate': False,
         },
-        
+
         'attendance': {
             'handlers': ['file_app'],
             'level': 'INFO',
             'propagate': False,
         },
-        
+
         'payrolls': {
             'handlers': ['file_app', 'file_security'],
             'level': 'INFO',
             'propagate': False,
         },
-        
+
         # Inventory module loggers
         'inventory': {
             'handlers': ['file_app'],
             'level': 'INFO',
             'propagate': False,
         },
-        
+
         # API loggers
         'api': {
             'handlers': ['file_api'],
             'level': 'INFO',
             'propagate': False,
         },
-        
+
         'api.authentication': {
             'handlers': ['file_security'],
             'level': 'INFO',
             'propagate': False,
         },
-        
+
         # Security loggers
         'security': {
             'handlers': ['file_security', 'mail_admins'],
             'level': 'WARNING',
             'propagate': False,
         },
-        
+
         'audit': {
             'handlers': ['file_security', 'file_user_activity'],
             'level': 'INFO',
             'propagate': False,
         },
-        
+
         # Performance loggers
         'performance': {
             'handlers': ['file_performance'],
             'level': 'INFO',
             'propagate': False,
         },
-        
+
         # Third-party loggers
         'celery': {
             'handlers': ['file_app'],
             'level': 'INFO',
             'propagate': False,
         },
-        
+
         'redis': {
             'handlers': ['file_cache'],
             'level': 'WARNING',
             'propagate': False,
         },
-        
+
         # Suppress noisy loggers
         'django.utils.autoreload': {
             'level': 'WARNING',
             'propagate': False,
         },
-        
+
         'django.template': {
             'level': 'WARNING',
             'propagate': False,
@@ -348,7 +348,7 @@ if os.getenv('DJANGO_ENV') == 'production':
     # Production logging adjustments
     LOGGING['handlers']['console']['level'] = 'WARNING'
     LOGGING['loggers']['django.db.backends']['level'] = 'WARNING'
-    
+
     # Add syslog handler in production
     LOGGING['handlers']['syslog']['level'] = 'INFO'
     LOGGING['root']['handlers'].append('syslog')

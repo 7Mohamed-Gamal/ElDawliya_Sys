@@ -14,9 +14,11 @@ User = get_user_model()
 
 
 class Command(BaseCommand):
+    """Command class"""
     help = 'Set up hierarchical permissions system with default modules, permissions, and roles'
-    
+
     def add_arguments(self, parser):
+        """add_arguments function"""
         parser.add_argument(
             '--reset',
             action='store_true',
@@ -27,50 +29,50 @@ class Command(BaseCommand):
             action='store_true',
             help='Create admin role and assign to superusers',
         )
-    
+
     def handle(self, *args, **options):
         """Main command handler"""
         self.stdout.write(
             self.style.SUCCESS('بدء إعداد نظام الصلاحيات الهرمي...')
         )
-        
+
         try:
             with transaction.atomic():
                 if options['reset']:
                     self.reset_permissions()
-                
+
                 self.create_modules()
                 self.create_permissions()
                 self.create_default_roles()
-                
+
                 if options['create_admin_role']:
                     self.create_admin_role()
-                
+
                 self.stdout.write(
                     self.style.SUCCESS('تم إعداد نظام الصلاحيات الهرمي بنجاح!')
                 )
-                
+
         except Exception as e:
             self.stdout.write(
                 self.style.ERROR(f'خطأ في إعداد نظام الصلاحيات: {e}')
             )
             raise CommandError(f'Failed to setup permissions: {e}')
-    
+
     def reset_permissions(self):
         """Reset existing permissions"""
         self.stdout.write('إعادة تعيين الصلاحيات الموجودة...')
-        
-        UserRole.objects.all().delete()
-        Role.objects.all().delete()
-        Permission.objects.all().delete()
-        Module.objects.all().delete()
-        
+
+        UserRole.objects.all().select_related()  # TODO: Add appropriate select_related fields.delete()
+        Role.objects.all().select_related()  # TODO: Add appropriate select_related fields.delete()
+        Permission.objects.all().select_related()  # TODO: Add appropriate select_related fields.delete()
+        Module.objects.all().select_related()  # TODO: Add appropriate select_related fields.delete()
+
         self.stdout.write(self.style.WARNING('تم حذف جميع الصلاحيات الموجودة'))
-    
+
     def create_modules(self):
         """Create system modules"""
         self.stdout.write('إنشاء وحدات النظام...')
-        
+
         modules_data = [
             # Core modules
             {
@@ -130,7 +132,7 @@ class Command(BaseCommand):
                 'order': 8
             }
         ]
-        
+
         # Create main modules
         created_modules = {}
         for module_data in modules_data:
@@ -139,12 +141,12 @@ class Command(BaseCommand):
                 defaults=module_data
             )
             created_modules[module.name] = module
-            
+
             if created:
                 self.stdout.write(f'  ✓ تم إنشاء وحدة: {module.display_name}')
             else:
                 self.stdout.write(f'  - وحدة موجودة: {module.display_name}')
-        
+
         # Create sub-modules for HR
         hr_submodules = [
             {
@@ -183,7 +185,7 @@ class Command(BaseCommand):
                 'order': 5
             }
         ]
-        
+
         for submodule_data in hr_submodules:
             submodule, created = Module.objects.get_or_create(
                 name=submodule_data['name'],
@@ -191,11 +193,11 @@ class Command(BaseCommand):
             )
             if created:
                 self.stdout.write(f'    ✓ تم إنشاء وحدة فرعية: {submodule.display_name}')
-    
+
     def create_permissions(self):
         """Create permissions for modules"""
         self.stdout.write('إنشاء الصلاحيات...')
-        
+
         # Standard permission types
         standard_permissions = [
             ('view', 'عرض', 'global', False),
@@ -206,7 +208,7 @@ class Command(BaseCommand):
             ('import', 'استيراد', 'global', True),
             ('print', 'طباعة', 'global', False),
         ]
-        
+
         # Special permissions for specific modules
         special_permissions = {
             'administration': [
@@ -253,10 +255,10 @@ class Command(BaseCommand):
                 ('view_api_logs', 'عرض سجلات API', 'global', True),
             ]
         }
-        
+
         # Create standard permissions for all modules
-        modules = Module.objects.filter(parent__isnull=True)  # Only main modules
-        
+        modules = Module.objects.filter(parent__isnull=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields  # Only main modules
+
         for module in modules:
             for perm_code, perm_name, scope, is_sensitive in standard_permissions:
                 permission, created = Permission.objects.get_or_create(
@@ -270,15 +272,15 @@ class Command(BaseCommand):
                         'is_sensitive': is_sensitive
                     }
                 )
-                
+
                 if created:
                     self.stdout.write(f'  ✓ {permission.name}')
-        
+
         # Create special permissions
         for module_name, permissions in special_permissions.items():
             try:
                 module = Module.objects.get(name=module_name)
-                
+
                 for perm_code, perm_name, scope, is_sensitive in permissions:
                     permission, created = Permission.objects.get_or_create(
                         module=module,
@@ -292,19 +294,19 @@ class Command(BaseCommand):
                             'requires_approval': is_sensitive
                         }
                     )
-                    
+
                     if created:
                         self.stdout.write(f'  ✓ {permission.name}')
-                        
+
             except Module.DoesNotExist:
                 self.stdout.write(
                     self.style.WARNING(f'وحدة غير موجودة: {module_name}')
                 )
-    
+
     def create_default_roles(self):
         """Create default system roles"""
         self.stdout.write('إنشاء الأدوار الافتراضية...')
-        
+
         roles_data = [
             {
                 'name': 'system_admin',
@@ -357,25 +359,25 @@ class Command(BaseCommand):
                 'permissions': ['api.access_api']
             }
         ]
-        
+
         for role_data in roles_data:
             permissions_list = role_data.pop('permissions')
-            
+
             role, created = Role.objects.get_or_create(
                 name=role_data['name'],
                 defaults=role_data
             )
-            
+
             if created or not role.permissions.exists():
                 # Assign permissions
                 if permissions_list == 'all':
                     # Assign all permissions
-                    all_permissions = Permission.objects.filter(is_active=True)
+                    all_permissions = Permission.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
                     role.permissions.set(all_permissions)
                 else:
                     # Assign specific permissions
                     permissions_to_assign = []
-                    
+
                     for perm_pattern in permissions_list:
                         if '.*' in perm_pattern:
                             # Module wildcard
@@ -383,7 +385,7 @@ class Command(BaseCommand):
                             module_permissions = Permission.objects.filter(
                                 module__name=module_name,
                                 is_active=True
-                            )
+                            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
                             permissions_to_assign.extend(module_permissions)
                         else:
                             # Specific permission
@@ -400,22 +402,22 @@ class Command(BaseCommand):
                                     self.stdout.write(
                                         self.style.WARNING(f'صلاحية غير موجودة: {perm_pattern}')
                                     )
-                    
+
                     role.permissions.set(permissions_to_assign)
-                
+
                 if created:
                     self.stdout.write(f'  ✓ تم إنشاء دور: {role.display_name}')
                 else:
                     self.stdout.write(f'  ↻ تم تحديث صلاحيات دور: {role.display_name}')
-    
+
     def create_admin_role(self):
         """Create admin role and assign to superusers"""
         self.stdout.write('تعيين دور المدير للمستخدمين المديرين...')
-        
+
         try:
             admin_role = Role.objects.get(name='system_admin')
-            superusers = User.objects.filter(is_superuser=True, is_active=True)
-            
+            superusers = User.objects.filter(is_superuser=True, is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+
             for user in superusers:
                 user_role, created = UserRole.objects.get_or_create(
                     user=user,
@@ -425,12 +427,12 @@ class Command(BaseCommand):
                         'is_active': True
                     }
                 )
-                
+
                 if created:
                     self.stdout.write(f'  ✓ تم تعيين دور المدير للمستخدم: {user.username}')
                 else:
                     self.stdout.write(f'  - دور موجود للمستخدم: {user.username}')
-                    
+
         except Role.DoesNotExist:
             self.stdout.write(
                 self.style.ERROR('دور المدير غير موجود. تأكد من إنشاء الأدوار أولاً.')

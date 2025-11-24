@@ -14,26 +14,26 @@ def search_products(request):
     """البحث عن المنتجات بالاسم أو الرمز أو التصنيف"""
     search_term = request.GET.get('term', '')
     category_id = request.GET.get('category', '')
-    
+
     if not search_term and not category_id:
         return JsonResponse({'results': []})
-    
+
     query = Q()
-    
+
     if search_term:
         query |= Q(name__icontains=search_term)
         query |= Q(product_id__icontains=search_term)
-    
+
     if category_id:
         query &= Q(category_id=category_id)
-    
-    products = Product.objects.filter(query)[:20]
-    
+
+    products = Product.objects.filter(query).prefetch_related()  # TODO: Add appropriate prefetch_related fields[:20]
+
     results = []
     for product in products:
         unit_name = product.unit.name if product.unit else ''
         unit_symbol = product.unit.symbol if product.unit else ''
-        
+
         results.append({
             'id': product.product_id,
             'text': f"{product.name} ({product.product_id})",
@@ -46,7 +46,7 @@ def search_products(request):
             'category': product.category.name if product.category else '',
             'location': product.location or '',
         })
-    
+
     return JsonResponse({'results': results})
 
 @login_required
@@ -54,10 +54,10 @@ def get_product_details(request, product_id):
     """الحصول على تفاصيل منتج محدد"""
     try:
         product = get_object_or_404(Product, product_id=product_id)
-        
+
         unit_name = product.unit.name if product.unit else ''
         unit_symbol = product.unit.symbol if product.unit else ''
-        
+
         data = {
             'id': product.id,
             'product_id': product.product_id,
@@ -76,7 +76,7 @@ def get_product_details(request, product_id):
             'notes': product.notes,
             'success': True
         }
-        
+
         return JsonResponse(data)
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)})
@@ -84,34 +84,34 @@ def get_product_details(request, product_id):
 @login_required
 def get_categories(request):
     """الحصول على قائمة التصنيفات"""
-    categories = Category.objects.all().order_by('name')
+    categories = Category.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
     data = [{'id': category.id, 'name': category.name} for category in categories]
     return JsonResponse({'categories': data})
 
 @login_required
 def get_units(request):
     """الحصول على قائمة وحدات القياس"""
-    units = Unit.objects.all().order_by('name')
+    units = Unit.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
     data = [{'id': unit.id, 'name': unit.name, 'symbol': unit.symbol} for unit in units]
     return JsonResponse({'units': data})
 
 @login_required
 def get_suppliers(request):
     """الحصول على قائمة الموردين"""
-    suppliers = Supplier.objects.all().order_by('name')
+    suppliers = Supplier.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
     data = [{'id': supplier.id, 'name': supplier.name} for supplier in suppliers]
     return JsonResponse({'suppliers': data})
 
 @login_required
 def get_customers(request):
     """الحصول على قائمة العملاء"""
-    customers = Customer.objects.all().order_by('name')
+    customers = Customer.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
     data = [{'id': customer.id, 'name': customer.name} for customer in customers]
     return JsonResponse({'customers': data})
 
 @login_required
 def get_departments(request):
     """الحصول على قائمة الأقسام"""
-    departments = Department.objects.all().order_by('name')
+    departments = Department.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
     data = [{'id': department.id, 'name': department.name} for department in departments]
     return JsonResponse({'departments': data})

@@ -43,7 +43,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, HasAPIAccess, ModulePermission('hr', 'view')]
     pagination_class = StandardResultsSetPagination
     throttle_classes = [APIKeyRateThrottle]
-    
+
     filterset_fields = ['department', 'job_position', 'emp_status', 'is_active']
     search_fields = ['first_name', 'last_name', 'emp_code', 'email']
     ordering_fields = ['created_at', 'hire_date', 'first_name', 'last_name']
@@ -63,7 +63,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         """Update employee with service layer"""
         service = EmployeeService(user=self.request.user)
         employee = service.update_employee(
-            serializer.instance, 
+            serializer.instance,
             serializer.validated_data
         )
         serializer.instance = employee
@@ -77,7 +77,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         """Get complete employee profile"""
         employee = self.get_object()
         service = EmployeeService(user=request.user)
-        
+
         profile_data = service.get_employee_profile(employee.id)
         return Response(profile_data)
 
@@ -102,15 +102,15 @@ class EmployeeViewSet(viewsets.ModelViewSet):
     def attendance_summary(self, request, pk=None):
         """Get employee attendance summary"""
         employee = self.get_object()
-        
+
         month = request.query_params.get('month', datetime.now().month)
         year = request.query_params.get('year', datetime.now().year)
-        
+
         attendance_service = AttendanceService(user=request.user)
         summary = attendance_service.get_employee_attendance_summary(
             employee.id, month, year
         )
-        
+
         return Response(summary)
 
     @swagger_auto_schema(
@@ -129,7 +129,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         """Calculate employee service years"""
         employee = self.get_object()
         service = EmployeeService(user=request.user)
-        
+
         service_data = service.calculate_service_period(employee)
         return Response(service_data)
 
@@ -153,10 +153,10 @@ class DepartmentViewSet(viewsets.ReadOnlyModelViewSet):
         """Get employees in department"""
         department = self.get_object()
         service = EmployeeService(user=request.user)
-        
+
         employees = service.get_department_employees(department.id)
         serializer = EmployeeSerializer(employees, many=True)
-        
+
         return Response(serializer.data)
 
     @action(detail=True, methods=['get'])
@@ -164,7 +164,7 @@ class DepartmentViewSet(viewsets.ReadOnlyModelViewSet):
         """Get department statistics"""
         department = self.get_object()
         service = EmployeeService(user=request.user)
-        
+
         stats = service.get_department_statistics(department.id)
         return Response(stats)
 
@@ -191,7 +191,7 @@ class AttendanceViewSet(viewsets.ModelViewSet):
     serializer_class = AttendanceSerializer
     permission_classes = [IsAuthenticated, HasAPIAccess, ModulePermission('hr', 'view')]
     pagination_class = StandardResultsSetPagination
-    
+
     filterset_fields = ['employee', 'att_date', 'status']
     ordering_fields = ['att_date', 'check_in_time']
 
@@ -204,7 +204,7 @@ class AttendanceViewSet(viewsets.ModelViewSet):
     def bulk_import(self, request):
         """Bulk import attendance from device"""
         service = AttendanceService(user=request.user)
-        
+
         result = service.import_attendance_data(request.data)
         return Response(result)
 
@@ -217,7 +217,7 @@ class LeaveViewSet(viewsets.ModelViewSet):
     serializer_class = LeaveSerializer
     permission_classes = [IsAuthenticated, HasAPIAccess, ModulePermission('hr', 'view')]
     pagination_class = StandardResultsSetPagination
-    
+
     filterset_fields = ['employee', 'leave_type', 'status', 'start_date']
     ordering_fields = ['start_date', 'created_at']
 
@@ -237,7 +237,7 @@ class LeaveViewSet(viewsets.ModelViewSet):
         """Approve leave request"""
         leave = self.get_object()
         service = LeaveService(user=request.user)
-        
+
         result = service.approve_leave(leave.id, request.data.get('comments', ''))
         return Response(result)
 
@@ -246,7 +246,7 @@ class LeaveViewSet(viewsets.ModelViewSet):
         """Reject leave request"""
         leave = self.get_object()
         service = LeaveService(user=request.user)
-        
+
         result = service.reject_leave(leave.id, request.data.get('comments', ''))
         return Response(result)
 
@@ -259,7 +259,7 @@ class PayrollViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = PayrollSerializer
     permission_classes = [IsAuthenticated, HasAPIAccess, ModulePermission('hr', 'view')]
     pagination_class = StandardResultsSetPagination
-    
+
     filterset_fields = ['employee', 'pay_period', 'status']
     ordering_fields = ['pay_period', 'created_at']
 
@@ -277,7 +277,7 @@ class EvaluationViewSet(viewsets.ModelViewSet):
     serializer_class = EvaluationSerializer
     permission_classes = [IsAuthenticated, HasAPIAccess, ModulePermission('hr', 'view')]
     pagination_class = StandardResultsSetPagination
-    
+
     filterset_fields = ['employee', 'evaluation_period', 'status']
     ordering_fields = ['evaluation_period', 'created_at']
 
@@ -315,16 +315,16 @@ class BulkEmployeeImportView(APIView):
     def post(self, request):
         """Import employees from uploaded file"""
         service = EmployeeService(user=request.user)
-        
+
         file_obj = request.FILES.get('file')
         file_format = request.data.get('format', 'excel')
-        
+
         if not file_obj:
             return Response(
                 {'error': 'لم يتم رفع ملف'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         result = service.bulk_import_employees(file_obj, file_format)
         return Response(result)
 
@@ -357,13 +357,13 @@ class EmployeeExportView(APIView):
     def get(self, request):
         """Export employees to specified format"""
         service = EmployeeService(user=request.user)
-        
+
         export_format = request.query_params.get('format', 'excel')
         filters = {
             'department': request.query_params.get('department'),
             'status': request.query_params.get('status'),
         }
-        
+
         result = service.export_employees(export_format, filters)
         return result
 
@@ -389,11 +389,11 @@ class ClockInView(APIView):
     def post(self, request):
         """Clock in employee"""
         service = AttendanceService(user=request.user)
-        
+
         employee_id = request.data.get('employee_id')
         location = request.data.get('location', '')
         notes = request.data.get('notes', '')
-        
+
         result = service.clock_in(employee_id, location, notes)
         return Response(result)
 
@@ -419,11 +419,11 @@ class ClockOutView(APIView):
     def post(self, request):
         """Clock out employee"""
         service = AttendanceService(user=request.user)
-        
+
         employee_id = request.data.get('employee_id')
         location = request.data.get('location', '')
         notes = request.data.get('notes', '')
-        
+
         result = service.clock_out(employee_id, location, notes)
         return Response(result)
 
@@ -461,11 +461,11 @@ class AttendanceSummaryView(APIView):
     def get(self, request):
         """Get attendance summary"""
         service = AttendanceService(user=request.user)
-        
+
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
         department = request.query_params.get('department')
-        
+
         summary = service.get_attendance_summary(start_date, end_date, department)
         return Response(summary)
 
@@ -480,7 +480,7 @@ class HRDashboardView(APIView):
     def get(self, request):
         """Get HR dashboard data"""
         service = EmployeeService(user=request.user)
-        
+
         dashboard_data = service.get_hr_dashboard_data()
         return Response(dashboard_data)
 
@@ -495,6 +495,6 @@ class HRAnalyticsView(APIView):
     def get(self, request):
         """Get HR analytics"""
         service = EmployeeService(user=request.user)
-        
+
         analytics = service.get_hr_analytics()
         return Response(analytics)

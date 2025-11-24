@@ -3,22 +3,27 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 class TblCategories(models.Model):
+    """TblCategories class"""
     cat_id = models.IntegerField(db_column='CAT_ID', primary_key=True)
     cat_name = models.CharField(db_column='CAT_Name', max_length=100, db_collation='Arabic_CI_AS', blank=True, null=True)
 
     class Meta:
+        """Meta class"""
         managed = True
         db_table = 'Tbl_Categories'
 
 class TblCustomers(models.Model):
+    """TblCustomers class"""
     customer_id = models.IntegerField(db_column='Customer_ID', primary_key=True)
     customer_name = models.CharField(db_column='Customer_Name', max_length=100, db_collation='Arabic_CI_AS', blank=True, null=True)
 
     class Meta:
+        """Meta class"""
         managed = True
         db_table = 'Tbl_Customers'
 
 class TblProducts(models.Model):
+    """TblProducts class"""
     product_id = models.CharField(db_column='Product_ID', primary_key=True, max_length=100, db_collation='Arabic_CI_AS')
     product_name = models.CharField(db_column='Product_Name', max_length=100, db_collation='Arabic_CI_AS', blank=True, null=True)
     initial_balance = models.DecimalField(db_column='Initial_Balance', max_digits=18, decimal_places=2, blank=True, null=True)
@@ -39,10 +44,12 @@ class TblProducts(models.Model):
     expiry_warning = models.CharField(db_column='Expiry_Warning', max_length=10, db_collation='Arabic_CI_AS', blank=True, null=True)
 
     class Meta:
+        """Meta class"""
         managed = True
         db_table = 'Tbl_Products'
 
 class TblInvoices(models.Model):
+    """TblInvoices class"""
     invoice_id = models.IntegerField(db_column='Invoice_ID')
     invoice_number = models.CharField(db_column='Invoice_Number', primary_key=True, max_length=255, db_collation='Arabic_CI_AS')
     invoice_date = models.DateField(db_column='Invoice_Date', blank=True, null=True)
@@ -56,10 +63,12 @@ class TblInvoices(models.Model):
     total_invoice_value = models.DecimalField(db_column='Total_Invoice_Value', max_digits=18, decimal_places=2, blank=True, null=True)
 
     class Meta:
+        """Meta class"""
         managed = True
         db_table = 'Tbl_Invoices'
 
 class TblInvoiceitems(models.Model):
+    """TblInvoiceitems class"""
     invoice_code_programing = models.AutoField(db_column='Invoice_Code_Programing', primary_key=True)
     invoice_id = models.IntegerField(db_column='Invoice_ID', blank=True, null=True)
     invoice_number = models.CharField(db_column='Invoice_Number', max_length=255, db_collation='Arabic_CI_AS', blank=True, null=True)
@@ -84,26 +93,32 @@ class TblInvoiceitems(models.Model):
     notes = models.CharField(db_column='Notes', max_length=100, db_collation='Arabic_CI_AS', blank=True, null=True)
 
     class Meta:
+        """Meta class"""
         managed = True
         db_table = 'Tbl_InvoiceItems'
 
 class TblSuppliers(models.Model):
+    """TblSuppliers class"""
     supplier_id = models.IntegerField(db_column='Supplier_ID', primary_key=True)
     supplier_name = models.CharField(db_column='Supplier_Name', max_length=100, db_collation='Arabic_CI_AS', blank=True, null=True)
 
     class Meta:
+        """Meta class"""
         managed = True
         db_table = 'Tbl_Suppliers'
 
 class TblUnitsSpareparts(models.Model):
+    """TblUnitsSpareparts class"""
     unit_id = models.IntegerField(db_column='Unit_ID', primary_key=True)
     unit_name = models.CharField(db_column='Unit_Name', max_length=100, db_collation='Arabic_CI_AS', blank=True, null=True)
 
     class Meta:
+        """Meta class"""
         managed = True
         db_table = 'Tbl_Units_SpareParts'
 
 class SystemSettings(models.Model):
+    """SystemSettings class"""
     LANGUAGE_CHOICES = [
         ('ar', 'العربية'),
         ('en', 'English'),
@@ -144,14 +159,17 @@ class SystemSettings(models.Model):
     )
 
     class Meta:
+        """Meta class"""
         verbose_name = _('إعدادات النظام')
         verbose_name_plural = _('إعدادات النظام')
 
     def __str__(self):
+        """__str__ function"""
         return f"System Settings - {self.language} - {self.font_family}"
 
     @classmethod
     def get_settings(cls):
+        """get_settings function"""
         settings = cls.objects.first()
         if not settings:
             settings = cls.objects.create()

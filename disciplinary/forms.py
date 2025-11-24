@@ -13,7 +13,7 @@ from employees.models import Employee
 
 class DisciplinaryActionForm(forms.ModelForm):
     """نموذج إضافة/تعديل إجراء انضباطي"""
-    
+
     ACTION_TYPE_CHOICES = [
         ('', '-- اختر نوع الإجراء --'),
         ('Verbal Warning', 'إنذار شفهي'),
@@ -25,7 +25,7 @@ class DisciplinaryActionForm(forms.ModelForm):
         ('Termination', 'فصل من العمل'),
         ('Other', 'أخرى'),
     ]
-    
+
     SEVERITY_CHOICES = [
         ('', '-- اختر مستوى الخطورة --'),
         (1, 'بسيط (1)'),
@@ -34,22 +34,23 @@ class DisciplinaryActionForm(forms.ModelForm):
         (4, 'خطير جداً (4)'),
         (5, 'حرج (5)'),
     ]
-    
+
     action_type = forms.ChoiceField(
         choices=ACTION_TYPE_CHOICES,
         widget=forms.Select(attrs={'class': 'form-select'}),
         label='نوع الإجراء',
         required=True
     )
-    
+
     severity_level = forms.ChoiceField(
         choices=SEVERITY_CHOICES,
         widget=forms.Select(attrs={'class': 'form-select'}),
         label='مستوى الخطورة',
         required=False
     )
-    
+
     class Meta:
+        """Meta class"""
         model = DisciplinaryAction
         fields = [
             'emp', 'action_type', 'action_date', 'reason',
@@ -92,80 +93,84 @@ class DisciplinaryActionForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         super().__init__(*args, **kwargs)
         # Improve employee dropdown display
         self.fields['emp'].queryset = Employee.objects.filter(
             emp_status='Active'
-        ).order_by('first_name', 'last_name')
+        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('first_name', 'last_name')
         self.fields['emp'].label_from_instance = lambda obj: f"{obj.emp_code} - {obj.first_name} {obj.last_name}"
-        
+
         # Set default values for new actions
         if not self.instance.pk:
             self.fields['action_date'].initial = date.today()
             self.fields['severity_level'].initial = 2  # Default to medium severity
 
     def clean_action_date(self):
+        """clean_action_date function"""
         action_date = self.cleaned_data.get('action_date')
         if action_date:
             # Don't allow future dates
             if action_date > date.today():
                 raise ValidationError('تاريخ الإجراء لا يمكن أن يكون في المستقبل')
-            
+
             # Don't allow dates too far in the past (more than 1 year)
             if (date.today() - action_date).days > 365:
                 raise ValidationError('تاريخ الإجراء قديم جداً (أكثر من سنة)')
-        
+
         return action_date
 
     def clean_reason(self):
+        """clean_reason function"""
         reason = self.cleaned_data.get('reason')
         if reason and len(reason) < 10:
             raise ValidationError('يجب أن يكون السبب 10 أحرف على الأقل')
         return reason
 
     def clean(self):
+        """clean function"""
         cleaned_data = super().clean()
         action_type = cleaned_data.get('action_type')
         action_date = cleaned_data.get('action_date')
         valid_until = cleaned_data.get('valid_until')
         severity_level = cleaned_data.get('severity_level')
         emp = cleaned_data.get('emp')
-        
+
         # Validate valid_until date
         if valid_until:
             if action_date and valid_until <= action_date:
                 raise ValidationError('تاريخ انتهاء الصلاحية يجب أن يكون بعد تاريخ الإجراء')
-            
+
             # Suggest valid_until based on action type
             if action_date:
                 if action_type == 'Verbal Warning' and (valid_until - action_date).days > 90:
                     self.add_error('valid_until', 'الإنذار الشفهي عادة يكون صالحاً لمدة 3 أشهر فقط')
                 elif action_type == 'Written Warning' and (valid_until - action_date).days > 180:
                     self.add_error('valid_until', 'الإنذار الكتابي عادة يكون صالحاً لمدة 6 أشهر فقط')
-        
+
         # Require high severity for termination
         if action_type == 'Termination':
             if severity_level and int(severity_level) < 4:
                 raise ValidationError('إجراء الفصل من العمل يتطلب مستوى خطورة 4 أو 5')
-        
+
         # Check for recent similar actions
         if emp and action_date:
             recent_actions = DisciplinaryAction.objects.filter(
                 emp=emp,
-                action_date__gte=action_date - timedelta(days=30)
+                action_date__gte=action_date - timedelta(days=30).prefetch_related()  # TODO: Add appropriate prefetch_related fields
             ).exclude(pk=self.instance.pk if self.instance.pk else None)
-            
+
             if recent_actions.count() >= 3:
-                self.add_error('emp', 
+                self.add_error('emp',
                     f'تحذير: هذا الموظف لديه {recent_actions.count()} إجراءات انضباطية في آخر 30 يوم'
                 )
-        
+
         return cleaned_data
 
 
 class DisciplinaryActionSearchForm(forms.Form):
     """نموذج البحث في الإجراءات الانضباطية"""
-    
+
     ACTION_TYPE_CHOICES = [
         ('', 'الكل'),
         ('Verbal Warning', 'إنذار شفهي'),
@@ -177,7 +182,7 @@ class DisciplinaryActionSearchForm(forms.Form):
         ('Termination', 'فصل من العمل'),
         ('Other', 'أخرى'),
     ]
-    
+
     SEVERITY_CHOICES = [
         ('', 'الكل'),
         (1, 'بسيط (1)'),
@@ -186,40 +191,40 @@ class DisciplinaryActionSearchForm(forms.Form):
         (4, 'خطير جداً (4)'),
         (5, 'حرج (5)'),
     ]
-    
+
     employee = forms.ModelChoiceField(
-        queryset=Employee.objects.filter(emp_status='Active').order_by('first_name'),
+        queryset=Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('first_name'),
         required=False,
         widget=forms.Select(attrs={'class': 'form-select'}),
         label='الموظف'
     )
-    
+
     action_type = forms.ChoiceField(
         choices=ACTION_TYPE_CHOICES,
         required=False,
         widget=forms.Select(attrs={'class': 'form-select'}),
         label='نوع الإجراء'
     )
-    
+
     severity_level = forms.ChoiceField(
         choices=SEVERITY_CHOICES,
         required=False,
         widget=forms.Select(attrs={'class': 'form-select'}),
         label='مستوى الخطورة'
     )
-    
+
     date_from = forms.DateField(
         required=False,
         widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
         label='من تاريخ'
     )
-    
+
     date_to = forms.DateField(
         required=False,
         widget=forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
         label='إلى تاريخ'
     )
-    
+
     search = forms.CharField(
         required=False,
         widget=forms.TextInput(attrs={
@@ -232,7 +237,7 @@ class DisciplinaryActionSearchForm(forms.Form):
 
 class BulkDisciplinaryActionForm(forms.Form):
     """نموذج الإجراءات الجماعية"""
-    
+
     action = forms.ChoiceField(
         label='الإجراء',
         choices=[
@@ -241,11 +246,11 @@ class BulkDisciplinaryActionForm(forms.Form):
         ],
         widget=forms.Select(attrs={'class': 'form-select'})
     )
-    
+
     action_ids = forms.CharField(
         widget=forms.HiddenInput()
     )
-    
+
     def clean_action_ids(self):
         """التحقق من معرفات الإجراءات"""
         action_ids = self.cleaned_data.get('action_ids')

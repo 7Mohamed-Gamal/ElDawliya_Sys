@@ -41,7 +41,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, HasAPIAccess, ModulePermission('inventory', 'view')]
     pagination_class = StandardResultsSetPagination
     throttle_classes = [APIKeyRateThrottle]
-    
+
     filterset_fields = ['category', 'supplier', 'is_active', 'warehouse']
     search_fields = ['name', 'sku', 'barcode', 'description']
     ordering_fields = ['created_at', 'name', 'unit_price', 'quantity_in_stock']
@@ -61,7 +61,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         """Update product with service layer"""
         service = ProductService(user=self.request.user)
         product = service.update_product(
-            serializer.instance, 
+            serializer.instance,
             serializer.validated_data
         )
         serializer.instance = product
@@ -83,7 +83,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         """Get product stock levels"""
         product = self.get_object()
         service = InventoryService(user=request.user)
-        
+
         stock_data = service.get_product_stock_levels(product.id)
         return Response(stock_data)
 
@@ -108,15 +108,15 @@ class ProductViewSet(viewsets.ModelViewSet):
     def movement_history(self, request, pk=None):
         """Get product movement history"""
         product = self.get_object()
-        
+
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
-        
+
         service = InventoryService(user=request.user)
         history = service.get_product_movement_history(
             product.id, start_date, end_date
         )
-        
+
         return Response(history)
 
     @action(detail=True, methods=['get'])
@@ -124,7 +124,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         """Get product suppliers"""
         product = self.get_object()
         service = ProductService(user=request.user)
-        
+
         suppliers = service.get_product_suppliers(product.id)
         return Response(suppliers)
 
@@ -148,10 +148,10 @@ class CategoryViewSet(viewsets.ModelViewSet):
         """Get products in category"""
         category = self.get_object()
         service = ProductService(user=request.user)
-        
+
         products = service.get_category_products(category.id)
         serializer = ProductSerializer(products, many=True)
-        
+
         return Response(serializer.data)
 
     @action(detail=True, methods=['get'])
@@ -159,7 +159,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
         """Get category statistics"""
         category = self.get_object()
         service = ProductService(user=request.user)
-        
+
         stats = service.get_category_statistics(category.id)
         return Response(stats)
 
@@ -172,7 +172,7 @@ class SupplierViewSet(viewsets.ModelViewSet):
     serializer_class = SupplierSerializer
     permission_classes = [IsAuthenticated, HasAPIAccess, ModulePermission('inventory', 'view')]
     pagination_class = StandardResultsSetPagination
-    
+
     filterset_fields = ['is_active', 'country', 'supplier_type']
     search_fields = ['name', 'contact_person', 'email', 'phone']
     ordering_fields = ['created_at', 'name', 'rating']
@@ -193,7 +193,7 @@ class SupplierViewSet(viewsets.ModelViewSet):
         """Get supplier products"""
         supplier = self.get_object()
         service = SupplierService(user=request.user)
-        
+
         products = service.get_supplier_products(supplier.id)
         return Response(products)
 
@@ -202,7 +202,7 @@ class SupplierViewSet(viewsets.ModelViewSet):
         """Get supplier performance metrics"""
         supplier = self.get_object()
         service = SupplierService(user=request.user)
-        
+
         performance = service.get_supplier_performance(supplier.id)
         return Response(performance)
 
@@ -211,10 +211,10 @@ class SupplierViewSet(viewsets.ModelViewSet):
         """Evaluate supplier performance"""
         supplier = self.get_object()
         service = SupplierService(user=request.user)
-        
+
         evaluation_data = request.data
         result = service.evaluate_supplier(supplier.id, evaluation_data)
-        
+
         return Response(result)
 
 
@@ -237,7 +237,7 @@ class WarehouseViewSet(viewsets.ModelViewSet):
         """Get warehouse inventory"""
         warehouse = self.get_object()
         service = WarehouseService(user=request.user)
-        
+
         inventory = service.get_warehouse_inventory(warehouse.id)
         return Response(inventory)
 
@@ -246,7 +246,7 @@ class WarehouseViewSet(viewsets.ModelViewSet):
         """Get warehouse capacity utilization"""
         warehouse = self.get_object()
         service = WarehouseService(user=request.user)
-        
+
         capacity = service.get_warehouse_capacity(warehouse.id)
         return Response(capacity)
 
@@ -259,7 +259,7 @@ class InventoryMovementViewSet(viewsets.ModelViewSet):
     serializer_class = InventoryMovementSerializer
     permission_classes = [IsAuthenticated, HasAPIAccess, ModulePermission('inventory', 'view')]
     pagination_class = StandardResultsSetPagination
-    
+
     filterset_fields = ['product', 'warehouse', 'movement_type', 'created_at']
     ordering_fields = ['created_at', 'quantity', 'unit_cost']
 
@@ -283,7 +283,7 @@ class InventoryAdjustmentViewSet(viewsets.ModelViewSet):
     serializer_class = InventoryAdjustmentSerializer
     permission_classes = [IsAuthenticated, HasAPIAccess, ModulePermission('inventory', 'manage')]
     pagination_class = StandardResultsSetPagination
-    
+
     filterset_fields = ['product', 'warehouse', 'adjustment_type', 'status']
     ordering_fields = ['created_at', 'quantity_adjusted']
 
@@ -303,7 +303,7 @@ class InventoryAdjustmentViewSet(viewsets.ModelViewSet):
         """Approve inventory adjustment"""
         adjustment = self.get_object()
         service = InventoryService(user=request.user)
-        
+
         result = service.approve_adjustment(adjustment.id)
         return Response(result)
 
@@ -320,16 +320,16 @@ class BulkProductImportView(APIView):
     def post(self, request):
         """Import products from uploaded file"""
         service = ProductService(user=request.user)
-        
+
         file_obj = request.FILES.get('file')
         file_format = request.data.get('format', 'excel')
-        
+
         if not file_obj:
             return Response(
                 {'error': 'لم يتم رفع ملف'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         result = service.bulk_import_products(file_obj, file_format)
         return Response(result)
 
@@ -344,14 +344,14 @@ class ProductExportView(APIView):
     def get(self, request):
         """Export products to specified format"""
         service = ProductService(user=request.user)
-        
+
         export_format = request.query_params.get('format', 'excel')
         filters = {
             'category': request.query_params.get('category'),
             'supplier': request.query_params.get('supplier'),
             'warehouse': request.query_params.get('warehouse'),
         }
-        
+
         result = service.export_products(export_format, filters)
         return result
 
@@ -366,10 +366,10 @@ class LowStockProductsView(APIView):
     def get(self, request):
         """Get low stock products"""
         service = InventoryService(user=request.user)
-        
+
         threshold = request.query_params.get('threshold', 'default')
         warehouse = request.query_params.get('warehouse')
-        
+
         low_stock_products = service.get_low_stock_products(threshold, warehouse)
         return Response(low_stock_products)
 
@@ -384,14 +384,14 @@ class BarcodeScanView(APIView):
     def post(self, request):
         """Scan barcode and return product info"""
         service = ProductService(user=request.user)
-        
+
         barcode = request.data.get('barcode')
         if not barcode:
             return Response(
                 {'error': 'الباركود مطلوب'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         product_info = service.scan_barcode(barcode)
         return Response(product_info)
 
@@ -406,10 +406,10 @@ class ReceiveInventoryView(APIView):
     def post(self, request):
         """Receive inventory"""
         service = InventoryService(user=request.user)
-        
+
         receive_data = request.data
         result = service.receive_inventory(receive_data)
-        
+
         return Response(result)
 
 
@@ -423,10 +423,10 @@ class IssueInventoryView(APIView):
     def post(self, request):
         """Issue inventory"""
         service = InventoryService(user=request.user)
-        
+
         issue_data = request.data
         result = service.issue_inventory(issue_data)
-        
+
         return Response(result)
 
 
@@ -440,10 +440,10 @@ class TransferInventoryView(APIView):
     def post(self, request):
         """Transfer inventory"""
         service = InventoryService(user=request.user)
-        
+
         transfer_data = request.data
         result = service.transfer_inventory(transfer_data)
-        
+
         return Response(result)
 
 
@@ -457,10 +457,10 @@ class StockLevelsView(APIView):
     def get(self, request):
         """Get stock levels"""
         service = InventoryService(user=request.user)
-        
+
         warehouse = request.query_params.get('warehouse')
         category = request.query_params.get('category')
-        
+
         stock_levels = service.get_stock_levels(warehouse, category)
         return Response(stock_levels)
 
@@ -475,10 +475,10 @@ class StockValuationView(APIView):
     def get(self, request):
         """Get stock valuation"""
         service = InventoryService(user=request.user)
-        
+
         valuation_method = request.query_params.get('method', 'fifo')
         as_of_date = request.query_params.get('as_of_date')
-        
+
         valuation = service.get_stock_valuation(valuation_method, as_of_date)
         return Response(valuation)
 
@@ -493,10 +493,10 @@ class StockAgingView(APIView):
     def get(self, request):
         """Get stock aging analysis"""
         service = InventoryService(user=request.user)
-        
+
         aging_periods = request.query_params.get('periods', '30,60,90,180')
         warehouse = request.query_params.get('warehouse')
-        
+
         aging_analysis = service.get_stock_aging_analysis(aging_periods, warehouse)
         return Response(aging_analysis)
 
@@ -511,10 +511,10 @@ class SupplierPerformanceView(APIView):
     def get(self, request):
         """Get supplier performance"""
         service = SupplierService(user=request.user)
-        
+
         start_date = request.query_params.get('start_date')
         end_date = request.query_params.get('end_date')
-        
+
         performance = service.get_suppliers_performance(start_date, end_date)
         return Response(performance)
 
@@ -529,10 +529,10 @@ class SupplierEvaluationView(APIView):
     def post(self, request):
         """Submit supplier evaluation"""
         service = SupplierService(user=request.user)
-        
+
         evaluation_data = request.data
         result = service.submit_supplier_evaluation(evaluation_data)
-        
+
         return Response(result)
 
 
@@ -546,7 +546,7 @@ class InventoryDashboardView(APIView):
     def get(self, request):
         """Get inventory dashboard data"""
         service = InventoryService(user=request.user)
-        
+
         dashboard_data = service.get_inventory_dashboard_data()
         return Response(dashboard_data)
 
@@ -561,7 +561,7 @@ class InventoryAnalyticsView(APIView):
     def get(self, request):
         """Get inventory analytics"""
         service = InventoryService(user=request.user)
-        
+
         analytics = service.get_inventory_analytics()
         return Response(analytics)
 
@@ -576,9 +576,9 @@ class InventoryTurnoverView(APIView):
     def get(self, request):
         """Get inventory turnover analysis"""
         service = InventoryService(user=request.user)
-        
+
         period = request.query_params.get('period', '12')  # months
         category = request.query_params.get('category')
-        
+
         turnover_analysis = service.get_inventory_turnover_analysis(period, category)
         return Response(turnover_analysis)

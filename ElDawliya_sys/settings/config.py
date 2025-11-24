@@ -24,11 +24,12 @@ class ConfigManager:
     Configuration manager for ElDawliya system.
     Provides centralized access to configuration values with validation.
     """
-    
+
     def __init__(self):
+        """__init__ function"""
         self.base_dir = Path(__file__).resolve().parent.parent.parent
         self._config_cache = {}
-    
+
     def get_database_config(self) -> Dict[str, Any]:
         """Get database configuration with validation."""
         config = {
@@ -57,13 +58,13 @@ class ConfigManager:
                 'COLLATION': 'Arabic_CI_AS',
             }
         }
-        
+
         return config
-    
+
     def get_cache_config(self) -> Dict[str, Any]:
         """Get cache configuration."""
         redis_url = self.get_optional('REDIS_URL', 'redis://127.0.0.1:6379/1')
-        
+
         return {
             'default': {
                 'BACKEND': 'django_redis.cache.RedisCache',
@@ -77,12 +78,12 @@ class ConfigManager:
                 'TIMEOUT': int(self.get_optional('CACHE_TIMEOUT_MEDIUM', '1800')),
             }
         }
-    
+
     def get_email_config(self) -> Dict[str, Any]:
         """Get email configuration."""
         return {
             'EMAIL_BACKEND': self.get_optional(
-                'EMAIL_BACKEND', 
+                'EMAIL_BACKEND',
                 'django.core.mail.backends.smtp.EmailBackend'
             ),
             'EMAIL_HOST': self.get_optional('EMAIL_HOST', 'smtp.gmail.com'),
@@ -91,11 +92,11 @@ class ConfigManager:
             'EMAIL_HOST_USER': self.get_optional('EMAIL_HOST_USER'),
             'EMAIL_HOST_PASSWORD': self.get_optional('EMAIL_HOST_PASSWORD'),
             'DEFAULT_FROM_EMAIL': self.get_optional(
-                'DEFAULT_FROM_EMAIL', 
+                'DEFAULT_FROM_EMAIL',
                 self.get_optional('EMAIL_HOST_USER', 'noreply@eldawliya.com')
             ),
         }
-    
+
     def get_security_config(self) -> Dict[str, Any]:
         """Get security configuration."""
         return {
@@ -104,7 +105,7 @@ class ConfigManager:
             'CORS_ALLOW_CREDENTIALS': self.get_bool('CORS_ALLOW_CREDENTIALS', True),
             'CSRF_TRUSTED_ORIGINS': self.get_list('CSRF_TRUSTED_ORIGINS'),
         }
-    
+
     def get_api_config(self) -> Dict[str, Any]:
         """Get API configuration."""
         return {
@@ -114,25 +115,25 @@ class ConfigManager:
             'GEMINI_API_KEY': self.get_optional('GEMINI_API_KEY'),
             'GEMINI_MODEL': self.get_optional('GEMINI_MODEL', 'gemini-1.5-flash'),
         }
-    
+
     def get_celery_config(self) -> Dict[str, Any]:
         """Get Celery configuration."""
         return {
             'CELERY_BROKER_URL': self.get_optional(
-                'CELERY_BROKER_URL', 
+                'CELERY_BROKER_URL',
                 'redis://127.0.0.1:6379/4'
             ),
             'CELERY_RESULT_BACKEND': self.get_optional(
-                'CELERY_RESULT_BACKEND', 
+                'CELERY_RESULT_BACKEND',
                 'redis://127.0.0.1:6379/5'
             ),
         }
-    
+
     def get_logging_config(self) -> Dict[str, Any]:
         """Get logging configuration."""
         log_dir = self.base_dir / self.get_optional('LOG_DIR', 'logs')
         log_dir.mkdir(exist_ok=True)
-        
+
         return {
             'version': 1,
             'disable_existing_loggers': False,
@@ -178,7 +179,7 @@ class ConfigManager:
                 },
             },
         }
-    
+
     def get_hr_settings(self) -> Dict[str, Any]:
         """Get HR system specific settings."""
         return {
@@ -194,28 +195,28 @@ class ConfigManager:
             'ATTENDANCE_SYNC_ENABLED': self.get_bool('ATTENDANCE_SYNC_ENABLED', True),
             'ATTENDANCE_SYNC_INTERVAL': int(self.get_optional('ATTENDANCE_SYNC_INTERVAL', '300')),
         }
-    
+
     def get_required(self, key: str) -> str:
         """Get required environment variable."""
         value = os.environ.get(key)
         if not value:
             raise ValueError(f"Required environment variable {key} is not set")
         return value
-    
+
     def get_optional(self, key: str, default: Optional[str] = None) -> Optional[str]:
         """Get optional environment variable."""
         return os.environ.get(key, default)
-    
+
     def get_bool(self, key: str, default: bool = False) -> bool:
         """Get boolean environment variable."""
         value = os.environ.get(key, str(default)).lower()
         return value in ('true', '1', 't', 'yes', 'on')
-    
+
     def get_list(self, key: str, default: Optional[str] = None) -> list:
         """Get list from comma-separated environment variable."""
         value = os.environ.get(key, default or '')
         return [item.strip() for item in value.split(',') if item.strip()]
-    
+
     def validate_configuration(self) -> Dict[str, Any]:
         """Validate all configuration and return validation results."""
         results = {
@@ -223,7 +224,7 @@ class ConfigManager:
             'errors': [],
             'warnings': []
         }
-        
+
         # Validate required settings
         required_settings = [
             'DJANGO_SECRET_KEY',
@@ -232,24 +233,24 @@ class ConfigManager:
             'DB_USER',
             'DB_PASSWORD'
         ]
-        
+
         for setting in required_settings:
             try:
                 self.get_required(setting)
             except ValueError as e:
                 results['valid'] = False
                 results['errors'].append(str(e))
-        
+
         # Validate optional but important settings
         if not self.get_optional('GEMINI_API_KEY'):
             results['warnings'].append('GEMINI_API_KEY not set - AI features will be disabled')
-        
+
         if not self.get_optional('EMAIL_HOST_USER'):
             results['warnings'].append('EMAIL_HOST_USER not set - email notifications will not work')
-        
+
         if not self.get_optional('FIELD_ENCRYPTION_KEY'):
             results['warnings'].append('FIELD_ENCRYPTION_KEY not set - sensitive data will not be encrypted')
-        
+
         return results
 
 

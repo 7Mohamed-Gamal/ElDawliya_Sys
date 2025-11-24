@@ -19,11 +19,11 @@ import json
 import logging
 
 from .models import (
-    ReportCategory, ReportTemplate, ReportSchedule, 
+    ReportCategory, ReportTemplate, ReportSchedule,
     GeneratedReport, ReportAccessLog, ReportDashboard
 )
 from .services import (
-    ReportDataService, ReportGeneratorService, 
+    ReportDataService, ReportGeneratorService,
     ReportSchedulerService, ReportAnalyticsService
 )
 from employees.models import Employee
@@ -36,28 +36,28 @@ logger = logging.getLogger(__name__)
 def dashboard(request):
     """لوحة تحكم التقارير الرئيسية"""
     analytics_service = ReportAnalyticsService()
-    
+
     # إحصائيات عامة
     usage_stats = analytics_service.get_usage_statistics()
-    
+
     # التقارير الحديثة
     recent_reports = GeneratedReport.objects.select_related(
         'template', 'generated_by'
     ).order_by('-generated_at')[:10]
-    
+
     # فئات التقارير
-    categories = ReportCategory.objects.filter(is_active=True).order_by('sort_order')
-    
+    categories = ReportCategory.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('sort_order')
+
     # التقارير المميزة
     featured_templates = ReportTemplate.objects.filter(
         is_featured=True, is_active=True
-    ).select_related('category')[:6]
-    
+    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('category')[:6]
+
     # الجدولة النشطة
     active_schedules = ReportSchedule.objects.filter(
         status='active'
-    ).select_related('template').order_by('next_run')[:5]
-    
+    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('template').order_by('next_run')[:5]
+
     context = {
         'usage_stats': usage_stats,
         'recent_reports': recent_reports,
@@ -65,7 +65,7 @@ def dashboard(request):
         'featured_templates': featured_templates,
         'active_schedules': active_schedules,
     }
-    
+
     return render(request, 'reports/dashboard.html', context)
 
 
@@ -75,11 +75,11 @@ def report_categories(request):
     categories = ReportCategory.objects.annotate(
         template_count=Count('reporttemplate')
     ).order_by('sort_order')
-    
+
     context = {
         'categories': categories
     }
-    
+
     return render(request, 'reports/categories.html', context)
 
 
@@ -87,29 +87,29 @@ def report_categories(request):
 def category_templates(request, category_id):
     """قوالب التقارير في فئة محددة"""
     category = get_object_or_404(ReportCategory, category_id=category_id)
-    
+
     templates = ReportTemplate.objects.filter(
         category=category,
         is_active=True
-    ).order_by('name')
-    
+    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('name')
+
     # فلترة حسب البحث
     search = request.GET.get('search')
     if search:
         templates = templates.filter(
             Q(name__icontains=search) | Q(description__icontains=search)
         )
-    
+
     # التقسيم إلى صفحات
     paginator = Paginator(templates, 12)
     page_number = request.GET.get('page')
     templates = paginator.get_page(page_number)
-    
+
     context = {
         'category': category,
         'templates': templates,
     }
-    
+
     return render(request, 'reports/category_templates.html', context)
 
 
@@ -117,7 +117,7 @@ def category_templates(request, category_id):
 def generate_report(request, template_id):
     """إنتاج تقرير جديد"""
     template = get_object_or_404(ReportTemplate, template_id=template_id)
-    
+
     if request.method == 'POST':
         try:
             # استخراج المعاملات من النموذج
@@ -126,10 +126,10 @@ def generate_report(request, template_id):
                 param_name = param.get('name')
                 if param_name in request.POST:
                     parameters[param_name] = request.POST[param_name]
-            
+
             # تحديد صيغة الإخراج
             output_format = request.POST.get('format', template.default_format)
-            
+
             # إنشاء سجل تقرير جديد
             generated_by = None
             if hasattr(request.user, 'employee'):
@@ -158,8 +158,8 @@ def generate_report(request, template_id):
             messages.error(request, f'حدث خطأ أثناء إنتاج التقرير: {str(e)}')
 
     # الحصول على البيانات المطلوبة للنموذج
-    departments = Department.objects.filter(is_active=True)
-    employees = Employee.objects.filter(emp_status='Active')
+    departments = Department.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+    employees = Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields
 
     context = {
         'template': template,
@@ -233,7 +233,7 @@ def my_reports(request):
 
     reports = GeneratedReport.objects.filter(
         generated_by=employee
-    ).select_related('template').order_by('-generated_at')
+    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('template').order_by('-generated_at')
 
     context = {
         'reports': reports,
@@ -288,7 +288,7 @@ def analytics(request):
     """تحليلات التقارير"""
     # إحصائيات أساسية
     total_reports = GeneratedReport.objects.count()
-    completed_reports = GeneratedReport.objects.filter(status='completed').count()
+    completed_reports = GeneratedReport.objects.filter(status='completed').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
 
     context = {
         'total_reports': total_reports,

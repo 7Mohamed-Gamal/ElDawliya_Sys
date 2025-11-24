@@ -21,13 +21,13 @@ urlpatterns = [
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('auth/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
     path('auth/', include('api.authentication.urls')),
-    
+
     # API v1 endpoints
     path('v1/', include('api.v1.urls')),
-    
+
     # Core API endpoints
     path('core/', include('core.urls')),
-    
+
     # Module-specific API endpoints
     path('hr/', include('apps.hr.urls')),
     path('inventory/', include('apps.inventory.urls')),
@@ -35,7 +35,7 @@ urlpatterns = [
     path('projects/', include('apps.projects.urls')),
     path('finance/', include('apps.finance.urls')),
     path('administration/', include('apps.administration.urls')),
-    
+
     # Router URLs (for ViewSets)
     path('', include(router.urls)),
 ]

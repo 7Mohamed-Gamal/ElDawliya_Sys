@@ -5,12 +5,15 @@ from attendance.models import AttendanceRules
 
 
 class RulesViewsIntegrationTests(TestCase):
+    """RulesViewsIntegrationTests class"""
     def setUp(self):
+        """setUp function"""
         User = get_user_model()
         self.user = User.objects.create_user(username='rules_user', password='pass12345', Role='admin')
         self.client.force_login(self.user)
 
     def test_rules_list_and_create_edit_delete(self):
+        """test_rules_list_and_create_edit_delete function"""
         # List
         resp = self.client.get(reverse('attendance:attendance_rules_list'))
         self.assertEqual(resp.status_code, 200)

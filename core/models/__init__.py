@@ -134,25 +134,25 @@ __all__ = [
     'TimestampedModel',
     'AddressModel',
     'ContactModel',
-    
+
     # Audit Models
     'AuditLog',
     'SystemLog',
     'LoginAttempt',
-    
+
     # Permission Models
     'Module',
     'Permission',
     'Role',
     'UserRole',
     'ObjectPermission',
-    
+
     # Settings Models
     'SystemSetting',
     'UserPreference',
     'CompanyProfile',
     'NotificationTemplate',
-    
+
     # HR Models
     'Department',
     'JobPosition',
@@ -162,26 +162,26 @@ __all__ = [
     'EmployeeDocument',
     'EmployeeSalary',
     'EmployeeInsurance',
-    
+
     # Attendance Models
     'AttendanceRule',
     'EmployeeAttendanceProfile',
     'AttendanceRecord',
     'AttendanceSummary',
-    
+
     # Leave Models
     'LeaveType',
     'LeaveBalance',
     'LeaveRequest',
     'LeaveRecord',
     'PublicHoliday',
-    
+
     # Payroll Models
     'PayrollRun',
     'PayrollDetail',
     'PayrollBonus',
     'PayrollDeduction',
-    
+
     # Evaluation Models
     'EvaluationPeriod',
     'EvaluationTemplate',
@@ -189,7 +189,7 @@ __all__ = [
     'EmployeeEvaluation',
     'EvaluationCriteriaScore',
     'EvaluationGoal',
-    
+
     # Inventory Models
     'ProductCategory',
     'Unit',
@@ -200,7 +200,7 @@ __all__ = [
     'StockMovement',
     'StockTake',
     'StockTakeItem',
-    
+
     # Procurement Models
     'PurchaseOrder',
     'PurchaseOrderLineItem',
@@ -210,7 +210,7 @@ __all__ = [
     'GoodsReceiptLineItem',
     'SupplierQuotation',
     'SupplierQuotationLineItem',
-    
+
     # Project Models
     'ProjectCategory',
     'Project',

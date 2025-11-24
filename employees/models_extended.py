@@ -28,11 +28,13 @@ class ExtendedHealthInsuranceProvider(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
 
     class Meta:
+        """Meta class"""
         db_table = 'ExtendedHealthInsuranceProviders'
         verbose_name = 'مقدم خدمة التأمين الصحي الموسع'
         verbose_name_plural = 'مقدمي خدمات التأمين الصحي الموسعة'
 
     def __str__(self):
+        """__str__ function"""
         return self.provider_name
 
 
@@ -72,18 +74,22 @@ class ExtendedEmployeeHealthInsurance(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')
 
     class Meta:
+        """Meta class"""
         db_table = 'ExtendedEmployeeHealthInsurance'
         verbose_name = 'تأمين صحي موسع للموظف'
         verbose_name_plural = 'التأمين الصحي الموسع للموظفين'
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.emp.get_full_name()} - {self.insurance_number}"
 
     @property
     def is_active(self):
+        """is_active function"""
         return self.insurance_status == 'active' and self.expiry_date >= date.today()
 
     def clean(self):
+        """clean function"""
         if self.start_date and self.expiry_date and self.start_date >= self.expiry_date:
             raise ValidationError('تاريخ الانتهاء يجب أن يكون بعد تاريخ البداية')
 
@@ -104,11 +110,13 @@ class SocialInsuranceJobTitle(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
 
     class Meta:
+        """Meta class"""
         db_table = 'SocialInsuranceJobTitles'
         verbose_name = 'مسمى وظيفة في التأمينات الاجتماعية'
         verbose_name_plural = 'مسميات الوظائف في التأمينات الاجتماعية'
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.job_code} - {self.job_title}"
 
 
@@ -141,14 +149,17 @@ class ExtendedEmployeeSocialInsurance(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')
 
     class Meta:
+        """Meta class"""
         db_table = 'ExtendedEmployeeSocialInsurance'
         verbose_name = 'تأمينات اجتماعية موسعة للموظف'
         verbose_name_plural = 'التأمينات الاجتماعية الموسعة للموظفين'
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.emp.get_full_name()} - {self.social_insurance_number or 'غير محدد'}"
 
     def save(self, *args, **kwargs):
+        """save function"""
         # Calculate deductions automatically if we have the required data
         if self.monthly_wage and self.deduction_percentage:
             # Calculate employee deduction based on percentage
@@ -182,7 +193,7 @@ class SalaryComponent(models.Model):
         ('allowance', 'بدل'),
         ('deduction', 'خصم'),
     ]
-    
+
     CALCULATION_TYPE_CHOICES = [
         ('fixed', 'مبلغ ثابت'),
         ('percentage', 'نسبة مئوية'),
@@ -203,12 +214,14 @@ class SalaryComponent(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
 
     class Meta:
+        """Meta class"""
         db_table = 'SalaryComponents'
         verbose_name = 'مكون راتب'
         verbose_name_plural = 'مكونات الراتب'
         ordering = ['sort_order', 'component_name']
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.component_name} ({self.get_component_type_display()})"
 
 
@@ -226,15 +239,18 @@ class EmployeeSalaryComponent(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
 
     class Meta:
+        """Meta class"""
         db_table = 'EmployeeSalaryComponents'
         verbose_name = 'مكون راتب الموظف'
         verbose_name_plural = 'مكونات رواتب الموظفين'
         unique_together = ['emp', 'component', 'effective_date']
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.emp.get_full_name()} - {self.component.component_name}"
 
     def clean(self):
+        """clean function"""
         if self.effective_date and self.end_date and self.effective_date >= self.end_date:
             raise ValidationError('تاريخ الانتهاء يجب أن يكون بعد تاريخ السريان')
 
@@ -257,12 +273,14 @@ class EmployeeLeaveBalance(models.Model):
     last_updated = models.DateTimeField(auto_now=True, verbose_name='آخر تحديث')
 
     class Meta:
+        """Meta class"""
         db_table = 'EmployeeLeaveBalances'
         verbose_name = 'رصيد إجازة الموظف'
         verbose_name_plural = 'أرصدة إجازات الموظفين'
         unique_together = ['emp', 'leave_type', 'year']
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.emp.get_full_name()} - {self.leave_type.leave_name} ({self.year})"
 
 
@@ -285,12 +303,14 @@ class EmployeeDocumentCategory(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')
 
     class Meta:
+        """Meta class"""
         db_table = 'EmployeeDocumentCategories'
         verbose_name = 'فئة وثائق الموظف'
         verbose_name_plural = 'فئات وثائق الموظفين'
         ordering = ['sort_order', 'category_name']
 
     def __str__(self):
+        """__str__ function"""
         return self.category_name
 
     def get_allowed_extensions_list(self):
@@ -322,15 +342,18 @@ class ExtendedEmployeeDocument(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')
 
     class Meta:
+        """Meta class"""
         db_table = 'ExtendedEmployeeDocuments'
         verbose_name = 'وثيقة الموظف الموسعة'
         verbose_name_plural = 'وثائق الموظفين الموسعة'
         ordering = ['-created_at']
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.emp.get_full_name()} - {self.document_name}"
 
     def save(self, *args, **kwargs):
+        """save function"""
         if self.document_file:
             self.file_size = self.document_file.size
             self.file_extension = self.document_file.name.split('.')[-1].lower()
@@ -352,6 +375,7 @@ class ExtendedEmployeeDocument(models.Model):
         return self.current_balance
 
     def save(self, *args, **kwargs):
+        """save function"""
         self.calculate_current_balance()
         super().save(*args, **kwargs)
 
@@ -387,15 +411,18 @@ class Vehicle(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
 
     class Meta:
+        """Meta class"""
         db_table = 'Vehicles'
         verbose_name = 'مركبة'
         verbose_name_plural = 'المركبات'
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.vehicle_number} - {self.vehicle_model}"
 
     @property
     def is_available(self):
+        """is_available function"""
         return self.vehicle_status == 'active'
 
 
@@ -412,11 +439,13 @@ class PickupPoint(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
 
     class Meta:
+        """Meta class"""
         db_table = 'PickupPoints'
         verbose_name = 'نقطة تجميع'
         verbose_name_plural = 'نقاط التجميع'
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.point_code} - {self.point_name}"
 
 
@@ -434,14 +463,17 @@ class EmployeeTransport(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
 
     class Meta:
+        """Meta class"""
         db_table = 'EmployeeTransport'
         verbose_name = 'نقل الموظف'
         verbose_name_plural = 'نقل الموظفين'
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.emp.get_full_name()} - {self.vehicle.vehicle_number}"
 
     def clean(self):
+        """clean function"""
         if self.effective_date and self.end_date and self.effective_date >= self.end_date:
             raise ValidationError('تاريخ الانتهاء يجب أن يكون بعد تاريخ السريان')
 
@@ -463,12 +495,14 @@ class EvaluationCriteria(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
 
     class Meta:
+        """Meta class"""
         db_table = 'EvaluationCriteria'
         verbose_name = 'معيار تقييم'
         verbose_name_plural = 'معايير التقييم'
         ordering = ['sort_order', 'criteria_name']
 
     def __str__(self):
+        """__str__ function"""
         return self.criteria_name
 
 
@@ -499,14 +533,17 @@ class EmployeePerformanceEvaluation(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')
 
     class Meta:
+        """Meta class"""
         db_table = 'EmployeePerformanceEvaluations'
         verbose_name = 'تقييم أداء الموظف'
         verbose_name_plural = 'تقييمات أداء الموظفين'
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.emp.get_full_name()} - {self.evaluation_date}"
 
     def clean(self):
+        """clean function"""
         if self.evaluation_period_start and self.evaluation_period_end and self.evaluation_period_start >= self.evaluation_period_end:
             raise ValidationError('نهاية فترة التقييم يجب أن تكون بعد البداية')
 
@@ -520,12 +557,14 @@ class EvaluationScore(models.Model):
     comments = models.TextField(blank=True, null=True, verbose_name='التعليقات')
 
     class Meta:
+        """Meta class"""
         db_table = 'EvaluationScores'
         verbose_name = 'درجة تقييم'
         verbose_name_plural = 'درجات التقييم'
         unique_together = ['evaluation', 'criteria']
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.evaluation} - {self.criteria.criteria_name}: {self.score}"
 
 
@@ -550,11 +589,13 @@ class WorkSchedule(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
 
     class Meta:
+        """Meta class"""
         db_table = 'WorkSchedules'
         verbose_name = 'جدول عمل'
         verbose_name_plural = 'جداول العمل'
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.schedule_name} ({self.daily_hours} ساعة)"
 
 
@@ -573,13 +614,16 @@ class EmployeeWorkSetup(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
 
     class Meta:
+        """Meta class"""
         db_table = 'EmployeeWorkSetup'
         verbose_name = 'إعدادات عمل الموظف'
         verbose_name_plural = 'إعدادات عمل الموظفين'
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.emp.get_full_name()} - {self.work_schedule.schedule_name}"
 
     def clean(self):
+        """clean function"""
         if self.effective_date and self.end_date and self.effective_date >= self.end_date:
             raise ValidationError('تاريخ الانتهاء يجب أن يكون بعد تاريخ السريان')

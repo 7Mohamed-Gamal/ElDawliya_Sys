@@ -17,7 +17,7 @@ class AuditLog(models.Model):
     LOGIN = 'LOGIN'
     LOGOUT = 'LOGOUT'
     OTHER = 'OTHER'
-    
+
     ACTION_CHOICES = [
         (CREATE, _('إنشاء')),
         (UPDATE, _('تحديث')),
@@ -27,7 +27,7 @@ class AuditLog(models.Model):
         (LOGOUT, _('تسجيل خروج')),
         (OTHER, _('أخرى')),
     ]
-    
+
     # User who performed the action (can be null if action not linked to user)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -37,7 +37,7 @@ class AuditLog(models.Model):
         verbose_name=_('المستخدم'),
         related_name='audit_logs'
     )
-    
+
     # Action details
     action = models.CharField(
         max_length=50,
@@ -64,7 +64,7 @@ class AuditLog(models.Model):
         blank=True,
         verbose_name=_('اسم التطبيق')
     )
-    
+
     # Target object information using ContentType framework
     content_type = models.ForeignKey(
         ContentType,
@@ -80,7 +80,7 @@ class AuditLog(models.Model):
         verbose_name=_('معرف الكائن')
     )
     content_object = GenericForeignKey('content_type', 'object_id')
-    
+
     # Additional details
     object_repr = models.CharField(
         max_length=255,
@@ -98,8 +98,9 @@ class AuditLog(models.Model):
         blank=True,
         verbose_name=_('بيانات التغييرات')
     )
-    
+
     class Meta:
+        """Meta class"""
         verbose_name = _('سجل التدقيق')
         verbose_name_plural = _('سجلات التدقيق')
         ordering = ['-timestamp']
@@ -110,11 +111,12 @@ class AuditLog(models.Model):
             models.Index(fields=['content_type', 'object_id']),
             models.Index(fields=['app_name']),
         ]
-    
+
     def __str__(self):
+        """__str__ function"""
         if self.user:
             user_repr = self.user.get_username()
         else:
             user_repr = _('مستخدم غير معروف')
-            
+
         return f"{user_repr} - {self.get_action_display()} - {self.timestamp}"

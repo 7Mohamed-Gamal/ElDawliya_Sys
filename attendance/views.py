@@ -43,6 +43,7 @@ class AttendanceRecordListView(LoginRequiredMixin, ListView):
     paginate_by = 30
 
     def get_queryset(self):
+        """get_queryset function"""
         queryset = AttendanceRecord.objects.select_related('employee').annotate(
             employee_display_name=Concat(
                 Coalesce('employee__first_name', Value('')),
@@ -72,8 +73,9 @@ class AttendanceRecordListView(LoginRequiredMixin, ListView):
         return queryset.order_by('-date', 'employee_display_name')
 
     def get_context_data(self, **kwargs):
+        """get_context_data function"""
         context = super().get_context_data(**kwargs)
-        context['employees'] = Employee.objects.all()
+        context['employees'] = Employee.objects.all().select_related()  # TODO: Add appropriate select_related fields
         context['record_types'] = AttendanceRecord.RECORD_TYPE_CHOICES
         return context
 
@@ -97,7 +99,7 @@ def mark_attendance(request):
             employee=employee,
             date=today,
             record_type=record_type
-        ).exists()
+        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists()
 
         if existing_record:
             messages.warning(request, _('لقد قمت بتسجيل الحضور/الانصراف بالفعل اليوم'))
@@ -115,7 +117,7 @@ def mark_attendance(request):
         return redirect('attendance:dashboard')
 
     # Get active employees for staff users
-    employees = Employee.objects.filter(emp_status='Active').annotate(
+    employees = Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.annotate(
         display_name=Concat(
             Coalesce('first_name', Value('')),
             Value(' '),
@@ -141,6 +143,7 @@ class LeaveBalanceListView(LoginRequiredMixin, ListView):
     context_object_name = 'balances'
 
     def get_queryset(self):
+        """get_queryset function"""
         employee_id = self.request.GET.get('employee')
         year = self.request.GET.get('year', date.today().year)
 
@@ -151,8 +154,9 @@ class LeaveBalanceListView(LoginRequiredMixin, ListView):
         return queryset.filter(year=year)
 
     def get_context_data(self, **kwargs):
+        """get_context_data function"""
         context = super().get_context_data(**kwargs)
-        context['employees'] = Employee.objects.all()
+        context['employees'] = Employee.objects.all().select_related()  # TODO: Add appropriate select_related fields
         context['current_year'] = date.today().year
         return context
 
@@ -163,7 +167,7 @@ def attendance_dashboard(request):
     today = timezone.localtime().date()
 
     # إحصائيات اليوم من جدول EmployeeAttendance
-    today_stats = EmployeeAttendance.objects.filter(att_date=today).aggregate(
+    today_stats = EmployeeAttendance.objects.filter(att_date=today).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
         present=Count('att_id', filter=Q(status='Present')),
         absent=Count('att_id', filter=Q(status='Absent')),
         leave=Count('att_id', filter=Q(status='Leave')),
@@ -171,7 +175,7 @@ def attendance_dashboard(request):
     )
 
     # إجمالي عدد الموظفين النشطين
-    total_employees = Employee.objects.filter(emp_status='Active').count()
+    total_employees = Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
 
     # حساب النسب المئوية
     if total_employees > 0:
@@ -183,7 +187,7 @@ def attendance_dashboard(request):
     late_records = EmployeeAttendance.objects.filter(
         att_date=today,
         status='Late'
-    )
+    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
     avg_late_minutes = 0
     if late_records.exists():
         total_late_minutes = sum([record.calculate_late_minutes() for record in late_records])
@@ -195,13 +199,13 @@ def attendance_dashboard(request):
         user_attendance = EmployeeAttendance.objects.filter(
             emp=request.user.employee,
             att_date=today
-        ).first()
+        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
 
     # جدول العمل للموظف
     work_schedule = None
     if hasattr(request.user, 'employee'):
         # البحث عن قاعدة الحضور الافتراضية أو المخصصة للموظف
-        default_rule = AttendanceRules.objects.filter(is_default=True).first()
+        default_rule = AttendanceRules.objects.filter(is_default=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
         if default_rule:
             work_schedule = {
                 'start_time': default_rule.shift_start,
@@ -216,19 +220,19 @@ def attendance_dashboard(request):
     # إحصائيات الأقسام
     from employees.models import Department
     department_stats = []
-    departments = Department.objects.filter(is_active=True)
-    
+    departments = Department.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+
     for dept in departments:
-        dept_employees = Employee.objects.filter(dept=dept, emp_status='Active')
+        dept_employees = Employee.objects.filter(dept=dept, emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields
         dept_attendance = EmployeeAttendance.objects.filter(
             emp__in=dept_employees,
             att_date=today
-        ).aggregate(
+        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
             present_count=Count('att_id', filter=Q(status='Present')),
             absent_count=Count('att_id', filter=Q(status='Absent')),
             late_count=Count('att_id', filter=Q(status='Late'))
         )
-        
+
         department_stats.append({
             'dept_name': dept.dept_name,
             'total_employees': dept_employees.count(),
@@ -240,10 +244,10 @@ def attendance_dashboard(request):
     # بيانات الرسم البياني الأسبوعي
     from datetime import timedelta
     weekly_data = {'present': [], 'absent': [], 'late': []}
-    
+
     for i in range(7):
         day = today - timedelta(days=6-i)
-        day_stats = EmployeeAttendance.objects.filter(att_date=day).aggregate(
+        day_stats = EmployeeAttendance.objects.filter(att_date=day).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
             present=Count('att_id', filter=Q(status='Present')),
             absent=Count('att_id', filter=Q(status='Absent')),
             late=Count('att_id', filter=Q(status='Late'))
@@ -277,11 +281,13 @@ from . import rules_service
 
 @login_required
 def attendance_rules_list(request):
+    """attendance_rules_list function"""
     items = rules_service.list_rules()
     return render(request, 'attendance/rules_list.html', {'items': items})
 
 @login_required
 def attendance_rules_create(request):
+    """attendance_rules_create function"""
     if request.method == 'POST':
         form = AttendanceRulesForm(request.POST)
         if form.is_valid():
@@ -294,6 +300,7 @@ def attendance_rules_create(request):
 
 @login_required
 def attendance_rules_edit(request, pk):
+    """attendance_rules_edit function"""
     item = get_object_or_404(AttendanceRules, pk=pk)
     if request.method == 'POST':
         form = AttendanceRulesForm(request.POST, instance=item)
@@ -307,6 +314,7 @@ def attendance_rules_edit(request, pk):
 
 @login_required
 def attendance_rules_delete(request, pk):
+    """attendance_rules_delete function"""
     get_object_or_404(AttendanceRules, pk=pk)
     if request.method == 'POST':
         rules_service.delete_rule(pk)
@@ -318,11 +326,13 @@ def attendance_rules_delete(request, pk):
 
 @login_required
 def employee_attendance_list(request):
+    """employee_attendance_list function"""
     items = EmployeeAttendance.objects.select_related('emp', 'rule').order_by('-att_date')
     return render(request, 'attendance/emp_att_list.html', {'items': items})
 
 @login_required
 def employee_attendance_create(request):
+    """employee_attendance_create function"""
     if request.method == 'POST':
         form = EmployeeAttendanceForm(request.POST)
         if form.is_valid():
@@ -335,6 +345,7 @@ def employee_attendance_create(request):
 
 @login_required
 def employee_attendance_edit(request, pk):
+    """employee_attendance_edit function"""
     item = get_object_or_404(EmployeeAttendance, pk=pk)
     if request.method == 'POST':
         form = EmployeeAttendanceForm(request.POST, instance=item)
@@ -348,6 +359,7 @@ def employee_attendance_edit(request, pk):
 
 @login_required
 def employee_attendance_delete(request, pk):
+    """employee_attendance_delete function"""
     item = get_object_or_404(EmployeeAttendance, pk=pk)
     if request.method == 'POST':
         item.delete()
@@ -370,7 +382,7 @@ def dashboard(request):
 def add_record(request):
     """إضافة سجل حضور جديد"""
     from .forms import EmployeeAttendanceForm
-    
+
     if request.method == 'POST':
         form = EmployeeAttendanceForm(request.POST)
         if form.is_valid():
@@ -381,12 +393,12 @@ def add_record(request):
             messages.error(request, 'يرجى تصحيح الأخطاء أدناه.')
     else:
         form = EmployeeAttendanceForm()
-    
+
     context = {
         'form': form,
         'title': 'إضافة سجل حضور جديد'
     }
-    
+
     return render(request, 'attendance/record_form.html', context)
 
 
@@ -394,11 +406,11 @@ def add_record(request):
 def record_detail(request, record_id):
     """تفاصيل سجل الحضور"""
     record = get_object_or_404(EmployeeAttendance, att_id=record_id)
-    
+
     context = {
         'record': record,
     }
-    
+
     return render(request, 'attendance/record_detail.html', context)
 
 
@@ -406,7 +418,7 @@ def record_detail(request, record_id):
 def edit_record(request, record_id):
     """تعديل سجل حضور"""
     record = get_object_or_404(EmployeeAttendance, att_id=record_id)
-    
+
     if request.method == 'POST':
         form = EmployeeAttendanceForm(request.POST, instance=record)
         if form.is_valid():
@@ -417,13 +429,13 @@ def edit_record(request, record_id):
             messages.error(request, 'يرجى تصحيح الأخطاء أدناه.')
     else:
         form = EmployeeAttendanceForm(instance=record)
-    
+
     context = {
         'form': form,
         'record': record,
         'title': 'تعديل سجل الحضور'
     }
-    
+
     return render(request, 'attendance/record_form.html', context)
 
 
@@ -431,16 +443,16 @@ def edit_record(request, record_id):
 def delete_record(request, record_id):
     """حذف سجل حضور"""
     record = get_object_or_404(EmployeeAttendance, att_id=record_id)
-    
+
     if request.method == 'POST':
         record.delete()
         messages.success(request, 'تم حذف سجل الحضور بنجاح.')
         return redirect('attendance:record_list')
-    
+
     context = {
         'record': record,
     }
-    
+
     return render(request, 'attendance/record_confirm_delete.html', context)
 
 
@@ -460,11 +472,11 @@ def add_rule(request):
 def get_rule(request, rule_id):
     """جلب قاعدة حضور"""
     rule = get_object_or_404(AttendanceRules, rule_id=rule_id)
-    
+
     context = {
         'rule': rule,
     }
-    
+
     return render(request, 'attendance/rule_detail.html', context)
 
 
@@ -484,14 +496,14 @@ def delete_rule(request, rule_id):
 def set_default_rule(request, rule_id):
     """تعيين قاعدة حضور كافتراضية"""
     rule = get_object_or_404(AttendanceRules, rule_id=rule_id)
-    
+
     # إزالة الافتراضية من جميع القواعد
-    AttendanceRules.objects.all().update(is_default=False)
-    
+    AttendanceRules.objects.all().select_related()  # TODO: Add appropriate select_related fields.update(is_default=False)
+
     # تعيين القاعدة الحالية كافتراضية
     rule.is_default = True
     rule.save()
-    
+
     messages.success(request, f'تم تعيين قاعدة "{rule.rule_name}" كقاعدة افتراضية.')
     return redirect('attendance:rules_list')
 
@@ -501,36 +513,36 @@ def reports(request):
     """تقارير الحضور"""
     from django.db.models import Count, Avg
     from datetime import datetime, timedelta
-    
+
     # إحصائيات عامة
     total_records = EmployeeAttendance.objects.count()
     today = date.today()
     this_month = EmployeeAttendance.objects.filter(
         att_date__year=today.year,
         att_date__month=today.month
-    ).count()
-    
+    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+
     # إحصائيات الحضور اليومي
     daily_stats = EmployeeAttendance.objects.filter(
-        att_date__gte=today - timedelta(days=7)
+        att_date__gte=today - timedelta(days=7).prefetch_related()  # TODO: Add appropriate prefetch_related fields
     ).values('att_date').annotate(
         count=Count('att_id')
     ).order_by('att_date')
-    
+
     # إحصائيات الموظفين
     employee_stats = EmployeeAttendance.objects.values(
         'emp__first_name', 'emp__last_name'
     ).annotate(
         attendance_count=Count('att_id')
     ).order_by('-attendance_count')[:10]
-    
+
     context = {
         'total_records': total_records,
         'this_month': this_month,
         'daily_stats': daily_stats,
         'employee_stats': employee_stats,
     }
-    
+
     return render(request, 'attendance/reports.html', context)
 
 
@@ -539,13 +551,13 @@ def export_attendance(request):
     """تصدير بيانات الحضور"""
     import csv
     from django.http import HttpResponse
-    
+
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="attendance.csv"'
-    
+
     writer = csv.writer(response)
     writer.writerow(['الموظف', 'التاريخ', 'وقت الدخول', 'وقت الخروج', 'الحالة'])
-    
+
     records = EmployeeAttendance.objects.select_related('emp').all()
     for record in records:
         writer.writerow([
@@ -555,7 +567,7 @@ def export_attendance(request):
             record.check_out,
             record.status
         ])
-    
+
     return response
 
 
@@ -563,36 +575,36 @@ def export_attendance(request):
 def monthly_report(request):
     """تقرير شهري للحضور"""
     from django.db.models import Count
-    
+
     year = int(request.GET.get('year', date.today().year))
     month = int(request.GET.get('month', date.today().month))
-    
+
     # إحصائيات الشهر
     monthly_stats = EmployeeAttendance.objects.filter(
         att_date__year=year,
         att_date__month=month
-    ).aggregate(
+    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
         total_records=Count('att_id'),
         present_count=Count('att_id', filter=Q(status='Present')),
         absent_count=Count('att_id', filter=Q(status='Absent')),
         late_count=Count('att_id', filter=Q(status='Late'))
     )
-    
+
     # تفاصيل يومية
     daily_details = EmployeeAttendance.objects.filter(
         att_date__year=year,
         att_date__month=month
-    ).values('att_date').annotate(
+    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.values('att_date').annotate(
         count=Count('att_id')
     ).order_by('att_date')
-    
+
     context = {
         'year': year,
         'month': month,
         'monthly_stats': monthly_stats,
         'daily_details': daily_details,
     }
-    
+
     return render(request, 'attendance/monthly_report.html', context)
 
 
@@ -600,29 +612,29 @@ def monthly_report(request):
 def employee_attendance_report(request, emp_id):
     """تقرير حضور موظف محدد"""
     from employees.models import Employee
-    
+
     employee = get_object_or_404(Employee, emp_id=emp_id)
-    
+
     # فترة التقرير
     date_from = request.GET.get('date_from')
     date_to = request.GET.get('date_to')
-    
+
     if not date_from:
         date_from = date.today() - timedelta(days=30)
     else:
         date_from = datetime.strptime(date_from, '%Y-%m-%d').date()
-    
+
     if not date_to:
         date_to = date.today()
     else:
         date_to = datetime.strptime(date_to, '%Y-%m-%d').date()
-    
+
     # سجلات الحضور
     attendance_records = EmployeeAttendance.objects.filter(
         emp=employee,
         att_date__range=[date_from, date_to]
-    ).order_by('att_date')
-    
+    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('att_date')
+
     # إحصائيات
     stats = attendance_records.aggregate(
         total_days=Count('att_id'),
@@ -630,7 +642,7 @@ def employee_attendance_report(request, emp_id):
         absent_days=Count('att_id', filter=Q(status='Absent')),
         late_days=Count('att_id', filter=Q(status='Late'))
     )
-    
+
     context = {
         'employee': employee,
         'attendance_records': attendance_records,
@@ -638,7 +650,7 @@ def employee_attendance_report(request, emp_id):
         'date_from': date_from,
         'date_to': date_to,
     }
-    
+
     return render(request, 'attendance/employee_report.html', context)
 
 
@@ -657,20 +669,20 @@ def check_in(request):
         if not emp_id:
             messages.error(request, 'يرجى تحديد الموظف.')
             return redirect('attendance:dashboard')
-        
+
         employee = get_object_or_404(Employee, emp_id=emp_id)
         today = date.today()
-        
+
         # التحقق من وجود سجل لليوم
         existing_record = EmployeeAttendance.objects.filter(
             emp=employee,
             att_date=today
-        ).first()
-        
+        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+
         if existing_record and existing_record.check_in:
             messages.warning(request, 'تم تسجيل الدخول مسبقاً لهذا اليوم.')
             return redirect('attendance:dashboard')
-        
+
         # إنشاء أو تحديث السجل
         if existing_record:
             existing_record.check_in = timezone.now()
@@ -683,10 +695,10 @@ def check_in(request):
                 check_in=timezone.now(),
                 status='Present'
             )
-        
+
         messages.success(request, f'تم تسجيل دخول {employee.first_name} {employee.last_name} بنجاح.')
         return redirect('attendance:dashboard')
-    
+
     return render(request, 'attendance/check_in.html')
 
 
@@ -698,31 +710,31 @@ def check_out(request):
         if not emp_id:
             messages.error(request, 'يرجى تحديد الموظف.')
             return redirect('attendance:dashboard')
-        
+
         employee = get_object_or_404(Employee, emp_id=emp_id)
         today = date.today()
-        
+
         # البحث عن سجل اليوم
         record = EmployeeAttendance.objects.filter(
             emp=employee,
             att_date=today
-        ).first()
-        
+        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+
         if not record or not record.check_in:
             messages.error(request, 'لم يتم تسجيل الدخول لهذا اليوم.')
             return redirect('attendance:dashboard')
-        
+
         if record.check_out:
             messages.warning(request, 'تم تسجيل الخروج مسبقاً لهذا اليوم.')
             return redirect('attendance:dashboard')
-        
+
         # تسجيل الخروج
         record.check_out = timezone.now()
         record.save()
-        
+
         messages.success(request, f'تم تسجيل خروج {employee.first_name} {employee.last_name} بنجاح.')
         return redirect('attendance:dashboard')
-    
+
     return render(request, 'attendance/check_out.html')
 
 
@@ -733,33 +745,33 @@ def profile(request):
     if not hasattr(request.user, 'employee'):
         messages.error(request, 'لا يمكن الوصول لهذه الصفحة.')
         return redirect('attendance:dashboard')
-    
+
     employee = request.user.employee
-    
+
     # سجلات الحضور الأخيرة
     recent_records = EmployeeAttendance.objects.filter(
         emp=employee
-    ).order_by('-att_date')[:10]
-    
+    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('-att_date')[:10]
+
     # إحصائيات الشهر الحالي
     today = date.today()
     monthly_stats = EmployeeAttendance.objects.filter(
         emp=employee,
         att_date__year=today.year,
         att_date__month=today.month
-    ).aggregate(
+    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
         total_days=Count('att_id'),
         present_days=Count('att_id', filter=Q(status='Present')),
         absent_days=Count('att_id', filter=Q(status='Absent')),
         late_days=Count('att_id', filter=Q(status='Late'))
     )
-    
+
     context = {
         'employee': employee,
         'recent_records': recent_records,
         'monthly_stats': monthly_stats,
     }
-    
+
     return render(request, 'attendance/profile.html', context)
 
 
@@ -778,12 +790,12 @@ def get_attendance_status(request, emp_id):
     try:
         employee = Employee.objects.get(emp_id=emp_id)
         today = date.today()
-        
+
         record = EmployeeAttendance.objects.filter(
             emp=employee,
             att_date=today
-        ).first()
-        
+        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+
         data = {
             'employee_name': f"{employee.first_name} {employee.last_name}",
             'has_checked_in': bool(record and record.check_in),
@@ -792,7 +804,7 @@ def get_attendance_status(request, emp_id):
             'check_out_time': record.check_out.strftime('%H:%M') if record and record.check_out else None,
             'status': record.status if record else 'غير محدد'
         }
-        
+
         return JsonResponse(data)
     except Employee.DoesNotExist:
         return JsonResponse({'error': 'الموظف غير موجود'}, status=404)
@@ -803,23 +815,23 @@ def calculate_work_hours(request):
     """حساب ساعات العمل"""
     emp_id = request.GET.get('emp_id')
     date_str = request.GET.get('date')
-    
+
     if not emp_id or not date_str:
         return JsonResponse({'error': 'بيانات ناقصة'}, status=400)
-    
+
     try:
         employee = Employee.objects.get(emp_id=emp_id)
         target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
-        
+
         record = EmployeeAttendance.objects.filter(
             emp=employee,
             att_date=target_date
-        ).first()
-        
+        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+
         if record and record.check_in and record.check_out:
             work_duration = record.check_out - record.check_in
             hours = work_duration.total_seconds() / 3600
-            
+
             data = {
                 'work_hours': round(hours, 2),
                 'work_duration': str(work_duration),
@@ -833,7 +845,7 @@ def calculate_work_hours(request):
                 'check_in': None,
                 'check_out': None
             }
-        
+
         return JsonResponse(data)
     except (Employee.DoesNotExist, ValueError):
         return JsonResponse({'error': 'بيانات غير صحيحة'}, status=400)
@@ -844,28 +856,28 @@ def attendance_summary(request, emp_id):
     """ملخص حضور الموظف"""
     try:
         employee = Employee.objects.get(emp_id=emp_id)
-        
+
         # الشهر الحالي
         today = date.today()
         monthly_records = EmployeeAttendance.objects.filter(
             emp=employee,
             att_date__year=today.year,
             att_date__month=today.month
-        )
-        
+        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+
         summary = monthly_records.aggregate(
             total_days=Count('att_id'),
             present_days=Count('att_id', filter=Q(status='Present')),
             absent_days=Count('att_id', filter=Q(status='Absent')),
             late_days=Count('att_id', filter=Q(status='Late'))
         )
-        
+
         # حساب النسب المئوية
         total = summary['total_days'] or 1
         summary['present_percentage'] = round((summary['present_days'] / total) * 100, 1)
         summary['absent_percentage'] = round((summary['absent_days'] / total) * 100, 1)
         summary['late_percentage'] = round((summary['late_days'] / total) * 100, 1)
-        
+
         return JsonResponse(summary)
     except Employee.DoesNotExist:
         return JsonResponse({'error': 'الموظف غير موجود'}, status=404)
@@ -878,7 +890,7 @@ def bulk_import_attendance(request):
     if request.method == 'POST':
         # معالجة ملف الاستيراد
         pass
-    
+
     return render(request, 'attendance/bulk_import.html')
 
 
@@ -896,12 +908,12 @@ def bulk_approve_attendance(request):
         if record_ids:
             EmployeeAttendance.objects.filter(
                 att_id__in=record_ids
-            ).update(status='Approved')
-            
+            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.update(status='Approved')
+
             messages.success(request, f'تم اعتماد {len(record_ids)} سجل حضور.')
         else:
             messages.warning(request, 'لم يتم تحديد أي سجلات.')
-    
+
     return redirect('attendance:record_list')
 
 
@@ -909,20 +921,20 @@ def bulk_approve_attendance(request):
 @login_required
 def time_tracking(request):
     """تتبع الوقت"""
-    employees = Employee.objects.filter(emp_status='Active').order_by('first_name')
-    
+    employees = Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('first_name')
+
     # سجلات اليوم
     today = date.today()
     today_records = EmployeeAttendance.objects.filter(
         att_date=today
-    ).select_related('emp')
-    
+    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('emp')
+
     context = {
         'employees': employees,
         'today_records': today_records,
         'today': today,
     }
-    
+
     return render(request, 'attendance/time_tracking.html', context)
 
 
@@ -933,12 +945,12 @@ def overtime_records(request):
     records = EmployeeAttendance.objects.filter(
         check_in__isnull=False,
         check_out__isnull=False
-    ).select_related('emp').order_by('-att_date')
-    
+    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('emp').order_by('-att_date')
+
     context = {
         'records': records,
     }
-    
+
     return render(request, 'attendance/overtime_records.html', context)
 
 
@@ -949,12 +961,12 @@ def overtime_records(request):
 @user_passes_test(lambda u: u.is_superuser)
 def zk_devices_list(request):
     """قائمة أجهزة ZK"""
-    devices = ZKDevice.objects.all().order_by('device_name')
-    
+    devices = ZKDevice.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('device_name')
+
     context = {
         'devices': devices,
     }
-    
+
     return render(request, 'attendance/zk_devices_list.html', context)
 
 
@@ -962,7 +974,7 @@ def zk_devices_list(request):
 def zk_device_create(request):
     """إضافة جهاز ZK جديد"""
     from .forms import ZKDeviceForm
-    
+
     if request.method == 'POST':
         form = ZKDeviceForm(request.POST)
         if form.is_valid():
@@ -973,12 +985,12 @@ def zk_device_create(request):
             messages.error(request, 'يرجى تصحيح الأخطاء أدناه.')
     else:
         form = ZKDeviceForm()
-    
+
     context = {
         'form': form,
         'title': 'إضافة جهاز ZK جديد'
     }
-    
+
     return render(request, 'attendance/zk_device_form.html', context)
 
 
@@ -986,9 +998,9 @@ def zk_device_create(request):
 def zk_device_edit(request, device_id):
     """تعديل جهاز ZK"""
     from .forms import ZKDeviceForm
-    
+
     device = get_object_or_404(ZKDevice, device_id=device_id)
-    
+
     if request.method == 'POST':
         form = ZKDeviceForm(request.POST, instance=device)
         if form.is_valid():
@@ -999,13 +1011,13 @@ def zk_device_edit(request, device_id):
             messages.error(request, 'يرجى تصحيح الأخطاء أدناه.')
     else:
         form = ZKDeviceForm(instance=device)
-    
+
     context = {
         'form': form,
         'device': device,
         'title': f'تعديل جهاز {device.device_name}'
     }
-    
+
     return render(request, 'attendance/zk_device_form.html', context)
 
 
@@ -1013,17 +1025,17 @@ def zk_device_edit(request, device_id):
 def zk_device_delete(request, device_id):
     """حذف جهاز ZK"""
     device = get_object_or_404(ZKDevice, device_id=device_id)
-    
+
     if request.method == 'POST':
         device_name = device.device_name
         device.delete()
         messages.success(request, f'تم حذف جهاز {device_name} بنجاح.')
         return redirect('attendance:zk_devices_list')
-    
+
     context = {
         'device': device,
     }
-    
+
     return render(request, 'attendance/zk_device_confirm_delete.html', context)
 
 
@@ -1031,17 +1043,17 @@ def zk_device_delete(request, device_id):
 def zk_device_test(request, device_id):
     """اختبار الاتصال بجهاز ZK"""
     device = get_object_or_404(ZKDevice, device_id=device_id)
-    
+
     if request.method == 'POST':
         result = test_device_connection(device_id)
-        
+
         if result['connection_status']:
             messages.success(request, f'تم الاتصال بجهاز {device.device_name} بنجاح.')
         else:
             messages.error(request, f'فشل الاتصال بجهاز {device.device_name}: {result.get("error_message", "خطأ غير معروف")}')
-        
+
         return JsonResponse(result)
-    
+
     return JsonResponse({'error': 'طريقة غير صحيحة'}, status=405)
 
 
@@ -1078,11 +1090,11 @@ def zk_device_sync(request, device_id):
             )
 
         return JsonResponse(result)
-    
+
     context = {
         'device': device,
     }
-    
+
     return render(request, 'attendance/zk_device_sync.html', context)
 
 
@@ -1090,23 +1102,23 @@ def zk_device_sync(request, device_id):
 def zk_device_info(request, device_id):
     """معلومات جهاز ZK"""
     device = get_object_or_404(ZKDevice, device_id=device_id)
-    
+
     # آخر سجلات المعالجة
     recent_logs = AttendanceProcessingLog.objects.filter(
         device=device
-    ).order_by('-created_at')[:10]
-    
+    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('-created_at')[:10]
+
     # إحصائيات الجهاز
-    total_raw_records = ZKAttendanceRaw.objects.filter(device=device).count()
+    total_raw_records = ZKAttendanceRaw.objects.filter(device=device).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
     processed_records = ZKAttendanceRaw.objects.filter(
-        device=device, 
+        device=device,
         is_processed=True
-    ).count()
+    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
     unprocessed_records = total_raw_records - processed_records
-    
+
     # آخر مزامنة
     last_sync = device.last_sync
-    
+
     context = {
         'device': device,
         'recent_logs': recent_logs,
@@ -1115,7 +1127,7 @@ def zk_device_info(request, device_id):
         'unprocessed_records': unprocessed_records,
         'last_sync': last_sync,
     }
-    
+
     return render(request, 'attendance/zk_device_info.html', context)
 
 
@@ -1127,9 +1139,9 @@ def zk_raw_data(request):
     date_from = request.GET.get('date_from')
     date_to = request.GET.get('date_to')
     processed = request.GET.get('processed')
-    
+
     queryset = ZKAttendanceRaw.objects.select_related('device', 'employee')
-    
+
     if device_id:
         queryset = queryset.filter(device_id=device_id)
     if date_from:
@@ -1140,17 +1152,17 @@ def zk_raw_data(request):
         queryset = queryset.filter(is_processed=True)
     elif processed == 'false':
         queryset = queryset.filter(is_processed=False)
-    
+
     queryset = queryset.order_by('-timestamp')
-    
+
     # ترقيم الصفحات
     paginator = Paginator(queryset, 50)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    
+
     context = {
         'page_obj': page_obj,
-        'devices': ZKDevice.objects.all(),
+        'devices': ZKDevice.objects.all().select_related()  # TODO: Add appropriate select_related fields,
         'current_filters': {
             'device': device_id,
             'date_from': date_from,
@@ -1158,7 +1170,7 @@ def zk_raw_data(request):
             'processed': processed,
         }
     }
-    
+
     return render(request, 'attendance/zk_raw_data.html', context)
 
 
@@ -1168,11 +1180,11 @@ def zk_employee_mapping(request):
     mappings = EmployeeDeviceMapping.objects.select_related(
         'employee', 'device'
     ).order_by('device__device_name', 'employee__emp_code')
-    
+
     context = {
         'mappings': mappings,
     }
-    
+
     return render(request, 'attendance/zk_employee_mapping.html', context)
 
 
@@ -1180,7 +1192,7 @@ def zk_employee_mapping(request):
 def zk_create_mapping(request):
     """إضافة ربط موظف بجهاز ZK"""
     from .forms import EmployeeDeviceMappingForm
-    
+
     if request.method == 'POST':
         form = EmployeeDeviceMappingForm(request.POST)
         if form.is_valid():
@@ -1194,12 +1206,12 @@ def zk_create_mapping(request):
             messages.error(request, 'يرجى تصحيح الأخطاء أدناه.')
     else:
         form = EmployeeDeviceMappingForm()
-    
+
     context = {
         'form': form,
         'title': 'ربط موظف بجهاز ZK'
     }
-    
+
     return render(request, 'attendance/zk_mapping_form.html', context)
 
 
@@ -1207,9 +1219,9 @@ def zk_create_mapping(request):
 def zk_edit_mapping(request, mapping_id):
     """تعديل ربط موظف بجهاز ZK"""
     from .forms import EmployeeDeviceMappingForm
-    
+
     mapping = get_object_or_404(EmployeeDeviceMapping, mapping_id=mapping_id)
-    
+
     if request.method == 'POST':
         form = EmployeeDeviceMappingForm(request.POST, instance=mapping)
         if form.is_valid():
@@ -1220,13 +1232,13 @@ def zk_edit_mapping(request, mapping_id):
             messages.error(request, 'يرجى تصحيح الأخطاء أدناه.')
     else:
         form = EmployeeDeviceMappingForm(instance=mapping)
-    
+
     context = {
         'form': form,
         'mapping': mapping,
         'title': 'تعديل ربط الموظف بجهاز ZK'
     }
-    
+
     return render(request, 'attendance/zk_mapping_form.html', context)
 
 
@@ -1234,16 +1246,16 @@ def zk_edit_mapping(request, mapping_id):
 def zk_delete_mapping(request, mapping_id):
     """حذف ربط موظف بجهاز ZK"""
     mapping = get_object_or_404(EmployeeDeviceMapping, mapping_id=mapping_id)
-    
+
     if request.method == 'POST':
         mapping.delete()
         messages.success(request, 'تم حذف الربط بنجاح.')
         return redirect('attendance:zk_employee_mapping')
-    
+
     context = {
         'mapping': mapping,
     }
-    
+
     return render(request, 'attendance/zk_mapping_confirm_delete.html', context)
 
 
@@ -1253,17 +1265,17 @@ def zk_sync_all_devices(request):
     if request.method == 'POST':
         try:
             logs = ZKDataProcessor.process_all_devices()
-            
+
             total_fetched = sum(log.records_fetched for log in logs)
             total_processed = sum(log.records_processed for log in logs)
             total_failed = sum(log.records_failed for log in logs)
-            
+
             messages.success(
                 request,
                 f'تم سحب {total_fetched} سجل من {len(logs)} جهاز. '
                 f'تم معالجة {total_processed} سجل بنجاح و {total_failed} سجل فشل.'
             )
-            
+
             return JsonResponse({
                 'success': True,
                 'devices_processed': len(logs),
@@ -1271,14 +1283,14 @@ def zk_sync_all_devices(request):
                 'total_processed': total_processed,
                 'total_failed': total_failed
             })
-            
+
         except Exception as e:
             messages.error(request, f'خطأ في المزامنة: {str(e)}')
             return JsonResponse({
                 'success': False,
                 'error': str(e)
             }, status=500)
-    
+
     return JsonResponse({'error': 'طريقة غير صحيحة'}, status=405)
 
 
@@ -1286,34 +1298,34 @@ def zk_sync_all_devices(request):
 def zk_processing_logs(request):
     """سجلات معالجة أجهزة ZK"""
     logs = AttendanceProcessingLog.objects.select_related('device').order_by('-created_at')
-    
+
     # التصفية
     device_id = request.GET.get('device')
     status = request.GET.get('status')
     date_from = request.GET.get('date_from')
-    
+
     if device_id:
         logs = logs.filter(device_id=device_id)
     if status:
         logs = logs.filter(status=status)
     if date_from:
         logs = logs.filter(process_date__gte=date_from)
-    
+
     # ترقيم الصفحات
     paginator = Paginator(logs, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    
+
     context = {
         'page_obj': page_obj,
-        'devices': ZKDevice.objects.all(),
+        'devices': ZKDevice.objects.all().select_related()  # TODO: Add appropriate select_related fields,
         'current_filters': {
             'device': device_id,
             'status': status,
             'date_from': date_from,
         }
     }
-    
+
     return render(request, 'attendance/zk_processing_logs.html', context)
 
 
@@ -1323,19 +1335,19 @@ def ajax_zk_device_status(request, device_id):
     """جلب حالة جهاز ZK عبر AJAX"""
     try:
         device = ZKDevice.objects.get(device_id=device_id)
-        
+
         # فحص الاتصال
         is_online = device.is_online()
-        
+
         # آخر مزامنة
         last_sync = device.last_sync.strftime('%Y-%m-%d %H:%M') if device.last_sync else 'لم يتم'
-        
+
         # عدد السجلات غير المعالجة
         unprocessed_count = ZKAttendanceRaw.objects.filter(
             device=device,
             is_processed=False
-        ).count()
-        
+        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+
         data = {
             'device_name': device.device_name,
             'is_online': is_online,
@@ -1345,9 +1357,9 @@ def ajax_zk_device_status(request, device_id):
             'ip_address': device.ip_address,
             'location': device.location or 'غير محدد'
         }
-        
+
         return JsonResponse(data)
-        
+
     except ZKDevice.DoesNotExist:
         return JsonResponse({'error': 'الجهاز غير موجود'}, status=404)
     except Exception as e:
@@ -1359,21 +1371,21 @@ def ajax_process_raw_record(request, raw_id):
     """معالجة سجل خام واحد عبر AJAX"""
     try:
         raw_record = ZKAttendanceRaw.objects.get(raw_id=raw_id)
-        
+
         if raw_record.is_processed:
             return JsonResponse({
                 'success': False,
                 'message': 'السجل تم معالجته مسبقاً'
             })
-        
+
         # معالجة السجل
         ZKDataProcessor._create_attendance_record(raw_record)
-        
+
         return JsonResponse({
             'success': True,
             'message': 'تم معالجة السجل بنجاح'
         })
-        
+
     except ZKAttendanceRaw.DoesNotExist:
         return JsonResponse({
             'success': False,
@@ -1392,24 +1404,24 @@ def attendance_analytics(request):
     """تحليلات الحضور"""
     from django.db.models import Count, Avg, Sum
     from datetime import timedelta
-    
+
     today = date.today()
     last_30_days = today - timedelta(days=30)
-    
+
     # إحصائيات عامة
-    total_employees = Employee.objects.filter(emp_status='Active').count()
+    total_employees = Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
     total_attendance_records = EmployeeAttendance.objects.count()
-    
+
     # إحصائيات آخر 30 يوم
     recent_stats = EmployeeAttendance.objects.filter(
         att_date__gte=last_30_days
-    ).aggregate(
+    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
         total_records=Count('att_id'),
         present_records=Count('att_id', filter=Q(status='Present')),
         absent_records=Count('att_id', filter=Q(status='Absent')),
         late_records=Count('att_id', filter=Q(status='Late'))
     )
-    
+
     # حساب النسب المئوية
     if recent_stats['total_records'] > 0:
         recent_stats['present_rate'] = round(
@@ -1427,40 +1439,40 @@ def attendance_analytics(request):
             'absent_rate': 0,
             'late_rate': 0
         })
-    
+
     # أفضل الموظفين حضوراً
     top_employees = EmployeeAttendance.objects.filter(
         att_date__gte=last_30_days,
         status='Present'
-    ).values(
+    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.values(
         'emp__emp_code',
         'emp__first_name',
         'emp__last_name'
     ).annotate(
         attendance_count=Count('att_id')
     ).order_by('-attendance_count')[:10]
-    
+
     # إحصائيات شهرية
     monthly_data = []
     for i in range(6):
         month_start = today.replace(day=1) - timedelta(days=i*30)
         month_end = month_start + timedelta(days=30)
-        
+
         month_stats = EmployeeAttendance.objects.filter(
             att_date__range=[month_start, month_end]
-        ).aggregate(
+        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
             total=Count('att_id'),
             present=Count('att_id', filter=Q(status='Present')),
             absent=Count('att_id', filter=Q(status='Absent'))
         )
-        
+
         monthly_data.append({
             'month': month_start.strftime('%Y-%m'),
             'total': month_stats['total'],
             'present': month_stats['present'],
             'absent': month_stats['absent']
         })
-    
+
     context = {
         'total_employees': total_employees,
         'total_attendance_records': total_attendance_records,
@@ -1469,7 +1481,7 @@ def attendance_analytics(request):
         'monthly_data': monthly_data,
         'last_30_days': last_30_days,
     }
-    
+
     return render(request, 'attendance/analytics.html', context)
 
 
@@ -1479,22 +1491,22 @@ def generate_attendance_summary(request):
     if request.method == 'POST':
         year = int(request.POST.get('year', date.today().year))
         month = int(request.POST.get('month', date.today().month))
-        
+
         # حذف الملخصات الموجودة لنفس الفترة
-        AttendanceSummary.objects.filter(year=year, month=month).delete()
-        
+        AttendanceSummary.objects.filter(year=year, month=month).prefetch_related()  # TODO: Add appropriate prefetch_related fields.delete()
+
         # إنشاء ملخص لكل موظف
-        employees = Employee.objects.filter(emp_status='Active')
+        employees = Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields
         created_count = 0
-        
+
         for employee in employees:
             # حساب إحصائيات الموظف للشهر
             monthly_records = EmployeeAttendance.objects.filter(
                 emp=employee,
                 att_date__year=year,
                 att_date__month=month
-            )
-            
+            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+
             if monthly_records.exists():
                 stats = monthly_records.aggregate(
                     total_days=Count('att_id'),
@@ -1502,18 +1514,18 @@ def generate_attendance_summary(request):
                     absent_days=Count('att_id', filter=Q(status='Absent')),
                     late_days=Count('att_id', filter=Q(status='Late'))
                 )
-                
+
                 # حساب ساعات العمل ودقائق التأخير
                 total_work_hours = 0
                 total_late_minutes = 0
-                
+
                 for record in monthly_records:
                     if record.check_in and record.check_out:
                         work_duration = record.check_out - record.check_in
                         total_work_hours += work_duration.total_seconds() / 3600
-                    
+
                     total_late_minutes += record.calculate_late_minutes()
-                
+
                 # إنشاء الملخص
                 AttendanceSummary.objects.create(
                     employee=employee,
@@ -1526,16 +1538,16 @@ def generate_attendance_summary(request):
                     total_work_hours=round(total_work_hours, 2),
                     late_minutes=total_late_minutes
                 )
-                
+
                 created_count += 1
-        
+
         messages.success(
             request,
             f'تم إنشاء ملخص الحضور لـ {created_count} موظف للشهر {month}/{year}'
         )
-        
+
         return redirect('attendance:attendance_summaries')
-    
+
     return render(request, 'attendance/generate_summary.html')
 
 
@@ -1544,24 +1556,24 @@ def attendance_summaries(request):
     """عرض ملخصات الحضور"""
     year = int(request.GET.get('year', date.today().year))
     month = int(request.GET.get('month', date.today().month))
-    
+
     summaries = AttendanceSummary.objects.filter(
         year=year,
         month=month
-    ).select_related('employee').order_by('employee__emp_code')
-    
+    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('employee').order_by('employee__emp_code')
+
     context = {
         'summaries': summaries,
         'year': year,
         'month': month,
     }
-    
+
     return render(request, 'attendance/summaries.html', context)
-    
+
     context = {
         'records': records,
     }
-    
+
     return render(request, 'attendance/overtime_records.html', context)
 
 
@@ -1571,5 +1583,5 @@ def calculate_overtime(request):
     if request.method == 'POST':
         # منطق حساب الوقت الإضافي
         pass
-    
+
     return render(request, 'attendance/calculate_overtime.html')

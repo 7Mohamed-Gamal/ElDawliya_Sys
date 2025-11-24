@@ -28,18 +28,18 @@ schema_view = get_schema_view(
 urlpatterns = [
     # Admin
     path('admin/', admin.site.urls),
-    
+
     # API URLs
     path('api/', include('config.urls.api')),
-    
+
     # Frontend URLs
     path('', include('config.urls.frontend')),
-    
+
     # API Documentation
     path('swagger/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     path('api/schema/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
-    
+
     # Redirect root to dashboard
     path('', RedirectView.as_view(url='/dashboard/', permanent=False)),
 ]
@@ -48,7 +48,7 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
-    
+
     # Django Debug Toolbar
     if 'debug_toolbar' in settings.INSTALLED_APPS:
         import debug_toolbar

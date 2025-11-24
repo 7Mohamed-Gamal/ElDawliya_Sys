@@ -13,14 +13,14 @@ class MeetingService(BaseService):
     خدمة إدارة الاجتماعات والمحاضر
     Meeting management and minutes service
     """
-    
+
     def create_meeting(self, data):
         """إنشاء اجتماع جديد"""
         self.check_permission('projects.add_meeting')
-        
+
         required_fields = ['title', 'meeting_date', 'start_time']
         self.validate_required_fields(data, required_fields)
-        
+
         try:
             with transaction.atomic():
                 meeting = Meeting.objects.create(
@@ -37,33 +37,33 @@ class MeetingService(BaseService):
                     created_by=self.user,
                     updated_by=self.user
                 )
-                
+
                 # Add attendees
                 if data.get('attendees'):
                     self._add_meeting_attendees(meeting, data['attendees'])
-                
+
                 self.log_action(
                     action='create',
                     resource='meeting',
                     content_object=meeting,
                     message=f'تم إنشاء اجتماع جديد: {meeting.title}'
                 )
-                
+
                 return self.format_response(
                     data={'meeting_id': meeting.id},
                     message='تم إنشاء الاجتماع بنجاح'
                 )
-                
+
         except Exception as e:
             return self.handle_exception(e, 'create_meeting', 'meeting', data)
-    
+
     def record_meeting_minutes(self, meeting_id, minutes_data):
         """تسجيل محضر الاجتماع"""
         self.check_permission('projects.add_meetingminutes')
-        
+
         try:
             meeting = Meeting.objects.get(id=meeting_id)
-            
+
             minutes = MeetingMinutes.objects.create(
                 meeting=meeting,
                 agenda_items=minutes_data.get('agenda_items', ''),
@@ -75,27 +75,27 @@ class MeetingService(BaseService):
                 created_by=self.user,
                 updated_by=self.user
             )
-            
+
             # Add action items
             if minutes_data.get('actions'):
                 self._add_meeting_actions(meeting, minutes_data['actions'])
-            
+
             # Update meeting status
             meeting.status = 'completed'
             meeting.save()
-            
+
             self.log_action(
                 action='record_minutes',
                 resource='meeting_minutes',
                 content_object=minutes,
                 message=f'تم تسجيل محضر الاجتماع: {meeting.title}'
             )
-            
+
             return self.format_response(
                 data={'minutes_id': minutes.id},
                 message='تم تسجيل محضر الاجتماع بنجاح'
             )
-            
+
         except Meeting.DoesNotExist:
             return self.format_response(
                 success=False,
@@ -103,11 +103,11 @@ class MeetingService(BaseService):
             )
         except Exception as e:
             return self.handle_exception(e, 'record_meeting_minutes', f'meeting_minutes/{meeting_id}')
-    
+
     def _add_meeting_attendees(self, meeting, attendees_data):
         """إضافة حضور الاجتماع"""
         from core.models.hr import Employee
-        
+
         for attendee_data in attendees_data:
             try:
                 employee = Employee.objects.get(id=attendee_data['employee_id'])
@@ -121,11 +121,11 @@ class MeetingService(BaseService):
                 )
             except Employee.DoesNotExist:
                 self.logger.warning(f"Employee {attendee_data['employee_id']} not found")
-    
+
     def _add_meeting_actions(self, meeting, actions_data):
         """إضافة إجراءات الاجتماع"""
         from core.models.hr import Employee
-        
+
         for action_data in actions_data:
             try:
                 assigned_to = Employee.objects.get(id=action_data['assigned_to_id'])

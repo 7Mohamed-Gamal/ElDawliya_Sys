@@ -14,6 +14,7 @@ class TaskStepInline(admin.TabularInline):
     readonly_fields = ['created_by', 'completion_date']
 
     def get_queryset(self, request):
+        """get_queryset function"""
         return super().get_queryset(request).select_related('created_by')
 
 @admin.register(Task)

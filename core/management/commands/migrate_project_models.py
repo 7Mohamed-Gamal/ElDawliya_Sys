@@ -12,9 +12,11 @@ logger = logging.getLogger(__name__)
 
 
 class Command(BaseCommand):
+    """Command class"""
     help = 'Migrate existing task and meeting data to the new unified project models'
 
     def add_arguments(self, parser):
+        """add_arguments function"""
         parser.add_argument(
             '--dry-run',
             action='store_true',
@@ -33,6 +35,7 @@ class Command(BaseCommand):
         )
 
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         super().__init__(*args, **kwargs)
         self.dry_run = False
         self.batch_size = 100
@@ -48,6 +51,7 @@ class Command(BaseCommand):
         }
 
     def handle(self, *args, **options):
+        """handle function"""
         self.dry_run = options['dry_run']
         self.batch_size = options['batch_size']
         self.verbose = options['verbose']
@@ -60,7 +64,7 @@ class Command(BaseCommand):
         try:
             with transaction.atomic():
                 self.migrate_data()
-                
+
                 if self.dry_run:
                     # Rollback transaction in dry-run mode
                     transaction.set_rollback(True)
@@ -108,10 +112,10 @@ class Command(BaseCommand):
     def create_default_categories(self):
         """Create default project categories"""
         self.stdout.write("Creating default project categories...")
-        
+
         try:
             ProjectCategory = apps.get_model('core', 'ProjectCategory')
-            
+
             default_categories = [
                 {
                     'name': 'مشاريع عامة',
@@ -148,11 +152,11 @@ class Command(BaseCommand):
     def create_default_projects(self):
         """Create default projects for tasks without projects"""
         self.stdout.write("Creating default projects...")
-        
+
         try:
             Project = apps.get_model('core', 'Project')
             ProjectCategory = apps.get_model('core', 'ProjectCategory')
-            
+
             # Get default categories
             general_category = ProjectCategory.objects.get(name='مشاريع عامة')
             admin_category = ProjectCategory.objects.get(name='مهام إدارية')
@@ -208,21 +212,21 @@ class Command(BaseCommand):
     def migrate_tasks(self):
         """Migrate existing tasks to new Task model"""
         self.stdout.write("Migrating tasks...")
-        
+
         try:
             # Get old Task model
             OldTask = apps.get_model('tasks', 'Task')
             NewTask = apps.get_model('core', 'Task')
             Project = apps.get_model('core', 'Project')
-            
+
             # Get default project for orphaned tasks
             default_project = Project.objects.get(code='GENERAL')
-            
-            old_tasks = OldTask.objects.all()
+
+            old_tasks = OldTask.objects.all().select_related()  # TODO: Add appropriate select_related fields
             total_tasks = old_tasks.count()
-            
+
             self.stdout.write(f"Found {total_tasks} tasks to migrate")
-            
+
             for i, old_task in enumerate(old_tasks.iterator(chunk_size=self.batch_size)):
                 try:
                     # Map old task fields to new task fields
@@ -242,28 +246,28 @@ class Command(BaseCommand):
                         'updated_at': old_task.updated_at,
                         'created_by': old_task.created_by,
                     }
-                    
+
                     # Handle completion date
                     if old_task.status == 'completed' and old_task.completion_date:
                         new_task_data['completed_date'] = old_task.completion_date
-                    
+
                     # Create new task
                     new_task = NewTask.objects.create(**new_task_data)
-                    
+
                     # Store mapping for later use
                     if not hasattr(self, 'task_mapping'):
                         self.task_mapping = {}
                     self.task_mapping[old_task.id] = new_task.id
-                    
+
                     self.stats['tasks_migrated'] += 1
-                    
+
                     if self.verbose and (i + 1) % 10 == 0:
                         self.stdout.write(f"  Migrated {i + 1}/{total_tasks} tasks")
-                        
+
                 except Exception as e:
                     logger.error(f"Error migrating task {old_task.id}: {str(e)}")
                     self.stats['errors'] += 1
-                    
+
         except Exception as e:
             logger.error(f"Error in task migration: {str(e)}")
             self.stats['errors'] += 1
@@ -271,24 +275,24 @@ class Command(BaseCommand):
     def migrate_task_steps(self):
         """Migrate existing task steps"""
         self.stdout.write("Migrating task steps...")
-        
+
         try:
             OldTaskStep = apps.get_model('tasks', 'TaskStep')
             NewTaskStep = apps.get_model('core', 'TaskStep')
             NewTask = apps.get_model('core', 'Task')
-            
-            old_steps = OldTaskStep.objects.all()
+
+            old_steps = OldTaskStep.objects.all().select_related()  # TODO: Add appropriate select_related fields
             total_steps = old_steps.count()
-            
+
             self.stdout.write(f"Found {total_steps} task steps to migrate")
-            
+
             for i, old_step in enumerate(old_steps.iterator(chunk_size=self.batch_size)):
                 try:
                     # Find corresponding new task
                     if hasattr(self, 'task_mapping') and old_step.task_id in self.task_mapping:
                         new_task_id = self.task_mapping[old_step.task_id]
                         new_task = NewTask.objects.get(id=new_task_id)
-                        
+
                         new_step_data = {
                             'task': new_task,
                             'description': old_step.description,
@@ -299,17 +303,17 @@ class Command(BaseCommand):
                             'updated_at': old_step.updated_at,
                             'created_by': old_step.created_by,
                         }
-                        
+
                         NewTaskStep.objects.create(**new_step_data)
                         self.stats['task_steps_migrated'] += 1
-                        
+
                         if self.verbose and (i + 1) % 10 == 0:
                             self.stdout.write(f"  Migrated {i + 1}/{total_steps} task steps")
-                    
+
                 except Exception as e:
                     logger.error(f"Error migrating task step {old_step.id}: {str(e)}")
                     self.stats['errors'] += 1
-                    
+
         except Exception as e:
             logger.error(f"Error in task steps migration: {str(e)}")
             self.stats['errors'] += 1
@@ -317,20 +321,20 @@ class Command(BaseCommand):
     def migrate_meetings(self):
         """Migrate existing meetings"""
         self.stdout.write("Migrating meetings...")
-        
+
         try:
             OldMeeting = apps.get_model('meetings', 'Meeting')
             NewMeeting = apps.get_model('core', 'Meeting')
             Project = apps.get_model('core', 'Project')
-            
+
             # Get default project for meetings
             meeting_project = Project.objects.get(code='MEETINGS')
-            
-            old_meetings = OldMeeting.objects.all()
+
+            old_meetings = OldMeeting.objects.all().select_related()  # TODO: Add appropriate select_related fields
             total_meetings = old_meetings.count()
-            
+
             self.stdout.write(f"Found {total_meetings} meetings to migrate")
-            
+
             for i, old_meeting in enumerate(old_meetings.iterator(chunk_size=self.batch_size)):
                 try:
                     new_meeting_data = {
@@ -345,23 +349,23 @@ class Command(BaseCommand):
                         'created_at': old_meeting.date,
                         'created_by': old_meeting.created_by,
                     }
-                    
+
                     new_meeting = NewMeeting.objects.create(**new_meeting_data)
-                    
+
                     # Store mapping for later use
                     if not hasattr(self, 'meeting_mapping'):
                         self.meeting_mapping = {}
                     self.meeting_mapping[old_meeting.id] = new_meeting.id
-                    
+
                     self.stats['meetings_migrated'] += 1
-                    
+
                     if self.verbose and (i + 1) % 10 == 0:
                         self.stdout.write(f"  Migrated {i + 1}/{total_meetings} meetings")
-                        
+
                 except Exception as e:
                     logger.error(f"Error migrating meeting {old_meeting.id}: {str(e)}")
                     self.stats['errors'] += 1
-                    
+
         except Exception as e:
             logger.error(f"Error in meetings migration: {str(e)}")
             self.stats['errors'] += 1
@@ -369,41 +373,41 @@ class Command(BaseCommand):
     def migrate_meeting_attendees(self):
         """Migrate meeting attendees"""
         self.stdout.write("Migrating meeting attendees...")
-        
+
         try:
             OldAttendee = apps.get_model('meetings', 'Attendee')
             NewMeetingAttendee = apps.get_model('core', 'MeetingAttendee')
             NewMeeting = apps.get_model('core', 'Meeting')
-            
-            old_attendees = OldAttendee.objects.all()
+
+            old_attendees = OldAttendee.objects.all().select_related()  # TODO: Add appropriate select_related fields
             total_attendees = old_attendees.count()
-            
+
             self.stdout.write(f"Found {total_attendees} meeting attendees to migrate")
-            
+
             for i, old_attendee in enumerate(old_attendees.iterator(chunk_size=self.batch_size)):
                 try:
                     # Find corresponding new meeting
                     if hasattr(self, 'meeting_mapping') and old_attendee.meeting_id in self.meeting_mapping:
                         new_meeting_id = self.meeting_mapping[old_attendee.meeting_id]
                         new_meeting = NewMeeting.objects.get(id=new_meeting_id)
-                        
+
                         new_attendee_data = {
                             'meeting': new_meeting,
                             'user': old_attendee.user,
                             'role': 'participant',  # Default role
                             'attendance_status': 'invited',  # Default status
                         }
-                        
+
                         NewMeetingAttendee.objects.create(**new_attendee_data)
                         self.stats['meeting_attendees_migrated'] += 1
-                        
+
                         if self.verbose and (i + 1) % 10 == 0:
                             self.stdout.write(f"  Migrated {i + 1}/{total_attendees} attendees")
-                    
+
                 except Exception as e:
                     logger.error(f"Error migrating attendee {old_attendee.id}: {str(e)}")
                     self.stats['errors'] += 1
-                    
+
         except Exception as e:
             logger.error(f"Error in meeting attendees migration: {str(e)}")
             self.stats['errors'] += 1
@@ -411,21 +415,21 @@ class Command(BaseCommand):
     def migrate_meeting_tasks(self):
         """Migrate meeting tasks to regular tasks"""
         self.stdout.write("Migrating meeting tasks...")
-        
+
         try:
             OldMeetingTask = apps.get_model('meetings', 'MeetingTask')
             NewTask = apps.get_model('core', 'Task')
             NewMeeting = apps.get_model('core', 'Meeting')
             Project = apps.get_model('core', 'Project')
-            
+
             # Get meeting project
             meeting_project = Project.objects.get(code='MEETINGS')
-            
-            old_meeting_tasks = OldMeetingTask.objects.all()
+
+            old_meeting_tasks = OldMeetingTask.objects.all().select_related()  # TODO: Add appropriate select_related fields
             total_meeting_tasks = old_meeting_tasks.count()
-            
+
             self.stdout.write(f"Found {total_meeting_tasks} meeting tasks to migrate")
-            
+
             for i, old_mtask in enumerate(old_meeting_tasks.iterator(chunk_size=self.batch_size)):
                 try:
                     # Find corresponding new meeting
@@ -433,7 +437,7 @@ class Command(BaseCommand):
                     if hasattr(self, 'meeting_mapping') and old_mtask.meeting_id in self.meeting_mapping:
                         new_meeting_id = self.meeting_mapping[old_mtask.meeting_id]
                         new_meeting = NewMeeting.objects.get(id=new_meeting_id)
-                    
+
                     new_task_data = {
                         'title': old_mtask.description[:100],  # Use first 100 chars as title
                         'description': old_mtask.description,
@@ -444,22 +448,22 @@ class Command(BaseCommand):
                         'priority': 'medium',  # Default priority
                         'start_date': old_mtask.created_at,
                         'due_date': timezone.datetime.combine(
-                            old_mtask.end_date, 
+                            old_mtask.end_date,
                             timezone.datetime.min.time()
                         ) if old_mtask.end_date else old_mtask.created_at + timezone.timedelta(days=7),
                         'created_at': old_mtask.created_at,
                     }
-                    
+
                     new_task = NewTask.objects.create(**new_task_data)
                     self.stats['meeting_tasks_migrated'] += 1
-                    
+
                     if self.verbose and (i + 1) % 10 == 0:
                         self.stdout.write(f"  Migrated {i + 1}/{total_meeting_tasks} meeting tasks")
-                        
+
                 except Exception as e:
                     logger.error(f"Error migrating meeting task {old_mtask.id}: {str(e)}")
                     self.stats['errors'] += 1
-                    
+
         except Exception as e:
             logger.error(f"Error in meeting tasks migration: {str(e)}")
             self.stats['errors'] += 1
@@ -469,7 +473,7 @@ class Command(BaseCommand):
         self.stdout.write("\n" + "="*50)
         self.stdout.write("MIGRATION STATISTICS")
         self.stdout.write("="*50)
-        
+
         for key, value in self.stats.items():
             label = key.replace('_', ' ').title()
             if key == 'errors' and value > 0:
@@ -480,9 +484,9 @@ class Command(BaseCommand):
                 self.stdout.write(
                     self.style.SUCCESS(f"{label}: {value}")
                 )
-        
+
         self.stdout.write("="*50)
-        
+
         if self.stats['errors'] > 0:
             self.stdout.write(
                 self.style.WARNING(

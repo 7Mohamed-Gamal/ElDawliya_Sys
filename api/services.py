@@ -39,28 +39,29 @@ class GeminiService:
     """Service class for interacting with Google Gemini AI"""
 
     def __init__(self, user=None):
+        """__init__ function"""
         self.user = user
         self.api_key = None
         self.model_name = 'gemini-1.5-flash'
         self.config_source = 'none'
-        
+
         # First try to get API key from user configuration
         if user:
             try:
                 from .models import AIConfiguration, AIProvider
-                
+
                 # Try to get the Gemini provider
                 try:
                     provider = AIProvider.objects.get(name='gemini')
                     logger.info(f"Found Gemini provider: {provider.id}")
-                    
+
                     # Try to get user's default Gemini configuration
                     config = AIConfiguration.objects.filter(
                         user=user,
                         provider=provider,
                         is_active=True
-                    ).order_by('-is_default').first()
-                    
+                    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('-is_default').first()
+
                     if config:
                         self.api_key = config.api_key
                         self.model_name = config.model_name
@@ -68,10 +69,10 @@ class GeminiService:
                         logger.info(f"Using Gemini configuration for user {user.username}, API key: {self.api_key[:5]}..., model: {self.model_name}")
                     else:
                         logger.warning(f"No active Gemini configuration found for user {user.username}")
-                
+
                 except AIProvider.DoesNotExist:
                     logger.warning("Gemini provider does not exist in the database")
-                    
+
                     # Create the provider
                     provider = AIProvider.objects.create(
                         name='gemini',
@@ -81,12 +82,12 @@ class GeminiService:
                         requires_api_key=True
                     )
                     logger.info(f"Created Gemini provider: {provider.id}")
-                
+
             except Exception as e:
                 import traceback
                 error_traceback = traceback.format_exc()
                 logger.warning(f"Error getting user Gemini configuration: {str(e)}\n{error_traceback}")
-        
+
         # If no API key from user config, try environment variable
         if not self.api_key:
             env_api_key = os.getenv('GEMINI_API_KEY')
@@ -97,7 +98,7 @@ class GeminiService:
                 if env_model:
                     self.model_name = env_model
                 logger.info(f"Using Gemini configuration from environment variables, API key: {self.api_key[:5]}..., model: {self.model_name}")
-        
+
         # Check if configuration is valid
         self.is_configured = bool(self.api_key and GEMINI_AVAILABLE)
 
@@ -183,6 +184,7 @@ class GeminiService:
             }
 
     def chat_with_context(self, user, message: str, conversation_id: Optional[str] = None,
+        """chat_with_context function"""
                          temperature: float = 0.7, max_tokens: int = 1000) -> Dict[str, Any]:
         """Chat with Gemini AI maintaining conversation context"""
         try:
@@ -228,38 +230,38 @@ class GeminiService:
 
 يرجى تقديم إجابات مفيدة ودقيقة باللغة العربية.
 """
-            
+
             # First, detect if this is a system data analysis request
             try:
                 # Check for inventory analysis queries
                 if any(keyword in message.lower() for keyword in [
-                    'المخزون', 'الاصناف', 'المنتجات', 'البضاعة', 'الرصيد', 'الأصناف', 
+                    'المخزون', 'الاصناف', 'المنتجات', 'البضاعة', 'الرصيد', 'الأصناف',
                     'ناقص', 'الكميات', 'منتهية الصلاحية', 'منخفضة', 'المستودع', 'حد أدنى', 'قائمة'
                 ]):
                     # Initialize data service just once for better performance
                     data_service = DataAnalysisService(user=user)
-                    
+
                     # First check for low stock items since it's the most specific
                     if any(keyword in message.lower() for keyword in [
-                        'منخفض', 'أقل من', 'قليل', 'ناقص', 'الحد الأدنى', 'نواقص', 'نفذت', 
+                        'منخفض', 'أقل من', 'قليل', 'ناقص', 'الحد الأدنى', 'نواقص', 'نفذت',
                         'الكميات القليلة', 'تحت الحد', 'الأصناف الناقصة'
                     ]):
                         # Add info about low stock items to the system context
                         system_context += "\n\n--- معلومات المخزون ---\n"
                         system_context += "قمت بالبحث عن الأصناف منخفضة المخزون في قاعدة البيانات. "
-                        
+
                         # Try to get low stock items
                         try:
                             low_stock_data = data_service.get_low_stock_items()
                             if low_stock_data['success'] and low_stock_data['low_stock_count'] > 0:
                                 system_context += f"وجدت {low_stock_data['low_stock_count']} من الأصناف منخفضة المخزون. "
                                 system_context += "تفاصيل الأصناف:\n"
-                                
+
                                 # Add information about each item
                                 for item in low_stock_data['items'][:5]:  # Limit to first 5 for brevity
                                     system_context += f"- {item['اسم الصنف']}: الرصيد الحالي {item['الرصيد الحالي']} "
                                     system_context += f"(الحد الأدنى {item['الحد الأدنى']})\n"
-                                
+
                                 if len(low_stock_data['items']) > 5:
                                     system_context += f"... وهناك {len(low_stock_data['items']) - 5} أصناف أخرى منخفضة المخزون.\n"
                             else:
@@ -267,7 +269,7 @@ class GeminiService:
                         except Exception as e:
                             logger.error(f"Error fetching low stock items: {str(e)}")
                             system_context += "واجهت مشكلة في استعلام البيانات من النظام."
-                    
+
                     # General inventory analysis as a fallback
                     else:
                         # Add general inventory info to the system context
@@ -278,7 +280,7 @@ class GeminiService:
                                 summary = inventory_data['data_summary']
                                 system_context += f"إجمالي المنتجات في المخزون: {summary['total_products']}\n"
                                 system_context += f"عدد الأصناف منخفضة المخزون: {summary['low_stock_items']}\n"
-                                
+
                                 # Add category distribution if available
                                 if 'categories' in summary and len(summary['categories']) > 0:
                                     system_context += "توزيع الفئات:\n"
@@ -293,7 +295,7 @@ class GeminiService:
             except Exception as e:
                 logger.error(f"Error in data analysis integration: {str(e)}")
                 # Continue without integrated data if there's an error
-            
+
             # Combine context with current message
             full_prompt = f"{system_context}\n{context}المستخدم: {message}\nالمساعد:"
 
@@ -343,6 +345,7 @@ class DataAnalysisService:
     """Service for analyzing system data with Gemini AI"""
 
     def __init__(self, user=None):
+        """__init__ function"""
         self.gemini_service = GeminiService(user=user)
         self.user = user
 
@@ -350,7 +353,7 @@ class DataAnalysisService:
         """Analyze employee data"""
         try:
             # Get employee data
-            employees = Employee.objects.all()
+            employees = Employee.objects.all().select_related()  # TODO: Add appropriate select_related fields
             if filters:
                 if 'department' in filters:
                     employees = employees.filter(department__dept_name__icontains=filters['department'])
@@ -402,8 +405,8 @@ class DataAnalysisService:
             # First try with the local models (preferred)
             try:
                 from inventory.models_local import Product, Category
-                
-                products = Product.objects.all()
+
+                products = Product.objects.all().select_related()  # TODO: Add appropriate select_related fields
                 if filters:
                     if 'category' in filters:
                         products = products.filter(category__name__icontains=filters['category'])
@@ -419,7 +422,7 @@ class DataAnalysisService:
 
             except (ImportError, ModuleNotFoundError):
                 # Fallback to the original models if local models aren't available
-                products = TblProducts.objects.all()
+                products = TblProducts.objects.all().select_related()  # TODO: Add appropriate select_related fields
                 if filters:
                     if 'category' in filters:
                         products = products.filter(cat_name__icontains=filters['category'])
@@ -466,7 +469,7 @@ class DataAnalysisService:
         except Exception as e:
             logger.error(f"Error analyzing inventory: {str(e)}")
             return {'success': False, 'error': str(e)}
-            
+
     def get_low_stock_items(self) -> Dict[str, Any]:
         """
         Get items with stock below minimum threshold and generate a report
@@ -475,14 +478,14 @@ class DataAnalysisService:
             # Try with local models first
             try:
                 from inventory.models_local import Product
-                
+
                 from django.db import models as django_models
-                
+
                 low_stock_items = Product.objects.filter(
-                    quantity__lt=django_models.F('minimum_threshold'),
+                    quantity__lt=django_models.F('minimum_threshold').prefetch_related()  # TODO: Add appropriate prefetch_related fields,
                     minimum_threshold__gt=0
                 ).values('product_id', 'name', 'quantity', 'minimum_threshold', 'category__name', 'unit__name')
-                
+
                 # Format output for display
                 formatted_items = []
                 for item in low_stock_items:
@@ -495,18 +498,18 @@ class DataAnalysisService:
                         'وحدة القياس': item['unit__name'] or 'غير محدد',
                         'النقص': float(item['minimum_threshold']) - float(item['quantity'])
                     })
-                    
+
             except (ImportError, ModuleNotFoundError):
                 # Fallback to original models
                 from inventory.models import TblProducts
-                
+
                 from django.db import models as django_models
-                
+
                 low_stock_items = TblProducts.objects.filter(
-                    qte_in_stock__lt=django_models.F('minimum_threshold'),
+                    qte_in_stock__lt=django_models.F('minimum_threshold').prefetch_related()  # TODO: Add appropriate prefetch_related fields,
                     minimum_threshold__gt=0
                 ).values('product_id', 'product_name', 'qte_in_stock', 'minimum_threshold', 'cat_name', 'unit_name')
-                
+
                 # Format output for display
                 formatted_items = []
                 for item in low_stock_items:
@@ -517,14 +520,14 @@ class DataAnalysisService:
                         'الحد الأدنى': float(item['minimum_threshold']) if item['minimum_threshold'] else 0,
                         'التصنيف': item['cat_name'] or 'غير محدد',
                         'وحدة القياس': item['unit_name'] or 'غير محدد',
-                        'النقص': (float(item['minimum_threshold']) if item['minimum_threshold'] else 0) - 
+                        'النقص': (float(item['minimum_threshold']) if item['minimum_threshold'] else 0) -
                                  (float(item['qte_in_stock']) if item['qte_in_stock'] else 0)
                     })
-            
+
             # Generate report with Gemini
             if formatted_items:
                 items_json = json.dumps(formatted_items, ensure_ascii=False, indent=2)
-                
+
                 prompt = f"""
 أحتاج تقرير مفصل وتحليل للأصناف منخفضة المخزون في المستودع. إليك البيانات:
 
@@ -537,9 +540,9 @@ class DataAnalysisService:
 
 ملاحظة: قدم التقرير بتنسيق واضح ومنظم مع عناوين وجداول واضحة.
 """
-                
+
                 result = self.gemini_service.generate_response(prompt, temperature=0.2)
-                
+
                 if result['success']:
                     return {
                         'success': True,
@@ -556,7 +559,7 @@ class DataAnalysisService:
                     'low_stock_count': 0,
                     'items': []
                 }
-                
+
         except Exception as e:
             logger.error(f"Error generating low stock report: {str(e)}")
             return {
@@ -589,6 +592,7 @@ class OllamaService:
     """Service class for interacting with Ollama AI (Local)"""
 
     def __init__(self, user=None):
+        """__init__ function"""
         self.user = user
         self.api_url = 'http://localhost:11434'  # Default Ollama URL
         self.model_name = 'llama2'
@@ -610,7 +614,7 @@ class OllamaService:
                         user=user,
                         provider=provider,
                         is_active=True
-                    ).order_by('-is_default').first()
+                    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('-is_default').first()
 
                     if config:
                         # For Ollama, api_key field can store the base URL
@@ -746,6 +750,7 @@ class UnifiedAIService:
     """Unified service for handling multiple AI providers"""
 
     def __init__(self, user=None):
+        """__init__ function"""
         self.user = user
         self.active_provider = None
         self.active_service = None
@@ -781,7 +786,7 @@ class UnifiedAIService:
                     user=self.user,
                     is_default=True,
                     is_active=True
-                ).select_related('provider').first()
+                ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('provider').first()
 
                 if default_config:
                     provider_name = default_config.provider.name
@@ -828,6 +833,7 @@ class UnifiedAIService:
         return result
 
     def chat_with_context(self, message: str, conversation_id: Optional[str] = None,
+        """chat_with_context function"""
                          temperature: float = 0.7, max_tokens: int = 1000) -> Dict[str, Any]:
         """Chat with context using the active provider"""
         if not self.is_available():

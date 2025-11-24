@@ -11,6 +11,7 @@ TIMEOUT = 30
 
 
 def test_jwt_token_refresh():
+    """test_jwt_token_refresh function"""
     # Obtain initial JWT token pair using valid credentials (Basic Token Auth simulated by POST data)
     try:
         response = requests.post(

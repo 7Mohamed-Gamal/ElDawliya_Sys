@@ -8,6 +8,7 @@ AUTH_PASSWORD = "hgslduhgfwdv"
 TIMEOUT = 30
 
 def test_attendance_records_retrieval():
+    """test_attendance_records_retrieval function"""
     # Authenticate using basic token as per provided credentials (Basic Auth here as per instructions)
     auth = HTTPBasicAuth(AUTH_USERNAME, AUTH_PASSWORD)
     attendance_endpoint = f"{BASE_URL}/attendance/"

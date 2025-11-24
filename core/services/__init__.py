@@ -8,7 +8,7 @@ from .notifications import NotificationService
 __all__ = [
     'BaseService',
     'AuditService',
-    'PermissionService', 
+    'PermissionService',
     'CacheService',
     'NotificationService',
 ]

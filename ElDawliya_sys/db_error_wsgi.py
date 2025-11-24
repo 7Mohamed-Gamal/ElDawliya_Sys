@@ -544,6 +544,7 @@ class DatabaseErrorMiddleware:
     and shows the database setup page.
     """
     def __init__(self, application):
+        """__init__ function"""
         self.application = application
 
     def __call__(self, environ, start_response):
@@ -604,6 +605,7 @@ def get_wsgi_application():
     except Exception as e:
         # If Django can't be loaded due to database error, return the simple application
         def simple_app(environ, start_response):
+            """simple_app function"""
             return db_setup_application(environ, start_response, str(e))
 
         return simple_app

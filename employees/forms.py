@@ -8,8 +8,9 @@ from datetime import date, timedelta
 
 class EmployeeForm(forms.ModelForm):
     """نموذج إضافة وتعديل الموظفين"""
-    
+
     class Meta:
+        """Meta class"""
         model = Employee
         fields = [
             'emp_code', 'first_name', 'second_name', 'third_name', 'last_name',
@@ -17,7 +18,7 @@ class EmployeeForm(forms.ModelForm):
             'mobile', 'email', 'address', 'hire_date', 'join_date', 'probation_end',
             'job', 'dept', 'branch', 'manager', 'emp_status', 'termination_date', 'notes'
         ]
-        
+
         widgets = {
             'emp_code': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -114,19 +115,20 @@ class EmployeeForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         super().__init__(*args, **kwargs)
-        
+
         # تخصيص خيارات القوائم المنسدلة
         self.fields['job'].queryset = Job.objects.filter(is_active=True).order_by('job_title')
         self.fields['dept'].queryset = Department.objects.filter(is_active=True).order_by('dept_name')
         self.fields['branch'].queryset = Branch.objects.filter(is_active=True).order_by('branch_name')
-        
+
         # تخصيص خيارات المدير المباشر (استبعاد الموظف نفسه)
         manager_queryset = Employee.objects.filter(emp_status='Active').order_by('first_name', 'last_name')
         if self.instance and self.instance.pk:
             manager_queryset = manager_queryset.exclude(pk=self.instance.pk)
         self.fields['manager'].queryset = manager_queryset
-        
+
         # إضافة خيار فارغ للحقول الاختيارية
         self.fields['manager'].empty_label = "لا يوجد مدير مباشر"
         self.fields['job'].empty_label = "اختر الوظيفة"
@@ -141,10 +143,10 @@ class EmployeeForm(forms.ModelForm):
             existing = Employee.objects.filter(emp_code=emp_code)
             if self.instance and self.instance.pk:
                 existing = existing.exclude(pk=self.instance.pk)
-            
+
             if existing.exists():
                 raise ValidationError('كود الموظف موجود مسبقاً. يرجى اختيار كود آخر.')
-        
+
         return emp_code
 
     def clean_national_id(self):
@@ -155,10 +157,10 @@ class EmployeeForm(forms.ModelForm):
             existing = Employee.objects.filter(national_id=national_id)
             if self.instance and self.instance.pk:
                 existing = existing.exclude(pk=self.instance.pk)
-            
+
             if existing.exists():
                 raise ValidationError('رقم الهوية الوطنية موجود مسبقاً.')
-        
+
         return national_id
 
     def clean_email(self):
@@ -169,10 +171,10 @@ class EmployeeForm(forms.ModelForm):
             existing = Employee.objects.filter(email=email)
             if self.instance and self.instance.pk:
                 existing = existing.exclude(pk=self.instance.pk)
-            
+
             if existing.exists():
                 raise ValidationError('البريد الإلكتروني موجود مسبقاً.')
-        
+
         return email
 
     def clean_birth_date(self):
@@ -182,13 +184,13 @@ class EmployeeForm(forms.ModelForm):
             # التحقق من أن العمر أكبر من 16 سنة
             today = date.today()
             age = today.year - birth_date.year - ((today.month, today.day) < (birth_date.month, birth_date.day))
-            
+
             if age < 16:
                 raise ValidationError('عمر الموظف يجب أن يكون 16 سنة على الأقل.')
-            
+
             if age > 70:
                 raise ValidationError('عمر الموظف لا يمكن أن يزيد عن 70 سنة.')
-        
+
         return birth_date
 
     def clean(self):
@@ -231,11 +233,12 @@ class EmployeeForm(forms.ModelForm):
 
 class EmployeeBankAccountForm(forms.ModelForm):
     """نموذج إضافة وتعديل الحسابات البنكية للموظفين"""
-    
+
     class Meta:
+        """Meta class"""
         model = EmployeeBankAccount
         fields = ['bank', 'account_no', 'iban']
-        
+
         widgets = {
             'bank': forms.Select(attrs={
                 'class': 'form-select'
@@ -258,13 +261,13 @@ class EmployeeBankAccountForm(forms.ModelForm):
             iban = iban.replace(' ', '').upper()
             if len(iban) < 15 or len(iban) > 34:
                 raise ValidationError('رقم الآيبان غير صحيح.')
-        
+
         return iban
 
 
 class EmployeeDocumentForm(forms.ModelForm):
     """نموذج إضافة وتعديل مستندات الموظفين"""
-    
+
     file_upload = forms.FileField(
         label='الملف',
         required=True,
@@ -275,11 +278,12 @@ class EmployeeDocumentForm(forms.ModelForm):
         }),
         help_text='الحد الأقصى لحجم الملف: 10 ميجابايت. الأنواع المدعومة: PDF, DOC, DOCX, JPG, PNG, GIF'
     )
-    
+
     class Meta:
+        """Meta class"""
         model = EmployeeDocument
         fields = ['doc_type', 'doc_name', 'notes']  # file_upload is handled separately
-        
+
         widgets = {
             'doc_type': forms.Select(attrs={
                 'class': 'form-select'
@@ -334,7 +338,7 @@ class EmployeeDocumentForm(forms.ModelForm):
 
 class EmployeeSearchForm(forms.Form):
     """نموذج البحث في الموظفين"""
-    
+
     search = forms.CharField(
         label='البحث',
         required=False,
@@ -343,7 +347,7 @@ class EmployeeSearchForm(forms.Form):
             'placeholder': 'اسم الموظف أو الكود أو البريد الإلكتروني'
         })
     )
-    
+
     department = forms.ModelChoiceField(
         label='القسم',
         queryset=Department.objects.filter(is_active=True).order_by('dept_name'),
@@ -353,7 +357,7 @@ class EmployeeSearchForm(forms.Form):
             'class': 'form-select'
         })
     )
-    
+
     branch = forms.ModelChoiceField(
         label='الفرع',
         queryset=Branch.objects.filter(is_active=True).order_by('branch_name'),
@@ -363,7 +367,7 @@ class EmployeeSearchForm(forms.Form):
             'class': 'form-select'
         })
     )
-    
+
     job = forms.ModelChoiceField(
         label='الوظيفة',
         queryset=Job.objects.filter(is_active=True).order_by('job_title'),
@@ -373,7 +377,7 @@ class EmployeeSearchForm(forms.Form):
             'class': 'form-select'
         })
     )
-    
+
     status = forms.ChoiceField(
         label='الحالة',
         choices=[
@@ -392,11 +396,12 @@ class EmployeeSearchForm(forms.Form):
 
 class DepartmentForm(forms.ModelForm):
     """نموذج إضافة وتعديل الأقسام"""
-    
+
     class Meta:
+        """Meta class"""
         model = Department
         fields = ['dept_name', 'parent_dept', 'branch', 'manager_id', 'is_active']
-        
+
         widgets = {
             'dept_name': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -418,12 +423,13 @@ class DepartmentForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         super().__init__(*args, **kwargs)
-        
+
         # تخصيص خيارات القوائم المنسدلة
         self.fields['parent_dept'].queryset = Department.objects.filter(is_active=True).order_by('dept_name')
         self.fields['branch'].queryset = Branch.objects.filter(is_active=True).order_by('branch_name')
-        
+
         # إضافة خيارات فارغة
         self.fields['parent_dept'].empty_label = "لا يوجد قسم أب"
         self.fields['branch'].empty_label = "اختر الفرع"
@@ -431,11 +437,12 @@ class DepartmentForm(forms.ModelForm):
 
 class JobForm(forms.ModelForm):
     """نموذج إضافة وتعديل الوظائف"""
-    
+
     class Meta:
+        """Meta class"""
         model = Job
         fields = ['job_title', 'job_level', 'basic_salary', 'description', 'is_active']
-        
+
         widgets = {
             'job_title': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -466,7 +473,7 @@ class JobForm(forms.ModelForm):
         if job_level is not None:
             if job_level < 1 or job_level > 10:
                 raise ValidationError('مستوى الوظيفة يجب أن يكون بين 1 و 10.')
-        
+
         return job_level
 
     def clean_basic_salary(self):
@@ -475,8 +482,8 @@ class JobForm(forms.ModelForm):
         if basic_salary is not None:
             if basic_salary < 0:
                 raise ValidationError('الراتب الأساسي لا يمكن أن يكون سالباً.')
-            
+
             if basic_salary > 999999.99:
                 raise ValidationError('الراتب الأساسي كبير جداً.')
-        
+
         return basic_salary

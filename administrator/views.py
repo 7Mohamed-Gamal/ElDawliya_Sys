@@ -174,6 +174,7 @@ def database_settings(request):
 @method_decorator(login_required, name='dispatch')
 @method_decorator(system_admin_required, name='dispatch')
 class DepartmentListView(ListView):
+    """DepartmentListView class"""
     model = Department
     template_name = 'administrator/department_list.html'
     context_object_name = 'departments'
@@ -181,6 +182,7 @@ class DepartmentListView(ListView):
 @method_decorator(login_required, name='dispatch')
 @method_decorator(system_admin_required, name='dispatch')
 class DepartmentCreateView(CreateView):
+    """DepartmentCreateView class"""
     model = Department
     form_class = DepartmentForm
     template_name = 'administrator/department_form.html'
@@ -189,6 +191,7 @@ class DepartmentCreateView(CreateView):
 @method_decorator(login_required, name='dispatch')
 @method_decorator(system_admin_required, name='dispatch')
 class DepartmentUpdateView(UpdateView):
+    """DepartmentUpdateView class"""
     model = Department
     form_class = DepartmentForm
     template_name = 'administrator/department_form.html'
@@ -197,6 +200,7 @@ class DepartmentUpdateView(UpdateView):
 @method_decorator(login_required, name='dispatch')
 @method_decorator(system_admin_required, name='dispatch')
 class DepartmentDeleteView(DeleteView):
+    """DepartmentDeleteView class"""
     model = Department
     template_name = 'administrator/department_confirm_delete.html'
     success_url = reverse_lazy('administrator:department_list')
@@ -205,6 +209,7 @@ class DepartmentDeleteView(DeleteView):
 @method_decorator(login_required, name='dispatch')
 @method_decorator(system_admin_required, name='dispatch')
 class ModuleListView(ListView):
+    """ModuleListView class"""
     model = Module
     template_name = 'administrator/module_list.html'
     context_object_name = 'modules'
@@ -212,6 +217,7 @@ class ModuleListView(ListView):
 @method_decorator(login_required, name='dispatch')
 @method_decorator(system_admin_required, name='dispatch')
 class ModuleCreateView(CreateView):
+    """ModuleCreateView class"""
     model = Module
     form_class = ModuleForm
     template_name = 'administrator/module_form.html'
@@ -220,6 +226,7 @@ class ModuleCreateView(CreateView):
 @method_decorator(login_required, name='dispatch')
 @method_decorator(system_admin_required, name='dispatch')
 class ModuleUpdateView(UpdateView):
+    """ModuleUpdateView class"""
     model = Module
     form_class = ModuleForm
     template_name = 'administrator/module_form.html'
@@ -228,6 +235,7 @@ class ModuleUpdateView(UpdateView):
 @method_decorator(login_required, name='dispatch')
 @method_decorator(system_admin_required, name='dispatch')
 class ModuleDeleteView(DeleteView):
+    """ModuleDeleteView class"""
     model = Module
     template_name = 'administrator/module_confirm_delete.html'
     success_url = reverse_lazy('administrator:module_list')
@@ -285,6 +293,7 @@ from django.contrib.auth.forms import UserCreationForm
 class UserCreateForm(UserCreationForm):
     """Custom user creation form"""
     class Meta:
+        """Meta class"""
         model = User
         fields = ('username', 'email', 'first_name', 'last_name', 'is_active')
 
@@ -298,8 +307,9 @@ class UserCreateView(CreateView):
     success_url = reverse_lazy('administrator:user_list')
 
     def get_context_data(self, **kwargs):
+        """get_context_data function"""
         context = super().get_context_data(**kwargs)
-        context['groups'] = Group.objects.all()
+        context['groups'] = Group.objects.all().select_related()  # TODO: Add appropriate select_related fields
         return context
 
 @method_decorator(login_required, name='dispatch')
@@ -345,12 +355,14 @@ class UserGroupsUpdateView(UpdateView):
     success_url = reverse_lazy('administrator:user_list')
 
     def get_context_data(self, **kwargs):
+        """get_context_data function"""
         context = super().get_context_data(**kwargs)
-        context['groups'] = Group.objects.all()
+        context['groups'] = Group.objects.all().select_related()  # TODO: Add appropriate select_related fields
         context['user_groups'] = self.object.groups.all()
         return context
 
     def form_valid(self, form):
+        """form_valid function"""
         user = self.object
         user.groups.clear()
 
@@ -359,7 +371,7 @@ class UserGroupsUpdateView(UpdateView):
 
         # Add user to selected groups
         if group_ids:
-            groups = Group.objects.filter(id__in=group_ids)
+            groups = Group.objects.filter(id__in=group_ids).prefetch_related()  # TODO: Add appropriate prefetch_related fields
             user.groups.add(*groups)
 
         messages.success(self.request, f'تم تحديث مجموعات المستخدم {user.username} بنجاح')
@@ -430,7 +442,7 @@ def group_permissions(request, pk):
 def permission_dashboard(request):
     """Django permissions dashboard"""
     app_permissions = {}
-    content_types = ContentType.objects.all().order_by('app_label')
+    content_types = ContentType.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('app_label')
 
     for content_type in content_types:
         app_label = content_type.app_label
@@ -441,7 +453,7 @@ def permission_dashboard(request):
         if model_name not in app_permissions[app_label]:
             app_permissions[app_label][model_name] = []
 
-        permissions = Permission.objects.filter(content_type=content_type)
+        permissions = Permission.objects.filter(content_type=content_type).prefetch_related()  # TODO: Add appropriate prefetch_related fields
         for permission in permissions:
             app_permissions[app_label][model_name].append(permission)
 

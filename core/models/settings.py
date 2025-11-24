@@ -29,7 +29,7 @@ class SystemSetting(BaseModel):
         ('image', _('صورة')),
         ('color', _('لون')),
     ]
-    
+
     CATEGORIES = [
         ('general', _('عام')),
         ('security', _('الأمان')),
@@ -45,7 +45,7 @@ class SystemSetting(BaseModel):
         ('finance', _('المالية')),
         ('projects', _('المشاريع')),
     ]
-    
+
     key = models.CharField(
         max_length=100,
         unique=True,
@@ -119,23 +119,25 @@ class SystemSetting(BaseModel):
         verbose_name=_('إعداد النظام'),
         help_text=_('هل هذا إعداد أساسي في النظام')
     )
-    
+
     class Meta:
+        """Meta class"""
         verbose_name = _('إعداد النظام')
         verbose_name_plural = _('إعدادات النظام')
         ordering = ['category', 'order', 'name']
-        
+
     def __str__(self):
+        """__str__ function"""
         return f"{self.name} ({self.key})"
-    
+
     def clean(self):
         """Validate the setting value"""
         if self.is_required and not self.value:
             raise ValidationError(_('هذا الإعداد مطلوب'))
-            
+
         if self.value:
             self._validate_value()
-    
+
     def _validate_value(self):
         """Validate value based on setting type"""
         try:
@@ -156,15 +158,15 @@ class SystemSetting(BaseModel):
                 URLValidator()(self.value)
         except (ValueError, ValidationError) as e:
             raise ValidationError(
-                _('قيمة غير صحيحة لنوع الإعداد %(type)s') % 
+                _('قيمة غير صحيحة لنوع الإعداد %(type)s') %
                 {'type': self.get_setting_type_display()}
             )
-    
+
     def get_typed_value(self):
         """Get the value converted to the appropriate type"""
         if not self.value:
             return self.get_typed_default_value()
-            
+
         try:
             if self.setting_type == 'integer':
                 return int(self.value)
@@ -178,12 +180,12 @@ class SystemSetting(BaseModel):
                 return self.value
         except (ValueError, json.JSONDecodeError):
             return self.get_typed_default_value()
-    
+
     def get_typed_default_value(self):
         """Get the default value converted to the appropriate type"""
         if not self.default_value:
             return None
-            
+
         try:
             if self.setting_type == 'integer':
                 return int(self.default_value)
@@ -197,7 +199,7 @@ class SystemSetting(BaseModel):
                 return self.default_value
         except (ValueError, json.JSONDecodeError):
             return None
-    
+
     @classmethod
     def get_setting(cls, key, default=None):
         """Get a setting value by key"""
@@ -206,7 +208,7 @@ class SystemSetting(BaseModel):
             return setting.get_typed_value()
         except cls.DoesNotExist:
             return default
-    
+
     @classmethod
     def set_setting(cls, key, value, user=None):
         """Set a setting value by key"""
@@ -233,7 +235,7 @@ class UserPreference(BaseModel):
         ('json', _('JSON')),
         ('color', _('لون')),
     ]
-    
+
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -261,21 +263,23 @@ class UserPreference(BaseModel):
         null=True,
         verbose_name=_('القيمة')
     )
-    
+
     class Meta:
+        """Meta class"""
         verbose_name = _('تفضيل المستخدم')
         verbose_name_plural = _('تفضيلات المستخدمين')
         unique_together = ['user', 'key']
         ordering = ['user__username', 'name']
-        
+
     def __str__(self):
+        """__str__ function"""
         return f"{self.user.username} - {self.name}"
-    
+
     def get_typed_value(self):
         """Get the value converted to the appropriate type"""
         if not self.value:
             return None
-            
+
         try:
             if self.preference_type == 'integer':
                 return int(self.value)
@@ -287,7 +291,7 @@ class UserPreference(BaseModel):
                 return self.value
         except (ValueError, json.JSONDecodeError):
             return None
-    
+
     @classmethod
     def get_preference(cls, user, key, default=None):
         """Get a user preference by key"""
@@ -296,7 +300,7 @@ class UserPreference(BaseModel):
             return preference.get_typed_value()
         except cls.DoesNotExist:
             return default
-    
+
     @classmethod
     def set_preference(cls, user, key, value, name=None, preference_type='string'):
         """Set a user preference"""
@@ -311,12 +315,12 @@ class UserPreference(BaseModel):
                 'updated_by': user,
             }
         )
-        
+
         if not created:
             preference.value = str(value)
             preference.updated_by = user
             preference.save()
-            
+
         return preference
 
 
@@ -407,18 +411,20 @@ class CompanyProfile(BaseModel):
         null=True,
         verbose_name=_('وصف الشركة')
     )
-    
+
     class Meta:
+        """Meta class"""
         verbose_name = _('ملف الشركة')
         verbose_name_plural = _('ملفات الشركات')
-        
+
     def __str__(self):
+        """__str__ function"""
         return self.name
-    
+
     @classmethod
     def get_company(cls):
         """Get the main company profile"""
-        return cls.objects.filter(is_active=True).first()
+        return cls.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
 
 
 class NotificationTemplate(BaseModel):
@@ -432,14 +438,14 @@ class NotificationTemplate(BaseModel):
         ('in_app', _('داخل التطبيق')),
         ('push', _('إشعار فوري')),
     ]
-    
+
     PRIORITY_LEVELS = [
         ('low', _('منخفض')),
         ('normal', _('عادي')),
         ('high', _('عالي')),
         ('urgent', _('عاجل')),
     ]
-    
+
     name = models.CharField(
         max_length=100,
         unique=True,
@@ -476,24 +482,26 @@ class NotificationTemplate(BaseModel):
         verbose_name=_('قالب النظام'),
         help_text=_('هل هذا قالب أساسي في النظام')
     )
-    
+
     class Meta:
+        """Meta class"""
         verbose_name = _('قالب الإشعار')
         verbose_name_plural = _('قوالب الإشعارات')
         ordering = ['template_type', 'display_name']
-        
+
     def __str__(self):
+        """__str__ function"""
         return f"{self.display_name} ({self.get_template_type_display()})"
-    
+
     def render_subject(self, context=None):
         """Render the subject template with context"""
         if not self.subject_template:
             return ''
-            
+
         from django.template import Context, Template
         template = Template(self.subject_template)
         return template.render(Context(context or {}))
-    
+
     def render_message(self, context=None):
         """Render the message template with context"""
         from django.template import Context, Template

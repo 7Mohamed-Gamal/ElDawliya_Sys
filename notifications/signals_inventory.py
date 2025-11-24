@@ -27,12 +27,12 @@ if INVENTORY_AVAILABLE:
             # Notify inventory managers about low stock
             from django.contrib.auth import get_user_model
             User = get_user_model()
-            
+
             # Get users with inventory management permissions
             inventory_managers = User.objects.filter(
                 groups__name__in=['Inventory Manager', 'مدير المخزون']
-            ).distinct()
-            
+            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.distinct()
+
             for manager in inventory_managers:
                 create_inventory_notification(
                     user=manager,
@@ -54,11 +54,11 @@ if INVENTORY_AVAILABLE:
             # Notify inventory managers about out of stock
             from django.contrib.auth import get_user_model
             User = get_user_model()
-            
+
             inventory_managers = User.objects.filter(
                 groups__name__in=['Inventory Manager', 'مدير المخزون']
-            ).distinct()
-            
+            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.distinct()
+
             for manager in inventory_managers:
                 create_inventory_notification(
                     user=manager,
@@ -77,7 +77,7 @@ if INVENTORY_AVAILABLE:
             # Update product quantity based on invoice type
             try:
                 product = TblProducts.objects.get(prod_id=instance.prod_id)
-                
+
                 if instance.invoice.invoice_type == 'in':
                     # Incoming invoice - increase stock
                     product.prod_qty = F('prod_qty') + instance.qty
@@ -86,17 +86,17 @@ if INVENTORY_AVAILABLE:
                     # Outgoing invoice - decrease stock
                     product.prod_qty = F('prod_qty') - instance.qty
                     product.save(update_fields=['prod_qty'])
-                    
+
                     # Check if stock is low after the transaction
                     product.refresh_from_db()
                     if product.prod_qty <= product.prod_min_qty:
                         from django.contrib.auth import get_user_model
                         User = get_user_model()
-                        
+
                         inventory_managers = User.objects.filter(
                             groups__name__in=['Inventory Manager', 'مدير المخزون']
-                        ).distinct()
-                        
+                        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.distinct()
+
                         for manager in inventory_managers:
                             create_inventory_notification(
                                 user=manager,

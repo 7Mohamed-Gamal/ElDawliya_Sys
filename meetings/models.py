@@ -11,20 +11,22 @@ class MeetingTask(models.Model):
         ('in_progress', 'قيد التنفيذ'),
         ('completed', 'مكتملة'),
     ]
-    
+
     meeting = models.ForeignKey('Meeting', on_delete=models.CASCADE, related_name='meeting_tasks', verbose_name="الاجتماع")
     description = models.TextField(verbose_name="وصف المهمة")
-    assigned_to = models.ForeignKey(Users_Login_New, on_delete=models.SET_NULL, null=True, blank=True, 
+    assigned_to = models.ForeignKey(Users_Login_New, on_delete=models.SET_NULL, null=True, blank=True,
                                     related_name='meeting_tasks', verbose_name="تم تعيينها لـ")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="الحالة")
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="تاريخ الإنشاء")
     end_date = models.DateField(null=True, blank=True, verbose_name="تاريخ الانتهاء المتوقع")
 
     class Meta:
+        """Meta class"""
         verbose_name = "مهمة اجتماع"
         verbose_name_plural = "مهام الاجتماعات"
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.description[:50]}..." if len(self.description) > 50 else self.description
 
     def get_status_display(self):
@@ -49,6 +51,7 @@ class Meeting(models.Model):
     created_by = models.ForeignKey(Users_Login_New, on_delete=models.CASCADE, related_name='meetings', verbose_name="منشئ الاجتماع")
 
     class Meta:
+        """Meta class"""
         verbose_name = "اجتماع"
         verbose_name_plural = "الاجتماعات"
         permissions = [
@@ -61,6 +64,7 @@ class Meeting(models.Model):
         ]
 
     def __str__(self):
+        """__str__ function"""
         return self.title
 
 class Attendee(models.Model):
@@ -72,11 +76,13 @@ class Attendee(models.Model):
     user = models.ForeignKey(Users_Login_New, on_delete=models.CASCADE, related_name='attendees', verbose_name="المستخدم")
 
     class Meta:
+        """Meta class"""
         unique_together = ('meeting', 'user')
         verbose_name = "حضور"
         verbose_name_plural = "الحضور"
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.user.username} - {self.meeting.title}"
 
 
@@ -96,14 +102,17 @@ class MeetingTaskStep(models.Model):
     notes = models.TextField(blank=True, null=True, verbose_name="ملاحظات")
 
     class Meta:
+        """Meta class"""
         verbose_name = "خطوة مهمة اجتماع"
         verbose_name_plural = "خطوات مهام الاجتماعات"
         ordering = ['created_at']
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.description[:50]}..." if len(self.description) > 50 else self.description
 
     def save(self, *args, **kwargs):
+        """save function"""
         # إذا تم تعيين الخطوة كمكتملة، قم بتعيين تاريخ الإنجاز
         if self.completed and not self.completion_date:
             from django.utils import timezone

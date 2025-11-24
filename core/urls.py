@@ -27,12 +27,12 @@ urlpatterns = [
     # Reporting URLs
     path('reporting/', views.reporting_dashboard, name='reporting_dashboard'),
     path('reporting/dashboard/', views.ReportingDashboardView.as_view(), name='reporting_dashboard_class'),
-    
+
     # System Administration URLs
     path('admin/system/', views.system_administration, name='system_administration'),
     path('admin/health/', views.system_health_check, name='system_health_check'),
     path('admin/cache/clear/', views.clear_all_caches, name='clear_all_caches'),
-    
+
     # Cache Monitoring URLs
     path('cache/', cache_dashboard, name='cache_dashboard'),
     path('cache/stats/', cache_stats_api, name='cache_stats_api'),
@@ -40,7 +40,7 @@ urlpatterns = [
     path('cache/operations/', cache_operations_api, name='cache_operations_api'),
     path('cache/keys/', cache_key_browser, name='cache_key_browser_api'),
     path('cache/health/', cache_health_check, name='cache_health_check'),
-    
+
     # System Monitoring URLs
     path('monitoring/', include([
         path('', 'core.views.monitoring_dashboard.monitoring_dashboard', name='monitoring_dashboard'),
@@ -55,7 +55,7 @@ urlpatterns = [
         path('api/export/', 'core.views.monitoring_dashboard.export_monitoring_data_api', name='export_monitoring_data_api'),
         path('api/reports/', 'core.views.monitoring_dashboard.monitoring_reports_api', name='monitoring_reports_api'),
     ])),
-    
+
     # Data Integration URLs
     path('integration/', views.integration_dashboard, name='integration_dashboard'),
     path('integration/status/', views.data_integration_status, name='data_integration_status'),

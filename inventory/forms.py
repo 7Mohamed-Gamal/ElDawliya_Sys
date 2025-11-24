@@ -9,7 +9,9 @@ from .models_local import (
 from .models import TblInvoices as Invoice, TblInvoiceitems as InvoiceItem
 
 class CategoryForm(forms.ModelForm):
+    """CategoryForm class"""
     class Meta:
+        """Meta class"""
         model = Category
         fields = ['name', 'description']
         widgets = {
@@ -18,7 +20,9 @@ class CategoryForm(forms.ModelForm):
         }
 
 class UnitForm(forms.ModelForm):
+    """UnitForm class"""
     class Meta:
+        """Meta class"""
         model = Unit
         fields = ['name', 'symbol']
         widgets = {
@@ -27,6 +31,7 @@ class UnitForm(forms.ModelForm):
         }
 
 class ProductForm(forms.ModelForm):
+    """ProductForm class"""
     # حقول لإنشاء تصنيف جديد
     new_category = forms.CharField(required=False, label="إضافة تصنيف جديد", widget=forms.HiddenInput())
     new_category_name = forms.CharField(required=False, label="اسم التصنيف الجديد", widget=forms.TextInput(attrs={'class': 'form-control'}))
@@ -41,6 +46,7 @@ class ProductForm(forms.ModelForm):
     form_submitted = forms.CharField(required=False, widget=forms.HiddenInput(), initial='true')
 
     class Meta:
+        """Meta class"""
         model = Product
         fields = ['product_id', 'name', 'category', 'unit', 'initial_quantity', 'quantity', 'unit_price', 'minimum_threshold', 'maximum_threshold', 'location', 'description', 'image']
         widgets = {
@@ -59,6 +65,7 @@ class ProductForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         super().__init__(*args, **kwargs)
         # جعل الحقول الأساسية إلزامية
         self.fields['product_id'].required = True
@@ -71,7 +78,9 @@ class ProductForm(forms.ModelForm):
         self.fields['quantity'].required = False
 
 class CustomerForm(forms.ModelForm):
+    """CustomerForm class"""
     class Meta:
+        """Meta class"""
         model = Customer
         fields = ['name', 'contact_person', 'phone', 'email', 'address']
         widgets = {
@@ -83,7 +92,9 @@ class CustomerForm(forms.ModelForm):
         }
 
 class SupplierForm(forms.ModelForm):
+    """SupplierForm class"""
     class Meta:
+        """Meta class"""
         model = Supplier
         fields = ['name', 'contact_person', 'phone', 'email', 'address']
         widgets = {
@@ -95,6 +106,7 @@ class SupplierForm(forms.ModelForm):
         }
 
 class DepartmentForm(forms.ModelForm):
+    """DepartmentForm class"""
     # إضافة حقول وهمية للنموذج (لن يتم حفظها في قاعدة البيانات)
     code = forms.CharField(
         required=False,
@@ -118,6 +130,7 @@ class DepartmentForm(forms.ModelForm):
     )
 
     class Meta:
+        """Meta class"""
         model = Department
         fields = ['name', 'description']
         widgets = {
@@ -126,6 +139,7 @@ class DepartmentForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         super().__init__(*args, **kwargs)
         if self.instance and self.instance.pk:
             # إذا كان هناك قسم موجود، قم بتعيين قيمة الكود
@@ -135,7 +149,9 @@ class DepartmentForm(forms.ModelForm):
             self.initial['code'] = 'سيتم إنشاؤه تلقائيًا'
 
 class VoucherForm(forms.ModelForm):
+    """VoucherForm class"""
     class Meta:
+        """Meta class"""
         model = Voucher
         fields = ['voucher_number', 'voucher_type', 'date', 'supplier', 'department', 'customer', 'supplier_voucher_number', 'recipient', 'notes']
         widgets = {
@@ -151,6 +167,7 @@ class VoucherForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         super().__init__(*args, **kwargs)
         # Make fields conditionally required based on voucher type
         self.fields['supplier'].required = False
@@ -170,6 +187,7 @@ class VoucherForm(forms.ModelForm):
             self.set_required_fields(voucher_type)
 
     def set_required_fields(self, voucher_type):
+        """set_required_fields function"""
         if voucher_type == 'إذن اضافة' or voucher_type == 'إذن مرتجع مورد':
             self.fields['supplier'].required = True
             self.fields['supplier_voucher_number'].required = True
@@ -180,7 +198,9 @@ class VoucherForm(forms.ModelForm):
             self.fields['customer'].required = True
 
 class VoucherItemForm(forms.ModelForm):
+    """VoucherItemForm class"""
     class Meta:
+        """Meta class"""
         model = VoucherItem
         fields = ['voucher', 'product', 'quantity_added', 'quantity_disbursed', 'machine', 'machine_unit', 'unit_price']
         widgets = {
@@ -194,6 +214,7 @@ class VoucherItemForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         super().__init__(*args, **kwargs)
         # Make fields conditionally required based on voucher type
         self.fields['quantity_added'].required = False
@@ -206,6 +227,7 @@ class VoucherItemForm(forms.ModelForm):
             self.set_required_fields(voucher_type)
 
     def set_required_fields(self, voucher_type):
+        """set_required_fields function"""
         if voucher_type == 'إذن اضافة' or voucher_type == 'اذن مرتجع عميل':
             self.fields['quantity_added'].required = True
             self.fields['quantity_disbursed'].required = False
@@ -223,7 +245,9 @@ class VoucherItemForm(forms.ModelForm):
             self.fields['machine_unit'].required = False
 
 class PurchaseRequestForm(forms.ModelForm):
+    """PurchaseRequestForm class"""
     class Meta:
+        """Meta class"""
         model = PurchaseRequest
         fields = ['product', 'status']
         widgets = {
@@ -232,7 +256,9 @@ class PurchaseRequestForm(forms.ModelForm):
         }
 
 class LocalSystemSettingsForm(forms.ModelForm):
+    """LocalSystemSettingsForm class"""
     class Meta:
+        """Meta class"""
         model = LocalSystemSettings
         fields = [
             # معلومات الشركة
@@ -280,7 +306,9 @@ class LocalSystemSettingsForm(forms.ModelForm):
         }
 
 class InvoiceForm(forms.ModelForm):
+    """InvoiceForm class"""
     class Meta:
+        """Meta class"""
         model = Invoice
         fields = ['invoice_number', 'invoice_date', 'invoice_type', 'recipient', 'supplier_id', 'customer_id', 'supplier_invoice_number', 'customer_invoice_number']
         widgets = {
@@ -300,7 +328,9 @@ class InvoiceForm(forms.ModelForm):
         }
 
 class InvoiceItemForm(forms.ModelForm):
+    """InvoiceItemForm class"""
     class Meta:
+        """Meta class"""
         model = InvoiceItem
         fields = ['invoice_number', 'product', 'quantity_elwarad', 'quantity_elmonsarf', 'quantity_mortagaaelmawarden', 'quantity_mortagaaomalaa', 'unit_price', 'received_machine', 'machine_unit']
         widgets = {

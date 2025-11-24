@@ -7,7 +7,7 @@ from .time_tracking_service import TimeTrackingService
 
 __all__ = [
     'ProjectService',
-    'TaskService', 
+    'TaskService',
     'MeetingService',
     'DocumentService',
     'TimeTrackingService',

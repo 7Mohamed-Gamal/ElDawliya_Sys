@@ -21,10 +21,10 @@ def debug_view(request):
         'debug_info': {
             'total_products': Product.objects.count(),
             'low_stock_products': Product.objects.filter(
-                quantity__lt=F('minimum_threshold'),
+                quantity__lt=F('minimum_threshold').prefetch_related()  # TODO: Add appropriate prefetch_related fields,
                 minimum_threshold__gt=0
             ).count(),
-            'out_of_stock_products': Product.objects.filter(quantity=0).count(),
+            'out_of_stock_products': Product.objects.filter(quantity=0).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count(),
         }
     }
     return render(request, 'inventory/debug.html', context)
@@ -34,7 +34,7 @@ def debug_view(request):
 def check_product_exists(request):
     """التحقق من وجود منتج برقم معين"""
     product_id = request.GET.get('product_id', '')
-    exists = Product.objects.filter(product_id=product_id).exists()
+    exists = Product.objects.filter(product_id=product_id).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists()
     return JsonResponse({'exists': exists})
 
 @login_required
@@ -83,7 +83,7 @@ def basic_product_add(request):
                 return render(request, 'inventory/basic_product_form.html')
 
             # التحقق من عدم وجود منتج بنفس الرقم
-            if Product.objects.filter(product_id=product_id).exists():
+            if Product.objects.filter(product_id=product_id).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists():
                 messages.error(request, f'يوجد صنف بنفس الرقم: {product_id}')
                 return render(request, 'inventory/basic_product_form.html')
 

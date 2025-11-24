@@ -14,8 +14,8 @@ def get_units_api(request):
     """
     try:
         # جلب جميع الوحدات مرتبة حسب الاسم
-        units = Unit.objects.all().order_by('name')
-        
+        units = Unit.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
+
         # تحويل النتائج إلى قائمة
         units_list = []
         for unit in units:
@@ -24,9 +24,9 @@ def get_units_api(request):
                 'name': unit.name,
                 'symbol': unit.symbol if hasattr(unit, 'symbol') else '',
             })
-        
+
         return JsonResponse({'success': True, 'units': units_list})
-    
+
     except Exception as e:
         print(f"Error in get_units_api: {str(e)}")
         return JsonResponse({'success': False, 'message': f'حدث خطأ: {str(e)}'})

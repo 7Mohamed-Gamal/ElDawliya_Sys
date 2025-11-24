@@ -2,6 +2,7 @@ from django.db import models
 
 
 class Company(models.Model):
+    """Company class"""
     company_id = models.AutoField(primary_key=True, db_column='CompanyID')
     name = models.CharField(max_length=200, db_column='CompanyName')
     name_en = models.CharField(max_length=200, db_column='CompanyNameEN', blank=True, null=True)
@@ -19,11 +20,13 @@ class Company(models.Model):
     updated_at = models.DateTimeField(blank=True, null=True, db_column='UpdatedAt')
 
     class Meta:
+        """Meta class"""
         db_table = 'Companies'
         verbose_name = 'شركة'
         verbose_name_plural = 'الشركات'
 
     def __str__(self):
+        """__str__ function"""
         return self.name
 
 # Create your models here.

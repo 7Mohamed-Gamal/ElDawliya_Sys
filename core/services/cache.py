@@ -12,16 +12,16 @@ class CacheService(BaseService):
     خدمة التخزين المؤقت المتقدمة
     Advanced caching service for performance optimization
     """
-    
+
     # Cache timeout configurations
     CACHE_TIMEOUTS = {
         'short': 300,      # 5 minutes
-        'medium': 1800,    # 30 minutes  
+        'medium': 1800,    # 30 minutes
         'long': 3600,      # 1 hour
         'daily': 86400,    # 24 hours
         'weekly': 604800,  # 7 days
     }
-    
+
     # Cache key prefixes
     PREFIXES = {
         'user': 'user',
@@ -33,7 +33,7 @@ class CacheService(BaseService):
         'settings': 'set',
         'permissions': 'perm',
     }
-    
+
     @classmethod
     def get_or_set(cls, key, callable_func, timeout='medium', version=None):
         """
@@ -41,16 +41,16 @@ class CacheService(BaseService):
         Get value from cache or set it using callable function
         """
         timeout_seconds = cls.CACHE_TIMEOUTS.get(timeout, timeout)
-        
+
         cached_value = cache.get(key, version=version)
         if cached_value is not None:
             return cached_value
-        
+
         # Generate value using callable
         value = callable_func()
         cache.set(key, value, timeout_seconds, version=version)
         return value
-    
+
     @classmethod
     def set(cls, key, value, timeout='medium', version=None):
         """
@@ -59,7 +59,7 @@ class CacheService(BaseService):
         """
         timeout_seconds = cls.CACHE_TIMEOUTS.get(timeout, timeout)
         cache.set(key, value, timeout_seconds, version=version)
-    
+
     @classmethod
     def get(cls, key, default=None, version=None):
         """
@@ -67,7 +67,7 @@ class CacheService(BaseService):
         Get value from cache
         """
         return cache.get(key, default, version=version)
-    
+
     @classmethod
     def delete(cls, key, version=None):
         """
@@ -75,7 +75,7 @@ class CacheService(BaseService):
         Delete value from cache
         """
         cache.delete(key, version=version)
-    
+
     @classmethod
     def delete_many(cls, keys, version=None):
         """
@@ -83,7 +83,7 @@ class CacheService(BaseService):
         Delete multiple values from cache
         """
         cache.delete_many(keys, version=version)
-    
+
     @classmethod
     def clear(cls):
         """
@@ -91,7 +91,7 @@ class CacheService(BaseService):
         Clear all cache
         """
         cache.clear()
-    
+
     @classmethod
     def invalidate_pattern(cls, pattern):
         """
@@ -112,7 +112,7 @@ class CacheService(BaseService):
             import logging
             logger = logging.getLogger(__name__)
             logger.warning(f"Cache pattern invalidation failed: {e}")
-    
+
     @classmethod
     def make_key(cls, prefix, *args):
         """
@@ -122,7 +122,7 @@ class CacheService(BaseService):
         prefix_value = cls.PREFIXES.get(prefix, prefix)
         key_parts = [prefix_value] + [str(arg) for arg in args]
         return ':'.join(key_parts)
-    
+
     @classmethod
     def warm_up_cache(cls):
         """
@@ -131,29 +131,29 @@ class CacheService(BaseService):
         """
         from core.models.settings import SystemSetting
         from core.models.permissions import Module, Permission
-        
+
         # Cache system settings
         cls.get_or_set(
             cls.make_key('settings', 'all'),
-            lambda: list(SystemSetting.objects.filter(is_active=True).values()),
+            lambda: list(SystemSetting.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.values()),
             'daily'
         )
-        
+
         # Cache modules and permissions
         cls.get_or_set(
             cls.make_key('permissions', 'modules'),
-            lambda: list(Module.objects.filter(is_active=True).values()),
+            lambda: list(Module.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.values()),
             'daily'
         )
-        
+
         cls.get_or_set(
             cls.make_key('permissions', 'all'),
-            lambda: list(Permission.objects.filter(is_active=True).select_related('module').values(
+            lambda: list(Permission.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('module').values(
                 'id', 'module__name', 'permission_type', 'codename', 'name'
             )),
             'daily'
         )
-    
+
     @classmethod
     def cache_user_data(cls, user_id):
         """
@@ -162,10 +162,10 @@ class CacheService(BaseService):
         """
         from django.contrib.auth.models import User
         from core.services.permissions import PermissionService
-        
+
         try:
             user = User.objects.get(id=user_id)
-            
+
             # Cache user permissions
             perm_service = PermissionService(user=user)
             user_permissions = perm_service.get_user_permissions()
@@ -174,7 +174,7 @@ class CacheService(BaseService):
                 user_permissions,
                 'medium'
             )
-            
+
             # Cache user roles
             user_roles = perm_service.get_user_roles()
             cls.set(
@@ -182,12 +182,12 @@ class CacheService(BaseService):
                 user_roles,
                 'medium'
             )
-            
+
             return True
-            
+
         except User.DoesNotExist:
             return False
-    
+
     @classmethod
     def invalidate_user_cache(cls, user_id):
         """
@@ -197,10 +197,10 @@ class CacheService(BaseService):
         patterns = [
             cls.make_key('user', user_id, '*'),
         ]
-        
+
         for pattern in patterns:
             cls.invalidate_pattern(pattern)
-    
+
     @classmethod
     def cache_employee_data(cls, employee_id):
         """
@@ -209,7 +209,7 @@ class CacheService(BaseService):
         """
         # This will be implemented when we have employee models
         pass
-    
+
     @classmethod
     def invalidate_employee_cache(cls, employee_id):
         """
@@ -220,10 +220,10 @@ class CacheService(BaseService):
             cls.make_key('employee', employee_id, '*'),
             cls.make_key('dept', '*', 'employees'),  # Department employee lists
         ]
-        
+
         for pattern in patterns:
             cls.invalidate_pattern(pattern)
-    
+
     @classmethod
     def cache_department_data(cls, department_id):
         """
@@ -232,7 +232,7 @@ class CacheService(BaseService):
         """
         # This will be implemented when we have department models
         pass
-    
+
     @classmethod
     def invalidate_department_cache(cls, department_id):
         """
@@ -242,10 +242,10 @@ class CacheService(BaseService):
         patterns = [
             cls.make_key('dept', department_id, '*'),
         ]
-        
+
         for pattern in patterns:
             cls.invalidate_pattern(pattern)
-    
+
     @classmethod
     def cache_product_data(cls, product_id):
         """
@@ -254,7 +254,7 @@ class CacheService(BaseService):
         """
         # This will be implemented when we have product models
         pass
-    
+
     @classmethod
     def invalidate_product_cache(cls, product_id):
         """
@@ -265,10 +265,10 @@ class CacheService(BaseService):
             cls.make_key('product', product_id, '*'),
             cls.make_key('inv', '*'),  # Inventory summaries
         ]
-        
+
         for pattern in patterns:
             cls.invalidate_pattern(pattern)
-    
+
     @classmethod
     def get_cache_stats(cls):
         """
@@ -289,7 +289,7 @@ class CacheService(BaseService):
                 'error': str(e),
                 'stats_available': False
             }
-    
+
     @classmethod
     def cache_report_data(cls, report_key, data, timeout='long'):
         """
@@ -299,7 +299,7 @@ class CacheService(BaseService):
         cache_key = cls.make_key('report', report_key)
         cls.set(cache_key, data, timeout)
         return cache_key
-    
+
     @classmethod
     def get_cached_report(cls, report_key):
         """
@@ -308,7 +308,7 @@ class CacheService(BaseService):
         """
         cache_key = cls.make_key('report', report_key)
         return cls.get(cache_key)
-    
+
     @classmethod
     def invalidate_reports_cache(cls):
         """
@@ -316,7 +316,7 @@ class CacheService(BaseService):
         Invalidate all cached reports
         """
         cls.invalidate_pattern(cls.make_key('report', '*'))
-    
+
     def cache_user_preferences(self, user_id, preferences):
         """
         تخزين تفضيلات المستخدم مؤقتاً
@@ -324,7 +324,7 @@ class CacheService(BaseService):
         """
         cache_key = self.make_key('user', user_id, 'preferences')
         self.set(cache_key, preferences, 'daily')
-    
+
     def get_cached_user_preferences(self, user_id):
         """
         الحصول على تفضيلات المستخدم المخزنة مؤقتاً
@@ -332,7 +332,7 @@ class CacheService(BaseService):
         """
         cache_key = self.make_key('user', user_id, 'preferences')
         return self.get(cache_key, {})
-    
+
     def invalidate_user_preferences(self, user_id):
         """
         إبطال تفضيلات المستخدم المخزنة مؤقتاً

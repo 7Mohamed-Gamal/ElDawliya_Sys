@@ -59,7 +59,7 @@ if TASKS_AVAILABLE:
         """
         if instance.due_date and instance.assigned_to:
             days_until_due = (instance.due_date - timezone.now().date()).days
-            
+
             if days_until_due <= 1 and days_until_due >= 0:
                 create_notification(
                     user=instance.assigned_to,

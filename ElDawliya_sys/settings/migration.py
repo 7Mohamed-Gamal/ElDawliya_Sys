@@ -44,7 +44,7 @@ LOCAL_APPS = [
     # Core apps
     'core',
     'api',
-    
+
     # Business apps
     'accounts',
     'hr',
@@ -55,7 +55,7 @@ LOCAL_APPS = [
     'Purchase_orders',
     'notifications',
     'audit',
-    
+
     # HR modules
     'cars',
     'attendance',

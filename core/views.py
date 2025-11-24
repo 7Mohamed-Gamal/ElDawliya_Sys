@@ -32,8 +32,9 @@ class ReportingDashboardView(LoginRequiredMixin, TemplateView):
     عرض لوحة التقارير المحسنة
     """
     template_name = 'reporting/dashboard.html'
-    
+
     def get_context_data(self, **kwargs):
+        """get_context_data function"""
         context = super().get_context_data(**kwargs)
         context.update({
             'page_title': 'لوحة التقارير',
@@ -73,16 +74,16 @@ def system_administration(request):
     try:
         # Get system statistics
         db_service = DatabaseOptimizationService()
-        
+
         # Get database statistics
         db_stats = db_service.get_database_statistics()
-        
+
         # Get cache statistics
         cache_stats = {
             'data_integration_cache_size': len(data_integration_service._cache),
             'reporting_cache_active': True,  # Simplified check
         }
-        
+
         # Get system health metrics
         health_metrics = {
             'database_status': 'healthy',
@@ -90,7 +91,7 @@ def system_administration(request):
             'integration_status': 'operational',
             'reporting_status': 'operational'
         }
-        
+
         context = {
             'page_title': 'إدارة النظام',
             'page_description': 'لوحة تحكم إدارة النظام',
@@ -102,9 +103,9 @@ def system_administration(request):
                 {'name': 'إدارة النظام', 'url': None}
             ]
         }
-        
+
         return render(request, 'core/system_admin.html', context)
-        
+
     except Exception as e:
         logger.error(f"Error in system administration view: {e}")
         context = {
@@ -135,9 +136,9 @@ def data_integration_status(request):
             'error_count': 0,  # Simplified
             'uptime': '99.9%'  # Simplified
         }
-        
+
         return JsonResponse(status_info)
-        
+
     except Exception as e:
         logger.error(f"Error getting data integration status: {e}")
         return JsonResponse({
@@ -157,19 +158,19 @@ def clear_all_caches(request):
     try:
         # Clear data integration cache
         data_integration_service.clear_all_cache()
-        
+
         # Clear reporting cache
         reporting_service.clear_cache()
-        
+
         # Clear Django cache (if configured)
         from django.core.cache import cache
         cache.clear()
-        
+
         return JsonResponse({
             'status': 'success',
             'message': 'تم مسح جميع ذاكرات التخزين المؤقت بنجاح'
         })
-        
+
     except Exception as e:
         logger.error(f"Error clearing caches: {e}")
         return JsonResponse({
@@ -212,9 +213,9 @@ def system_health_check(request):
             'last_check': '2025-06-29T12:00:00Z',
             'next_check': '2025-06-29T12:15:00Z'
         }
-        
+
         return JsonResponse(health_status)
-        
+
     except Exception as e:
         logger.error(f"Error in system health check: {e}")
         return JsonResponse({
@@ -239,7 +240,7 @@ def integration_dashboard(request):
             'error_count': 0,  # Simplified
             'data_consistency': '99.9%'  # Simplified
         }
-        
+
         # Get recent sync activities
         recent_activities = [
             {
@@ -261,7 +262,7 @@ def integration_dashboard(request):
                 'status': 'success'
             }
         ]
-        
+
         context = {
             'page_title': 'تكامل البيانات',
             'page_description': 'لوحة تحكم تكامل البيانات',
@@ -272,9 +273,9 @@ def integration_dashboard(request):
                 {'name': 'تكامل البيانات', 'url': None}
             ]
         }
-        
+
         return render(request, 'core/integration_dashboard.html', context)
-        
+
     except Exception as e:
         logger.error(f"Error in integration dashboard: {e}")
         context = {

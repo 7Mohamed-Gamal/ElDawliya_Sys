@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
                 verbose_name='الأولوية'
             ),
         ),
-        
+
         # Enhance TaskStep model
         migrations.AddField(
             model_name='taskstep',
@@ -56,7 +56,7 @@ class Migration(migrations.Migration):
             name='updated_at',
             field=models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث'),
         ),
-        
+
         # Update model metadata
         migrations.AlterModelOptions(
             name='task',
@@ -81,7 +81,7 @@ class Migration(migrations.Migration):
                 'verbose_name_plural': 'خطوات المهام',
             },
         ),
-        
+
         # Add database indexes for better performance (SQL Server compatible)
         migrations.RunSQL(
             """

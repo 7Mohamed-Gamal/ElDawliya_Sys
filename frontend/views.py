@@ -15,8 +15,9 @@ from django.core.exceptions import PermissionDenied
 class DashboardView(LoginRequiredMixin, TemplateView):
     """Main dashboard view."""
     template_name = 'pages/dashboard.html'
-    
+
     def get_context_data(self, **kwargs):
+        """get_context_data function"""
         context = super().get_context_data(**kwargs)
         context.update({
             'page_title': _('لوحة التحكم'),
@@ -31,8 +32,9 @@ class DashboardView(LoginRequiredMixin, TemplateView):
 class ProfileView(LoginRequiredMixin, TemplateView):
     """User profile view."""
     template_name = 'pages/profile.html'
-    
+
     def get_context_data(self, **kwargs):
+        """get_context_data function"""
         context = super().get_context_data(**kwargs)
         context.update({
             'page_title': _('الملف الشخصي'),
@@ -47,8 +49,9 @@ class ProfileView(LoginRequiredMixin, TemplateView):
 class ProfileEditView(LoginRequiredMixin, TemplateView):
     """Edit user profile view."""
     template_name = 'pages/profile_edit.html'
-    
+
     def get_context_data(self, **kwargs):
+        """get_context_data function"""
         context = super().get_context_data(**kwargs)
         context.update({
             'page_title': _('تعديل الملف الشخصي'),
@@ -64,8 +67,9 @@ class ProfileEditView(LoginRequiredMixin, TemplateView):
 class ReportsView(LoginRequiredMixin, TemplateView):
     """Reports listing view."""
     template_name = 'pages/reports.html'
-    
+
     def get_context_data(self, **kwargs):
+        """get_context_data function"""
         context = super().get_context_data(**kwargs)
         context.update({
             'page_title': _('التقارير'),
@@ -80,8 +84,9 @@ class ReportsView(LoginRequiredMixin, TemplateView):
 class ReportDetailView(LoginRequiredMixin, TemplateView):
     """Individual report view."""
     template_name = 'pages/report_detail.html'
-    
+
     def get_context_data(self, **kwargs):
+        """get_context_data function"""
         context = super().get_context_data(**kwargs)
         report_type = kwargs.get('report_type')
         context.update({
@@ -99,8 +104,9 @@ class ReportDetailView(LoginRequiredMixin, TemplateView):
 class SettingsView(LoginRequiredMixin, TemplateView):
     """System settings view."""
     template_name = 'pages/settings.html'
-    
+
     def get_context_data(self, **kwargs):
+        """get_context_data function"""
         context = super().get_context_data(**kwargs)
         context.update({
             'page_title': _('الإعدادات'),
@@ -115,8 +121,9 @@ class SettingsView(LoginRequiredMixin, TemplateView):
 class HelpView(LoginRequiredMixin, TemplateView):
     """Help and documentation view."""
     template_name = 'pages/help.html'
-    
+
     def get_context_data(self, **kwargs):
+        """get_context_data function"""
         context = super().get_context_data(**kwargs)
         context.update({
             'page_title': _('المساعدة'),
@@ -131,8 +138,9 @@ class HelpView(LoginRequiredMixin, TemplateView):
 class SupportView(LoginRequiredMixin, TemplateView):
     """Support and contact view."""
     template_name = 'pages/support.html'
-    
+
     def get_context_data(self, **kwargs):
+        """get_context_data function"""
         context = super().get_context_data(**kwargs)
         context.update({
             'page_title': _('الدعم الفني'),

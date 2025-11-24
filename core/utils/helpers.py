@@ -21,10 +21,10 @@ def generate_unique_code(prefix='', length=8, include_letters=True, include_numb
         characters += string.ascii_uppercase
     if include_numbers:
         characters += string.digits
-    
+
     if not characters:
         characters = string.digits
-    
+
     code = ''.join(random.choices(characters, k=length))
     return f"{prefix}{code}" if prefix else code
 
@@ -36,7 +36,7 @@ def generate_employee_code(department_code='', sequence_number=None):
     """
     if sequence_number is None:
         sequence_number = random.randint(1000, 9999)
-    
+
     year = datetime.now().year
     return f"{department_code}{year}{sequence_number:04d}"
 
@@ -48,10 +48,10 @@ def format_currency(amount, currency='ريال', show_currency=True):
     """
     if amount is None:
         return '0'
-    
+
     # Format with thousands separator
     formatted = f"{amount:,.2f}"
-    
+
     if show_currency:
         return f"{formatted} {currency}"
     return formatted
@@ -64,20 +64,20 @@ def format_phone_number(phone, country_code='+966'):
     """
     if not phone:
         return ''
-    
+
     # Remove any non-digit characters
     digits_only = ''.join(filter(str.isdigit, phone))
-    
+
     # Handle Saudi phone numbers
     if country_code == '+966':
         if digits_only.startswith('966'):
             digits_only = digits_only[3:]
         elif digits_only.startswith('0'):
             digits_only = digits_only[1:]
-        
+
         if len(digits_only) == 9:
             return f"+966 {digits_only[:2]} {digits_only[2:5]} {digits_only[5:]}"
-    
+
     return phone
 
 
@@ -109,14 +109,14 @@ def calculate_age(birth_date):
     """
     if not birth_date:
         return None
-    
+
     today = timezone.now().date()
     age = today.year - birth_date.year
-    
+
     # Adjust if birthday hasn't occurred this year
     if today.month < birth_date.month or (today.month == birth_date.month and today.day < birth_date.day):
         age -= 1
-    
+
     return age
 
 
@@ -127,7 +127,7 @@ def calculate_service_years(hire_date, end_date=None):
     """
     if not hire_date:
         return 0
-    
+
     end_date = end_date or timezone.now().date()
     service_period = end_date - hire_date
     return round(service_period.days / 365.25, 2)
@@ -140,7 +140,7 @@ def get_hijri_date(gregorian_date=None):
     """
     if gregorian_date is None:
         gregorian_date = timezone.now().date()
-    
+
     # This is a basic approximation
     # For accurate conversion, use a proper Hijri calendar library
     hijri_year = gregorian_date.year - 579
@@ -154,7 +154,7 @@ def send_email_notification(to_email, subject, message, from_email=None):
     """
     try:
         from_email = from_email or settings.DEFAULT_FROM_EMAIL
-        
+
         send_mail(
             subject=subject,
             message=message,
@@ -178,7 +178,7 @@ def generate_password(length=12, include_special=True):
     characters = string.ascii_letters + string.digits
     if include_special:
         characters += "!@#$%^&*"
-    
+
     password = ''.join(random.choices(characters, k=length))
     return password
 
@@ -190,7 +190,7 @@ def slugify_arabic(text):
     """
     import re
     from django.utils.text import slugify
-    
+
     # Replace Arabic characters with transliteration
     arabic_to_latin = {
         'ا': 'a', 'ب': 'b', 'ت': 't', 'ث': 'th', 'ج': 'j', 'ح': 'h',
@@ -200,11 +200,11 @@ def slugify_arabic(text):
         'ن': 'n', 'ه': 'h', 'و': 'w', 'ي': 'y', 'ى': 'a', 'ة': 'h',
         'أ': 'a', 'إ': 'i', 'آ': 'a', 'ؤ': 'o', 'ئ': 'e'
     }
-    
+
     # Replace Arabic characters
     for arabic, latin in arabic_to_latin.items():
         text = text.replace(arabic, latin)
-    
+
     # Use Django's slugify for the rest
     return slugify(text)
 
@@ -216,7 +216,7 @@ def format_file_size(size_bytes):
     """
     if size_bytes == 0:
         return "0 B"
-    
+
     size_names = ["B", "KB", "MB", "GB", "TB"]
     import math
     i = int(math.floor(math.log(size_bytes, 1024)))
@@ -259,7 +259,7 @@ def truncate_text(text, max_length=100, suffix='...'):
     """
     if not text or len(text) <= max_length:
         return text
-    
+
     return text[:max_length - len(suffix)] + suffix
 
 
@@ -270,7 +270,7 @@ def clean_phone_number(phone):
     """
     if not phone:
         return ''
-    
+
     return ''.join(filter(str.isdigit, phone))
 
 
@@ -281,7 +281,7 @@ def mask_sensitive_data(data, mask_char='*', visible_chars=4):
     """
     if not data or len(data) <= visible_chars:
         return data
-    
+
     visible_part = data[-visible_chars:]
     masked_part = mask_char * (len(data) - visible_chars)
     return masked_part + visible_part
@@ -317,17 +317,17 @@ def business_days_between(start_date, end_date):
     Calculate business days between two dates
     """
     from datetime import timedelta
-    
+
     current_date = start_date
     business_days = 0
-    
+
     while current_date <= end_date:
         # Monday = 0, Sunday = 6
         # In Saudi Arabia, weekend is Friday (4) and Saturday (5)
         if current_date.weekday() not in [4, 5]:  # Not Friday or Saturday
             business_days += 1
         current_date += timedelta(days=1)
-    
+
     return business_days
 
 
@@ -337,16 +337,16 @@ def add_business_days(start_date, days_to_add):
     Add business days to a date
     """
     from datetime import timedelta
-    
+
     current_date = start_date
     days_added = 0
-    
+
     while days_added < days_to_add:
         current_date += timedelta(days=1)
         # Skip weekends (Friday and Saturday in Saudi Arabia)
         if current_date.weekday() not in [4, 5]:
             days_added += 1
-    
+
     return current_date
 
 
@@ -358,7 +358,7 @@ def generate_qr_code(data, size=10):
     try:
         import qrcode
         from io import BytesIO
-        
+
         qr = qrcode.QRCode(
             version=1,
             error_correction=qrcode.constants.ERROR_CORRECT_L,
@@ -367,14 +367,14 @@ def generate_qr_code(data, size=10):
         )
         qr.add_data(data)
         qr.make(fit=True)
-        
+
         img = qr.make_image(fill_color="black", back_color="white")
-        
+
         # Convert to bytes
         buffer = BytesIO()
         img.save(buffer, format='PNG')
         return buffer.getvalue()
-        
+
     except ImportError:
         # qrcode library not installed
         return None

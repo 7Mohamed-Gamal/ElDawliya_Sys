@@ -10,6 +10,7 @@ def can_manage_inventory(view_func):
     """
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
+        """_wrapped_view function"""
         if request.user.is_superuser or request.user.has_perm('inventory.change_product'):
             return view_func(request, *args, **kwargs)
         messages.error(request, 'ليس لديك صلاحية الوصول إلى هذه الصفحة')
@@ -65,8 +66,10 @@ def admin_or_permission_required(perm):
     ديكوريتور للتحقق من أن المستخدم إما مشرف أو لديه صلاحية معينة
     """
     def decorator(view_func):
+        """decorator function"""
         @wraps(view_func)
         def _wrapped_view(request, *args, **kwargs):
+            """_wrapped_view function"""
             # المشرفون لديهم جميع الصلاحيات
             if request.user.is_superuser or getattr(request.user, 'Role', '') == 'admin':
                 return view_func(request, *args, **kwargs)
@@ -125,8 +128,10 @@ def inventory_class_permission_required(module_key, permission_type='view'):
 
     # دالة مخصصة للتحقق من الصلاحيات
     def custom_permission_check(view_func):
+        """custom_permission_check function"""
         @wraps(view_func)
         def _wrapped_view(request, *args, **kwargs):
+            """_wrapped_view function"""
             # المشرفون لديهم جميع الصلاحيات
             if request.user.is_superuser or getattr(request.user, 'Role', '') == 'admin':
                 return view_func(request, *args, **kwargs)

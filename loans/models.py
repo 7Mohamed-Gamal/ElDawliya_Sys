@@ -3,6 +3,7 @@ from employees.models import Employee
 
 
 class LoanType(models.Model):
+    """LoanType class"""
     loan_type_id = models.AutoField(primary_key=True, db_column='LoanTypeID')
     type_name = models.CharField(max_length=100, db_column='TypeName')
     max_amount = models.DecimalField(max_digits=18, decimal_places=2, db_column='MaxAmount', blank=True, null=True)
@@ -10,12 +11,14 @@ class LoanType(models.Model):
     interest_rate = models.DecimalField(max_digits=5, decimal_places=2, db_column='InterestRate', blank=True, null=True)
 
     class Meta:
+        """Meta class"""
         db_table = 'LoanTypes'
         verbose_name = 'نوع سلفة'
         verbose_name_plural = 'أنواع السلف'
 
 
 class EmployeeLoan(models.Model):
+    """EmployeeLoan class"""
     loan_id = models.AutoField(primary_key=True, db_column='LoanID')
     emp = models.ForeignKey(Employee, on_delete=models.CASCADE, db_column='EmpID')
     loan_type = models.ForeignKey(LoanType, on_delete=models.PROTECT, db_column='LoanTypeID', blank=True, null=True)
@@ -28,12 +31,14 @@ class EmployeeLoan(models.Model):
     approved_by = models.IntegerField(db_column='ApprovedBy', blank=True, null=True)
 
     class Meta:
+        """Meta class"""
         db_table = 'EmployeeLoans'
         verbose_name = 'سلفة موظف'
         verbose_name_plural = 'سلف الموظفين'
 
 
 class LoanInstallment(models.Model):
+    """LoanInstallment class"""
     installment_id = models.AutoField(primary_key=True, db_column='InstallmentID')
     loan = models.ForeignKey(EmployeeLoan, on_delete=models.CASCADE, db_column='LoanID')
     due_date = models.DateField(db_column='DueDate', blank=True, null=True)
@@ -43,6 +48,7 @@ class LoanInstallment(models.Model):
     status = models.CharField(max_length=20, db_column='Status', default='Pending')
 
     class Meta:
+        """Meta class"""
         db_table = 'LoanInstallments'
         verbose_name = 'قسط سلفة'
         verbose_name_plural = 'أقساط السلف'

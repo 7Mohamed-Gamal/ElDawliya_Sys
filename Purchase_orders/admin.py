@@ -3,6 +3,7 @@ from django.utils.translation import gettext_lazy as _
 from .models import PurchaseRequest, PurchaseRequestItem, Vendor
 
 class PurchaseRequestItemInline(admin.TabularInline):
+    """PurchaseRequestItemInline class"""
     model = PurchaseRequestItem
     extra = 0
     fields = ('product', 'quantity_requested', 'status', 'notes')
@@ -10,6 +11,7 @@ class PurchaseRequestItemInline(admin.TabularInline):
 
 @admin.register(PurchaseRequest)
 class PurchaseRequestAdmin(admin.ModelAdmin):
+    """PurchaseRequestAdmin class"""
     list_display = ('request_number', 'request_date', 'requested_by', 'status', 'approved_by')
     list_filter = ('status', 'request_date')
     search_fields = ('request_number', 'requested_by__username', 'notes')
@@ -29,11 +31,13 @@ class PurchaseRequestAdmin(admin.ModelAdmin):
     )
 
     def save_model(self, request, obj, form, change):
+        """save_model function"""
         if not change:  # إذا كان إنشاء جديد
             obj.requested_by = request.user
         super().save_model(request, obj, form, change)
 
     def has_change_permission(self, request, obj=None):
+        """has_change_permission function"""
         # السماح للمستخدم بتعديل الطلبات التي أنشأها أو للمشرفين
         if obj is not None and (obj.requested_by == request.user or request.user.is_superuser or request.user.has_perm('Purchase_orders.change_purchaserequest')):
             return True
@@ -41,6 +45,7 @@ class PurchaseRequestAdmin(admin.ModelAdmin):
 
 @admin.register(PurchaseRequestItem)
 class PurchaseRequestItemAdmin(admin.ModelAdmin):
+    """PurchaseRequestItemAdmin class"""
     list_display = ('purchase_request', 'product', 'quantity_requested', 'status')
     list_filter = ('status', 'created_at', 'purchase_request__status')
     search_fields = ('product__product_name', 'notes', 'purchase_request__request_number')
@@ -62,6 +67,7 @@ class PurchaseRequestItemAdmin(admin.ModelAdmin):
     )
 
     def has_change_permission(self, request, obj=None):
+        """has_change_permission function"""
         # السماح للمستخدم بتعديل عناصر الطلبات التي أنشأها أو للمشرفين
         if obj is not None and (obj.purchase_request.requested_by == request.user or request.user.is_superuser or request.user.has_perm('Purchase_orders.change_purchaserequestitem')):
             return True
@@ -71,6 +77,7 @@ class PurchaseRequestItemAdmin(admin.ModelAdmin):
 
 @admin.register(Vendor)
 class VendorAdmin(admin.ModelAdmin):
+    """VendorAdmin class"""
     list_display = ('name', 'contact_person', 'phone', 'email')
     search_fields = ('name', 'contact_person', 'phone', 'email', 'address')
     list_filter = ('created_at', 'updated_at')

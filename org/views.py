@@ -9,7 +9,9 @@ from companies.models import Company
 
 
 class DepartmentForm(forms.ModelForm):
+    """DepartmentForm class"""
     class Meta:
+        """Meta class"""
         model = Department
         fields = ['dept_name', 'parent_dept', 'branch', 'manager_id']
         widgets = {
@@ -37,7 +39,9 @@ class DepartmentForm(forms.ModelForm):
 
 
 class JobForm(forms.ModelForm):
+    """JobForm class"""
     class Meta:
+        """Meta class"""
         model = Job
         fields = ['job_title', 'job_level', 'basic_salary', 'description']
         widgets = {
@@ -69,16 +73,19 @@ class JobForm(forms.ModelForm):
 
 
 class BranchForm(forms.ModelForm):
+    """BranchForm class"""
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         super().__init__(*args, **kwargs)
         # Only show active companies in the dropdown
-        self.fields['company'].queryset = Company.objects.filter(is_active=True).order_by('name')
+        self.fields['company'].queryset = Company.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('name')
         # Make company field required
         self.fields['company'].required = True
         # Add empty label for company dropdown
         self.fields['company'].empty_label = "اختر الشركة"
 
     class Meta:
+        """Meta class"""
         model = Branch
         fields = ['branch_name', 'branch_address', 'phone', 'company', 'manager_id']
         widgets = {
@@ -114,12 +121,14 @@ class BranchForm(forms.ModelForm):
         }
 
     def clean_branch_name(self):
+        """clean_branch_name function"""
         branch_name = self.cleaned_data.get('branch_name', '').strip()
         if not branch_name:
             raise forms.ValidationError('اسم الفرع مطلوب')
         return branch_name
 
     def clean_company(self):
+        """clean_company function"""
         company = self.cleaned_data.get('company')
         if not company:
             raise forms.ValidationError('يجب اختيار شركة')
@@ -132,9 +141,9 @@ class BranchForm(forms.ModelForm):
 def index(request):
     """الصفحة الرئيسية للتنظيم"""
     context = {
-        'total_departments': Department.objects.filter(is_active=True).count(),
-        'total_jobs': Job.objects.filter(is_active=True).count(),
-        'total_branches': Branch.objects.filter(is_active=True).count(),
+        'total_departments': Department.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count(),
+        'total_jobs': Job.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count(),
+        'total_branches': Branch.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count(),
     }
     return render(request, 'org/index.html', context)
 
@@ -220,7 +229,7 @@ def department_detail(request, dept_id):
     department = get_object_or_404(Department, dept_id=dept_id)
 
     # الأقسام الفرعية
-    sub_departments = Department.objects.filter(parent_dept=department, is_active=True)
+    sub_departments = Department.objects.filter(parent_dept=department, is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
 
     # عدد الموظفين في القسم
     employees_count = department.employee_set.filter(emp_status='Active').count()
@@ -354,7 +363,7 @@ def branch_detail(request, branch_id):
     branch = get_object_or_404(Branch, branch_id=branch_id)
 
     # الأقسام التابعة للفرع
-    departments = Department.objects.filter(branch=branch, is_active=True)
+    departments = Department.objects.filter(branch=branch, is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
 
     context = {
         'branch': branch,

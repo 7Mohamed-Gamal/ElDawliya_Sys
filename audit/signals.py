@@ -31,7 +31,7 @@ def user_login_failed_handler(sender, credentials, request=None, **kwargs):
     try:
         # Get username from credentials
         username = credentials.get('username', 'unknown')
-        
+
         # Extract IP and user agent if available
         ip_address = None
         user_agent = None
@@ -39,7 +39,7 @@ def user_login_failed_handler(sender, credentials, request=None, **kwargs):
             from .utils import _get_client_ip
             ip_address = _get_client_ip(request)
             user_agent = request.META.get('HTTP_USER_AGENT', '')
-            
+
         # Log the failed attempt
         log_action(
             user=None,  # No user since login failed

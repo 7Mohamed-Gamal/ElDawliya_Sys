@@ -13,11 +13,16 @@ from django.db.models import F
 # from Hr.models import Car
 
 # استيراد ملفات الإشارات الإضافية
-from .signals_meetings import *
-from .signals_tasks import *
-from .signals_inventory import *
-from .signals_purchase import *
-from .signals_inventory_purchase import *
+# TODO: Replace wildcard import
+# from .signals_meetings import specific_items
+# TODO: Replace wildcard import
+# from .signals_tasks import specific_items
+# TODO: Replace wildcard import
+# from .signals_inventory import specific_items
+# TODO: Replace wildcard import
+# from .signals_purchase import specific_items
+# TODO: Replace wildcard import
+# from .signals_inventory_purchase import specific_items
 from meetings.models import Meeting, Attendee
 from tasks.models import Task, TaskStep as MeetingTaskStep
 from inventory.models import TblProducts, TblInvoiceitems

@@ -3,17 +3,20 @@ from employees.models import Employee
 
 
 class TicketType(models.Model):
+    """TicketType class"""
     ticket_type_id = models.AutoField(primary_key=True, db_column='TicketTypeID')
     type_name = models.CharField(max_length=100, db_column='TypeName')
     max_tickets_per_year = models.IntegerField(db_column='MaxTicketsPerYear', blank=True, null=True)
 
     class Meta:
+        """Meta class"""
         db_table = 'TicketTypes'
         verbose_name = 'نوع تذكرة'
         verbose_name_plural = 'أنواع التذاكر'
 
 
 class EmployeeTicket(models.Model):
+    """EmployeeTicket class"""
     ticket_id = models.AutoField(primary_key=True, db_column='TicketID')
     emp = models.ForeignKey(Employee, on_delete=models.CASCADE, db_column='EmpID')
     ticket_type = models.ForeignKey(TicketType, on_delete=models.PROTECT, db_column='TicketTypeID', blank=True, null=True)
@@ -24,6 +27,7 @@ class EmployeeTicket(models.Model):
     approved_by = models.IntegerField(db_column='ApprovedBy', blank=True, null=True)
 
     class Meta:
+        """Meta class"""
         db_table = 'EmployeeTickets'
         verbose_name = 'تذكرة موظف'
         verbose_name_plural = 'تذاكر الموظفين'

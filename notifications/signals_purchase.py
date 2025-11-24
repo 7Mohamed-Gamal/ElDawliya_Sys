@@ -25,11 +25,11 @@ if PURCHASE_AVAILABLE:
             # Notify purchase managers about new request
             from django.contrib.auth import get_user_model
             User = get_user_model()
-            
+
             purchase_managers = User.objects.filter(
                 groups__name__in=['Purchase Manager', 'مدير المشتريات']
-            ).distinct()
-            
+            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.distinct()
+
             for manager in purchase_managers:
                 create_purchase_notification(
                     user=manager,

@@ -3,5 +3,6 @@ from .models import SysSetting
 
 @admin.register(SysSetting)
 class SysSettingAdmin(admin.ModelAdmin):
+    """SysSettingAdmin class"""
     list_display = ('setting_id', 'setting_key', 'setting_value')
     search_fields = ('setting_key',)

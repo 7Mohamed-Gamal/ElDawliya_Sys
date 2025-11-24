@@ -24,21 +24,22 @@ class SecurityTestRunner:
     """
     Security test runner with comprehensive reporting
     """
-    
+
     def __init__(self):
+        """__init__ function"""
         self.test_results = {}
         self.start_time = None
         self.end_time = None
         self.report_path = project_root / 'tests' / 'security' / 'reports'
         self.report_path.mkdir(exist_ok=True)
-    
+
     def run_all_security_tests(self):
         """Run all security tests and generate report"""
         print("🔒 Starting Comprehensive Security Testing...")
         print("=" * 60)
-        
+
         self.start_time = datetime.now()
-        
+
         # Test categories
         test_categories = [
             {
@@ -67,15 +68,15 @@ class SecurityTestRunner:
                 'description': 'Advanced penetration testing scenarios'
             }
         ]
-        
+
         for category in test_categories:
             print(f"\n📋 Running {category['name']} Tests...")
             print(f"   {category['description']}")
             print("-" * 40)
-            
+
             result = self._run_test_category(category)
             self.test_results[category['name']] = result
-            
+
             # Print summary
             if result['success']:
                 print(f"✅ {category['name']}: {result['passed']}/{result['total']} tests passed")
@@ -85,19 +86,19 @@ class SecurityTestRunner:
                     print(f"   Failures: {len(result['failures'])}")
                 if result['errors']:
                     print(f"   Errors: {len(result['errors'])}")
-        
+
         self.end_time = datetime.now()
-        
+
         # Generate comprehensive report
         self._generate_security_report()
-        
+
         # Print final summary
         self._print_final_summary()
-    
+
     def _run_test_category(self, category):
         """Run a specific test category"""
         test_file = project_root / 'tests' / 'security' / category['file']
-        
+
         if not test_file.exists():
             return {
                 'success': False,
@@ -107,10 +108,10 @@ class SecurityTestRunner:
                 'errors': [f"Test file {category['file']} not found"],
                 'duration': 0
             }
-        
+
         # Run pytest with JSON report
         start_time = time.time()
-        
+
         try:
             # Run pytest and capture results
             result = pytest.main([
@@ -119,9 +120,9 @@ class SecurityTestRunner:
                 '--quiet',
                 '--disable-warnings'
             ])
-            
+
             duration = time.time() - start_time
-            
+
             # For now, return basic result structure
             # In a real implementation, you would parse pytest output
             return {
@@ -132,7 +133,7 @@ class SecurityTestRunner:
                 'errors': [],
                 'duration': duration
             }
-            
+
         except Exception as e:
             duration = time.time() - start_time
             return {
@@ -143,7 +144,7 @@ class SecurityTestRunner:
                 'errors': [str(e)],
                 'duration': duration
             }
-    
+
     def _generate_security_report(self):
         """Generate comprehensive security report"""
         report_data = {
@@ -158,27 +159,27 @@ class SecurityTestRunner:
             'recommendations': self._generate_recommendations(),
             'security_checklist': self._generate_security_checklist()
         }
-        
+
         # Save JSON report
         json_report_path = self.report_path / f'security_report_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
         with open(json_report_path, 'w', encoding='utf-8') as f:
             json.dump(report_data, f, indent=2, ensure_ascii=False)
-        
+
         # Generate HTML report
         html_report_path = self.report_path / f'security_report_{datetime.now().strftime("%Y%m%d_%H%M%S")}.html'
         self._generate_html_report(report_data, html_report_path)
-        
+
         print(f"\n📊 Security reports generated:")
         print(f"   JSON: {json_report_path}")
         print(f"   HTML: {html_report_path}")
-    
+
     def _calculate_summary(self):
         """Calculate overall test summary"""
         total_tests = sum(result['total'] for result in self.test_results.values())
         total_passed = sum(result['passed'] for result in self.test_results.values())
         total_failures = sum(len(result['failures']) for result in self.test_results.values())
         total_errors = sum(len(result['errors']) for result in self.test_results.values())
-        
+
         return {
             'total_tests': total_tests,
             'passed': total_passed,
@@ -187,11 +188,11 @@ class SecurityTestRunner:
             'success_rate': (total_passed / total_tests * 100) if total_tests > 0 else 0,
             'categories_tested': len(self.test_results)
         }
-    
+
     def _generate_recommendations(self):
         """Generate security recommendations based on test results"""
         recommendations = []
-        
+
         # Analyze test results and generate recommendations
         for category, result in self.test_results.items():
             if not result['success']:
@@ -230,7 +231,7 @@ class SecurityTestRunner:
                         "Review and harden server configurations",
                         "Implement intrusion detection and monitoring"
                     ])
-        
+
         # Remove duplicates and add general recommendations
         recommendations = list(set(recommendations))
         recommendations.extend([
@@ -239,9 +240,9 @@ class SecurityTestRunner:
             "Conduct regular security training for development team",
             "Establish incident response procedures"
         ])
-        
+
         return recommendations
-    
+
     def _generate_security_checklist(self):
         """Generate security implementation checklist"""
         return {
@@ -280,7 +281,7 @@ class SecurityTestRunner:
                 "Security configuration reviewed"
             ]
         }
-    
+
     def _generate_html_report(self, report_data, output_path):
         """Generate HTML security report"""
         html_template = """
@@ -448,7 +449,7 @@ class SecurityTestRunner:
             <p>نظام الدولية - اختبارات الأمان والثغرات</p>
             <p>تاريخ التقرير: {timestamp}</p>
         </div>
-        
+
         <div class="summary">
             <h2>ملخص النتائج</h2>
             <div class="summary-grid">
@@ -470,13 +471,13 @@ class SecurityTestRunner:
                 </div>
             </div>
         </div>
-        
+
         <div class="content">
             <div class="section">
                 <h2>نتائج الاختبارات حسب الفئة</h2>
                 {test_categories_html}
             </div>
-            
+
             <div class="section">
                 <h2>التوصيات الأمنية</h2>
                 <div class="recommendations">
@@ -486,7 +487,7 @@ class SecurityTestRunner:
                     </ul>
                 </div>
             </div>
-            
+
             <div class="section">
                 <h2>قائمة التحقق الأمنية</h2>
                 <div class="checklist">
@@ -494,7 +495,7 @@ class SecurityTestRunner:
                 </div>
             </div>
         </div>
-        
+
         <div class="footer">
             <p>تم إنشاء هذا التقرير بواسطة نظام اختبار الأمان الآلي</p>
             <p>مدة الاختبار: {duration:.2f} ثانية</p>
@@ -503,16 +504,16 @@ class SecurityTestRunner:
 </body>
 </html>
         """
-        
+
         # Generate HTML content
         summary = report_data['summary']
-        
+
         # Test categories HTML
         test_categories_html = ""
         for category, result in report_data['categories'].items():
             status_class = "status-success" if result['success'] else "status-danger"
             status_text = "نجح" if result['success'] else "فشل"
-            
+
             test_categories_html += f"""
             <div class="test-category">
                 <div class="test-category-header">
@@ -525,12 +526,12 @@ class SecurityTestRunner:
                 </div>
             </div>
             """
-        
+
         # Recommendations HTML
         recommendations_html = ""
         for rec in report_data['recommendations']:
             recommendations_html += f"<li>{rec}</li>"
-        
+
         # Checklist HTML
         checklist_html = ""
         for category, items in report_data['security_checklist'].items():
@@ -540,7 +541,7 @@ class SecurityTestRunner:
                 {' '.join([f'<div class="checklist-item"><input type="checkbox"> <span>{item}</span></div>' for item in items])}
             </div>
             """
-        
+
         # Fill template
         html_content = html_template.format(
             timestamp=report_data['test_run']['timestamp'],
@@ -553,15 +554,15 @@ class SecurityTestRunner:
             recommendations_html=recommendations_html,
             checklist_html=checklist_html
         )
-        
+
         # Save HTML report
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(html_content)
-    
+
     def _print_final_summary(self):
         """Print final test summary"""
         summary = self._calculate_summary()
-        
+
         print("\n" + "=" * 60)
         print("🔒 SECURITY TEST SUMMARY")
         print("=" * 60)
@@ -572,7 +573,7 @@ class SecurityTestRunner:
         print(f"Success Rate: {summary['success_rate']:.1f}%")
         print(f"Duration: {(self.end_time - self.start_time).total_seconds():.2f} seconds")
         print("=" * 60)
-        
+
         if summary['success_rate'] >= 90:
             print("🎉 Excellent! Your application has strong security measures.")
         elif summary['success_rate'] >= 70:

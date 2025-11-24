@@ -5,6 +5,6 @@ from .performance import PerformanceMiddleware
 
 __all__ = [
     'AuditMiddleware',
-    'SecurityMiddleware', 
+    'SecurityMiddleware',
     'PerformanceMiddleware',
 ]

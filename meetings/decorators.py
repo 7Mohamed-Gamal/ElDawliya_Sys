@@ -103,6 +103,7 @@ def can_manage_meeting(view_func):
     """
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
+        """_wrapped_view function"""
         if request.user.is_superuser or request.user.has_perm('meetings.change_meeting'):
             return view_func(request, *args, **kwargs)
         messages.error(request, 'ليس لديك صلاحية الوصول إلى هذه الصفحة')
@@ -116,6 +117,7 @@ def can_access_meeting(view_func):
     """
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
+        """_wrapped_view function"""
         from .models import Meeting
         meeting_id = kwargs.get('pk')
         try:

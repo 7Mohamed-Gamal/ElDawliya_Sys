@@ -17,16 +17,18 @@ from inventory.forms import PurchaseRequestForm
 @method_decorator(login_required, name='dispatch')
 @inventory_class_permission_required('purchase_requests', 'view')
 class PurchaseRequestListView(ListView):
+    """PurchaseRequestListView class"""
     model = PurchaseRequest
     template_name = 'inventory/purchase_request_list.html'
     context_object_name = 'purchase_requests'
 
     def get_context_data(self, **kwargs):
+        """get_context_data function"""
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'قائمة طلبات الشراء'
         # Add low stock count for sidebar
         low_stock_count = Product.objects.filter(
-            quantity__lt=F('minimum_threshold'),
+            quantity__lt=F('minimum_threshold').prefetch_related()  # TODO: Add appropriate prefetch_related fields,
             minimum_threshold__gt=0
         ).count()
         context['low_stock_count'] = low_stock_count
@@ -35,12 +37,14 @@ class PurchaseRequestListView(ListView):
 @method_decorator(login_required, name='dispatch')
 @inventory_class_permission_required('purchase_requests', 'add')
 class PurchaseRequestCreateView(CreateView):
+    """PurchaseRequestCreateView class"""
     model = PurchaseRequest
     form_class = PurchaseRequestForm
     template_name = 'inventory/purchase_request_form.html'
     success_url = reverse_lazy('inventory:purchase_request_list')
 
     def get_context_data(self, **kwargs):
+        """get_context_data function"""
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'إضافة طلب شراء جديد'
         # Add product ID from URL if provided
@@ -51,40 +55,47 @@ class PurchaseRequestCreateView(CreateView):
         return context
 
     def form_valid(self, form):
+        """form_valid function"""
         messages.success(self.request, 'تم إضافة طلب الشراء بنجاح')
         return super().form_valid(form)
 
 @method_decorator(login_required, name='dispatch')
 @inventory_class_permission_required('purchase_requests', 'edit')
 class PurchaseRequestUpdateView(UpdateView):
+    """PurchaseRequestUpdateView class"""
     model = PurchaseRequest
     form_class = PurchaseRequestForm
     template_name = 'inventory/purchase_request_form.html'
     success_url = reverse_lazy('inventory:purchase_request_list')
 
     def get_context_data(self, **kwargs):
+        """get_context_data function"""
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'تعديل طلب الشراء'
         return context
 
     def form_valid(self, form):
+        """form_valid function"""
         messages.success(self.request, 'تم تعديل طلب الشراء بنجاح')
         return super().form_valid(form)
 
 @method_decorator(login_required, name='dispatch')
 @inventory_class_permission_required('purchase_requests', 'delete')
 class PurchaseRequestDeleteView(DeleteView):
+    """PurchaseRequestDeleteView class"""
     model = PurchaseRequest
     template_name = 'inventory/purchase_request_confirm_delete.html'
     success_url = reverse_lazy('inventory:purchase_request_list')
 
     def delete(self, request, *args, **kwargs):
+        """delete function"""
         messages.success(self.request, 'تم حذف طلب الشراء بنجاح')
         return super().delete(request, *args, **kwargs)
 
 @login_required
 @inventory_class_permission_required('purchase_requests', 'edit')
 def mark_purchase_request_as_completed(request, pk):
+    """mark_purchase_request_as_completed function"""
     purchase_request = get_object_or_404(PurchaseRequest, pk=pk)
     purchase_request.status = 'completed'
     purchase_request.save()
@@ -100,31 +111,31 @@ def create_purchase_request(request, product_id):
     import json
     import requests
     from django.conf import settings
-    
+
     product = get_object_or_404(Product, product_id=product_id)
-    
+
     # استخدام نظام طلبات الشراء الرئيسي عبر الـ API
     try:
         # استدعاء API ترحيل المنتج إلى طلب شراء من تطبيق Purchase_orders
         from django.urls import reverse
         api_url = request.build_absolute_uri(reverse('Purchase_orders:transfer_product_to_purchase_request'))
-        
+
         # تجهيز بيانات الطلب
         data = {
             'product_id': product_id,
             'action': 'add'
         }
-        
+
         # استخدام الـ session الحالية للحفاظ على المصادقة
         from django.http import HttpRequest
         from datetime import datetime
         from django.middleware.csrf import get_token
-        
+
         # استخدام requests مع تمرير الـ session والـ csrf token من الـ request الحالي
         import urllib.parse
         from django.http import HttpResponse
         from django.views.decorators.csrf import csrf_exempt
-        
+
         # الحل البديل: إنشاء طلب مباشر إلى views.py في Purchase_orders
         from Purchase_orders.views import transfer_product_to_purchase_request as purchase_api_view
 
@@ -136,15 +147,15 @@ def create_purchase_request(request, product_id):
         ajax_request.META['HTTP_X_REQUESTED_WITH'] = 'XMLHttpRequest'
         ajax_request.body = json.dumps(data).encode('utf-8')
         ajax_request._body = ajax_request.body
-        
+
         # استدعاء الـ view مباشرة
         response = purchase_api_view(ajax_request)
-        
+
         # فحص النتيجة
         if response.status_code == 200:
             response_data = json.loads(response.content.decode('utf-8'))
             request_id = response_data.get('request_id')
-            
+
             messages.success(request, f'تم إنشاء طلب شراء جديد للصنف {product.name}')
             return redirect('Purchase_orders:purchase_request_detail', pk=request_id)
         else:
@@ -152,7 +163,7 @@ def create_purchase_request(request, product_id):
             error_message = error_data.get('message', 'حدث خطأ أثناء إنشاء طلب الشراء')
             messages.error(request, error_message)
             return redirect('inventory:product_list')
-            
+
     except Exception as e:
         messages.error(request, f'حدث خطأ أثناء إنشاء طلب الشراء: {str(e)}')
         return redirect('inventory:product_list')

@@ -7,6 +7,7 @@ PASSWORD = "hgslduhgfwdv"
 TIMEOUT = 30
 
 def test_ai_chat_with_gemini():
+    """test_ai_chat_with_gemini function"""
     url = f"{BASE_URL}/api/v1/ai/chat/"
     headers = {
         "Content-Type": "application/json"

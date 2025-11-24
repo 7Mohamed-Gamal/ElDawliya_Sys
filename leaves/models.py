@@ -14,14 +14,14 @@ class LeaveType(models.Model):
         ('hours', 'بالساعات'),
         ('half_days', 'بأنصاف الأيام'),
     ]
-    
+
     ACCRUAL_FREQUENCY = [
         ('monthly', 'شهري'),
         ('quarterly', 'ربع سنوي'),
         ('yearly', 'سنوي'),
         ('on_hire', 'عند التعيين'),
     ]
-    
+
     leave_type_id = models.AutoField(primary_key=True, db_column='LeaveTypeID')
     leave_name = models.CharField(max_length=100, db_column='LeaveName', verbose_name='اسم نوع الإجازة')
     leave_code = models.CharField(max_length=10, unique=True, verbose_name='رمز الإجازة')
@@ -46,30 +46,32 @@ class LeaveType(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')
 
     class Meta:
+        """Meta class"""
         db_table = 'LeaveTypes'
         verbose_name = 'نوع إجازة'
         verbose_name_plural = 'أنواع الإجازات'
         ordering = ['sort_order', 'leave_name']
 
     def __str__(self):
+        """__str__ function"""
         return self.leave_name
 
     def clean(self):
         """التحقق من صحة البيانات"""
         if self.max_days_per_year is not None and self.max_days_per_year < 0:
             raise ValidationError('الحد الأقصى للأيام يجب أن يكون رقماً موجباً')
-        
+
         if self.can_carry_forward and self.max_carry_forward_days < 0:
             raise ValidationError('الحد الأقصى للترحيل يجب أن يكون رقماً موجباً')
-        
+
         if self.minimum_service_months < 0:
             raise ValidationError('الحد الأدنى للخدمة يجب أن يكون رقماً موجباً')
-    
+
     def calculate_accrual_amount(self, months_of_service):
         """حساب مقدار الاستحقاق"""
         if months_of_service < self.minimum_service_months:
             return 0
-        
+
         if self.accrual_frequency == 'monthly':
             return float(self.accrual_rate)
         elif self.accrual_frequency == 'quarterly':
@@ -104,12 +106,14 @@ class EmployeeLeave(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')
 
     class Meta:
+        """Meta class"""
         db_table = 'EmployeeLeaves'
         verbose_name = 'إجازة'
         verbose_name_plural = 'إجازات الموظفين'
         unique_together = ['emp', 'start_date', 'end_date']
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.emp} - {self.leave_type.leave_name} ({self.start_date})"
 
     @property
@@ -151,7 +155,7 @@ class EmployeeLeave(models.Model):
                 status__in=['Pending', 'Approved'],
                 start_date__lte=self.end_date,
                 end_date__gte=self.start_date
-            ).exclude(pk=self.pk)
+            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exclude(pk=self.pk)
 
             if overlapping_leaves.exists():
                 raise ValidationError('يوجد تداخل مع إجازة أخرى معتمدة أو في الانتظار')
@@ -165,7 +169,7 @@ class EmployeeLeave(models.Model):
                     leave_type=self.leave_type,
                     status='Approved',
                     start_date__year=year
-                ).exclude(pk=self.pk)
+                ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exclude(pk=self.pk)
 
                 total_days_this_year = sum(
                     (leave.end_date - leave.start_date).days + 1
@@ -210,12 +214,14 @@ class PublicHoliday(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
 
     class Meta:
+        """Meta class"""
         db_table = 'PublicHolidays'
         verbose_name = 'عطلة رسمية'
         verbose_name_plural = 'العطلات الرسمية'
         unique_together = ['holiday_date']
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.description} - {self.holiday_date}"
 
     @classmethod
@@ -224,7 +230,7 @@ class PublicHoliday(models.Model):
         return cls.objects.filter(
             holiday_date=check_date,
             is_active=True
-        ).exists()
+        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists()
 
 
 class LeaveBalance(models.Model):
@@ -240,11 +246,13 @@ class LeaveBalance(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')
 
     class Meta:
+        """Meta class"""
         verbose_name = 'رصيد إجازة'
         verbose_name_plural = 'أرصدة الإجازات'
         unique_together = ['emp', 'leave_type', 'year']
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.emp} - {self.leave_type.leave_name} ({self.year})"
 
     @property
@@ -290,13 +298,13 @@ class LeaveBalance(models.Model):
             leave_type=self.leave_type,
             status='Approved',
             start_date__year=self.year
-        )
+        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
 
         used = sum(
             (leave.end_date - leave.start_date).days + 1
             for leave in approved_leaves
         )
-        
+
         self.used_days = used
         self.save()
 
@@ -318,30 +326,32 @@ class LeavePolicy(models.Model):
     is_active = models.BooleanField(default=True, verbose_name='نشط')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
+        """Meta class"""
         verbose_name = 'سياسة إجازة'
         verbose_name_plural = 'سياسات الإجازات'
-        
+
     def __str__(self):
+        """__str__ function"""
         return self.policy_name
-    
+
     def is_applicable_to_employee(self, employee):
         """فحص إذا كانت السياسة قابلة للتطبيق على الموظف"""
         # فحص القسم
         if self.department and employee.dept != self.department:
             return False
-            
+
         # فحص المنصب
         if self.job_position and employee.job != self.job_position:
             return False
-            
+
         # فحص سنوات الخدمة
         if employee.hire_date:
             service_years = (date.today() - employee.hire_date).days / 365.25
             if service_years < self.min_service_years:
                 return False
-                
+
         return True
 
 
@@ -356,14 +366,14 @@ class LeaveRequest(models.Model):
         ('cancelled', 'ملغى'),
         ('expired', 'منتهي الصلاحية'),
     ]
-    
+
     PRIORITY_CHOICES = [
         ('low', 'منخفض'),
         ('normal', 'عادي'),
         ('high', 'عالي'),
         ('urgent', 'عاجل'),
     ]
-    
+
     request_id = models.AutoField(primary_key=True)
     request_number = models.CharField(max_length=20, unique=True, verbose_name='رقم الطلب')
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='leave_requests', verbose_name='الموظف')
@@ -383,34 +393,37 @@ class LeaveRequest(models.Model):
     review_notes = models.TextField(blank=True, null=True, verbose_name='ملاحظات المراجعة')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
+        """Meta class"""
         verbose_name = 'طلب إجازة'
         verbose_name_plural = 'طلبات الإجازات'
         ordering = ['-created_at']
-        
+
     def __str__(self):
+        """__str__ function"""
         return f'{self.request_number} - {self.employee}'
-    
+
     def save(self, *args, **kwargs):
+        """save function"""
         if not self.request_number:
             # إنشاء رقم طلب تلقائي
             year = date.today().year
-            count = LeaveRequest.objects.filter(created_at__year=year).count() + 1
+            count = LeaveRequest.objects.filter(created_at__year=year).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count() + 1
             self.request_number = f'LR{year}{count:04d}'
-            
+
         if not self.duration_days:
             self.duration_days = (self.end_date - self.start_date).days + 1
-            
+
         super().save(*args, **kwargs)
-    
+
     def submit(self):
         """تقديم الطلب"""
         if self.status == 'draft':
             self.status = 'submitted'
             self.submitted_at = timezone.now()
             self.save()
-    
+
     def approve(self, reviewer, notes=None):
         """اعتماد الطلب"""
         self.status = 'approved'
@@ -419,7 +432,7 @@ class LeaveRequest(models.Model):
         if notes:
             self.review_notes = notes
         self.save()
-        
+
         # إنشاء سجل إجازة في جدول EmployeeLeave
         EmployeeLeave.objects.create(
             emp=self.employee,
@@ -431,7 +444,7 @@ class LeaveRequest(models.Model):
             approved_by=reviewer,
             approved_date=timezone.now()
         )
-    
+
     def reject(self, reviewer, reason):
         """رفض الطلب"""
         self.status = 'rejected'
@@ -450,13 +463,15 @@ class LeaveWorkflow(models.Model):
     approver_employee = models.ForeignKey(Employee, on_delete=models.CASCADE, blank=True, null=True, verbose_name='الموظف المعتمد')
     is_required = models.BooleanField(default=True, verbose_name='إجباري')
     conditions = models.TextField(blank=True, null=True, verbose_name='الشروط')
-    
+
     class Meta:
+        """Meta class"""
         verbose_name = 'سير عمل الإجازة'
         verbose_name_plural = 'سير عمل الإجازات'
         ordering = ['leave_type', 'step_order']
-        
+
     def __str__(self):
+        """__str__ function"""
         return f'{self.leave_type.leave_name} - خطوة {self.step_order}'
 
 
@@ -468,7 +483,7 @@ class LeaveApprovalStep(models.Model):
         ('rejected', 'مرفوض'),
         ('skipped', 'متجاوز'),
     ]
-    
+
     step_id = models.AutoField(primary_key=True)
     leave_request = models.ForeignKey(LeaveRequest, on_delete=models.CASCADE, related_name='approval_steps', verbose_name='طلب الإجازة')
     workflow_step = models.ForeignKey(LeaveWorkflow, on_delete=models.CASCADE, verbose_name='خطوة سير العمل')
@@ -477,13 +492,15 @@ class LeaveApprovalStep(models.Model):
     comments = models.TextField(blank=True, null=True, verbose_name='تعليقات')
     processed_at = models.DateTimeField(blank=True, null=True, verbose_name='تاريخ المعالجة')
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
     class Meta:
+        """Meta class"""
         verbose_name = 'خطوة اعتماد'
         verbose_name_plural = 'خطوات الاعتماد'
         ordering = ['workflow_step__step_order']
-        
+
     def __str__(self):
+        """__str__ function"""
         return f'{self.leave_request.request_number} - خطوة {self.workflow_step.step_order}'
 
 
@@ -500,20 +517,22 @@ class LeaveQuota(models.Model):
     is_active = models.BooleanField(default=True, verbose_name='نشط')
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     class Meta:
+        """Meta class"""
         verbose_name = 'حصة إجازة'
         verbose_name_plural = 'حصص الإجازات'
         unique_together = ['employee', 'leave_type', 'year']
-        
+
     def __str__(self):
+        """__str__ function"""
         return f'{self.employee} - {self.leave_type.leave_name} ({self.year})'
-    
+
     @property
     def available_quota(self):
         """الحصة المتاحة"""
         return self.total_quota + self.carried_forward - self.used_quota
-    
+
     @property
     def utilization_rate(self):
         """معدل الاستخدام"""
@@ -533,14 +552,16 @@ class LeaveCalendar(models.Model):
     is_weekend = models.BooleanField(default=False, verbose_name='عطلة نهاية أسبوع')
     notes = models.TextField(blank=True, null=True, verbose_name='ملاحظات')
     created_at = models.DateTimeField(auto_now_add=True)
-    
+
     class Meta:
+        """Meta class"""
         verbose_name = 'تقويم إجازة'
         verbose_name_plural = 'تقويم الإجازات'
         unique_together = ['employee', 'date']
         ordering = ['date']
-        
+
     def __str__(self):
+        """__str__ function"""
         return f'{self.employee} - {self.date}'
 
 

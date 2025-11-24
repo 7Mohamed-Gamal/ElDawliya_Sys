@@ -18,11 +18,13 @@ from inventory.voucher_handlers import VoucherHandler
 @method_decorator(login_required, name='dispatch')
 @inventory_class_permission_required('vouchers', 'delete')
 class VoucherDeleteView(DeleteView):
+    """VoucherDeleteView class"""
     model = Voucher
     template_name = 'inventory/voucher_confirm_delete.html'
     success_url = reverse_lazy('inventory:voucher_list')
 
     def delete(self, request, *args, **kwargs):
+        """delete function"""
         try:
             voucher = self.get_object()
             updated_products = VoucherHandler.handle_voucher_deletion(voucher)
@@ -43,12 +45,14 @@ class VoucherDeleteView(DeleteView):
 @method_decorator(login_required, name='dispatch')
 @inventory_class_permission_required('vouchers', 'edit')
 class VoucherUpdateView(UpdateView):
+    """VoucherUpdateView class"""
     model = Voucher
     form_class = VoucherForm
     template_name = 'inventory/voucher_form.html'
     success_url = reverse_lazy('inventory:voucher_list')
 
     def get_context_data(self, **kwargs):
+        """get_context_data function"""
         context = super().get_context_data(**kwargs)
         voucher = self.get_object()
 
@@ -63,16 +67,17 @@ class VoucherUpdateView(UpdateView):
             context['page_title'] = 'تعديل إذن مرتجع مورد'
 
         context['today'] = timezone.now().date().strftime('%Y-%m-%d')
-        context['suppliers'] = Supplier.objects.all().order_by('name')
-        context['departments'] = Department.objects.all().order_by('name')
-        context['customers'] = Customer.objects.all().order_by('name')
-        context['products'] = Product.objects.all().order_by('name')
+        context['suppliers'] = Supplier.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
+        context['departments'] = Department.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
+        context['customers'] = Customer.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
+        context['products'] = Product.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
         context['voucher_type'] = voucher.voucher_type
         context['voucher_items'] = voucher.items.all()
 
         return context
 
     def form_valid(self, form):
+        """form_valid function"""
         try:
             voucher = self.get_object()
             old_items = list(voucher.items.all())
@@ -121,12 +126,14 @@ class VoucherUpdateView(UpdateView):
 @method_decorator(login_required, name='dispatch')
 @inventory_class_permission_required('vouchers', 'add')
 class VoucherCreateView(CreateView):
+    """VoucherCreateView class"""
     model = Voucher
     form_class = VoucherForm
     template_name = 'inventory/voucher_form.html'
     success_url = reverse_lazy('inventory:voucher_list')
 
     def get_context_data(self, **kwargs):
+        """get_context_data function"""
         context = super().get_context_data(**kwargs)
         voucher_type = self.request.GET.get('type', 'إذن اضافة')
 
@@ -141,16 +148,17 @@ class VoucherCreateView(CreateView):
             context['page_title'] = 'إضافة إذن مرتجع مورد'
 
         context['today'] = timezone.now().date().strftime('%Y-%m-%d')
-        context['suppliers'] = Supplier.objects.all().order_by('name')
-        context['departments'] = Department.objects.all().order_by('name')
-        context['customers'] = Customer.objects.all().order_by('name')
-        context['products'] = Product.objects.all().order_by('name')
+        context['suppliers'] = Supplier.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
+        context['departments'] = Department.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
+        context['customers'] = Customer.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
+        context['products'] = Product.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
         context['voucher_type'] = voucher_type
         context['voucher_items'] = []
 
         return context
 
     def form_valid(self, form):
+        """form_valid function"""
         try:
             # Save the form to create the voucher
             response = super().form_valid(form)

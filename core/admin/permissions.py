@@ -30,7 +30,7 @@ class ModuleAdmin(admin.ModelAdmin):
     search_fields = ['name', 'display_name', 'description']
     ordering = ['order', 'display_name']
     list_editable = ['order', 'is_active']
-    
+
     fieldsets = (
         ('معلومات أساسية', {
             'fields': ('name', 'display_name', 'description', 'parent')
@@ -43,9 +43,9 @@ class ModuleAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
-    
+
     readonly_fields = ['created_at', 'updated_at']
-    
+
     def permissions_count(self, obj):
         """Display count of permissions for this module"""
         count = obj.permissions.count()
@@ -54,8 +54,9 @@ class ModuleAdmin(admin.ModelAdmin):
             return format_html('<a href="{}">{} صلاحية</a>', url, count)
         return '0 صلاحية'
     permissions_count.short_description = 'عدد الصلاحيات'
-    
+
     def get_queryset(self, request):
+        """get_queryset function"""
         return super().get_queryset(request).select_related('parent')
 
 
@@ -70,7 +71,7 @@ class PermissionAdmin(admin.ModelAdmin):
     search_fields = ['name', 'codename', 'description']
     ordering = ['module__order', 'permission_type', 'name']
     list_editable = ['is_active']
-    
+
     fieldsets = (
         ('معلومات أساسية', {
             'fields': ('module', 'permission_type', 'codename', 'name', 'description')
@@ -83,10 +84,11 @@ class PermissionAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
-    
+
     readonly_fields = ['created_at']
-    
+
     def get_queryset(self, request):
+        """get_queryset function"""
         return super().get_queryset(request).select_related('module')
 
 
@@ -98,8 +100,9 @@ class UserRoleInline(admin.TabularInline):
     extra = 0
     fields = ['user', 'granted_by', 'granted_at', 'expires_at', 'is_active']
     readonly_fields = ['granted_at']
-    
+
     def get_queryset(self, request):
+        """get_queryset function"""
         return super().get_queryset(request).select_related('user', 'granted_by')
 
 
@@ -114,7 +117,7 @@ class RoleAdmin(admin.ModelAdmin):
     search_fields = ['name', 'display_name', 'description']
     ordering = ['display_name']
     list_editable = ['is_active']
-    
+
     fieldsets = (
         ('معلومات أساسية', {
             'fields': ('name', 'display_name', 'description', 'role_type')
@@ -133,11 +136,11 @@ class RoleAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
-    
+
     readonly_fields = ['created_at', 'updated_at']
     filter_horizontal = ['permissions']
     inlines = [UserRoleInline]
-    
+
     def users_count(self, obj):
         """Display count of users assigned to this role"""
         count = obj.get_users_count()
@@ -146,8 +149,9 @@ class RoleAdmin(admin.ModelAdmin):
             return format_html('<a href="{}">{} مستخدم</a>', url, count)
         return '0 مستخدم'
     users_count.short_description = 'عدد المستخدمين'
-    
+
     def get_queryset(self, request):
+        """get_queryset function"""
         return super().get_queryset(request).select_related('parent_role')
 
 
@@ -163,7 +167,7 @@ class UserRoleAdmin(admin.ModelAdmin):
     ordering = ['-granted_at']
     list_editable = ['is_active']
     date_hierarchy = 'granted_at'
-    
+
     fieldsets = (
         ('تعيين الدور', {
             'fields': ('user', 'role', 'granted_by')
@@ -176,9 +180,9 @@ class UserRoleAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
-    
+
     readonly_fields = ['granted_at']
-    
+
     def status(self, obj):
         """Display status of role assignment"""
         if not obj.is_active:
@@ -188,8 +192,9 @@ class UserRoleAdmin(admin.ModelAdmin):
         else:
             return format_html('<span style="color: green;">نشط</span>')
     status.short_description = 'الحالة'
-    
+
     def get_queryset(self, request):
+        """get_queryset function"""
         return super().get_queryset(request).select_related('user', 'role', 'granted_by')
 
 
@@ -204,7 +209,7 @@ class ObjectPermissionAdmin(admin.ModelAdmin):
     search_fields = ['user__username', 'permission__name', 'object_id']
     ordering = ['-granted_at']
     date_hierarchy = 'granted_at'
-    
+
     fieldsets = (
         ('صلاحية الكائن', {
             'fields': ('user', 'permission', 'content_type', 'object_id')
@@ -213,10 +218,11 @@ class ObjectPermissionAdmin(admin.ModelAdmin):
             'fields': ('granted_by', 'granted_at', 'expires_at', 'is_active')
         }),
     )
-    
+
     readonly_fields = ['granted_at']
-    
+
     def get_queryset(self, request):
+        """get_queryset function"""
         return super().get_queryset(request).select_related(
             'user', 'permission', 'content_type', 'granted_by'
         )
@@ -244,7 +250,7 @@ class ApprovalWorkflowAdmin(admin.ModelAdmin):
     search_fields = ['title', 'description', 'requested_by__username', 'target_user__username']
     ordering = ['-created_at']
     date_hierarchy = 'created_at'
-    
+
     fieldsets = (
         ('معلومات سير العمل', {
             'fields': ('workflow_type', 'title', 'description')
@@ -260,11 +266,12 @@ class ApprovalWorkflowAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
-    
+
     readonly_fields = ['created_at', 'updated_at']
     inlines = [ApprovalStepInline]
-    
+
     def get_queryset(self, request):
+        """get_queryset function"""
         return super().get_queryset(request).select_related('requested_by', 'target_user')
 
 
@@ -278,7 +285,7 @@ class ApprovalStepAdmin(admin.ModelAdmin):
     list_filter = ['status', 'approved_at']
     search_fields = ['workflow__title', 'name']
     ordering = ['workflow', 'level']
-    
+
     fieldsets = (
         ('خطوة الموافقة', {
             'fields': ('workflow', 'level', 'name', 'requires_all')
@@ -290,11 +297,12 @@ class ApprovalStepAdmin(admin.ModelAdmin):
             'fields': ('status', 'approved_by', 'approved_at', 'comments')
         }),
     )
-    
+
     readonly_fields = ['approved_at']
     filter_horizontal = ['approvers']
-    
+
     def get_queryset(self, request):
+        """get_queryset function"""
         return super().get_queryset(request).select_related('workflow', 'approved_by')
 
 
@@ -309,7 +317,7 @@ class PermissionCacheAdmin(admin.ModelAdmin):
     search_fields = ['user__username', 'permission_hash']
     ordering = ['-created_at']
     date_hierarchy = 'created_at'
-    
+
     fieldsets = (
         ('ذاكرة التخزين المؤقت', {
             'fields': ('user', 'permission_hash', 'permissions_data')
@@ -318,14 +326,14 @@ class PermissionCacheAdmin(admin.ModelAdmin):
             'fields': ('created_at', 'expires_at')
         }),
     )
-    
+
     readonly_fields = ['created_at']
-    
+
     def permission_hash_short(self, obj):
         """Display shortened permission hash"""
         return f"{obj.permission_hash[:16]}..."
     permission_hash_short.short_description = 'هاش الصلاحية'
-    
+
     def is_expired_status(self, obj):
         """Display expiration status"""
         if obj.is_expired():
@@ -333,12 +341,13 @@ class PermissionCacheAdmin(admin.ModelAdmin):
         else:
             return format_html('<span style="color: green;">صالح</span>')
     is_expired_status.short_description = 'حالة الصلاحية'
-    
+
     def get_queryset(self, request):
+        """get_queryset function"""
         return super().get_queryset(request).select_related('user')
-    
+
     actions = ['clear_expired_cache']
-    
+
     def clear_expired_cache(self, request, queryset):
         """Clear expired cache entries"""
         from django.utils import timezone
@@ -356,30 +365,30 @@ class PermissionAdminSite(admin.AdminSite):
     site_header = 'إدارة الصلاحيات الهرمية'
     site_title = 'نظام الصلاحيات'
     index_title = 'لوحة تحكم الصلاحيات'
-    
+
     def get_app_list(self, request):
         """
         Return a sorted list of all the installed apps that have been
         registered in this site.
         """
         app_list = super().get_app_list(request)
-        
+
         # Custom ordering for permissions app
         for app in app_list:
             if app['name'] == 'Core':
                 # Custom model ordering
                 model_order = [
-                    'Module', 'Permission', 'Role', 'UserRole', 
+                    'Module', 'Permission', 'Role', 'UserRole',
                     'ObjectPermission', 'ApprovalWorkflow', 'ApprovalStep',
                     'PermissionCache'
                 ]
-                
+
                 app['models'].sort(key=lambda x: (
-                    model_order.index(x['object_name']) 
-                    if x['object_name'] in model_order 
+                    model_order.index(x['object_name'])
+                    if x['object_name'] in model_order
                     else len(model_order)
                 ))
-        
+
         return app_list
 
 

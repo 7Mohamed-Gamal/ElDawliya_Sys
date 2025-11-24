@@ -11,6 +11,7 @@ PASSWORD = "hgslduhgfwdv"
 TIMEOUT = 30
 
 def test_leave_request_submission_and_listing():
+    """test_leave_request_submission_and_listing function"""
     # Obtain JWT token
     auth_payload = {"username": USERNAME, "password": PASSWORD}
     try:

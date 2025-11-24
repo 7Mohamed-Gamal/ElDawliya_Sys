@@ -18,11 +18,13 @@ class APIKey(models.Model):
     expires_at = models.DateTimeField(null=True, blank=True, help_text="تاريخ انتهاء الصلاحية")
 
     class Meta:
+        """Meta class"""
         verbose_name = "مفتاح API"
         verbose_name_plural = "مفاتيح API"
         ordering = ['-created_at']
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.name} - {self.user.username}"
 
     def is_expired(self):
@@ -42,11 +44,13 @@ class GeminiConversation(models.Model):
     is_active = models.BooleanField(default=True)
 
     class Meta:
+        """Meta class"""
         verbose_name = "محادثة Gemini"
         verbose_name_plural = "محادثات Gemini"
         ordering = ['-updated_at']
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.title} - {self.user.username}"
 
 
@@ -66,11 +70,13 @@ class GeminiMessage(models.Model):
     tokens_used = models.IntegerField(default=0, help_text="عدد الرموز المستخدمة")
 
     class Meta:
+        """Meta class"""
         verbose_name = "رسالة Gemini"
         verbose_name_plural = "رسائل Gemini"
         ordering = ['timestamp']
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.role}: {self.content[:50]}..."
 
 
@@ -88,11 +94,13 @@ class APIUsageLog(models.Model):
     user_agent = models.TextField(blank=True)
 
     class Meta:
+        """Meta class"""
         verbose_name = "سجل استخدام API"
         verbose_name_plural = "سجلات استخدام API"
         ordering = ['-timestamp']
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.endpoint} - {self.status_code} - {self.timestamp}"
 
 
@@ -116,11 +124,13 @@ class AIProvider(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
+        """Meta class"""
         verbose_name = "مقدم خدمة الذكاء الاصطناعي"
         verbose_name_plural = "مقدمو خدمات الذكاء الاصطناعي"
         ordering = ['display_name']
 
     def __str__(self):
+        """__str__ function"""
         return self.display_name
 
 
@@ -138,19 +148,22 @@ class AIConfiguration(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
+        """Meta class"""
         verbose_name = "إعداد الذكاء الاصطناعي"
         verbose_name_plural = "إعدادات الذكاء الاصطناعي"
         unique_together = ['user', 'provider']
         ordering = ['-is_default', 'provider__display_name']
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.user.username} - {self.provider.display_name}"
 
     def save(self, *args, **kwargs):
+        """save function"""
         # إذا كان هذا الإعداد افتراضي، قم بإلغاء الافتراضي من الآخرين
         if self.is_default:
             AIConfiguration.objects.filter(
                 user=self.user,
                 is_default=True
-            ).exclude(id=self.id).update(is_default=False)
+            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exclude(id=self.id).update(is_default=False)
         super().save(*args, **kwargs)

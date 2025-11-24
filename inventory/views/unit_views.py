@@ -16,6 +16,7 @@ from inventory.forms import UnitForm
 @method_decorator(login_required, name='dispatch')
 @inventory_class_permission_required('units', 'view')
 class UnitListView(ListView):
+    """UnitListView class"""
     model = Unit
     template_name = 'inventory/unit_list.html'
     context_object_name = 'units'
@@ -23,6 +24,7 @@ class UnitListView(ListView):
 @method_decorator(login_required, name='dispatch')
 @inventory_class_permission_required('units', 'add')
 class UnitCreateView(CreateView):
+    """UnitCreateView class"""
     model = Unit
     form_class = UnitForm
     template_name = 'inventory/unit_form.html'
@@ -31,6 +33,7 @@ class UnitCreateView(CreateView):
 @method_decorator(login_required, name='dispatch')
 @inventory_class_permission_required('units', 'edit')
 class UnitUpdateView(UpdateView):
+    """UnitUpdateView class"""
     model = Unit
     form_class = UnitForm
     template_name = 'inventory/unit_form.html'
@@ -39,6 +42,7 @@ class UnitUpdateView(UpdateView):
 @method_decorator(login_required, name='dispatch')
 @inventory_class_permission_required('units', 'delete')
 class UnitDeleteView(DeleteView):
+    """UnitDeleteView class"""
     model = Unit
     template_name = 'inventory/unit_confirm_delete.html'
     success_url = reverse_lazy('inventory:unit_list')
@@ -71,7 +75,7 @@ def unit_add_ajax(request):
                 return JsonResponse({'success': False, 'error': 'اسم وحدة القياس مطلوب'})
 
             # Check if unit with this name already exists
-            existing_unit = Unit.objects.filter(name=name).first()
+            existing_unit = Unit.objects.filter(name=name).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
             if existing_unit:
                 logger.info(f"Unit with name '{name}' already exists with ID: {existing_unit.id}")
                 return JsonResponse({

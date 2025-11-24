@@ -2,7 +2,8 @@
 Development settings for ElDawliya System.
 """
 
-from .base import *
+# TODO: Replace wildcard import
+# from .base import specific_items
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True

@@ -24,6 +24,7 @@ User = get_user_model()
 @ensure_csrf_cookie
 @csrf_protect
 def login_view(request):
+    """login_view function"""
     # Add debugging information
     print("Starting login_view function")
 
@@ -58,6 +59,7 @@ def login_view(request):
     return render(request, 'accounts/login.html', {'form': form})
 
 def logout_view(request):
+    """logout_view function"""
     logout(request)
     return redirect('accounts:login')
 
@@ -78,8 +80,9 @@ def csrf_failure(request, reason=""):
 
 @login_required
 def dashboard_view(request):
+    """dashboard_view function"""
     # Get all users
-    users = User.objects.all()
+    users = User.objects.all().select_related()  # TODO: Add appropriate select_related fields
 
     # Count statistics
     total_users = users.count()
@@ -102,10 +105,11 @@ def dashboard_view(request):
 
 @login_required
 def home_view(request):
+    """home_view function"""
     # Get real-time stats for dashboard
     meetings_count = Meeting.objects.count()
     tasks_count = Task.objects.count()
-    completed_tasks_count = Task.objects.filter(status='completed').count()
+    completed_tasks_count = Task.objects.filter(status='completed').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
     users_count = User.objects.count()
 
     # Get recent meetings
@@ -115,7 +119,7 @@ def home_view(request):
     recent_tasks = Task.objects.order_by('-start_date')[:5]
 
     # Get user's tasks
-    user_tasks = Task.objects.filter(assigned_to=request.user).order_by('status', '-start_date')
+    user_tasks = Task.objects.filter(assigned_to=request.user).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('status', '-start_date')
 
     # Check if user is admin
     is_admin = request.user.Role == 'admin'
@@ -127,7 +131,7 @@ def home_view(request):
         from administrator.models import Department
 
         # Get all active departments
-        departments = Department.objects.filter(is_active=True).order_by('order')
+        departments = Department.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('order')
 
         # For admin users, store all departments
         if is_admin:
@@ -180,6 +184,7 @@ def home_view(request):
 
 @login_required
 def create_user_view(request):
+    """create_user_view function"""
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
@@ -197,7 +202,7 @@ def create_user_view(request):
 
     # استخدام نظام المجموعات الخاص بـ Django
     from django.contrib.auth.models import Group
-    groups = Group.objects.all()
+    groups = Group.objects.all().select_related()  # TODO: Add appropriate select_related fields
 
     context = {
         'form': form,
@@ -233,7 +238,7 @@ def edit_permissions_view(request, user_id):
 
     # استخدام نظام المجموعات الخاص بـ Django
     from django.contrib.auth.models import Group
-    groups = Group.objects.all()
+    groups = Group.objects.all().select_related()  # TODO: Add appropriate select_related fields
 
     context = {
         'user_to_edit': user,
@@ -305,7 +310,7 @@ def search_hr_data(query, user, limit):
 
         # Search employees
         employees = Employee.objects.filter(
-            Q(first_name__icontains=query) |
+            Q(first_name__icontains=query).prefetch_related()  # TODO: Add appropriate prefetch_related fields |
             Q(second_name__icontains=query) |
             Q(third_name__icontains=query) |
             Q(last_name__icontains=query) |
@@ -315,7 +320,7 @@ def search_hr_data(query, user, limit):
         for emp in employees:
             # Create full name
             full_name = f"{emp.first_name} {emp.second_name or ''} {emp.third_name or ''} {emp.last_name or ''}".strip()
-            
+
             results.append({
                 'module': 'hr',
                 'type': 'employee',
@@ -332,7 +337,7 @@ def search_hr_data(query, user, limit):
 
         # Search departments
         departments = Department.objects.filter(
-            Q(dept_name__icontains=query)
+            Q(dept_name__icontains=query).prefetch_related()  # TODO: Add appropriate prefetch_related fields
         ).filter(is_active=True)[:limit//2]
 
         for dept in departments:
@@ -365,7 +370,7 @@ def search_inventory_data(query, user, limit):
 
         # Search products
         products = Product.objects.filter(
-            Q(name__icontains=query) |
+            Q(name__icontains=query).prefetch_related()  # TODO: Add appropriate prefetch_related fields |
             Q(product_id__icontains=query)
         )[:limit]
 
@@ -398,12 +403,12 @@ def search_tasks_data(query, user, limit):
         # Search tasks accessible to user
         if user.is_superuser:
             tasks = Task.objects.filter(
-                Q(title__icontains=query) |
+                Q(title__icontains=query).prefetch_related()  # TODO: Add appropriate prefetch_related fields |
                 Q(description__icontains=query)
             )[:limit]
         else:
             tasks = Task.objects.filter(
-                Q(title__icontains=query) |
+                Q(title__icontains=query).prefetch_related()  # TODO: Add appropriate prefetch_related fields |
                 Q(description__icontains=query)
             ).filter(
                 Q(assigned_to=user) |
@@ -438,7 +443,7 @@ def search_meetings_data(query, user, limit):
     try:
         # Search meetings
         meetings = Meeting.objects.filter(
-            Q(title__icontains=query) |
+            Q(title__icontains=query).prefetch_related()  # TODO: Add appropriate prefetch_related fields |
             Q(description__icontains=query)
         )[:limit]
 
@@ -472,7 +477,7 @@ def search_purchase_orders_data(query, user, limit):
 
         # Search purchase requests
         requests = PurchaseRequest.objects.filter(
-            Q(description__icontains=query)
+            Q(description__icontains=query).prefetch_related()  # TODO: Add appropriate prefetch_related fields
         )[:limit]
 
         for req in requests:

@@ -5,7 +5,8 @@ ElDawliya System - Production Settings
 Settings for production environment.
 """
 
-from .base import *
+# TODO: Replace wildcard import
+# from .base import specific_items
 
 # ================================================================
 # PRODUCTION CONFIGURATION
@@ -251,7 +252,7 @@ if SENTRY_DSN:
     from sentry_sdk.integrations.django import DjangoIntegration
     from sentry_sdk.integrations.celery import CeleryIntegration
     from sentry_sdk.integrations.redis import RedisIntegration
-    
+
     sentry_sdk.init(
         dsn=SENTRY_DSN,
         integrations=[

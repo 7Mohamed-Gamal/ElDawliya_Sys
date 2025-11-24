@@ -20,7 +20,7 @@ def stock_report(request):
     search_query = request.GET.get('search', '')
 
     # بناء الاستعلام الأساسي
-    products = Product.objects.all()
+    products = Product.objects.all().select_related()  # TODO: Add appropriate select_related fields
 
     # تطبيق معايير التصفية
     if category_id:
@@ -45,7 +45,7 @@ def stock_report(request):
     products = products.order_by('category__name', 'name')
 
     # الحصول على جميع التصنيفات للفلتر
-    categories = Category.objects.all()
+    categories = Category.objects.all().select_related()  # TODO: Add appropriate select_related fields
 
     # إحصائيات إضافية
     total_products = products.count()
@@ -109,7 +109,7 @@ def movement_report(request):
     voucher_items = voucher_items.order_by('-voucher__date', '-voucher__created_at')
 
     # الحصول على جميع المنتجات للفلتر
-    products = Product.objects.all().order_by('name')
+    products = Product.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
 
     # إحصائيات إضافية
     total_items = voucher_items.count()
@@ -151,7 +151,7 @@ def voucher_report(request):
     customer_id = request.GET.get('customer_id', '')
 
     # بناء الاستعلام الأساسي
-    vouchers = Voucher.objects.all()
+    vouchers = Voucher.objects.all().select_related()  # TODO: Add appropriate select_related fields
 
     # تطبيق معايير التصفية
     if voucher_type:

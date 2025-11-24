@@ -3,9 +3,11 @@ from django.contrib.auth.models import Group
 from administrator.models import Department, Module
 
 class Command(BaseCommand):
+    """Command class"""
     help = 'Initialize default departments, modules, and permissions'
 
     def add_arguments(self, parser):
+        """add_arguments function"""
         parser.add_argument(
             '--force',
             action='store_true',
@@ -13,19 +15,20 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        """handle function"""
         force = options.get('force', False)
-        
+
         # Check if departments already exist
         if Department.objects.exists() and not force:
             self.stdout.write(self.style.WARNING('Departments already exist. Use --force to recreate them.'))
             return
-            
+
         # Create default groups if they don't exist
         admin_group, _ = Group.objects.get_or_create(name='Admin')
         hr_group, _ = Group.objects.get_or_create(name='HR')
         warehouse_group, _ = Group.objects.get_or_create(name='Warehouse')
         meetings_group, _ = Group.objects.get_or_create(name='Meetings')
-        
+
         # Default departments with their modules
         departments = [
             {
@@ -167,31 +170,31 @@ class Command(BaseCommand):
                 ]
             },
         ]
-        
+
         # Clear existing departments if using --force
         if force:
-            Department.objects.all().delete()
-        
+            Department.objects.all().select_related()  # TODO: Add appropriate select_related fields.delete()
+
         # Create departments with their modules
         for dept_data in departments:
             groups = dept_data.pop('groups', [])
             modules_data = dept_data.pop('modules', [])
-            
+
             # Create department
             dept = Department.objects.create(**dept_data)
-            
+
             # Add groups to department
             for group in groups:
                 dept.groups.add(group)
-                
+
             # Create modules for department
             for module_data in modules_data:
                 module = Module.objects.create(department=dept, **module_data)
-                
+
                 # Add same groups as department to module
                 for group in groups:
                     module.groups.add(group)
-            
+
             self.stdout.write(self.style.SUCCESS(f'Created department: {dept.name} with {len(modules_data)} modules'))
-            
+
         self.stdout.write(self.style.SUCCESS('Successfully initialized departments'))

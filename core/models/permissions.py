@@ -31,10 +31,10 @@ class Module(models.Model):
     order = models.PositiveIntegerField(default=0, verbose_name=_('الترتيب'))
     is_active = models.BooleanField(default=True, verbose_name=_('نشط'))
     parent = models.ForeignKey(
-        'self', 
-        on_delete=models.CASCADE, 
-        null=True, 
-        blank=True, 
+        'self',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
         related_name='children',
         verbose_name=_('الوحدة الأب')
     )
@@ -42,11 +42,13 @@ class Module(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_('تاريخ التحديث'))
 
     class Meta:
+        """Meta class"""
         verbose_name = _('وحدة النظام')
         verbose_name_plural = _('وحدات النظام')
         ordering = ['order', 'display_name']
 
     def __str__(self):
+        """__str__ function"""
         return self.display_name
 
     def get_full_path(self):
@@ -102,12 +104,14 @@ class Permission(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('تاريخ الإنشاء'))
 
     class Meta:
+        """Meta class"""
         verbose_name = _('صلاحية')
         verbose_name_plural = _('الصلاحيات')
         unique_together = ['module', 'codename']
         ordering = ['module__order', 'permission_type']
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.module.display_name} - {self.name}"
 
     @property
@@ -135,10 +139,10 @@ class Role(models.Model):
     role_type = models.CharField(max_length=20, choices=ROLE_TYPES, default='custom', verbose_name=_('نوع الدور'))
     permissions = models.ManyToManyField(Permission, blank=True, related_name='roles', verbose_name=_('الصلاحيات'))
     parent_role = models.ForeignKey(
-        'self', 
-        on_delete=models.CASCADE, 
-        null=True, 
-        blank=True, 
+        'self',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
         related_name='child_roles',
         verbose_name=_('الدور الأب')
     )
@@ -149,20 +153,22 @@ class Role(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_('تاريخ التحديث'))
 
     class Meta:
+        """Meta class"""
         verbose_name = _('دور')
         verbose_name_plural = _('الأدوار')
         ordering = ['display_name']
 
     def __str__(self):
+        """__str__ function"""
         return self.display_name
 
     def get_all_permissions(self):
         """Get all permissions including inherited from parent roles"""
         permissions = set(self.permissions.filter(is_active=True))
-        
+
         if self.parent_role:
             permissions.update(self.parent_role.get_all_permissions())
-        
+
         return permissions
 
     def get_users_count(self):
@@ -185,9 +191,9 @@ class UserRole(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_roles', verbose_name=_('المستخدم'))
     role = models.ForeignKey(Role, on_delete=models.CASCADE, related_name='user_roles', verbose_name=_('الدور'))
     granted_by = models.ForeignKey(
-        User, 
-        on_delete=models.SET_NULL, 
-        null=True, 
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
         related_name='granted_roles',
         verbose_name=_('منح بواسطة')
     )
@@ -198,12 +204,14 @@ class UserRole(models.Model):
     notes = models.TextField(blank=True, verbose_name=_('ملاحظات'))
 
     class Meta:
+        """Meta class"""
         verbose_name = _('دور المستخدم')
         verbose_name_plural = _('أدوار المستخدمين')
         unique_together = ['user', 'role']
         ordering = ['-granted_at']
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.user.username} - {self.role.display_name}"
 
     def is_expired(self):
@@ -229,9 +237,9 @@ class ObjectPermission(models.Model):
     object_id = models.CharField(max_length=255, verbose_name=_('معرف الكائن'))
     content_object = GenericForeignKey('content_type', 'object_id')
     granted_by = models.ForeignKey(
-        User, 
-        on_delete=models.SET_NULL, 
-        null=True, 
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
         related_name='granted_object_permissions',
         verbose_name=_('منح بواسطة')
     )
@@ -240,12 +248,14 @@ class ObjectPermission(models.Model):
     is_active = models.BooleanField(default=True, verbose_name=_('نشط'))
 
     class Meta:
+        """Meta class"""
         verbose_name = _('صلاحية الكائن')
         verbose_name_plural = _('صلاحيات الكائنات')
         unique_together = ['user', 'permission', 'content_type', 'object_id']
         ordering = ['-granted_at']
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.user.username} - {self.permission.name} - {self.content_object}"
 
     def is_expired(self):
@@ -284,15 +294,15 @@ class ApprovalWorkflow(models.Model):
     title = models.CharField(max_length=200, verbose_name=_('العنوان'))
     description = models.TextField(verbose_name=_('الوصف'))
     requested_by = models.ForeignKey(
-        User, 
-        on_delete=models.CASCADE, 
+        User,
+        on_delete=models.CASCADE,
         related_name='requested_approvals',
         verbose_name=_('طلب بواسطة')
     )
     target_user = models.ForeignKey(
-        User, 
-        on_delete=models.CASCADE, 
-        null=True, 
+        User,
+        on_delete=models.CASCADE,
+        null=True,
         blank=True,
         related_name='target_approvals',
         verbose_name=_('المستخدم المستهدف')
@@ -303,11 +313,13 @@ class ApprovalWorkflow(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_('تاريخ التحديث'))
 
     class Meta:
+        """Meta class"""
         verbose_name = _('سير عمل الموافقة')
         verbose_name_plural = _('سير عمل الموافقات')
         ordering = ['-created_at']
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.title} - {self.get_status_display()}"
 
     def get_current_approvers(self):
@@ -315,7 +327,7 @@ class ApprovalWorkflow(models.Model):
         current_level = self.approval_steps.filter(
             status='pending'
         ).order_by('level').first()
-        
+
         if current_level:
             return current_level.approvers.all()
         return User.objects.none()
@@ -339,8 +351,8 @@ class ApprovalStep(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     workflow = models.ForeignKey(
-        ApprovalWorkflow, 
-        on_delete=models.CASCADE, 
+        ApprovalWorkflow,
+        on_delete=models.CASCADE,
         related_name='approval_steps',
         verbose_name=_('سير العمل')
     )
@@ -350,9 +362,9 @@ class ApprovalStep(models.Model):
     requires_all = models.BooleanField(default=False, verbose_name=_('يتطلب الجميع'))
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name=_('الحالة'))
     approved_by = models.ForeignKey(
-        User, 
-        on_delete=models.SET_NULL, 
-        null=True, 
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
         blank=True,
         related_name='approved_steps',
         verbose_name=_('اعتمد بواسطة')
@@ -361,12 +373,14 @@ class ApprovalStep(models.Model):
     comments = models.TextField(blank=True, verbose_name=_('التعليقات'))
 
     class Meta:
+        """Meta class"""
         verbose_name = _('خطوة الموافقة')
         verbose_name_plural = _('خطوات الموافقة')
         unique_together = ['workflow', 'level']
         ordering = ['level']
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.workflow.title} - المستوى {self.level}"
 
 
@@ -383,12 +397,14 @@ class PermissionCache(models.Model):
     expires_at = models.DateTimeField(verbose_name=_('تاريخ الانتهاء'))
 
     class Meta:
+        """Meta class"""
         verbose_name = _('ذاكرة تخزين الصلاحيات')
         verbose_name_plural = _('ذاكرة تخزين الصلاحيات')
         unique_together = ['user', 'permission_hash']
         ordering = ['-created_at']
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.user.username} - {self.permission_hash[:8]}"
 
     def is_expired(self):
@@ -413,7 +429,7 @@ class PermissionCache(models.Model):
     def set_user_permissions(cls, user, permission_hash, permissions_data, timeout=3600):
         """Cache permissions for user"""
         expires_at = timezone.now() + timezone.timedelta(seconds=timeout)
-        
+
         cls.objects.update_or_create(
             user=user,
             permission_hash=permission_hash,

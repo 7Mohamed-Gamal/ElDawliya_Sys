@@ -9,6 +9,7 @@ PASSWORD = "hgslduhgfwdv"
 TIMEOUT = 30
 
 def test_meeting_listing():
+    """test_meeting_listing function"""
     try:
         # Step 1: Obtain JWT token pair using basic auth credentials
         auth_response = requests.post(
@@ -30,7 +31,7 @@ def test_meeting_listing():
         response = requests.get(f"{BASE_URL}{MEETINGS_ENDPOINT}", headers=headers, timeout=TIMEOUT)
         assert response.status_code == 200, f"Meeting listing failed with status {response.status_code}, response: {response.text}"
         meetings = response.json()
-        
+
         # Validate meetings structure: expect list
         assert isinstance(meetings, list), f"Meetings response expected list but got {type(meetings)}"
 

@@ -24,11 +24,11 @@ class ProductMovementView(ListView):
         """
         product_id = self.kwargs.get('product_id')
         product = get_object_or_404(Product, product_id=product_id)
-        
+
         queryset = VoucherItem.objects.filter(
             product=product
-        ).select_related('voucher', 'product').order_by('-voucher__date')
-        
+        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('voucher', 'product').order_by('-voucher__date')
+
         return queryset
 
     def get_context_data(self, **kwargs):
@@ -38,14 +38,14 @@ class ProductMovementView(ListView):
         context = super().get_context_data(**kwargs)
         product_id = self.kwargs.get('product_id')
         product = get_object_or_404(Product, product_id=product_id)
-        
+
         # Calculate movement totals
         movements = self.get_queryset()
         total_additions = 0
         total_disbursements = 0
         total_customer_returns = 0
         total_supplier_returns = 0
-        
+
         for item in movements:
             # Addition vouchers
             if item.voucher.voucher_type == 'إذن اضافة' and item.quantity_added:
@@ -59,21 +59,21 @@ class ProductMovementView(ListView):
             # Supplier return vouchers
             elif item.voucher.voucher_type == 'إذن مرتجع مورد' and item.quantity_disbursed:
                 total_supplier_returns += float(item.quantity_disbursed)
-        
+
         context['product'] = product
         context['page_title'] = f'حركات الصنف: {product.name}'
         context['total_additions'] = total_additions
         context['total_disbursements'] = total_disbursements
         context['total_customer_returns'] = total_customer_returns
         context['total_supplier_returns'] = total_supplier_returns
-        
+
         # Add low stock count for sidebar
         low_stock_count = Product.objects.filter(
-            quantity__lt=F('minimum_threshold'),
+            quantity__lt=F('minimum_threshold').prefetch_related()  # TODO: Add appropriate prefetch_related fields,
             minimum_threshold__gt=0
         ).count()
         context['low_stock_count'] = low_stock_count
-        
+
         return context
 
 @method_decorator(login_required, name='dispatch')
@@ -85,6 +85,7 @@ class ProductMovementListView(ListView):
     context_object_name = 'products'
 
     def get_queryset(self):
+        """get_queryset function"""
         queryset = super().get_queryset()
         search_query = self.request.GET.get('search', '')
         category = self.request.GET.get('category', '')
@@ -102,14 +103,15 @@ class ProductMovementListView(ListView):
         return queryset
 
     def get_context_data(self, **kwargs):
+        """get_context_data function"""
         context = super().get_context_data(**kwargs)
         context['page_title'] = 'قائمة الأصناف - حركات الصنف'
-        
+
         # Add low stock count for sidebar
         low_stock_count = Product.objects.filter(
-            quantity__lt=F('minimum_threshold'),
+            quantity__lt=F('minimum_threshold').prefetch_related()  # TODO: Add appropriate prefetch_related fields,
             minimum_threshold__gt=0
         ).count()
         context['low_stock_count'] = low_stock_count
-        
+
         return context

@@ -51,7 +51,7 @@ def reset_settings(request):
     """
     if request.method == 'POST':
         # الحصول على الإعدادات الحالية
-        settings = LocalSystemSettings.objects.filter(pk=1).first()
+        settings = LocalSystemSettings.objects.filter(pk=1).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
 
         if settings:
             # تعيين القيم الافتراضية

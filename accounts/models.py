@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
 
 class Users_Login_New(AbstractUser):
+    """Users_Login_New class"""
     # نستخدم حقل is_active الموجود في AbstractUser بدلاً من IsActive
     # نحتفظ بحقل Role للتوافق مع الكود الحالي
     Role = models.CharField(max_length=20, choices=[('admin', 'Admin'),('manager', 'Manager'), ('employee', 'Employee')])
@@ -21,13 +22,16 @@ class Users_Login_New(AbstractUser):
     )
 
     def __str__(self):
+        """__str__ function"""
         return self.username
-        
+
     # استخدام حقل is_active الموجود في AbstractUser
     @property
     def IsActive(self):
+        """IsActive function"""
         return self.is_active
-        
+
     @IsActive.setter
     def IsActive(self, value):
+        """IsActive function"""
         self.is_active = value

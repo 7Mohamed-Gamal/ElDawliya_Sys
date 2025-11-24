@@ -84,7 +84,7 @@ LOCAL_APPS = [
     'core.apps.CoreConfig',
     'api.apps.ApiConfig',
     'accounts',
-    
+
     # Business apps
     'meetings',
     'tasks',
@@ -93,7 +93,7 @@ LOCAL_APPS = [
     'Purchase_orders',
     'notifications',
     'audit.apps.AuditConfig',
-    
+
     # HR modules
     'cars',
     'attendance.apps.AttendanceConfig',
@@ -294,7 +294,7 @@ REST_FRAMEWORK = {
 
 try:
     from datetime import timedelta
-    
+
     SIMPLE_JWT = {
         'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
         'REFRESH_TOKEN_LIFETIME': timedelta(days=7),

@@ -31,23 +31,23 @@ schema_view = get_schema_view(
 
         ## المصادقة والأمان
         يدعم API طرق مصادقة متعددة:
-        
+
         ### 1. JWT Authentication (الموصى به)
         ```
         Authorization: Bearer YOUR_JWT_TOKEN
         ```
-        
+
         ### 2. API Key Authentication
         ```
         Authorization: ApiKey YOUR_API_KEY
         ```
-        
+
         ### 3. Session Authentication (للواجهات الداخلية)
         يستخدم cookies الجلسة العادية
 
         ## التحكم في معدل الطلبات
         - **المستخدمين العاديين**: 1000 طلب/ساعة
-        - **مفاتيح API الأساسية**: 1000 طلب/ساعة  
+        - **مفاتيح API الأساسية**: 1000 طلب/ساعة
         - **مفاتيح API المميزة**: 5000 طلب/ساعة
         - **مفاتيح API المؤسسية**: 10000 طلب/ساعة
 
@@ -123,12 +123,12 @@ urlpatterns = [
     # API Versions
     path('v1/', include('api.v1.urls', namespace='v1')),
     # path('v2/', include('api.v2.urls', namespace='v2')),  # Future version
-    
+
     # Web Interface URLs (for API management)
     path('dashboard/', web_views.APIDashboardView.as_view(), name='dashboard'),
     path('create-key/', web_views.create_api_key, name='create_key'),
     path('documentation/', web_views.api_documentation, name='documentation'),
-    
+
     # AI Web Interface
     path('ai/chat-interface/', web_views.ai_chat_interface, name='ai_chat'),
     path('ai/chat-api/', web_views.ai_chat_api, name='ai_chat_api'),
@@ -147,7 +147,7 @@ urlpatterns = [
     path('docs/', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     path('schema/', schema_view.without_ui(cache_timeout=0), name='schema-json'),
-    
+
     # Debug endpoints (development only)
     path('debug/ai-info/', debug_view.debug_ai_info, name='debug_ai_info'),
 

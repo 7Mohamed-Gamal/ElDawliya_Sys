@@ -7,14 +7,15 @@ from .models import Car, Supplier, Trip, Settings, RoutePoint
 
 class CarForm(forms.ModelForm):
     """نموذج إضافة وتعديل السيارات"""
-    
+
     class Meta:
+        """Meta class"""
         model = Car
         fields = [
             'car_code', 'car_name', 'car_type', 'supplier', 'fuel_type',
             'passengers_count', 'fuel_consumption_rate', 'car_status'
         ]
-        
+
         widgets = {
             'car_code': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -48,7 +49,7 @@ class CarForm(forms.ModelForm):
                 'class': 'form-select'
             })
         }
-        
+
         labels = {
             'car_code': 'كود السيارة',
             'car_name': 'اسم السيارة',
@@ -61,8 +62,9 @@ class CarForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         super().__init__(*args, **kwargs)
-        
+
         # تخصيص خيارات الموردين
         self.fields['supplier'].queryset = Supplier.objects.all().order_by('name')
         self.fields['supplier'].empty_label = "اختر المورد"
@@ -75,10 +77,10 @@ class CarForm(forms.ModelForm):
             existing = Car.objects.filter(car_code=car_code)
             if self.instance and self.instance.pk:
                 existing = existing.exclude(pk=self.instance.pk)
-            
+
             if existing.exists():
                 raise ValidationError('كود السيارة موجود مسبقاً.')
-        
+
         return car_code
 
     def clean_passengers_count(self):
@@ -104,11 +106,12 @@ class CarForm(forms.ModelForm):
 
 class SupplierForm(forms.ModelForm):
     """نموذج إضافة وتعديل الموردين"""
-    
+
     class Meta:
+        """Meta class"""
         model = Supplier
         fields = ['name', 'contact_person', 'phone', 'email', 'address']
-        
+
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -132,7 +135,7 @@ class SupplierForm(forms.ModelForm):
                 'placeholder': 'العنوان'
             })
         }
-        
+
         labels = {
             'name': 'اسم المورد',
             'contact_person': 'الشخص المسؤول',
@@ -149,20 +152,21 @@ class SupplierForm(forms.ModelForm):
             existing = Supplier.objects.filter(name=name)
             if self.instance and self.instance.pk:
                 existing = existing.exclude(pk=self.instance.pk)
-            
+
             if existing.exists():
                 raise ValidationError('اسم المورد موجود مسبقاً.')
-        
+
         return name
 
 
 class TripForm(forms.ModelForm):
     """نموذج إضافة وتعديل الرحلات"""
-    
+
     class Meta:
+        """Meta class"""
         model = Trip
         fields = ['date', 'car', 'distance']
-        
+
         widgets = {
             'date': forms.DateInput(attrs={
                 'class': 'form-control',
@@ -178,7 +182,7 @@ class TripForm(forms.ModelForm):
                 'placeholder': 'المسافة بالكيلومتر'
             })
         }
-        
+
         labels = {
             'date': 'تاريخ الرحلة',
             'car': 'السيارة',
@@ -186,14 +190,15 @@ class TripForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         super().__init__(*args, **kwargs)
-        
+
         # تخصيص خيارات السيارات (السيارات النشطة فقط)
         self.fields['car'].queryset = Car.objects.filter(
             car_status='active'
         ).order_by('car_code')
         self.fields['car'].empty_label = "اختر السيارة"
-        
+
         # تعيين التاريخ الافتراضي
         if not self.instance.pk:
             self.fields['date'].initial = date.today()
@@ -205,11 +210,11 @@ class TripForm(forms.ModelForm):
             # التحقق من أن التاريخ ليس في المستقبل
             if trip_date > date.today():
                 raise ValidationError('لا يمكن إضافة رحلة في المستقبل.')
-            
+
             # التحقق من أن التاريخ ليس قديماً جداً
             if trip_date < date.today() - timedelta(days=365):
                 raise ValidationError('تاريخ الرحلة قديم جداً.')
-        
+
         return trip_date
 
     def clean_distance(self):
@@ -225,14 +230,15 @@ class TripForm(forms.ModelForm):
 
 class SettingsForm(forms.ModelForm):
     """نموذج إعدادات النظام"""
-    
+
     class Meta:
+        """Meta class"""
         model = Settings
         fields = [
             'diesel_price', 'gasoline_price', 'gas_price', 'maintenance_rate',
             'depreciation_rate', 'license_rate', 'driver_profit_rate', 'tax_rate'
         ]
-        
+
         widgets = {
             'diesel_price': forms.NumberInput(attrs={
                 'class': 'form-control',
@@ -276,7 +282,7 @@ class SettingsForm(forms.ModelForm):
                 'max': '100'
             })
         }
-        
+
         labels = {
             'diesel_price': 'سعر الديزل (لتر)',
             'gasoline_price': 'سعر البنزين (لتر)',
@@ -299,11 +305,12 @@ class SettingsForm(forms.ModelForm):
 
 class RoutePointForm(forms.ModelForm):
     """نموذج نقاط خط السير"""
-    
+
     class Meta:
+        """Meta class"""
         model = RoutePoint
         fields = ['car', 'point_name', 'departure_time', 'order', 'employees']
-        
+
         widgets = {
             'car': forms.Select(attrs={
                 'class': 'form-select'
@@ -324,7 +331,7 @@ class RoutePointForm(forms.ModelForm):
                 'class': 'form-check-input'
             })
         }
-        
+
         labels = {
             'car': 'السيارة',
             'point_name': 'اسم النقطة',
@@ -334,14 +341,15 @@ class RoutePointForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         super().__init__(*args, **kwargs)
-        
+
         # تخصيص خيارات السيارات
         self.fields['car'].queryset = Car.objects.filter(
             car_status='active'
         ).order_by('car_code')
         self.fields['car'].empty_label = "اختر السيارة"
-        
+
         # تخصيص خيارات الموظفين
         from employees.models import Employee
         self.fields['employees'].queryset = Employee.objects.filter(
@@ -351,7 +359,7 @@ class RoutePointForm(forms.ModelForm):
 
 class CarSearchForm(forms.Form):
     """نموذج البحث في السيارات"""
-    
+
     search = forms.CharField(
         label='البحث',
         required=False,
@@ -360,7 +368,7 @@ class CarSearchForm(forms.Form):
             'placeholder': 'كود السيارة أو اسم السيارة'
         })
     )
-    
+
     car_type = forms.ChoiceField(
         label='نوع السيارة',
         choices=[('', 'جميع الأنواع')] + Car._meta.get_field('car_type').choices,
@@ -369,7 +377,7 @@ class CarSearchForm(forms.Form):
             'class': 'form-select'
         })
     )
-    
+
     supplier = forms.ModelChoiceField(
         label='المورد',
         queryset=Supplier.objects.all().order_by('name'),
@@ -379,7 +387,7 @@ class CarSearchForm(forms.Form):
             'class': 'form-select'
         })
     )
-    
+
     status = forms.ChoiceField(
         label='الحالة',
         choices=[('', 'جميع الحالات')] + Car._meta.get_field('car_status').choices,
@@ -392,7 +400,7 @@ class CarSearchForm(forms.Form):
 
 class TripSearchForm(forms.Form):
     """نموذج البحث في الرحلات"""
-    
+
     search = forms.CharField(
         label='البحث',
         required=False,
@@ -401,7 +409,7 @@ class TripSearchForm(forms.Form):
             'placeholder': 'كود السيارة أو اسم السيارة'
         })
     )
-    
+
     car = forms.ModelChoiceField(
         label='السيارة',
         queryset=Car.objects.all().order_by('car_code'),
@@ -411,7 +419,7 @@ class TripSearchForm(forms.Form):
             'class': 'form-select'
         })
     )
-    
+
     date_from = forms.DateField(
         label='من تاريخ',
         required=False,
@@ -420,7 +428,7 @@ class TripSearchForm(forms.Form):
             'type': 'date'
         })
     )
-    
+
     date_to = forms.DateField(
         label='إلى تاريخ',
         required=False,
@@ -445,14 +453,14 @@ class TripSearchForm(forms.Form):
 
 class CarReportForm(forms.Form):
     """نموذج تقارير السيارات"""
-    
+
     REPORT_TYPES = [
         ('summary', 'تقرير ملخص'),
         ('detailed', 'تقرير مفصل'),
         ('cost_analysis', 'تحليل التكلفة'),
         ('usage_analysis', 'تحليل الاستخدام')
     ]
-    
+
     report_type = forms.ChoiceField(
         label='نوع التقرير',
         choices=REPORT_TYPES,
@@ -460,7 +468,7 @@ class CarReportForm(forms.Form):
             'class': 'form-select'
         })
     )
-    
+
     car = forms.ModelChoiceField(
         label='السيارة',
         queryset=Car.objects.all().order_by('car_code'),
@@ -470,7 +478,7 @@ class CarReportForm(forms.Form):
             'class': 'form-select'
         })
     )
-    
+
     car_type = forms.ChoiceField(
         label='نوع السيارة',
         choices=[('', 'جميع الأنواع')] + Car._meta.get_field('car_type').choices,
@@ -479,7 +487,7 @@ class CarReportForm(forms.Form):
             'class': 'form-select'
         })
     )
-    
+
     date_from = forms.DateField(
         label='من تاريخ',
         widget=forms.DateInput(attrs={
@@ -487,7 +495,7 @@ class CarReportForm(forms.Form):
             'type': 'date'
         })
     )
-    
+
     date_to = forms.DateField(
         label='إلى تاريخ',
         widget=forms.DateInput(attrs={
@@ -497,8 +505,9 @@ class CarReportForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         super().__init__(*args, **kwargs)
-        
+
         # تعيين التواريخ الافتراضية
         today = date.today()
         self.fields['date_from'].initial = today.replace(month=1, day=1)  # بداية السنة

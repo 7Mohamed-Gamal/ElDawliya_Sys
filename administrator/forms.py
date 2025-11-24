@@ -6,6 +6,7 @@ from .models import SystemSettings, Department, Module
 class SystemSettingsForm(forms.ModelForm):
     """Form for system settings configuration."""
     class Meta:
+        """Meta class"""
         model = SystemSettings
         fields = [
             'company_name', 'company_address', 'company_phone', 'company_email',
@@ -32,6 +33,7 @@ class SystemSettingsForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         super().__init__(*args, **kwargs)
         # إضافة خيارات للمنطقة الزمنية
         timezone_choices = [
@@ -66,6 +68,7 @@ class SystemSettingsForm(forms.ModelForm):
             self.fields['date_format'].initial = self.instance.date_format
 
     def clean(self):
+        """clean function"""
         cleaned_data = super().clean()
 
         # التحقق من الحقول المطلوبة
@@ -89,6 +92,7 @@ class SystemSettingsForm(forms.ModelForm):
 class DepartmentForm(forms.ModelForm):
     """Form for department configuration."""
     class Meta:
+        """Meta class"""
         model = Department
         fields = ['name', 'icon', 'url_name', 'description', 'is_active', 'order', 'require_admin', 'groups']
         widgets = {
@@ -100,6 +104,7 @@ class DepartmentForm(forms.ModelForm):
 class ModuleForm(forms.ModelForm):
     """Form for module configuration."""
     class Meta:
+        """Meta class"""
         model = Module
         fields = ['department', 'name', 'icon', 'url', 'description', 'is_active', 'order', 'bg_color']
         widgets = {
@@ -192,20 +197,21 @@ class GroupForm(forms.ModelForm):
     )
 
     permissions = forms.ModelMultipleChoiceField(
-        queryset=Permission.objects.all(),
+        queryset=Permission.objects.all().select_related()  # TODO: Add appropriate select_related fields,
         required=False,
         widget=forms.CheckboxSelectMultiple,
         label="الصلاحيات"
     )
 
     users = forms.ModelMultipleChoiceField(
-        queryset=get_user_model().objects.all(),
+        queryset=get_user_model().objects.all().select_related()  # TODO: Add appropriate select_related fields,
         required=False,
         widget=forms.SelectMultiple(attrs={'class': 'form-control'}),
         label="المستخدمون"
     )
 
     class Meta:
+        """Meta class"""
         model = Group
         fields = ['name', 'permissions']
         labels = {
@@ -216,12 +222,14 @@ class GroupForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         super().__init__(*args, **kwargs)
         # If editing an existing group, pre-select its users
         if self.instance.pk:
             self.initial['users'] = self.instance.user_set.all()
 
     def save(self, commit=True):
+        """save function"""
         group = super().save(commit)
         if commit:
             # Update group users
@@ -242,7 +250,7 @@ class GroupForm(forms.ModelForm):
 class UserPermissionForm(forms.Form):
     """Form for managing user permissions."""
     permissions = forms.ModelMultipleChoiceField(
-        queryset=Permission.objects.all(),
+        queryset=Permission.objects.all().select_related()  # TODO: Add appropriate select_related fields,
         required=False,
         widget=forms.CheckboxSelectMultiple,
         label="الصلاحيات"
@@ -252,7 +260,7 @@ class UserPermissionForm(forms.Form):
 class GroupPermissionForm(forms.Form):
     """Form for managing group permissions."""
     permissions = forms.ModelMultipleChoiceField(
-        queryset=Permission.objects.all(),
+        queryset=Permission.objects.all().select_related()  # TODO: Add appropriate select_related fields,
         required=False,
         widget=forms.CheckboxSelectMultiple,
         label="الصلاحيات"

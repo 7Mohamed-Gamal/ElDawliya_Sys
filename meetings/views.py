@@ -18,11 +18,11 @@ def dashboard(request):
     # تصفية الاجتماعات حسب صلاحية الوصول للمستخدم
     if request.user.is_superuser:
         # المدير العام يرى جميع الاجتماعات
-        accessible_meetings = Meeting.objects.all()
+        accessible_meetings = Meeting.objects.all().select_related()  # TODO: Add appropriate select_related fields
     else:
         # المستخدمون العاديون يرون فقط الاجتماعات التي أنشؤوها أو مدعوون إليها
         accessible_meetings = Meeting.objects.filter(
-            Q(created_by=request.user) | Q(attendees__user=request.user)
+            Q(created_by=request.user).prefetch_related()  # TODO: Add appropriate prefetch_related fields | Q(attendees__user=request.user)
         ).distinct()
 
     # إحصائيات الاجتماعات
@@ -51,7 +51,7 @@ def dashboard(request):
         date__date__gte=today,
         status='pending'
     ).count()
-    
+
     context = {
         'total_meetings': total_meetings,
         'today_meetings': today_meetings_count,
@@ -66,14 +66,15 @@ def dashboard(request):
 
 @login_required
 def meeting_list(request):
+    """meeting_list function"""
     # تصفية الاجتماعات حسب صلاحية الوصول للمستخدم
     if request.user.is_superuser:
         # المدير العام يرى جميع الاجتماعات
-        meetings = Meeting.objects.all().order_by('-date')
+        meetings = Meeting.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('-date')
     else:
         # المستخدمون العاديون يرون فقط الاجتماعات التي أنشؤوها أو مدعوون إليها
         meetings = Meeting.objects.filter(
-            Q(created_by=request.user) | Q(attendees__user=request.user)
+            Q(created_by=request.user).prefetch_related()  # TODO: Add appropriate prefetch_related fields | Q(attendees__user=request.user)
         ).distinct().order_by('-date')
 
     # تطبيق عوامل التصفية
@@ -118,6 +119,7 @@ def meeting_list(request):
 
 @login_required
 def meeting_detail(request, pk):
+    """meeting_detail function"""
     meeting = get_object_or_404(Meeting, pk=pk)
 
     # التحقق من صلاحية الوصول - فقط المدير العام أو الحضور أو منشئ الاجتماع
@@ -126,21 +128,21 @@ def meeting_detail(request, pk):
             meeting.created_by == request.user):
         messages.error(request, "ليس لديك صلاحية للوصول إلى هذا الاجتماع")
         return redirect('meetings:list')
-    
+
     # حساب إحصائيات المهام
     total_tasks = meeting.meeting_tasks.count()
     completed_count = meeting.meeting_tasks.filter(status='completed').count()
     in_progress_count = meeting.meeting_tasks.filter(status='in_progress').count()
-    
+
     # حساب النسب المئوية للمهام
     completed_percent = (completed_count / total_tasks * 100) if total_tasks > 0 else 0
     in_progress_percent = (in_progress_count / total_tasks * 100) if total_tasks > 0 else 0
     pending_percent = 100 - completed_percent - in_progress_percent
-    
+
     # الحصول على قائمة المستخدمين المتاحين لإضافتهم (غير موجودين بالفعل في قائمة الحضور)
     existing_attendee_ids = meeting.attendees.values_list('user_id', flat=True)
     available_users = User.objects.exclude(id__in=existing_attendee_ids)
-    
+
     # مع عدد المهام المخصصة لكل حضور
     attendee_task_counts = []
     for attendee in meeting.attendees.all():
@@ -149,7 +151,7 @@ def meeting_detail(request, pk):
             'attendee': attendee,
             'task_count': task_count
         })
-    
+
     context = {
         'meeting': meeting,
         'completed_count': completed_count,
@@ -165,23 +167,24 @@ def meeting_detail(request, pk):
 @login_required
 @permission_required('meetings.add_meeting', login_url='accounts:access_denied')
 def meeting_create(request):
+    """meeting_create function"""
     if request.method == 'POST':
         form = MeetingForm(request.POST)
         if form.is_valid():
             meeting = form.save(commit=False)
             meeting.created_by = request.user
             meeting.save()
-            
+
             # حفظ الحضور المحددين
             attendees = form.cleaned_data.get('attendees', [])
             for user in attendees:
                 Attendee.objects.create(meeting=meeting, user=user)
-            
+
             # معالجة المهام
             tasks_text = form.cleaned_data.get('tasks', '')
             if tasks_text:
                 task_lines = [line.strip() for line in tasks_text.split('\n') if line.strip()]
-                
+
                 # معالجة تعيينات المهام
                 task_assignments = {}
                 task_assignments_text = form.cleaned_data.get('task_assignments', '')
@@ -191,12 +194,12 @@ def meeting_create(request):
                     except json.JSONDecodeError:
                         # إذا كان هناك خطأ في تحليل البيانات، تجاهل
                         pass
-                
+
                 # إنشاء المهام
                 for i, task_description in enumerate(task_lines):
                     task_id = f"task-{i}"
                     task = MeetingTask(meeting=meeting, description=task_description)
-                    
+
                     # إذا كانت المهمة معينة لشخص، أضف المستخدم وغير الحالة إلى قيد التنفيذ
                     if task_id in task_assignments and task_assignments[task_id]:
                         try:
@@ -208,17 +211,17 @@ def meeting_create(request):
                             task.end_date = meeting.date.date() + timedelta(days=7)
                         except User.DoesNotExist:
                             pass
-                    
+
                     task.save()
-            
+
             messages.success(request, "تم إنشاء الاجتماع بنجاح")
             return redirect('meetings:detail', pk=meeting.pk)
     else:
         form = MeetingForm()
-    
+
     context = {
-        'form': form, 
-        'edit': False, 
+        'form': form,
+        'edit': False,
         'select2_enabled': True,  # لتفعيل القائمة المنسدلة
     }
     return render(request, 'meetings/meeting_form.html', context)
@@ -226,27 +229,28 @@ def meeting_create(request):
 @login_required
 @permission_required('meetings.change_meeting', login_url='accounts:access_denied')
 def meeting_edit(request, pk):
+    """meeting_edit function"""
     meeting = get_object_or_404(Meeting, pk=pk)
     if request.method == 'POST':
         form = MeetingForm(request.POST, instance=meeting)
         if form.is_valid():
             # حفظ بيانات الاجتماع
             form.save()
-            
+
             # حفظ الحضور المحددين - أولا نحذف الحضور القدامى
             meeting.attendees.all().delete()
             attendees = form.cleaned_data.get('attendees', [])
             for user in attendees:
                 Attendee.objects.create(meeting=meeting, user=user)
-            
+
             # معالجة المهام - أولا نحذف المهام القديمة
             meeting.meeting_tasks.all().delete()
-            
+
             # ثم نضيف المهام الجديدة
             tasks_text = form.cleaned_data.get('tasks', '')
             if tasks_text:
                 task_lines = [line.strip() for line in tasks_text.split('\n') if line.strip()]
-                
+
                 # معالجة تعيينات المهام
                 task_assignments = {}
                 task_assignments_text = form.cleaned_data.get('task_assignments', '')
@@ -256,12 +260,12 @@ def meeting_edit(request, pk):
                     except json.JSONDecodeError:
                         # إذا كان هناك خطأ في تحليل البيانات، تجاهل
                         pass
-                
+
                 # إنشاء المهام
                 for i, task_description in enumerate(task_lines):
                     task_id = f"task-{i}"
                     task = MeetingTask(meeting=meeting, description=task_description)
-                    
+
                     # إذا كانت المهمة معينة لشخص، أضف المستخدم وغير الحالة إلى قيد التنفيذ
                     if task_id in task_assignments and task_assignments[task_id]:
                         try:
@@ -273,40 +277,40 @@ def meeting_edit(request, pk):
                             task.end_date = meeting.date.date() + timedelta(days=7)
                         except User.DoesNotExist:
                             pass
-                    
+
                     task.save()
-            
+
             messages.success(request, "تم تحديث الاجتماع بنجاح")
             return redirect('meetings:detail', pk=meeting.pk)
     else:
         # إعداد البيانات الحالية للنموذج
         form = MeetingForm(instance=meeting)
-        
+
         # تحديد الحضور المحددين مسبقاً
         current_attendees = meeting.attendees.values_list('user_id', flat=True)
         if current_attendees.exists():
             form.initial['attendees'] = list(current_attendees)
-        
+
         # إعداد المهام الحالية
         tasks = meeting.meeting_tasks.all()
         if tasks.exists():
             # تجميع وصف المهام
             tasks_text = "\n".join([task.description for task in tasks])
             form.initial['tasks'] = tasks_text
-            
+
             # تجميع تعيينات المهام
             task_assignments = {}
             for i, task in enumerate(tasks):
                 if task.assigned_to:
                     task_assignments[f"task-{i}"] = str(task.assigned_to.id)
-            
+
             if task_assignments:
                 form.initial['task_assignments'] = json.dumps(task_assignments)
-    
+
     context = {
-        'form': form, 
-        'edit': True, 
-        'meeting': meeting, 
+        'form': form,
+        'edit': True,
+        'meeting': meeting,
         'select2_enabled': True,  # لتفعيل القائمة المنسدلة
     }
     return render(request, 'meetings/meeting_form.html', context)
@@ -314,6 +318,7 @@ def meeting_edit(request, pk):
 @login_required
 @permission_required('meetings.delete_meeting', login_url='accounts:access_denied')
 def meeting_delete(request, pk):
+    """meeting_delete function"""
     meeting = get_object_or_404(Meeting, pk=pk)
     if request.method == 'POST':
         meeting.delete()
@@ -324,6 +329,7 @@ def meeting_delete(request, pk):
 @login_required
 @permission_required('meetings.add_attendee', login_url='accounts:access_denied')
 def add_attendee(request, pk):
+    """add_attendee function"""
     meeting = get_object_or_404(Meeting, pk=pk)
     if request.method == 'POST':
         user_id = request.POST.get('user')
@@ -336,6 +342,7 @@ def add_attendee(request, pk):
 @login_required
 @permission_required('meetings.delete_attendee', login_url='accounts:access_denied')
 def remove_attendee(request, pk):
+    """remove_attendee function"""
     meeting = get_object_or_404(Meeting, pk=pk)
     attendee_id = request.GET.get('attendee_id')
     if attendee_id:
@@ -352,7 +359,7 @@ def remove_attendee(request, pk):
 @permission_required('meetings.view_meeting', login_url='accounts:access_denied')
 def calendar_view(request):
     """عرض تقويم الاجتماعات"""
-    meetings = Meeting.objects.all()
+    meetings = Meeting.objects.all().select_related()  # TODO: Add appropriate select_related fields
     return render(request, 'meetings/calendar.html', {'meetings': meetings})
 
 @login_required
@@ -397,7 +404,7 @@ def meeting_task_detail(request, task_id):
     steps = task.steps.all().order_by('created_at')
 
     # المهام ذات الصلة من نفس الاجتماع
-    related_tasks = MeetingTask.objects.filter(meeting=task.meeting).exclude(id=task.id)[:5]
+    related_tasks = MeetingTask.objects.filter(meeting=task.meeting).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exclude(id=task.id)[:5]
 
     # إحصائيات مهام الاجتماع
     meeting_tasks_stats = {
@@ -441,37 +448,37 @@ def reports(request):
     date_to = request.GET.get('date_to')
     status = request.GET.get('status')
     creator = request.GET.get('creator')
-    
+
     # تطبيق معايير التصفية على الاستعلام
-    meetings = Meeting.objects.all()
-    
+    meetings = Meeting.objects.all().select_related()  # TODO: Add appropriate select_related fields
+
     if date_from:
         meetings = meetings.filter(date__date__gte=date_from)
-    
+
     if date_to:
         meetings = meetings.filter(date__date__lte=date_to)
-        
+
     if status:
         meetings = meetings.filter(status=status)
-        
+
     if creator:
         meetings = meetings.filter(created_by_id=creator)
-    
+
     # إحصائيات حالة الاجتماعات
     pending_count = meetings.filter(status='pending').count()
     completed_count = meetings.filter(status='completed').count()
     cancelled_count = meetings.filter(status='cancelled').count()
-    
+
     # بيانات الاجتماعات حسب الشهر
     monthly_data = []
     months_ar = [
         'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
         'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
     ]
-    
+
     # الحصول على الأشهر التي تحتوي على اجتماعات
     meeting_months = meetings.dates('date', 'month')
-    
+
     for month in meeting_months:
         month_count = meetings.filter(date__year=month.year, date__month=month.month).count()
         month_name = f"{months_ar[month.month - 1]} {month.year}"
@@ -479,24 +486,24 @@ def reports(request):
             'month_name': month_name,
             'count': month_count
         })
-    
+
     # حساب متوسط المهام والحضور لكل اجتماع
     avg_tasks = meetings.annotate(tasks_count=Count('meeting_tasks')).aggregate(avg=Avg('tasks_count'))['avg'] or 0
     avg_attendees = meetings.annotate(attendees_count=Count('attendees')).aggregate(avg=Avg('attendees_count'))['avg'] or 0
-    
+
     # إضافة عدد المهام المكتملة لكل اجتماع
     meeting_list = []
     for meeting in meetings:
         # حساب عدد المهام المكتملة
         meeting.completed_tasks_count = meeting.meeting_tasks.filter(status='completed').count()
         meeting_list.append(meeting)
-    
+
     # الحصول على قائمة المستخدمين للفلتر
-    users = User.objects.all()
-    
+    users = User.objects.all().select_related()  # TODO: Add appropriate select_related fields
+
     # التاريخ الحالي للطباعة
     now = timezone.now()
-    
+
     context = {
         'meetings': meeting_list,
         'pending_count': pending_count,

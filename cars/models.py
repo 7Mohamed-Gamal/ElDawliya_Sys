@@ -13,9 +13,11 @@ class Supplier(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
+        """__str__ function"""
         return self.name
-    
+
     class Meta:
+        """Meta class"""
         verbose_name = "المورد"
         verbose_name_plural = "الموردين"
         ordering = ['name']
@@ -54,9 +56,11 @@ class Car(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.car_code} - {self.car_name}"
-    
+
     class Meta:
+        """Meta class"""
         ordering = ['car_code']
 
 
@@ -74,9 +78,11 @@ class Settings(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
+        """__str__ function"""
         return f"Settings (Last updated: {self.updated_at.strftime('%Y-%m-%d %H:%M')})"
-    
+
     class Meta:
+        """Meta class"""
         verbose_name = 'Settings'
         verbose_name_plural = 'Settings'
 
@@ -86,7 +92,7 @@ class Trip(models.Model):
     date = models.DateField()
     car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name='trips')
     distance = models.FloatField(help_text="Distance in km")
-    
+
     # These fields will be calculated based on the settings
     fuel_cost = models.FloatField(null=True, blank=True)
     maintenance_cost = models.FloatField(null=True, blank=True)
@@ -100,12 +106,13 @@ class Trip(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.car.car_name} - {self.date}"
-    
+
     def calculate_costs(self):
         """Calculate all costs based on current settings"""
         settings = Settings.objects.latest('id')
-        
+
         # Determine fuel price based on the car's fuel type
         if self.car.fuel_type == 'diesel':
             fuel_price = settings.diesel_price
@@ -113,36 +120,38 @@ class Trip(models.Model):
             fuel_price = settings.gasoline_price
         else:  # gas
             fuel_price = settings.gas_price
-        
+
         # Calculate all costs
         self.fuel_cost = self.distance * self.car.fuel_consumption_rate * fuel_price
         self.maintenance_cost = self.distance * settings.maintenance_rate
         self.depreciation_cost = self.distance * settings.depreciation_rate
         self.license_cost = self.distance * settings.license_rate
         self.driver_profit = self.distance * settings.driver_profit_rate
-        
+
         # Calculate total base cost and tax
-        self.total_base_cost = (self.fuel_cost + self.maintenance_cost + 
-                                self.depreciation_cost + self.license_cost + 
+        self.total_base_cost = (self.fuel_cost + self.maintenance_cost +
+                                self.depreciation_cost + self.license_cost +
                                 self.driver_profit)
         self.tax_amount = self.total_base_cost * (settings.tax_rate / 100)
         self.final_price = self.total_base_cost + self.tax_amount
-        
+
         self.save()
-        
+
         # Update the car's total distance traveled
         self.car.distance_traveled += self.distance
         self.car.save()
-        
+
     def save(self, *args, **kwargs):
+        """save function"""
         is_new = not self.pk  # Check if this is a new record
         super().save(*args, **kwargs)
-        
+
         # Calculate costs if this is a new trip
         if is_new:
             self.calculate_costs()
-    
+
     class Meta:
+        """Meta class"""
         ordering = ['-date', 'car__car_code']
 
 
@@ -160,9 +169,11 @@ class RoutePoint(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.car.car_name} - {self.point_name}"
-    
+
     class Meta:
+        """Meta class"""
         verbose_name = "نقطة خط السير"
         verbose_name_plural = "نقاط خط السير"
         ordering = ['car', 'order']

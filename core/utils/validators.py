@@ -14,23 +14,25 @@ def validate_saudi_id(value):
     """
     if not value:
         return
-    
+
     # Remove any non-digit characters
     id_number = ''.join(filter(str.isdigit, str(value)))
-    
+
     # Check length
     if len(id_number) != 10:
         raise ValidationError(_('رقم الهوية يجب أن يكون 10 أرقام'))
-    
+
     # Check if it starts with 1 or 2
     if not id_number.startswith(('1', '2')):
         raise ValidationError(_('رقم الهوية يجب أن يبدأ بـ 1 أو 2'))
-    
+
     # Validate using Luhn algorithm (modified for Saudi ID)
     def luhn_checksum(card_num):
+        """luhn_checksum function"""
         def digits_of(n):
+            """digits_of function"""
             return [int(d) for d in str(n)]
-        
+
         digits = digits_of(card_num)
         odd_digits = digits[-1::-2]
         even_digits = digits[-2::-2]
@@ -38,7 +40,7 @@ def validate_saudi_id(value):
         for d in even_digits:
             checksum += sum(digits_of(d*2))
         return checksum % 10
-    
+
     if luhn_checksum(id_number) != 0:
         raise ValidationError(_('رقم الهوية غير صحيح'))
 
@@ -50,20 +52,20 @@ def validate_phone_number(value):
     """
     if not value:
         return
-    
+
     # Remove any non-digit characters
     phone = ''.join(filter(str.isdigit, str(value)))
-    
+
     # Remove country code if present
     if phone.startswith('966'):
         phone = phone[3:]
     elif phone.startswith('0'):
         phone = phone[1:]
-    
+
     # Check length (should be 9 digits)
     if len(phone) != 9:
         raise ValidationError(_('رقم الهاتف يجب أن يكون 9 أرقام'))
-    
+
     # Check if it starts with valid mobile prefixes
     valid_prefixes = ['50', '51', '52', '53', '54', '55', '56', '57', '58', '59']
     if not any(phone.startswith(prefix) for prefix in valid_prefixes):
@@ -77,27 +79,28 @@ def validate_iban(value):
     """
     if not value:
         return
-    
+
     # Remove spaces and convert to uppercase
     iban = ''.join(value.split()).upper()
-    
+
     # Check if it starts with SA
     if not iban.startswith('SA'):
         raise ValidationError(_('رقم الآيبان يجب أن يبدأ بـ SA'))
-    
+
     # Check length (Saudi IBAN is 24 characters)
     if len(iban) != 24:
         raise ValidationError(_('رقم الآيبان يجب أن يكون 24 حرف'))
-    
+
     # Check if the rest are digits
     if not iban[2:].isdigit():
         raise ValidationError(_('رقم الآيبان يحتوي على أحرف غير صحيحة'))
-    
+
     # Validate using IBAN checksum algorithm
     def iban_checksum(iban):
+        """iban_checksum function"""
         # Move first 4 characters to end
         rearranged = iban[4:] + iban[:4]
-        
+
         # Replace letters with numbers (A=10, B=11, ..., Z=35)
         numeric = ''
         for char in rearranged:
@@ -105,10 +108,10 @@ def validate_iban(value):
                 numeric += char
             else:
                 numeric += str(ord(char) - ord('A') + 10)
-        
+
         # Calculate mod 97
         return int(numeric) % 97
-    
+
     if iban_checksum(iban) != 1:
         raise ValidationError(_('رقم الآيبان غير صحيح'))
 
@@ -120,7 +123,7 @@ def validate_email_domain(value, allowed_domains=None):
     """
     if not value or not allowed_domains:
         return
-    
+
     domain = value.split('@')[-1].lower()
     if domain not in [d.lower() for d in allowed_domains]:
         raise ValidationError(
@@ -136,29 +139,29 @@ def validate_password_strength(value):
     """
     if not value:
         return
-    
+
     errors = []
-    
+
     # Check minimum length
     if len(value) < 8:
         errors.append(_('كلمة المرور يجب أن تكون 8 أحرف على الأقل'))
-    
+
     # Check for uppercase letter
     if not re.search(r'[A-Z]', value):
         errors.append(_('كلمة المرور يجب أن تحتوي على حرف كبير واحد على الأقل'))
-    
+
     # Check for lowercase letter
     if not re.search(r'[a-z]', value):
         errors.append(_('كلمة المرور يجب أن تحتوي على حرف صغير واحد على الأقل'))
-    
+
     # Check for digit
     if not re.search(r'\d', value):
         errors.append(_('كلمة المرور يجب أن تحتوي على رقم واحد على الأقل'))
-    
+
     # Check for special character
     if not re.search(r'[!@#$%^&*(),.?":{}|<>]', value):
         errors.append(_('كلمة المرور يجب أن تحتوي على رمز خاص واحد على الأقل'))
-    
+
     if errors:
         raise ValidationError(errors)
 
@@ -170,7 +173,7 @@ def validate_file_size(value, max_size_mb=5):
     """
     if not value:
         return
-    
+
     max_size_bytes = max_size_mb * 1024 * 1024
     if value.size > max_size_bytes:
         raise ValidationError(
@@ -186,10 +189,10 @@ def validate_file_extension(value, allowed_extensions=None):
     """
     if not value or not allowed_extensions:
         return
-    
+
     import os
     ext = os.path.splitext(value.name)[1].lower()
-    
+
     if ext not in [e.lower() for e in allowed_extensions]:
         raise ValidationError(
             _('امتداد الملف غير مسموح. الامتدادات المسموحة: %(extensions)s') %
@@ -204,10 +207,10 @@ def validate_image_file(value):
     """
     if not value:
         return
-    
+
     allowed_extensions = ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.webp']
     validate_file_extension(value, allowed_extensions)
-    
+
     # Additional validation using PIL (if available)
     try:
         from PIL import Image
@@ -263,13 +266,13 @@ def validate_salary_range(basic_salary, min_salary=None, max_salary=None):
     """
     if basic_salary is None:
         return
-    
+
     if min_salary and basic_salary < min_salary:
         raise ValidationError(
             _('الراتب الأساسي يجب أن يكون أكبر من %(min_salary)s') %
             {'min_salary': min_salary}
         )
-    
+
     if max_salary and basic_salary > max_salary:
         raise ValidationError(
             _('الراتب الأساسي يجب أن يكون أقل من %(max_salary)s') %
@@ -284,11 +287,11 @@ def validate_unique_in_queryset(value, queryset, field_name, exclude_id=None):
     """
     if not value:
         return
-    
+
     qs = queryset.filter(**{field_name: value})
     if exclude_id:
         qs = qs.exclude(id=exclude_id)
-    
+
     if qs.exists():
         raise ValidationError(_('هذه القيمة موجودة بالفعل'))
 
@@ -300,12 +303,12 @@ def validate_business_email(value):
     """
     if not value:
         return
-    
+
     personal_domains = [
         'gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com',
         'live.com', 'msn.com', 'aol.com', 'icloud.com'
     ]
-    
+
     domain = value.split('@')[-1].lower()
     if domain in personal_domains:
         raise ValidationError(_('يرجى استخدام بريد إلكتروني تجاري وليس شخصي'))
@@ -318,7 +321,7 @@ def validate_arabic_text(value):
     """
     if not value:
         return
-    
+
     arabic_pattern = re.compile(r'[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]')
     if not arabic_pattern.search(value):
         raise ValidationError(_('النص يجب أن يحتوي على أحرف عربية'))
@@ -331,7 +334,7 @@ def validate_english_text(value):
     """
     if not value:
         return
-    
+
     english_pattern = re.compile(r'^[a-zA-Z0-9\s\-_.]+$')
     if not english_pattern.match(value):
         raise ValidationError(_('النص يجب أن يحتوي على أحرف إنجليزية فقط'))

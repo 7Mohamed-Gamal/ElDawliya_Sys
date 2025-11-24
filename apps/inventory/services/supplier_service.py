@@ -16,17 +16,17 @@ class SupplierService(BaseService):
     خدمة إدارة الموردين والتقييمات
     Comprehensive supplier management with evaluation system
     """
-    
+
     def create_supplier(self, data):
         """
         إنشاء مورد جديد
         Create new supplier
         """
         self.check_permission('inventory.add_supplier')
-        
+
         required_fields = ['name_ar', 'name_en', 'supplier_type']
         self.validate_required_fields(data, required_fields)
-        
+
         try:
             with transaction.atomic():
                 # Create supplier
@@ -36,21 +36,21 @@ class SupplierService(BaseService):
                     'phone', 'fax', 'email', 'website', 'contact_person',
                     'payment_terms', 'credit_limit', 'currency', 'is_active'
                 ])
-                
+
                 supplier = Supplier.objects.create(
                     **supplier_data,
                     created_by=self.user,
                     updated_by=self.user
                 )
-                
+
                 # Add supplier contacts if provided
                 if data.get('contacts'):
                     self._add_supplier_contacts(supplier, data['contacts'])
-                
+
                 # Add supplier products if provided
                 if data.get('products'):
                     self._add_supplier_products(supplier, data['products'])
-                
+
                 # Log the action
                 self.log_action(
                     action='create',
@@ -59,7 +59,7 @@ class SupplierService(BaseService):
                     new_values=supplier_data,
                     message=f'تم إنشاء مورد جديد: {supplier.name_ar}'
                 )
-                
+
                 return self.format_response(
                     data={
                         'supplier_id': supplier.id,
@@ -67,26 +67,26 @@ class SupplierService(BaseService):
                     },
                     message='تم إنشاء المورد بنجاح'
                 )
-                
+
         except Exception as e:
             return self.handle_exception(e, 'create_supplier', 'supplier', data)
-    
+
     def update_supplier(self, supplier_id, data):
         """
         تحديث بيانات المورد
         Update supplier information
         """
         self.check_permission('inventory.change_supplier')
-        
+
         try:
             supplier = Supplier.objects.get(id=supplier_id)
-            
+
             # Check object-level permission
             self.check_object_permission('inventory.change_supplier', supplier)
-            
+
             # Get old values for audit
             old_values, new_values = self.get_model_changes(supplier, data)
-            
+
             # Update supplier data
             allowed_fields = [
                 'name_ar', 'name_en', 'supplier_type', 'tax_number', 'commercial_register',
@@ -94,14 +94,14 @@ class SupplierService(BaseService):
                 'phone', 'fax', 'email', 'website', 'contact_person',
                 'payment_terms', 'credit_limit', 'currency', 'is_active'
             ]
-            
+
             for field, value in data.items():
                 if field in allowed_fields and hasattr(supplier, field):
                     setattr(supplier, field, value)
-            
+
             supplier.updated_by = self.user
             supplier.save()
-            
+
             # Log the action
             self.log_action(
                 action='update',
@@ -111,10 +111,10 @@ class SupplierService(BaseService):
                 new_values=new_values,
                 message=f'تم تحديث بيانات المورد: {supplier.name_ar}'
             )
-            
+
             # Invalidate cache
             self.invalidate_cache(f'supplier_{supplier_id}_*')
-            
+
             return self.format_response(
                 data={
                     'supplier_id': supplier.id,
@@ -122,7 +122,7 @@ class SupplierService(BaseService):
                 },
                 message='تم تحديث بيانات المورد بنجاح'
             )
-            
+
         except Supplier.DoesNotExist:
             return self.format_response(
                 success=False,
@@ -130,30 +130,31 @@ class SupplierService(BaseService):
             )
         except Exception as e:
             return self.handle_exception(e, 'update_supplier', f'supplier/{supplier_id}', data)
-    
+
     def get_supplier(self, supplier_id, include_relations=True):
         """
         الحصول على بيانات المورد
         Get supplier details
         """
         self.check_permission('inventory.view_supplier')
-        
+
         try:
             cache_key = self.cache_key('supplier', supplier_id, 'details', include_relations)
-            
+
             def get_supplier_data():
+                """get_supplier_data function"""
                 queryset = Supplier.objects
-                
+
                 if include_relations:
                     queryset = queryset.prefetch_related(
                         'contacts', 'products', 'evaluations', 'purchase_orders'
                     )
-                
+
                 supplier = queryset.get(id=supplier_id)
-                
+
                 # Check object-level permission
                 self.check_object_permission('inventory.view_supplier', supplier)
-                
+
                 supplier_data = {
                     'id': supplier.id,
                     'name_ar': supplier.name_ar,
@@ -174,7 +175,7 @@ class SupplierService(BaseService):
                     'is_active': supplier.is_active,
                     'created_at': supplier.created_at,
                 }
-                
+
                 if include_relations:
                     # Add contacts
                     contacts = []
@@ -188,7 +189,7 @@ class SupplierService(BaseService):
                             'is_primary': contact.is_primary,
                         })
                     supplier_data['contacts'] = contacts
-                    
+
                     # Add evaluation summary
                     evaluations = supplier.evaluations.all()
                     if evaluations:
@@ -198,19 +199,19 @@ class SupplierService(BaseService):
                             'evaluations_count': evaluations.count(),
                             'last_evaluation': evaluations.order_by('-evaluation_date').first().evaluation_date if evaluations else None
                         }
-                
+
                 return supplier_data
-            
+
             supplier_data = self.get_from_cache(cache_key)
             if not supplier_data:
                 supplier_data = get_supplier_data()
                 self.set_cache(cache_key, supplier_data, 300)  # 5 minutes
-            
+
             return self.format_response(
                 data=supplier_data,
                 message='تم الحصول على بيانات المورد بنجاح'
             )
-            
+
         except Supplier.DoesNotExist:
             return self.format_response(
                 success=False,
@@ -218,25 +219,25 @@ class SupplierService(BaseService):
             )
         except Exception as e:
             return self.handle_exception(e, 'get_supplier', f'supplier/{supplier_id}')
-    
+
     def search_suppliers(self, filters=None, page=1, page_size=20):
         """
         البحث في الموردين
         Search suppliers with filters
         """
         self.check_permission('inventory.view_supplier')
-        
+
         try:
-            queryset = Supplier.objects.all()
-            
+            queryset = Supplier.objects.all().select_related()  # TODO: Add appropriate select_related fields
+
             # Apply filters
             if filters:
                 if filters.get('supplier_type'):
                     queryset = queryset.filter(supplier_type=filters['supplier_type'])
-                
+
                 if filters.get('is_active') is not None:
                     queryset = queryset.filter(is_active=filters['is_active'])
-                
+
                 if filters.get('search_term'):
                     term = filters['search_term']
                     queryset = queryset.filter(
@@ -246,24 +247,24 @@ class SupplierService(BaseService):
                         Q(email__icontains=term) |
                         Q(phone__icontains=term)
                     )
-                
+
                 if filters.get('city'):
                     queryset = queryset.filter(city__icontains=filters['city'])
-                
+
                 if filters.get('country'):
                     queryset = queryset.filter(country__icontains=filters['country'])
-                
+
                 if filters.get('min_rating'):
                     queryset = queryset.filter(
                         evaluations__overall_rating__gte=filters['min_rating']
                     ).distinct()
-            
+
             # Order by name
             queryset = queryset.order_by('name_ar')
-            
+
             # Paginate results
             paginated_data = self.paginate_queryset(queryset, page, page_size)
-            
+
             # Format supplier data
             suppliers = []
             for supplier in paginated_data['results']:
@@ -271,7 +272,7 @@ class SupplierService(BaseService):
                 avg_rating = supplier.evaluations.aggregate(
                     avg_rating=Avg('overall_rating')
                 )['avg_rating']
-                
+
                 suppliers.append({
                     'id': supplier.id,
                     'name_ar': supplier.name_ar,
@@ -285,30 +286,30 @@ class SupplierService(BaseService):
                     'average_rating': round(avg_rating, 2) if avg_rating else 0,
                     'is_active': supplier.is_active,
                 })
-            
+
             paginated_data['results'] = suppliers
-            
+
             return self.format_response(
                 data=paginated_data,
                 message='تم البحث في الموردين بنجاح'
             )
-            
+
         except Exception as e:
             return self.handle_exception(e, 'search_suppliers', 'suppliers', filters)
-    
+
     def evaluate_supplier(self, supplier_id, evaluation_data):
         """
         تقييم المورد
         Evaluate supplier performance
         """
         self.check_permission('inventory.add_supplierevaluation')
-        
+
         required_fields = ['evaluation_period_start', 'evaluation_period_end', 'overall_rating']
         self.validate_required_fields(evaluation_data, required_fields)
-        
+
         try:
             supplier = Supplier.objects.get(id=supplier_id)
-            
+
             with transaction.atomic():
                 # Create supplier evaluation
                 evaluation = SupplierEvaluation.objects.create(
@@ -329,10 +330,10 @@ class SupplierService(BaseService):
                     created_by=self.user,
                     updated_by=self.user
                 )
-                
+
                 # Update supplier's average rating
                 self._update_supplier_rating(supplier)
-                
+
                 # Log the action
                 self.log_action(
                     action='create',
@@ -341,12 +342,12 @@ class SupplierService(BaseService):
                     new_values=evaluation_data,
                     message=f'تم تقييم المورد: {supplier.name_ar} - التقييم: {evaluation_data["overall_rating"]}'
                 )
-                
+
                 return self.format_response(
                     data={'evaluation_id': evaluation.id},
                     message='تم تقييم المورد بنجاح'
                 )
-                
+
         except Supplier.DoesNotExist:
             return self.format_response(
                 success=False,
@@ -354,24 +355,24 @@ class SupplierService(BaseService):
             )
         except Exception as e:
             return self.handle_exception(e, 'evaluate_supplier', f'supplier_evaluation/{supplier_id}', evaluation_data)
-    
+
     def get_supplier_evaluations(self, supplier_id, page=1, page_size=20):
         """
         الحصول على تقييمات المورد
         Get supplier evaluations
         """
         self.check_permission('inventory.view_supplierevaluation')
-        
+
         try:
             supplier = Supplier.objects.get(id=supplier_id)
-            
+
             queryset = SupplierEvaluation.objects.filter(
                 supplier=supplier
-            ).order_by('-evaluation_date')
-            
+            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('-evaluation_date')
+
             # Paginate results
             paginated_data = self.paginate_queryset(queryset, page, page_size)
-            
+
             # Format evaluation data
             evaluations = []
             for evaluation in paginated_data['results']:
@@ -391,14 +392,14 @@ class SupplierService(BaseService):
                     'recommendations': evaluation.recommendations,
                     'evaluator': evaluation.created_by.get_full_name() if evaluation.created_by else '',
                 })
-            
+
             paginated_data['results'] = evaluations
-            
+
             return self.format_response(
                 data=paginated_data,
                 message='تم الحصول على تقييمات المورد بنجاح'
             )
-            
+
         except Supplier.DoesNotExist:
             return self.format_response(
                 success=False,
@@ -406,31 +407,31 @@ class SupplierService(BaseService):
             )
         except Exception as e:
             return self.handle_exception(e, 'get_supplier_evaluations', f'supplier_evaluations/{supplier_id}')
-    
+
     def get_supplier_performance_report(self, supplier_id, start_date=None, end_date=None):
         """
         تقرير أداء المورد
         Get supplier performance report
         """
         self.check_permission('inventory.view_supplier_reports')
-        
+
         try:
             supplier = Supplier.objects.get(id=supplier_id)
-            
+
             # Set default date range if not provided
             if not end_date:
                 end_date = timezone.now().date()
             if not start_date:
                 start_date = end_date - timedelta(days=365)  # Last year
-            
+
             # Get purchase orders statistics
             from core.models.procurement import PurchaseOrder
-            
+
             purchase_orders = PurchaseOrder.objects.filter(
                 supplier=supplier,
                 order_date__range=[start_date, end_date]
-            )
-            
+            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+
             po_stats = purchase_orders.aggregate(
                 total_orders=Count('id'),
                 total_value=Sum('total_amount'),
@@ -438,20 +439,20 @@ class SupplierService(BaseService):
                 on_time_deliveries=Count('id', filter=Q(delivery_status='on_time')),
                 late_deliveries=Count('id', filter=Q(delivery_status='late')),
             )
-            
+
             # Calculate delivery performance
             total_deliveries = po_stats['on_time_deliveries'] + po_stats['late_deliveries']
             on_time_percentage = (
                 (po_stats['on_time_deliveries'] / total_deliveries * 100)
                 if total_deliveries > 0 else 0
             )
-            
+
             # Get evaluation statistics
             evaluations = SupplierEvaluation.objects.filter(
                 supplier=supplier,
                 evaluation_date__range=[start_date, end_date]
-            )
-            
+            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+
             eval_stats = evaluations.aggregate(
                 avg_overall_rating=Avg('overall_rating'),
                 avg_quality_rating=Avg('quality_rating'),
@@ -460,12 +461,12 @@ class SupplierService(BaseService):
                 avg_price_rating=Avg('price_rating'),
                 evaluations_count=Count('id'),
             )
-            
+
             # Get top products from this supplier
             top_products = SupplierProduct.objects.filter(
                 supplier=supplier
-            ).select_related('product').order_by('-last_purchase_date')[:10]
-            
+            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('product').order_by('-last_purchase_date')[:10]
+
             products_list = []
             for sp in top_products:
                 products_list.append({
@@ -474,7 +475,7 @@ class SupplierService(BaseService):
                     'unit_price': sp.unit_price,
                     'last_purchase_date': sp.last_purchase_date,
                 })
-            
+
             performance_report = {
                 'supplier': {
                     'id': supplier.id,
@@ -501,12 +502,12 @@ class SupplierService(BaseService):
                 },
                 'top_products': products_list,
             }
-            
+
             return self.format_response(
                 data=performance_report,
                 message='تم إنشاء تقرير أداء المورد بنجاح'
             )
-            
+
         except Supplier.DoesNotExist:
             return self.format_response(
                 success=False,
@@ -514,46 +515,46 @@ class SupplierService(BaseService):
             )
         except Exception as e:
             return self.handle_exception(e, 'get_supplier_performance_report', f'supplier_performance/{supplier_id}')
-    
+
     def get_suppliers_comparison(self, supplier_ids, criteria=None):
         """
         مقارنة الموردين
         Compare suppliers
         """
         self.check_permission('inventory.view_supplier_reports')
-        
+
         try:
-            suppliers = Supplier.objects.filter(id__in=supplier_ids)
-            
+            suppliers = Supplier.objects.filter(id__in=supplier_ids).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+
             if not suppliers.exists():
                 return self.format_response(
                     success=False,
                     message='لا توجد موردين للمقارنة'
                 )
-            
+
             comparison_data = []
-            
+
             for supplier in suppliers:
                 # Get latest evaluation
                 latest_evaluation = SupplierEvaluation.objects.filter(
                     supplier=supplier
-                ).order_by('-evaluation_date').first()
-                
+                ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('-evaluation_date').first()
+
                 # Get purchase statistics (last 12 months)
                 end_date = timezone.now().date()
                 start_date = end_date - timedelta(days=365)
-                
+
                 from core.models.procurement import PurchaseOrder
-                
+
                 po_stats = PurchaseOrder.objects.filter(
                     supplier=supplier,
                     order_date__range=[start_date, end_date]
-                ).aggregate(
+                ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
                     total_orders=Count('id'),
                     total_value=Sum('total_amount'),
                     avg_order_value=Avg('total_amount'),
                 )
-                
+
                 supplier_data = {
                     'id': supplier.id,
                     'name': supplier.name_ar,
@@ -573,17 +574,17 @@ class SupplierService(BaseService):
                         'average_order_value': po_stats['avg_order_value'] or 0,
                     }
                 }
-                
+
                 comparison_data.append(supplier_data)
-            
+
             return self.format_response(
                 data=comparison_data,
                 message='تم إنشاء مقارنة الموردين بنجاح'
             )
-            
+
         except Exception as e:
             return self.handle_exception(e, 'get_suppliers_comparison', 'suppliers_comparison')
-    
+
     def _add_supplier_contacts(self, supplier, contacts_data):
         """إضافة جهات اتصال المورد"""
         for contact_data in contacts_data:
@@ -597,15 +598,15 @@ class SupplierService(BaseService):
                 created_by=self.user,
                 updated_by=self.user
             )
-    
+
     def _add_supplier_products(self, supplier, products_data):
         """إضافة منتجات المورد"""
         from core.models.inventory import Product
-        
+
         for product_data in products_data:
             try:
                 product = Product.objects.get(id=product_data['product_id'])
-                
+
                 SupplierProduct.objects.create(
                     supplier=supplier,
                     product=product,
@@ -619,13 +620,13 @@ class SupplierService(BaseService):
                 )
             except Product.DoesNotExist:
                 self.logger.warning(f"Product {product_data['product_id']} not found for supplier {supplier.id}")
-    
+
     def _update_supplier_rating(self, supplier):
         """تحديث تقييم المورد المتوسط"""
         avg_rating = SupplierEvaluation.objects.filter(
             supplier=supplier
-        ).aggregate(avg_rating=Avg('overall_rating'))['avg_rating']
-        
+        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(avg_rating=Avg('overall_rating'))['avg_rating']
+
         if avg_rating:
             supplier.average_rating = round(avg_rating, 2)
             supplier.save()

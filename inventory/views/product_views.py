@@ -22,6 +22,7 @@ class ProductListView(ListView):
     context_object_name = 'products'
 
     def get_queryset(self):
+        """get_queryset function"""
         queryset = super().get_queryset()
         search_query = self.request.GET.get('search', '')
         category = self.request.GET.get('category', '')
@@ -62,31 +63,32 @@ class ProductListView(ListView):
         return queryset
 
     def get_context_data(self, **kwargs):
+        """get_context_data function"""
         context = super().get_context_data(**kwargs)
-        context['categories'] = Category.objects.all()
-        
+        context['categories'] = Category.objects.all().select_related()  # TODO: Add appropriate select_related fields
+
         # حساب إحصائيات المخزون
         # مساوي الحد الأدنى
         equal_stock_count = Product.objects.filter(
-            quantity=F('minimum_threshold'),
+            quantity=F('minimum_threshold').prefetch_related()  # TODO: Add appropriate prefetch_related fields,
             minimum_threshold__gt=0
         ).count()
-        
+
         # تحت الحد الأدنى
         low_stock_count = Product.objects.filter(
-            quantity__lt=F('minimum_threshold'),
+            quantity__lt=F('minimum_threshold').prefetch_related()  # TODO: Add appropriate prefetch_related fields,
             minimum_threshold__gt=0
         ).count()
-        
+
         # نفذت الكمية
-        out_of_stock = Product.objects.filter(quantity=0).count()
-        
+        out_of_stock = Product.objects.filter(quantity=0).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+
         # المتوفر (كمية أكبر من الحد الأدنى، ليس مساوي له)
         normal_stock_count = Product.objects.filter(
-            Q(quantity__gt=F('minimum_threshold')) | Q(minimum_threshold=0),
+            Q(quantity__gt=F('minimum_threshold').prefetch_related()  # TODO: Add appropriate prefetch_related fields) | Q(minimum_threshold=0),
             quantity__gt=0
         ).count()
-        
+
         context['equal_stock_count'] = equal_stock_count
         context['low_stock_count'] = low_stock_count
         context['out_of_stock'] = out_of_stock
@@ -97,6 +99,7 @@ class ProductListView(ListView):
 @method_decorator(login_required, name='dispatch')
 @inventory_class_permission_required('products', 'add')
 class ProductCreateView(CreateView):
+    """ProductCreateView class"""
     model = Product
     form_class = ProductForm
     template_name = 'inventory/product_form.html'
@@ -130,16 +133,17 @@ class ProductCreateView(CreateView):
             return self.form_invalid(form)
 
     def get_context_data(self, **kwargs):
+        """get_context_data function"""
         context = super().get_context_data(**kwargs)
         # Add categories for the form
-        context['categories'] = Category.objects.all()
+        context['categories'] = Category.objects.all().select_related()  # TODO: Add appropriate select_related fields
         # Add units for the form
-        context['units'] = Unit.objects.all()
+        context['units'] = Unit.objects.all().select_related()  # TODO: Add appropriate select_related fields
         # Add page title
         context['page_title'] = 'إضافة صنف جديد'
         # Add low stock count for sidebar
         low_stock_count = Product.objects.filter(
-            quantity__lt=F('minimum_threshold'),
+            quantity__lt=F('minimum_threshold').prefetch_related()  # TODO: Add appropriate prefetch_related fields,
             minimum_threshold__gt=0
         ).count()
         context['low_stock_count'] = low_stock_count
@@ -243,28 +247,31 @@ class ProductCreateView(CreateView):
 @method_decorator(login_required, name='dispatch')
 @inventory_class_permission_required('products', 'edit')
 class ProductUpdateView(UpdateView):
+    """ProductUpdateView class"""
     model = Product
     form_class = ProductForm
     template_name = 'inventory/product_form.html'
     success_url = reverse_lazy('inventory:product_list')
 
     def get_context_data(self, **kwargs):
+        """get_context_data function"""
         context = super().get_context_data(**kwargs)
         # Add categories for the form
-        context['categories'] = Category.objects.all()
+        context['categories'] = Category.objects.all().select_related()  # TODO: Add appropriate select_related fields
         # Add units for the form
-        context['units'] = Unit.objects.all()
+        context['units'] = Unit.objects.all().select_related()  # TODO: Add appropriate select_related fields
         # Add page title
         context['page_title'] = 'تعديل الصنف'
         # Add low stock count for sidebar
         low_stock_count = Product.objects.filter(
-            quantity__lt=F('minimum_threshold'),
+            quantity__lt=F('minimum_threshold').prefetch_related()  # TODO: Add appropriate prefetch_related fields,
             minimum_threshold__gt=0
         ).count()
         context['low_stock_count'] = low_stock_count
         return context
 
     def form_valid(self, form):
+        """form_valid function"""
         # Print all form data for debugging
         print("Form data (update):", self.request.POST)
         print("Form cleaned data (update):", form.cleaned_data)
@@ -339,6 +346,7 @@ class ProductUpdateView(UpdateView):
 @method_decorator(login_required, name='dispatch')
 @inventory_class_permission_required('products', 'delete')
 class ProductDeleteView(DeleteView):
+    """ProductDeleteView class"""
     model = Product
     template_name = 'inventory/product_confirm_delete.html'
     success_url = reverse_lazy('inventory:product_list')

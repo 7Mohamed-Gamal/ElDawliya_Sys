@@ -14,8 +14,10 @@ except (ProgrammingError, OperationalError, DatabaseError, ImportError) as e:
     logger.warning(f"Could not import models: {str(e)}")
     # Define placeholder classes to avoid import errors
     class SystemSettings:
+        """SystemSettings class"""
         @classmethod
         def get_settings(cls):
+            """get_settings function"""
             return DefaultSystemSettings()
 
 # Create a fallback settings class
@@ -27,6 +29,7 @@ class DefaultSystemSettings:
     system_name = 'نظام الدولية'
 
     def __str__(self):
+        """__str__ function"""
         return "إعدادات النظام (افتراضية)"
 
 def system_settings(request):
@@ -46,7 +49,7 @@ def system_settings(request):
             except Exception as e:
                 logger.error(f"Could not create default system settings: {str(e)}")
                 settings = DefaultSystemSettings()
-        
+
         return {
             'system_settings': settings
         }

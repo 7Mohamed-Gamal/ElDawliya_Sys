@@ -21,9 +21,11 @@ class TaskCategory(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_('تاريخ التحديث'))
 
     def __str__(self):
+        """__str__ function"""
         return self.name
 
     class Meta:
+        """Meta class"""
         verbose_name = _('تصنيف المهام')
         verbose_name_plural = _('تصنيفات المهام')
         ordering = ['name']
@@ -42,9 +44,11 @@ class TaskReminder(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name=_('تاريخ الإنشاء'))
 
     def __str__(self):
+        """__str__ function"""
         return f"تذكير لـ {self.task.get_display_title()} في {self.reminder_date}"
 
     class Meta:
+        """Meta class"""
         verbose_name = _('تذكير المهمة')
         verbose_name_plural = _('تذكيرات المهام')
         ordering = ['reminder_date']
@@ -84,18 +88,23 @@ class TaskManager(models.Manager):
     """Custom manager for Task model"""
 
     def get_queryset(self):
+        """get_queryset function"""
         return TaskQuerySet(self.model, using=self._db)
 
     def with_related(self):
+        """with_related function"""
         return self.get_queryset().with_related()
 
     def for_user(self, user):
+        """for_user function"""
         return self.get_queryset().for_user(user)
 
     def overdue(self):
+        """overdue function"""
         return self.get_queryset().overdue()
 
     def active(self):
+        """active function"""
         return self.get_queryset().active()
 
 class Task(models.Model):
@@ -195,6 +204,7 @@ class Task(models.Model):
     objects = TaskManager()
 
     class Meta:
+        """Meta class"""
         verbose_name = "مهمة"
         verbose_name_plural = "المهام"
         ordering = ['-created_at']
@@ -220,6 +230,7 @@ class Task(models.Model):
         ]
 
     def __str__(self):
+        """__str__ function"""
         title = self.title or self.description[:50]
         return f"{title} - {self.assigned_to.username}"
 
@@ -347,6 +358,7 @@ class TaskStep(models.Model):
     )
 
     class Meta:
+        """Meta class"""
         verbose_name = "خطوة مهمة"
         verbose_name_plural = "خطوات المهام"
         ordering = ['-date']
@@ -357,6 +369,7 @@ class TaskStep(models.Model):
         ]
 
     def __str__(self):
+        """__str__ function"""
         return f"خطوة: {self.description[:30]}... - {self.task.get_display_title()}"
 
     def save(self, *args, **kwargs):
@@ -405,7 +418,7 @@ class UnifiedTaskManager:
             else:
                 meeting_tasks = MeetingTask.objects.filter(
                     assigned_to=user
-                ).select_related('assigned_to', 'meeting').prefetch_related('steps')
+                ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('assigned_to', 'meeting').prefetch_related('steps')
 
             for mtask in meeting_tasks:
                 tasks.append(UnifiedTask(mtask, task_type='meeting'))
@@ -492,7 +505,7 @@ class UnifiedTaskManager:
             )
         else:
             regular_stats = Task.objects.filter(
-                models.Q(assigned_to=user) | models.Q(created_by=user)
+                models.Q(assigned_to=user).prefetch_related()  # TODO: Add appropriate prefetch_related fields | models.Q(created_by=user)
             ).aggregate(
                 total=models.Count('id'),
                 completed=models.Count(models.Case(
@@ -513,7 +526,7 @@ class UnifiedTaskManager:
                 ))
             )
 
-            meeting_stats = MeetingTask.objects.filter(assigned_to=user).aggregate(
+            meeting_stats = MeetingTask.objects.filter(assigned_to=user).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
                 total=models.Count('id'),
                 completed=models.Count(models.Case(
                     models.When(status='completed', then=1),
@@ -809,9 +822,11 @@ class UnifiedTask:
         return step
 
     def __str__(self):
+        """__str__ function"""
         return f"[{self.get_task_type_display()}] {self.get_display_title()}"
 
     def __repr__(self):
+        """__repr__ function"""
         return f"UnifiedTask(id={self.id}, type={self.task_type}, status={self.status})"
 
 

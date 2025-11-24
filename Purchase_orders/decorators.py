@@ -10,6 +10,7 @@ def can_manage_purchase_order(view_func):
     """
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
+        """_wrapped_view function"""
         if request.user.is_superuser or request.user.has_perm('Purchase_orders.change_purchaserequest') or request.user.username == 'Ragab':
             return view_func(request, *args, **kwargs)
         messages.error(request, 'ليس لديك صلاحية الوصول إلى هذه الصفحة')
@@ -23,10 +24,11 @@ def can_access_purchase_request(view_func):
     """
     @wraps(view_func)
     def _wrapped_view(request, *args, **kwargs):
+        """_wrapped_view function"""
         # السماح للمستخدم Ragab بالوصول مباشرة
         if request.user.username == 'Ragab':
             return view_func(request, *args, **kwargs)
-            
+
         from .models import PurchaseRequest
         request_id = kwargs.get('pk')
         try:
@@ -83,8 +85,10 @@ def purchase_module_permission_required(module_key, permission_type='view'):
 
     # مزخرف مخصص يسمح للمستخدم Ragab بالوصول مباشرة
     def custom_permission_check(view_func):
+        """custom_permission_check function"""
         @wraps(view_func)
         def _wrapped_view(request, *args, **kwargs):
+            """_wrapped_view function"""
             # السماح للمستخدم Ragab بالوصول مباشرة
             if request.user.username == 'Ragab':
                 return view_func(request, *args, **kwargs)
@@ -95,7 +99,7 @@ def purchase_module_permission_required(module_key, permission_type='view'):
             messages.error(request, 'ليس لديك صلاحية الوصول إلى هذه الصفحة')
             return redirect('accounts:access_denied')
         return _wrapped_view
-        
+
     return custom_permission_check
 
 def purchase_class_permission_required(module_key, permission_type='view'):
@@ -121,8 +125,10 @@ def purchase_class_permission_required(module_key, permission_type='view'):
 
     # دالة مخصصة للتحقق من الصلاحيات
     def custom_permission_check(view_func):
+        """custom_permission_check function"""
         @wraps(view_func)
         def _wrapped_view(request, *args, **kwargs):
+            """_wrapped_view function"""
             # السماح للمستخدم Ragab بالوصول مباشرة
             if request.user.username == 'Ragab':
                 return view_func(request, *args, **kwargs)
@@ -133,7 +139,7 @@ def purchase_class_permission_required(module_key, permission_type='view'):
             messages.error(request, 'ليس لديك صلاحية الوصول إلى هذه الصفحة')
             return redirect('accounts:access_denied')
         return _wrapped_view
-    
+
     return method_decorator(
         custom_permission_check,
         name='dispatch'
@@ -154,7 +160,7 @@ def has_purchase_permission(request, module_key, permission_type='view'):
     # المشرفون لديهم جميع الصلاحيات
     if request.user.is_superuser or getattr(request.user, 'Role', '') == 'admin':
         return True
-        
+
     # السماح للمستخدم Ragab بالوصول مباشرة
     if request.user.username == 'Ragab':
         return True

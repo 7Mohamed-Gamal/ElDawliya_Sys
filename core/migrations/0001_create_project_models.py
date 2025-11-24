@@ -41,7 +41,7 @@ class Migration(migrations.Migration):
                 'ordering': ['name'],
             },
         ),
-        
+
         # Project
         migrations.CreateModel(
             name='Project',
@@ -79,7 +79,7 @@ class Migration(migrations.Migration):
                 'permissions': [('view_project_dashboard', 'Can view project dashboard'), ('manage_project_team', 'Can manage project team'), ('view_project_reports', 'Can view project reports'), ('export_project_data', 'Can export project data')],
             },
         ),
-        
+
         # Project Phase
         migrations.CreateModel(
             name='ProjectPhase',
@@ -112,7 +112,7 @@ class Migration(migrations.Migration):
                 'ordering': ['project', 'order'],
             },
         ),
-        
+
         # Project Milestone
         migrations.CreateModel(
             name='ProjectMilestone',
@@ -141,7 +141,7 @@ class Migration(migrations.Migration):
                 'ordering': ['project', 'target_date'],
             },
         ),
-        
+
         # Project Member
         migrations.CreateModel(
             name='ProjectMember',
@@ -165,7 +165,7 @@ class Migration(migrations.Migration):
                 'db_table': 'project_members',
             },
         ),
-        
+
         # Task
         migrations.CreateModel(
             name='Task',
@@ -207,7 +207,7 @@ class Migration(migrations.Migration):
                 'permissions': [('view_task_dashboard', 'Can view task dashboard'), ('view_all_tasks', 'Can view all tasks'), ('manage_task_assignments', 'Can manage task assignments'), ('view_task_reports', 'Can view task reports'), ('export_task_data', 'Can export task data')],
             },
         ),
-        
+
         # Task Step
         migrations.CreateModel(
             name='TaskStep',
@@ -232,7 +232,7 @@ class Migration(migrations.Migration):
                 'ordering': ['-created_at'],
             },
         ),
-        
+
         # Time Entry
         migrations.CreateModel(
             name='TimeEntry',
@@ -258,7 +258,7 @@ class Migration(migrations.Migration):
                 'ordering': ['-start_time'],
             },
         ),
-        
+
         # Meeting
         migrations.CreateModel(
             name='Meeting',
@@ -292,7 +292,7 @@ class Migration(migrations.Migration):
                 'permissions': [('view_meeting_dashboard', 'Can view meeting dashboard'), ('manage_meeting_attendees', 'Can manage meeting attendees'), ('view_meeting_reports', 'Can view meeting reports'), ('export_meeting_data', 'Can export meeting data')],
             },
         ),
-        
+
         # Meeting Attendee
         migrations.CreateModel(
             name='MeetingAttendee',
@@ -316,7 +316,7 @@ class Migration(migrations.Migration):
                 'db_table': 'meeting_attendees',
             },
         ),
-        
+
         # Document
         migrations.CreateModel(
             name='Document',
@@ -352,28 +352,28 @@ class Migration(migrations.Migration):
                 'permissions': [('view_confidential_documents', 'Can view confidential documents'), ('manage_document_versions', 'Can manage document versions')],
             },
         ),
-        
+
         # Add many-to-many relationship for project team members
         migrations.AddField(
             model_name='project',
             name='team_members',
             field=models.ManyToManyField(related_name='projects', through='core.ProjectMember', to=settings.AUTH_USER_MODEL, verbose_name='أعضاء الفريق'),
         ),
-        
+
         # Add many-to-many relationship for meeting attendees
         migrations.AddField(
             model_name='meeting',
             name='attendees',
             field=models.ManyToManyField(related_name='meetings', through='core.MeetingAttendee', to=settings.AUTH_USER_MODEL, verbose_name='الحضور'),
         ),
-        
+
         # Add many-to-many relationship for project member permissions
         migrations.AddField(
             model_name='projectmember',
             name='permissions',
             field=models.ManyToManyField(blank=True, related_name='project_members', to='core.permission', verbose_name='الصلاحيات'),
         ),
-        
+
         # Add constraints and indexes
         migrations.AlterUniqueTogether(
             name='projectphase',
@@ -387,7 +387,7 @@ class Migration(migrations.Migration):
             name='meetingattendee',
             unique_together={('meeting', 'user')},
         ),
-        
+
         # Add database indexes
         migrations.RunSQL(
             "CREATE INDEX idx_projects_status ON projects(status);",

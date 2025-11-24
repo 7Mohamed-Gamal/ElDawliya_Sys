@@ -24,38 +24,38 @@ from core.services.monitoring_service import (
 @never_cache
 def monitoring_dashboard(request):
     """لوحة تحكم مراقبة النظام"""
-    
+
     context = {
         'title': 'مراقبة النظام',
         'current_time': timezone.now(),
     }
-    
+
     return render(request, 'core/monitoring_dashboard.html', context)
 
 
 @staff_member_required
 def system_metrics_api(request):
     """API لمقاييس النظام"""
-    
+
     try:
         # Get system metrics
         system_metrics = system_monitor.get_system_metrics()
-        
+
         # Get database metrics
         db_metrics = system_monitor.get_database_metrics()
-        
+
         # Get application metrics
         app_metrics = system_monitor.get_application_metrics()
-        
+
         data = {
             'system': system_metrics,
             'database': db_metrics,
             'application': app_metrics,
             'timestamp': timezone.now().isoformat(),
         }
-        
+
         return JsonResponse(data)
-        
+
     except Exception as e:
         return JsonResponse({
             'error': str(e),
@@ -66,11 +66,11 @@ def system_metrics_api(request):
 @staff_member_required
 def system_health_api(request):
     """API لفحص صحة النظام"""
-    
+
     try:
         health_status = system_monitor.check_system_health()
         return JsonResponse(health_status)
-        
+
     except Exception as e:
         return JsonResponse({
             'overall_status': 'error',
@@ -82,13 +82,13 @@ def system_health_api(request):
 @staff_member_required
 def performance_metrics_api(request):
     """API لمقاييس الأداء"""
-    
+
     try:
         hours = int(request.GET.get('hours', 1))
         performance_summary = performance_analyzer.get_performance_summary(hours)
-        
+
         return JsonResponse(performance_summary)
-        
+
     except Exception as e:
         return JsonResponse({
             'error': str(e),
@@ -99,12 +99,12 @@ def performance_metrics_api(request):
 @staff_member_required
 def alert_history_api(request):
     """API لتاريخ التنبيهات"""
-    
+
     try:
         from django.core.cache import cache
-        
+
         alert_history = cache.get('alert_history', {})
-        
+
         # Convert to list format with timestamps
         alerts = []
         for alert_name, timestamp_str in alert_history.items():
@@ -117,16 +117,16 @@ def alert_history_api(request):
                 })
             except ValueError:
                 continue
-        
+
         # Sort by timestamp (most recent first)
         alerts.sort(key=lambda x: x['timestamp'], reverse=True)
-        
+
         return JsonResponse({
             'alerts': alerts[:50],  # Last 50 alerts
             'total_count': len(alerts),
             'timestamp': timezone.now().isoformat(),
         })
-        
+
     except Exception as e:
         return JsonResponse({
             'error': str(e),
@@ -137,11 +137,11 @@ def alert_history_api(request):
 @staff_member_required
 def log_analysis_api(request):
     """API لتحليل السجلات"""
-    
+
     try:
         log_type = request.GET.get('type', 'application')
         hours = int(request.GET.get('hours', 24))
-        
+
         # This would typically analyze log files
         # For now, return mock data
         log_analysis = {
@@ -174,9 +174,9 @@ def log_analysis_api(request):
             },
             'timestamp': timezone.now().isoformat(),
         }
-        
+
         return JsonResponse(log_analysis)
-        
+
     except Exception as e:
         return JsonResponse({
             'error': str(e),
@@ -187,16 +187,16 @@ def log_analysis_api(request):
 @staff_member_required
 def resource_usage_history_api(request):
     """API لتاريخ استخدام الموارد"""
-    
+
     try:
         hours = int(request.GET.get('hours', 24))
-        
+
         # This would typically read from stored metrics
         # For now, generate sample data
         import random
-        
+
         data_points = min(hours * 4, 100)  # 4 points per hour, max 100 points
-        
+
         history = {
             'time_range_hours': hours,
             'data_points': data_points,
@@ -205,21 +205,21 @@ def resource_usage_history_api(request):
             'disk_usage': [],
             'timestamps': [],
         }
-        
+
         base_time = timezone.now() - timedelta(hours=hours)
         interval = timedelta(hours=hours) / data_points
-        
+
         for i in range(data_points):
             timestamp = base_time + (interval * i)
             history['timestamps'].append(timestamp.isoformat())
-            
+
             # Generate realistic sample data
             history['cpu_usage'].append(random.uniform(20, 80))
             history['memory_usage'].append(random.uniform(40, 85))
             history['disk_usage'].append(random.uniform(60, 75))
-        
+
         return JsonResponse(history)
-        
+
     except Exception as e:
         return JsonResponse({
             'error': str(e),
@@ -230,7 +230,7 @@ def resource_usage_history_api(request):
 @staff_member_required
 def monitoring_settings_api(request):
     """API لإعدادات المراقبة"""
-    
+
     if request.method == 'GET':
         try:
             settings = {
@@ -239,42 +239,42 @@ def monitoring_settings_api(request):
                 'alert_email': system_monitor.alert_email,
                 'performance_retention_hours': performance_analyzer.metrics_retention_hours,
             }
-            
+
             return JsonResponse(settings)
-            
+
         except Exception as e:
             return JsonResponse({
                 'error': str(e),
                 'timestamp': timezone.now().isoformat(),
             }, status=500)
-    
+
     elif request.method == 'POST':
         try:
             # Update monitoring settings
             data = json.loads(request.body)
-            
+
             if 'alert_thresholds' in data:
                 system_monitor.alert_thresholds.update(data['alert_thresholds'])
-            
+
             if 'monitoring_enabled' in data:
                 system_monitor.monitoring_enabled = data['monitoring_enabled']
-            
+
             if 'alert_email' in data:
                 system_monitor.alert_email = data['alert_email']
-            
+
             return JsonResponse({
                 'success': True,
                 'message': 'تم تحديث إعدادات المراقبة بنجاح',
                 'timestamp': timezone.now().isoformat(),
             })
-            
+
         except Exception as e:
             return JsonResponse({
                 'success': False,
                 'error': str(e),
                 'timestamp': timezone.now().isoformat(),
             }, status=500)
-    
+
     return JsonResponse({
         'error': 'Method not allowed',
     }, status=405)
@@ -283,33 +283,33 @@ def monitoring_settings_api(request):
 @staff_member_required
 def trigger_test_alert_api(request):
     """API لتشغيل تنبيه تجريبي"""
-    
+
     if request.method == 'POST':
         try:
             alert_type = request.POST.get('type', 'test')
             severity = request.POST.get('severity', 'info')
-            
+
             message = f"This is a test alert of type '{alert_type}' with severity '{severity}'"
-            
+
             system_monitor.send_alert(
                 alert_type=f"Test Alert - {alert_type}",
                 message=message,
                 severity=severity
             )
-            
+
             return JsonResponse({
                 'success': True,
                 'message': 'تم إرسال التنبيه التجريبي بنجاح',
                 'timestamp': timezone.now().isoformat(),
             })
-            
+
         except Exception as e:
             return JsonResponse({
                 'success': False,
                 'error': str(e),
                 'timestamp': timezone.now().isoformat(),
             }, status=500)
-    
+
     return JsonResponse({
         'error': 'Method not allowed',
     }, status=405)
@@ -318,44 +318,44 @@ def trigger_test_alert_api(request):
 @staff_member_required
 def export_monitoring_data_api(request):
     """API لتصدير بيانات المراقبة"""
-    
+
     try:
         export_type = request.GET.get('type', 'all')
         format_type = request.GET.get('format', 'json')
         hours = int(request.GET.get('hours', 24))
-        
+
         data = {}
-        
+
         if export_type in ['all', 'system']:
             data['system_metrics'] = system_monitor.get_system_metrics()
-        
+
         if export_type in ['all', 'performance']:
             data['performance_metrics'] = performance_analyzer.get_performance_summary(hours)
-        
+
         if export_type in ['all', 'health']:
             data['health_status'] = system_monitor.check_system_health()
-        
+
         if export_type in ['all', 'alerts']:
             from django.core.cache import cache
             data['alert_history'] = cache.get('alert_history', {})
-        
+
         data['export_info'] = {
             'export_type': export_type,
             'format': format_type,
             'time_range_hours': hours,
             'exported_at': timezone.now().isoformat(),
         }
-        
+
         if format_type == 'json':
             response = JsonResponse(data)
             response['Content-Disposition'] = f'attachment; filename="monitoring_data_{timezone.now().strftime("%Y%m%d_%H%M%S")}.json"'
             return response
-        
+
         else:
             return JsonResponse({
                 'error': 'Unsupported format type',
             }, status=400)
-            
+
     except Exception as e:
         return JsonResponse({
             'error': str(e),
@@ -366,11 +366,11 @@ def export_monitoring_data_api(request):
 @staff_member_required
 def monitoring_reports_api(request):
     """API لتقارير المراقبة"""
-    
+
     try:
         report_type = request.GET.get('type', 'summary')
         period = request.GET.get('period', 'daily')
-        
+
         if report_type == 'summary':
             # Daily/Weekly/Monthly summary report
             report = {
@@ -393,7 +393,7 @@ def monitoring_reports_api(request):
                     'Implement better caching strategy for employee data',
                 ],
             }
-        
+
         elif report_type == 'performance':
             # Performance analysis report
             report = {
@@ -414,7 +414,7 @@ def monitoring_reports_api(request):
                     'avg_query_time': '0.045s',
                 },
             }
-        
+
         elif report_type == 'security':
             # Security monitoring report
             report = {
@@ -429,14 +429,14 @@ def monitoring_reports_api(request):
                     'Unusual API access pattern detected',
                 ],
             }
-        
+
         else:
             return JsonResponse({
                 'error': 'Unknown report type',
             }, status=400)
-        
+
         return JsonResponse(report)
-        
+
     except Exception as e:
         return JsonResponse({
             'error': str(e),

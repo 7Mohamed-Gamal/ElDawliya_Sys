@@ -12,7 +12,7 @@ def rtl_context_processor(request):
     """
     Provides RTL-related context variables to all templates.
     Uses values from SystemSettings if available.
-    
+
     Returns:
         dict: A dictionary containing RTL-related context variables.
     """
@@ -20,7 +20,7 @@ def rtl_context_processor(request):
     text_direction = 'rtl'
     current_language = 'ar'
     current_font = 'Cairo'
-    
+
     # Try to get values from system_settings context processor
     try:
         from administrator.models import SystemSettings
@@ -31,7 +31,7 @@ def rtl_context_processor(request):
             current_font = system_settings.font_family.capitalize() or current_font
     except Exception as e:
         logger.warning(f"Error getting system settings in rtl_context_processor: {str(e)}")
-    
+
     return {
         'text_direction': text_direction,
         'current_language': current_language,

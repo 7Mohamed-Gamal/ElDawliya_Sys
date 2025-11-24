@@ -4,6 +4,7 @@ BASE_URL = "http://localhost:8000"
 TIMEOUT = 30
 
 def test_jwt_token_obtainment():
+    """test_jwt_token_obtainment function"""
     url = f"{BASE_URL}/api/v1/auth/token/"
     headers = {"Content-Type": "application/json"}
 

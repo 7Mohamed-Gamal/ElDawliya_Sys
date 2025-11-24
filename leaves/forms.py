@@ -8,11 +8,12 @@ from employees.models import Employee
 
 class LeaveTypeForm(forms.ModelForm):
     """نموذج إضافة وتعديل أنواع الإجازات"""
-    
+
     class Meta:
+        """Meta class"""
         model = LeaveType
         fields = ['leave_name', 'max_days_per_year', 'is_paid']
-        
+
         widgets = {
             'leave_name': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -27,7 +28,7 @@ class LeaveTypeForm(forms.ModelForm):
                 'class': 'form-check-input'
             })
         }
-        
+
         labels = {
             'leave_name': 'اسم نوع الإجازة',
             'max_days_per_year': 'الحد الأقصى للأيام سنوياً',
@@ -47,11 +48,12 @@ class LeaveTypeForm(forms.ModelForm):
 
 class EmployeeLeaveForm(forms.ModelForm):
     """نموذج إضافة وتعديل طلبات الإجازات"""
-    
+
     class Meta:
+        """Meta class"""
         model = EmployeeLeave
         fields = ['emp', 'leave_type', 'start_date', 'end_date', 'reason', 'status']
-        
+
         widgets = {
             'emp': forms.Select(attrs={
                 'class': 'form-select'
@@ -80,7 +82,7 @@ class EmployeeLeaveForm(forms.ModelForm):
                 ('Rejected', 'مرفوض')
             ])
         }
-        
+
         labels = {
             'emp': 'الموظف',
             'leave_type': 'نوع الإجازة',
@@ -91,16 +93,17 @@ class EmployeeLeaveForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         super().__init__(*args, **kwargs)
-        
+
         # تخصيص خيارات القوائم المنسدلة
-        self.fields['emp'].queryset = Employee.objects.filter(emp_status='Active').order_by('first_name', 'last_name')
-        self.fields['leave_type'].queryset = LeaveType.objects.all().order_by('leave_name')
-        
+        self.fields['emp'].queryset = Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('first_name', 'last_name')
+        self.fields['leave_type'].queryset = LeaveType.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('leave_name')
+
         # إضافة خيارات فارغة
         self.fields['emp'].empty_label = "اختر الموظف"
         self.fields['leave_type'].empty_label = "اختر نوع الإجازة"
-        
+
         # تعيين الحالة الافتراضية للطلبات الجديدة
         if not self.instance.pk:
             self.fields['status'].initial = 'Pending'
@@ -118,16 +121,16 @@ class EmployeeLeaveForm(forms.ModelForm):
         """التحقق من تاريخ النهاية"""
         end_date = self.cleaned_data.get('end_date')
         start_date = self.cleaned_data.get('start_date')
-        
+
         if end_date and start_date:
             if end_date < start_date:
                 raise ValidationError('تاريخ النهاية يجب أن يكون بعد تاريخ البداية.')
-            
+
             # التحقق من أن مدة الإجازة معقولة
             duration = (end_date - start_date).days + 1
             if duration > 365:
                 raise ValidationError('مدة الإجازة لا يمكن أن تزيد عن سنة.')
-        
+
         return end_date
 
     def clean(self):
@@ -143,14 +146,14 @@ class EmployeeLeaveForm(forms.ModelForm):
             overlapping_leaves = EmployeeLeave.objects.filter(
                 emp=emp,
                 status__in=['Pending', 'Approved']
-            ).exclude(pk=self.instance.pk if self.instance.pk else None)
-            
+            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exclude(pk=self.instance.pk if self.instance.pk else None)
+
             for leave in overlapping_leaves:
                 if (start_date <= leave.end_date and end_date >= leave.start_date):
                     raise ValidationError(
                         f'يوجد تداخل مع إجازة أخرى من {leave.start_date} إلى {leave.end_date}.'
                     )
-            
+
             # التحقق من رصيد الإجازات
             if leave_type.max_days_per_year:
                 current_year = start_date.year
@@ -159,11 +162,11 @@ class EmployeeLeaveForm(forms.ModelForm):
                     leave_type=leave_type,
                     status='Approved',
                     start_date__year=current_year
-                ).exclude(pk=self.instance.pk if self.instance.pk else None)
-                
+                ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exclude(pk=self.instance.pk if self.instance.pk else None)
+
                 total_used = sum([(leave.end_date - leave.start_date).days + 1 for leave in used_days])
                 requested_days = (end_date - start_date).days + 1
-                
+
                 if total_used + requested_days > leave_type.max_days_per_year:
                     remaining = leave_type.max_days_per_year - total_used
                     raise ValidationError(
@@ -176,11 +179,12 @@ class EmployeeLeaveForm(forms.ModelForm):
 
 class PublicHolidayForm(forms.ModelForm):
     """نموذج إضافة وتعديل العطلات الرسمية"""
-    
+
     class Meta:
+        """Meta class"""
         model = PublicHoliday
         fields = ['holiday_date', 'description']
-        
+
         widgets = {
             'holiday_date': forms.DateInput(attrs={
                 'class': 'form-control',
@@ -191,7 +195,7 @@ class PublicHolidayForm(forms.ModelForm):
                 'placeholder': 'وصف العطلة الرسمية'
             })
         }
-        
+
         labels = {
             'holiday_date': 'تاريخ العطلة',
             'description': 'وصف العطلة'
@@ -202,19 +206,19 @@ class PublicHolidayForm(forms.ModelForm):
         holiday_date = self.cleaned_data.get('holiday_date')
         if holiday_date:
             # التحقق من عدم تكرار التاريخ
-            existing = PublicHoliday.objects.filter(holiday_date=holiday_date)
+            existing = PublicHoliday.objects.filter(holiday_date=holiday_date).prefetch_related()  # TODO: Add appropriate prefetch_related fields
             if self.instance and self.instance.pk:
                 existing = existing.exclude(pk=self.instance.pk)
-            
+
             if existing.exists():
                 raise ValidationError('يوجد عطلة رسمية مسجلة في هذا التاريخ مسبقاً.')
-        
+
         return holiday_date
 
 
 class LeaveSearchForm(forms.Form):
     """نموذج البحث في الإجازات"""
-    
+
     search = forms.CharField(
         label='البحث',
         required=False,
@@ -223,17 +227,17 @@ class LeaveSearchForm(forms.Form):
             'placeholder': 'اسم الموظف أو سبب الإجازة'
         })
     )
-    
+
     leave_type = forms.ModelChoiceField(
         label='نوع الإجازة',
-        queryset=LeaveType.objects.all().order_by('leave_name'),
+        queryset=LeaveType.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('leave_name'),
         required=False,
         empty_label='جميع الأنواع',
         widget=forms.Select(attrs={
             'class': 'form-select'
         })
     )
-    
+
     status = forms.ChoiceField(
         label='الحالة',
         choices=[
@@ -247,7 +251,7 @@ class LeaveSearchForm(forms.Form):
             'class': 'form-select'
         })
     )
-    
+
     date_from = forms.DateField(
         label='من تاريخ',
         required=False,
@@ -256,7 +260,7 @@ class LeaveSearchForm(forms.Form):
             'type': 'date'
         })
     )
-    
+
     date_to = forms.DateField(
         label='إلى تاريخ',
         required=False,
@@ -281,7 +285,7 @@ class LeaveSearchForm(forms.Form):
 
 class LeaveApprovalForm(forms.Form):
     """نموذج اعتماد أو رفض الإجازة"""
-    
+
     action = forms.ChoiceField(
         label='الإجراء',
         choices=[
@@ -292,7 +296,7 @@ class LeaveApprovalForm(forms.Form):
             'class': 'form-check-input'
         })
     )
-    
+
     notes = forms.CharField(
         label='ملاحظات',
         required=False,
@@ -306,7 +310,7 @@ class LeaveApprovalForm(forms.Form):
 
 class BulkLeaveActionForm(forms.Form):
     """نموذج الإجراءات الجماعية على الإجازات"""
-    
+
     action = forms.ChoiceField(
         label='الإجراء',
         choices=[
@@ -318,7 +322,7 @@ class BulkLeaveActionForm(forms.Form):
             'class': 'form-select'
         })
     )
-    
+
     leave_ids = forms.CharField(
         widget=forms.HiddenInput()
     )
@@ -340,17 +344,17 @@ class BulkLeaveActionForm(forms.Form):
 
 class LeaveBalanceForm(forms.Form):
     """نموذج عرض أرصدة الإجازات"""
-    
+
     employee = forms.ModelChoiceField(
         label='الموظف',
-        queryset=Employee.objects.filter(emp_status='Active').order_by('first_name', 'last_name'),
+        queryset=Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('first_name', 'last_name'),
         required=False,
         empty_label='جميع الموظفين',
         widget=forms.Select(attrs={
             'class': 'form-select'
         })
     )
-    
+
     department = forms.CharField(
         label='القسم',
         required=False,
@@ -358,7 +362,7 @@ class LeaveBalanceForm(forms.Form):
             'class': 'form-select'
         })
     )
-    
+
     year = forms.IntegerField(
         label='السنة',
         initial=date.today().year,
@@ -370,25 +374,26 @@ class LeaveBalanceForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         super().__init__(*args, **kwargs)
-        
+
         # إضافة خيارات الأقسام
         from org.models import Department
-        departments = Department.objects.filter(is_active=True).order_by('dept_name')
+        departments = Department.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('dept_name')
         dept_choices = [('', 'جميع الأقسام')] + [(dept.dept_id, dept.dept_name) for dept in departments]
         self.fields['department'].widget.choices = dept_choices
 
 
 class LeaveReportForm(forms.Form):
     """نموذج تقارير الإجازات"""
-    
+
     REPORT_TYPES = [
         ('summary', 'تقرير ملخص'),
         ('detailed', 'تقرير مفصل'),
         ('balance', 'تقرير الأرصدة'),
         ('usage', 'تقرير الاستخدام')
     ]
-    
+
     report_type = forms.ChoiceField(
         label='نوع التقرير',
         choices=REPORT_TYPES,
@@ -396,7 +401,7 @@ class LeaveReportForm(forms.Form):
             'class': 'form-select'
         })
     )
-    
+
     date_from = forms.DateField(
         label='من تاريخ',
         widget=forms.DateInput(attrs={
@@ -404,7 +409,7 @@ class LeaveReportForm(forms.Form):
             'type': 'date'
         })
     )
-    
+
     date_to = forms.DateField(
         label='إلى تاريخ',
         widget=forms.DateInput(attrs={
@@ -412,7 +417,7 @@ class LeaveReportForm(forms.Form):
             'type': 'date'
         })
     )
-    
+
     department = forms.CharField(
         label='القسم',
         required=False,
@@ -420,10 +425,10 @@ class LeaveReportForm(forms.Form):
             'class': 'form-select'
         })
     )
-    
+
     leave_type = forms.ModelChoiceField(
         label='نوع الإجازة',
-        queryset=LeaveType.objects.all().order_by('leave_name'),
+        queryset=LeaveType.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('leave_name'),
         required=False,
         empty_label='جميع الأنواع',
         widget=forms.Select(attrs={
@@ -432,16 +437,17 @@ class LeaveReportForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         super().__init__(*args, **kwargs)
-        
+
         # تعيين التواريخ الافتراضية
         today = date.today()
         self.fields['date_from'].initial = today.replace(month=1, day=1)  # بداية السنة
         self.fields['date_to'].initial = today
-        
+
         # إضافة خيارات الأقسام
         from org.models import Department
-        departments = Department.objects.filter(is_active=True).order_by('dept_name')
+        departments = Department.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('dept_name')
         dept_choices = [('', 'جميع الأقسام')] + [(dept.dept_id, dept.dept_name) for dept in departments]
         self.fields['department'].widget.choices = dept_choices
 
@@ -454,7 +460,7 @@ class LeaveReportForm(forms.Form):
         if date_from and date_to:
             if date_to < date_from:
                 raise ValidationError('تاريخ النهاية يجب أن يكون بعد تاريخ البداية.')
-            
+
             # التحقق من أن الفترة ليست طويلة جداً
             if (date_to - date_from).days > 365:
                 raise ValidationError('فترة التقرير لا يمكن أن تزيد عن سنة واحدة.')

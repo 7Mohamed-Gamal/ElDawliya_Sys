@@ -25,8 +25,9 @@ django.setup()
 
 class PerformanceTestRunner:
     """مشغل اختبارات الأداء"""
-    
+
     def __init__(self):
+        """__init__ function"""
         self.results = {
             'timestamp': datetime.now().isoformat(),
             'test_suites': {},
@@ -35,14 +36,14 @@ class PerformanceTestRunner:
         }
         self.start_time = None
         self.end_time = None
-    
+
     def run_all_tests(self):
         """تشغيل جميع اختبارات الأداء"""
         print("🚀 بدء تشغيل اختبارات الأداء الشاملة")
         print("=" * 60)
-        
+
         self.start_time = time.time()
-        
+
         # قائمة اختبارات الأداء
         test_suites = [
             ('tests.performance.test_page_response_times', 'اختبارات أوقات الاستجابة'),
@@ -50,11 +51,11 @@ class PerformanceTestRunner:
             ('tests.performance.test_memory_usage', 'اختبارات استهلاك الذاكرة'),
             ('tests.performance.test_optimization', 'اختبارات التحسين'),
         ]
-        
+
         for test_module, test_name in test_suites:
             print(f"\n📊 تشغيل {test_name}...")
             print("-" * 40)
-            
+
             try:
                 # تشغيل الاختبار
                 result = self.run_test_suite(test_module)
@@ -63,12 +64,12 @@ class PerformanceTestRunner:
                     'status': 'success' if result else 'failed',
                     'timestamp': datetime.now().isoformat()
                 }
-                
+
                 if result:
                     print(f"✅ {test_name} - مكتمل بنجاح")
                 else:
                     print(f"❌ {test_name} - فشل")
-                    
+
             except Exception as e:
                 print(f"❌ خطأ في {test_name}: {str(e)}")
                 self.results['test_suites'][test_module] = {
@@ -77,42 +78,42 @@ class PerformanceTestRunner:
                     'error': str(e),
                     'timestamp': datetime.now().isoformat()
                 }
-        
+
         self.end_time = time.time()
         self.generate_summary()
         self.generate_recommendations()
         self.save_results()
         self.print_final_report()
-    
+
     def run_test_suite(self, test_module):
         """تشغيل مجموعة اختبارات محددة"""
         try:
             # استخدام Django test runner
             from django.test.runner import DiscoverRunner
-            
+
             runner = DiscoverRunner(verbosity=1, interactive=False, keepdb=True)
-            
+
             # تشغيل الاختبارات
             result = runner.run_tests([test_module])
-            
+
             return result == 0  # 0 يعني نجاح
-            
+
         except Exception as e:
             print(f"خطأ في تشغيل {test_module}: {str(e)}")
             return False
-    
+
     def generate_summary(self):
         """إنتاج ملخص النتائج"""
         total_tests = len(self.results['test_suites'])
-        successful_tests = sum(1 for suite in self.results['test_suites'].values() 
+        successful_tests = sum(1 for suite in self.results['test_suites'].values()
                               if suite['status'] == 'success')
-        failed_tests = sum(1 for suite in self.results['test_suites'].values() 
+        failed_tests = sum(1 for suite in self.results['test_suites'].values()
                           if suite['status'] == 'failed')
-        error_tests = sum(1 for suite in self.results['test_suites'].values() 
+        error_tests = sum(1 for suite in self.results['test_suites'].values()
                          if suite['status'] == 'error')
-        
+
         total_time = self.end_time - self.start_time if self.end_time and self.start_time else 0
-        
+
         self.results['summary'] = {
             'total_test_suites': total_tests,
             'successful_suites': successful_tests,
@@ -122,15 +123,15 @@ class PerformanceTestRunner:
             'total_execution_time': total_time,
             'execution_time_formatted': f"{total_time:.2f}s"
         }
-    
+
     def generate_recommendations(self):
         """إنتاج توصيات التحسين"""
         recommendations = []
-        
+
         # تحليل النتائج وإنتاج التوصيات
-        failed_suites = [suite for suite in self.results['test_suites'].values() 
+        failed_suites = [suite for suite in self.results['test_suites'].values()
                         if suite['status'] in ['failed', 'error']]
-        
+
         if failed_suites:
             recommendations.append({
                 'priority': 'high',
@@ -139,7 +140,7 @@ class PerformanceTestRunner:
                 'description': f'يوجد {len(failed_suites)} مجموعة اختبارات فاشلة تحتاج إلى إصلاح',
                 'action': 'مراجعة وإصلاح الاختبارات الفاشلة قبل النشر'
             })
-        
+
         # توصيات عامة للأداء
         recommendations.extend([
             {
@@ -164,28 +165,28 @@ class PerformanceTestRunner:
                 'action': 'تطبيق أدوات مراقبة الأداء في الإنتاج'
             }
         ])
-        
+
         self.results['recommendations'] = recommendations
-    
+
     def save_results(self):
         """حفظ النتائج في ملف"""
         results_dir = os.path.join(os.path.dirname(__file__), 'results')
         os.makedirs(results_dir, exist_ok=True)
-        
+
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         results_file = os.path.join(results_dir, f'performance_test_results_{timestamp}.json')
-        
+
         with open(results_file, 'w', encoding='utf-8') as f:
             json.dump(self.results, f, ensure_ascii=False, indent=2)
-        
+
         print(f"\n💾 تم حفظ النتائج في: {results_file}")
-    
+
     def print_final_report(self):
         """طباعة التقرير النهائي"""
         print("\n" + "=" * 60)
         print("📋 تقرير اختبارات الأداء النهائي")
         print("=" * 60)
-        
+
         summary = self.results['summary']
         print(f"📊 الملخص:")
         print(f"   إجمالي مجموعات الاختبارات: {summary['total_test_suites']}")
@@ -194,13 +195,13 @@ class PerformanceTestRunner:
         print(f"   المجموعات بأخطاء: {summary['error_suites']}")
         print(f"   معدل النجاح: {summary['success_rate']:.1f}%")
         print(f"   وقت التنفيذ الإجمالي: {summary['execution_time_formatted']}")
-        
+
         # طباعة حالة كل مجموعة اختبارات
         print(f"\n📋 تفاصيل مجموعات الاختبارات:")
         for module, suite_info in self.results['test_suites'].items():
             status_icon = "✅" if suite_info['status'] == 'success' else "❌"
             print(f"   {status_icon} {suite_info['name']}: {suite_info['status']}")
-        
+
         # طباعة التوصيات
         print(f"\n💡 التوصيات:")
         for rec in self.results['recommendations']:
@@ -208,7 +209,7 @@ class PerformanceTestRunner:
             print(f"   {priority_icon} {rec['title']}")
             print(f"      {rec['description']}")
             print(f"      الإجراء: {rec['action']}")
-        
+
         # تقييم عام
         if summary['success_rate'] >= 80:
             print(f"\n🎉 تقييم عام: ممتاز - النظام يحقق معايير الأداء المطلوبة")
@@ -226,7 +227,7 @@ def main():
         print("\nالخيارات:")
         print("  --help    عرض هذه المساعدة")
         return
-    
+
     runner = PerformanceTestRunner()
     runner.run_all_tests()
 

@@ -9,11 +9,12 @@ from org.models import Department
 
 class EvaluationPeriodForm(forms.ModelForm):
     """نموذج إضافة وتعديل فترات التقييم"""
-    
+
     class Meta:
+        """Meta class"""
         model = EvaluationPeriod
         fields = ['period_name', 'start_date', 'end_date']
-        
+
         widgets = {
             'period_name': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -28,7 +29,7 @@ class EvaluationPeriodForm(forms.ModelForm):
                 'type': 'date'
             })
         }
-        
+
         labels = {
             'period_name': 'اسم فترة التقييم',
             'start_date': 'تاريخ البداية',
@@ -48,18 +49,18 @@ class EvaluationPeriodForm(forms.ModelForm):
         """التحقق من تاريخ النهاية"""
         end_date = self.cleaned_data.get('end_date')
         start_date = self.cleaned_data.get('start_date')
-        
+
         if end_date and start_date:
             if end_date <= start_date:
                 raise ValidationError('تاريخ النهاية يجب أن يكون بعد تاريخ البداية.')
-            
+
             # التحقق من أن مدة الفترة معقولة
             duration = (end_date - start_date).days
             if duration < 30:
                 raise ValidationError('مدة فترة التقييم يجب أن تكون شهر على الأقل.')
             if duration > 365:
                 raise ValidationError('مدة فترة التقييم لا يمكن أن تزيد عن سنة.')
-        
+
         return end_date
 
     def clean(self):
@@ -74,7 +75,7 @@ class EvaluationPeriodForm(forms.ModelForm):
                 start_date__lte=end_date,
                 end_date__gte=start_date
             ).exclude(pk=self.instance.pk if self.instance.pk else None)
-            
+
             if overlapping_periods.exists():
                 period = overlapping_periods.first()
                 raise ValidationError(
@@ -87,11 +88,12 @@ class EvaluationPeriodForm(forms.ModelForm):
 
 class EmployeeEvaluationForm(forms.ModelForm):
     """نموذج إضافة وتعديل تقييمات الموظفين"""
-    
+
     class Meta:
+        """Meta class"""
         model = EmployeeEvaluation
         fields = ['emp', 'period', 'manager_id', 'score', 'notes', 'eval_date', 'status']
-        
+
         widgets = {
             'emp': forms.Select(attrs={
                 'class': 'form-select'
@@ -123,7 +125,7 @@ class EmployeeEvaluationForm(forms.ModelForm):
                 'class': 'form-select'
             })
         }
-        
+
         labels = {
             'emp': 'الموظف',
             'period': 'فترة التقييم',
@@ -135,19 +137,20 @@ class EmployeeEvaluationForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         super().__init__(*args, **kwargs)
-        
+
         # تخصيص خيارات القوائم المنسدلة
         self.fields['emp'].queryset = Employee.objects.filter(
             emp_status='Active'
         ).order_by('first_name', 'last_name')
-        
+
         self.fields['period'].queryset = EvaluationPeriod.objects.all().order_by('-start_date')
-        
+
         # إضافة خيارات فارغة
         self.fields['emp'].empty_label = "اختر الموظف"
         self.fields['period'].empty_label = "اختر فترة التقييم"
-        
+
         # تعيين تاريخ التقييم الافتراضي
         if not self.instance.pk:
             self.fields['eval_date'].initial = date.today()
@@ -164,14 +167,14 @@ class EmployeeEvaluationForm(forms.ModelForm):
         """التحقق من تاريخ التقييم"""
         eval_date = self.cleaned_data.get('eval_date')
         period = self.cleaned_data.get('period')
-        
+
         if eval_date and period:
             if eval_date < period.start_date or eval_date > period.end_date:
                 raise ValidationError(
                     f'تاريخ التقييم يجب أن يكون ضمن فترة التقييم '
                     f'من {period.start_date} إلى {period.end_date}.'
                 )
-        
+
         return eval_date
 
     def clean(self):
@@ -186,7 +189,7 @@ class EmployeeEvaluationForm(forms.ModelForm):
                 emp=emp,
                 period=period
             ).exclude(pk=self.instance.pk if self.instance.pk else None)
-            
+
             if existing_evaluation.exists():
                 raise ValidationError(
                     f'يوجد تقييم مسبق للموظف {emp.first_name} {emp.last_name} '
@@ -198,7 +201,7 @@ class EmployeeEvaluationForm(forms.ModelForm):
 
 class EvaluationSearchForm(forms.Form):
     """نموذج البحث في التقييمات"""
-    
+
     search = forms.CharField(
         label='البحث',
         required=False,
@@ -207,7 +210,7 @@ class EvaluationSearchForm(forms.Form):
             'placeholder': 'اسم الموظف أو ملاحظات التقييم'
         })
     )
-    
+
     period = forms.ModelChoiceField(
         label='فترة التقييم',
         queryset=EvaluationPeriod.objects.all().order_by('-start_date'),
@@ -217,7 +220,7 @@ class EvaluationSearchForm(forms.Form):
             'class': 'form-select'
         })
     )
-    
+
     department = forms.ModelChoiceField(
         label='القسم',
         queryset=Department.objects.filter(is_active=True).order_by('dept_name'),
@@ -227,7 +230,7 @@ class EvaluationSearchForm(forms.Form):
             'class': 'form-select'
         })
     )
-    
+
     score_range = forms.ChoiceField(
         label='نطاق الدرجات',
         choices=[
@@ -248,7 +251,7 @@ class EvaluationSearchForm(forms.Form):
 
 class BulkEvaluationForm(forms.Form):
     """نموذج إنشاء تقييمات بالجملة"""
-    
+
     period = forms.ModelChoiceField(
         label='فترة التقييم',
         queryset=EvaluationPeriod.objects.all().order_by('-start_date'),
@@ -256,7 +259,7 @@ class BulkEvaluationForm(forms.Form):
             'class': 'form-select'
         })
     )
-    
+
     department = forms.ModelChoiceField(
         label='القسم',
         queryset=Department.objects.filter(is_active=True).order_by('dept_name'),
@@ -266,7 +269,7 @@ class BulkEvaluationForm(forms.Form):
             'class': 'form-select'
         })
     )
-    
+
     employees = forms.ModelMultipleChoiceField(
         label='الموظفين',
         queryset=Employee.objects.filter(emp_status='Active').order_by('first_name', 'last_name'),
@@ -276,8 +279,9 @@ class BulkEvaluationForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         super().__init__(*args, **kwargs)
-        
+
         # إضافة JavaScript لفلترة الموظفين حسب القسم
         self.fields['employees'].widget.attrs.update({
             'data-department-filter': 'true'
@@ -286,14 +290,14 @@ class BulkEvaluationForm(forms.Form):
 
 class EvaluationReportForm(forms.Form):
     """نموذج تقارير التقييمات"""
-    
+
     REPORT_TYPES = [
         ('summary', 'تقرير ملخص'),
         ('detailed', 'تقرير مفصل'),
         ('comparison', 'تقرير مقارنة'),
         ('performance_trend', 'اتجاه الأداء')
     ]
-    
+
     report_type = forms.ChoiceField(
         label='نوع التقرير',
         choices=REPORT_TYPES,
@@ -301,7 +305,7 @@ class EvaluationReportForm(forms.Form):
             'class': 'form-select'
         })
     )
-    
+
     period = forms.ModelChoiceField(
         label='فترة التقييم',
         queryset=EvaluationPeriod.objects.all().order_by('-start_date'),
@@ -311,7 +315,7 @@ class EvaluationReportForm(forms.Form):
             'class': 'form-select'
         })
     )
-    
+
     department = forms.ModelChoiceField(
         label='القسم',
         queryset=Department.objects.filter(is_active=True).order_by('dept_name'),
@@ -321,7 +325,7 @@ class EvaluationReportForm(forms.Form):
             'class': 'form-select'
         })
     )
-    
+
     date_from = forms.DateField(
         label='من تاريخ',
         required=False,
@@ -330,7 +334,7 @@ class EvaluationReportForm(forms.Form):
             'type': 'date'
         })
     )
-    
+
     date_to = forms.DateField(
         label='إلى تاريخ',
         required=False,
@@ -341,8 +345,9 @@ class EvaluationReportForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         super().__init__(*args, **kwargs)
-        
+
         # تعيين التواريخ الافتراضية
         today = date.today()
         self.fields['date_from'].initial = today.replace(month=1, day=1)  # بداية السنة
@@ -363,13 +368,13 @@ class EvaluationReportForm(forms.Form):
 
 class PerformanceComparisonForm(forms.Form):
     """نموذج مقارنة الأداء"""
-    
+
     COMPARISON_TYPES = [
         ('employees', 'مقارنة الموظفين'),
         ('departments', 'مقارنة الأقسام'),
         ('periods', 'مقارنة الفترات')
     ]
-    
+
     comparison_type = forms.ChoiceField(
         label='نوع المقارنة',
         choices=COMPARISON_TYPES,
@@ -377,7 +382,7 @@ class PerformanceComparisonForm(forms.Form):
             'class': 'form-select'
         })
     )
-    
+
     employees = forms.ModelMultipleChoiceField(
         label='الموظفين للمقارنة',
         queryset=Employee.objects.filter(emp_status='Active').order_by('first_name', 'last_name'),
@@ -386,7 +391,7 @@ class PerformanceComparisonForm(forms.Form):
             'class': 'form-check-input'
         })
     )
-    
+
     departments = forms.ModelMultipleChoiceField(
         label='الأقسام للمقارنة',
         queryset=Department.objects.filter(is_active=True).order_by('dept_name'),
@@ -395,7 +400,7 @@ class PerformanceComparisonForm(forms.Form):
             'class': 'form-check-input'
         })
     )
-    
+
     periods = forms.ModelMultipleChoiceField(
         label='الفترات للمقارنة',
         queryset=EvaluationPeriod.objects.all().order_by('-start_date'),
@@ -409,17 +414,17 @@ class PerformanceComparisonForm(forms.Form):
         """التحقق من صحة البيانات"""
         cleaned_data = super().clean()
         comparison_type = cleaned_data.get('comparison_type')
-        
+
         if comparison_type == 'employees':
             employees = cleaned_data.get('employees')
             if not employees or len(employees) < 2:
                 raise ValidationError('يجب اختيار موظفين اثنين على الأقل للمقارنة.')
-        
+
         elif comparison_type == 'departments':
             departments = cleaned_data.get('departments')
             if not departments or len(departments) < 2:
                 raise ValidationError('يجب اختيار قسمين على الأقل للمقارنة.')
-        
+
         elif comparison_type == 'periods':
             periods = cleaned_data.get('periods')
             if not periods or len(periods) < 2:
@@ -430,7 +435,7 @@ class PerformanceComparisonForm(forms.Form):
 
 class EvaluationTemplateForm(forms.Form):
     """نموذج قوالب التقييم"""
-    
+
     template_name = forms.CharField(
         label='اسم القالب',
         widget=forms.TextInput(attrs={
@@ -438,7 +443,7 @@ class EvaluationTemplateForm(forms.Form):
             'placeholder': 'اسم قالب التقييم'
         })
     )
-    
+
     criteria = forms.CharField(
         label='معايير التقييم',
         widget=forms.Textarea(attrs={
@@ -447,7 +452,7 @@ class EvaluationTemplateForm(forms.Form):
             'placeholder': 'معايير التقييم (كل معيار في سطر منفصل)'
         })
     )
-    
+
     weights = forms.CharField(
         label='أوزان المعايير',
         widget=forms.Textarea(attrs={
@@ -456,7 +461,7 @@ class EvaluationTemplateForm(forms.Form):
             'placeholder': 'أوزان المعايير (نسب مئوية)'
         })
     )
-    
+
     description = forms.CharField(
         label='وصف القالب',
         required=False,
@@ -470,7 +475,7 @@ class EvaluationTemplateForm(forms.Form):
 
 class GoalSettingForm(forms.Form):
     """نموذج تحديد الأهداف"""
-    
+
     employee = forms.ModelChoiceField(
         label='الموظف',
         queryset=Employee.objects.filter(emp_status='Active').order_by('first_name', 'last_name'),
@@ -478,7 +483,7 @@ class GoalSettingForm(forms.Form):
             'class': 'form-select'
         })
     )
-    
+
     period = forms.ModelChoiceField(
         label='فترة التقييم',
         queryset=EvaluationPeriod.objects.all().order_by('-start_date'),
@@ -486,7 +491,7 @@ class GoalSettingForm(forms.Form):
             'class': 'form-select'
         })
     )
-    
+
     goals = forms.CharField(
         label='الأهداف',
         widget=forms.Textarea(attrs={
@@ -495,7 +500,7 @@ class GoalSettingForm(forms.Form):
             'placeholder': 'أهداف الموظف للفترة (كل هدف في سطر منفصل)'
         })
     )
-    
+
     success_criteria = forms.CharField(
         label='معايير النجاح',
         widget=forms.Textarea(attrs={
@@ -504,7 +509,7 @@ class GoalSettingForm(forms.Form):
             'placeholder': 'معايير قياس نجاح الأهداف'
         })
     )
-    
+
     target_date = forms.DateField(
         label='تاريخ الإنجاز المستهدف',
         widget=forms.DateInput(attrs={
@@ -517,12 +522,12 @@ class GoalSettingForm(forms.Form):
         """التحقق من تاريخ الإنجاز المستهدف"""
         target_date = self.cleaned_data.get('target_date')
         period = self.cleaned_data.get('period')
-        
+
         if target_date and period:
             if target_date > period.end_date:
                 raise ValidationError(
                     f'تاريخ الإنجاز المستهدف يجب أن يكون قبل انتهاء فترة التقييم '
                     f'({period.end_date}).'
                 )
-        
+
         return target_date

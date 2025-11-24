@@ -23,19 +23,20 @@ class APIDashboardView(LoginRequiredMixin, TemplateView):
     template_name = 'api/dashboard.html'
 
     def get_context_data(self, **kwargs):
+        """get_context_data function"""
         context = super().get_context_data(**kwargs)
 
         # Get user's API keys
-        api_keys = APIKey.objects.filter(user=self.request.user, is_active=True)
+        api_keys = APIKey.objects.filter(user=self.request.user, is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
 
         # Get user's conversations
         conversations = GeminiConversation.objects.filter(
             user=self.request.user,
             is_active=True
-        ).order_by('-updated_at')[:5]
+        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('-updated_at')[:5]
 
         # Get usage stats
-        usage_logs = APIUsageLog.objects.filter(user=self.request.user)
+        usage_logs = APIUsageLog.objects.filter(user=self.request.user).prefetch_related()  # TODO: Add appropriate prefetch_related fields
         total_requests = usage_logs.count()
 
         # Check Gemini availability with the user's API key
@@ -86,16 +87,16 @@ def ai_chat_interface(request):
     conversations = GeminiConversation.objects.filter(
         user=request.user,
         is_active=True
-    ).order_by('-updated_at')
+    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('-updated_at')
 
     # Check Gemini availability with the user's API key
     gemini_service = GeminiService(user=request.user)
-    
+
     # Debug info
     is_configured = gemini_service.is_configured
     api_key_exists = bool(gemini_service.api_key)
     config_source = gemini_service.config_source
-    
+
     context = {
         'conversations': conversations,
         'gemini_available': gemini_service.is_available(),
@@ -226,7 +227,7 @@ def api_usage_stats(request):
     user_logs = APIUsageLog.objects.filter(
         user=request.user,
         timestamp__gte=thirty_days_ago
-    )
+    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
 
     stats = {
         'total_requests': user_logs.count(),
@@ -250,8 +251,8 @@ def api_usage_stats(request):
 @login_required
 def ai_settings_view(request):
     """صفحة إعدادات الذكاء الاصطناعي"""
-    user_configs = AIConfiguration.objects.filter(user=request.user)
-    providers = AIProvider.objects.filter(is_active=True)
+    user_configs = AIConfiguration.objects.filter(user=request.user).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+    providers = AIProvider.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
 
     context = {
         'user_configs': user_configs,
@@ -279,7 +280,7 @@ def add_ai_config(request):
             existing_config = AIConfiguration.objects.filter(
                 user=request.user,
                 provider=provider
-            ).first()
+            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
 
             if existing_config:
                 # تحديث الإعداد الموجود
@@ -311,7 +312,7 @@ def add_ai_config(request):
         except Exception as e:
             messages.error(request, f'حدث خطأ: {str(e)}')
 
-    providers = AIProvider.objects.filter(is_active=True)
+    providers = AIProvider.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
     context = {'providers': providers}
 
     return render(request, 'api/add_ai_config.html', context)

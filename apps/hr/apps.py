@@ -11,7 +11,7 @@ class HrConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'apps.hr'
     verbose_name = _('إدارة الموارد البشرية')
-    
+
     def ready(self):
         """Import signals when the app is ready."""
         try:

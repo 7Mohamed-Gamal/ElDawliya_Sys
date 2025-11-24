@@ -20,40 +20,40 @@ app.conf.update(
     # إعدادات الوسيط (Broker)
     broker_url=os.environ.get('CELERY_BROKER_URL', 'redis://127.0.0.1:6379/4'),
     result_backend=os.environ.get('CELERY_RESULT_BACKEND', 'redis://127.0.0.1:6379/5'),
-    
+
     # إعدادات التسلسل
     task_serializer='json',
     accept_content=['json'],
     result_serializer='json',
     timezone='Asia/Riyadh',
     enable_utc=True,
-    
+
     # إعدادات المهام
     task_track_started=True,
     task_time_limit=30 * 60,  # 30 دقيقة
     task_soft_time_limit=25 * 60,  # 25 دقيقة
     task_max_retries=3,
     task_default_retry_delay=60,  # دقيقة واحدة
-    
+
     # إعدادات العامل (Worker)
     worker_prefetch_multiplier=1,
     worker_max_tasks_per_child=1000,
     worker_disable_rate_limits=False,
     worker_enable_remote_control=True,
-    
+
     # إعدادات النتائج
     result_expires=3600,  # ساعة واحدة
     result_persistent=True,
     result_compression='gzip',
-    
+
     # إعدادات المراقبة
     worker_send_task_events=True,
     task_send_sent_event=True,
-    
+
     # إعدادات الأمان
     worker_hijack_root_logger=False,
     worker_log_color=False,
-    
+
     # إعدادات الطوابير
     task_routes={
         # Attendance tasks
@@ -64,7 +64,7 @@ app.conf.update(
         'attendance.tasks.generate_monthly_attendance_report': {'queue': 'reports'},
         'attendance.tasks.optimize_attendance_data': {'queue': 'maintenance'},
     },
-    
+
     # إعدادات الجدولة (مهام متوفرة فقط)
     beat_schedule={
         # مهام يومية
@@ -73,14 +73,14 @@ app.conf.update(
             'schedule': 60.0 * 60.0 * 24.0,
             'options': {'queue': 'reports'}
         },
-        
+
         # مهام شهرية
         'monthly-attendance-report': {
             'task': 'attendance.tasks.generate_monthly_attendance_report',
             'schedule': 60.0 * 60.0 * 24.0 * 30.0,
             'options': {'queue': 'reports'}
         },
-        
+
         # مهام كل ساعة
         'sync-attendance-devices': {
             'task': 'attendance.tasks.sync_all_zk_devices',
@@ -92,7 +92,7 @@ app.conf.update(
             'schedule': 60.0 * 60.0,
             'options': {'queue': 'integration'}
         },
-        
+
         # مهام كل 6 ساعات
         'cleanup-old-zk-data': {
             'task': 'attendance.tasks.cleanup_old_zk_data',
@@ -116,6 +116,7 @@ if settings.DEBUG:
 # دالة لاختبار Celery
 @app.task(bind=True)
 def debug_task(self):
+    """debug_task function"""
     print(f'Request: {self.request!r}')
     return 'Celery is working!'
 
@@ -125,7 +126,7 @@ def health_check():
     """فحص صحة النظام"""
     import psutil
     import time
-    
+
     return {
         'timestamp': time.time(),
         'cpu_percent': psutil.cpu_percent(),
@@ -183,11 +184,11 @@ QUEUE_CONFIGS = {
 # دالة لبدء العامل مع إعدادات مخصصة
 def start_worker(queue_name='default', concurrency=1):
     """بدء عامل Celery مع إعدادات مخصصة"""
-    
+
     if queue_name in QUEUE_CONFIGS:
         config = QUEUE_CONFIGS[queue_name]
         concurrency = config.get('max_workers', concurrency)
-    
+
     command = [
         'celery',
         '-A', 'ElDawliya_sys',
@@ -197,13 +198,13 @@ def start_worker(queue_name='default', concurrency=1):
         '--loglevel=info',
         f'--hostname=worker-{queue_name}@%h'
     ]
-    
+
     return command
 
 # دالة لبدء المجدول
 def start_beat():
     """بدء مجدول Celery"""
-    
+
     command = [
         'celery',
         '-A', 'ElDawliya_sys',
@@ -211,13 +212,13 @@ def start_beat():
         '--loglevel=info',
         '--scheduler=django_celery_beat.schedulers:DatabaseScheduler'
     ]
-    
+
     return command
 
 # دالة لمراقبة المهام
 def start_monitor():
     """بدء مراقب Celery"""
-    
+
     command = [
         'celery',
         '-A', 'ElDawliya_sys',
@@ -225,7 +226,7 @@ def start_monitor():
         '--port=5555',
         '--broker=redis://127.0.0.1:6379/4'
     ]
-    
+
     return command
 
 # إعدادات التسجيل

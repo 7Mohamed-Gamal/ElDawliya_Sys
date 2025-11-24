@@ -49,6 +49,7 @@ class Notification(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name=_('تاريخ التحديث'))
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.title} - {self.user.username}"
 
     def mark_as_read(self):
@@ -59,6 +60,7 @@ class Notification(models.Model):
         self.save()
 
     class Meta:
+        """Meta class"""
         verbose_name = _('تنبيه')
         verbose_name_plural = _('التنبيهات')
         ordering = ['-created_at']

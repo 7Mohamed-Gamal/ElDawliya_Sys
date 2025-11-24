@@ -5,8 +5,9 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 class MeetingForm(forms.ModelForm):
+    """MeetingForm class"""
     attendees = forms.ModelMultipleChoiceField(
-        queryset=User.objects.all(),
+        queryset=User.objects.all().select_related()  # TODO: Add appropriate select_related fields,
         required=False,
         widget=forms.SelectMultiple(attrs={'class': 'form-select select2', 'style': 'width: 100%'})
     )
@@ -36,6 +37,7 @@ class MeetingForm(forms.ModelForm):
     )
 
     def clean(self):
+        """clean function"""
         cleaned_data = super().clean()
         tasks = cleaned_data.get('tasks', '')
         task_assignments = cleaned_data.get('task_assignments', '')
@@ -59,6 +61,7 @@ class MeetingForm(forms.ModelForm):
         return cleaned_data
 
     class Meta:
+        """Meta class"""
         model = Meeting
         fields = ['title', 'date', 'topic', 'status', 'attendees']
         widgets = {
@@ -73,6 +76,7 @@ class MeetingTaskStepForm(forms.ModelForm):
     """نموذج إضافة خطوة لمهمة اجتماع"""
 
     class Meta:
+        """Meta class"""
         model = MeetingTaskStep
         fields = ['description', 'notes', 'completed']
         widgets = {
@@ -98,11 +102,13 @@ class MeetingTaskStepForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         self.meeting_task = kwargs.pop('meeting_task', None)
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
 
     def save(self, commit=True):
+        """save function"""
         step = super().save(commit=False)
         if self.meeting_task:
             step.meeting_task = self.meeting_task
@@ -117,6 +123,7 @@ class MeetingTaskStatusForm(forms.ModelForm):
     """نموذج تحديث حالة مهمة الاجتماع"""
 
     class Meta:
+        """Meta class"""
         model = MeetingTask
         fields = ['status']
         widgets = {

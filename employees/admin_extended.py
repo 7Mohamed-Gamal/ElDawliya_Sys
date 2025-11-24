@@ -17,11 +17,12 @@ from .models_extended import (
 
 @admin.register(HealthInsuranceProvider)
 class HealthInsuranceProviderAdmin(admin.ModelAdmin):
+    """HealthInsuranceProviderAdmin class"""
     list_display = ['provider_name', 'provider_code', 'contact_person', 'phone', 'is_active', 'created_at']
     list_filter = ['is_active', 'created_at']
     search_fields = ['provider_name', 'provider_code', 'contact_person']
     ordering = ['provider_name']
-    
+
     fieldsets = (
         ('معلومات أساسية', {
             'fields': ('provider_name', 'provider_code', 'is_active')
@@ -34,11 +35,12 @@ class HealthInsuranceProviderAdmin(admin.ModelAdmin):
 
 @admin.register(EmployeeHealthInsurance)
 class EmployeeHealthInsuranceAdmin(admin.ModelAdmin):
+    """EmployeeHealthInsuranceAdmin class"""
     list_display = ['emp', 'provider', 'insurance_status', 'insurance_type', 'start_date', 'expiry_date', 'is_active']
     list_filter = ['insurance_status', 'insurance_type', 'provider', 'start_date']
     search_fields = ['emp__first_name', 'emp__last_name', 'insurance_number']
     ordering = ['emp__first_name', 'emp__last_name']
-    
+
     fieldsets = (
         ('معلومات الموظف', {
             'fields': ('emp',)
@@ -59,8 +61,9 @@ class EmployeeHealthInsuranceAdmin(admin.ModelAdmin):
             'fields': ('coverage_details', 'notes')
         }),
     )
-    
+
     def is_active(self, obj):
+        """is_active function"""
         return obj.is_active
     is_active.boolean = True
     is_active.short_description = 'نشط'
@@ -68,12 +71,13 @@ class EmployeeHealthInsuranceAdmin(admin.ModelAdmin):
 
 @admin.register(SocialInsuranceJobTitle)
 class SocialInsuranceJobTitleAdmin(admin.ModelAdmin):
-    list_display = ['job_code', 'job_title', 'insurable_wage_amount', 'employee_deduction_percentage', 
+    """SocialInsuranceJobTitleAdmin class"""
+    list_display = ['job_code', 'job_title', 'insurable_wage_amount', 'employee_deduction_percentage',
                    'company_contribution_percentage', 'is_active']
     list_filter = ['is_active', 'created_at']
     search_fields = ['job_code', 'job_title']
     ordering = ['job_code']
-    
+
     fieldsets = (
         ('معلومات الوظيفة', {
             'fields': ('job_code', 'job_title', 'is_active')
@@ -86,12 +90,13 @@ class SocialInsuranceJobTitleAdmin(admin.ModelAdmin):
 
 @admin.register(EmployeeSocialInsurance)
 class EmployeeSocialInsuranceAdmin(admin.ModelAdmin):
-    list_display = ['emp', 'insurance_status', 'job_title', 'social_insurance_number', 
+    """EmployeeSocialInsuranceAdmin class"""
+    list_display = ['emp', 'insurance_status', 'job_title', 'social_insurance_number',
                    'monthly_wage', 'employee_deduction', 'company_contribution']
     list_filter = ['insurance_status', 'subscription_confirmed', 'job_title']
     search_fields = ['emp__first_name', 'emp__last_name', 'social_insurance_number']
     ordering = ['emp__first_name', 'emp__last_name']
-    
+
     fieldsets = (
         ('معلومات الموظف', {
             'fields': ('emp',)
@@ -110,12 +115,13 @@ class EmployeeSocialInsuranceAdmin(admin.ModelAdmin):
 
 @admin.register(SalaryComponent)
 class SalaryComponentAdmin(admin.ModelAdmin):
-    list_display = ['component_name', 'component_code', 'component_type', 'calculation_type', 
+    """SalaryComponentAdmin class"""
+    list_display = ['component_name', 'component_code', 'component_type', 'calculation_type',
                    'default_value', 'is_taxable', 'is_active', 'sort_order']
     list_filter = ['component_type', 'calculation_type', 'is_taxable', 'is_social_insurance_applicable', 'is_active']
     search_fields = ['component_name', 'component_code']
     ordering = ['component_type', 'sort_order', 'component_name']
-    
+
     fieldsets = (
         ('معلومات أساسية', {
             'fields': ('component_name', 'component_code', 'component_type', 'is_active')
@@ -133,6 +139,7 @@ class SalaryComponentAdmin(admin.ModelAdmin):
 
 
 class EmployeeSalaryComponentInline(admin.TabularInline):
+    """EmployeeSalaryComponentInline class"""
     model = EmployeeSalaryComponent
     extra = 1
     fields = ['component', 'amount', 'percentage', 'effective_date', 'end_date', 'is_active']
@@ -140,12 +147,13 @@ class EmployeeSalaryComponentInline(admin.TabularInline):
 
 @admin.register(Vehicle)
 class VehicleAdmin(admin.ModelAdmin):
-    list_display = ['vehicle_number', 'vehicle_model', 'vehicle_year', 'capacity', 
+    """VehicleAdmin class"""
+    list_display = ['vehicle_number', 'vehicle_model', 'vehicle_year', 'capacity',
                    'supervisor_name', 'driver_name', 'vehicle_status', 'is_available']
     list_filter = ['vehicle_status', 'vehicle_year']
     search_fields = ['vehicle_number', 'vehicle_model', 'supervisor_name', 'driver_name']
     ordering = ['vehicle_number']
-    
+
     fieldsets = (
         ('معلومات المركبة', {
             'fields': ('vehicle_number', 'vehicle_model', 'vehicle_year', 'capacity', 'vehicle_status')
@@ -166,8 +174,9 @@ class VehicleAdmin(admin.ModelAdmin):
             'fields': ('notes',)
         }),
     )
-    
+
     def is_available(self, obj):
+        """is_available function"""
         return obj.is_available
     is_available.boolean = True
     is_available.short_description = 'متاح'
@@ -175,11 +184,12 @@ class VehicleAdmin(admin.ModelAdmin):
 
 @admin.register(PickupPoint)
 class PickupPointAdmin(admin.ModelAdmin):
+    """PickupPointAdmin class"""
     list_display = ['point_name', 'point_code', 'address', 'is_active', 'created_at']
     list_filter = ['is_active', 'created_at']
     search_fields = ['point_name', 'point_code', 'address']
     ordering = ['point_code']
-    
+
     fieldsets = (
         ('معلومات أساسية', {
             'fields': ('point_name', 'point_code', 'is_active')
@@ -195,11 +205,12 @@ class PickupPointAdmin(admin.ModelAdmin):
 
 @admin.register(EmployeeTransport)
 class EmployeeTransportAdmin(admin.ModelAdmin):
+    """EmployeeTransportAdmin class"""
     list_display = ['emp', 'vehicle', 'pickup_point', 'pickup_time', 'effective_date', 'is_active']
     list_filter = ['vehicle', 'pickup_point', 'is_active', 'effective_date']
     search_fields = ['emp__first_name', 'emp__last_name']
     ordering = ['emp__first_name', 'emp__last_name']
-    
+
     fieldsets = (
         ('معلومات الموظف', {
             'fields': ('emp',)
@@ -218,12 +229,13 @@ class EmployeeTransportAdmin(admin.ModelAdmin):
 
 @admin.register(WorkSchedule)
 class WorkScheduleAdmin(admin.ModelAdmin):
-    list_display = ['schedule_name', 'schedule_code', 'daily_hours', 'weekly_hours', 
+    """WorkScheduleAdmin class"""
+    list_display = ['schedule_name', 'schedule_code', 'daily_hours', 'weekly_hours',
                    'start_time', 'end_time', 'is_flexible', 'is_active']
     list_filter = ['is_flexible', 'overtime_applicable', 'is_active']
     search_fields = ['schedule_name', 'schedule_code']
     ordering = ['schedule_name']
-    
+
     fieldsets = (
         ('معلومات أساسية', {
             'fields': ('schedule_name', 'schedule_code', 'is_active')
@@ -242,11 +254,12 @@ class WorkScheduleAdmin(admin.ModelAdmin):
 
 @admin.register(EmployeeWorkSetup)
 class EmployeeWorkSetupAdmin(admin.ModelAdmin):
+    """EmployeeWorkSetupAdmin class"""
     list_display = ['emp', 'work_schedule', 'effective_date', 'overtime_rate', 'is_active']
     list_filter = ['work_schedule', 'is_active', 'effective_date']
     search_fields = ['emp__first_name', 'emp__last_name']
     ordering = ['emp__first_name', 'emp__last_name']
-    
+
     fieldsets = (
         ('معلومات الموظف', {
             'fields': ('emp',)
@@ -265,11 +278,12 @@ class EmployeeWorkSetupAdmin(admin.ModelAdmin):
 
 @admin.register(EvaluationCriteria)
 class EvaluationCriteriaAdmin(admin.ModelAdmin):
+    """EvaluationCriteriaAdmin class"""
     list_display = ['criteria_name', 'criteria_code', 'max_score', 'weight', 'is_active', 'sort_order']
     list_filter = ['is_active', 'created_at']
     search_fields = ['criteria_name', 'criteria_code']
     ordering = ['sort_order', 'criteria_name']
-    
+
     fieldsets = (
         ('معلومات أساسية', {
             'fields': ('criteria_name', 'criteria_code', 'is_active')
@@ -284,6 +298,7 @@ class EvaluationCriteriaAdmin(admin.ModelAdmin):
 
 
 class EvaluationScoreInline(admin.TabularInline):
+    """EvaluationScoreInline class"""
     model = EvaluationScore
     extra = 0
     fields = ['criteria', 'score', 'comments']
@@ -291,12 +306,13 @@ class EvaluationScoreInline(admin.TabularInline):
 
 @admin.register(EmployeePerformanceEvaluation)
 class EmployeePerformanceEvaluationAdmin(admin.ModelAdmin):
+    """EmployeePerformanceEvaluationAdmin class"""
     list_display = ['emp', 'evaluator', 'evaluation_date', 'overall_score', 'overall_rating', 'status']
     list_filter = ['status', 'evaluation_date', 'evaluator']
     search_fields = ['emp__first_name', 'emp__last_name', 'evaluator__first_name', 'evaluator__last_name']
     ordering = ['-evaluation_date']
     inlines = [EvaluationScoreInline]
-    
+
     fieldsets = (
         ('معلومات التقييم', {
             'fields': ('emp', 'evaluator', 'evaluation_date', 'status')
@@ -318,13 +334,14 @@ class EmployeePerformanceEvaluationAdmin(admin.ModelAdmin):
 
 @admin.register(EmployeeLeaveBalance)
 class EmployeeLeaveBalanceAdmin(admin.ModelAdmin):
-    list_display = ['emp', 'leave_type', 'year', 'opening_balance', 'accrued_balance', 
+    """EmployeeLeaveBalanceAdmin class"""
+    list_display = ['emp', 'leave_type', 'year', 'opening_balance', 'accrued_balance',
                    'used_balance', 'current_balance', 'last_updated']
     list_filter = ['leave_type', 'year', 'last_updated']
     search_fields = ['emp__first_name', 'emp__last_name']
     ordering = ['emp__first_name', 'emp__last_name', 'leave_type']
     readonly_fields = ['current_balance', 'last_updated']
-    
+
     fieldsets = (
         ('معلومات الموظف', {
             'fields': ('emp', 'leave_type', 'year')

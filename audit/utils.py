@@ -7,11 +7,11 @@ from .models import AuditLog
 logger = logging.getLogger(__name__)
 
 
-def log_action(user, action, obj=None, app_name=None, object_repr=None, 
+def log_action(user, action, obj=None, app_name=None, object_repr=None,
                action_details=None, change_data=None, ip_address=None, user_agent=None):
     """
     Manually log an action for audit purposes.
-    
+
     Parameters:
     - user: The user performing the action (can be None)
     - action: Action type (e.g., AuditLog.CREATE, AuditLog.UPDATE)
@@ -22,7 +22,7 @@ def log_action(user, action, obj=None, app_name=None, object_repr=None,
     - change_data: Dictionary or JSON serializable data about changes (optional)
     - ip_address: IP address of the user (optional)
     - user_agent: User agent string (optional)
-    
+
     Returns:
     - The created AuditLog instance
     """
@@ -30,29 +30,29 @@ def log_action(user, action, obj=None, app_name=None, object_repr=None,
         # Process object information if provided
         content_type = None
         object_id = None
-        
+
         if obj is not None:
             if isinstance(obj, models.Model):
                 content_type = ContentType.objects.get_for_model(obj)
                 object_id = str(obj.pk)
-                
+
                 # Set app_name from object if not provided
                 if not app_name:
                     app_name = obj.__class__._meta.app_label
-                    
+
                 # Set object_repr from object if not provided
                 if not object_repr:
                     object_repr = str(obj)
             else:
                 logger.warning(f"Object provided is not a Django model instance: {type(obj)}")
-        
+
         # Ensure change_data is JSON serializable
         if change_data and not isinstance(change_data, (dict, list, str, int, float, bool, type(None))):
             if hasattr(change_data, '__dict__'):
                 change_data = change_data.__dict__
             else:
                 change_data = {'data': str(change_data)}
-        
+
         # Create the audit log entry
         audit_log = AuditLog.objects.create(
             user=user,
@@ -66,7 +66,7 @@ def log_action(user, action, obj=None, app_name=None, object_repr=None,
             ip_address=ip_address,
             user_agent=user_agent
         )
-        
+
         return audit_log
     except Exception as e:
         logger.error(f"Error creating manual audit log: {e}")
@@ -81,17 +81,17 @@ def log_create(user, obj, **kwargs):
 def log_update(user, obj, original_data=None, new_data=None, **kwargs):
     """
     Log object update action.
-    
+
     original_data and new_data can be provided to log the specific changes.
     """
     change_data = kwargs.get('change_data', {})
-    
+
     if original_data and new_data:
         change_data.update({
             'original': original_data,
             'new': new_data
         })
-    
+
     kwargs['change_data'] = change_data
     return log_action(user, AuditLog.UPDATE, obj, **kwargs)
 
@@ -111,10 +111,10 @@ def log_login(user, request=None, **kwargs):
     if request:
         kwargs.setdefault('ip_address', _get_client_ip(request))
         kwargs.setdefault('user_agent', request.META.get('HTTP_USER_AGENT', ''))
-    
+
     kwargs.setdefault('app_name', 'accounts')
     kwargs.setdefault('action_details', f"User login: {user.username if user else 'Anonymous'}")
-    
+
     return log_action(user, AuditLog.LOGIN, obj=None, **kwargs)
 
 
@@ -123,10 +123,10 @@ def log_logout(user, request=None, **kwargs):
     if request:
         kwargs.setdefault('ip_address', _get_client_ip(request))
         kwargs.setdefault('user_agent', request.META.get('HTTP_USER_AGENT', ''))
-    
+
     kwargs.setdefault('app_name', 'accounts')
     kwargs.setdefault('action_details', f"User logout: {user.username if user else 'Anonymous'}")
-    
+
     return log_action(user, AuditLog.LOGOUT, obj=None, **kwargs)
 
 

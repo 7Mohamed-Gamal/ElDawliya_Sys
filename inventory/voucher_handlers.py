@@ -5,6 +5,7 @@ from decimal import Decimal
 from .models_local import Product, Voucher, VoucherItem
 
 class VoucherHandler:
+    """VoucherHandler class"""
     @staticmethod
     def handle_voucher_deletion(voucher):
         """
@@ -242,7 +243,7 @@ class VoucherHandler:
     def prepare_items_data(request, voucher_type):
         """تحضير بيانات الأصناف من بيانات الطلب"""
         items_data = []
-        
+
         # تحقق من نمط تسمية الحقول (Django formset أو arrays باستخدام [])
         if any(key.startswith('form-') for key in request.POST.keys()):
             # نمط Django formset
@@ -250,23 +251,23 @@ class VoucherHandler:
             form_count = 0
             while f'form-{form_count}-product' in request.POST:
                 form_count += 1
-            
+
             for i in range(form_count):
                 product_id = request.POST.get(f'form-{i}-product')
                 quantity = request.POST.get(f'form-{i}-quantity')
                 machine = request.POST.get(f'form-{i}-machine_name', '')
                 machine_unit = request.POST.get(f'form-{i}-machine_unit', '')
-                
+
                 if product_id and quantity:
                     item_data = {
                         'product_id': product_id,
                         'quantity': quantity,
                     }
-                    
+
                     if voucher_type == 'إذن صرف':
                         item_data['machine'] = machine
                         item_data['machine_unit'] = machine_unit
-                    
+
                     items_data.append(item_data)
         else:
             # نمط المصفوفات (Arrays)
@@ -274,20 +275,20 @@ class VoucherHandler:
             quantities = request.POST.getlist('quantity[]')
             machines = request.POST.getlist('machine[]')
             machine_units = request.POST.getlist('machine_unit[]')
-            
+
             for i in range(len(product_ids)):
                 if not product_ids[i] or not quantities[i]:
                     continue
-                
+
                 item_data = {
                     'product_id': product_ids[i],
                     'quantity': quantities[i],
                 }
-                
+
                 if voucher_type == 'إذن صرف':
                     item_data['machine'] = machines[i] if i < len(machines) else ''
                     item_data['machine_unit'] = machine_units[i] if i < len(machine_units) else ''
-                
+
                 items_data.append(item_data)
 
 

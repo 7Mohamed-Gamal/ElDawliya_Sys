@@ -38,9 +38,9 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         """Return users based on permissions"""
         if self.request.user.is_staff:
-            return User.objects.all().select_related()
+            return User.objects.all().select_related()  # TODO: Add appropriate select_related fields.select_related()
         else:
-            return User.objects.filter(id=self.request.user.id)
+            return User.objects.filter(id=self.request.user.id).prefetch_related()  # TODO: Add appropriate prefetch_related fields
 
     @swagger_auto_schema(
         operation_description="Get current user profile",
@@ -61,8 +61,8 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     def update_profile(self, request):
         """Update current user profile"""
         serializer = self.get_serializer(
-            request.user, 
-            data=request.data, 
+            request.user,
+            data=request.data,
             partial=True
         )
         if serializer.is_valid():
@@ -82,7 +82,7 @@ class APIKeyViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Return API keys for the current user"""
-        return APIKey.objects.filter(user=self.request.user)
+        return APIKey.objects.filter(user=self.request.user).prefetch_related()  # TODO: Add appropriate prefetch_related fields
 
     def perform_create(self, serializer):
         """Create API key for the current user"""
@@ -98,13 +98,13 @@ class APIKeyViewSet(viewsets.ModelViewSet):
     def regenerate(self, request, pk=None):
         """Regenerate API key"""
         api_key_obj = self.get_object()
-        
+
         # Generate new key
         import secrets
         new_key = secrets.token_urlsafe(32)
         api_key_obj.key = new_key
         api_key_obj.save()
-        
+
         serializer = self.get_serializer(api_key_obj)
         return Response(serializer.data)
 
@@ -123,24 +123,24 @@ class APIKeyViewSet(viewsets.ModelViewSet):
     def usage_stats(self, request, pk=None):
         """Get usage statistics for API key"""
         api_key_obj = self.get_object()
-        
+
         # Get usage statistics
         from django.db.models import Count
         from datetime import datetime, timedelta
-        
+
         today = datetime.now().date()
-        
+
         stats = {
-            'total_requests': APIUsageLog.objects.filter(api_key=api_key_obj).count(),
+            'total_requests': APIUsageLog.objects.filter(api_key=api_key_obj).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count(),
             'requests_today': APIUsageLog.objects.filter(
                 api_key=api_key_obj,
                 timestamp__date=today
-            ).count(),
+            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count(),
             'last_used': api_key_obj.last_used.isoformat() if api_key_obj.last_used else None,
             'created_at': api_key_obj.created_at.isoformat(),
             'expires_at': api_key_obj.expires_at.isoformat() if api_key_obj.expires_at else None,
         }
-        
+
         return Response(stats)
 
 
@@ -166,9 +166,9 @@ class APIStatusView(APIView):
     def get(self, request):
         """Get API status"""
         from core.services.integrations import IntegrationService
-        
+
         integration_service = IntegrationService()
-        
+
         return Response({
             'status': 'healthy',
             'version': 'v1',
@@ -217,12 +217,12 @@ class HealthCheckView(APIView):
                 'memory': self._check_memory(),
             }
         }
-        
+
         # Determine overall status
         if not all(health_status['checks'].values()):
             health_status['status'] = 'unhealthy'
             return Response(health_status, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-        
+
         return Response(health_status)
 
     def _check_database(self):
@@ -298,7 +298,7 @@ class UsageStatsView(APIView):
         user_logs = APIUsageLog.objects.filter(
             user=request.user,
             timestamp__gte=start_date
-        )
+        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
 
         stats = {
             'period': {
@@ -327,7 +327,7 @@ class UsageStatsView(APIView):
                 .order_by('status_code')
             ),
             'error_rate': (
-                user_logs.filter(status_code__gte=400).count() / 
+                user_logs.filter(status_code__gte=400).count() /
                 max(user_logs.count(), 1) * 100
             )
         }
@@ -356,22 +356,22 @@ class LogoutView(APIView):
         try:
             # Get JWT token from request
             token = getattr(request, 'jwt_token', None)
-            
+
             if token:
                 # Blacklist the token
                 from django.core.cache import cache
                 import hashlib
-                
+
                 token_hash = hashlib.sha256(str(token).encode()).hexdigest()
                 blacklist_key = f"jwt_blacklist_{token_hash}"
-                
+
                 # Blacklist until token expiration
                 cache.set(blacklist_key, True, 3600 * 24)  # 24 hours
-            
+
             return Response({
                 'message': 'تم تسجيل الخروج بنجاح'
             })
-            
+
         except Exception as e:
             logger.error(f"Logout error: {e}")
             return Response({

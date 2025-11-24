@@ -8,19 +8,20 @@ from channels.db import database_sync_to_async
 
 
 class NotificationConsumer(AsyncWebsocketConsumer):
+    """NotificationConsumer class"""
     async def connect(self):
         self.user = self.scope["user"]
         if self.user.is_anonymous:
             await self.close()
         else:
             self.group_name = f"user_{self.user.id}"
-            
+
             # Join user group
             await self.channel_layer.group_add(
                 self.group_name,
                 self.channel_name
             )
-            
+
             await self.accept()
 
     async def disconnect(self, close_code):
@@ -34,7 +35,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         text_data_json = json.loads(text_data)
         message_type = text_data_json.get('type')
-        
+
         if message_type == 'mark_read':
             notification_id = text_data_json.get('notification_id')
             await self.mark_notification_read(notification_id)
@@ -51,6 +52,7 @@ class NotificationConsumer(AsyncWebsocketConsumer):
 
     @database_sync_to_async
     def mark_notification_read(self, notification_id):
+        """mark_notification_read function"""
         # Mark notification as read in database
         try:
             from .models import Notification

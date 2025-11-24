@@ -3,20 +3,23 @@ from django.db import transaction
 
 
 def _use_modern() -> bool:
+    """_use_modern function"""
     from django.conf import settings
     return getattr(settings, 'ATTENDANCE_USE_MODERN_RULES', False)
 
 
 def list_rules() -> Any:
+    """list_rules function"""
     if _use_modern():
         from .models import AttendanceRule
-        return AttendanceRule.objects.all().order_by('name')
+        return AttendanceRule.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
     else:
         from .models import AttendanceRules
-        return AttendanceRules.objects.all().order_by('rule_name')
+        return AttendanceRules.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('rule_name')
 
 
 def get_rule(rule_id: int) -> Any:
+    """get_rule function"""
     if _use_modern():
         from .models import AttendanceRule
         return AttendanceRule.objects.get(id=rule_id)
@@ -27,6 +30,7 @@ def get_rule(rule_id: int) -> Any:
 
 @transaction.atomic
 def create_rule(data: Dict[str, Any]) -> Any:
+    """create_rule function"""
     if _use_modern():
         from .models import AttendanceRule
         obj = AttendanceRule.objects.create(
@@ -52,6 +56,7 @@ def create_rule(data: Dict[str, Any]) -> Any:
 
 @transaction.atomic
 def update_rule(rule_id: int, data: Dict[str, Any]) -> Any:
+    """update_rule function"""
     if _use_modern():
         from .models import AttendanceRule
         obj = AttendanceRule.objects.get(id=rule_id)
@@ -71,16 +76,18 @@ def update_rule(rule_id: int, data: Dict[str, Any]) -> Any:
 
 @transaction.atomic
 def delete_rule(rule_id: int) -> None:
+    """delete_rule function"""
     if _use_modern():
         from .models import AttendanceRule
-        AttendanceRule.objects.filter(id=rule_id).delete()
+        AttendanceRule.objects.filter(id=rule_id).prefetch_related()  # TODO: Add appropriate prefetch_related fields.delete()
     else:
         from .models import AttendanceRules
-        AttendanceRules.objects.filter(pk=rule_id).delete()
+        AttendanceRules.objects.filter(pk=rule_id).prefetch_related()  # TODO: Add appropriate prefetch_related fields.delete()
 
 
 @transaction.atomic
 def set_default_rule(rule_id: int) -> Optional[Any]:
+    """set_default_rule function"""
     if _use_modern():
         # Modern rules do not have is_default; no-op
         return None

@@ -22,15 +22,16 @@ from employees.models import Employee
 
 class AttendanceRulesForm(forms.ModelForm):
     """نموذج إضافة/تعديل قواعد الحضور"""
-    
+
     class Meta:
+        """Meta class"""
         model = AttendanceRules
         fields = [
-            'rule_name', 'shift_start', 'shift_end', 
-            'late_threshold', 'early_threshold', 
+            'rule_name', 'shift_start', 'shift_end',
+            'late_threshold', 'early_threshold',
             'overtime_start_after', 'week_end_days', 'is_default'
         ]
-        
+
         widgets = {
             'rule_name': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -66,7 +67,7 @@ class AttendanceRulesForm(forms.ModelForm):
                 'class': 'form-check-input'
             })
         }
-        
+
         labels = {
             'rule_name': 'اسم القاعدة',
             'shift_start': 'بداية الوردية',
@@ -77,31 +78,33 @@ class AttendanceRulesForm(forms.ModelForm):
             'week_end_days': 'أيام نهاية الأسبوع',
             'is_default': 'قاعدة افتراضية'
         }
-    
+
     def clean(self):
+        """clean function"""
         cleaned_data = super().clean()
         shift_start = cleaned_data.get('shift_start')
         shift_end = cleaned_data.get('shift_end')
         overtime_start = cleaned_data.get('overtime_start_after')
-        
+
         if shift_start and shift_end:
             if shift_start >= shift_end:
                 raise ValidationError('وقت بداية الوردية يجب أن يكون قبل وقت النهاية')
-        
+
         if overtime_start and shift_end:
             if overtime_start <= shift_end:
                 raise ValidationError('بداية الوقت الإضافي يجب أن تكون بعد نهاية الوردية')
-        
+
         return cleaned_data
 
 
 class EmployeeAttendanceForm(forms.ModelForm):
     """نموذج إضافة/تعديل سجل حضور الموظف"""
-    
+
     class Meta:
+        """Meta class"""
         model = EmployeeAttendance
         fields = ['emp', 'att_date', 'check_in', 'check_out', 'status', 'rule']
-        
+
         widgets = {
             'emp': forms.Select(attrs={
                 'class': 'form-control select2',
@@ -126,7 +129,7 @@ class EmployeeAttendanceForm(forms.ModelForm):
                 'class': 'form-control'
             })
         }
-        
+
         labels = {
             'emp': 'الموظف',
             'att_date': 'التاريخ',
@@ -135,18 +138,19 @@ class EmployeeAttendanceForm(forms.ModelForm):
             'status': 'الحالة',
             'rule': 'قاعدة الحضور'
         }
-    
+
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         super().__init__(*args, **kwargs)
-        
+
         # تحديد خيارات الموظفين النشطين
         self.fields['emp'].queryset = Employee.objects.filter(
             emp_status='Active'
         ).order_by('emp_code')
-        
+
         # تحديد خيارات قواعد الحضور
         self.fields['rule'].queryset = AttendanceRules.objects.all()
-        
+
         # خيارات الحالة
         STATUS_CHOICES = [
             ('Present', 'حاضر'),
@@ -157,20 +161,21 @@ class EmployeeAttendanceForm(forms.ModelForm):
             ('Leave', 'إجازة')
         ]
         self.fields['status'].choices = STATUS_CHOICES
-    
+
     def clean(self):
+        """clean function"""
         cleaned_data = super().clean()
         check_in = cleaned_data.get('check_in')
         check_out = cleaned_data.get('check_out')
         att_date = cleaned_data.get('att_date')
-        
+
         if check_in and check_out:
             if check_in >= check_out:
                 raise ValidationError('وقت الدخول يجب أن يكون قبل وقت الخروج')
-        
+
         if att_date and att_date > date.today():
             raise ValidationError('لا يمكن تسجيل حضور لتاريخ مستقبلي')
-        
+
         return cleaned_data
 
 
@@ -178,17 +183,19 @@ class ZKDeviceForm(forms.ModelForm):
     """نموذج إضافة/تعديل جهاز ZK"""
 
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         super().__init__(*args, **kwargs)
         # Make timezone field optional
         self.fields['timezone'].required = False
 
     class Meta:
+        """Meta class"""
         model = ZKDevice
         fields = [
             'device_name', 'device_serial', 'ip_address',
             'port', 'location', 'status', 'timezone'
         ]
-        
+
         widgets = {
             'device_name': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -219,7 +226,7 @@ class ZKDeviceForm(forms.ModelForm):
                 'class': 'form-control'
             })
         }
-        
+
         labels = {
             'device_name': 'اسم الجهاز',
             'device_serial': 'الرقم التسلسلي',
@@ -229,10 +236,11 @@ class ZKDeviceForm(forms.ModelForm):
             'status': 'الحالة',
             'timezone': 'المنطقة الزمنية'
         }
-    
+
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         super().__init__(*args, **kwargs)
-        
+
         # خيارات المنطقة الزمنية
         TIMEZONE_CHOICES = [
             ('Asia/Riyadh', 'توقيت الرياض'),
@@ -243,27 +251,29 @@ class ZKDeviceForm(forms.ModelForm):
             ('UTC', 'التوقيت العالمي')
         ]
         self.fields['timezone'].choices = TIMEZONE_CHOICES
-    
+
     def clean_ip_address(self):
+        """clean_ip_address function"""
         ip_address = self.cleaned_data['ip_address']
-        
+
         # التحقق من صحة عنوان IP
         import re
         ip_pattern = r'^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$'
-        
+
         if not re.match(ip_pattern, ip_address):
             raise ValidationError('عنوان IP غير صحيح')
-        
+
         return ip_address
 
 
 class EmployeeDeviceMappingForm(forms.ModelForm):
     """نموذج ربط الموظف بجهاز ZK"""
-    
+
     class Meta:
+        """Meta class"""
         model = EmployeeDeviceMapping
         fields = ['employee', 'device', 'device_user_id', 'is_active']
-        
+
         widgets = {
             'employee': forms.Select(attrs={
                 'class': 'form-control select2',
@@ -281,49 +291,51 @@ class EmployeeDeviceMappingForm(forms.ModelForm):
                 'class': 'form-check-input'
             })
         }
-        
+
         labels = {
             'employee': 'الموظف',
             'device': 'الجهاز',
             'device_user_id': 'معرف المستخدم في الجهاز',
             'is_active': 'نشط'
         }
-    
+
     def __init__(self, *args, **kwargs):
+        """__init__ function"""
         super().__init__(*args, **kwargs)
-        
+
         # تحديد الموظفين النشطين
         self.fields['employee'].queryset = Employee.objects.filter(
             emp_status='Active'
         ).order_by('emp_code')
-        
+
         # تحديد الأجهزة النشطة
         self.fields['device'].queryset = ZKDevice.objects.filter(
             status='active'
         ).order_by('device_name')
-    
+
     def clean(self):
+        """clean function"""
         cleaned_data = super().clean()
         employee = cleaned_data.get('employee')
         device = cleaned_data.get('device')
         device_user_id = cleaned_data.get('device_user_id')
-        
+
         if employee and device and device_user_id:
             # التحقق من عدم تكرار الربط
             existing = EmployeeDeviceMapping.objects.filter(
                 device=device,
                 device_user_id=device_user_id
             ).exclude(pk=self.instance.pk if self.instance else None)
-            
+
             if existing.exists():
                 raise ValidationError('معرف المستخدم مستخدم بالفعل في هذا الجهاز')
-        
+
         return cleaned_data
 
 
 class AttendanceFilterForm(forms.Form):
     """نموذج تصفية سجلات الحضور"""
-    
+
     employee = forms.ModelChoiceField(
         queryset=Employee.objects.filter(emp_status='Active').order_by('emp_code'),
         required=False,
@@ -333,7 +345,7 @@ class AttendanceFilterForm(forms.Form):
         }),
         label='الموظف'
     )
-    
+
     date_from = forms.DateField(
         required=False,
         widget=forms.DateInput(attrs={
@@ -342,7 +354,7 @@ class AttendanceFilterForm(forms.Form):
         }),
         label='من تاريخ'
     )
-    
+
     date_to = forms.DateField(
         required=False,
         widget=forms.DateInput(attrs={
@@ -351,7 +363,7 @@ class AttendanceFilterForm(forms.Form):
         }),
         label='إلى تاريخ'
     )
-    
+
     status = forms.ChoiceField(
         choices=[('', 'جميع الحالات')] + [
             ('Present', 'حاضر'),
@@ -367,7 +379,7 @@ class AttendanceFilterForm(forms.Form):
         }),
         label='الحالة'
     )
-    
+
     department = forms.CharField(
         required=False,
         widget=forms.TextInput(attrs={
@@ -380,7 +392,7 @@ class AttendanceFilterForm(forms.Form):
 
 class QuickAttendanceForm(forms.Form):
     """نموذج تسجيل الحضور السريع"""
-    
+
     employee = forms.ModelChoiceField(
         queryset=Employee.objects.filter(emp_status='Active').order_by('emp_code'),
         widget=forms.Select(attrs={
@@ -389,7 +401,7 @@ class QuickAttendanceForm(forms.Form):
         }),
         label='الموظف'
     )
-    
+
     action = forms.ChoiceField(
         choices=[
             ('check_in', 'تسجيل دخول'),
@@ -404,7 +416,7 @@ class QuickAttendanceForm(forms.Form):
 
 class BulkAttendanceForm(forms.Form):
     """نموذج تسجيل الحضور بالجملة"""
-    
+
     date = forms.DateField(
         widget=forms.DateInput(attrs={
             'class': 'form-control',
@@ -412,13 +424,13 @@ class BulkAttendanceForm(forms.Form):
         }),
         label='التاريخ'
     )
-    
+
     employees = forms.ModelMultipleChoiceField(
         queryset=Employee.objects.filter(emp_status='Active').order_by('emp_code'),
         widget=forms.CheckboxSelectMultiple(),
         label='الموظفين'
     )
-    
+
     status = forms.ChoiceField(
         choices=[
             ('Present', 'حاضر'),
@@ -431,7 +443,7 @@ class BulkAttendanceForm(forms.Form):
         }),
         label='الحالة'
     )
-    
+
     notes = forms.CharField(
         required=False,
         widget=forms.Textarea(attrs={
@@ -445,14 +457,14 @@ class BulkAttendanceForm(forms.Form):
 
 class AttendanceReportForm(forms.Form):
     """نموذج تقرير الحضور"""
-    
+
     REPORT_TYPE_CHOICES = [
         ('daily', 'تقرير يومي'),
         ('weekly', 'تقرير أسبوعي'),
         ('monthly', 'تقرير شهري'),
         ('custom', 'فترة مخصصة')
     ]
-    
+
     report_type = forms.ChoiceField(
         choices=REPORT_TYPE_CHOICES,
         widget=forms.Select(attrs={
@@ -461,7 +473,7 @@ class AttendanceReportForm(forms.Form):
         }),
         label='نوع التقرير'
     )
-    
+
     date_from = forms.DateField(
         required=False,
         widget=forms.DateInput(attrs={
@@ -470,7 +482,7 @@ class AttendanceReportForm(forms.Form):
         }),
         label='من تاريخ'
     )
-    
+
     date_to = forms.DateField(
         required=False,
         widget=forms.DateInput(attrs={
@@ -479,7 +491,7 @@ class AttendanceReportForm(forms.Form):
         }),
         label='إلى تاريخ'
     )
-    
+
     employees = forms.ModelMultipleChoiceField(
         queryset=Employee.objects.filter(emp_status='Active').order_by('emp_code'),
         required=False,
@@ -490,7 +502,7 @@ class AttendanceReportForm(forms.Form):
         }),
         label='الموظفين'
     )
-    
+
     include_summary = forms.BooleanField(
         required=False,
         initial=True,
@@ -499,7 +511,7 @@ class AttendanceReportForm(forms.Form):
         }),
         label='تضمين الملخص'
     )
-    
+
     include_details = forms.BooleanField(
         required=False,
         initial=True,
@@ -508,7 +520,7 @@ class AttendanceReportForm(forms.Form):
         }),
         label='تضمين التفاصيل'
     )
-    
+
     export_format = forms.ChoiceField(
         choices=[
             ('html', 'عرض في المتصفح'),
@@ -525,11 +537,12 @@ class AttendanceReportForm(forms.Form):
 
 class LeaveRequestForm(forms.ModelForm):
     """نموذج طلب إجازة"""
-    
+
     class Meta:
+        """Meta class"""
         model = LeaveBalance  # سيتم ربطها بنموذج الإجازات لاحقاً
         fields = ['leave_type', 'allocated_days']
-        
+
         widgets = {
             'leave_type': forms.Select(attrs={
                 'class': 'form-control'
@@ -544,14 +557,15 @@ class LeaveRequestForm(forms.ModelForm):
 
 class EmployeeAttendanceProfileForm(forms.ModelForm):
     """نموذج ملف الحضور للموظف"""
-    
+
     class Meta:
+        """Meta class"""
         model = EmployeeAttendanceProfile
         fields = [
             'employee', 'attendance_rule', 'work_hours_per_day',
             'salary_status', 'attendance_status'
         ]
-        
+
         widgets = {
             'employee': forms.Select(attrs={
                 'class': 'form-control select2'
@@ -576,7 +590,7 @@ class EmployeeAttendanceProfileForm(forms.ModelForm):
 
 class ZKSyncForm(forms.Form):
     """نموذج مزامنة أجهزة ZK"""
-    
+
     device = forms.ModelChoiceField(
         queryset=ZKDevice.objects.filter(status='active'),
         required=False,
@@ -586,7 +600,7 @@ class ZKSyncForm(forms.Form):
         }),
         label='الجهاز'
     )
-    
+
     days = forms.IntegerField(
         initial=7,
         min_value=1,
@@ -597,7 +611,7 @@ class ZKSyncForm(forms.Form):
         }),
         label='عدد الأيام'
     )
-    
+
     force_sync = forms.BooleanField(
         required=False,
         widget=forms.CheckboxInput(attrs={
@@ -605,7 +619,7 @@ class ZKSyncForm(forms.Form):
         }),
         label='مزامنة قسرية (تجاهل آخر مزامنة)'
     )
-    
+
     clear_device_data = forms.BooleanField(
         required=False,
         widget=forms.CheckboxInput(attrs={
@@ -617,7 +631,7 @@ class ZKSyncForm(forms.Form):
 
 class AttendanceImportForm(forms.Form):
     """نموذج استيراد بيانات الحضور"""
-    
+
     file = forms.FileField(
         widget=forms.FileInput(attrs={
             'class': 'form-control',
@@ -625,7 +639,7 @@ class AttendanceImportForm(forms.Form):
         }),
         label='ملف البيانات'
     )
-    
+
     file_type = forms.ChoiceField(
         choices=[
             ('csv', 'ملف CSV'),
@@ -636,7 +650,7 @@ class AttendanceImportForm(forms.Form):
         }),
         label='نوع الملف'
     )
-    
+
     has_header = forms.BooleanField(
         required=False,
         initial=True,
@@ -645,7 +659,7 @@ class AttendanceImportForm(forms.Form):
         }),
         label='الملف يحتوي على عناوين الأعمدة'
     )
-    
+
     skip_existing = forms.BooleanField(
         required=False,
         initial=True,

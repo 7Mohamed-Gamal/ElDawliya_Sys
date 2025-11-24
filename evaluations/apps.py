@@ -3,6 +3,7 @@ from django.utils.translation import gettext_lazy as _
 
 
 class EvaluationsConfig(AppConfig):
+    """EvaluationsConfig class"""
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'evaluations'
     verbose_name = _('التقييمات')

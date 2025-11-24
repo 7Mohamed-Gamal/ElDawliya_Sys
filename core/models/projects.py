@@ -19,23 +19,23 @@ class ProjectCategory(BaseModel):
     Project Categories
     """
     name = models.CharField(
-        max_length=100, 
+        max_length=100,
         unique=True,
         verbose_name=_('اسم التصنيف')
     )
     description = models.TextField(
-        blank=True, 
+        blank=True,
         null=True,
         verbose_name=_('وصف التصنيف')
     )
     color = models.CharField(
-        max_length=7, 
+        max_length=7,
         default='#3498db',
         verbose_name=_('اللون'),
         help_text=_('لون التصنيف بصيغة HEX')
     )
     icon = models.CharField(
-        max_length=50, 
+        max_length=50,
         default='fas fa-project-diagram',
         verbose_name=_('الأيقونة')
     )
@@ -47,16 +47,18 @@ class ProjectCategory(BaseModel):
         related_name='subcategories',
         verbose_name=_('التصنيف الأب')
     )
-    
+
     class Meta:
+        """Meta class"""
         verbose_name = _('تصنيف المشروع')
         verbose_name_plural = _('تصنيفات المشاريع')
         ordering = ['name']
         db_table = 'project_categories'
-        
+
     def __str__(self):
+        """__str__ function"""
         return self.name
-    
+
     @property
     def full_name(self):
         """Get full category name including parent"""
@@ -78,14 +80,14 @@ class Project(AuditableModel, SoftDeleteModel):
         ('cancelled', _('ملغي')),
         ('archived', _('مؤرشف')),
     ]
-    
+
     PRIORITY_CHOICES = [
         ('low', _('منخفضة')),
         ('medium', _('متوسطة')),
         ('high', _('عالية')),
         ('critical', _('حرجة')),
     ]
-    
+
     name = models.CharField(
         max_length=200,
         verbose_name=_('اسم المشروع')
@@ -169,8 +171,9 @@ class Project(AuditableModel, SoftDeleteModel):
         related_name='subprojects',
         verbose_name=_('المشروع الأب')
     )
-    
+
     class Meta:
+        """Meta class"""
         verbose_name = _('مشروع')
         verbose_name_plural = _('المشاريع')
         ordering = ['-created_at']
@@ -189,10 +192,11 @@ class Project(AuditableModel, SoftDeleteModel):
             ("view_project_reports", "Can view project reports"),
             ("export_project_data", "Can export project data"),
         ]
-    
+
     def __str__(self):
+        """__str__ function"""
         return f"{self.code} - {self.name}"
-    
+
     def clean(self):
         """Validate model data"""
         super().clean()
@@ -200,23 +204,23 @@ class Project(AuditableModel, SoftDeleteModel):
             raise ValidationError({
                 'end_date': _('تاريخ الانتهاء لا يمكن أن يكون قبل تاريخ البدء')
             })
-        
+
         if self.progress_percentage < 0 or self.progress_percentage > 100:
             raise ValidationError({
                 'progress_percentage': _('نسبة الإنجاز يجب أن تكون بين 0 و 100')
             })
-    
+
     def get_absolute_url(self):
         """Get the URL for this project"""
         return reverse('projects:detail', kwargs={'pk': self.pk})
-    
+
     @property
     def is_overdue(self):
         """Check if project is overdue"""
         if self.status in ['completed', 'cancelled', 'archived']:
             return False
         return self.end_date < timezone.now().date()
-    
+
     @property
     def days_remaining(self):
         """Get days remaining until end date"""
@@ -224,21 +228,21 @@ class Project(AuditableModel, SoftDeleteModel):
             delta = self.end_date - timezone.now().date()
             return delta.days
         return 0
-    
+
     @property
     def duration_days(self):
         """Get project duration in days"""
         if self.start_date and self.end_date:
             return (self.end_date - self.start_date).days
         return 0
-    
+
     @property
     def budget_utilization(self):
         """Get budget utilization percentage"""
         if self.budget and self.budget > 0:
             return (self.actual_cost / self.budget) * 100
         return 0
-    
+
     def calculate_progress(self):
         """Calculate project progress based on tasks and phases"""
         # Calculate based on tasks completion
@@ -247,19 +251,19 @@ class Project(AuditableModel, SoftDeleteModel):
             completed_tasks = tasks.filter(status='completed').count()
             total_tasks = tasks.count()
             task_progress = (completed_tasks / total_tasks) * 100
-            
+
             # Calculate based on phases completion
             phases = self.phases.all()
             if phases.exists():
                 phase_progress = sum(phase.progress_percentage for phase in phases) / phases.count()
                 # Average of task and phase progress
                 return (task_progress + phase_progress) / 2
-            
+
             return task_progress
-        
+
         # Fallback to manual progress
         return self.progress_percentage
-    
+
     def update_progress(self):
         """Update project progress automatically"""
         self.progress_percentage = int(self.calculate_progress())
@@ -278,7 +282,7 @@ class ProjectPhase(AuditableModel):
         ('on_hold', _('معلقة')),
         ('cancelled', _('ملغاة')),
     ]
-    
+
     project = models.ForeignKey(
         Project,
         on_delete=models.CASCADE,
@@ -340,8 +344,9 @@ class ProjectPhase(AuditableModel):
         related_name='responsible_phases',
         verbose_name=_('المسؤول عن المرحلة')
     )
-    
+
     class Meta:
+        """Meta class"""
         verbose_name = _('مرحلة مشروع')
         verbose_name_plural = _('مراحل المشاريع')
         ordering = ['project', 'order']
@@ -352,10 +357,11 @@ class ProjectPhase(AuditableModel):
             models.Index(fields=['start_date']),
             models.Index(fields=['end_date']),
         ]
-    
+
     def __str__(self):
+        """__str__ function"""
         return f"{self.project.name} - {self.name}"
-    
+
     def clean(self):
         """Validate model data"""
         super().clean()
@@ -363,7 +369,7 @@ class ProjectPhase(AuditableModel):
             raise ValidationError({
                 'end_date': _('تاريخ الانتهاء لا يمكن أن يكون قبل تاريخ البدء')
             })
-    
+
     @property
     def is_overdue(self):
         """Check if phase is overdue"""
@@ -383,7 +389,7 @@ class ProjectMilestone(AuditableModel):
         ('missed', _('فائت')),
         ('cancelled', _('ملغي')),
     ]
-    
+
     project = models.ForeignKey(
         Project,
         on_delete=models.CASCADE,
@@ -426,8 +432,9 @@ class ProjectMilestone(AuditableModel):
         verbose_name=_('الأهمية'),
         help_text=_('من 1 إلى 10')
     )
-    
+
     class Meta:
+        """Meta class"""
         verbose_name = _('معلم مشروع')
         verbose_name_plural = _('معالم المشاريع')
         ordering = ['project', 'target_date']
@@ -437,10 +444,11 @@ class ProjectMilestone(AuditableModel):
             models.Index(fields=['target_date']),
             models.Index(fields=['phase']),
         ]
-    
+
     def __str__(self):
+        """__str__ function"""
         return f"{self.project.name} - {self.name}"
-    
+
     @property
     def is_overdue(self):
         """Check if milestone is overdue"""
@@ -465,7 +473,7 @@ class ProjectMember(BaseModel):
         ('stakeholder', _('صاحب مصلحة')),
         ('observer', _('مراقب')),
     ]
-    
+
     project = models.ForeignKey(
         Project,
         on_delete=models.CASCADE,
@@ -506,8 +514,9 @@ class ProjectMember(BaseModel):
         related_name='project_members',
         verbose_name=_('الصلاحيات')
     )
-    
+
     class Meta:
+        """Meta class"""
         verbose_name = _('عضو فريق المشروع')
         verbose_name_plural = _('أعضاء فرق المشاريع')
         unique_together = ['project', 'user']
@@ -516,10 +525,11 @@ class ProjectMember(BaseModel):
             models.Index(fields=['project', 'role']),
             models.Index(fields=['user']),
         ]
-    
+
     def __str__(self):
+        """__str__ function"""
         return f"{self.user.get_full_name()} - {self.project.name}"
-    
+
     @property
     def is_active(self):
         """Check if member is currently active in project"""
@@ -539,7 +549,7 @@ class Task(AuditableModel, SoftDeleteModel):
         ('deferred', _('مؤجلة')),
         ('blocked', _('محجوبة')),
     ]
-    
+
     PRIORITY_CHOICES = [
         ('low', _('منخفضة')),
         ('medium', _('متوسطة')),
@@ -547,14 +557,14 @@ class Task(AuditableModel, SoftDeleteModel):
         ('urgent', _('عاجلة')),
         ('critical', _('حرجة')),
     ]
-    
+
     TYPE_CHOICES = [
         ('regular', _('مهمة عادية')),
         ('meeting', _('مهمة اجتماع')),
         ('milestone', _('مهمة معلم')),
         ('phase', _('مهمة مرحلة')),
     ]
-    
+
     title = models.CharField(
         max_length=200,
         verbose_name=_('عنوان المهمة')
@@ -660,8 +670,9 @@ class Task(AuditableModel, SoftDeleteModel):
         verbose_name=_('العلامات'),
         help_text=_('علامات مفصولة بفواصل')
     )
-    
+
     class Meta:
+        """Meta class"""
         verbose_name = _('مهمة')
         verbose_name_plural = _('المهام')
         ordering = ['-created_at']
@@ -683,10 +694,11 @@ class Task(AuditableModel, SoftDeleteModel):
             ("view_task_reports", "Can view task reports"),
             ("export_task_data", "Can export task data"),
         ]
-    
+
     def __str__(self):
+        """__str__ function"""
         return f"{self.title} - {self.assigned_to.get_full_name() if self.assigned_to else 'غير مكلف'}"
-    
+
     def clean(self):
         """Validate model data"""
         super().clean()
@@ -694,23 +706,23 @@ class Task(AuditableModel, SoftDeleteModel):
             raise ValidationError({
                 'due_date': _('تاريخ الاستحقاق لا يمكن أن يكون قبل تاريخ البدء')
             })
-        
+
         if self.progress_percentage < 0 or self.progress_percentage > 100:
             raise ValidationError({
                 'progress_percentage': _('نسبة الإنجاز يجب أن تكون بين 0 و 100')
             })
-    
+
     def get_absolute_url(self):
         """Get the URL for this task"""
         return reverse('tasks:detail', kwargs={'pk': self.pk})
-    
+
     @property
     def is_overdue(self):
         """Check if task is overdue"""
         if self.status in ['completed', 'cancelled']:
             return False
         return self.due_date < timezone.now()
-    
+
     @property
     def days_until_due(self):
         """Get days until due date"""
@@ -718,7 +730,7 @@ class Task(AuditableModel, SoftDeleteModel):
             delta = self.due_date.date() - timezone.now().date()
             return delta.days
         return 0
-    
+
     @property
     def duration_hours(self):
         """Get task duration in hours"""
@@ -726,14 +738,14 @@ class Task(AuditableModel, SoftDeleteModel):
             delta = self.due_date - self.start_date
             return delta.total_seconds() / 3600
         return 0
-    
+
     @property
     def tag_list(self):
         """Get tags as a list"""
         if self.tags:
             return [tag.strip() for tag in self.tags.split(',')]
         return []
-    
+
     def can_be_edited_by(self, user):
         """Check if user can edit this task"""
         return (
@@ -742,7 +754,7 @@ class Task(AuditableModel, SoftDeleteModel):
             user == self.created_by or
             (self.project and self.project.manager == user)
         )
-    
+
     def can_be_viewed_by(self, user):
         """Check if user can view this task"""
         if self.is_private:
@@ -751,7 +763,7 @@ class Task(AuditableModel, SoftDeleteModel):
                 user == self.assigned_to or
                 user == self.created_by
             )
-        
+
         return (
             user.is_superuser or
             user == self.assigned_to or
@@ -794,8 +806,9 @@ class TaskStep(BaseModel):
         default=0,
         verbose_name=_('الساعات المستغرقة')
     )
-    
+
     class Meta:
+        """Meta class"""
         verbose_name = _('خطوة مهمة')
         verbose_name_plural = _('خطوات المهام')
         ordering = ['-created_at']
@@ -804,10 +817,11 @@ class TaskStep(BaseModel):
             models.Index(fields=['task']),
             models.Index(fields=['completed']),
         ]
-    
+
     def __str__(self):
+        """__str__ function"""
         return f"خطوة: {self.description[:30]}... - {self.task.title}"
-    
+
     def save(self, *args, **kwargs):
         """Override save to handle completion date"""
         if self.completed and not self.completion_date:
@@ -858,8 +872,9 @@ class TimeEntry(BaseModel):
         default=True,
         verbose_name=_('قابل للفوترة')
     )
-    
+
     class Meta:
+        """Meta class"""
         verbose_name = _('إدخال وقت')
         verbose_name_plural = _('إدخالات الوقت')
         ordering = ['-start_time']
@@ -869,17 +884,18 @@ class TimeEntry(BaseModel):
             models.Index(fields=['start_time']),
             models.Index(fields=['user']),
         ]
-    
+
     def __str__(self):
+        """__str__ function"""
         return f"{self.user.get_full_name()} - {self.task.title} - {self.duration_hours}h"
-    
+
     def save(self, *args, **kwargs):
         """Calculate duration if end_time is provided"""
         if self.start_time and self.end_time and not self.duration_hours:
             delta = self.end_time - self.start_time
             self.duration_hours = delta.total_seconds() / 3600
         super().save(*args, **kwargs)
-    
+
     @property
     def is_active(self):
         """Check if time entry is currently active (no end time)"""
@@ -898,7 +914,7 @@ class Meeting(AuditableModel):
         ('cancelled', _('ملغي')),
         ('postponed', _('مؤجل')),
     ]
-    
+
     TYPE_CHOICES = [
         ('project', _('اجتماع مشروع')),
         ('team', _('اجتماع فريق')),
@@ -908,7 +924,7 @@ class Meeting(AuditableModel):
         ('standup', _('اجتماع يومي')),
         ('other', _('أخرى')),
     ]
-    
+
     title = models.CharField(
         max_length=200,
         verbose_name=_('عنوان الاجتماع')
@@ -977,8 +993,9 @@ class Meeting(AuditableModel):
         null=True,
         verbose_name=_('محضر الاجتماع')
     )
-    
+
     class Meta:
+        """Meta class"""
         verbose_name = _('اجتماع')
         verbose_name_plural = _('الاجتماعات')
         ordering = ['-start_datetime']
@@ -995,10 +1012,11 @@ class Meeting(AuditableModel):
             ("view_meeting_reports", "Can view meeting reports"),
             ("export_meeting_data", "Can export meeting data"),
         ]
-    
+
     def __str__(self):
+        """__str__ function"""
         return f"{self.title} - {self.start_datetime.strftime('%Y-%m-%d %H:%M')}"
-    
+
     def clean(self):
         """Validate model data"""
         super().clean()
@@ -1006,11 +1024,11 @@ class Meeting(AuditableModel):
             raise ValidationError({
                 'end_datetime': _('وقت الانتهاء يجب أن يكون بعد وقت البدء')
             })
-    
+
     def get_absolute_url(self):
         """Get the URL for this meeting"""
         return reverse('meetings:detail', kwargs={'pk': self.pk})
-    
+
     @property
     def duration_hours(self):
         """Get meeting duration in hours"""
@@ -1018,12 +1036,12 @@ class Meeting(AuditableModel):
             delta = self.end_datetime - self.start_datetime
             return delta.total_seconds() / 3600
         return 0
-    
+
     @property
     def is_upcoming(self):
         """Check if meeting is upcoming"""
         return self.start_datetime > timezone.now() and self.status == 'scheduled'
-    
+
     @property
     def is_past(self):
         """Check if meeting is in the past"""
@@ -1043,7 +1061,7 @@ class MeetingAttendee(BaseModel):
         ('attended', _('حضر')),
         ('absent', _('غائب')),
     ]
-    
+
     ROLE_CHOICES = [
         ('organizer', _('منظم')),
         ('presenter', _('مقدم')),
@@ -1052,7 +1070,7 @@ class MeetingAttendee(BaseModel):
         ('required', _('مطلوب')),
         ('optional', _('اختياري')),
     ]
-    
+
     meeting = models.ForeignKey(
         Meeting,
         on_delete=models.CASCADE,
@@ -1087,8 +1105,9 @@ class MeetingAttendee(BaseModel):
         null=True,
         verbose_name=_('ملاحظات')
     )
-    
+
     class Meta:
+        """Meta class"""
         verbose_name = _('حضور اجتماع')
         verbose_name_plural = _('حضور الاجتماعات')
         unique_together = ['meeting', 'user']
@@ -1097,8 +1116,9 @@ class MeetingAttendee(BaseModel):
             models.Index(fields=['meeting', 'attendance_status']),
             models.Index(fields=['user']),
         ]
-    
+
     def __str__(self):
+        """__str__ function"""
         return f"{self.user.get_full_name()} - {self.meeting.title}"
 
 
@@ -1118,7 +1138,7 @@ class Document(AuditableModel, SoftDeleteModel):
         ('image', _('صورة')),
         ('other', _('أخرى')),
     ]
-    
+
     name = models.CharField(
         max_length=200,
         verbose_name=_('اسم الوثيقة')
@@ -1189,8 +1209,9 @@ class Document(AuditableModel, SoftDeleteModel):
         verbose_name=_('العلامات'),
         help_text=_('علامات مفصولة بفواصل')
     )
-    
+
     class Meta:
+        """Meta class"""
         verbose_name = _('وثيقة')
         verbose_name_plural = _('الوثائق')
         ordering = ['-created_at']
@@ -1205,10 +1226,11 @@ class Document(AuditableModel, SoftDeleteModel):
             ("view_confidential_documents", "Can view confidential documents"),
             ("manage_document_versions", "Can manage document versions"),
         ]
-    
+
     def __str__(self):
+        """__str__ function"""
         return self.name
-    
+
     def save(self, *args, **kwargs):
         """Override save to set file size and mime type"""
         if self.file:
@@ -1217,28 +1239,28 @@ class Document(AuditableModel, SoftDeleteModel):
             import mimetypes
             self.mime_type, _ = mimetypes.guess_type(self.file.name)
         super().save(*args, **kwargs)
-    
+
     @property
     def file_extension(self):
         """Get file extension"""
         if self.file:
             return self.file.name.split('.')[-1].lower()
         return ''
-    
+
     @property
     def file_size_mb(self):
         """Get file size in MB"""
         if self.file_size:
             return round(self.file_size / (1024 * 1024), 2)
         return 0
-    
+
     @property
     def tag_list(self):
         """Get tags as a list"""
         if self.tags:
             return [tag.strip() for tag in self.tags.split(',')]
         return []
-    
+
     def can_be_viewed_by(self, user):
         """Check if user can view this document"""
         if self.is_confidential:

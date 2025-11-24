@@ -72,7 +72,7 @@ class PurchaseOrder(AuditableModel):
         default='normal',
         verbose_name=_('الأولوية')
     )
-    
+
     # Dates
     expected_delivery_date = models.DateField(
         null=True,
@@ -84,7 +84,7 @@ class PurchaseOrder(AuditableModel):
         blank=True,
         verbose_name=_('تاريخ التسليم الفعلي')
     )
-    
+
     # Financial
     subtotal = models.DecimalField(
         max_digits=15,
@@ -128,7 +128,7 @@ class PurchaseOrder(AuditableModel):
         validators=[MinValueValidator(Decimal('0'))],
         verbose_name=_('المبلغ الإجمالي')
     )
-    
+
     # Approval workflow
     requested_by = models.ForeignKey(
         User,
@@ -149,7 +149,7 @@ class PurchaseOrder(AuditableModel):
         blank=True,
         verbose_name=_('تاريخ الاعتماد')
     )
-    
+
     # Additional information
     terms_and_conditions = models.TextField(
         blank=True,
@@ -166,7 +166,7 @@ class PurchaseOrder(AuditableModel):
         null=True,
         verbose_name=_('ملاحظات داخلية')
     )
-    
+
     # Reference to purchase request
     purchase_request = models.ForeignKey(
         'PurchaseRequest',
@@ -178,6 +178,7 @@ class PurchaseOrder(AuditableModel):
     )
 
     class Meta:
+        """Meta class"""
         verbose_name = _('أمر شراء')
         verbose_name_plural = _('أوامر الشراء')
         ordering = ['-po_date', '-created_at']
@@ -188,16 +189,18 @@ class PurchaseOrder(AuditableModel):
         ]
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.po_number} - {self.supplier.name}"
 
     def save(self, *args, **kwargs):
+        """save function"""
         # Generate PO number if not provided
         if not self.po_number:
             self.po_number = self.generate_po_number()
-        
+
         # Calculate totals
         self.calculate_totals()
-        
+
         super().save(*args, **kwargs)
 
     def generate_po_number(self):
@@ -205,7 +208,7 @@ class PurchaseOrder(AuditableModel):
         from django.utils import timezone
         date_str = timezone.now().strftime('%Y%m')
         count = PurchaseOrder.objects.filter(
-            po_date__year=timezone.now().year,
+            po_date__year=timezone.now().prefetch_related()  # TODO: Add appropriate prefetch_related fields.year,
             po_date__month=timezone.now().month
         ).count() + 1
         return f"PO-{date_str}-{count:04d}"
@@ -214,10 +217,10 @@ class PurchaseOrder(AuditableModel):
         """Calculate order totals"""
         # Calculate subtotal from line items
         self.subtotal = sum(item.line_total for item in self.line_items.all())
-        
+
         # Calculate tax
         self.tax_amount = (self.subtotal * self.tax_rate) / 100
-        
+
         # Calculate total
         self.total_amount = self.subtotal + self.tax_amount + self.shipping_cost - self.discount_amount
 
@@ -225,7 +228,7 @@ class PurchaseOrder(AuditableModel):
         """Approve purchase order"""
         if self.status != 'pending_approval':
             raise ValidationError(_('يمكن اعتماد أمر الشراء فقط إذا كان في انتظار الموافقة'))
-        
+
         self.status = 'approved'
         self.approved_by = user
         self.approved_at = timezone.now()
@@ -235,7 +238,7 @@ class PurchaseOrder(AuditableModel):
         """Send PO to supplier"""
         if self.status != 'approved':
             raise ValidationError(_('يمكن إرسال أمر الشراء فقط بعد اعتماده'))
-        
+
         self.status = 'sent_to_supplier'
         self.save()
 
@@ -243,7 +246,7 @@ class PurchaseOrder(AuditableModel):
         """Cancel purchase order"""
         if self.status in ['fully_received', 'closed', 'cancelled']:
             raise ValidationError(_('لا يمكن إلغاء أمر الشراء في هذه الحالة'))
-        
+
         self.status = 'cancelled'
         if reason:
             self.internal_notes = f"{self.internal_notes or ''}\nألغي بواسطة {user.username}: {reason}"
@@ -261,7 +264,7 @@ class PurchaseOrder(AuditableModel):
         """Calculate received percentage"""
         total_ordered = sum(item.quantity_ordered for item in self.line_items.all())
         total_received = sum(item.quantity_received for item in self.line_items.all())
-        
+
         if total_ordered == 0:
             return 0
         return (total_received / total_ordered) * 100
@@ -269,7 +272,7 @@ class PurchaseOrder(AuditableModel):
     def update_status_based_on_receipts(self):
         """Update PO status based on receipt status"""
         received_percentage = self.received_percentage
-        
+
         if received_percentage == 0:
             # No items received yet
             if self.status == 'partially_received':
@@ -281,7 +284,7 @@ class PurchaseOrder(AuditableModel):
         else:
             # Partially received
             self.status = 'partially_received'
-        
+
         self.save()
 
 
@@ -340,18 +343,21 @@ class PurchaseOrderLineItem(BaseModel):
     )
 
     class Meta:
+        """Meta class"""
         verbose_name = _('عنصر أمر الشراء')
         verbose_name_plural = _('عناصر أوامر الشراء')
         unique_together = ['purchase_order', 'product']
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.purchase_order.po_number} - {self.product.name}"
 
     def save(self, *args, **kwargs):
+        """save function"""
         # Calculate line total
         self.line_total = self.quantity_ordered * self.unit_price
         super().save(*args, **kwargs)
-        
+
         # Update PO totals
         self.purchase_order.calculate_totals()
         self.purchase_order.save()
@@ -434,7 +440,7 @@ class PurchaseRequest(AuditableModel):
         verbose_name=_('المبرر'),
         help_text=_('مبرر طلب الشراء')
     )
-    
+
     # Approval workflow
     reviewed_by = models.ForeignKey(
         User,
@@ -467,7 +473,7 @@ class PurchaseRequest(AuditableModel):
         null=True,
         verbose_name=_('سبب الرفض')
     )
-    
+
     # Budget information
     estimated_total = models.DecimalField(
         max_digits=15,
@@ -485,6 +491,7 @@ class PurchaseRequest(AuditableModel):
     )
 
     class Meta:
+        """Meta class"""
         verbose_name = _('طلب شراء')
         verbose_name_plural = _('طلبات الشراء')
         ordering = ['-pr_date', '-created_at']
@@ -495,13 +502,15 @@ class PurchaseRequest(AuditableModel):
         ]
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.pr_number} - {self.requested_by.get_full_name()}"
 
     def save(self, *args, **kwargs):
+        """save function"""
         # Generate PR number if not provided
         if not self.pr_number:
             self.pr_number = self.generate_pr_number()
-        
+
         super().save(*args, **kwargs)
 
     def generate_pr_number(self):
@@ -509,7 +518,7 @@ class PurchaseRequest(AuditableModel):
         from django.utils import timezone
         date_str = timezone.now().strftime('%Y%m')
         count = PurchaseRequest.objects.filter(
-            pr_date__year=timezone.now().year,
+            pr_date__year=timezone.now().prefetch_related()  # TODO: Add appropriate prefetch_related fields.year,
             pr_date__month=timezone.now().month
         ).count() + 1
         return f"PR-{date_str}-{count:04d}"
@@ -518,7 +527,7 @@ class PurchaseRequest(AuditableModel):
         """Submit purchase request for review"""
         if self.status != 'draft':
             raise ValidationError(_('يمكن تقديم طلب الشراء فقط إذا كان مسودة'))
-        
+
         self.status = 'submitted'
         self.save()
 
@@ -526,7 +535,7 @@ class PurchaseRequest(AuditableModel):
         """Approve purchase request"""
         if self.status not in ['submitted', 'under_review']:
             raise ValidationError(_('يمكن اعتماد طلب الشراء فقط إذا كان مقدماً أو قيد المراجعة'))
-        
+
         self.status = 'approved'
         self.approved_by = user
         self.approved_at = timezone.now()
@@ -536,7 +545,7 @@ class PurchaseRequest(AuditableModel):
         """Reject purchase request"""
         if self.status not in ['submitted', 'under_review']:
             raise ValidationError(_('يمكن رفض طلب الشراء فقط إذا كان مقدماً أو قيد المراجعة'))
-        
+
         self.status = 'rejected'
         self.reviewed_by = user
         self.reviewed_at = timezone.now()
@@ -627,18 +636,21 @@ class PurchaseRequestLineItem(BaseModel):
     )
 
     class Meta:
+        """Meta class"""
         verbose_name = _('عنصر طلب الشراء')
         verbose_name_plural = _('عناصر طلبات الشراء')
 
     def __str__(self):
+        """__str__ function"""
         item_name = self.product.name if self.product else self.item_description
         return f"{self.purchase_request.pr_number} - {item_name}"
 
     def save(self, *args, **kwargs):
+        """save function"""
         # Calculate estimated total
         if self.estimated_unit_price:
             self.estimated_total = self.quantity_requested * self.estimated_unit_price
-        
+
         super().save(*args, **kwargs)
 
     @property
@@ -741,18 +753,21 @@ class GoodsReceipt(AuditableModel):
     )
 
     class Meta:
+        """Meta class"""
         verbose_name = _('إيصال استلام البضائع')
         verbose_name_plural = _('إيصالات استلام البضائع')
         ordering = ['-grn_date', '-created_at']
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.grn_number} - {self.purchase_order.po_number}"
 
     def save(self, *args, **kwargs):
+        """save function"""
         # Generate GRN number if not provided
         if not self.grn_number:
             self.grn_number = self.generate_grn_number()
-        
+
         super().save(*args, **kwargs)
 
     def generate_grn_number(self):
@@ -760,7 +775,7 @@ class GoodsReceipt(AuditableModel):
         from django.utils import timezone
         date_str = timezone.now().strftime('%Y%m')
         count = GoodsReceipt.objects.filter(
-            grn_date__year=timezone.now().year,
+            grn_date__year=timezone.now().prefetch_related()  # TODO: Add appropriate prefetch_related fields.year,
             grn_date__month=timezone.now().month
         ).count() + 1
         return f"GRN-{date_str}-{count:04d}"
@@ -769,9 +784,9 @@ class GoodsReceipt(AuditableModel):
         """Complete goods receipt and update stock"""
         if self.status != 'draft':
             raise ValidationError(_('يمكن إكمال الاستلام فقط إذا كان مسودة'))
-        
+
         from .inventory import StockMovement
-        
+
         # Create stock movements for received items
         for item in self.line_items.all():
             if item.quantity_received > 0:
@@ -789,15 +804,15 @@ class GoodsReceipt(AuditableModel):
                     expiry_date=item.expiry_date,
                     created_by=user
                 )
-                
+
                 # Update PO line item received quantity
                 po_item = item.purchase_order_line_item
                 po_item.quantity_received += item.quantity_received
                 po_item.save()
-        
+
         # Update PO status
         self.purchase_order.update_status_based_on_receipts()
-        
+
         self.status = 'completed'
         self.save()
 
@@ -848,7 +863,7 @@ class GoodsReceiptLineItem(BaseModel):
         validators=[MinValueValidator(Decimal('0'))],
         verbose_name=_('تكلفة الوحدة')
     )
-    
+
     # Batch/Serial tracking
     batch_number = models.CharField(
         max_length=50,
@@ -867,7 +882,7 @@ class GoodsReceiptLineItem(BaseModel):
         blank=True,
         verbose_name=_('تاريخ انتهاء الصلاحية')
     )
-    
+
     # Quality control
     quality_status = models.CharField(
         max_length=20,
@@ -891,13 +906,16 @@ class GoodsReceiptLineItem(BaseModel):
     )
 
     class Meta:
+        """Meta class"""
         verbose_name = _('عنصر إيصال استلام البضائع')
         verbose_name_plural = _('عناصر إيصالات استلام البضائع')
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.goods_receipt.grn_number} - {self.product.name}"
 
     def clean(self):
+        """clean function"""
         if self.quantity_received + self.quantity_rejected > self.quantity_ordered:
             raise ValidationError(_('مجموع الكمية المستلمة والمرفوضة لا يمكن أن يتجاوز الكمية المطلوبة'))
 
@@ -982,7 +1000,7 @@ class SupplierQuotation(AuditableModel):
         null=True,
         verbose_name=_('ملاحظات')
     )
-    
+
     # Evaluation
     evaluated_by = models.ForeignKey(
         User,
@@ -1007,18 +1025,21 @@ class SupplierQuotation(AuditableModel):
     )
 
     class Meta:
+        """Meta class"""
         verbose_name = _('عرض سعر المورد')
         verbose_name_plural = _('عروض أسعار الموردين')
         ordering = ['-quotation_date']
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.quotation_number} - {self.supplier.name}"
 
     def save(self, *args, **kwargs):
+        """save function"""
         # Generate quotation number if not provided
         if not self.quotation_number:
             self.quotation_number = self.generate_quotation_number()
-        
+
         super().save(*args, **kwargs)
 
     def generate_quotation_number(self):
@@ -1026,7 +1047,7 @@ class SupplierQuotation(AuditableModel):
         from django.utils import timezone
         date_str = timezone.now().strftime('%Y%m')
         count = SupplierQuotation.objects.filter(
-            quotation_date__year=timezone.now().year,
+            quotation_date__year=timezone.now().prefetch_related()  # TODO: Add appropriate prefetch_related fields.year,
             quotation_date__month=timezone.now().month
         ).count() + 1
         return f"QUO-{date_str}-{count:04d}"
@@ -1040,7 +1061,7 @@ class SupplierQuotation(AuditableModel):
         """Accept quotation"""
         if self.status != 'under_review':
             raise ValidationError(_('يمكن قبول عرض السعر فقط إذا كان قيد المراجعة'))
-        
+
         self.status = 'accepted'
         self.evaluated_by = user
         self.save()
@@ -1049,7 +1070,7 @@ class SupplierQuotation(AuditableModel):
         """Reject quotation"""
         if self.status not in ['submitted', 'under_review']:
             raise ValidationError(_('يمكن رفض عرض السعر فقط إذا كان مقدماً أو قيد المراجعة'))
-        
+
         self.status = 'rejected'
         self.evaluated_by = user
         if reason:
@@ -1117,14 +1138,17 @@ class SupplierQuotationLineItem(BaseModel):
     )
 
     class Meta:
+        """Meta class"""
         verbose_name = _('عنصر عرض سعر المورد')
         verbose_name_plural = _('عناصر عروض أسعار الموردين')
 
     def __str__(self):
+        """__str__ function"""
         item_name = self.product.name if self.product else self.item_description
         return f"{self.quotation.quotation_number} - {item_name}"
 
     def save(self, *args, **kwargs):
+        """save function"""
         # Calculate line total
         self.line_total = self.quantity * self.unit_price
         super().save(*args, **kwargs)

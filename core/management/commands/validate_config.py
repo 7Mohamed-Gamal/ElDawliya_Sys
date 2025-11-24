@@ -8,9 +8,11 @@ from ElDawliya_sys.settings.config import config_manager
 
 
 class Command(BaseCommand):
+    """Command class"""
     help = 'Validate ElDawliya system configuration'
 
     def add_arguments(self, parser):
+        """add_arguments function"""
         parser.add_argument(
             '--fix-warnings',
             action='store_true',
@@ -23,6 +25,7 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
+        """handle function"""
         self.stdout.write(
             self.style.SUCCESS('🔍 Validating ElDawliya System Configuration...\n')
         )

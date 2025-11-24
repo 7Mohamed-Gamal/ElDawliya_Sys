@@ -24,26 +24,26 @@ urlpatterns = [
     path('products/export/', views.ProductExportView.as_view(), name='product_export'),
     path('products/low-stock/', views.LowStockProductsView.as_view(), name='low_stock_products'),
     path('products/barcode-scan/', views.BarcodeScanView.as_view(), name='barcode_scan'),
-    
+
     # Inventory movement endpoints
     path('movements/receive/', views.ReceiveInventoryView.as_view(), name='receive_inventory'),
     path('movements/issue/', views.IssueInventoryView.as_view(), name='issue_inventory'),
     path('movements/transfer/', views.TransferInventoryView.as_view(), name='transfer_inventory'),
-    
+
     # Stock management endpoints
     path('stock/levels/', views.StockLevelsView.as_view(), name='stock_levels'),
     path('stock/valuation/', views.StockValuationView.as_view(), name='stock_valuation'),
     path('stock/aging/', views.StockAgingView.as_view(), name='stock_aging'),
-    
+
     # Supplier management endpoints
     path('suppliers/performance/', views.SupplierPerformanceView.as_view(), name='supplier_performance'),
     path('suppliers/evaluation/', views.SupplierEvaluationView.as_view(), name='supplier_evaluation'),
-    
+
     # Reports and analytics
     path('reports/dashboard/', views.InventoryDashboardView.as_view(), name='inventory_dashboard'),
     path('reports/analytics/', views.InventoryAnalyticsView.as_view(), name='inventory_analytics'),
     path('reports/turnover/', views.InventoryTurnoverView.as_view(), name='inventory_turnover'),
-    
+
     # ViewSet URLs
     path('', include(router.urls)),
 ]

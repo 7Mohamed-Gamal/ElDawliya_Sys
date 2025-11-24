@@ -5,7 +5,8 @@ ElDawliya System - Testing Settings
 Settings for testing environment.
 """
 
-from .base import *
+# TODO: Replace wildcard import
+# from .base import specific_items
 
 # ================================================================
 # TESTING CONFIGURATION
@@ -105,10 +106,13 @@ PASSWORD_HASHERS = [
 
 # Disable migrations for testing
 class DisableMigrations:
+    """DisableMigrations class"""
     def __contains__(self, item):
+        """__contains__ function"""
         return True
-    
+
     def __getitem__(self, item):
+        """__getitem__ function"""
         return None
 
 MIGRATION_MODULES = DisableMigrations()

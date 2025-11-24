@@ -19,17 +19,17 @@ class EvaluationService(BaseService):
     خدمة نظام التقييمات الشاملة
     Comprehensive employee evaluation system service
     """
-    
+
     def create_evaluation_template(self, data):
         """
         إنشاء قالب تقييم جديد
         Create new evaluation template
         """
         self.check_permission('evaluations.add_evaluationtemplate')
-        
+
         required_fields = ['name', 'description', 'evaluation_type']
         self.validate_required_fields(data, required_fields)
-        
+
         try:
             with transaction.atomic():
                 # Create evaluation template
@@ -43,11 +43,11 @@ class EvaluationService(BaseService):
                     created_by=self.user,
                     updated_by=self.user
                 )
-                
+
                 # Add evaluation criteria
                 if data.get('criteria'):
                     self._add_evaluation_criteria(template, data['criteria'])
-                
+
                 # Log the action
                 self.log_action(
                     action='create',
@@ -56,42 +56,42 @@ class EvaluationService(BaseService):
                     new_values=data,
                     message=f'تم إنشاء قالب تقييم جديد: {template.name}'
                 )
-                
+
                 return self.format_response(
                     data={'template_id': template.id},
                     message='تم إنشاء قالب التقييم بنجاح'
                 )
-                
+
         except Exception as e:
             return self.handle_exception(e, 'create_evaluation_template', 'evaluation_template', data)
-    
+
     def start_evaluation_period(self, data):
         """
         بدء فترة تقييم جديدة
         Start new evaluation period
         """
         self.check_permission('evaluations.add_evaluationperiod')
-        
+
         required_fields = ['name', 'start_date', 'end_date', 'template_id']
         self.validate_required_fields(data, required_fields)
-        
+
         try:
             template = EvaluationTemplate.objects.get(id=data['template_id'])
-            
+
             # Check for overlapping periods
             overlapping = EvaluationPeriod.objects.filter(
                 template=template,
                 start_date__lte=data['end_date'],
                 end_date__gte=data['start_date'],
                 status__in=['active', 'pending']
-            ).exists()
-            
+            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists()
+
             if overlapping:
                 return self.format_response(
                     success=False,
                     message='يوجد فترة تقييم متداخلة مع هذه الفترة'
                 )
-            
+
             with transaction.atomic():
                 # Create evaluation period
                 period = EvaluationPeriod.objects.create(
@@ -104,13 +104,13 @@ class EvaluationService(BaseService):
                     created_by=self.user,
                     updated_by=self.user
                 )
-                
+
                 # Create evaluations for eligible employees
                 if data.get('auto_create_evaluations', True):
                     created_count = self._create_employee_evaluations(period, data.get('department_ids'))
                 else:
                     created_count = 0
-                
+
                 # Log the action
                 self.log_action(
                     action='create',
@@ -122,7 +122,7 @@ class EvaluationService(BaseService):
                     },
                     message=f'تم بدء فترة تقييم جديدة: {period.name}'
                 )
-                
+
                 return self.format_response(
                     data={
                         'period_id': period.id,
@@ -130,7 +130,7 @@ class EvaluationService(BaseService):
                     },
                     message=f'تم بدء فترة التقييم وإنشاء {created_count} تقييم'
                 )
-                
+
         except EvaluationTemplate.DoesNotExist:
             return self.format_response(
                 success=False,
@@ -138,46 +138,46 @@ class EvaluationService(BaseService):
             )
         except Exception as e:
             return self.handle_exception(e, 'start_evaluation_period', 'evaluation_period', data)
-    
+
     def submit_evaluation(self, evaluation_id, scores_data, comments=None):
         """
         تقديم التقييم
         Submit evaluation scores
         """
         self.check_permission('evaluations.change_employeeevaluation')
-        
+
         try:
             evaluation = EmployeeEvaluation.objects.select_related(
                 'employee', 'evaluator', 'period', 'period__template'
             ).get(id=evaluation_id)
-            
+
             # Check if user can submit this evaluation
             if evaluation.evaluator != self.user and not self.user.has_perm('evaluations.manage_all_evaluations'):
                 return self.format_response(
                     success=False,
                     message='ليس لديك صلاحية تقديم هذا التقييم'
                 )
-            
+
             if evaluation.status != 'pending':
                 return self.format_response(
                     success=False,
                     message='لا يمكن تعديل تقييم مقدم بالفعل'
                 )
-            
+
             with transaction.atomic():
                 # Delete existing scores
-                EvaluationScore.objects.filter(evaluation=evaluation).delete()
-                
+                EvaluationScore.objects.filter(evaluation=evaluation).prefetch_related()  # TODO: Add appropriate prefetch_related fields.delete()
+
                 # Add new scores
                 total_score = 0
                 max_possible_score = 0
-                
+
                 for score_data in scores_data:
                     criteria = EvaluationCriteria.objects.get(
                         id=score_data['criteria_id'],
                         template=evaluation.period.template
                     )
-                    
+
                     score = EvaluationScore.objects.create(
                         evaluation=evaluation,
                         criteria=criteria,
@@ -186,15 +186,15 @@ class EvaluationService(BaseService):
                         created_by=self.user,
                         updated_by=self.user
                     )
-                    
+
                     # Calculate weighted score
                     weighted_score = (score_data['score'] * criteria.weight) / 100
                     total_score += weighted_score
                     max_possible_score += (criteria.max_score * criteria.weight) / 100
-                
+
                 # Calculate final score percentage
                 final_score = (total_score / max_possible_score * 100) if max_possible_score > 0 else 0
-                
+
                 # Update evaluation
                 evaluation.total_score = final_score
                 evaluation.status = 'submitted'
@@ -202,12 +202,12 @@ class EvaluationService(BaseService):
                 evaluation.comments = comments
                 evaluation.updated_by = self.user
                 evaluation.save()
-                
+
                 # Determine performance rating
                 rating = self._calculate_performance_rating(final_score, evaluation.period.template)
                 evaluation.performance_rating = rating
                 evaluation.save()
-                
+
                 # Log the action
                 self.log_action(
                     action='submit',
@@ -220,10 +220,10 @@ class EvaluationService(BaseService):
                     },
                     message=f'تم تقديم تقييم الموظف: {evaluation.employee.get_full_name()}'
                 )
-                
+
                 # Send notification to employee
                 self._send_evaluation_notification(evaluation, 'submitted')
-                
+
                 return self.format_response(
                     data={
                         'evaluation_id': evaluation.id,
@@ -232,7 +232,7 @@ class EvaluationService(BaseService):
                     },
                     message='تم تقديم التقييم بنجاح'
                 )
-                
+
         except EmployeeEvaluation.DoesNotExist:
             return self.format_response(
                 success=False,
@@ -245,52 +245,52 @@ class EvaluationService(BaseService):
             )
         except Exception as e:
             return self.handle_exception(e, 'submit_evaluation', f'evaluation/{evaluation_id}')
-    
+
     def approve_evaluation(self, evaluation_id, action, feedback=None):
         """
         اعتماد أو رفض التقييم
         Approve or reject evaluation
         """
         self.check_permission('evaluations.approve_evaluation')
-        
+
         if action not in ['approve', 'reject', 'request_revision']:
             return self.format_response(
                 success=False,
                 message='الإجراء غير صحيح'
             )
-        
+
         try:
             evaluation = EmployeeEvaluation.objects.select_related(
                 'employee', 'evaluator', 'period'
             ).get(id=evaluation_id)
-            
+
             if evaluation.status != 'submitted':
                 return self.format_response(
                     success=False,
                     message='لا يمكن اعتماد تقييم غير مقدم'
                 )
-            
+
             with transaction.atomic():
                 if action == 'approve':
                     evaluation.status = 'approved'
                     evaluation.approved_by = self.user
                     evaluation.approved_at = timezone.now()
-                    
+
                     # Create performance review record
                     self._create_performance_review(evaluation)
-                    
+
                 elif action == 'reject':
                     evaluation.status = 'rejected'
                     evaluation.rejected_by = self.user
                     evaluation.rejected_at = timezone.now()
-                    
+
                 elif action == 'request_revision':
                     evaluation.status = 'revision_requested'
-                
+
                 evaluation.reviewer_feedback = feedback
                 evaluation.updated_by = self.user
                 evaluation.save()
-                
+
                 # Log the action
                 self.log_action(
                     action=action,
@@ -302,15 +302,15 @@ class EvaluationService(BaseService):
                     },
                     message=f'تم {action} تقييم الموظف: {evaluation.employee.get_full_name()}'
                 )
-                
+
                 # Send notification
                 self._send_evaluation_notification(evaluation, action)
-                
+
                 return self.format_response(
                     data={'new_status': evaluation.status},
                     message=f'تم {action} التقييم بنجاح'
                 )
-                
+
         except EmployeeEvaluation.DoesNotExist:
             return self.format_response(
                 success=False,
@@ -318,34 +318,34 @@ class EvaluationService(BaseService):
             )
         except Exception as e:
             return self.handle_exception(e, 'approve_evaluation', f'evaluation_approval/{evaluation_id}')
-    
+
     def get_employee_evaluations(self, employee_id, year=None, page=1, page_size=20):
         """
         الحصول على تقييمات الموظف
         Get employee evaluations
         """
         self.check_permission('evaluations.view_employeeevaluation')
-        
+
         try:
             from core.models.hr import Employee
-            
+
             employee = Employee.objects.get(id=employee_id)
-            
+
             # Check object-level permission
             self.check_object_permission('evaluations.view_employeeevaluation', employee)
-            
-            queryset = EmployeeEvaluation.objects.filter(employee=employee)
-            
+
+            queryset = EmployeeEvaluation.objects.filter(employee=employee).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+
             if year:
                 queryset = queryset.filter(period__start_date__year=year)
-            
+
             queryset = queryset.select_related(
                 'period', 'period__template', 'evaluator', 'approved_by'
             ).order_by('-period__start_date')
-            
+
             # Paginate results
             paginated_data = self.paginate_queryset(queryset, page, page_size)
-            
+
             # Format evaluation data
             evaluations = []
             for evaluation in paginated_data['results']:
@@ -363,14 +363,14 @@ class EvaluationService(BaseService):
                     'submitted_at': evaluation.submitted_at,
                     'approved_at': evaluation.approved_at,
                 })
-            
+
             paginated_data['results'] = evaluations
-            
+
             return self.format_response(
                 data=paginated_data,
                 message='تم الحصول على تقييمات الموظف بنجاح'
             )
-            
+
         except Employee.DoesNotExist:
             return self.format_response(
                 success=False,
@@ -378,23 +378,23 @@ class EvaluationService(BaseService):
             )
         except Exception as e:
             return self.handle_exception(e, 'get_employee_evaluations', f'evaluations/{employee_id}')
-    
+
     def get_evaluation_analytics(self, period_id=None, department_id=None):
         """
         الحصول على تحليلات التقييم
         Get evaluation analytics
         """
         self.check_permission('evaluations.view_evaluation_analytics')
-        
+
         try:
-            queryset = EmployeeEvaluation.objects.filter(status='approved')
-            
+            queryset = EmployeeEvaluation.objects.filter(status='approved').prefetch_related()  # TODO: Add appropriate prefetch_related fields
+
             if period_id:
                 queryset = queryset.filter(period_id=period_id)
-            
+
             if department_id:
                 queryset = queryset.filter(employee__department_id=department_id)
-            
+
             # Calculate analytics
             analytics = queryset.aggregate(
                 total_evaluations=Count('id'),
@@ -405,7 +405,7 @@ class EvaluationService(BaseService):
                 needs_improvement_count=Count('id', filter=Q(performance_rating='needs_improvement')),
                 unsatisfactory_count=Count('id', filter=Q(performance_rating='unsatisfactory')),
             )
-            
+
             # Calculate percentages
             total = analytics['total_evaluations'] or 1
             analytics.update({
@@ -415,7 +415,7 @@ class EvaluationService(BaseService):
                 'needs_improvement_percentage': round((analytics['needs_improvement_count'] / total) * 100, 2),
                 'unsatisfactory_percentage': round((analytics['unsatisfactory_count'] / total) * 100, 2),
             })
-            
+
             # Get department breakdown if not filtered by department
             if not department_id:
                 department_breakdown = queryset.values(
@@ -424,37 +424,37 @@ class EvaluationService(BaseService):
                     count=Count('id'),
                     avg_score=Avg('total_score')
                 ).order_by('employee__department__name_ar')
-                
+
                 analytics['department_breakdown'] = list(department_breakdown)
-            
+
             return self.format_response(
                 data=analytics,
                 message='تم الحصول على تحليلات التقييم بنجاح'
             )
-            
+
         except Exception as e:
             return self.handle_exception(e, 'get_evaluation_analytics', 'evaluation_analytics')
-    
+
     def set_evaluation_goals(self, employee_id, period_id, goals_data):
         """
         تحديد أهداف التقييم
         Set evaluation goals for employee
         """
         self.check_permission('evaluations.add_evaluationgoal')
-        
+
         try:
             from core.models.hr import Employee
-            
+
             employee = Employee.objects.get(id=employee_id)
             period = EvaluationPeriod.objects.get(id=period_id)
-            
+
             with transaction.atomic():
                 # Delete existing goals
                 EvaluationGoal.objects.filter(
                     employee=employee,
                     period=period
-                ).delete()
-                
+                ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.delete()
+
                 # Create new goals
                 goals_created = 0
                 for goal_data in goals_data:
@@ -472,7 +472,7 @@ class EvaluationService(BaseService):
                         updated_by=self.user
                     )
                     goals_created += 1
-                
+
                 # Log the action
                 self.log_action(
                     action='create',
@@ -484,12 +484,12 @@ class EvaluationService(BaseService):
                     },
                     message=f'تم تحديد {goals_created} هدف للموظف: {employee.get_full_name()}'
                 )
-                
+
                 return self.format_response(
                     data={'goals_created': goals_created},
                     message=f'تم تحديد {goals_created} هدف بنجاح'
                 )
-                
+
         except Employee.DoesNotExist:
             return self.format_response(
                 success=False,
@@ -502,7 +502,7 @@ class EvaluationService(BaseService):
             )
         except Exception as e:
             return self.handle_exception(e, 'set_evaluation_goals', f'goals/{employee_id}')
-    
+
     def _add_evaluation_criteria(self, template, criteria_data):
         """إضافة معايير التقييم"""
         for criteria in criteria_data:
@@ -517,26 +517,26 @@ class EvaluationService(BaseService):
                 created_by=self.user,
                 updated_by=self.user
             )
-    
+
     def _create_employee_evaluations(self, period, department_ids=None):
         """إنشاء تقييمات للموظفين"""
         from core.models.hr import Employee
-        
-        queryset = Employee.objects.filter(is_active=True)
-        
+
+        queryset = Employee.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+
         if department_ids:
             queryset = queryset.filter(department_id__in=department_ids)
-        
+
         created_count = 0
         for employee in queryset:
             # Check if evaluation already exists
             if not EmployeeEvaluation.objects.filter(
                 employee=employee,
                 period=period
-            ).exists():
+            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists():
                 # Assign evaluator (manager or HR)
                 evaluator = employee.manager.user if employee.manager and employee.manager.user else self.user
-                
+
                 EmployeeEvaluation.objects.create(
                     employee=employee,
                     period=period,
@@ -546,9 +546,9 @@ class EvaluationService(BaseService):
                     updated_by=self.user
                 )
                 created_count += 1
-        
+
         return created_count
-    
+
     def _calculate_performance_rating(self, score, template):
         """حساب تقدير الأداء"""
         if score >= 90:
@@ -561,7 +561,7 @@ class EvaluationService(BaseService):
             return 'needs_improvement'
         else:
             return 'unsatisfactory'
-    
+
     def _create_performance_review(self, evaluation):
         """إنشاء مراجعة الأداء"""
         PerformanceReview.objects.create(
@@ -577,17 +577,17 @@ class EvaluationService(BaseService):
             created_by=self.user,
             updated_by=self.user
         )
-    
+
     def _send_evaluation_notification(self, evaluation, action):
         """إرسال إشعار التقييم"""
         try:
             template_name = f'evaluation_{action}'
-            
+
             if action in ['submitted', 'approved', 'rejected']:
                 recipient = evaluation.employee.user if evaluation.employee.user else evaluation.employee
             else:
                 recipient = evaluation.evaluator
-            
+
             self.send_notification(
                 recipient=recipient,
                 template_name=template_name,

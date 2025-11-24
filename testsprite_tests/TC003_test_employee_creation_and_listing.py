@@ -10,6 +10,7 @@ PASSWORD = "hgslduhgfwdv"
 TIMEOUT = 30
 
 def test_employee_creation_and_listing():
+    """test_employee_creation_and_listing function"""
     # Step 1: Obtain JWT token using basic auth credentials
     try:
         auth_response = requests.post(
@@ -55,7 +56,7 @@ def test_employee_creation_and_listing():
         created_employee = create_response.json()
         employee_id = created_employee.get("id")
         assert employee_id is not None, "Created employee ID not returned"
-        
+
         # Step 3: List all employees and verify the created employee is in the list
         list_response = requests.get(
             EMPLOYEES_URL,
@@ -68,14 +69,14 @@ def test_employee_creation_and_listing():
         # Check created employee presence by ID or by unique email
         found = any(emp.get("id") == employee_id or emp.get("email") == employee_payload["email"] for emp in employees_list)
         assert found, "Created employee not found in employee listing"
-        
+
         # Step 4: Check access control - try listing employees without token
         unauth_response = requests.get(
             EMPLOYEES_URL,
             timeout=TIMEOUT
         )
         assert unauth_response.status_code in (401, 403), "Unauthorized access to employee listing should be denied"
-        
+
     except (requests.RequestException, AssertionError) as e:
         raise AssertionError(f"Employee creation and listing test failed: {e}")
     finally:

@@ -33,22 +33,22 @@ urlpatterns = [
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('auth/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
     path('auth/logout/', views.LogoutView.as_view(), name='logout'),
-    
+
     # Core API endpoints
     path('status/', views.APIStatusView.as_view(), name='api_status'),
     path('health/', views.HealthCheckView.as_view(), name='health_check'),
     path('usage-stats/', views.UsageStatsView.as_view(), name='usage_stats'),
-    
+
     # Module-specific endpoints
     path('hr/', include(hr_urls)),
     path('inventory/', include(inventory_urls)),
     path('projects/', include(projects_urls)),
     path('reports/', include(reports_urls)),
-    
+
     # AI and integration endpoints
     path('ai/', include('api.v1.ai.urls')),
     path('integration/', include('api.v1.integration.urls')),
-    
+
     # ViewSet URLs
     path('', include(router.urls)),
 ]

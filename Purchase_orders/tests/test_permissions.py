@@ -10,21 +10,23 @@ from Purchase_orders.models import PurchaseRequest
 User = get_user_model()
 
 class PurchasePermissionsTestCase(TestCase):
+    """PurchasePermissionsTestCase class"""
     def setUp(self):
+        """setUp function"""
         # Create admin user
         self.admin_user = User.objects.create_user(
             username='admin',
             password='adminpassword',
             Role='admin'
         )
-        
+
         # Create regular user
         self.regular_user = User.objects.create_user(
             username='user',
             password='userpassword',
             Role='user'
         )
-        
+
         # Create purchase department
         self.purchase_department = Department.objects.create(
             name=DEPARTMENT_NAME,
@@ -34,7 +36,7 @@ class PurchasePermissionsTestCase(TestCase):
             order=4,
             is_active=True,
         )
-        
+
         # Create purchase modules
         self.modules = {}
         for module_key, module_name in MODULES.items():
@@ -47,7 +49,7 @@ class PurchasePermissionsTestCase(TestCase):
                 is_active=True,
             )
             self.modules[module_key] = module
-        
+
         # Create permissions for each module
         self.permissions = {}
         for module_key, module in self.modules.items():
@@ -60,94 +62,94 @@ class PurchasePermissionsTestCase(TestCase):
                 )
                 module_perms[perm_type] = perm
             self.permissions[module_key] = module_perms
-        
+
         # Create purchase group
         self.purchase_group = Group.objects.create(name='Purchase Staff')
-        
+
         # Add view permissions for purchase_requests to purchase group
         self.purchase_group.adminpermission_set.add(self.permissions['purchase_requests']['view'])
-        
+
         # Add regular user to purchase group
         self.regular_user.groups.add(self.purchase_group)
-        
+
         # Create a test purchase request
         self.purchase_request = PurchaseRequest.objects.create(
             request_number='PR-TEST123',
             requested_by=self.admin_user,
             status='pending'
         )
-        
+
         # Create clients
         self.admin_client = Client()
         self.admin_client.login(username='admin', password='adminpassword')
-        
+
         self.user_client = Client()
         self.user_client.login(username='user', password='userpassword')
-        
+
         self.anonymous_client = Client()
-    
+
     def test_admin_can_access_all_purchase_pages(self):
         """Test that admin users can access all purchase pages"""
         # Test dashboard
         response = self.admin_client.get(reverse('Purchase_orders:dashboard'))
         self.assertEqual(response.status_code, 200)
-        
+
         # Test purchase request list
         response = self.admin_client.get(reverse('Purchase_orders:purchase_request_list'))
         self.assertEqual(response.status_code, 200)
-        
+
         # Test purchase request detail
         response = self.admin_client.get(reverse('Purchase_orders:purchase_request_detail', args=[self.purchase_request.pk]))
         self.assertEqual(response.status_code, 200)
-    
+
     def test_regular_user_can_access_permitted_pages(self):
         """Test that regular users can access pages they have permission for"""
         # Test purchase request list (should have access)
         response = self.user_client.get(reverse('Purchase_orders:purchase_request_list'))
         self.assertEqual(response.status_code, 200)
-        
+
         # Test purchase request detail (should have access)
         response = self.user_client.get(reverse('Purchase_orders:purchase_request_detail', args=[self.purchase_request.pk]))
         self.assertEqual(response.status_code, 200)
-        
+
         # Test create purchase request (should not have access)
         response = self.user_client.get(reverse('Purchase_orders:create_purchase_request'))
         self.assertNotEqual(response.status_code, 200)
-    
+
     def test_anonymous_user_redirected_to_login(self):
         """Test that anonymous users are redirected to login page"""
         # Test purchase request list
         response = self.anonymous_client.get(reverse('Purchase_orders:purchase_request_list'))
         self.assertRedirects(
-            response, 
+            response,
             f"{reverse('accounts:login')}?next={reverse('Purchase_orders:purchase_request_list')}"
         )
-    
+
     def test_permission_assignment(self):
         """Test that permissions are correctly assigned to groups"""
         # Add more permissions to purchase group
         self.purchase_group.adminpermission_set.add(self.permissions['purchase_requests']['add'])
-        
+
         # Test create purchase request (should now have access)
         response = self.user_client.get(reverse('Purchase_orders:create_purchase_request'))
         self.assertEqual(response.status_code, 200)
-    
+
     def test_template_tags(self):
         """Test that template tags correctly check permissions"""
         from Purchase_orders.templatetags.purchase_permission_tags import has_purchase_module_permission
         from django.http import HttpRequest
-        
+
         # Create request objects
         admin_request = HttpRequest()
         admin_request.user = self.admin_user
-        
+
         user_request = HttpRequest()
         user_request.user = self.regular_user
-        
+
         # Admin should have all permissions
         self.assertTrue(has_purchase_module_permission(admin_request, 'purchase_requests', 'view'))
         self.assertTrue(has_purchase_module_permission(admin_request, 'purchase_requests', 'add'))
-        
+
         # Regular user should only have purchase_requests view permission
         self.assertTrue(has_purchase_module_permission(user_request, 'purchase_requests', 'view'))
         self.assertFalse(has_purchase_module_permission(user_request, 'purchase_requests', 'add'))

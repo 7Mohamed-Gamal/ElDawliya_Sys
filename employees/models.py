@@ -3,6 +3,7 @@ from org.models import Branch, Department, Job
 
 
 class Employee(models.Model):
+    """Employee class"""
     emp_id = models.AutoField(primary_key=True, db_column='EmpID')
     emp_code = models.CharField(max_length=20, unique=True, db_column='EmpCode')
     first_name = models.CharField(max_length=100, db_column='FirstName', blank=True, null=True)
@@ -14,7 +15,7 @@ class Employee(models.Model):
         ('M', 'ذكر'),
         ('F', 'أنثى'),
     ]
-    
+
     STATUS_CHOICES = [
         ('Active', 'نشط'),
         ('Inactive', 'غير نشط'),
@@ -22,7 +23,7 @@ class Employee(models.Model):
         ('Suspended', 'معلق'),
         ('On Leave', 'في إجازة'),
     ]
-    
+
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, db_column='Gender', verbose_name='الجنس')
     birth_date = models.DateField(db_column='BirthDate', blank=True, null=True, verbose_name='تاريخ الميلاد')
     nationality = models.CharField(max_length=50, db_column='Nationality', blank=True, null=True, verbose_name='الجنسية')
@@ -37,7 +38,7 @@ class Employee(models.Model):
     job = models.ForeignKey(Job, on_delete=models.PROTECT, db_column='JobID', related_name='employees', verbose_name='الوظيفة')
     dept = models.ForeignKey(Department, on_delete=models.PROTECT, db_column='DeptID', related_name='employees', verbose_name='القسم')
     branch = models.ForeignKey(Branch, on_delete=models.PROTECT, db_column='BranchID', related_name='employees', verbose_name='الفرع')
-    manager = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, db_column='ManagerID', 
+    manager = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, db_column='ManagerID',
                                related_name='subordinates', verbose_name='المدير المباشر')
     emp_status = models.CharField(max_length=30, choices=STATUS_CHOICES, db_column='EmpStatus', default='Active', verbose_name='حالة الموظف')
     termination_date = models.DateField(db_column='TerminationDate', blank=True, null=True, verbose_name='تاريخ إنهاء الخدمة')
@@ -47,6 +48,7 @@ class Employee(models.Model):
     updated_at = models.DateTimeField(db_column='UpdatedAt', auto_now=True, verbose_name='تاريخ التحديث')
 
     class Meta:
+        """Meta class"""
         db_table = 'Employees'
         verbose_name = 'موظف'
         verbose_name_plural = 'الموظفون'
@@ -64,6 +66,7 @@ class Employee(models.Model):
         ]
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.emp_code} - {self.get_full_name()}"
 
     def get_full_name(self):
@@ -140,10 +143,11 @@ class Employee(models.Model):
 
 
 class EmployeeBankAccount(models.Model):
+    """EmployeeBankAccount class"""
     acc_id = models.AutoField(primary_key=True, db_column='AccID')
-    emp = models.ForeignKey(Employee, on_delete=models.CASCADE, db_column='EmpID', 
+    emp = models.ForeignKey(Employee, on_delete=models.CASCADE, db_column='EmpID',
                            related_name='bank_accounts', verbose_name='الموظف')
-    bank = models.ForeignKey('banks.Bank', on_delete=models.SET_NULL, db_column='BankID', 
+    bank = models.ForeignKey('banks.Bank', on_delete=models.SET_NULL, db_column='BankID',
                             blank=True, null=True, related_name='employee_accounts', verbose_name='البنك')
     account_no = models.CharField(max_length=50, db_column='AccountNo', blank=True, null=True, verbose_name='رقم الحساب')
     iban = models.CharField(max_length=50, db_column='IBAN', blank=True, null=True, verbose_name='رقم الآيبان')
@@ -153,6 +157,7 @@ class EmployeeBankAccount(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')
 
     class Meta:
+        """Meta class"""
         db_table = 'EmployeeBankAccounts'
         verbose_name = 'حساب بنكي'
         verbose_name_plural = 'حسابات الموظفين البنكية'
@@ -163,10 +168,12 @@ class EmployeeBankAccount(models.Model):
         ]
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.emp.get_full_name()} - {self.bank.bank_name if self.bank else 'Unknown Bank'}"
 
 
 class EmployeeDocument(models.Model):
+    """EmployeeDocument class"""
     DOCUMENT_TYPES = [
         ('ID', 'بطاقة الهوية'),
         ('PASSPORT', 'جواز السفر'),
@@ -175,9 +182,9 @@ class EmployeeDocument(models.Model):
         ('MEDICAL', 'تقرير طبي'),
         ('OTHER', 'أخرى'),
     ]
-    
+
     doc_id = models.AutoField(primary_key=True, db_column='DocID')
-    emp = models.ForeignKey(Employee, on_delete=models.CASCADE, db_column='EmpID', 
+    emp = models.ForeignKey(Employee, on_delete=models.CASCADE, db_column='EmpID',
                            related_name='documents', verbose_name='الموظف')
     doc_type = models.CharField(max_length=100, choices=DOCUMENT_TYPES, db_column='DocType', verbose_name='نوع المستند')
     doc_name = models.CharField(max_length=255, db_column='DocName', blank=True, null=True, verbose_name='اسم المستند')
@@ -189,6 +196,7 @@ class EmployeeDocument(models.Model):
     notes = models.CharField(max_length=500, db_column='Notes', blank=True, null=True, verbose_name='ملاحظات')
 
     class Meta:
+        """Meta class"""
         db_table = 'EmployeeDocuments'
         verbose_name = 'مستند'
         verbose_name_plural = 'مستندات الموظفين'
@@ -200,6 +208,7 @@ class EmployeeDocument(models.Model):
         ]
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.emp.get_full_name()} - {self.get_doc_type_display()}"
 
     @property
@@ -221,7 +230,8 @@ class EmployeeDocument(models.Model):
 
 # Import extended models for comprehensive HR management
 try:
-    from .models_extended import *
+    # TODO: Replace wildcard import
+# from .models_extended import specific_items
 except ImportError:
     # Extended models not yet available during initial migration
     pass

@@ -5,7 +5,8 @@ ElDawliya System - Development Settings
 Settings for development environment.
 """
 
-from .base import *
+# TODO: Replace wildcard import
+# from .base import specific_items
 
 # ================================================================
 # DEBUG CONFIGURATION

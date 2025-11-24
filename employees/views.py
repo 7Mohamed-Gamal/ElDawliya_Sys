@@ -20,22 +20,22 @@ def dashboard(request):
     """صفحة لوحة التحكم الرئيسية لتطبيق الموظفين"""
     # إحصائيات عامة
     total_employees = Employee.objects.count()
-    active_employees = Employee.objects.filter(emp_status='Active').count()
+    active_employees = Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
     total_departments = Department.objects.count()
     total_jobs = Job.objects.count()
-    
+
     # الموظفين المضافين حديثاً
     recent_employees = Employee.objects.select_related('dept', 'job').order_by('-created_at')[:5]
-    
+
     # إحصائيات الأقسام
     department_stats = Department.objects.annotate(
         employee_count=Count('employee')
     ).filter(employee_count__gt=0).order_by('-employee_count')[:5]
-    
+
     # حساب النسب المئوية
     for dept in department_stats:
         dept.percentage = (dept.employee_count / total_employees * 100) if total_employees > 0 else 0
-    
+
     context = {
         'total_employees': total_employees,
         'active_employees': active_employees,
@@ -44,7 +44,7 @@ def dashboard(request):
         'recent_employees': recent_employees,
         'department_stats': department_stats,
     }
-    
+
     return render(request, 'employees/index.html', context)
 
 
@@ -52,7 +52,7 @@ def dashboard(request):
 def employee_list(request):
     """عرض قائمة الموظفين مع البحث والفلترة"""
     employees = Employee.objects.select_related('dept', 'job', 'branch').all()
-    
+
     # البحث
     search = request.GET.get('search')
     if search:
@@ -63,33 +63,33 @@ def employee_list(request):
             Q(email__icontains=search) |
             Q(mobile__icontains=search)
         )
-    
+
     # فلترة حسب القسم
     department = request.GET.get('department')
     if department:
         employees = employees.filter(dept_id=department)
-    
+
     # فلترة حسب الحالة
     status = request.GET.get('status')
     if status:
         employees = employees.filter(emp_status=status)
-    
+
     # ترتيب النتائج
     employees = employees.order_by('emp_code')
-    
+
     # التقسيم إلى صفحات
     paginator = Paginator(employees, 20)
     page_number = request.GET.get('page')
     employees = paginator.get_page(page_number)
-    
+
     # قائمة الأقسام للفلترة
-    departments = Department.objects.filter(is_active=True).order_by('dept_name')
-    
+    departments = Department.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('dept_name')
+
     context = {
         'employees': employees,
         'departments': departments,
     }
-    
+
     return render(request, 'employees/employee_list.html', context)
 
 
@@ -97,11 +97,11 @@ def employee_list(request):
 def employee_detail(request, emp_id):
     """عرض تفاصيل موظف محدد"""
     employee = get_object_or_404(Employee, emp_id=emp_id)
-    
+
     context = {
         'employee': employee,
     }
-    
+
     return render(request, 'employees/employee_detail.html', context)
 
 
@@ -118,12 +118,12 @@ def add_employee(request):
             messages.error(request, 'يرجى تصحيح الأخطاء أدناه.')
     else:
         form = EmployeeForm()
-    
+
     context = {
         'form': form,
         'employee': Employee(),  # موظف فارغ للقالب
     }
-    
+
     return render(request, 'employees/employee_form.html', context)
 
 
@@ -140,13 +140,13 @@ def employee_delete(request, emp_id):
     """حذف موظف"""
     employee = get_object_or_404(Employee, emp_id=emp_id)
     employee_name = f"{employee.first_name} {employee.last_name}"
-    
+
     try:
         employee.delete()
         messages.success(request, f'تم حذف الموظف {employee_name} بنجاح.')
     except Exception as e:
         messages.error(request, f'حدث خطأ أثناء حذف الموظف: {str(e)}')
-    
+
     return redirect('employees:employee_list')
 
 
@@ -156,11 +156,11 @@ def department_list(request):
     departments = Department.objects.annotate(
         employee_count=Count('employee')
     ).order_by('dept_name')
-    
+
     context = {
         'departments': departments,
     }
-    
+
     return render(request, 'employees/department_list.html', context)
 
 
@@ -170,11 +170,11 @@ def job_list(request):
     jobs = Job.objects.annotate(
         employee_count=Count('employee')
     ).order_by('job_title')
-    
+
     context = {
         'jobs': jobs,
     }
-    
+
     return render(request, 'employees/job_list.html', context)
 
 
@@ -185,9 +185,9 @@ def get_departments_by_branch(request):
     branch_id = request.GET.get('branch_id')
     if branch_id:
         departments = Department.objects.filter(
-            branch_id=branch_id, 
+            branch_id=branch_id,
             is_active=True
-        ).values('dept_id', 'dept_name')
+        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.values('dept_id', 'dept_name')
         return JsonResponse(list(departments), safe=False)
     return JsonResponse([], safe=False)
 
@@ -200,8 +200,8 @@ def get_employees_by_department(request):
         employees = Employee.objects.filter(
             dept_id=dept_id,
             emp_status='Active'
-        ).values('emp_id', 'first_name', 'last_name', 'emp_code')
-        
+        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.values('emp_id', 'first_name', 'last_name', 'emp_code')
+
         # تنسيق البيانات
         employee_list = []
         for emp in employees:
@@ -209,7 +209,7 @@ def get_employees_by_department(request):
                 'emp_id': emp['emp_id'],
                 'name': f"{emp['first_name']} {emp['last_name']} ({emp['emp_code']})"
             })
-        
+
         return JsonResponse(employee_list, safe=False)
     return JsonResponse([], safe=False)
 
@@ -224,19 +224,19 @@ def delete_employee(request, emp_id):
 def employee_profile(request, emp_id):
     """عرض ملف الموظف الشخصي"""
     employee = get_object_or_404(Employee, emp_id=emp_id)
-    
+
     # جلب الحسابات البنكية
-    bank_accounts = EmployeeBankAccount.objects.filter(emp=employee)
-    
+    bank_accounts = EmployeeBankAccount.objects.filter(emp=employee).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+
     # جلب المستندات
-    documents = EmployeeDocument.objects.filter(emp=employee).order_by('-upload_date')
-    
+    documents = EmployeeDocument.objects.filter(emp=employee).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('-upload_date')
+
     context = {
         'employee': employee,
         'bank_accounts': bank_accounts,
         'documents': documents,
     }
-    
+
     return render(request, 'employees/employee_profile.html', context)
 
 
@@ -244,7 +244,7 @@ def employee_profile(request, emp_id):
 def add_department(request):
     """إضافة قسم جديد"""
     from .forms import DepartmentForm
-    
+
     if request.method == 'POST':
         form = DepartmentForm(request.POST)
         if form.is_valid():
@@ -255,12 +255,12 @@ def add_department(request):
             messages.error(request, 'يرجى تصحيح الأخطاء أدناه.')
     else:
         form = DepartmentForm()
-    
+
     context = {
         'form': form,
         'title': 'إضافة قسم جديد'
     }
-    
+
     return render(request, 'employees/department_form.html', context)
 
 
@@ -268,13 +268,13 @@ def add_department(request):
 def department_detail(request, dept_id):
     """عرض تفاصيل قسم"""
     department = get_object_or_404(Department, dept_id=dept_id)
-    employees = Employee.objects.filter(dept=department).order_by('emp_code')
-    
+    employees = Employee.objects.filter(dept=department).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('emp_code')
+
     context = {
         'department': department,
         'employees': employees,
     }
-    
+
     return render(request, 'employees/department_detail.html', context)
 
 
@@ -282,9 +282,9 @@ def department_detail(request, dept_id):
 def edit_department(request, dept_id):
     """تعديل قسم"""
     from .forms import DepartmentForm
-    
+
     department = get_object_or_404(Department, dept_id=dept_id)
-    
+
     if request.method == 'POST':
         form = DepartmentForm(request.POST, instance=department)
         if form.is_valid():
@@ -295,13 +295,13 @@ def edit_department(request, dept_id):
             messages.error(request, 'يرجى تصحيح الأخطاء أدناه.')
     else:
         form = DepartmentForm(instance=department)
-    
+
     context = {
         'form': form,
         'department': department,
         'title': 'تعديل القسم'
     }
-    
+
     return render(request, 'employees/department_form.html', context)
 
 
@@ -311,17 +311,17 @@ def delete_department(request, dept_id):
     """حذف قسم"""
     department = get_object_or_404(Department, dept_id=dept_id)
     department_name = department.dept_name
-    
+
     try:
         # التحقق من وجود موظفين في القسم
-        if Employee.objects.filter(dept=department).exists():
+        if Employee.objects.filter(dept=department).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists():
             messages.error(request, f'لا يمكن حذف القسم {department_name} لأنه يحتوي على موظفين.')
         else:
             department.delete()
             messages.success(request, f'تم حذف القسم {department_name} بنجاح.')
     except Exception as e:
         messages.error(request, f'حدث خطأ أثناء حذف القسم: {str(e)}')
-    
+
     return redirect('employees:department_list')
 
 
@@ -335,7 +335,7 @@ def position_list(request):
 def add_position(request):
     """إضافة وظيفة جديدة"""
     from .forms import JobForm
-    
+
     if request.method == 'POST':
         form = JobForm(request.POST)
         if form.is_valid():
@@ -346,12 +346,12 @@ def add_position(request):
             messages.error(request, 'يرجى تصحيح الأخطاء أدناه.')
     else:
         form = JobForm()
-    
+
     context = {
         'form': form,
         'title': 'إضافة وظيفة جديدة'
     }
-    
+
     return render(request, 'employees/job_form.html', context)
 
 
@@ -359,13 +359,13 @@ def add_position(request):
 def position_detail(request, position_id):
     """عرض تفاصيل وظيفة"""
     job = get_object_or_404(Job, job_id=position_id)
-    employees = Employee.objects.filter(job=job).order_by('emp_code')
-    
+    employees = Employee.objects.filter(job=job).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('emp_code')
+
     context = {
         'job': job,
         'employees': employees,
     }
-    
+
     return render(request, 'employees/job_detail.html', context)
 
 
@@ -373,9 +373,9 @@ def position_detail(request, position_id):
 def edit_position(request, position_id):
     """تعديل وظيفة"""
     from .forms import JobForm
-    
+
     job = get_object_or_404(Job, job_id=position_id)
-    
+
     if request.method == 'POST':
         form = JobForm(request.POST, instance=job)
         if form.is_valid():
@@ -386,13 +386,13 @@ def edit_position(request, position_id):
             messages.error(request, 'يرجى تصحيح الأخطاء أدناه.')
     else:
         form = JobForm(instance=job)
-    
+
     context = {
         'form': form,
         'job': job,
         'title': 'تعديل الوظيفة'
     }
-    
+
     return render(request, 'employees/job_form.html', context)
 
 
@@ -402,17 +402,17 @@ def delete_position(request, position_id):
     """حذف وظيفة"""
     job = get_object_or_404(Job, job_id=position_id)
     job_title = job.job_title
-    
+
     try:
         # التحقق من وجود موظفين في الوظيفة
-        if Employee.objects.filter(job=job).exists():
+        if Employee.objects.filter(job=job).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists():
             messages.error(request, f'لا يمكن حذف الوظيفة {job_title} لأنها مرتبطة بموظفين.')
         else:
             job.delete()
             messages.success(request, f'تم حذف الوظيفة {job_title} بنجاح.')
     except Exception as e:
         messages.error(request, f'حدث خطأ أثناء حذف الوظيفة: {str(e)}')
-    
+
     return redirect('employees:position_list')
 
 
@@ -421,25 +421,25 @@ def reports(request):
     """تقارير الموظفين"""
     # إحصائيات عامة
     total_employees = Employee.objects.count()
-    active_employees = Employee.objects.filter(emp_status='Active').count()
-    
+    active_employees = Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+
     # إحصائيات الأقسام
     department_stats = Department.objects.annotate(
         employee_count=Count('employee')
     ).order_by('-employee_count')
-    
+
     # إحصائيات الوظائف
     job_stats = Job.objects.annotate(
         employee_count=Count('employee')
     ).order_by('-employee_count')
-    
+
     context = {
         'total_employees': total_employees,
         'active_employees': active_employees,
         'department_stats': department_stats,
         'job_stats': job_stats,
     }
-    
+
     return render(request, 'employees/reports.html', context)
 
 
@@ -448,13 +448,13 @@ def export_employees(request):
     """تصدير بيانات الموظفين"""
     import csv
     from django.http import HttpResponse
-    
+
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="employees.csv"'
-    
+
     writer = csv.writer(response)
     writer.writerow(['كود الموظف', 'الاسم الأول', 'الاسم الأخير', 'القسم', 'الوظيفة', 'الحالة'])
-    
+
     employees = Employee.objects.select_related('dept', 'job').all()
     for emp in employees:
         writer.writerow([
@@ -465,7 +465,7 @@ def export_employees(request):
             emp.job.job_title if emp.job else '',
             emp.emp_status
         ])
-    
+
     return response
 
 
@@ -476,11 +476,11 @@ def department_summary(request):
         employee_count=Count('employee'),
         active_count=Count('employee', filter=Q(employee__emp_status='Active'))
     ).order_by('dept_name')
-    
+
     context = {
         'departments': departments,
     }
-    
+
     return render(request, 'employees/department_summary.html', context)
 
 
@@ -512,13 +512,13 @@ def search_employees_ajax(request):
     query = request.GET.get('q', '')
     if len(query) < 2:
         return JsonResponse([], safe=False)
-    
+
     employees = Employee.objects.filter(
-        Q(first_name__icontains=query) |
+        Q(first_name__icontains=query).prefetch_related()  # TODO: Add appropriate prefetch_related fields |
         Q(last_name__icontains=query) |
         Q(emp_code__icontains=query)
     ).select_related('dept', 'job')[:10]
-    
+
     results = []
     for emp in employees:
         results.append({
@@ -528,7 +528,7 @@ def search_employees_ajax(request):
             'dept': emp.dept.dept_name if emp.dept else '',
             'job': emp.job.job_title if emp.job else '',
         })
-    
+
     return JsonResponse(results, safe=False)
 
 
@@ -538,8 +538,8 @@ def department_employees_ajax(request, dept_id):
     employees = Employee.objects.filter(
         dept_id=dept_id,
         emp_status='Active'
-    ).values('emp_id', 'first_name', 'last_name', 'emp_code')
-    
+    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.values('emp_id', 'first_name', 'last_name', 'emp_code')
+
     return JsonResponse(list(employees), safe=False)
 
 
@@ -550,7 +550,7 @@ def bulk_import_employees(request):
     if request.method == 'POST':
         # معالجة ملف الاستيراد
         pass
-    
+
     return render(request, 'employees/bulk_import.html')
 
 
@@ -566,7 +566,7 @@ def bulk_update_employees(request):
     if request.method == 'POST':
         # معالجة التحديث الجماعي
         pass
-    
+
     return render(request, 'employees/bulk_update.html')
 
 
@@ -575,13 +575,13 @@ def bulk_update_employees(request):
 def employee_documents(request, emp_id):
     """إدارة مستندات الموظف"""
     employee = get_object_or_404(Employee, emp_id=emp_id)
-    documents = EmployeeDocument.objects.filter(emp=employee).order_by('-upload_date')
-    
+    documents = EmployeeDocument.objects.filter(emp=employee).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('-upload_date')
+
     context = {
         'employee': employee,
         'documents': documents,
     }
-    
+
     return render(request, 'employees/employee_documents.html', context)
 
 
@@ -589,21 +589,21 @@ def employee_documents(request, emp_id):
 def upload_document(request, emp_id):
     """رفع مستند للموظف"""
     from .forms import EmployeeDocumentForm
-    
+
     employee = get_object_or_404(Employee, emp_id=emp_id)
-    
+
     if request.method == 'POST':
         form = EmployeeDocumentForm(request.POST, request.FILES)
         if form.is_valid():
             document = form.save(commit=False)
             document.emp = employee
-            
+
             # معالجة الملف المرفوع
             file_upload = form.cleaned_data.get('file_upload')
             if file_upload:
                 document.file_data = file_upload.read()
                 document.file_ext = file_upload.name.split('.')[-1].lower()
-            
+
             document.save()
             messages.success(request, 'تم رفع المستند بنجاح.')
             return redirect('employees:employee_documents', emp_id=emp_id)
@@ -611,12 +611,12 @@ def upload_document(request, emp_id):
             messages.error(request, 'يرجى تصحيح الأخطاء أدناه.')
     else:
         form = EmployeeDocumentForm()
-    
+
     context = {
         'form': form,
         'employee': employee,
     }
-    
+
     return render(request, 'employees/upload_document.html', context)
 
 

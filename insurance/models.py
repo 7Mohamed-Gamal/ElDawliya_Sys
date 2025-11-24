@@ -19,15 +19,18 @@ class HealthInsuranceProvider(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')
 
     class Meta:
+        """Meta class"""
         db_table = 'HealthInsuranceProviders'
         verbose_name = 'مزود تأمين صحي'
         verbose_name_plural = 'مزودو التأمين الصحي'
         ordering = ['provider_name']
 
     def __str__(self):
+        """__str__ function"""
         return self.provider_name
 
     def clean(self):
+        """clean function"""
         if self.provider_code:
             self.provider_code = self.provider_code.upper()
 
@@ -49,7 +52,7 @@ class EmployeeHealthInsurance(models.Model):
 
     ins_id = models.AutoField(primary_key=True, db_column='InsID')
     emp = models.ForeignKey(Employee, on_delete=models.CASCADE, db_column='EmpID', verbose_name='الموظف')
-    provider = models.ForeignKey(HealthInsuranceProvider, on_delete=models.PROTECT, db_column='ProviderID', 
+    provider = models.ForeignKey(HealthInsuranceProvider, on_delete=models.PROTECT, db_column='ProviderID',
                                 blank=True, null=True, verbose_name='مقدم الخدمة')
     policy_no = models.CharField(max_length=100, db_column='PolicyNo', blank=True, null=True, verbose_name='رقم البوليصة')
     insurance_type = models.CharField(max_length=20, choices=INSURANCE_TYPE_CHOICES, default='basic', verbose_name='نوع التأمين')
@@ -64,15 +67,18 @@ class EmployeeHealthInsurance(models.Model):
     updated_at = models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')
 
     class Meta:
+        """Meta class"""
         db_table = 'EmployeeHealthInsurance'
         verbose_name = 'تأمين صحي للموظف'
         verbose_name_plural = 'تأمينات صحية للموظفين'
         ordering = ['-start_date']
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.emp} - {self.provider} - {self.policy_no}"
 
     def clean(self):
+        """clean function"""
         if self.start_date and self.end_date and self.start_date >= self.end_date:
             raise ValidationError('تاريخ البداية يجب أن يكون قبل تاريخ النهاية')
 
@@ -109,26 +115,29 @@ class EmployeeSocialInsurance(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='active', verbose_name='الحالة')
     start_date = models.DateField(db_column='StartDate', blank=True, null=True, verbose_name='تاريخ البداية')
     end_date = models.DateField(db_column='EndDate', blank=True, null=True, verbose_name='تاريخ النهاية')
-    contribution = models.DecimalField(max_digits=18, decimal_places=2, db_column='Contribution', 
+    contribution = models.DecimalField(max_digits=18, decimal_places=2, db_column='Contribution',
                                      blank=True, null=True, verbose_name='المساهمة الشهرية')
-    employer_contribution = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True, 
+    employer_contribution = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True,
                                               verbose_name='مساهمة صاحب العمل')
-    employee_contribution = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True, 
+    employee_contribution = models.DecimalField(max_digits=18, decimal_places=2, blank=True, null=True,
                                               verbose_name='مساهمة الموظف')
     notes = models.TextField(blank=True, null=True, verbose_name='ملاحظات')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='تاريخ الإنشاء')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='تاريخ التحديث')
 
     class Meta:
+        """Meta class"""
         db_table = 'EmployeeSocialInsurance'
         verbose_name = 'تأمين اجتماعي (GOSI)'
         verbose_name_plural = 'تأمينات اجتماعية للموظفين'
         ordering = ['-start_date']
 
     def __str__(self):
+        """__str__ function"""
         return f"{self.emp} - GOSI: {self.gosi_no}"
 
     def clean(self):
+        """clean function"""
         if self.start_date and self.end_date and self.start_date >= self.end_date:
             raise ValidationError('تاريخ البداية يجب أن يكون قبل تاريخ النهاية')
 

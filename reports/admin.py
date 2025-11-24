@@ -1,12 +1,13 @@
 from django.contrib import admin
 from .models import (
-    ReportCategory, ReportTemplate, ReportSchedule, 
+    ReportCategory, ReportTemplate, ReportSchedule,
     GeneratedReport, ReportAccessLog, ReportDashboard
 )
 
 
 @admin.register(ReportCategory)
 class ReportCategoryAdmin(admin.ModelAdmin):
+    """ReportCategoryAdmin class"""
     list_display = ['name', 'code', 'category_type', 'is_active', 'sort_order']
     list_filter = ['category_type', 'is_active']
     search_fields = ['name', 'code', 'description']
@@ -15,12 +16,13 @@ class ReportCategoryAdmin(admin.ModelAdmin):
 
 @admin.register(ReportTemplate)
 class ReportTemplateAdmin(admin.ModelAdmin):
+    """ReportTemplateAdmin class"""
     list_display = ['name', 'code', 'category', 'is_active', 'is_featured', 'created_at']
     list_filter = ['category', 'is_active', 'is_featured', 'default_format']
     search_fields = ['name', 'code', 'description']
     readonly_fields = ['created_at', 'updated_at']
     filter_horizontal = ['allowed_users']
-    
+
     fieldsets = (
         ('معلومات أساسية', {
             'fields': ('category', 'name', 'code', 'description')
@@ -46,11 +48,12 @@ class ReportTemplateAdmin(admin.ModelAdmin):
 
 @admin.register(ReportSchedule)
 class ReportScheduleAdmin(admin.ModelAdmin):
+    """ReportScheduleAdmin class"""
     list_display = ['name', 'template', 'frequency', 'status', 'next_run', 'run_count']
     list_filter = ['frequency', 'status', 'template__category']
     search_fields = ['name', 'template__name']
     readonly_fields = ['last_run', 'run_count', 'error_count', 'created_at', 'updated_at']
-    
+
     fieldsets = (
         ('معلومات أساسية', {
             'fields': ('template', 'name')
@@ -75,12 +78,13 @@ class ReportScheduleAdmin(admin.ModelAdmin):
 
 @admin.register(GeneratedReport)
 class GeneratedReportAdmin(admin.ModelAdmin):
+    """GeneratedReportAdmin class"""
     list_display = ['name', 'template', 'status', 'output_format', 'file_size', 'download_count', 'generated_at']
     list_filter = ['status', 'output_format', 'template__category', 'generated_at']
     search_fields = ['name', 'template__name']
     readonly_fields = ['file_size', 'download_count', 'execution_time', 'generated_at']
     date_hierarchy = 'generated_at'
-    
+
     fieldsets = (
         ('معلومات التقرير', {
             'fields': ('template', 'schedule', 'name', 'parameters', 'output_format')
@@ -102,6 +106,7 @@ class GeneratedReportAdmin(admin.ModelAdmin):
 
 @admin.register(ReportAccessLog)
 class ReportAccessLogAdmin(admin.ModelAdmin):
+    """ReportAccessLogAdmin class"""
     list_display = ['report', 'user', 'access_type', 'success', 'accessed_at']
     list_filter = ['access_type', 'success', 'accessed_at']
     search_fields = ['report__name', 'user__username']
@@ -111,6 +116,7 @@ class ReportAccessLogAdmin(admin.ModelAdmin):
 
 @admin.register(ReportDashboard)
 class ReportDashboardAdmin(admin.ModelAdmin):
+    """ReportDashboardAdmin class"""
     list_display = ['name', 'owner', 'is_public', 'is_active', 'is_default', 'created_at']
     list_filter = ['is_public', 'is_active', 'is_default']
     search_fields = ['name', 'description', 'owner__first_name', 'owner__last_name']
