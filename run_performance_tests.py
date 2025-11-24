@@ -75,7 +75,7 @@ def create_test_data():
 
         with transaction.atomic():
             # إنشاء مستخدم إداري للاختبار
-            if not User.objects.filter(username='performance_admin').prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists():
+            if not User.objects.filter(username='performance_admin').exists():
                 User.objects.create_superuser(
                     username='performance_admin',
                     email='admin@performance.test',
@@ -86,7 +86,7 @@ def create_test_data():
             # إنشاء مستخدمين عاديين للاختبار
             for i in range(5):
                 username = f'perf_user_{i}'
-                if not User.objects.filter(username=username).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists():
+                if not User.objects.filter(username=username).exists():
                     User.objects.create_user(
                         username=username,
                         email=f'user{i}@performance.test',
@@ -212,13 +212,13 @@ def cleanup_test_data():
 
         with transaction.atomic():
             # حذف المستخدمين المؤقتين
-            User.objects.filter(username__startswith='perf_user_').prefetch_related()  # TODO: Add appropriate prefetch_related fields.delete()
-            User.objects.filter(username__startswith='loadtest_user_').prefetch_related()  # TODO: Add appropriate prefetch_related fields.delete()
-            User.objects.filter(username__startswith='memtest_user').prefetch_related()  # TODO: Add appropriate prefetch_related fields.delete()
-            User.objects.filter(username__startswith='optim_user_').prefetch_related()  # TODO: Add appropriate prefetch_related fields.delete()
-            User.objects.filter(username__startswith='cache_test_user').prefetch_related()  # TODO: Add appropriate prefetch_related fields.delete()
-            User.objects.filter(username__startswith='response_test_user').prefetch_related()  # TODO: Add appropriate prefetch_related fields.delete()
-            User.objects.filter(username__startswith='batch_').prefetch_related()  # TODO: Add appropriate prefetch_related fields.delete()
+            User.objects.filter(username__startswith='perf_user_').delete()
+            User.objects.filter(username__startswith='loadtest_user_').delete()
+            User.objects.filter(username__startswith='memtest_user').delete()
+            User.objects.filter(username__startswith='optim_user_').delete()
+            User.objects.filter(username__startswith='cache_test_user').delete()
+            User.objects.filter(username__startswith='response_test_user').delete()
+            User.objects.filter(username__startswith='batch_').delete()
 
             logger.info("✅ تم تنظيف بيانات الاختبار")
 

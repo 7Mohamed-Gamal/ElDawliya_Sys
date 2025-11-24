@@ -58,13 +58,13 @@ class SynchronizationService:
                 if hasattr(employee, 'user') and employee.user:
                     if action == 'update':
                         # Update task assignments if employee department changed
-                        Task.objects.filter(assigned_to=employee.user).prefetch_related()  # TODO: Add appropriate prefetch_related fields.update(
+                        Task.objects.filter(assigned_to=employee.user).update(
                             updated_at=timezone.now()
                         )
 
                     elif action == 'delete':
                         # Reassign tasks to department manager or mark as unassigned
-                        tasks_to_reassign = Task.objects.filter(assigned_to=employee.user).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+                        tasks_to_reassign = Task.objects.filter(assigned_to=employee.user)
                         if employee.department and employee.department.manager:
                             if hasattr(employee.department.manager, 'user'):
                                 tasks_to_reassign.update(
@@ -81,7 +81,7 @@ class SynchronizationService:
                 if action == 'delete':
                     # Remove from future meetings
                     future_meetings = Meeting.objects.filter(
-                        date_time__gte=timezone.now().prefetch_related()  # TODO: Add appropriate prefetch_related fields,
+                        date_time__gte=timezone.now(),
                         attendee__employee=employee
                     )
                     for meeting in future_meetings:
@@ -109,7 +109,7 @@ class SynchronizationService:
 
                 elif action == 'delete':
                     # Move employees to default department or mark as unassigned
-                    default_dept = Department.objects.filter(dept_name='عام').prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+                    default_dept = Department.objects.filter(dept_name='عام').first()
                     if default_dept:
                         department.employees.update(department=default_dept)
 
@@ -132,7 +132,7 @@ class SynchronizationService:
                 if action in ['create', 'update']:
                     # Update related employee task counts
                     if task.assigned_to:
-                        employee = Employee.objects.filter(user=task.assigned_to).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+                        employee = Employee.objects.filter(user=task.assigned_to).first()
                         if employee:
                             self._invalidate_employee_caches(employee)
 
@@ -163,7 +163,7 @@ class SynchronizationService:
 
                 elif action == 'delete':
                     # Clean up related meeting tasks
-                    MeetingTask.objects.filter(meeting=meeting).prefetch_related()  # TODO: Add appropriate prefetch_related fields.delete()
+                    MeetingTask.objects.filter(meeting=meeting).delete()
 
                 # Invalidate meeting-related caches
                 cache.delete_many([
@@ -188,7 +188,7 @@ class SynchronizationService:
                     # Update related purchase requests
                     related_requests = PurchaseRequest.objects.filter(
                         purchaserequestitem__product=product
-                    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.distinct()
+                    ).distinct()
 
                     for request in related_requests:
                         request.updated_at = timezone.now()

@@ -32,7 +32,7 @@ class TimeTrackingService(BaseService):
             active_entry = TimeEntry.objects.filter(
                 employee=self.user.employee,
                 end_time__isnull=True
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+            ).first()
 
             if active_entry:
                 return self.format_response(
@@ -115,7 +115,7 @@ class TimeTrackingService(BaseService):
         self.check_permission('projects.view_timeentry')
 
         try:
-            queryset = TimeEntry.objects.filter(end_time__isnull=False).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            queryset = TimeEntry.objects.filter(end_time__isnull=False)
 
             if employee_id:
                 queryset = queryset.filter(employee_id=employee_id)

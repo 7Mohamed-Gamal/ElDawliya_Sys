@@ -65,27 +65,27 @@ class ProductListView(ListView):
     def get_context_data(self, **kwargs):
         """get_context_data function"""
         context = super().get_context_data(**kwargs)
-        context['categories'] = Category.objects.all().select_related()  # TODO: Add appropriate select_related fields
+        context['categories'] = Category.objects.all()
 
         # حساب إحصائيات المخزون
         # مساوي الحد الأدنى
         equal_stock_count = Product.objects.filter(
-            quantity=F('minimum_threshold').prefetch_related()  # TODO: Add appropriate prefetch_related fields,
+            quantity=F('minimum_threshold'),
             minimum_threshold__gt=0
         ).count()
 
         # تحت الحد الأدنى
         low_stock_count = Product.objects.filter(
-            quantity__lt=F('minimum_threshold').prefetch_related()  # TODO: Add appropriate prefetch_related fields,
+            quantity__lt=F('minimum_threshold'),
             minimum_threshold__gt=0
         ).count()
 
         # نفذت الكمية
-        out_of_stock = Product.objects.filter(quantity=0).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+        out_of_stock = Product.objects.filter(quantity=0).count()
 
         # المتوفر (كمية أكبر من الحد الأدنى، ليس مساوي له)
         normal_stock_count = Product.objects.filter(
-            Q(quantity__gt=F('minimum_threshold').prefetch_related()  # TODO: Add appropriate prefetch_related fields) | Q(minimum_threshold=0),
+            Q(quantity__gt=F('minimum_threshold')) | Q(minimum_threshold=0),
             quantity__gt=0
         ).count()
 
@@ -136,14 +136,14 @@ class ProductCreateView(CreateView):
         """get_context_data function"""
         context = super().get_context_data(**kwargs)
         # Add categories for the form
-        context['categories'] = Category.objects.all().select_related()  # TODO: Add appropriate select_related fields
+        context['categories'] = Category.objects.all()
         # Add units for the form
-        context['units'] = Unit.objects.all().select_related()  # TODO: Add appropriate select_related fields
+        context['units'] = Unit.objects.all()
         # Add page title
         context['page_title'] = 'إضافة صنف جديد'
         # Add low stock count for sidebar
         low_stock_count = Product.objects.filter(
-            quantity__lt=F('minimum_threshold').prefetch_related()  # TODO: Add appropriate prefetch_related fields,
+            quantity__lt=F('minimum_threshold'),
             minimum_threshold__gt=0
         ).count()
         context['low_stock_count'] = low_stock_count
@@ -257,14 +257,14 @@ class ProductUpdateView(UpdateView):
         """get_context_data function"""
         context = super().get_context_data(**kwargs)
         # Add categories for the form
-        context['categories'] = Category.objects.all().select_related()  # TODO: Add appropriate select_related fields
+        context['categories'] = Category.objects.all()
         # Add units for the form
-        context['units'] = Unit.objects.all().select_related()  # TODO: Add appropriate select_related fields
+        context['units'] = Unit.objects.all()
         # Add page title
         context['page_title'] = 'تعديل الصنف'
         # Add low stock count for sidebar
         low_stock_count = Product.objects.filter(
-            quantity__lt=F('minimum_threshold').prefetch_related()  # TODO: Add appropriate prefetch_related fields,
+            quantity__lt=F('minimum_threshold'),
             minimum_threshold__gt=0
         ).count()
         context['low_stock_count'] = low_stock_count

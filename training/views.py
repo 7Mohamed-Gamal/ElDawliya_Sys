@@ -33,17 +33,17 @@ def training_dashboard(request):
     total_providers = TrainingProvider.objects.count()
     total_courses = TrainingCourse.objects.count()
     active_courses = TrainingCourse.objects.filter(
-        end_date__gte=date.today().prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        end_date__gte=date.today()
     ).count()
     total_enrollments = EmployeeTraining.objects.count()
-    completed_trainings = EmployeeTraining.objects.filter(status='Completed').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+    completed_trainings = EmployeeTraining.objects.filter(status='Completed').count()
 
     # Recent courses
     recent_courses = TrainingCourse.objects.select_related('provider').order_by('-start_date')[:5]
 
     # Upcoming courses
     upcoming_courses = TrainingCourse.objects.filter(
-        start_date__gte=date.today().prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        start_date__gte=date.today()
     ).select_related('provider').order_by('start_date')[:5]
 
     # Recent enrollments
@@ -80,7 +80,7 @@ def provider_list(request):
     """قائمة مزودي التدريب"""
     search_query = request.GET.get('search', '')
 
-    providers = TrainingProvider.objects.all().select_related()  # TODO: Add appropriate select_related fields
+    providers = TrainingProvider.objects.all()
 
     if search_query:
         providers = providers.filter(
@@ -111,12 +111,12 @@ def provider_detail(request, provider_id):
     provider = get_object_or_404(TrainingProvider, provider_id=provider_id)
 
     # Get courses by this provider
-    courses = TrainingCourse.objects.filter(provider=provider).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('-start_date')
+    courses = TrainingCourse.objects.filter(provider=provider).order_by('-start_date')
 
     # Statistics
     total_courses = courses.count()
     total_cost = courses.aggregate(Sum('cost'))['cost__sum'] or 0
-    total_enrollments = EmployeeTraining.objects.filter(course__provider=provider).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+    total_enrollments = EmployeeTraining.objects.filter(course__provider=provider).count()
 
     context = {
         'provider': provider,
@@ -178,7 +178,7 @@ def provider_delete(request, provider_id):
     provider = get_object_or_404(TrainingProvider, provider_id=provider_id)
 
     # Check if provider has courses
-    courses_count = TrainingCourse.objects.filter(provider=provider).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+    courses_count = TrainingCourse.objects.filter(provider=provider).count()
 
     if request.method == 'POST':
         if courses_count > 0:
@@ -237,7 +237,7 @@ def course_list(request):
     page_obj = paginator.get_page(page_number)
 
     # Get providers for filter dropdown
-    providers = TrainingProvider.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('provider_name')
+    providers = TrainingProvider.objects.all().order_by('provider_name')
 
     context = {
         'page_obj': page_obj,
@@ -258,7 +258,7 @@ def course_detail(request, course_id):
     # Get enrollments for this course
     enrollments = EmployeeTraining.objects.filter(
         course=course
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('emp').order_by('-enrollment_date')
+    ).select_related('emp').order_by('-enrollment_date')
 
     # Statistics
     total_enrollments = enrollments.count()
@@ -344,7 +344,7 @@ def course_delete(request, course_id):
     course = get_object_or_404(TrainingCourse, course_id=course_id)
 
     # Check if course has enrollments
-    enrollments_count = EmployeeTraining.objects.filter(course=course).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+    enrollments_count = EmployeeTraining.objects.filter(course=course).count()
 
     if request.method == 'POST':
         if enrollments_count > 0:
@@ -501,7 +501,7 @@ def employee_training_history(request, emp_id):
 
     enrollments = EmployeeTraining.objects.filter(
         emp=employee
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('course', 'course__provider').order_by('-enrollment_date')
+    ).select_related('course', 'course__provider').order_by('-enrollment_date')
 
     # Statistics
     total_trainings = enrollments.count()

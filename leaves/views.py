@@ -22,20 +22,20 @@ def dashboard(request):
     # إحصائيات عامة
     total_leave_types = LeaveType.objects.count()
     total_leaves = EmployeeLeave.objects.count()
-    pending_leaves = EmployeeLeave.objects.filter(status='Pending').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
-    approved_leaves = EmployeeLeave.objects.filter(status='Approved').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+    pending_leaves = EmployeeLeave.objects.filter(status='Pending').count()
+    approved_leaves = EmployeeLeave.objects.filter(status='Approved').count()
 
     # إجازات اليوم
     today_leaves = EmployeeLeave.objects.filter(
         start_date__lte=today,
         end_date__gte=today,
         status='Approved'
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('emp', 'leave_type')
+    ).select_related('emp', 'leave_type')
 
     # الإجازات المعلقة للمراجعة
     pending_requests = EmployeeLeave.objects.filter(
         status='Pending'
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('emp', 'leave_type').order_by('-start_date')[:5]
+    ).select_related('emp', 'leave_type').order_by('-start_date')[:5]
 
     # إحصائيات أنواع الإجازات
     leave_type_stats = LeaveType.objects.annotate(
@@ -45,7 +45,7 @@ def dashboard(request):
     # العطلات الرسمية القادمة
     upcoming_holidays = PublicHoliday.objects.filter(
         holiday_date__gte=today
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('holiday_date')[:5]
+    ).order_by('holiday_date')[:5]
 
     context = {
         'total_leave_types': total_leave_types,
@@ -103,7 +103,7 @@ def leave_list(request):
     leaves = paginator.get_page(page_number)
 
     # قوائم للفلترة
-    leave_types = LeaveType.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('leave_name')
+    leave_types = LeaveType.objects.all().order_by('leave_name')
 
     context = {
         'leaves': leaves,
@@ -266,7 +266,7 @@ def get_leave_type(request, type_id):
     leave_type = get_object_or_404(LeaveType, leave_type_id=type_id)
 
     # إحصائيات الاستخدام
-    usage_stats = EmployeeLeave.objects.filter(leave_type=leave_type).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+    usage_stats = EmployeeLeave.objects.filter(leave_type=leave_type).aggregate(
         total_requests=Count('leave_id'),
         approved_requests=Count('leave_id', filter=Q(status='Approved')),
         pending_requests=Count('leave_id', filter=Q(status='Pending')),
@@ -314,7 +314,7 @@ def delete_leave_type(request, type_id):
 
     try:
         # التحقق من وجود إجازات مرتبطة
-        if EmployeeLeave.objects.filter(leave_type=leave_type).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists():
+        if EmployeeLeave.objects.filter(leave_type=leave_type).exists():
             messages.error(request, f'لا يمكن حذف نوع الإجازة {leave_type.leave_name} لأنه مرتبط بطلبات إجازات.')
         else:
             leave_type.delete()
@@ -333,7 +333,7 @@ def leave_type_stats(request, type_id):
     # إحصائيات شهرية
     monthly_stats = EmployeeLeave.objects.filter(
         leave_type=leave_type
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.extra(
+    ).extra(
         select={'month': "MONTH(start_date)", 'year': "YEAR(start_date)"}
     ).values('month', 'year').annotate(
         count=Count('leave_id')
@@ -351,7 +351,7 @@ def leave_type_stats(request, type_id):
 @login_required
 def balance_report(request):
     """تقرير أرصدة الإجازات"""
-    employees = Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('dept', 'job')
+    employees = Employee.objects.filter(emp_status='Active').select_related('dept', 'job')
 
     # فلترة حسب القسم
     department = request.GET.get('department')
@@ -366,7 +366,7 @@ def balance_report(request):
         approved_leaves = EmployeeLeave.objects.filter(
             emp=emp,
             status='Approved',
-            start_date__year=date.today().prefetch_related()  # TODO: Add appropriate prefetch_related fields.year
+            start_date__year=date.today().year
         )
 
         used_days = sum(
@@ -397,7 +397,7 @@ def employee_balance(request, emp_id):
     employee_leaves = EmployeeLeave.objects.filter(
         emp=employee,
         start_date__year=current_year
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('leave_type')
+    ).select_related('leave_type')
 
     # تجميع حسب نوع الإجازة
     leave_summary = {}
@@ -432,7 +432,7 @@ def employee_balance(request, emp_id):
 @login_required
 def holidays(request):
     """قائمة العطلات الرسمية"""
-    holidays = PublicHoliday.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('holiday_date')
+    holidays = PublicHoliday.objects.all().order_by('holiday_date')
 
     context = {
         'holidays': holidays,
@@ -477,7 +477,7 @@ def my_leaves(request):
     # إجازات الموظف
     my_leaves = EmployeeLeave.objects.filter(
         emp=employee
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('leave_type').order_by('-start_date')
+    ).select_related('leave_type').order_by('-start_date')
 
     context = {
         'my_leaves': my_leaves,
@@ -539,7 +539,7 @@ def leave_reports(request):
     this_month_leaves = EmployeeLeave.objects.filter(
         start_date__year=today.year,
         start_date__month=today.month
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+    ).count()
 
     # إحصائيات حسب النوع
     leave_type_stats = LeaveType.objects.annotate(
@@ -605,7 +605,7 @@ def check_leave_balance(request, emp_id, type_id):
             leave_type=leave_type,
             status='Approved',
             start_date__year=current_year
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        )
 
         used_days = sum(
             (leave.end_date - leave.start_date).days + 1
@@ -650,7 +650,7 @@ def calculate_leave_days(request):
         # استبعاد العطلات الرسمية
         holidays = PublicHoliday.objects.filter(
             holiday_date__range=[start_date, end_date]
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+        ).count()
 
         working_days = total_days - holidays
 
@@ -677,7 +677,7 @@ def bulk_approve_leaves(request):
             EmployeeLeave.objects.filter(
                 leave_id__in=leave_ids,
                 status='Pending'
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.update(
+            ).update(
                 status='Approved',
                 approved_date=timezone.now()
             )
@@ -698,7 +698,7 @@ def bulk_reject_leaves(request):
             EmployeeLeave.objects.filter(
                 leave_id__in=leave_ids,
                 status='Pending'
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.update(
+            ).update(
                 status='Rejected',
                 approved_date=timezone.now()
             )

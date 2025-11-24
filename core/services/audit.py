@@ -4,7 +4,7 @@ Audit Service for tracking system activities
 """
 from django.contrib.contenttypes.models import ContentType
 from django.utils import timezone
-from core.models.audit import AuditLog, SystemLog, LoginAttempt
+from core.models.audit import AuditLog, SecurityEvent, SystemMetric
 from .base import BaseService
 
 
@@ -75,7 +75,7 @@ class AuditService(BaseService):
         الحصول على سجل نشاط المستخدم
         Get user activity log with filtering
         """
-        queryset = AuditLog.objects.all().select_related()  # TODO: Add appropriate select_related fields
+        queryset = AuditLog.objects.all()
 
         if user:
             queryset = queryset.filter(user=user)
@@ -104,7 +104,7 @@ class AuditService(BaseService):
         """
         self.check_permission('core.view_systemlog')
 
-        queryset = SystemLog.objects.all().select_related()  # TODO: Add appropriate select_related fields
+        queryset = SystemLog.objects.all()
 
         if level:
             queryset = queryset.filter(level=level)
@@ -136,7 +136,7 @@ class AuditService(BaseService):
         """
         self.check_permission('core.view_loginattempt')
 
-        queryset = LoginAttempt.objects.all().select_related()  # TODO: Add appropriate select_related fields
+        queryset = LoginAttempt.objects.all()
 
         if username:
             queryset = queryset.filter(username__icontains=username)
@@ -171,7 +171,7 @@ class AuditService(BaseService):
         # Login attempts summary
         login_stats = LoginAttempt.objects.filter(
             created_at__gte=start_date
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+        ).aggregate(
             total_attempts=Count('id'),
             successful_logins=Count('id', filter=Q(success=True)),
             failed_logins=Count('id', filter=Q(success=False))
@@ -181,7 +181,7 @@ class AuditService(BaseService):
         error_stats = SystemLog.objects.filter(
             created_at__gte=start_date,
             level__in=['error', 'critical']
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+        ).aggregate(
             total_errors=Count('id'),
             unresolved_errors=Count('id', filter=Q(resolved=False))
         )
@@ -189,7 +189,7 @@ class AuditService(BaseService):
         # User activity summary
         activity_stats = AuditLog.objects.filter(
             created_at__gte=start_date
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+        ).aggregate(
             total_actions=Count('id'),
             failed_actions=Count('id', filter=Q(result='failure'))
         )
@@ -244,19 +244,19 @@ class AuditService(BaseService):
         # Clean audit logs
         audit_deleted = AuditLog.objects.filter(
             created_at__lt=cutoff_date
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.delete()
+        ).delete()
 
         # Clean system logs (keep errors longer)
         system_deleted = SystemLog.objects.filter(
             created_at__lt=cutoff_date,
             level__in=['debug', 'info'],
             resolved=True
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.delete()
+        ).delete()
 
         # Clean login attempts
         login_deleted = LoginAttempt.objects.filter(
             created_at__lt=cutoff_date
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.delete()
+        ).delete()
 
         self.log_user_action(
             action='delete',

@@ -231,7 +231,8 @@ class EmployeeDocument(models.Model):
 # Import extended models for comprehensive HR management
 try:
     # TODO: Replace wildcard import
-# from .models_extended import specific_items
+    # from .models_extended import specific_items
+    pass
 except ImportError:
     # Extended models not yet available during initial migration
     pass

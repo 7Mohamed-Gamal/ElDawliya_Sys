@@ -26,7 +26,7 @@ class SupplierListView(ListView):
         context['page_title'] = 'قائمة الموردين'
         # Add low stock count for sidebar
         low_stock_count = Product.objects.filter(
-            quantity__lt=F('minimum_threshold').prefetch_related()  # TODO: Add appropriate prefetch_related fields,
+            quantity__lt=F('minimum_threshold'),
             minimum_threshold__gt=0
         ).count()
         context['low_stock_count'] = low_stock_count

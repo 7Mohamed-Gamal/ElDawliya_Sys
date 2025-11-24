@@ -45,9 +45,9 @@ urlpatterns = [
     path('projects/', include(projects_urls)),
     path('reports/', include(reports_urls)),
 
-    # AI and integration endpoints
-    path('ai/', include('api.v1.ai.urls')),
-    path('integration/', include('api.v1.integration.urls')),
+    # AI and integration endpoints (commented out - modules not implemented)
+    # path('ai/', include('api.v1.ai.urls')),
+    # path('integration/', include('api.v1.integration.urls')),
 
     # ViewSet URLs
     path('', include(router.urls)),

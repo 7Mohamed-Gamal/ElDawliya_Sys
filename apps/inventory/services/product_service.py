@@ -6,7 +6,7 @@ from django.db import transaction
 from django.utils import timezone
 from django.db.models import Count, Sum, Avg, Q
 from core.services.base import BaseService
-from core.models.inventory import Product, ProductCategory, ProductUnit, ProductImage, ProductVariant
+from core.models.inventory import Product, ProductCategory, Unit
 
 
 class ProductService(BaseService):
@@ -27,14 +27,14 @@ class ProductService(BaseService):
 
         try:
             # Check if product code already exists
-            if Product.objects.filter(code=data['code']).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists():
+            if Product.objects.filter(code=data['code']).exists():
                 return self.format_response(
                     success=False,
                     message=f"كود المنتج {data['code']} موجود بالفعل"
                 )
 
             category = ProductCategory.objects.get(id=data['category_id'])
-            unit = ProductUnit.objects.get(id=data['unit_id'])
+            unit = Unit.objects.get(id=data['unit_id'])
 
             with transaction.atomic():
                 # Create product
@@ -54,13 +54,8 @@ class ProductService(BaseService):
                     updated_by=self.user
                 )
 
-                # Add product images if provided
-                if data.get('images'):
-                    self._add_product_images(product, data['images'])
-
-                # Add product variants if provided
-                if data.get('variants'):
-                    self._add_product_variants(product, data['variants'])
+                # Note: Product images and variants functionality 
+                # would require additional models to be implemented
 
                 # Log the action
                 self.log_action(
@@ -85,7 +80,7 @@ class ProductService(BaseService):
                 success=False,
                 message='التصنيف المحدد غير موجود'
             )
-        except ProductUnit.DoesNotExist:
+        except Unit.DoesNotExist:
             return self.format_response(
                 success=False,
                 message='الوحدة المحددة غير موجودة'
@@ -373,7 +368,7 @@ class ProductService(BaseService):
 
             def build_categories_tree():
                 """build_categories_tree function"""
-                categories = ProductCategory.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('name_ar')
+                categories = ProductCategory.objects.filter(is_active=True).order_by('name_ar')
 
                 # Build tree structure
                 categories_dict = {}
@@ -425,7 +420,7 @@ class ProductService(BaseService):
         self.check_permission('inventory.view_product_analytics')
 
         try:
-            queryset = Product.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            queryset = Product.objects.filter(is_active=True)
 
             if category_id:
                 queryset = queryset.filter(category_id=category_id)
@@ -537,29 +532,4 @@ class ProductService(BaseService):
         except Exception as e:
             return self.handle_exception(e, 'bulk_update_prices', 'bulk_price_update')
 
-    def _add_product_images(self, product, images_data):
-        """إضافة صور المنتج"""
-        for image_data in images_data:
-            ProductImage.objects.create(
-                product=product,
-                image_path=image_data['image_path'],
-                alt_text=image_data.get('alt_text', ''),
-                is_primary=image_data.get('is_primary', False),
-                display_order=image_data.get('display_order', 0),
-                created_by=self.user,
-                updated_by=self.user
-            )
 
-    def _add_product_variants(self, product, variants_data):
-        """إضافة متغيرات المنتج"""
-        for variant_data in variants_data:
-            ProductVariant.objects.create(
-                product=product,
-                variant_name=variant_data['variant_name'],
-                variant_value=variant_data['variant_value'],
-                additional_cost=variant_data.get('additional_cost', 0),
-                sku_suffix=variant_data.get('sku_suffix', ''),
-                is_active=variant_data.get('is_active', True),
-                created_by=self.user,
-                updated_by=self.user
-            )

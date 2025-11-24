@@ -14,6 +14,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.utils import timezone
 from django.core.cache import cache
 from django.utils.translation import gettext_lazy as _
+from django.conf import settings
 
 User = get_user_model()
 
@@ -188,10 +189,10 @@ class UserRole(models.Model):
     تعيينات أدوار المستخدمين مع الوصول المؤقت والمشروط
     """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='user_roles', verbose_name=_('المستخدم'))
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='user_roles', verbose_name=_('المستخدم'))
     role = models.ForeignKey(Role, on_delete=models.CASCADE, related_name='user_roles', verbose_name=_('الدور'))
     granted_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         related_name='granted_roles',
@@ -231,13 +232,13 @@ class ObjectPermission(models.Model):
     صلاحيات على مستوى الكائن للتحكم الدقيق في الوصول
     """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='object_permissions', verbose_name=_('المستخدم'))
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='object_permissions', verbose_name=_('المستخدم'))
     permission = models.ForeignKey(Permission, on_delete=models.CASCADE, verbose_name=_('الصلاحية'))
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, verbose_name=_('نوع المحتوى'))
     object_id = models.CharField(max_length=255, verbose_name=_('معرف الكائن'))
     content_object = GenericForeignKey('content_type', 'object_id')
     granted_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         related_name='granted_object_permissions',
@@ -294,13 +295,13 @@ class ApprovalWorkflow(models.Model):
     title = models.CharField(max_length=200, verbose_name=_('العنوان'))
     description = models.TextField(verbose_name=_('الوصف'))
     requested_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='requested_approvals',
         verbose_name=_('طلب بواسطة')
     )
     target_user = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         null=True,
         blank=True,

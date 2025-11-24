@@ -24,7 +24,7 @@ def sync_all_zk_devices(self):
         from .models import ZKDevice
 
         # الحصول على جميع الأجهزة النشطة
-        active_devices = ZKDevice.objects.filter(status='active').prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        active_devices = ZKDevice.objects.filter(status='active')
 
         if not active_devices.exists():
             logger.info("لا توجد أجهزة ZK نشطة للمزامنة")
@@ -145,7 +145,7 @@ def generate_daily_attendance_summary():
         current_year = today.year
 
         # تحديث ملخصات الحضور للشهر الحالي
-        active_employees = Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        active_employees = Employee.objects.filter(emp_status='Active')
         updated_count = 0
 
         for employee in active_employees:
@@ -154,7 +154,7 @@ def generate_daily_attendance_summary():
                 emp=employee,
                 att_date__year=current_year,
                 att_date__month=current_month
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            )
 
             if monthly_records.exists():
                 stats = monthly_records.aggregate(
@@ -283,7 +283,7 @@ def cleanup_old_zk_data(days_to_keep=90):
         old_raw_data = ZKAttendanceRaw.objects.filter(
             timestamp__lt=cutoff_date,
             is_processed=True
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        )
 
         deleted_raw_count = old_raw_data.count()
         old_raw_data.delete()
@@ -291,7 +291,7 @@ def cleanup_old_zk_data(days_to_keep=90):
         # حذف سجلات المعالجة القديمة
         old_logs = AttendanceProcessingLog.objects.filter(
             created_at__lt=cutoff_date
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        )
 
         deleted_logs_count = old_logs.count()
         old_logs.delete()
@@ -324,7 +324,7 @@ def check_device_connectivity():
     try:
         from .models import ZKDevice
 
-        devices = ZKDevice.objects.filter(status='active').prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        devices = ZKDevice.objects.filter(status='active')
         online_devices = []
         offline_devices = []
 
@@ -427,12 +427,12 @@ def generate_monthly_attendance_report():
             report_year = today.year
 
         # إحصائيات عامة
-        total_employees = Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+        total_employees = Employee.objects.filter(emp_status='Active').count()
 
         summaries = AttendanceSummary.objects.filter(
             year=report_year,
             month=report_month
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        )
 
         if summaries.exists():
             stats = summaries.aggregate(
@@ -517,7 +517,7 @@ def optimize_attendance_data():
         # البحث عن السجلات بدون حالة
         records_without_status = EmployeeAttendance.objects.filter(
             status__isnull=True
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        )
 
         for record in records_without_status:
             if record.check_in and record.check_out:

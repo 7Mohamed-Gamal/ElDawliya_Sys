@@ -28,9 +28,10 @@ from .permissions import HasAPIAccess
 # from Hr.models.employee.employee_models import Employee
 # from Hr.models.core.department_models import Department
 # EmployeeSerializer and DepartmentSerializer temporarily removed
-from inventory.models import TblProducts, TblCategories
-from tasks.models import Task
-from meetings.models import Meeting
+# Temporarily disabled until apps are restored
+# from inventory.models import TblProducts, TblCategories
+# from tasks.models import Task
+# from meetings.models import Meeting
 
 # Import core services
 from core.data_integration import data_integration_service
@@ -99,7 +100,7 @@ class APIKeyViewSet(APIUsageLogMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Return API keys for the current user"""
-        return APIKey.objects.filter(user=self.request.user).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        return APIKey.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
         """Create API key for the current user"""
@@ -118,9 +119,9 @@ class UserViewSet(APIUsageLogMixin, viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         """Return users based on permissions"""
         if self.request.user.is_staff:
-            return User.objects.all().select_related()  # TODO: Add appropriate select_related fields
+            return User.objects.all()
         else:
-            return User.objects.filter(id=self.request.user.id).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            return User.objects.filter(id=self.request.user.id)
 
 
 # HR Views - temporarily disabled
@@ -143,34 +144,49 @@ class ProductViewSet(APIUsageLogMixin, viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         """Return products with optional filtering"""
-        queryset = TblProducts.objects.all().select_related()  # TODO: Add appropriate select_related fields
+        try:
+            from inventory.models import TblProducts
+            queryset = TblProducts.objects.all()
 
-        # Filter by category
-        category = self.request.query_params.get('category', None)
-        if category:
-            queryset = queryset.filter(cat_name__icontains=category)
+            # Filter by category
+            category = self.request.query_params.get('category', None)
+            if category:
+                queryset = queryset.filter(cat_name__icontains=category)
 
-        # Filter low stock items
-        low_stock = self.request.query_params.get('low_stock', None)
-        if low_stock and low_stock.lower() == 'true':
-            from django.db import models as django_models
-            queryset = queryset.filter(qte_in_stock__lte=django_models.F('minimum_threshold'))
+            # Filter low stock items
+            low_stock = self.request.query_params.get('low_stock', None)
+            if low_stock and low_stock.lower() == 'true':
+                from django.db import models as django_models
+                queryset = queryset.filter(qte_in_stock__lte=django_models.F('minimum_threshold'))
 
-        # Search by name
-        search = self.request.query_params.get('search', None)
-        if search:
-            queryset = queryset.filter(product_name__icontains=search)
+            # Search by name
+            search = self.request.query_params.get('search', None)
+            if search:
+                queryset = queryset.filter(product_name__icontains=search)
 
-        return queryset.select_related('cat')
+            return queryset.select_related('cat')
+        except ImportError:
+            # Return empty queryset if inventory app is not available
+            from django.db import models
+            return models.QuerySet().none()
 
 
 class CategoryViewSet(APIUsageLogMixin, viewsets.ReadOnlyModelViewSet):
     """ViewSet for category data"""
-    queryset = TblCategories.objects.all().select_related()  # TODO: Add appropriate select_related fields
     serializer_class = CategorySerializer
     permission_classes = [IsAuthenticated, HasAPIAccess]
     pagination_class = StandardResultsSetPagination
     throttle_classes = [UserRateThrottle]
+
+    def get_queryset(self):
+        """Return categories with optional filtering"""
+        try:
+            from inventory.models import TblCategories
+            return TblCategories.objects.all()
+        except ImportError:
+            # Return empty queryset if inventory app is not available
+            from django.db import models
+            return models.QuerySet().none()
 
 
 # Task Management Views
@@ -183,24 +199,30 @@ class TaskViewSet(APIUsageLogMixin, viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         """Return tasks with optional filtering"""
-        queryset = Task.objects.all().select_related()  # TODO: Add appropriate select_related fields
+        try:
+            from tasks.models import Task
+            queryset = Task.objects.all()
 
-        # Filter by assigned user
-        assigned_to = self.request.query_params.get('assigned_to', None)
-        if assigned_to:
-            queryset = queryset.filter(assigned_to__username=assigned_to)
+            # Filter by assigned user
+            assigned_to = self.request.query_params.get('assigned_to', None)
+            if assigned_to:
+                queryset = queryset.filter(assigned_to__username=assigned_to)
 
-        # Filter by status
-        status_filter = self.request.query_params.get('status', None)
-        if status_filter:
-            queryset = queryset.filter(status=status_filter)
+            # Filter by status
+            status_filter = self.request.query_params.get('status', None)
+            if status_filter:
+                queryset = queryset.filter(status=status_filter)
 
-        # Filter by priority
-        priority = self.request.query_params.get('priority', None)
-        if priority:
-            queryset = queryset.filter(priority=priority)
+            # Filter by priority
+            priority = self.request.query_params.get('priority', None)
+            if priority:
+                queryset = queryset.filter(priority=priority)
 
-        return queryset.select_related('assigned_to', 'created_by')
+            return queryset.select_related('assigned_to', 'created_by')
+        except ImportError:
+            # Return empty queryset if tasks app is not available
+            from django.db import models
+            return models.QuerySet().none()
 
 
 # Meeting Management Views
@@ -213,19 +235,25 @@ class MeetingViewSet(APIUsageLogMixin, viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         """Return meetings with optional filtering"""
-        queryset = Meeting.objects.all().select_related()  # TODO: Add appropriate select_related fields
+        try:
+            from meetings.models import Meeting
+            queryset = Meeting.objects.all()
 
-        # Filter by organizer
-        organizer = self.request.query_params.get('organizer', None)
-        if organizer:
-            queryset = queryset.filter(organizer__username=organizer)
+            # Filter by organizer
+            organizer = self.request.query_params.get('organizer', None)
+            if organizer:
+                queryset = queryset.filter(organizer__username=organizer)
 
-        # Filter by status
-        status_filter = self.request.query_params.get('status', None)
-        if status_filter:
-            queryset = queryset.filter(status=status_filter)
+            # Filter by status
+            status_filter = self.request.query_params.get('status', None)
+            if status_filter:
+                queryset = queryset.filter(status=status_filter)
 
-        return queryset.select_related('organizer')
+            return queryset.select_related('organizer')
+        except ImportError:
+            # Return empty queryset if meetings app is not available
+            from django.db import models
+            return models.QuerySet().none()
 
 
 # Gemini AI Views
@@ -238,7 +266,7 @@ class GeminiConversationViewSet(APIUsageLogMixin, viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Return conversations for the current user"""
-        return GeminiConversation.objects.filter(user=self.request.user).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        return GeminiConversation.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
         """Create conversation for the current user"""
@@ -366,7 +394,7 @@ def api_usage_stats(request):
     user_logs = APIUsageLog.objects.filter(
         user=request.user,
         timestamp__gte=thirty_days_ago
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+    )
 
     stats = {
         'total_requests': user_logs.count(),

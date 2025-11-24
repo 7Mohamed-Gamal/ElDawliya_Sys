@@ -94,24 +94,24 @@ class ReportingService:
         """Get high-level overview metrics"""
         return {
             'total_employees': Employee.objects.count(),
-            'active_employees': Employee.objects.filter(working_condition='سارى').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count(),
+            'active_employees': Employee.objects.filter(working_condition='سارى').count(),
             'total_tasks': Task.objects.count(),
-            'active_tasks': Task.objects.filter(status__in=['pending', 'in_progress']).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count(),
+            'active_tasks': Task.objects.filter(status__in=['pending', 'in_progress']).count(),
             'completed_tasks_period': Task.objects.filter(
                 status='completed',
                 updated_at__range=[start_date, end_date]
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count(),
+            ).count(),
             'total_meetings': Meeting.objects.count(),
-            'upcoming_meetings': Meeting.objects.filter(date__gte=timezone.now().prefetch_related()  # TODO: Add appropriate prefetch_related fields).count(),
+            'upcoming_meetings': Meeting.objects.filter(date__gte=timezone.now()).count(),
             'meetings_this_period': Meeting.objects.filter(
                 date__range=[start_date, end_date]
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count(),
+            ).count(),
             'total_products': TblProducts.objects.count(),
             'low_stock_products': TblProducts.objects.filter(
-                qte_in_stock__lte=F('minimum_threshold').prefetch_related()  # TODO: Add appropriate prefetch_related fields
+                qte_in_stock__lte=F('minimum_threshold')
             ).count(),
             'total_purchase_requests': PurchaseRequest.objects.count(),
-            'pending_purchase_requests': PurchaseRequest.objects.filter(status='pending').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+            'pending_purchase_requests': PurchaseRequest.objects.filter(status='pending').count()
         }
 
     def _get_employee_analytics(self, user, start_date, end_date) -> Dict[str, Any]:
@@ -155,7 +155,7 @@ class ReportingService:
 
         # Tasks by assignee
         assignee_distribution = list(
-            Task.objects.filter(assigned_to__isnull=False).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            Task.objects.filter(assigned_to__isnull=False)
             .values('assigned_to__username')
             .annotate(count=Count('id'))
             .order_by('-count')[:10]
@@ -167,7 +167,7 @@ class ReportingService:
             'assignee_distribution': assignee_distribution,
             'completion_rate': self._calculate_task_completion_rate(start_date, end_date),
             'overdue_tasks': Task.objects.filter(
-                end_date__lt=timezone.now().prefetch_related()  # TODO: Add appropriate prefetch_related fields.date(),
+                end_date__lt=timezone.now().date(),
                 status__in=['pending', 'in_progress']
             ).count()
         }
@@ -192,7 +192,7 @@ class ReportingService:
             'status_distribution': status_distribution,
             'creator_distribution': creator_distribution,
             'meetings_this_week': Meeting.objects.filter(
-                date__gte=timezone.now().prefetch_related()  # TODO: Add appropriate prefetch_related fields.date(),
+                date__gte=timezone.now().date(),
                 date__lt=timezone.now().date() + timedelta(days=7)
             ).count(),
             'average_meetings_per_month': Meeting.objects.count() / 12  # Rough estimate
@@ -210,10 +210,10 @@ class ReportingService:
         # Stock status analysis
         total_products = TblProducts.objects.count()
         low_stock = TblProducts.objects.filter(
-            qte_in_stock__lt=F('minimum_threshold').prefetch_related()  # TODO: Add appropriate prefetch_related fields,
+            qte_in_stock__lt=F('minimum_threshold'),
             minimum_threshold__isnull=False
         ).exclude(minimum_threshold=0).count()
-        out_of_stock = TblProducts.objects.filter(qte_in_stock__lte=0).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+        out_of_stock = TblProducts.objects.filter(qte_in_stock__lte=0).count()
 
         return {
             'category_distribution': category_distribution,
@@ -249,7 +249,7 @@ class ReportingService:
             'vendor_distribution': vendor_distribution,
             'requests_this_period': PurchaseRequest.objects.filter(
                 request_date__range=[start_date, end_date]
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count(),
+            ).count(),
             'average_processing_time': self._calculate_avg_processing_time()
         }
 
@@ -271,14 +271,14 @@ class ReportingService:
             completed_count = Task.objects.filter(
                 status='completed',
                 updated_at__date=day_date
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+            ).count()
             task_completion_trend.append(completed_count)
 
         # Meeting trend
         meeting_trend = []
         for day in days:
             day_date = datetime.strptime(day, '%Y-%m-%d').date()
-            meeting_count = Meeting.objects.filter(date=day_date).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+            meeting_count = Meeting.objects.filter(date=day_date).count()
             meeting_trend.append(meeting_count)
 
         return {
@@ -343,7 +343,7 @@ class ReportingService:
         """Calculate task completion rate for the period"""
         total_tasks = Task.objects.filter(
             created_at__range=[start_date, end_date]
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+        ).count()
 
         if total_tasks == 0:
             return 0.0
@@ -351,7 +351,7 @@ class ReportingService:
         completed_tasks = Task.objects.filter(
             created_at__range=[start_date, end_date],
             status='completed'
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+        ).count()
 
         return round((completed_tasks / total_tasks) * 100, 2)
 

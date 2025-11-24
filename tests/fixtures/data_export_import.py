@@ -83,7 +83,7 @@ class TestDataExporter:
                 model = apps.get_model(app_label, model_class)
 
                 # Serialize model data
-                model_data = serializers.serialize('json', model.objects.all().select_related()  # TODO: Add appropriate select_related fields)
+                model_data = serializers.serialize('json', model.objects.all())
                 model_objects = json.loads(model_data)
 
                 exported_data.extend(model_objects)
@@ -143,7 +143,7 @@ class TestDataExporter:
                     writer.writerow(config['fields'])
 
                     # Write data
-                    for obj in model.objects.all().select_related()  # TODO: Add appropriate select_related fields:
+                    for obj in model.objects.all():
                         row = []
                         for field in config['fields']:
                             value = getattr(obj, field, '')
@@ -182,7 +182,7 @@ class TestDataExporter:
                 # Export Users
                 if User.objects.exists():
                     users_data = []
-                    for user in User.objects.all().select_related()  # TODO: Add appropriate select_related fields:
+                    for user in User.objects.all():
                         users_data.append({
                             'اسم المستخدم': user.username,
                             'البريد الإلكتروني': user.email,
@@ -200,7 +200,7 @@ class TestDataExporter:
                     from employees.models import Employee
                     if Employee.objects.exists():
                         employees_data = []
-                        for emp in Employee.objects.all().select_related()  # TODO: Add appropriate select_related fields:
+                        for emp in Employee.objects.all():
                             employees_data.append({
                                 'رمز الموظف': emp.emp_code,
                                 'الاسم الكامل': f"{emp.first_name} {emp.last_name}",
@@ -222,7 +222,7 @@ class TestDataExporter:
                     from inventory.models import TblProducts
                     if TblProducts.objects.exists():
                         products_data = []
-                        for product in TblProducts.objects.all().select_related()  # TODO: Add appropriate select_related fields:
+                        for product in TblProducts.objects.all():
                             products_data.append({
                                 'رمز المنتج': product.product_id,
                                 'اسم المنتج': product.product_name,
@@ -243,7 +243,7 @@ class TestDataExporter:
                     from tasks.models import Task
                     if Task.objects.exists():
                         tasks_data = []
-                        for task in Task.objects.all().select_related()  # TODO: Add appropriate select_related fields:
+                        for task in Task.objects.all():
                             tasks_data.append({
                                 'عنوان المهمة': task.title,
                                 'الحالة': task.status,
@@ -338,13 +338,13 @@ class TestDataImporter:
                 model = apps.get_model(app_label, model_class)
                 count = model.objects.count()
                 if count > 0:
-                    model.objects.all().select_related()  # TODO: Add appropriate select_related fields.delete()
+                    model.objects.all().delete()
                     print(f"  • تم مسح {count} من {model_name}")
             except Exception as e:
                 print(f"  ⚠️  تعذر مسح {model_name}: {e}")
 
         # Clear non-admin users
-        non_admin_users = User.objects.filter(is_superuser=False).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        non_admin_users = User.objects.filter(is_superuser=False)
         user_count = non_admin_users.count()
         if user_count > 0:
             non_admin_users.delete()
@@ -392,22 +392,22 @@ class TestScenarioExporter:
         # Export key demo objects
         try:
             # Export sample users
-            demo_users = User.objects.filter(username__startswith='user').prefetch_related()  # TODO: Add appropriate prefetch_related fields[:5]
+            demo_users = User.objects.filter(username__startswith='user')[:5]
             demo_data['data']['users'] = json.loads(serializers.serialize('json', demo_users))
 
             # Export sample employees
             from employees.models import Employee
-            demo_employees = Employee.objects.all().select_related()  # TODO: Add appropriate select_related fields[:10]
+            demo_employees = Employee.objects.all()[:10]
             demo_data['data']['employees'] = json.loads(serializers.serialize('json', demo_employees))
 
             # Export sample products
             from inventory.models import TblProducts
-            demo_products = TblProducts.objects.all().select_related()  # TODO: Add appropriate select_related fields[:20]
+            demo_products = TblProducts.objects.all()[:20]
             demo_data['data']['products'] = json.loads(serializers.serialize('json', demo_products))
 
             # Export sample tasks
             from tasks.models import Task
-            demo_tasks = Task.objects.all().select_related()  # TODO: Add appropriate select_related fields[:15]
+            demo_tasks = Task.objects.all()[:15]
             demo_data['data']['tasks'] = json.loads(serializers.serialize('json', demo_tasks))
 
         except ImportError as e:

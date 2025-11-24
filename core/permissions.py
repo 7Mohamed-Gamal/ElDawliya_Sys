@@ -177,7 +177,7 @@ class UnifiedPermissionService:
                 return True
 
             # Check if user is in the same department and has department permissions
-            user_employee = Employee.objects.filter(user=self.user).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+            user_employee = Employee.objects.filter(user=self.user).first()
             if user_employee and user_employee.department == employee.department:
                 return self.user.has_perm('Hr.view_department_employees')
 

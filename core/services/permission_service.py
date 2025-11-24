@@ -124,7 +124,7 @@ class HierarchicalPermissionService:
                 user=self.user,
                 is_active=True,
                 role__is_active=True
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('role')
+            ).select_related('role')
 
             # Check if any role has the permission
             for user_role in user_roles:
@@ -170,7 +170,7 @@ class HierarchicalPermissionService:
                 user=self.user,
                 permission=permission,
                 content_type=content_type,
-                object_id=str(obj.pk).prefetch_related()  # TODO: Add appropriate prefetch_related fields,
+                object_id=str(obj.pk),
                 is_active=True
             ).first()
 
@@ -221,7 +221,7 @@ class HierarchicalPermissionService:
         permissions = {}
 
         # Get all active modules
-        modules = Module.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.prefetch_related('permissions')
+        modules = Module.objects.filter(is_active=True).prefetch_related('permissions')
 
         for module in modules:
             module_permissions = {}
@@ -244,7 +244,7 @@ class HierarchicalPermissionService:
         user_roles = UserRole.objects.filter(
             user=self.user,
             is_active=True
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.values('role_id', 'granted_at', 'expires_at')
+        ).values('role_id', 'granted_at', 'expires_at')
 
         # Create hash input
         hash_input = {
@@ -260,8 +260,8 @@ class HierarchicalPermissionService:
         return hashlib.sha256(hash_string.encode()).hexdigest()
 
     def assign_role(self, target_user: User, role: Role, expires_at: Optional[timezone.datetime] = None,
-        """assign_role function"""
                    notes: str = '') -> UserRole:
+        """assign_role function"""
         """
         Assign role to user with approval workflow if needed
         تعيين دور للمستخدم مع سير عمل الموافقة إذا لزم الأمر
@@ -276,8 +276,8 @@ class HierarchicalPermissionService:
         return self._assign_role_direct(target_user, role, expires_at, notes)
 
     def _assign_role_direct(self, target_user: User, role: Role, expires_at: Optional[timezone.datetime] = None,
-        """_assign_role_direct function"""
                            notes: str = '') -> UserRole:
+        """_assign_role_direct function"""
         """
         Directly assign role to user
         تعيين الدور مباشرة للمستخدم
@@ -308,9 +308,9 @@ class HierarchicalPermissionService:
             return user_role
 
     def _create_approval_workflow_for_role_assignment(self, target_user: User, role: Role,
-        """_create_approval_workflow_for_role_assignment function"""
                                                     expires_at: Optional[timezone.datetime] = None,
                                                     notes: str = '') -> ApprovalWorkflow:
+        """_create_approval_workflow_for_role_assignment function"""
         """
         Create approval workflow for role assignment
         إنشاء سير عمل الموافقة لتعيين الدور
@@ -343,7 +343,7 @@ class HierarchicalPermissionService:
         """
         # For system roles, require admin approval
         if role.is_system_role:
-            admin_users = User.objects.filter(is_superuser=True, is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            admin_users = User.objects.filter(is_superuser=True, is_active=True)
 
             step = ApprovalStep.objects.create(
                 workflow=workflow,
@@ -359,8 +359,8 @@ class HierarchicalPermissionService:
             pass
 
     def grant_object_permission(self, target_user: User, permission: Permission, obj: Any,
-        """grant_object_permission function"""
                               expires_at: Optional[timezone.datetime] = None) -> ObjectPermission:
+        """grant_object_permission function"""
         """
         Grant object-level permission to user
         منح صلاحية على مستوى الكائن للمستخدم
@@ -453,7 +453,7 @@ class HierarchicalPermissionService:
             # In production, you might want to use Redis pattern matching
 
             # Clear permission cache entries
-            PermissionCache.objects.filter(user=user).prefetch_related()  # TODO: Add appropriate prefetch_related fields.delete()
+            PermissionCache.objects.filter(user=user).delete()
 
     def get_user_roles(self, include_expired: bool = False) -> List[UserRole]:
         """
@@ -463,7 +463,7 @@ class HierarchicalPermissionService:
         if not self.user:
             return []
 
-        queryset = UserRole.objects.filter(user=self.user).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('role')
+        queryset = UserRole.objects.filter(user=self.user).select_related('role')
 
         if not include_expired:
             queryset = queryset.filter(is_active=True)
@@ -481,7 +481,7 @@ class HierarchicalPermissionService:
         queryset = ObjectPermission.objects.filter(
             user=self.user,
             is_active=True
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('permission', 'content_type')
+        ).select_related('permission', 'content_type')
 
         if content_type:
             queryset = queryset.filter(content_type=content_type)

@@ -75,7 +75,7 @@ def unit_add_ajax(request):
                 return JsonResponse({'success': False, 'error': 'اسم وحدة القياس مطلوب'})
 
             # Check if unit with this name already exists
-            existing_unit = Unit.objects.filter(name=name).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+            existing_unit = Unit.objects.filter(name=name).first()
             if existing_unit:
                 logger.info(f"Unit with name '{name}' already exists with ID: {existing_unit.id}")
                 return JsonResponse({

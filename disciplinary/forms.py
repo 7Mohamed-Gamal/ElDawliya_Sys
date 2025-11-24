@@ -98,7 +98,7 @@ class DisciplinaryActionForm(forms.ModelForm):
         # Improve employee dropdown display
         self.fields['emp'].queryset = Employee.objects.filter(
             emp_status='Active'
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('first_name', 'last_name')
+        ).order_by('first_name', 'last_name')
         self.fields['emp'].label_from_instance = lambda obj: f"{obj.emp_code} - {obj.first_name} {obj.last_name}"
 
         # Set default values for new actions
@@ -157,7 +157,7 @@ class DisciplinaryActionForm(forms.ModelForm):
         if emp and action_date:
             recent_actions = DisciplinaryAction.objects.filter(
                 emp=emp,
-                action_date__gte=action_date - timedelta(days=30).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+                action_date__gte=action_date - timedelta(days=30)
             ).exclude(pk=self.instance.pk if self.instance.pk else None)
 
             if recent_actions.count() >= 3:
@@ -193,7 +193,7 @@ class DisciplinaryActionSearchForm(forms.Form):
     ]
 
     employee = forms.ModelChoiceField(
-        queryset=Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('first_name'),
+        queryset=Employee.objects.filter(emp_status='Active').order_by('first_name'),
         required=False,
         widget=forms.Select(attrs={'class': 'form-select'}),
         label='الموظف'

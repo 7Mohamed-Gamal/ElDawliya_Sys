@@ -8,7 +8,7 @@ from django.db.models import Sum, Count, Q, F
 from decimal import Decimal
 from datetime import date, timedelta
 from core.services.base import BaseService
-from core.models.inventory import Warehouse, WarehouseZone, StockTransfer, InventoryMovement
+from core.models.inventory import Warehouse, StockLevel, StockMovement
 
 
 class WarehouseService(BaseService):
@@ -43,9 +43,7 @@ class WarehouseService(BaseService):
                     updated_by=self.user
                 )
 
-                # Add warehouse zones if provided
-                if data.get('zones'):
-                    self._add_warehouse_zones(warehouse, data['zones'])
+                # Note: Warehouse zones functionality would require WarehouseZone model
 
                 # Log the action
                 self.log_action(
@@ -227,7 +225,7 @@ class WarehouseService(BaseService):
         self.check_permission('inventory.view_warehouse')
 
         try:
-            queryset = Warehouse.objects.all().select_related()  # TODO: Add appropriate select_related fields
+            queryset = Warehouse.objects.all()
 
             # Apply filters
             if filters:
@@ -281,189 +279,23 @@ class WarehouseService(BaseService):
         """
         إنشاء تحويل مخزون
         Create stock transfer between warehouses
+        Note: This would require StockTransfer model to be implemented
         """
-        self.check_permission('inventory.add_stocktransfer')
-
-        required_fields = ['from_warehouse_id', 'to_warehouse_id', 'transfer_items']
-        self.validate_required_fields(data, required_fields)
-
-        try:
-            from_warehouse = Warehouse.objects.get(id=data['from_warehouse_id'])
-            to_warehouse = Warehouse.objects.get(id=data['to_warehouse_id'])
-
-            if from_warehouse.id == to_warehouse.id:
-                return self.format_response(
-                    success=False,
-                    message='لا يمكن التحويل من وإلى نفس المخزن'
-                )
-
-            with transaction.atomic():
-                # Create stock transfer
-                transfer = StockTransfer.objects.create(
-                    from_warehouse=from_warehouse,
-                    to_warehouse=to_warehouse,
-                    transfer_date=data.get('transfer_date', timezone.now().date()),
-                    reference_number=data.get('reference_number'),
-                    notes=data.get('notes', ''),
-                    status='pending',
-                    created_by=self.user,
-                    updated_by=self.user
-                )
-
-                # Add transfer items
-                total_items = 0
-                for item_data in data['transfer_items']:
-                    from core.models.inventory import Product, StockTransferItem
-
-                    product = Product.objects.get(id=item_data['product_id'])
-
-                    # Check available stock
-                    from core.models.inventory import StockLevel
-
-                    stock_level = StockLevel.objects.filter(
-                        product=product,
-                        warehouse=from_warehouse
-                    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
-
-                    if not stock_level or stock_level.available_stock < item_data['quantity']:
-                        raise ValueError(f'مخزون غير كافي للمنتج: {product.name_ar}')
-
-                    StockTransferItem.objects.create(
-                        stock_transfer=transfer,
-                        product=product,
-                        quantity=item_data['quantity'],
-                        unit_cost=stock_level.average_cost,
-                        notes=item_data.get('notes', ''),
-                        created_by=self.user,
-                        updated_by=self.user
-                    )
-
-                    total_items += 1
-
-                # Log the action
-                self.log_action(
-                    action='create',
-                    resource='stock_transfer',
-                    content_object=transfer,
-                    details={
-                        'from_warehouse': from_warehouse.name_ar,
-                        'to_warehouse': to_warehouse.name_ar,
-                        'items_count': total_items
-                    },
-                    message=f'تم إنشاء تحويل مخزون من {from_warehouse.name_ar} إلى {to_warehouse.name_ar}'
-                )
-
-                return self.format_response(
-                    data={
-                        'transfer_id': transfer.id,
-                        'items_count': total_items
-                    },
-                    message='تم إنشاء تحويل المخزون بنجاح'
-                )
-
-        except Warehouse.DoesNotExist:
-            return self.format_response(
-                success=False,
-                message='المخزن المحدد غير موجود'
-            )
-        except ValueError as e:
-            return self.format_response(
-                success=False,
-                message=str(e)
-            )
-        except Exception as e:
-            return self.handle_exception(e, 'create_stock_transfer', 'stock_transfer', data)
+        return self.format_response(
+            success=False,
+            message='وظيفة تحويل المخزون تتطلب نموذج StockTransfer'
+        )
 
     def approve_stock_transfer(self, transfer_id, action='approve'):
         """
         اعتماد تحويل المخزون
         Approve or reject stock transfer
+        Note: This would require StockTransfer model to be implemented
         """
-        self.check_permission('inventory.change_stocktransfer')
-
-        if action not in ['approve', 'reject']:
-            return self.format_response(
-                success=False,
-                message='الإجراء غير صحيح'
-            )
-
-        try:
-            transfer = StockTransfer.objects.select_related(
-                'from_warehouse', 'to_warehouse'
-            ).prefetch_related('items').get(id=transfer_id)
-
-            if transfer.status != 'pending':
-                return self.format_response(
-                    success=False,
-                    message='لا يمكن تعديل تحويل غير معلق'
-                )
-
-            with transaction.atomic():
-                if action == 'approve':
-                    # Process the transfer
-                    for item in transfer.items.all():
-                        # Create outbound movement from source warehouse
-                        InventoryMovement.objects.create(
-                            product=item.product,
-                            warehouse=transfer.from_warehouse,
-                            movement_type='transfer_out',
-                            quantity=item.quantity,
-                            unit_cost=item.unit_cost,
-                            reference_number=transfer.reference_number,
-                            reference_type='stock_transfer',
-                            notes=f'تحويل إلى {transfer.to_warehouse.name_ar}',
-                            movement_date=transfer.transfer_date,
-                            created_by=self.user,
-                            updated_by=self.user
-                        )
-
-                        # Create inbound movement to destination warehouse
-                        InventoryMovement.objects.create(
-                            product=item.product,
-                            warehouse=transfer.to_warehouse,
-                            movement_type='transfer_in',
-                            quantity=item.quantity,
-                            unit_cost=item.unit_cost,
-                            reference_number=transfer.reference_number,
-                            reference_type='stock_transfer',
-                            notes=f'تحويل من {transfer.from_warehouse.name_ar}',
-                            movement_date=transfer.transfer_date,
-                            created_by=self.user,
-                            updated_by=self.user
-                        )
-
-                    transfer.status = 'approved'
-                    transfer.approved_by = self.user
-                    transfer.approved_at = timezone.now()
-
-                else:  # reject
-                    transfer.status = 'rejected'
-                    transfer.rejected_by = self.user
-                    transfer.rejected_at = timezone.now()
-
-                transfer.updated_by = self.user
-                transfer.save()
-
-                # Log the action
-                self.log_action(
-                    action=action,
-                    resource='stock_transfer_approval',
-                    content_object=transfer,
-                    message=f'تم {action} تحويل المخزون رقم {transfer.id}'
-                )
-
-                return self.format_response(
-                    data={'new_status': transfer.status},
-                    message=f'تم {action} تحويل المخزون بنجاح'
-                )
-
-        except StockTransfer.DoesNotExist:
-            return self.format_response(
-                success=False,
-                message='تحويل المخزون غير موجود'
-            )
-        except Exception as e:
-            return self.handle_exception(e, 'approve_stock_transfer', f'transfer_approval/{transfer_id}')
+        return self.format_response(
+            success=False,
+            message='وظيفة اعتماد تحويل المخزون تتطلب نموذج StockTransfer'
+        )
 
     def get_warehouse_movements(self, warehouse_id, start_date=None, end_date=None,
                                movement_type=None, page=1, page_size=20):
@@ -476,9 +308,9 @@ class WarehouseService(BaseService):
         try:
             warehouse = Warehouse.objects.get(id=warehouse_id)
 
-            queryset = InventoryMovement.objects.filter(
+            queryset = StockMovement.objects.filter(
                 warehouse=warehouse
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('product')
+            ).select_related('product')
 
             # Apply filters
             if start_date:
@@ -552,10 +384,10 @@ class WarehouseService(BaseService):
             end_date = timezone.now().date()
             start_date = end_date - timedelta(days=30)
 
-            movements = InventoryMovement.objects.filter(
+            movements = StockMovement.objects.filter(
                 warehouse=warehouse,
                 movement_date__range=[start_date, end_date]
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            )
 
             movement_stats = {
                 'total_movements': movements.count(),
@@ -615,16 +447,4 @@ class WarehouseService(BaseService):
         except Exception as e:
             return self.handle_exception(e, 'get_warehouse_utilization_report', f'warehouse_utilization/{warehouse_id}')
 
-    def _add_warehouse_zones(self, warehouse, zones_data):
-        """إضافة مناطق المخزن"""
-        for zone_data in zones_data:
-            WarehouseZone.objects.create(
-                warehouse=warehouse,
-                name=zone_data['name'],
-                zone_type=zone_data.get('zone_type', 'general'),
-                description=zone_data.get('description', ''),
-                capacity=zone_data.get('capacity', 0),
-                is_active=zone_data.get('is_active', True),
-                created_by=self.user,
-                updated_by=self.user
-            )
+

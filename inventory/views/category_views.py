@@ -75,7 +75,7 @@ def category_add_ajax(request):
                 return JsonResponse({'success': False, 'error': 'اسم التصنيف مطلوب'})
 
             # Check if category with this name already exists
-            existing_category = Category.objects.filter(name=name).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+            existing_category = Category.objects.filter(name=name).first()
             if existing_category:
                 logger.info(f"Category with name '{name}' already exists with ID: {existing_category.id}")
                 return JsonResponse({

@@ -88,7 +88,7 @@ class QueryOptimizer:
 
     def get_optimized_queryset(self, model_class, optimization_type: str = 'default') -> QuerySet:
         """الحصول على استعلام محسن حسب نوع النموذج"""
-        queryset = model_class.objects.all().select_related()  # TODO: Add appropriate select_related fields
+        queryset = model_class.objects.all()
 
         model_name = model_class.__name__.lower()
 
@@ -486,9 +486,9 @@ def get_dashboard_stats_cached() -> Dict:
 
     try:
         from employees.models import Employee
-        stats['total_employees'] = Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+        stats['total_employees'] = Employee.objects.filter(emp_status='Active').count()
         stats['new_employees_this_month'] = Employee.objects.filter(
-            hire_date__gte=timezone.now().prefetch_related()  # TODO: Add appropriate prefetch_related fields.replace(day=1)
+            hire_date__gte=timezone.now().replace(day=1)
         ).count()
     except ImportError:
         pass
@@ -496,7 +496,7 @@ def get_dashboard_stats_cached() -> Dict:
     try:
         from attendance.models import EmployeeAttendance
         today = timezone.now().date()
-        today_attendance = EmployeeAttendance.objects.filter(att_date=today).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        today_attendance = EmployeeAttendance.objects.filter(att_date=today)
         stats['present_today'] = today_attendance.filter(
             status__in=['Present', 'Late']
         ).count()
@@ -506,7 +506,7 @@ def get_dashboard_stats_cached() -> Dict:
 
     try:
         from leaves.models import EmployeeLeave
-        stats['pending_leaves'] = EmployeeLeave.objects.filter(status='Pending').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+        stats['pending_leaves'] = EmployeeLeave.objects.filter(status='Pending').count()
     except ImportError:
         pass
 

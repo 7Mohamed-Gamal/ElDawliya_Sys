@@ -270,7 +270,7 @@ class ZKDeviceAdmin(admin.ModelAdmin):
         """unprocessed_count function"""
         count = ZKAttendanceRaw.objects.filter(
             device=obj, is_processed=False
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+        ).count()
         if count > 0:
             return format_html('<span style="color: orange;">{}</span>', count)
         return count

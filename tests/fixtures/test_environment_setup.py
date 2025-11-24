@@ -368,7 +368,7 @@ class TestDataValidator:
             return False
 
         # Check for users without email
-        users_without_email = User.objects.filter(email='').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+        users_without_email = User.objects.filter(email='').count()
         if users_without_email > 0:
             print(f"    ⚠️  مستخدمين بدون بريد إلكتروني: {users_without_email}")
             return False
@@ -381,7 +381,7 @@ class TestDataValidator:
             from employees.models import Employee
 
             # Check for employees without required fields
-            employees_without_code = Employee.objects.filter(emp_code='').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+            employees_without_code = Employee.objects.filter(emp_code='').count()
             if employees_without_code > 0:
                 print(f"    ⚠️  موظفين بدون رمز: {employees_without_code}")
                 return False
@@ -406,13 +406,13 @@ class TestDataValidator:
             from inventory.models import TblProducts
 
             # Check for products with negative stock
-            negative_stock = TblProducts.objects.filter(qte_in_stock__lt=0).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+            negative_stock = TblProducts.objects.filter(qte_in_stock__lt=0).count()
             if negative_stock > 0:
                 print(f"    ⚠️  منتجات برصيد سالب: {negative_stock}")
                 return False
 
             # Check for products without categories
-            no_category = TblProducts.objects.filter(cat__isnull=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+            no_category = TblProducts.objects.filter(cat__isnull=True).count()
             if no_category > 0:
                 print(f"    ⚠️  منتجات بدون فئة: {no_category}")
                 return False
@@ -429,13 +429,13 @@ class TestDataValidator:
             from tasks.models import Task
 
             # Check for tasks with end date before start date
-            invalid_dates = Task.objects.filter(end_date__lt=models.F('start_date').prefetch_related()  # TODO: Add appropriate prefetch_related fields).count()
+            invalid_dates = Task.objects.filter(end_date__lt=models.F('start_date').count()
             if invalid_dates > 0:
                 print(f"    ⚠️  مهام بتواريخ غير صحيحة: {invalid_dates}")
                 return False
 
             # Check for tasks without assigned users
-            no_assignee = Task.objects.filter(assigned_to__isnull=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+            no_assignee = Task.objects.filter(assigned_to__isnull=True).count()
             if no_assignee > 0:
                 print(f"    ⚠️  مهام غير مُعيَّنة: {no_assignee}")
                 return False
@@ -452,7 +452,7 @@ class TestDataValidator:
             from meetings.models import Meeting, Attendee
 
             # Check for meetings without attendees
-            meetings_without_attendees = Meeting.objects.filter(attendees__isnull=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+            meetings_without_attendees = Meeting.objects.filter(attendees__isnull=True).count()
             if meetings_without_attendees > 0:
                 print(f"    ⚠️  اجتماعات بدون حضور: {meetings_without_attendees}")
                 return False
@@ -469,7 +469,7 @@ class TestDataValidator:
             from Purchase_orders.models import PurchaseRequest, PurchaseRequestItem
 
             # Check for requests without items
-            requests_without_items = PurchaseRequest.objects.filter(items__isnull=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+            requests_without_items = PurchaseRequest.objects.filter(items__isnull=True).count()
             if requests_without_items > 0:
                 print(f"    ⚠️  طلبات شراء بدون عناصر: {requests_without_items}")
                 return False

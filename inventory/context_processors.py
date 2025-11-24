@@ -20,7 +20,7 @@ def inventory_stats(request):
             try:
                 # Try to access the table
                 low_stock_count = TblProducts.objects.filter(
-                    qte_in_stock__lt=F('minimum_threshold').prefetch_related()  # TODO: Add appropriate prefetch_related fields,
+                    qte_in_stock__lt=F('minimum_threshold'),
                     minimum_threshold__isnull=False
                 ).exclude(minimum_threshold=0).count()
             except OperationalError:

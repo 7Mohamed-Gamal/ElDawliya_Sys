@@ -155,7 +155,7 @@ class EmployeeLeave(models.Model):
                 status__in=['Pending', 'Approved'],
                 start_date__lte=self.end_date,
                 end_date__gte=self.start_date
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exclude(pk=self.pk)
+            ).exclude(pk=self.pk)
 
             if overlapping_leaves.exists():
                 raise ValidationError('يوجد تداخل مع إجازة أخرى معتمدة أو في الانتظار')
@@ -169,7 +169,7 @@ class EmployeeLeave(models.Model):
                     leave_type=self.leave_type,
                     status='Approved',
                     start_date__year=year
-                ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exclude(pk=self.pk)
+                ).exclude(pk=self.pk)
 
                 total_days_this_year = sum(
                     (leave.end_date - leave.start_date).days + 1
@@ -230,7 +230,7 @@ class PublicHoliday(models.Model):
         return cls.objects.filter(
             holiday_date=check_date,
             is_active=True
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists()
+        ).exists()
 
 
 class LeaveBalance(models.Model):
@@ -298,7 +298,7 @@ class LeaveBalance(models.Model):
             leave_type=self.leave_type,
             status='Approved',
             start_date__year=self.year
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        )
 
         used = sum(
             (leave.end_date - leave.start_date).days + 1
@@ -409,7 +409,7 @@ class LeaveRequest(models.Model):
         if not self.request_number:
             # إنشاء رقم طلب تلقائي
             year = date.today().year
-            count = LeaveRequest.objects.filter(created_at__year=year).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count() + 1
+            count = LeaveRequest.objects.filter(created_at__year=year).count() + 1
             self.request_number = f'LR{year}{count:04d}'
 
         if not self.duration_days:

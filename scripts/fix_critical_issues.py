@@ -188,10 +188,10 @@ def fix_performance_issues():
                     modified = False
 
                     # Fix N+1 query problems by adding select_related suggestions
-                    if '.objects.all().select_related()  # TODO: Add appropriate select_related fields' in content and 'for ' in content:
+                    if '.objects.all()' in content and 'for ' in content:
                         content = re.sub(
                             r'(\.objects\.all\(\))',
-                            r'\1.select_related()  # TODO: Add appropriate select_related fields',
+                            r'\1',
                             content
                         )
                         modified = True
@@ -199,8 +199,8 @@ def fix_performance_issues():
                     # Add prefetch_related suggestions for many-to-many relationships
                     if '.objects.filter(' in content and 'for ' in content:
                         content = re.sub(
-                            r'(\.objects\.filter\([^).prefetch_related()  # TODO: Add appropriate prefetch_related fields]+\))',
-                            r'\1.prefetch_related()  # TODO: Add appropriate prefetch_related fields',
+                            r'(\.objects\.filter\([^)]+\))',
+                            r'\1',
                             content
                         )
                         modified = True

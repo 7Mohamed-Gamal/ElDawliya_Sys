@@ -299,7 +299,7 @@ class AuditMiddleware(MiddlewareMixin):
         ip_address = self._get_client_ip(request)
         recent_requests = AuditLog.objects.filter(
             ip_address=ip_address,
-            timestamp__gte=timezone.now().prefetch_related()  # TODO: Add appropriate prefetch_related fields - timezone.timedelta(minutes=1)
+            timestamp__gte=timezone.now().timedelta(minutes=1)
         ).count()
 
         if recent_requests > 20:  # More than 20 requests per minute

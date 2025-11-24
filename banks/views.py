@@ -15,7 +15,7 @@ def bank_list(request):
     """عرض قائمة البنوك"""
     search_query = request.GET.get('search', '')
 
-    banks = Bank.objects.all().select_related()  # TODO: Add appropriate select_related fields
+    banks = Bank.objects.all()
 
     if search_query:
         banks = banks.filter(
@@ -62,7 +62,7 @@ def add_bank(request):
             messages.error(request, 'اسم البنك مطلوب')
         else:
             # التحقق من عدم وجود بنك بنفس الاسم
-            if Bank.objects.filter(bank_name=bank_name).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists():
+            if Bank.objects.filter(bank_name=bank_name).exists():
                 messages.error(request, 'يوجد بنك بهذا الاسم مسبقاً')
             else:
                 Bank.objects.create(
@@ -88,7 +88,7 @@ def edit_bank(request, bank_id):
             messages.error(request, 'اسم البنك مطلوب')
         else:
             # التحقق من عدم وجود بنك آخر بنفس الاسم
-            existing_bank = Bank.objects.filter(bank_name=bank_name).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exclude(bank_id=bank_id)
+            existing_bank = Bank.objects.filter(bank_name=bank_name).exclude(bank_id=bank_id)
             if existing_bank.exists():
                 messages.error(request, 'يوجد بنك آخر بهذا الاسم')
             else:
@@ -144,7 +144,7 @@ def bank_branches(request, bank_id):
 def banks_api(request):
     """API لجلب قائمة البنوك"""
     try:
-        banks = Bank.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('bank_name')
+        banks = Bank.objects.all().order_by('bank_name')
 
         banks_data = []
         for bank in banks:

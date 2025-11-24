@@ -62,10 +62,10 @@ class Command(BaseCommand):
         """Reset existing permissions"""
         self.stdout.write('إعادة تعيين الصلاحيات الموجودة...')
 
-        UserRole.objects.all().select_related()  # TODO: Add appropriate select_related fields.delete()
-        Role.objects.all().select_related()  # TODO: Add appropriate select_related fields.delete()
-        Permission.objects.all().select_related()  # TODO: Add appropriate select_related fields.delete()
-        Module.objects.all().select_related()  # TODO: Add appropriate select_related fields.delete()
+        UserRole.objects.all().delete()
+        Role.objects.all().delete()
+        Permission.objects.all().delete()
+        Module.objects.all().delete()
 
         self.stdout.write(self.style.WARNING('تم حذف جميع الصلاحيات الموجودة'))
 
@@ -257,7 +257,7 @@ class Command(BaseCommand):
         }
 
         # Create standard permissions for all modules
-        modules = Module.objects.filter(parent__isnull=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields  # Only main modules
+        modules = Module.objects.filter(parent__isnull=True)  # Only main modules
 
         for module in modules:
             for perm_code, perm_name, scope, is_sensitive in standard_permissions:
@@ -372,7 +372,7 @@ class Command(BaseCommand):
                 # Assign permissions
                 if permissions_list == 'all':
                     # Assign all permissions
-                    all_permissions = Permission.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+                    all_permissions = Permission.objects.filter(is_active=True)
                     role.permissions.set(all_permissions)
                 else:
                     # Assign specific permissions
@@ -385,7 +385,7 @@ class Command(BaseCommand):
                             module_permissions = Permission.objects.filter(
                                 module__name=module_name,
                                 is_active=True
-                            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+                            )
                             permissions_to_assign.extend(module_permissions)
                         else:
                             # Specific permission
@@ -416,7 +416,7 @@ class Command(BaseCommand):
 
         try:
             admin_role = Role.objects.get(name='system_admin')
-            superusers = User.objects.filter(is_superuser=True, is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            superusers = User.objects.filter(is_superuser=True, is_active=True)
 
             for user in superusers:
                 user_role, created = UserRole.objects.get_or_create(

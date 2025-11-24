@@ -67,10 +67,10 @@ class VoucherUpdateView(UpdateView):
             context['page_title'] = 'تعديل إذن مرتجع مورد'
 
         context['today'] = timezone.now().date().strftime('%Y-%m-%d')
-        context['suppliers'] = Supplier.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
-        context['departments'] = Department.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
-        context['customers'] = Customer.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
-        context['products'] = Product.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
+        context['suppliers'] = Supplier.objects.all().order_by('name')
+        context['departments'] = Department.objects.all().order_by('name')
+        context['customers'] = Customer.objects.all().order_by('name')
+        context['products'] = Product.objects.all().order_by('name')
         context['voucher_type'] = voucher.voucher_type
         context['voucher_items'] = voucher.items.all()
 
@@ -148,10 +148,10 @@ class VoucherCreateView(CreateView):
             context['page_title'] = 'إضافة إذن مرتجع مورد'
 
         context['today'] = timezone.now().date().strftime('%Y-%m-%d')
-        context['suppliers'] = Supplier.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
-        context['departments'] = Department.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
-        context['customers'] = Customer.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
-        context['products'] = Product.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
+        context['suppliers'] = Supplier.objects.all().order_by('name')
+        context['departments'] = Department.objects.all().order_by('name')
+        context['customers'] = Customer.objects.all().order_by('name')
+        context['products'] = Product.objects.all().order_by('name')
         context['voucher_type'] = voucher_type
         context['voucher_items'] = []
 

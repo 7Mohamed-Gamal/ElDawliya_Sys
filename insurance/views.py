@@ -24,18 +24,18 @@ def dashboard(request):
     total_social_insurance = EmployeeSocialInsurance.objects.count()
     active_health_policies = EmployeeHealthInsurance.objects.filter(
         end_date__gte=today
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+    ).count()
 
     # التأمينات المنتهية الصلاحية قريباً (خلال 30 يوم)
     expiring_soon = EmployeeHealthInsurance.objects.filter(
         end_date__gte=today,
-        end_date__lte=today + timedelta(days=30).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        end_date__lte=today + timedelta(days=30)
     ).select_related('emp', 'provider').order_by('end_date')
 
     # التأمينات المنتهية الصلاحية
     expired_insurance = EmployeeHealthInsurance.objects.filter(
         end_date__lt=today
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('emp', 'provider').order_by('-end_date')[:5]
+    ).select_related('emp', 'provider').order_by('-end_date')[:5]
 
     # إحصائيات مزودي التأمين
     provider_stats = HealthInsuranceProvider.objects.annotate(
@@ -48,7 +48,7 @@ def dashboard(request):
     # إجمالي الأقساط الشهرية
     monthly_premiums = EmployeeHealthInsurance.objects.filter(
         end_date__gte=today
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+    ).aggregate(
         total_premium=Sum('premium')
     )['total_premium'] or 0
 
@@ -130,7 +130,7 @@ def provider_detail(request, provider_id):
     # بوالص التأمين الخاصة بهذا المزود
     policies = EmployeeHealthInsurance.objects.filter(
         provider=provider
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('emp').order_by('-start_date')
+    ).select_related('emp').order_by('-start_date')
 
     # إحصائيات المزود
     provider_stats = policies.aggregate(
@@ -182,7 +182,7 @@ def delete_provider(request, provider_id):
 
     try:
         # التحقق من وجود بوالص مرتبطة
-        if EmployeeHealthInsurance.objects.filter(provider=provider).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists():
+        if EmployeeHealthInsurance.objects.filter(provider=provider).exists():
             messages.error(request, f'لا يمكن حذف مزود التأمين {provider.provider_name} لأنه مرتبط ببوالص تأمين.')
         else:
             provider.delete()
@@ -236,7 +236,7 @@ def health_insurance_list(request):
     insurances = paginator.get_page(page_number)
 
     # قوائم للفلترة
-    providers = HealthInsuranceProvider.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('provider_name')
+    providers = HealthInsuranceProvider.objects.all().order_by('provider_name')
 
     context = {
         'insurances': insurances,
@@ -468,18 +468,18 @@ def reports(request):
     total_health_insurance = EmployeeHealthInsurance.objects.count()
     active_health_insurance = EmployeeHealthInsurance.objects.filter(
         end_date__gte=today
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+    ).count()
     total_social_insurance = EmployeeSocialInsurance.objects.count()
 
     # إجمالي الأقساط والمساهمات
     health_premiums = EmployeeHealthInsurance.objects.filter(
         end_date__gte=today
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+    ).aggregate(
         total_premium=Sum('premium')
     )['total_premium'] or 0
 
     social_contributions = EmployeeSocialInsurance.objects.filter(
-        Q(end_date__isnull=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields | Q(end_date__gte=today)
+        Q(end_date__isnull=True) | Q(end_date__gte=today)
     ).aggregate(
         total_contribution=Sum('contribution')
     )['total_contribution'] or 0
@@ -495,7 +495,7 @@ def reports(request):
     # التأمينات المنتهية الصلاحية قريباً
     expiring_soon = EmployeeHealthInsurance.objects.filter(
         end_date__gte=today,
-        end_date__lte=today + timedelta(days=30).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        end_date__lte=today + timedelta(days=30)
     ).count()
 
     # إحصائيات الأقسام
@@ -574,12 +574,12 @@ def my_insurance(request):
     # التأمين الصحي
     health_insurance = EmployeeHealthInsurance.objects.filter(
         emp=employee
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('provider').order_by('-start_date').first()
+    ).select_related('provider').order_by('-start_date').first()
 
     # التأمين الاجتماعي
     social_insurance = EmployeeSocialInsurance.objects.filter(
         emp=employee
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('-start_date').first()
+    ).order_by('-start_date').first()
 
     context = {
         'employee': employee,
@@ -601,7 +601,7 @@ def check_insurance_status(request, emp_id):
         # التأمين الصحي
         health_insurance = EmployeeHealthInsurance.objects.filter(
             emp=employee
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('-start_date').first()
+        ).order_by('-start_date').first()
 
         health_status = 'غير مؤمن'
         if health_insurance:
@@ -615,7 +615,7 @@ def check_insurance_status(request, emp_id):
         # التأمين الاجتماعي
         social_insurance = EmployeeSocialInsurance.objects.filter(
             emp=employee
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('-start_date').first()
+        ).order_by('-start_date').first()
 
         social_status = 'غير مؤمن'
         if social_insurance:
@@ -649,20 +649,20 @@ def insurance_expiry_alerts(request):
     alerts = {
         'expired': EmployeeHealthInsurance.objects.filter(
             end_date__lt=today
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('emp', 'provider').order_by('end_date'),
+        ).select_related('emp', 'provider').order_by('end_date'),
 
         'expiring_week': EmployeeHealthInsurance.objects.filter(
             end_date__gte=today,
-            end_date__lte=today + timedelta(days=7).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            end_date__lte=today + timedelta(days=7)
         ).select_related('emp', 'provider').order_by('end_date'),
 
         'expiring_month': EmployeeHealthInsurance.objects.filter(
-            end_date__gte=today + timedelta(days=8).prefetch_related()  # TODO: Add appropriate prefetch_related fields,
+            end_date__gte=today + timedelta(days=8),
             end_date__lte=today + timedelta(days=30)
         ).select_related('emp', 'provider').order_by('end_date'),
 
         'expiring_quarter': EmployeeHealthInsurance.objects.filter(
-            end_date__gte=today + timedelta(days=31).prefetch_related()  # TODO: Add appropriate prefetch_related fields,
+            end_date__gte=today + timedelta(days=31),
             end_date__lte=today + timedelta(days=90)
         ).select_related('emp', 'provider').order_by('end_date')
     }
@@ -739,7 +739,7 @@ def insurance_analytics(request):
     # اتجاهات التكلفة الشهرية
     monthly_costs = EmployeeHealthInsurance.objects.filter(
         end_date__gte=today
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.extra(
+    ).extra(
         select={'month': "MONTH(start_date)", 'year': "YEAR(start_date)"}
     ).values('month', 'year').annotate(
         total_premium=Sum('premium'),

@@ -58,7 +58,7 @@ class LoanTypeForm(forms.ModelForm):
             raise ValidationError('اسم نوع القرض يجب أن يكون 3 أحرف على الأقل')
 
         # Check for duplicate type name
-        qs = LoanType.objects.filter(type_name=type_name).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        qs = LoanType.objects.filter(type_name=type_name)
         if self.instance.pk:
             qs = qs.exclude(pk=self.instance.pk)
         if qs.exists():
@@ -171,11 +171,11 @@ class EmployeeLoanForm(forms.ModelForm):
         # Improve employee dropdown display
         self.fields['emp'].queryset = Employee.objects.filter(
             emp_status='Active'
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('first_name', 'last_name')
+        ).order_by('first_name', 'last_name')
         self.fields['emp'].label_from_instance = lambda obj: f"{obj.emp_code} - {obj.first_name} {obj.last_name}"
 
         # Improve loan type dropdown display
-        self.fields['loan_type'].queryset = LoanType.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('type_name')
+        self.fields['loan_type'].queryset = LoanType.objects.all().order_by('type_name')
 
         # Set default values for new loans
         if not self.instance.pk:
@@ -199,7 +199,7 @@ class EmployeeLoanForm(forms.ModelForm):
             active_loans_count = EmployeeLoan.objects.filter(
                 emp=emp,
                 status='Active'
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exclude(pk=self.instance.pk if self.instance.pk else None).count()
+            ).exclude(pk=self.instance.pk if self.instance.pk else None).count()
 
             if active_loans_count >= 3:
                 raise ValidationError('الموظف لديه 3 قروض نشطة بالفعل (الحد الأقصى)')

@@ -28,9 +28,10 @@ from .models import GeminiConversation, GeminiMessage
 # Temporarily disabled - will be replaced with new modular HR apps
 # from Hr.models.employee.employee_models import Employee
 # from Hr.models.core.department_models import Department
-from inventory.models import TblProducts, TblCategories
-from tasks.models import Task
-from meetings.models import Meeting
+# Temporarily disabled until apps are restored
+# from inventory.models import TblProducts, TblCategories
+# from tasks.models import Task
+# from meetings.models import Meeting
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +61,7 @@ class GeminiService:
                         user=user,
                         provider=provider,
                         is_active=True
-                    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('-is_default').first()
+                    ).order_by('-is_default').first()
 
                     if config:
                         self.api_key = config.api_key
@@ -184,8 +185,8 @@ class GeminiService:
             }
 
     def chat_with_context(self, user, message: str, conversation_id: Optional[str] = None,
-        """chat_with_context function"""
                          temperature: float = 0.7, max_tokens: int = 1000) -> Dict[str, Any]:
+        """chat_with_context function"""
         """Chat with Gemini AI maintaining conversation context"""
         try:
             # Get or create conversation
@@ -352,21 +353,24 @@ class DataAnalysisService:
     def analyze_employees(self, filters: Optional[Dict] = None) -> Dict[str, Any]:
         """Analyze employee data"""
         try:
-            # Get employee data
-            employees = Employee.objects.all().select_related()  # TODO: Add appropriate select_related fields
-            if filters:
-                if 'department' in filters:
-                    employees = employees.filter(department__dept_name__icontains=filters['department'])
-                if 'status' in filters:
-                    employees = employees.filter(emp_status=filters['status'])
+            # Try to import Employee model dynamically
+            try:
+                from Hr.models.employee.employee_models import Employee
+                # Get employee data
+                employees = Employee.objects.all()
+                if filters:
+                    if 'department' in filters:
+                        employees = employees.filter(department__dept_name__icontains=filters['department'])
+                    if 'status' in filters:
+                        employees = employees.filter(emp_status=filters['status'])
 
-            # Prepare data summary
-            total_employees = employees.count()
-            departments = employees.values('department__dept_name').annotate(count=Count('id'))
-            status_distribution = employees.values('emp_status').annotate(count=Count('id'))
+                # Prepare data summary
+                total_employees = employees.count()
+                departments = employees.values('department__dept_name').annotate(count=Count('id'))
+                status_distribution = employees.values('emp_status').annotate(count=Count('id'))
 
-            # Create analysis prompt
-            prompt = f"""
+                # Create analysis prompt
+                prompt = f"""
 قم بتحليل بيانات الموظفين التالية:
 - إجمالي عدد الموظفين: {total_employees}
 - توزيع الأقسام: {list(departments)}
@@ -377,6 +381,18 @@ class DataAnalysisService:
 2. الاتجاهات الملاحظة
 3. التوصيات لتحسين إدارة الموارد البشرية
 """
+            except (ImportError, ModuleNotFoundError):
+                # Employee model not available, return placeholder analysis
+                return {
+                    'status': 'success',
+                    'analysis': 'تحليل الموظفين غير متاح حالياً. يرجى تفعيل وحدة الموارد البشرية أولاً.',
+                    'data_summary': {
+                        'total_employees': 0,
+                        'departments': [],
+                        'status_distribution': []
+                    },
+                    'recommendations': ['تفعيل وحدة الموارد البشرية لإجراء التحليل']
+                }
 
             result = self.gemini_service.generate_response(prompt)
 
@@ -406,7 +422,7 @@ class DataAnalysisService:
             try:
                 from inventory.models_local import Product, Category
 
-                products = Product.objects.all().select_related()  # TODO: Add appropriate select_related fields
+                products = Product.objects.all()
                 if filters:
                     if 'category' in filters:
                         products = products.filter(category__name__icontains=filters['category'])
@@ -421,17 +437,31 @@ class DataAnalysisService:
                 low_stock_items = products.filter(quantity__lte=django_models.F('minimum_threshold')).count()
 
             except (ImportError, ModuleNotFoundError):
-                # Fallback to the original models if local models aren't available
-                products = TblProducts.objects.all().select_related()  # TODO: Add appropriate select_related fields
-                if filters:
-                    if 'category' in filters:
-                        products = products.filter(cat_name__icontains=filters['category'])
-                    if 'low_stock' in filters and filters['low_stock']:
-                        from django.db import models as django_models
-                        products = products.filter(qte_in_stock__lte=django_models.F('minimum_threshold'))
+                # Try fallback to the original models if local models aren't available
+                try:
+                    from inventory.models import TblProducts, TblCategories
+                    products = TblProducts.objects.all()
+                    if filters:
+                        if 'category' in filters:
+                            products = products.filter(cat_name__icontains=filters['category'])
+                        if 'low_stock' in filters and filters['low_stock']:
+                            from django.db import models as django_models
+                            products = products.filter(qte_in_stock__lte=django_models.F('minimum_threshold'))
 
-                # Prepare data summary
-                total_products = products.count()
+                    # Prepare data summary
+                    total_products = products.count()
+                except (ImportError, ModuleNotFoundError):
+                    # Inventory models not available, return placeholder analysis
+                    return {
+                        'status': 'success',
+                        'analysis': 'تحليل المخزون غير متاح حالياً. يرجى تفعيل وحدة المخزون أولاً.',
+                        'data_summary': {
+                            'total_products': 0,
+                            'categories': [],
+                            'low_stock_items': 0
+                        },
+                        'recommendations': ['تفعيل وحدة المخزون لإجراء التحليل']
+                    }
                 categories = products.values('cat_name').annotate(count=Count('product_id'))
                 from django.db import models as django_models
                 low_stock_items = products.filter(qte_in_stock__lte=django_models.F('minimum_threshold')).count()
@@ -482,7 +512,7 @@ class DataAnalysisService:
                 from django.db import models as django_models
 
                 low_stock_items = Product.objects.filter(
-                    quantity__lt=django_models.F('minimum_threshold').prefetch_related()  # TODO: Add appropriate prefetch_related fields,
+                    quantity__lt=django_models.F('minimum_threshold'),
                     minimum_threshold__gt=0
                 ).values('product_id', 'name', 'quantity', 'minimum_threshold', 'category__name', 'unit__name')
 
@@ -500,29 +530,40 @@ class DataAnalysisService:
                     })
 
             except (ImportError, ModuleNotFoundError):
-                # Fallback to original models
-                from inventory.models import TblProducts
+                # Try fallback to original models
+                try:
+                    from inventory.models import TblProducts
 
-                from django.db import models as django_models
+                    from django.db import models as django_models
 
-                low_stock_items = TblProducts.objects.filter(
-                    qte_in_stock__lt=django_models.F('minimum_threshold').prefetch_related()  # TODO: Add appropriate prefetch_related fields,
-                    minimum_threshold__gt=0
-                ).values('product_id', 'product_name', 'qte_in_stock', 'minimum_threshold', 'cat_name', 'unit_name')
+                    low_stock_items = TblProducts.objects.filter(
+                        qte_in_stock__lt=django_models.F('minimum_threshold'),
+                        minimum_threshold__gt=0
+                    ).values('product_id', 'product_name', 'qte_in_stock', 'minimum_threshold', 'cat_name', 'unit_name')
 
-                # Format output for display
-                formatted_items = []
-                for item in low_stock_items:
-                    formatted_items.append({
-                        'رقم الصنف': item['product_id'],
-                        'اسم الصنف': item['product_name'],
-                        'الرصيد الحالي': float(item['qte_in_stock']) if item['qte_in_stock'] else 0,
-                        'الحد الأدنى': float(item['minimum_threshold']) if item['minimum_threshold'] else 0,
-                        'التصنيف': item['cat_name'] or 'غير محدد',
-                        'وحدة القياس': item['unit_name'] or 'غير محدد',
-                        'النقص': (float(item['minimum_threshold']) if item['minimum_threshold'] else 0) -
-                                 (float(item['qte_in_stock']) if item['qte_in_stock'] else 0)
-                    })
+                    # Format output for display
+                    formatted_items = []
+                    for item in low_stock_items:
+                        formatted_items.append({
+                            'رقم الصنف': item['product_id'],
+                            'اسم الصنف': item['product_name'],
+                            'الرصيد الحالي': float(item['qte_in_stock']) if item['qte_in_stock'] else 0,
+                            'الحد الأدنى': float(item['minimum_threshold']) if item['minimum_threshold'] else 0,
+                            'التصنيف': item['cat_name'] or 'غير محدد',
+                            'وحدة القياس': item['unit_name'] or 'غير محدد',
+                            'النقص': (float(item['minimum_threshold']) if item['minimum_threshold'] else 0) -
+                                     (float(item['qte_in_stock']) if item['qte_in_stock'] else 0)
+                        })
+                except (ImportError, ModuleNotFoundError):
+                    # Inventory models not available
+                    return {
+                        'success': True,
+                        'message': 'وحدة المخزون غير متاحة حالياً',
+                        'low_stock_items': [],
+                        'total_items': 0,
+                        'report': 'تقرير الأصناف ناقصة المخزون غير متاح. يرجى تفعيل وحدة المخزون أولاً.'
+                    }
+                    formatted_items = []
 
             # Generate report with Gemini
             if formatted_items:
@@ -614,7 +655,7 @@ class OllamaService:
                         user=user,
                         provider=provider,
                         is_active=True
-                    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('-is_default').first()
+                    ).order_by('-is_default').first()
 
                     if config:
                         # For Ollama, api_key field can store the base URL
@@ -786,7 +827,7 @@ class UnifiedAIService:
                     user=self.user,
                     is_default=True,
                     is_active=True
-                ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('provider').first()
+                ).select_related('provider').first()
 
                 if default_config:
                     provider_name = default_config.provider.name
@@ -833,8 +874,8 @@ class UnifiedAIService:
         return result
 
     def chat_with_context(self, message: str, conversation_id: Optional[str] = None,
-        """chat_with_context function"""
                          temperature: float = 0.7, max_tokens: int = 1000) -> Dict[str, Any]:
+        """chat_with_context function"""
         """Chat with context using the active provider"""
         if not self.is_available():
             return {

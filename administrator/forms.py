@@ -197,14 +197,14 @@ class GroupForm(forms.ModelForm):
     )
 
     permissions = forms.ModelMultipleChoiceField(
-        queryset=Permission.objects.all().select_related()  # TODO: Add appropriate select_related fields,
+        queryset=Permission.objects.all(),
         required=False,
         widget=forms.CheckboxSelectMultiple,
         label="الصلاحيات"
     )
 
     users = forms.ModelMultipleChoiceField(
-        queryset=get_user_model().objects.all().select_related()  # TODO: Add appropriate select_related fields,
+        queryset=get_user_model().objects.all(),
         required=False,
         widget=forms.SelectMultiple(attrs={'class': 'form-control'}),
         label="المستخدمون"
@@ -250,7 +250,7 @@ class GroupForm(forms.ModelForm):
 class UserPermissionForm(forms.Form):
     """Form for managing user permissions."""
     permissions = forms.ModelMultipleChoiceField(
-        queryset=Permission.objects.all().select_related()  # TODO: Add appropriate select_related fields,
+        queryset=Permission.objects.all(),
         required=False,
         widget=forms.CheckboxSelectMultiple,
         label="الصلاحيات"
@@ -260,7 +260,7 @@ class UserPermissionForm(forms.Form):
 class GroupPermissionForm(forms.Form):
     """Form for managing group permissions."""
     permissions = forms.ModelMultipleChoiceField(
-        queryset=Permission.objects.all().select_related()  # TODO: Add appropriate select_related fields,
+        queryset=Permission.objects.all(),
         required=False,
         widget=forms.CheckboxSelectMultiple,
         label="الصلاحيات"

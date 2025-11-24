@@ -12,10 +12,10 @@ def list_rules() -> Any:
     """list_rules function"""
     if _use_modern():
         from .models import AttendanceRule
-        return AttendanceRule.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
+        return AttendanceRule.objects.all().order_by('name')
     else:
         from .models import AttendanceRules
-        return AttendanceRules.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('rule_name')
+        return AttendanceRules.objects.all().order_by('rule_name')
 
 
 def get_rule(rule_id: int) -> Any:
@@ -79,10 +79,10 @@ def delete_rule(rule_id: int) -> None:
     """delete_rule function"""
     if _use_modern():
         from .models import AttendanceRule
-        AttendanceRule.objects.filter(id=rule_id).prefetch_related()  # TODO: Add appropriate prefetch_related fields.delete()
+        AttendanceRule.objects.filter(id=rule_id).delete()
     else:
         from .models import AttendanceRules
-        AttendanceRules.objects.filter(pk=rule_id).prefetch_related()  # TODO: Add appropriate prefetch_related fields.delete()
+        AttendanceRules.objects.filter(pk=rule_id).delete()
 
 
 @transaction.atomic

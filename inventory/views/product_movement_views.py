@@ -27,7 +27,7 @@ class ProductMovementView(ListView):
 
         queryset = VoucherItem.objects.filter(
             product=product
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('voucher', 'product').order_by('-voucher__date')
+        ).select_related('voucher', 'product').order_by('-voucher__date')
 
         return queryset
 
@@ -69,7 +69,7 @@ class ProductMovementView(ListView):
 
         # Add low stock count for sidebar
         low_stock_count = Product.objects.filter(
-            quantity__lt=F('minimum_threshold').prefetch_related()  # TODO: Add appropriate prefetch_related fields,
+            quantity__lt=F('minimum_threshold'),
             minimum_threshold__gt=0
         ).count()
         context['low_stock_count'] = low_stock_count
@@ -109,7 +109,7 @@ class ProductMovementListView(ListView):
 
         # Add low stock count for sidebar
         low_stock_count = Product.objects.filter(
-            quantity__lt=F('minimum_threshold').prefetch_related()  # TODO: Add appropriate prefetch_related fields,
+            quantity__lt=F('minimum_threshold'),
             minimum_threshold__gt=0
         ).count()
         context['low_stock_count'] = low_stock_count

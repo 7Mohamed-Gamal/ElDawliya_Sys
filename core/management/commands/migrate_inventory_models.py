@@ -75,7 +75,7 @@ class Command(BaseCommand):
 
             categories_migrated = 0
 
-            for old_category in TblCategories.objects.all().select_related()  # TODO: Add appropriate select_related fields:
+            for old_category in TblCategories.objects.all():
                 category, created = ProductCategory.objects.get_or_create(
                     code=f"CAT-{old_category.cat_id:04d}",
                     defaults={
@@ -110,7 +110,7 @@ class Command(BaseCommand):
 
             units_migrated = 0
 
-            for old_unit in TblUnitsSpareparts.objects.all().select_related()  # TODO: Add appropriate select_related fields:
+            for old_unit in TblUnitsSpareparts.objects.all():
                 unit, created = Unit.objects.get_or_create(
                     symbol=f"U{old_unit.unit_id:03d}",
                     defaults={
@@ -148,7 +148,7 @@ class Command(BaseCommand):
             suppliers_migrated = 0
 
             # ترحيل من TblSuppliers
-            for old_supplier in TblSuppliers.objects.all().select_related()  # TODO: Add appropriate select_related fields:
+            for old_supplier in TblSuppliers.objects.all():
                 supplier, created = Supplier.objects.get_or_create(
                     code=f"SUP-{old_supplier.supplier_id:04d}",
                     defaults={
@@ -167,7 +167,7 @@ class Command(BaseCommand):
                         self.stdout.write(f'  - تم إنشاء مورد: {supplier.name}')
 
             # ترحيل من Vendor
-            for old_vendor in Vendor.objects.all().select_related()  # TODO: Add appropriate select_related fields:
+            for old_vendor in Vendor.objects.all():
                 supplier, created = Supplier.objects.get_or_create(
                     name=old_vendor.name,
                     defaults={
@@ -232,7 +232,7 @@ class Command(BaseCommand):
             from core.models.inventory import Product, ProductCategory, Unit, Warehouse, StockLevel
 
             products_migrated = 0
-            main_warehouse = Warehouse.objects.filter(is_main_warehouse=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+            main_warehouse = Warehouse.objects.filter(is_main_warehouse=True).first()
             default_category = ProductCategory.objects.first()
             default_unit = Unit.objects.first()
 
@@ -242,7 +242,7 @@ class Command(BaseCommand):
                 )
                 return
 
-            for old_product in TblProducts.objects.all().select_related()  # TODO: Add appropriate select_related fields:
+            for old_product in TblProducts.objects.all():
                 # البحث عن التصنيف المناسب
                 category = default_category
                 if old_product.cat_id:
@@ -317,7 +317,7 @@ class Command(BaseCommand):
             from core.models.inventory import Product, Supplier, Warehouse
 
             requests_migrated = 0
-            main_warehouse = Warehouse.objects.filter(is_main_warehouse=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+            main_warehouse = Warehouse.objects.filter(is_main_warehouse=True).first()
 
             if not main_warehouse:
                 self.stdout.write(
@@ -325,7 +325,7 @@ class Command(BaseCommand):
                 )
                 return
 
-            for old_request in OldPurchaseRequest.objects.all().select_related()  # TODO: Add appropriate select_related fields:
+            for old_request in OldPurchaseRequest.objects.all():
                 # البحث عن المورد
                 supplier = None
                 if old_request.vendor:

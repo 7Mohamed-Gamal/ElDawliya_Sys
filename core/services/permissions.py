@@ -148,7 +148,7 @@ class PermissionService(BaseService):
                 role=role,
                 is_active=True,
                 revoked_at__isnull=True
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+            ).first()
 
             if existing:
                 return self.format_response(
@@ -260,14 +260,14 @@ class PermissionService(BaseService):
             roles__user_assignments__revoked_at__isnull=True,
             roles__is_active=True,
             is_active=True
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.distinct()
+        ).distinct()
 
         # Get direct object permissions
         object_permissions = Permission.objects.filter(
             object_assignments__user=user,
             object_assignments__is_active=True,
             is_active=True
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.distinct()
+        ).distinct()
 
         # Combine and return unique permissions
         all_permissions = (role_permissions | object_permissions).distinct()
@@ -292,7 +292,7 @@ class PermissionService(BaseService):
             role__is_active=True,
             role__permissions__codename=permission_codename,
             role__permissions__is_active=True
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        )
 
         if module_name:
             role_permission_exists = role_permission_exists.filter(
@@ -312,7 +312,7 @@ class PermissionService(BaseService):
                 is_active=True,
                 permission__codename=permission_codename,
                 content_type=content_type,
-                object_id=str(obj.pk).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+                object_id=str(obj.pk)
             )
 
             if module_name:
@@ -338,7 +338,7 @@ class PermissionService(BaseService):
             user=user,
             is_active=True,
             revoked_at__isnull=True
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('role').order_by('role__level', 'role__display_name')
+        ).select_related('role').order_by('role__level', 'role__display_name')
 
         return [{
             'id': ur.id,
@@ -355,7 +355,7 @@ class PermissionService(BaseService):
         الحصول على التسلسل الهرمي للوحدات
         Get modules hierarchy for permission management
         """
-        modules = Module.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('order', 'display_name')
+        modules = Module.objects.filter(is_active=True).order_by('order', 'display_name')
 
         # Build hierarchy
         module_dict = {}

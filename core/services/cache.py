@@ -135,20 +135,20 @@ class CacheService(BaseService):
         # Cache system settings
         cls.get_or_set(
             cls.make_key('settings', 'all'),
-            lambda: list(SystemSetting.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.values()),
+            lambda: list(SystemSetting.objects.filter(is_active=True).values()),
             'daily'
         )
 
         # Cache modules and permissions
         cls.get_or_set(
             cls.make_key('permissions', 'modules'),
-            lambda: list(Module.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.values()),
+            lambda: list(Module.objects.filter(is_active=True).values()),
             'daily'
         )
 
         cls.get_or_set(
             cls.make_key('permissions', 'all'),
-            lambda: list(Permission.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('module').values(
+            lambda: list(Permission.objects.filter(is_active=True).select_related('module').values(
                 'id', 'module__name', 'permission_type', 'codename', 'name'
             )),
             'daily'

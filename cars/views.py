@@ -19,13 +19,13 @@ def dashboard(request):
 
     # إحصائيات عامة
     total_cars = Car.objects.count()
-    active_cars = Car.objects.filter(car_status='active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+    active_cars = Car.objects.filter(car_status='active').count()
     total_suppliers = Supplier.objects.count()
     total_trips = Trip.objects.count()
 
     # رحلات اليوم
-    today_trips = Trip.objects.filter(date=today).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
-    today_distance = Trip.objects.filter(date=today).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+    today_trips = Trip.objects.filter(date=today).count()
+    today_distance = Trip.objects.filter(date=today).aggregate(
         total_distance=Sum('distance')
     )['total_distance'] or 0
 
@@ -33,7 +33,7 @@ def dashboard(request):
     current_month = today.replace(day=1)
     monthly_costs = Trip.objects.filter(
         date__gte=current_month
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+    ).aggregate(
         total_cost=Sum('final_price'),
         total_distance=Sum('distance'),
         total_trips=Count('id')
@@ -60,7 +60,7 @@ def dashboard(request):
     week_ago = today - timedelta(days=7)
     weekly_costs = Trip.objects.filter(
         date__gte=week_ago
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.values('date').annotate(
+    ).values('date').annotate(
         daily_cost=Sum('final_price'),
         daily_distance=Sum('distance')
     ).order_by('date')
@@ -124,7 +124,7 @@ def car_list(request):
     cars = paginator.get_page(page_number)
 
     # قوائم للفلترة
-    suppliers = Supplier.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
+    suppliers = Supplier.objects.all().order_by('name')
 
     context = {
         'cars': cars,
@@ -164,18 +164,18 @@ def car_detail(request, car_id):
     car = get_object_or_404(Car, id=car_id)
 
     # رحلات السيارة الأخيرة
-    recent_trips = Trip.objects.filter(car=car).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('-date')[:10]
+    recent_trips = Trip.objects.filter(car=car).order_by('-date')[:10]
 
     # إحصائيات السيارة
-    car_stats = Trip.objects.filter(car=car).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+    car_stats = Trip.objects.filter(car=car).aggregate(
         total_trips=Count('id'),
         total_distance=Sum('distance'),
         total_cost=Sum('final_price'),
-        avg_cost_per_km=Avg('final_price') / Avg('distance') if Trip.objects.filter(car=car).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists() else 0
+        avg_cost_per_km=Avg('final_price') / Avg('distance') if Trip.objects.filter(car=car).exists() else 0
     )
 
     # نقاط خط السير
-    route_points = RoutePoint.objects.filter(car=car).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('order')
+    route_points = RoutePoint.objects.filter(car=car).order_by('order')
 
     # إحصائيات شهرية
     today = date.today()
@@ -183,7 +183,7 @@ def car_detail(request, car_id):
     monthly_stats = Trip.objects.filter(
         car=car,
         date__gte=current_month
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+    ).aggregate(
         monthly_trips=Count('id'),
         monthly_distance=Sum('distance'),
         monthly_cost=Sum('final_price')
@@ -233,7 +233,7 @@ def delete_car(request, car_id):
 
     try:
         # التحقق من وجود رحلات مرتبطة
-        if Trip.objects.filter(car=car).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists():
+        if Trip.objects.filter(car=car).exists():
             messages.error(request, f'لا يمكن حذف السيارة {car.car_code} لأنها مرتبطة برحلات.')
         else:
             car_name = f"{car.car_code} - {car.car_name}"
@@ -298,7 +298,7 @@ def supplier_detail(request, supplier_id):
     supplier = get_object_or_404(Supplier, id=supplier_id)
 
     # سيارات المورد
-    cars = Car.objects.filter(supplier=supplier).prefetch_related()  # TODO: Add appropriate prefetch_related fields.annotate(
+    cars = Car.objects.filter(supplier=supplier).annotate(
         trip_count=Count('trips'),
         total_distance=Sum('trips__distance')
     ).order_by('car_code')
@@ -343,7 +343,7 @@ def delete_supplier(request, supplier_id):
     supplier = get_object_or_404(Supplier, id=supplier_id)
 
     # التحقق من وجود سيارات مرتبطة
-    if Car.objects.filter(supplier=supplier).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists():
+    if Car.objects.filter(supplier=supplier).exists():
         messages.error(request, 'لا يمكن حذف المورد لوجود سيارات مرتبطة به.')
         return redirect('cars:supplier_detail', supplier_id=supplier.id)
 
@@ -389,7 +389,7 @@ def trip_list(request):
     trips = paginator.get_page(page_number)
 
     # قوائم للفلترة
-    cars = Car.objects.filter(car_status='active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('car_code')
+    cars = Car.objects.filter(car_status='active').order_by('car_code')
 
     context = {
         'trips': trips,
@@ -518,7 +518,7 @@ def reports(request):
     current_month = today.replace(day=1)
     monthly_stats = Trip.objects.filter(
         date__gte=current_month
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+    ).aggregate(
         monthly_trips=Count('id'),
         monthly_distance=Sum('distance'),
         monthly_cost=Sum('final_price')

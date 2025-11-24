@@ -9,8 +9,7 @@ from datetime import date, timedelta
 from core.services.base import BaseService
 from core.models.evaluations import (
     EvaluationTemplate, EvaluationCriteria, EvaluationPeriod,
-    EmployeeEvaluation, EvaluationScore, EvaluationGoal,
-    PerformanceReview, TrainingRecommendation
+    EmployeeEvaluation, EvaluationCriteriaScore, EvaluationGoal
 )
 
 
@@ -84,7 +83,7 @@ class EvaluationService(BaseService):
                 start_date__lte=data['end_date'],
                 end_date__gte=data['start_date'],
                 status__in=['active', 'pending']
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists()
+            ).exists()
 
             if overlapping:
                 return self.format_response(
@@ -166,7 +165,7 @@ class EvaluationService(BaseService):
 
             with transaction.atomic():
                 # Delete existing scores
-                EvaluationScore.objects.filter(evaluation=evaluation).prefetch_related()  # TODO: Add appropriate prefetch_related fields.delete()
+                EvaluationScore.objects.filter(evaluation=evaluation).delete()
 
                 # Add new scores
                 total_score = 0
@@ -334,7 +333,7 @@ class EvaluationService(BaseService):
             # Check object-level permission
             self.check_object_permission('evaluations.view_employeeevaluation', employee)
 
-            queryset = EmployeeEvaluation.objects.filter(employee=employee).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            queryset = EmployeeEvaluation.objects.filter(employee=employee)
 
             if year:
                 queryset = queryset.filter(period__start_date__year=year)
@@ -387,7 +386,7 @@ class EvaluationService(BaseService):
         self.check_permission('evaluations.view_evaluation_analytics')
 
         try:
-            queryset = EmployeeEvaluation.objects.filter(status='approved').prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            queryset = EmployeeEvaluation.objects.filter(status='approved')
 
             if period_id:
                 queryset = queryset.filter(period_id=period_id)
@@ -453,7 +452,7 @@ class EvaluationService(BaseService):
                 EvaluationGoal.objects.filter(
                     employee=employee,
                     period=period
-                ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.delete()
+                ).delete()
 
                 # Create new goals
                 goals_created = 0
@@ -522,7 +521,7 @@ class EvaluationService(BaseService):
         """إنشاء تقييمات للموظفين"""
         from core.models.hr import Employee
 
-        queryset = Employee.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        queryset = Employee.objects.filter(is_active=True)
 
         if department_ids:
             queryset = queryset.filter(department_id__in=department_ids)
@@ -533,7 +532,7 @@ class EvaluationService(BaseService):
             if not EmployeeEvaluation.objects.filter(
                 employee=employee,
                 period=period
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists():
+            ).exists():
                 # Assign evaluator (manager or HR)
                 evaluator = employee.manager.user if employee.manager and employee.manager.user else self.user
 

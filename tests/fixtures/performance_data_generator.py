@@ -63,7 +63,7 @@ class PerformanceDataGenerator(BaseFixtureGenerator):
 
         # Set passwords (can't be done in bulk_create)
         print("🔐 تعيين كلمات المرور...")
-        users = User.objects.filter(username__startswith='perfuser').prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        users = User.objects.filter(username__startswith='perfuser')
         for user in users.iterator(chunk_size=self.batch_size):
             user.set_password('performance123')
             user.save(update_fields=['password'])
@@ -79,9 +79,9 @@ class PerformanceDataGenerator(BaseFixtureGenerator):
         from org.models import Branch, Department, Job
 
         # Get related objects
-        branches = list(Branch.objects.all().select_related()  # TODO: Add appropriate select_related fields)
-        departments = list(Department.objects.all().select_related()  # TODO: Add appropriate select_related fields)
-        jobs = list(Job.objects.all().select_related()  # TODO: Add appropriate select_related fields)
+        branches = list(Branch.objects.all())
+        departments = list(Department.objects.all())
+        jobs = list(Job.objects.all())
 
         if not branches or not departments or not jobs:
             raise ValueError("Must create organization structure first")
@@ -145,8 +145,8 @@ class PerformanceDataGenerator(BaseFixtureGenerator):
 
         from inventory.models import TblProducts, TblCategories, TblUnitsSpareparts
 
-        categories = list(TblCategories.objects.all().select_related()  # TODO: Add appropriate select_related fields)
-        units = list(TblUnitsSpareparts.objects.all().select_related()  # TODO: Add appropriate select_related fields)
+        categories = list(TblCategories.objects.all())
+        units = list(TblUnitsSpareparts.objects.all())
 
         if not categories or not units:
             raise ValueError("Must create categories and units first")
@@ -202,9 +202,9 @@ class PerformanceDataGenerator(BaseFixtureGenerator):
         from tasks.models import Task, TaskCategory
         from meetings.models import Meeting
 
-        users = list(User.objects.all().select_related()  # TODO: Add appropriate select_related fields)
-        categories = list(TaskCategory.objects.all().select_related()  # TODO: Add appropriate select_related fields)
-        meetings = list(Meeting.objects.all().select_related()  # TODO: Add appropriate select_related fields)
+        users = list(User.objects.all())
+        categories = list(TaskCategory.objects.all())
+        meetings = list(Meeting.objects.all())
 
         if not users:
             raise ValueError("Must create users first")
@@ -266,7 +266,7 @@ class PerformanceDataGenerator(BaseFixtureGenerator):
 
         from meetings.models import Meeting, Attendee
 
-        users = list(User.objects.all().select_related()  # TODO: Add appropriate select_related fields)
+        users = list(User.objects.all())
         if not users:
             raise ValueError("Must create users first")
 
@@ -454,7 +454,7 @@ class LoadTestScenarioGenerator:
         from employees.models import Employee
 
         # Create tasks with complex relationships
-        employees = list(Employee.objects.all().select_related()  # TODO: Add appropriate select_related fields[:100])
+        employees = list(Employee.objects.all()[:100])
 
         for i in range(1000):
             # Create tasks with overlapping date ranges

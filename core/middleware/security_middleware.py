@@ -156,7 +156,7 @@ class EnhancedSessionMiddleware(MiddlewareMixin):
 
         # Get all active sessions for user
         user_sessions = Session.objects.filter(
-            expire_date__gt=timezone.now().prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            expire_date__gt=timezone.now()
         )
 
         active_sessions = []

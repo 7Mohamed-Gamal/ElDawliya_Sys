@@ -28,7 +28,7 @@ if PURCHASE_AVAILABLE:
 
             purchase_managers = User.objects.filter(
                 groups__name__in=['Purchase Manager', 'مدير المشتريات']
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.distinct()
+            ).distinct()
 
             for manager in purchase_managers:
                 create_purchase_notification(

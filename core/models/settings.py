@@ -4,10 +4,13 @@ Settings and Configuration Models
 """
 import json
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
+from django.conf import settings
 from .base import BaseModel
+
+User = get_user_model()
 
 
 class SystemSetting(BaseModel):
@@ -237,7 +240,7 @@ class UserPreference(BaseModel):
     ]
 
     user = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='preferences',
         verbose_name=_('المستخدم')
@@ -424,7 +427,7 @@ class CompanyProfile(BaseModel):
     @classmethod
     def get_company(cls):
         """Get the main company profile"""
-        return cls.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+        return cls.objects.filter(is_active=True).first()
 
 
 class NotificationTemplate(BaseModel):

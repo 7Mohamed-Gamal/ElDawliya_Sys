@@ -30,7 +30,7 @@ class EmployeeService(BaseService):
         try:
             with transaction.atomic():
                 # Check if employee code already exists
-                if Employee.objects.filter(emp_code=data['emp_code']).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists():
+                if Employee.objects.filter(emp_code=data['emp_code']).exists():
                     return self.format_response(
                         success=False,
                         message=f"رقم الموظف {data['emp_code']} موجود بالفعل"
@@ -335,7 +335,7 @@ class EmployeeService(BaseService):
 
             def get_employees():
                 """get_employees function"""
-                queryset = Employee.objects.filter(department_id=department_id).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+                queryset = Employee.objects.filter(department_id=department_id)
 
                 if not include_inactive:
                     queryset = queryset.filter(is_active=True)
@@ -440,7 +440,7 @@ class EmployeeService(BaseService):
 
             def get_summary():
                 """get_summary function"""
-                queryset = Employee.objects.all().select_related()  # TODO: Add appropriate select_related fields
+                queryset = Employee.objects.all()
 
                 if department_id:
                     queryset = queryset.filter(department_id=department_id)
@@ -481,7 +481,7 @@ class EmployeeService(BaseService):
         email = user_data.get('email') or employee.email
 
         # Check if username already exists
-        if User.objects.filter(username=username).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists():
+        if User.objects.filter(username=username).exists():
             username = f"{employee.emp_code}_{employee.id}"
 
         user = User.objects.create_user(

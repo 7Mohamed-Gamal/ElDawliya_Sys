@@ -49,16 +49,16 @@ def dashboard(request):
     # Get basic statistics if models are available
     if Employee:
         context.update({
-            'total_employees': Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count(),
-            'active_employees': Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count(),
+            'total_employees': Employee.objects.filter(emp_status='Active').count(),
+            'active_employees': Employee.objects.filter(emp_status='Active').count(),
             'new_employees_this_month': Employee.objects.filter(
-                hire_date__gte=date.today().prefetch_related()  # TODO: Add appropriate prefetch_related fields.replace(day=1)
+                hire_date__gte=date.today().replace(day=1)
             ).count(),
         })
 
     if EmployeeAttendance:
         # Today's attendance
-        today_attendance = EmployeeAttendance.objects.filter(att_date=date.today().prefetch_related()  # TODO: Add appropriate prefetch_related fields)
+        today_attendance = EmployeeAttendance.objects.filter(att_date=date.today())
         context.update({
             'present_today': today_attendance.filter(status__in=['Present', 'Late']).count(),
             'late_today': today_attendance.filter(status='Late').count(),
@@ -72,30 +72,30 @@ def dashboard(request):
     if EmployeeLeave:
         # Leave statistics
         context.update({
-            'pending_leaves': EmployeeLeave.objects.filter(status='Pending').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count(),
+            'pending_leaves': EmployeeLeave.objects.filter(status='Pending').count(),
             'approved_leaves': EmployeeLeave.objects.filter(
                 status='Approved',
-                created_at__gte=date.today().prefetch_related()  # TODO: Add appropriate prefetch_related fields.replace(day=1)
+                created_at__gte=date.today().replace(day=1)
             ).count(),
             'current_leaves': EmployeeLeave.objects.filter(
                 status='Approved',
-                start_date__lte=date.today().prefetch_related()  # TODO: Add appropriate prefetch_related fields,
+                start_date__lte=date.today(),
                 end_date__gte=date.today()
             ).count(),
         })
 
     if PayrollRun:
         # Payroll statistics
-        active_runs = PayrollRun.objects.filter(status__in=['draft', 'calculating', 'review']).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        active_runs = PayrollRun.objects.filter(status__in=['draft', 'calculating', 'review'])
         context.update({
             'active_payroll_runs': active_runs.count(),
         })
 
         if EmployeeSalary:
-            avg_salary = EmployeeSalary.objects.filter(is_current=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+            avg_salary = EmployeeSalary.objects.filter(is_current=True).aggregate(
                 avg=Avg('basic_salary')
             )['avg']
-            total_payroll = EmployeeSalary.objects.filter(is_current=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+            total_payroll = EmployeeSalary.objects.filter(is_current=True).aggregate(
                 total=Sum('basic_salary')
             )['total']
             context.update({
@@ -104,22 +104,22 @@ def dashboard(request):
             })
 
     if EmployeeLoan:
-        context['active_loans'] = EmployeeLoan.objects.filter(status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+        context['active_loans'] = EmployeeLoan.objects.filter(status='Active').count()
 
     if TrainingCourse:
         context.update({
-            'active_trainings': TrainingCourse.objects.filter(status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count(),
-            'enrolled_trainees': TrainingCourse.objects.filter(status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+            'active_trainings': TrainingCourse.objects.filter(status='Active').count(),
+            'enrolled_trainees': TrainingCourse.objects.filter(status='Active').aggregate(
                 total=Sum('enrolled_count')
             )['total'] or 0,
         })
 
     if EmployeeEvaluation:
         context.update({
-            'pending_evaluations': EmployeeEvaluation.objects.filter(status='Pending').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count(),
+            'pending_evaluations': EmployeeEvaluation.objects.filter(status='Pending').count(),
             'overdue_evaluations': EmployeeEvaluation.objects.filter(
                 status='Pending',
-                due_date__lt=date.today().prefetch_related()  # TODO: Add appropriate prefetch_related fields
+                due_date__lt=date.today()
             ).count(),
         })
 
@@ -133,7 +133,7 @@ def dashboard(request):
             date_check = date.today() - timedelta(days=i)
             chart_labels.append(date_check.strftime('%m/%d'))
 
-            day_attendance = EmployeeAttendance.objects.filter(att_date=date_check).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            day_attendance = EmployeeAttendance.objects.filter(att_date=date_check)
             attendance_data.append(day_attendance.filter(status__in=['Present', 'Late']).count())
             absence_data.append(day_attendance.filter(status='Absent').count())
 
@@ -186,14 +186,14 @@ def dashboard_data(request):
     data = {}
 
     if Employee:
-        data['total_employees'] = Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+        data['total_employees'] = Employee.objects.filter(emp_status='Active').count()
 
     if EmployeeAttendance:
-        today_attendance = EmployeeAttendance.objects.filter(att_date=date.today().prefetch_related()  # TODO: Add appropriate prefetch_related fields)
+        today_attendance = EmployeeAttendance.objects.filter(att_date=date.today())
         data['present_today'] = today_attendance.filter(status__in=['Present', 'Late']).count()
 
     if EmployeeLeave:
-        data['pending_leaves'] = EmployeeLeave.objects.filter(status='Pending').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+        data['pending_leaves'] = EmployeeLeave.objects.filter(status='Pending').count()
 
     return JsonResponse(data)
 

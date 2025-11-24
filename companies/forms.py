@@ -90,7 +90,7 @@ class CompanyForm(forms.ModelForm):
             raise forms.ValidationError('اسم الشركة مطلوب')
 
         # Check for duplicate company names
-        if Company.objects.filter(name__iexact=name, is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exclude(pk=self.instance.pk if self.instance else None).exists():
+        if Company.objects.filter(name__iexact=name, is_active=True).exclude(pk=self.instance.pk if self.instance else None).exists():
             raise forms.ValidationError('يوجد شركة أخرى بنفس الاسم')
 
         return name
@@ -101,7 +101,7 @@ class CompanyForm(forms.ModelForm):
         if tax_number:
             tax_number = tax_number.strip()
             # Check for duplicate tax numbers
-            if Company.objects.filter(tax_number=tax_number, is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exclude(pk=self.instance.pk if self.instance else None).exists():
+            if Company.objects.filter(tax_number=tax_number, is_active=True).exclude(pk=self.instance.pk if self.instance else None).exists():
                 raise forms.ValidationError('يوجد شركة أخرى بنفس الرقم الضريبي')
         return tax_number
 
@@ -111,7 +111,7 @@ class CompanyForm(forms.ModelForm):
         if commercial_register:
             commercial_register = commercial_register.strip()
             # Check for duplicate commercial register numbers
-            if Company.objects.filter(commercial_register=commercial_register, is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exclude(pk=self.instance.pk if self.instance else None).exists():
+            if Company.objects.filter(commercial_register=commercial_register, is_active=True).exclude(pk=self.instance.pk if self.instance else None).exists():
                 raise forms.ValidationError('يوجد شركة أخرى بنفس رقم السجل التجاري')
         return commercial_register
 
@@ -121,7 +121,7 @@ class CompanyForm(forms.ModelForm):
         if email:
             email = email.strip()
             # Check for duplicate emails
-            if Company.objects.filter(email__iexact=email, is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exclude(pk=self.instance.pk if self.instance else None).exists():
+            if Company.objects.filter(email__iexact=email, is_active=True).exclude(pk=self.instance.pk if self.instance else None).exists():
                 raise forms.ValidationError('يوجد شركة أخرى بنفس البريد الإلكتروني')
         return email
 

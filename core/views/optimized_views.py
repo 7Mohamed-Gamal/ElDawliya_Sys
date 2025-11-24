@@ -85,7 +85,7 @@ def get_recent_activities_cached():
         if Employee:
             # Recent new employees
             recent_employees = Employee.objects.filter(
-                hire_date__gte=date.today().prefetch_related()  # TODO: Add appropriate prefetch_related fields - timedelta(days=7)
+                hire_date__gte=date.today() - timedelta(days=7)
             ).select_related('dept', 'job')[:5]
 
             for emp in recent_employees:
@@ -103,7 +103,7 @@ def get_recent_activities_cached():
         if EmployeeLeave:
             # Recent leave requests
             recent_leaves = EmployeeLeave.objects.filter(
-                created_at__gte=timezone.now().prefetch_related()  # TODO: Add appropriate prefetch_related fields - timedelta(days=3),
+                created_at__gte=timezone.now() - timedelta(days=3),
                 status='Pending'
             ).select_related('employee')[:5]
 
@@ -149,7 +149,7 @@ def get_chart_data_cached():
                     date_check.strftime('%m/%d')
                 )
 
-                day_attendance = EmployeeAttendance.objects.filter(att_date=date_check).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+                day_attendance = EmployeeAttendance.objects.filter(att_date=date_check)
                 present_count = day_attendance.filter(
                     status__in=['Present', 'Late']
                 ).count()
@@ -170,7 +170,7 @@ def get_chart_data_cached():
             # Department distribution
             dept_stats = Employee.objects.filter(
                 emp_status='Active'
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.values('dept__dept_name').annotate(
+            ).values('dept__dept_name').annotate(
                 count=Count('emp_id')
             ).order_by('-count')[:10]
 
@@ -263,7 +263,7 @@ def get_departments_cached():
 
     return list(Department.objects.filter(
         is_active=True
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.values('dept_id', 'dept_name').order_by('dept_name'))
+    ).values('dept_id', 'dept_name').order_by('dept_name'))
 
 
 @cache_result(timeout='daily', key_prefix='job_positions')
@@ -274,7 +274,7 @@ def get_job_positions_cached():
 
     return list(JobPosition.objects.filter(
         is_active=True
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.values('job_id', 'job_title').order_by('job_title'))
+    ).values('job_id', 'job_title').order_by('job_title'))
 
 
 @login_required

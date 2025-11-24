@@ -14,7 +14,7 @@ def get_units_api(request):
     """
     try:
         # جلب جميع الوحدات مرتبة حسب الاسم
-        units = Unit.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
+        units = Unit.objects.all().order_by('name')
 
         # تحويل النتائج إلى قائمة
         units_list = []

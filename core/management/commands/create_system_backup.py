@@ -1,721 +1,450 @@
 """
-ElDawliya System - System Backup Management Command
-==================================================
+أداة إنشاء النسخ الاحتياطية الشاملة
+===================================
 
-Django management command for creating comprehensive system backups.
-This command creates backups of database, media files, configuration, and code.
+هذه الأداة تقوم بإنشاء نسخة احتياطية شاملة من النظام تشمل:
+- قاعدة البيانات
+- ملفات المشروع
+- الإعدادات
+- ملفات الوسائط
 """
 
 import os
-import json
 import shutil
-import subprocess
+import sqlite3
+import json
 import zipfile
-from datetime import datetime
 from pathlib import Path
-from django.core.management.base import BaseCommand, CommandError
+from datetime import datetime
+from typing import Dict, List, Optional
+from django.core.management.base import BaseCommand
 from django.conf import settings
-from django.db import connection
 from django.core.management import call_command
-from django.utils import timezone
+from django.db import connection
+import logging
 
 
-class Command(BaseCommand):
-    """
-    Create comprehensive system backup including:
-    - Database backup (SQL Server)
-    - Media files backup
-    - Configuration files backup
-    - Code backup (optional)
-    - System state documentation
-    """
-
-    help = 'Create comprehensive system backup for ElDawliya system'
-
-    def add_arguments(self, parser):
-        """add_arguments function"""
-        parser.add_argument(
-            '--backup-dir',
-            type=str,
-            default='backups',
-            help='Directory to store backups (default: backups)'
+class SystemBackupManager:
+    """مدير النسخ الاحتياطية للنظام"""
+    
+    def __init__(self):
+        self.logger = self._setup_logging()
+        self.base_dir = Path(settings.BASE_DIR)
+        self.backup_dir = self.base_dir / 'backups'
+        self.backup_dir.mkdir(exist_ok=True)
+        
+    def _setup_logging(self) -> logging.Logger:
+        """إعداد نظام التسجيل"""
+        logger = logging.getLogger('system_backup')
+        logger.setLevel(logging.INFO)
+        
+        # إنشاء معالج الملف
+        log_file = Path(settings.BASE_DIR) / 'logs' / 'system_backup.log'
+        log_file.parent.mkdir(exist_ok=True)
+        
+        file_handler = logging.FileHandler(log_file, encoding='utf-8')
+        file_handler.setLevel(logging.INFO)
+        
+        # إنشاء معالج وحدة التحكم
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.INFO)
+        
+        # تنسيق الرسائل
+        formatter = logging.Formatter(
+            '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
         )
-
-        parser.add_argument(
-            '--include-code',
-            action='store_true',
-            help='Include source code in backup'
-        )
-
-        parser.add_argument(
-            '--compress',
-            action='store_true',
-            help='Compress backup files'
-        )
-
-        parser.add_argument(
-            '--name',
-            type=str,
-            help='Custom backup name (default: auto-generated)'
-        )
-
-        parser.add_argument(
-            '--description',
-            type=str,
-            help='Backup description'
-        )
-
-        parser.add_argument(
-            '--checkpoint',
-            type=str,
-            help='Checkpoint name for this backup'
-        )
-
-    def handle(self, *args, **options):
-        """Execute the backup process."""
-        try:
-            # Initialize backup process
-            backup_info = self._initialize_backup(options)
-
-            self.stdout.write(
-                self.style.SUCCESS(
-                    f"🚀 بدء عملية النسخ الاحتياطي: {backup_info['name']}"
-                )
-            )
-
-            # Create backup directory structure
-            self._create_backup_structure(backup_info)
-
-            # Document current system state
-            self._document_system_state(backup_info)
-
-            # Backup database
-            self._backup_database(backup_info)
-
-            # Backup media files
-            self._backup_media_files(backup_info)
-
-            # Backup configuration files
-            self._backup_configuration(backup_info)
-
-            # Backup code (if requested)
-            if options['include_code']:
-                self._backup_code(backup_info)
-
-            # Create backup manifest
-            self._create_backup_manifest(backup_info)
-
-            # Compress backup (if requested)
-            if options['compress']:
-                self._compress_backup(backup_info)
-
-            # Validate backup integrity
-            self._validate_backup(backup_info)
-
-            # Update backup registry
-            self._update_backup_registry(backup_info)
-
-            self.stdout.write(
-                self.style.SUCCESS(
-                    f"✅ تم إنشاء النسخة الاحتياطية بنجاح: {backup_info['backup_path']}"
-                )
-            )
-
-            # Display backup summary
-            self._display_backup_summary(backup_info)
-
-        except Exception as e:
-            self.stdout.write(
-                self.style.ERROR(f"❌ فشل في إنشاء النسخة الاحتياطية: {str(e)}")
-            )
-            raise CommandError(f"Backup failed: {str(e)}")
-
-    def _initialize_backup(self, options):
-        """Initialize backup process and create backup info."""
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-
-        # Generate backup name
-        if options['name']:
-            backup_name = f"{options['name']}_{timestamp}"
-        else:
-            backup_name = f"eldawliya_backup_{timestamp}"
-
-        # Create backup directory
-        backup_dir = Path(options['backup_dir'])
-        backup_dir.mkdir(exist_ok=True)
-
-        backup_path = backup_dir / backup_name
+        file_handler.setFormatter(formatter)
+        console_handler.setFormatter(formatter)
+        
+        logger.addHandler(file_handler)
+        logger.addHandler(console_handler)
+        
+        return logger
+    
+    def create_full_backup(self, backup_name: Optional[str] = None) -> str:
+        """إنشاء نسخة احتياطية شاملة"""
+        if not backup_name:
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            backup_name = f"system_backup_{timestamp}"
+            
+        backup_path = self.backup_dir / backup_name
         backup_path.mkdir(exist_ok=True)
-
-        return {
-            'name': backup_name,
-            'timestamp': timestamp,
-            'backup_dir': backup_dir,
-            'backup_path': backup_path,
-            'description': options.get('description', ''),
-            'checkpoint': options.get('checkpoint', ''),
-            'include_code': options['include_code'],
-            'compress': options['compress'],
-            'created_at': timezone.now(),
-            'files': [],
-            'size': 0,
-            'status': 'in_progress'
-        }
-
-    def _create_backup_structure(self, backup_info):
-        """Create backup directory structure."""
-        structure = [
-            'database',
-            'media',
-            'config',
-            'logs',
-            'docs'
-        ]
-
-        if backup_info['include_code']:
-            structure.append('code')
-
-        for folder in structure:
-            (backup_info['backup_path'] / folder).mkdir(exist_ok=True)
-
-        self.stdout.write("📁 تم إنشاء هيكل مجلدات النسخة الاحتياطية")
-
-    def _document_system_state(self, backup_info):
-        """Document current system state."""
-        system_state = {
-            'backup_info': {
-                'name': backup_info['name'],
-                'created_at': backup_info['created_at'].isoformat(),
-                'description': backup_info['description'],
-                'checkpoint': backup_info['checkpoint']
-            },
-            'django_info': {
-                'version': self._get_django_version(),
-                'settings_module': os.environ.get('DJANGO_SETTINGS_MODULE'),
-                'debug': settings.DEBUG,
-                'allowed_hosts': settings.ALLOWED_HOSTS,
-                'installed_apps': settings.INSTALLED_APPS,
-                'middleware': settings.MIDDLEWARE
-            },
-            'database_info': {
-                'engine': settings.DATABASES['default']['ENGINE'],
-                'name': settings.DATABASES['default']['NAME'],
-                'host': settings.DATABASES['default']['HOST'],
-                'port': settings.DATABASES['default']['PORT']
-            },
-            'environment_info': {
-                'python_version': self._get_python_version(),
-                'os_info': self._get_os_info(),
-                'requirements': self._get_installed_packages()
-            },
-            'application_state': {
-                'migrations': self._get_migration_status(),
-                'static_files': self._check_static_files(),
-                'media_files': self._check_media_files()
-            }
-        }
-
-        # Save system state
-        state_file = backup_info['backup_path'] / 'docs' / 'system_state.json'
-        with open(state_file, 'w', encoding='utf-8') as f:
-            json.dump(system_state, f, indent=2, ensure_ascii=False, default=str)
-
-        backup_info['files'].append(str(state_file))
-
-        self.stdout.write("📋 تم توثيق حالة النظام الحالية")
-
-    def _backup_database(self, backup_info):
-        """Backup database using SQL Server tools."""
+        
+        self.logger.info(f"بدء إنشاء النسخة الاحتياطية: {backup_name}")
+        
         try:
+            # 1. نسخ احتياطي من قاعدة البيانات
+            db_backup_path = self._backup_database(backup_path)
+            
+            # 2. نسخ احتياطي من ملفات المشروع
+            project_backup_path = self._backup_project_files(backup_path)
+            
+            # 3. نسخ احتياطي من الإعدادات
+            settings_backup_path = self._backup_settings(backup_path)
+            
+            # 4. نسخ احتياطي من ملفات الوسائط
+            media_backup_path = self._backup_media_files(backup_path)
+            
+            # 5. إنشاء ملف معلومات النسخة الاحتياطية
+            info_file = self._create_backup_info(backup_path, {
+                'database': db_backup_path,
+                'project_files': project_backup_path,
+                'settings': settings_backup_path,
+                'media_files': media_backup_path
+            })
+            
+            # 6. ضغط النسخة الاحتياطية
+            zip_path = self._compress_backup(backup_path)
+            
+            self.logger.info(f"تم إنشاء النسخة الاحتياطية بنجاح: {zip_path}")
+            return str(zip_path)
+            
+        except Exception as e:
+            self.logger.error(f"خطأ في إنشاء النسخة الاحتياطية: {e}")
+            raise
+    
+    def _backup_database(self, backup_path: Path) -> str:
+        """نسخ احتياطي من قاعدة البيانات"""
+        self.logger.info("إنشاء نسخة احتياطية من قاعدة البيانات...")
+        
+        db_backup_dir = backup_path / 'database'
+        db_backup_dir.mkdir(exist_ok=True)
+        
+        try:
+            # التحقق من نوع قاعدة البيانات
             db_config = settings.DATABASES['default']
-            timestamp = backup_info['timestamp']
-
-            # Create database backup using sqlcmd
-            backup_file = backup_info['backup_path'] / 'database' / f"database_backup_{timestamp}.bak"
-
-            # SQL Server backup command
-            sql_command = f"""
-            BACKUP DATABASE [{db_config['NAME']}]
-            TO DISK = N'{backup_file}'
-            WITH FORMAT, INIT,
-            NAME = N'ElDawliya System Backup - {backup_info['name']}',
-            SKIP, NOREWIND, NOUNLOAD, STATS = 10
-            """
-
-            # Execute backup using sqlcmd
-            cmd = [
-                'sqlcmd',
-                '-S', f"{db_config['HOST']},{db_config['PORT']}",
-                '-U', db_config['USER'],
-                '-P', db_config['PASSWORD'],
-                '-Q', sql_command
-            ]
-
-            result = subprocess.run(cmd, capture_output=True, text=True)
-
-            if result.returncode == 0:
-                backup_info['files'].append(str(backup_file))
-                self.stdout.write("💾 تم نسخ قاعدة البيانات بنجاح")
+            
+            if db_config['ENGINE'] == 'django.db.backends.sqlite3':
+                # نسخ احتياطي من SQLite
+                db_file = Path(db_config['NAME'])
+                if db_file.exists():
+                    backup_db_file = db_backup_dir / f"database_{datetime.now().strftime('%Y%m%d_%H%M%S')}.sqlite3"
+                    shutil.copy2(db_file, backup_db_file)
+                    self.logger.info(f"تم نسخ قاعدة البيانات SQLite: {backup_db_file}")
+                    return str(backup_db_file)
+            
+            elif 'mssql' in db_config['ENGINE']:
+                # نسخ احتياطي من SQL Server باستخدام Django dumpdata
+                dump_file = db_backup_dir / f"database_dump_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+                
+                with open(dump_file, 'w', encoding='utf-8') as f:
+                    call_command('dumpdata', stdout=f, indent=2)
+                
+                self.logger.info(f"تم إنشاء dump من قاعدة البيانات: {dump_file}")
+                return str(dump_file)
+            
             else:
-                # Fallback to Django dumpdata
-                self._backup_database_django(backup_info)
-
+                # نسخ احتياطي عام باستخدام dumpdata
+                dump_file = db_backup_dir / f"database_dump_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+                
+                with open(dump_file, 'w', encoding='utf-8') as f:
+                    call_command('dumpdata', stdout=f, indent=2)
+                
+                self.logger.info(f"تم إنشاء dump عام من قاعدة البيانات: {dump_file}")
+                return str(dump_file)
+                
         except Exception as e:
-            self.stdout.write(
-                self.style.WARNING(f"⚠️ فشل في النسخ المباشر لقاعدة البيانات: {str(e)}")
-            )
-            # Fallback to Django dumpdata
-            self._backup_database_django(backup_info)
-
-    def _backup_database_django(self, backup_info):
-        """Backup database using Django dumpdata as fallback."""
+            self.logger.error(f"خطأ في نسخ قاعدة البيانات: {e}")
+            raise
+    
+    def _backup_project_files(self, backup_path: Path) -> str:
+        """نسخ احتياطي من ملفات المشروع"""
+        self.logger.info("إنشاء نسخة احتياطية من ملفات المشروع...")
+        
+        project_backup_dir = backup_path / 'project_files'
+        project_backup_dir.mkdir(exist_ok=True)
+        
+        # قائمة الملفات والمجلدات المهمة للنسخ الاحتياطي
+        important_items = [
+            'manage.py',
+            'requirements.txt',
+            '.env.example',
+            'ElDawliya_sys',
+            'api',
+            'accounts',
+            'administrator',
+            'notifications',
+            'core',
+            'templates',
+            'static',
+            'docs',
+            'scripts',
+        ]
+        
+        # قائمة الملفات والمجلدات المستبعدة
+        excluded_items = [
+            '__pycache__',
+            '*.pyc',
+            '.git',
+            'logs',
+            'media',
+            'staticfiles',
+            'backups',
+            '.env',
+            'db.sqlite3',
+            '*.log'
+        ]
+        
         try:
-            timestamp = backup_info['timestamp']
-
-            # Full database dump
-            dump_file = backup_info['backup_path'] / 'database' / f"django_dump_{timestamp}.json"
-
-            with open(dump_file, 'w', encoding='utf-8') as f:
-                call_command('dumpdata', stdout=f, indent=2)
-
-            backup_info['files'].append(str(dump_file))
-
-            # Individual app dumps for easier restoration
-            apps_to_backup = [
-                'hr', 'accounts', 'inventory', 'meetings', 'tasks',
-                'Purchase_orders', 'notifications', 'audit'
-            ]
-
-            for app in apps_to_backup:
-                try:
-                    app_dump_file = backup_info['backup_path'] / 'database' / f"{app}_dump_{timestamp}.json"
-                    with open(app_dump_file, 'w', encoding='utf-8') as f:
-                        call_command('dumpdata', app, stdout=f, indent=2)
-                    backup_info['files'].append(str(app_dump_file))
-                except Exception:
-                    continue  # Skip if app doesn't exist
-
-            self.stdout.write("💾 تم نسخ قاعدة البيانات باستخدام Django")
-
-        except Exception as e:
-            raise CommandError(f"Database backup failed: {str(e)}")
-
-    def _backup_media_files(self, backup_info):
-        """Backup media files."""
-        try:
-            media_root = Path(settings.MEDIA_ROOT)
-
-            if media_root.exists() and any(media_root.iterdir()):
-                media_backup_dir = backup_info['backup_path'] / 'media'
-
-                # Copy media files
-                shutil.copytree(media_root, media_backup_dir / 'files', dirs_exist_ok=True)
-
-                # Create media inventory
-                media_inventory = self._create_media_inventory(media_root)
-                inventory_file = media_backup_dir / 'media_inventory.json'
-
-                with open(inventory_file, 'w', encoding='utf-8') as f:
-                    json.dump(media_inventory, f, indent=2, ensure_ascii=False)
-
-                backup_info['files'].extend([str(media_backup_dir), str(inventory_file)])
-
-                self.stdout.write("📁 تم نسخ ملفات الوسائط")
-            else:
-                self.stdout.write("📁 لا توجد ملفات وسائط للنسخ")
-
-        except Exception as e:
-            self.stdout.write(
-                self.style.WARNING(f"⚠️ فشل في نسخ ملفات الوسائط: {str(e)}")
-            )
-
-    def _backup_configuration(self, backup_info):
-        """Backup configuration files."""
-        try:
-            config_backup_dir = backup_info['backup_path'] / 'config'
-
-            # Configuration files to backup
-            config_files = [
-                '.env',
-                '.env.example',
-                'requirements.txt',
-                'manage.py',
-                'ElDawliya_sys/settings/',
-                'ElDawliya_sys/urls.py',
-                'ElDawliya_sys/wsgi.py',
-                'ElDawliya_sys/asgi.py'
-            ]
-
-            base_dir = Path(settings.BASE_DIR)
-
-            for config_file in config_files:
-                source_path = base_dir / config_file
-
+            for item in important_items:
+                source_path = self.base_dir / item
                 if source_path.exists():
+                    dest_path = project_backup_dir / item
+                    
                     if source_path.is_file():
-                        dest_path = config_backup_dir / config_file
-                        dest_path.parent.mkdir(parents=True, exist_ok=True)
                         shutil.copy2(source_path, dest_path)
                     else:
-                        dest_path = config_backup_dir / config_file
-                        shutil.copytree(source_path, dest_path, dirs_exist_ok=True)
-
-                    backup_info['files'].append(str(dest_path))
-
-            # Create configuration summary
-            config_summary = {
-                'django_settings': {
-                    'SECRET_KEY': '***HIDDEN***',
-                    'DEBUG': settings.DEBUG,
-                    'ALLOWED_HOSTS': settings.ALLOWED_HOSTS,
-                    'DATABASE_ENGINE': settings.DATABASES['default']['ENGINE'],
-                    'STATIC_URL': settings.STATIC_URL,
-                    'MEDIA_URL': settings.MEDIA_URL,
-                    'TIME_ZONE': settings.TIME_ZONE,
-                    'LANGUAGE_CODE': settings.LANGUAGE_CODE
+                        shutil.copytree(source_path, dest_path, 
+                                      ignore=shutil.ignore_patterns(*excluded_items))
+                    
+                    self.logger.info(f"تم نسخ: {item}")
+            
+            self.logger.info("تم إنشاء نسخة احتياطية من ملفات المشروع")
+            return str(project_backup_dir)
+            
+        except Exception as e:
+            self.logger.error(f"خطأ في نسخ ملفات المشروع: {e}")
+            raise
+    
+    def _backup_settings(self, backup_path: Path) -> str:
+        """نسخ احتياطي من الإعدادات"""
+        self.logger.info("إنشاء نسخة احتياطية من الإعدادات...")
+        
+        settings_backup_dir = backup_path / 'settings'
+        settings_backup_dir.mkdir(exist_ok=True)
+        
+        try:
+            # حفظ إعدادات Django الحالية
+            settings_info = {
+                'INSTALLED_APPS': settings.INSTALLED_APPS,
+                'MIDDLEWARE': settings.MIDDLEWARE,
+                'DATABASES': {
+                    'default': {
+                        'ENGINE': settings.DATABASES['default']['ENGINE'],
+                        'NAME': settings.DATABASES['default'].get('NAME', ''),
+                        # لا نحفظ كلمات المرور في النسخة الاحتياطية
+                    }
                 },
-                'installed_apps': settings.INSTALLED_APPS,
-                'middleware': settings.MIDDLEWARE
+                'LANGUAGE_CODE': settings.LANGUAGE_CODE,
+                'TIME_ZONE': settings.TIME_ZONE,
+                'DEBUG': settings.DEBUG,
+                'ALLOWED_HOSTS': settings.ALLOWED_HOSTS,
             }
-
-            summary_file = config_backup_dir / 'configuration_summary.json'
-            with open(summary_file, 'w', encoding='utf-8') as f:
-                json.dump(config_summary, f, indent=2, ensure_ascii=False)
-
-            backup_info['files'].append(str(summary_file))
-
-            self.stdout.write("⚙️ تم نسخ ملفات التكوين")
-
+            
+            settings_file = settings_backup_dir / 'django_settings.json'
+            with open(settings_file, 'w', encoding='utf-8') as f:
+                json.dump(settings_info, f, indent=2, ensure_ascii=False)
+            
+            # نسخ ملفات الإعدادات
+            settings_dir = self.base_dir / 'ElDawliya_sys' / 'settings'
+            if settings_dir.exists():
+                dest_settings_dir = settings_backup_dir / 'settings_files'
+                shutil.copytree(settings_dir, dest_settings_dir)
+            
+            self.logger.info("تم إنشاء نسخة احتياطية من الإعدادات")
+            return str(settings_backup_dir)
+            
         except Exception as e:
-            self.stdout.write(
-                self.style.WARNING(f"⚠️ فشل في نسخ ملفات التكوين: {str(e)}")
-            )
-
-    def _backup_code(self, backup_info):
-        """Backup source code."""
+            self.logger.error(f"خطأ في نسخ الإعدادات: {e}")
+            raise
+    
+    def _backup_media_files(self, backup_path: Path) -> str:
+        """نسخ احتياطي من ملفات الوسائط"""
+        self.logger.info("إنشاء نسخة احتياطية من ملفات الوسائط...")
+        
+        media_backup_dir = backup_path / 'media_files'
+        media_backup_dir.mkdir(exist_ok=True)
+        
         try:
-            code_backup_dir = backup_info['backup_path'] / 'code'
-            base_dir = Path(settings.BASE_DIR)
-
-            # Directories to include in code backup
-            code_dirs = [
-                'core',
-                'api',
-                'hr',
-                'accounts',
-                'inventory',
-                'meetings',
-                'tasks',
-                'Purchase_orders',
-                'notifications',
-                'audit',
-                'templates',
-                'static'
-            ]
-
-            # Files to include
-            code_files = [
-                'manage.py',
-                'requirements.txt'
-            ]
-
-            # Copy directories
-            for code_dir in code_dirs:
-                source_path = base_dir / code_dir
-                if source_path.exists():
-                    dest_path = code_backup_dir / code_dir
-                    shutil.copytree(source_path, dest_path, dirs_exist_ok=True)
-                    backup_info['files'].append(str(dest_path))
-
-            # Copy files
-            for code_file in code_files:
-                source_path = base_dir / code_file
-                if source_path.exists():
-                    dest_path = code_backup_dir / code_file
-                    shutil.copy2(source_path, dest_path)
-                    backup_info['files'].append(str(dest_path))
-
-            self.stdout.write("💻 تم نسخ الكود المصدري")
-
+            media_dir = Path(settings.MEDIA_ROOT)
+            if media_dir.exists() and any(media_dir.iterdir()):
+                shutil.copytree(media_dir, media_backup_dir / 'media')
+                self.logger.info("تم نسخ ملفات الوسائط")
+            else:
+                self.logger.info("لا توجد ملفات وسائط للنسخ")
+            
+            return str(media_backup_dir)
+            
         except Exception as e:
-            self.stdout.write(
-                self.style.WARNING(f"⚠️ فشل في نسخ الكود المصدري: {str(e)}")
-            )
-
-    def _create_backup_manifest(self, backup_info):
-        """Create backup manifest with all backup information."""
-        manifest = {
-            'backup_info': {
-                'name': backup_info['name'],
-                'created_at': backup_info['created_at'].isoformat(),
-                'description': backup_info['description'],
-                'checkpoint': backup_info['checkpoint'],
-                'include_code': backup_info['include_code'],
-                'compressed': backup_info['compress']
-            },
+            self.logger.error(f"خطأ في نسخ ملفات الوسائط: {e}")
+            raise
+    
+    def _create_backup_info(self, backup_path: Path, backup_components: Dict[str, str]) -> str:
+        """إنشاء ملف معلومات النسخة الاحتياطية"""
+        backup_info = {
+            'backup_name': backup_path.name,
+            'created_at': datetime.now().isoformat(),
+            'django_version': getattr(settings, 'DJANGO_VERSION', 'Unknown'),
+            'python_version': f"{os.sys.version_info.major}.{os.sys.version_info.minor}.{os.sys.version_info.micro}",
             'system_info': {
-                'django_version': self._get_django_version(),
-                'python_version': self._get_python_version(),
-                'os_info': self._get_os_info()
+                'platform': os.name,
+                'base_dir': str(self.base_dir),
             },
-            'backup_contents': {
-                'files': backup_info['files'],
-                'total_files': len(backup_info['files']),
-                'backup_size': self._calculate_backup_size(backup_info['backup_path'])
-            },
-            'restoration_info': {
-                'restoration_order': [
-                    'database',
-                    'media',
-                    'config',
-                    'code'
-                ],
-                'prerequisites': [
-                    'Python 3.7+',
-                    'Django 4.2+',
-                    'SQL Server',
-                    'Required Python packages'
-                ],
-                'restoration_notes': [
-                    'Restore database first',
-                    'Update configuration files',
-                    'Run migrations if needed',
-                    'Collect static files',
-                    'Test system functionality'
-                ]
-            }
+            'components': backup_components,
+            'installed_apps': list(settings.INSTALLED_APPS),
+            'backup_size': self._calculate_backup_size(backup_path),
         }
-
-        manifest_file = backup_info['backup_path'] / 'backup_manifest.json'
-        with open(manifest_file, 'w', encoding='utf-8') as f:
-            json.dump(manifest, f, indent=2, ensure_ascii=False, default=str)
-
-        backup_info['files'].append(str(manifest_file))
-        backup_info['size'] = manifest['backup_contents']['backup_size']
-
-        self.stdout.write("📋 تم إنشاء ملف البيانات الوصفية للنسخة الاحتياطية")
-
-    def _compress_backup(self, backup_info):
-        """Compress backup into a single archive."""
-        try:
-            archive_name = f"{backup_info['name']}.zip"
-            archive_path = backup_info['backup_dir'] / archive_name
-
-            with zipfile.ZipFile(archive_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                for root, dirs, files in os.walk(backup_info['backup_path']):
-                    for file in files:
-                        file_path = Path(root) / file
-                        arcname = file_path.relative_to(backup_info['backup_path'])
-                        zipf.write(file_path, arcname)
-
-            # Remove uncompressed backup
-            shutil.rmtree(backup_info['backup_path'])
-
-            backup_info['backup_path'] = archive_path
-            backup_info['compressed'] = True
-
-            self.stdout.write(f"🗜️ تم ضغط النسخة الاحتياطية: {archive_name}")
-
-        except Exception as e:
-            self.stdout.write(
-                self.style.WARNING(f"⚠️ فشل في ضغط النسخة الاحتياطية: {str(e)}")
-            )
-
-    def _validate_backup(self, backup_info):
-        """Validate backup integrity."""
-        try:
-            if backup_info.get('compressed'):
-                # Validate compressed backup
-                with zipfile.ZipFile(backup_info['backup_path'], 'r') as zipf:
-                    bad_files = zipf.testzip()
-                    if bad_files:
-                        raise Exception(f"Corrupted files in backup: {bad_files}")
-            else:
-                # Validate uncompressed backup
-                if not backup_info['backup_path'].exists():
-                    raise Exception("Backup directory does not exist")
-
-                # Check if manifest exists
-                manifest_file = backup_info['backup_path'] / 'backup_manifest.json'
-                if not manifest_file.exists():
-                    raise Exception("Backup manifest is missing")
-
-            backup_info['status'] = 'completed'
-            self.stdout.write("✅ تم التحقق من سلامة النسخة الاحتياطية")
-
-        except Exception as e:
-            backup_info['status'] = 'failed'
-            raise CommandError(f"Backup validation failed: {str(e)}")
-
-    def _update_backup_registry(self, backup_info):
-        """Update backup registry with new backup information."""
-        try:
-            registry_file = backup_info['backup_dir'] / 'backup_registry.json'
-
-            # Load existing registry
-            if registry_file.exists():
-                with open(registry_file, 'r', encoding='utf-8') as f:
-                    registry = json.load(f)
-            else:
-                registry = {'backups': []}
-
-            # Add new backup to registry
-            backup_entry = {
-                'name': backup_info['name'],
-                'created_at': backup_info['created_at'].isoformat(),
-                'description': backup_info['description'],
-                'checkpoint': backup_info['checkpoint'],
-                'path': str(backup_info['backup_path']),
-                'size': backup_info['size'],
-                'compressed': backup_info.get('compressed', False),
-                'status': backup_info['status'],
-                'include_code': backup_info['include_code']
-            }
-
-            registry['backups'].append(backup_entry)
-
-            # Keep only last 50 backups in registry
-            registry['backups'] = registry['backups'][-50:]
-
-            # Save updated registry
-            with open(registry_file, 'w', encoding='utf-8') as f:
-                json.dump(registry, f, indent=2, ensure_ascii=False)
-
-            self.stdout.write("📝 تم تحديث سجل النسخ الاحتياطية")
-
-        except Exception as e:
-            self.stdout.write(
-                self.style.WARNING(f"⚠️ فشل في تحديث سجل النسخ الاحتياطية: {str(e)}")
-            )
-
-    def _display_backup_summary(self, backup_info):
-        """Display backup summary."""
-        self.stdout.write("\n" + "="*60)
-        self.stdout.write(self.style.SUCCESS("📊 ملخص النسخة الاحتياطية"))
-        self.stdout.write("="*60)
-        self.stdout.write(f"الاسم: {backup_info['name']}")
-        self.stdout.write(f"التاريخ: {backup_info['created_at'].strftime('%Y-%m-%d %H:%M:%S')}")
-        self.stdout.write(f"المسار: {backup_info['backup_path']}")
-        self.stdout.write(f"الحجم: {self._format_size(backup_info['size'])}")
-        self.stdout.write(f"عدد الملفات: {len(backup_info['files'])}")
-        self.stdout.write(f"الحالة: {backup_info['status']}")
-
-        if backup_info['description']:
-            self.stdout.write(f"الوصف: {backup_info['description']}")
-
-        if backup_info['checkpoint']:
-            self.stdout.write(f"نقطة التحقق: {backup_info['checkpoint']}")
-
-        self.stdout.write("="*60 + "\n")
-
-    # Helper methods
-    def _get_django_version(self):
-        """Get Django version."""
-        import django
-        return django.get_version()
-
-    def _get_python_version(self):
-        """Get Python version."""
-        import sys
-        return sys.version
-
-    def _get_os_info(self):
-        """Get OS information."""
-        import platform
-        return {
-            'system': platform.system(),
-            'release': platform.release(),
-            'version': platform.version(),
-            'machine': platform.machine(),
-            'processor': platform.processor()
-        }
-
-    def _get_installed_packages(self):
-        """Get list of installed Python packages."""
-        try:
-            result = subprocess.run(['pip', 'freeze'], capture_output=True, text=True)
-            return result.stdout.strip().split('\n') if result.returncode == 0 else []
-        except Exception:
-            return []
-
-    def _get_migration_status(self):
-        """Get migration status for all apps."""
-        try:
-            from django.core.management.commands.showmigrations import Command as ShowMigrationsCommand
-            cmd = ShowMigrationsCommand()
-            # This is a simplified version - in practice, you'd capture the output
-            return "Migration status captured"
-        except Exception:
-            return "Unable to capture migration status"
-
-    def _check_static_files(self):
-        """Check static files status."""
-        static_root = Path(settings.STATIC_ROOT)
-        return {
-            'static_root_exists': static_root.exists(),
-            'static_files_count': len(list(static_root.rglob('*'))) if static_root.exists() else 0
-        }
-
-    def _check_media_files(self):
-        """Check media files status."""
-        media_root = Path(settings.MEDIA_ROOT)
-        return {
-            'media_root_exists': media_root.exists(),
-            'media_files_count': len(list(media_root.rglob('*'))) if media_root.exists() else 0
-        }
-
-    def _create_media_inventory(self, media_root):
-        """Create inventory of media files."""
-        inventory = {
-            'total_files': 0,
-            'total_size': 0,
-            'directories': {},
-            'file_types': {}
-        }
-
-        for file_path in media_root.rglob('*'):
-            if file_path.is_file():
-                inventory['total_files'] += 1
-                file_size = file_path.stat().st_size
-                inventory['total_size'] += file_size
-
-                # Track by directory
-                rel_dir = str(file_path.parent.relative_to(media_root))
-                if rel_dir not in inventory['directories']:
-                    inventory['directories'][rel_dir] = {'count': 0, 'size': 0}
-                inventory['directories'][rel_dir]['count'] += 1
-                inventory['directories'][rel_dir]['size'] += file_size
-
-                # Track by file type
-                file_ext = file_path.suffix.lower()
-                if file_ext not in inventory['file_types']:
-                    inventory['file_types'][file_ext] = {'count': 0, 'size': 0}
-                inventory['file_types'][file_ext]['count'] += 1
-                inventory['file_types'][file_ext]['size'] += file_size
-
-        return inventory
-
-    def _calculate_backup_size(self, backup_path):
-        """Calculate total backup size."""
+        
+        info_file = backup_path / 'backup_info.json'
+        with open(info_file, 'w', encoding='utf-8') as f:
+            json.dump(backup_info, f, indent=2, ensure_ascii=False)
+        
+        return str(info_file)
+    
+    def _calculate_backup_size(self, backup_path: Path) -> int:
+        """حساب حجم النسخة الاحتياطية"""
         total_size = 0
-
-        if backup_path.is_file():
-            return backup_path.stat().st_size
-
         for file_path in backup_path.rglob('*'):
             if file_path.is_file():
                 total_size += file_path.stat().st_size
-
         return total_size
+    
+    def _compress_backup(self, backup_path: Path) -> str:
+        """ضغط النسخة الاحتياطية"""
+        self.logger.info("ضغط النسخة الاحتياطية...")
+        
+        zip_path = backup_path.with_suffix('.zip')
+        
+        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for file_path in backup_path.rglob('*'):
+                if file_path.is_file():
+                    arcname = file_path.relative_to(backup_path.parent)
+                    zipf.write(file_path, arcname)
+        
+        # حذف المجلد غير المضغوط
+        shutil.rmtree(backup_path)
+        
+        self.logger.info(f"تم ضغط النسخة الاحتياطية: {zip_path}")
+        return str(zip_path)
+    
+    def list_backups(self) -> List[Dict[str, str]]:
+        """عرض قائمة النسخ الاحتياطية المتاحة"""
+        backups = []
+        
+        for backup_file in self.backup_dir.glob('*.zip'):
+            backup_info = {
+                'name': backup_file.stem,
+                'file': str(backup_file),
+                'size': backup_file.stat().st_size,
+                'created': datetime.fromtimestamp(backup_file.stat().st_ctime).isoformat(),
+            }
+            backups.append(backup_info)
+        
+        return sorted(backups, key=lambda x: x['created'], reverse=True)
+    
+    def restore_backup(self, backup_file: str) -> bool:
+        """استعادة نسخة احتياطية"""
+        self.logger.info(f"بدء استعادة النسخة الاحتياطية: {backup_file}")
+        
+        try:
+            backup_path = Path(backup_file)
+            if not backup_path.exists():
+                raise FileNotFoundError(f"ملف النسخة الاحتياطية غير موجود: {backup_file}")
+            
+            # استخراج النسخة الاحتياطية
+            extract_dir = self.backup_dir / 'restore_temp'
+            extract_dir.mkdir(exist_ok=True)
+            
+            with zipfile.ZipFile(backup_path, 'r') as zipf:
+                zipf.extractall(extract_dir)
+            
+            # قراءة معلومات النسخة الاحتياطية
+            info_file = extract_dir / backup_path.stem / 'backup_info.json'
+            if info_file.exists():
+                with open(info_file, 'r', encoding='utf-8') as f:
+                    backup_info = json.load(f)
+                self.logger.info(f"معلومات النسخة الاحتياطية: {backup_info['created_at']}")
+            
+            # يمكن إضافة منطق الاستعادة هنا
+            self.logger.warning("وظيفة الاستعادة قيد التطوير")
+            
+            # تنظيف الملفات المؤقتة
+            shutil.rmtree(extract_dir)
+            
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"خطأ في استعادة النسخة الاحتياطية: {e}")
+            return False
 
-    def _format_size(self, size_bytes):
-        """Format size in human readable format."""
-        if size_bytes == 0:
-            return "0 B"
 
-        size_names = ["B", "KB", "MB", "GB", "TB"]
-        import math
-        i = int(math.floor(math.log(size_bytes, 1024)))
-        p = math.pow(1024, i)
-        s = round(size_bytes / p, 2)
-        return f"{s} {size_names[i]}"
+class Command(BaseCommand):
+    """أمر Django لإنشاء النسخ الاحتياطية"""
+    
+    help = 'إنشاء نسخة احتياطية شاملة من النظام'
+    
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--name',
+            type=str,
+            help='اسم النسخة الاحتياطية'
+        )
+        parser.add_argument(
+            '--list',
+            action='store_true',
+            help='عرض قائمة النسخ الاحتياطية المتاحة'
+        )
+        parser.add_argument(
+            '--restore',
+            type=str,
+            help='استعادة نسخة احتياطية محددة'
+        )
+    
+    def handle(self, *args, **options):
+        backup_manager = SystemBackupManager()
+        
+        if options['list']:
+            # عرض قائمة النسخ الاحتياطية
+            backups = backup_manager.list_backups()
+            
+            if not backups:
+                self.stdout.write("لا توجد نسخ احتياطية متاحة")
+                return
+            
+            self.stdout.write("النسخ الاحتياطية المتاحة:")
+            self.stdout.write("-" * 50)
+            
+            for backup in backups:
+                size_mb = backup['size'] / (1024 * 1024)
+                created = datetime.fromisoformat(backup['created']).strftime('%Y-%m-%d %H:%M:%S')
+                self.stdout.write(f"  {backup['name']}")
+                self.stdout.write(f"    الحجم: {size_mb:.2f} MB")
+                self.stdout.write(f"    التاريخ: {created}")
+                self.stdout.write("")
+        
+        elif options['restore']:
+            # استعادة نسخة احتياطية
+            backup_file = options['restore']
+            self.stdout.write(f"استعادة النسخة الاحتياطية: {backup_file}")
+            
+            success = backup_manager.restore_backup(backup_file)
+            if success:
+                self.stdout.write(
+                    self.style.SUCCESS("تم استعادة النسخة الاحتياطية بنجاح")
+                )
+            else:
+                self.stdout.write(
+                    self.style.ERROR("فشل في استعادة النسخة الاحتياطية")
+                )
+        
+        else:
+            # إنشاء نسخة احتياطية جديدة
+            backup_name = options.get('name')
+            self.stdout.write("بدء إنشاء النسخة الاحتياطية...")
+            
+            try:
+                backup_file = backup_manager.create_full_backup(backup_name)
+                
+                self.stdout.write(
+                    self.style.SUCCESS(f"تم إنشاء النسخة الاحتياطية بنجاح: {backup_file}")
+                )
+                
+                # عرض معلومات النسخة الاحتياطية
+                backup_path = Path(backup_file)
+                size_mb = backup_path.stat().st_size / (1024 * 1024)
+                self.stdout.write(f"حجم النسخة الاحتياطية: {size_mb:.2f} MB")
+                
+            except Exception as e:
+                self.stdout.write(
+                    self.style.ERROR(f"فشل في إنشاء النسخة الاحتياطية: {e}")
+                )

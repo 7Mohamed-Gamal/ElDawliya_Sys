@@ -20,7 +20,7 @@ def dashboard(request):
     """صفحة لوحة التحكم الرئيسية لتطبيق الموظفين"""
     # إحصائيات عامة
     total_employees = Employee.objects.count()
-    active_employees = Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+    active_employees = Employee.objects.filter(emp_status='Active').count()
     total_departments = Department.objects.count()
     total_jobs = Job.objects.count()
 
@@ -83,7 +83,7 @@ def employee_list(request):
     employees = paginator.get_page(page_number)
 
     # قائمة الأقسام للفلترة
-    departments = Department.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('dept_name')
+    departments = Department.objects.filter(is_active=True).order_by('dept_name')
 
     context = {
         'employees': employees,
@@ -187,7 +187,7 @@ def get_departments_by_branch(request):
         departments = Department.objects.filter(
             branch_id=branch_id,
             is_active=True
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.values('dept_id', 'dept_name')
+        ).values('dept_id', 'dept_name')
         return JsonResponse(list(departments), safe=False)
     return JsonResponse([], safe=False)
 
@@ -200,7 +200,7 @@ def get_employees_by_department(request):
         employees = Employee.objects.filter(
             dept_id=dept_id,
             emp_status='Active'
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.values('emp_id', 'first_name', 'last_name', 'emp_code')
+        ).values('emp_id', 'first_name', 'last_name', 'emp_code')
 
         # تنسيق البيانات
         employee_list = []
@@ -226,10 +226,10 @@ def employee_profile(request, emp_id):
     employee = get_object_or_404(Employee, emp_id=emp_id)
 
     # جلب الحسابات البنكية
-    bank_accounts = EmployeeBankAccount.objects.filter(emp=employee).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+    bank_accounts = EmployeeBankAccount.objects.filter(emp=employee)
 
     # جلب المستندات
-    documents = EmployeeDocument.objects.filter(emp=employee).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('-upload_date')
+    documents = EmployeeDocument.objects.filter(emp=employee).order_by('-upload_date')
 
     context = {
         'employee': employee,
@@ -268,7 +268,7 @@ def add_department(request):
 def department_detail(request, dept_id):
     """عرض تفاصيل قسم"""
     department = get_object_or_404(Department, dept_id=dept_id)
-    employees = Employee.objects.filter(dept=department).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('emp_code')
+    employees = Employee.objects.filter(dept=department).order_by('emp_code')
 
     context = {
         'department': department,
@@ -314,7 +314,7 @@ def delete_department(request, dept_id):
 
     try:
         # التحقق من وجود موظفين في القسم
-        if Employee.objects.filter(dept=department).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists():
+        if Employee.objects.filter(dept=department).exists():
             messages.error(request, f'لا يمكن حذف القسم {department_name} لأنه يحتوي على موظفين.')
         else:
             department.delete()
@@ -359,7 +359,7 @@ def add_position(request):
 def position_detail(request, position_id):
     """عرض تفاصيل وظيفة"""
     job = get_object_or_404(Job, job_id=position_id)
-    employees = Employee.objects.filter(job=job).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('emp_code')
+    employees = Employee.objects.filter(job=job).order_by('emp_code')
 
     context = {
         'job': job,
@@ -405,7 +405,7 @@ def delete_position(request, position_id):
 
     try:
         # التحقق من وجود موظفين في الوظيفة
-        if Employee.objects.filter(job=job).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists():
+        if Employee.objects.filter(job=job).exists():
             messages.error(request, f'لا يمكن حذف الوظيفة {job_title} لأنها مرتبطة بموظفين.')
         else:
             job.delete()
@@ -421,7 +421,7 @@ def reports(request):
     """تقارير الموظفين"""
     # إحصائيات عامة
     total_employees = Employee.objects.count()
-    active_employees = Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+    active_employees = Employee.objects.filter(emp_status='Active').count()
 
     # إحصائيات الأقسام
     department_stats = Department.objects.annotate(
@@ -514,7 +514,7 @@ def search_employees_ajax(request):
         return JsonResponse([], safe=False)
 
     employees = Employee.objects.filter(
-        Q(first_name__icontains=query).prefetch_related()  # TODO: Add appropriate prefetch_related fields |
+        Q(first_name__icontains=query) |
         Q(last_name__icontains=query) |
         Q(emp_code__icontains=query)
     ).select_related('dept', 'job')[:10]
@@ -538,7 +538,7 @@ def department_employees_ajax(request, dept_id):
     employees = Employee.objects.filter(
         dept_id=dept_id,
         emp_status='Active'
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.values('emp_id', 'first_name', 'last_name', 'emp_code')
+    ).values('emp_id', 'first_name', 'last_name', 'emp_code')
 
     return JsonResponse(list(employees), safe=False)
 
@@ -575,7 +575,7 @@ def bulk_update_employees(request):
 def employee_documents(request, emp_id):
     """إدارة مستندات الموظف"""
     employee = get_object_or_404(Employee, emp_id=emp_id)
-    documents = EmployeeDocument.objects.filter(emp=employee).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('-upload_date')
+    documents = EmployeeDocument.objects.filter(emp=employee).order_by('-upload_date')
 
     context = {
         'employee': employee,

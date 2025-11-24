@@ -35,7 +35,7 @@ class HealthInsuranceProviderForm(forms.ModelForm):
         provider_name = self.cleaned_data.get('provider_name')
         if provider_name:
             # التحقق من عدم تكرار الاسم
-            existing = HealthInsuranceProvider.objects.filter(provider_name=provider_name).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            existing = HealthInsuranceProvider.objects.filter(provider_name=provider_name)
             if self.instance and self.instance.pk:
                 existing = existing.exclude(pk=self.instance.pk)
 
@@ -102,9 +102,9 @@ class EmployeeHealthInsuranceForm(forms.ModelForm):
         # تخصيص خيارات القوائم المنسدلة
         self.fields['emp'].queryset = Employee.objects.filter(
             emp_status='Active'
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('first_name', 'last_name')
+        ).order_by('first_name', 'last_name')
 
-        self.fields['provider'].queryset = HealthInsuranceProvider.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('provider_name')
+        self.fields['provider'].queryset = HealthInsuranceProvider.objects.all().order_by('provider_name')
 
         # إضافة خيارات فارغة
         self.fields['emp'].empty_label = "اختر الموظف"
@@ -170,7 +170,7 @@ class EmployeeHealthInsuranceForm(forms.ModelForm):
                 emp=emp,
                 start_date__lte=end_date,
                 end_date__gte=start_date
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exclude(pk=self.instance.pk if self.instance.pk else None)
+            ).exclude(pk=self.instance.pk if self.instance.pk else None)
 
             if overlapping_insurance.exists():
                 insurance = overlapping_insurance.first()
@@ -228,7 +228,7 @@ class EmployeeSocialInsuranceForm(forms.ModelForm):
         # تخصيص خيارات الموظفين
         self.fields['emp'].queryset = Employee.objects.filter(
             emp_status='Active'
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('first_name', 'last_name')
+        ).order_by('first_name', 'last_name')
 
         # إضافة خيار فارغ
         self.fields['emp'].empty_label = "اختر الموظف"
@@ -238,7 +238,7 @@ class EmployeeSocialInsuranceForm(forms.ModelForm):
         gosi_no = self.cleaned_data.get('gosi_no')
         if gosi_no:
             # التحقق من عدم تكرار رقم GOSI
-            existing = EmployeeSocialInsurance.objects.filter(gosi_no=gosi_no).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            existing = EmployeeSocialInsurance.objects.filter(gosi_no=gosi_no)
             if self.instance and self.instance.pk:
                 existing = existing.exclude(pk=self.instance.pk)
 
@@ -288,7 +288,7 @@ class EmployeeSocialInsuranceForm(forms.ModelForm):
             # التحقق من عدم وجود تأمين اجتماعي نشط آخر للموظف
             active_insurance = EmployeeSocialInsurance.objects.filter(
                 emp=emp,
-                start_date__lte=start_date if start_date else date.today().prefetch_related()  # TODO: Add appropriate prefetch_related fields
+                start_date__lte=start_date if start_date else date.today()
             ).filter(
                 Q(end_date__isnull=True) | Q(end_date__gte=start_date if start_date else date.today())
             ).exclude(pk=self.instance.pk if self.instance.pk else None)
@@ -315,7 +315,7 @@ class InsuranceSearchForm(forms.Form):
 
     provider = forms.ModelChoiceField(
         label='مزود التأمين',
-        queryset=HealthInsuranceProvider.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('provider_name'),
+        queryset=HealthInsuranceProvider.objects.all().order_by('provider_name'),
         required=False,
         empty_label='جميع المزودين',
         widget=forms.Select(attrs={
@@ -453,7 +453,7 @@ class InsuranceReportForm(forms.Form):
 
     provider = forms.ModelChoiceField(
         label='مزود التأمين',
-        queryset=HealthInsuranceProvider.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('provider_name'),
+        queryset=HealthInsuranceProvider.objects.all().order_by('provider_name'),
         required=False,
         empty_label='جميع المزودين',
         widget=forms.Select(attrs={
@@ -524,7 +524,7 @@ class InsuranceExpiryAlertForm(forms.Form):
 
     provider = forms.ModelChoiceField(
         label='مزود التأمين',
-        queryset=HealthInsuranceProvider.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('provider_name'),
+        queryset=HealthInsuranceProvider.objects.all().order_by('provider_name'),
         required=False,
         empty_label='جميع المزودين',
         widget=forms.Select(attrs={

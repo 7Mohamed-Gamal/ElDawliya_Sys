@@ -89,14 +89,14 @@ class PayrollCalculationService:
             emp=employee,
             effective_date__lte=as_of_date,
             is_current=True
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('-effective_date').first()
+        ).order_by('-effective_date').first()
 
     def _calculate_attendance_data(self, employee, payroll_run):
         """حساب بيانات الحضور للموظف في الفترة المحددة"""
         attendance_records = EmployeeAttendance.objects.filter(
             emp=employee,
             att_date__range=[payroll_run.period_start, payroll_run.period_end]
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        )
 
         # حساب أيام العمل الفعلية
         worked_days = attendance_records.filter(
@@ -141,7 +141,7 @@ class PayrollCalculationService:
             status='Approved',
             start_date__lte=payroll_run.period_end,
             end_date__gte=payroll_run.period_start
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        )
 
         paid_leave_days = 0
         unpaid_leave_days = 0
@@ -182,7 +182,7 @@ class PayrollCalculationService:
                 att_date__range=[payroll_run.period_start, payroll_run.period_end],
                 check_in__isnull=False,
                 check_out__isnull=False
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            )
 
             for record in daily_records:
                 daily_hours = record.calculate_work_minutes() / 60
@@ -206,7 +206,7 @@ class PayrollCalculationService:
             employee=employee,
             effective_date__range=[payroll_run.period_start, payroll_run.period_end],
             is_active=True
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        )
 
         total_bonus_amount = bonuses.aggregate(
             total=Sum('amount')
@@ -253,7 +253,7 @@ class PayrollCalculationService:
             employee=employee,
             effective_date__lte=payroll_run.period_end,
             is_active=True
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.filter(
+        ).filter(
             Q(end_date__isnull=True) | Q(end_date__gte=payroll_run.period_start)
         )
 
@@ -278,7 +278,7 @@ class PayrollCalculationService:
             loan__emp=employee,
             due_date__range=[payroll_run.period_start, payroll_run.period_end],
             status='pending'
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        )
 
         total_installment_amount = due_installments.aggregate(
             total=Sum('installment_amount')
@@ -461,7 +461,7 @@ class PayrollRunService:
             existing_run = PayrollRun.objects.filter(
                 month_year=month_year,
                 status__in=['draft', 'calculating', 'review', 'approved']
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+            ).first()
 
             if existing_run:
                 raise ValueError(f"يوجد تشغيل راتب آخر لشهر {month_year}")
@@ -493,7 +493,7 @@ class PayrollRunService:
             payroll_run.start_calculation()
 
             # الحصول على قائمة الموظفين
-            employees = Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            employees = Employee.objects.filter(emp_status='Active')
 
             # تطبيق فلتر إضافي إذا تم تحديده
             if employee_filter:
@@ -576,7 +576,7 @@ class PayrollRunService:
             raise ValueError("لا يمكن إلغاء تشغيل الرواتب في هذه الحالة")
 
         # حذف تفاصيل الرواتب المرتبطة
-        PayrollDetail.objects.filter(run=payroll_run).prefetch_related()  # TODO: Add appropriate prefetch_related fields.delete()
+        PayrollDetail.objects.filter(run=payroll_run).delete()
 
         payroll_run.cancel()
         return True
@@ -587,7 +587,7 @@ class PayrollReportService:
 
     def generate_payroll_summary_report(self, payroll_run):
         """إنشاء تقرير ملخص الرواتب"""
-        details = PayrollDetail.objects.filter(run=payroll_run).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        details = PayrollDetail.objects.filter(run=payroll_run)
 
         summary = details.aggregate(
             total_employees=Count('payroll_detail_id'),

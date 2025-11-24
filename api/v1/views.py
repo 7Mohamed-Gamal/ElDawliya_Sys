@@ -38,9 +38,9 @@ class UserViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         """Return users based on permissions"""
         if self.request.user.is_staff:
-            return User.objects.all().select_related()  # TODO: Add appropriate select_related fields.select_related()
+            return User.objects.all().select_related()
         else:
-            return User.objects.filter(id=self.request.user.id).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            return User.objects.filter(id=self.request.user.id)
 
     @swagger_auto_schema(
         operation_description="Get current user profile",
@@ -82,7 +82,7 @@ class APIKeyViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Return API keys for the current user"""
-        return APIKey.objects.filter(user=self.request.user).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        return APIKey.objects.filter(user=self.request.user)
 
     def perform_create(self, serializer):
         """Create API key for the current user"""
@@ -131,11 +131,11 @@ class APIKeyViewSet(viewsets.ModelViewSet):
         today = datetime.now().date()
 
         stats = {
-            'total_requests': APIUsageLog.objects.filter(api_key=api_key_obj).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count(),
+            'total_requests': APIUsageLog.objects.filter(api_key=api_key_obj).count(),
             'requests_today': APIUsageLog.objects.filter(
                 api_key=api_key_obj,
                 timestamp__date=today
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count(),
+            ).count(),
             'last_used': api_key_obj.last_used.isoformat() if api_key_obj.last_used else None,
             'created_at': api_key_obj.created_at.isoformat(),
             'expires_at': api_key_obj.expires_at.isoformat() if api_key_obj.expires_at else None,
@@ -298,7 +298,7 @@ class UsageStatsView(APIView):
         user_logs = APIUsageLog.objects.filter(
             user=request.user,
             timestamp__gte=start_date
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        )
 
         stats = {
             'period': {

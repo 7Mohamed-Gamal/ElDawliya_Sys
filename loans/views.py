@@ -23,11 +23,11 @@ def dashboard(request):
     # إحصائيات عامة
     total_loan_types = LoanType.objects.count()
     total_loans = EmployeeLoan.objects.count()
-    active_loans = EmployeeLoan.objects.filter(status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
-    pending_loans = EmployeeLoan.objects.filter(status='Pending').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+    active_loans = EmployeeLoan.objects.filter(status='Active').count()
+    pending_loans = EmployeeLoan.objects.filter(status='Pending').count()
 
     # إجمالي المبالغ
-    loan_amounts = EmployeeLoan.objects.filter(status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+    loan_amounts = EmployeeLoan.objects.filter(status='Active').aggregate(
         total_requested=Sum('request_amount'),
         total_approved=Sum('approved_amount')
     )
@@ -36,18 +36,18 @@ def dashboard(request):
     due_installments = LoanInstallment.objects.filter(
         due_date__lte=today,
         status='Pending'
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+    ).count()
 
     overdue_installments = LoanInstallment.objects.filter(
         due_date__lt=today,
         status='Pending'
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+    ).count()
 
     # إجمالي الأقساط المستحقة
     due_amount = LoanInstallment.objects.filter(
         due_date__lte=today,
         status='Pending'
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+    ).aggregate(
         total_due=Sum('amount')
     )['total_due'] or 0
 
@@ -75,7 +75,7 @@ def dashboard(request):
     monthly_installments = LoanInstallment.objects.filter(
         due_date__gte=current_month,
         due_date__lt=next_month
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+    ).aggregate(
         count=Count('installment_id'),
         total_amount=Sum('amount')
     )
@@ -145,7 +145,7 @@ def loan_type_detail(request, type_id):
     # قروض هذا النوع
     loans = EmployeeLoan.objects.filter(
         loan_type=loan_type
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('emp').order_by('-start_date')
+    ).select_related('emp').order_by('-start_date')
 
     # إحصائيات النوع
     type_stats = loans.aggregate(
@@ -205,8 +205,8 @@ def loan_list(request):
     loans = paginator.get_page(page_number)
 
     # قوائم للفلترة
-    loan_types = LoanType.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('type_name')
-    departments = Department.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('dept_name')
+    loan_types = LoanType.objects.all().order_by('type_name')
+    departments = Department.objects.filter(is_active=True).order_by('dept_name')
 
     context = {
         'loans': loans,
@@ -247,7 +247,7 @@ def loan_detail(request, loan_id):
     # أقساط القرض
     installments = LoanInstallment.objects.filter(
         loan=loan
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('due_date')
+    ).order_by('due_date')
 
     # إحصائيات القرض
     installment_stats = installments.aggregate(
@@ -399,7 +399,7 @@ def pay_installment(request, installment_id):
         remaining_installments = LoanInstallment.objects.filter(
             loan=installment.loan,
             status='Pending'
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+        ).count()
 
         if remaining_installments == 0:
             installment.loan.status = 'Completed'
@@ -425,7 +425,7 @@ def my_loans(request):
     # قروض الموظف
     my_loans = EmployeeLoan.objects.filter(
         emp=employee
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('loan_type').order_by('-start_date')
+    ).select_related('loan_type').order_by('-start_date')
 
     # إحصائيات شخصية
     personal_stats = my_loans.aggregate(
@@ -487,8 +487,8 @@ def reports(request):
 
     # إحصائيات عامة
     total_loans = EmployeeLoan.objects.count()
-    active_loans = EmployeeLoan.objects.filter(status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
-    completed_loans = EmployeeLoan.objects.filter(status='Completed').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+    active_loans = EmployeeLoan.objects.filter(status='Active').count()
+    completed_loans = EmployeeLoan.objects.filter(status='Completed').count()
 
     # إجمالي المبالغ
     amount_stats = EmployeeLoan.objects.aggregate(
@@ -523,7 +523,7 @@ def reports(request):
     # اتجاهات القروض الشهرية
     monthly_trends = EmployeeLoan.objects.filter(
         start_date__isnull=False
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.extra(
+    ).extra(
         select={'month': "MONTH(start_date)", 'year': "YEAR(start_date)"}
     ).values('month', 'year').annotate(
         loan_count=Count('loan_id'),
@@ -622,20 +622,20 @@ def loan_eligibility_check(request, emp_id):
         active_loans = EmployeeLoan.objects.filter(
             emp=employee,
             status='Active'
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+        ).count()
 
         # حساب إجمالي المبالغ النشطة
         total_active_amount = EmployeeLoan.objects.filter(
             emp=employee,
             status='Active'
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+        ).aggregate(
             total=Sum('approved_amount')
         )['total'] or 0
 
         # فحص الأقساط المتأخرة
         overdue_installments = LoanInstallment.objects.filter(
             loan__emp=employee,
-            due_date__lt=date.today().prefetch_related()  # TODO: Add appropriate prefetch_related fields,
+            due_date__lt=date.today(),
             status='Pending'
         ).count()
 

@@ -4,8 +4,11 @@ Base Models for the ElDawliya System
 """
 import uuid
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.utils.translation import gettext_lazy as _
+from django.conf import settings
+
+User = get_user_model()
 
 
 class BaseModel(models.Model):
@@ -30,7 +33,7 @@ class BaseModel(models.Model):
         help_text=_('تاريخ ووقت آخر تحديث للسجل')
     )
     created_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -39,7 +42,7 @@ class BaseModel(models.Model):
         help_text=_('المستخدم الذي أنشأ هذا السجل')
     )
     updated_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -112,7 +115,7 @@ class SoftDeleteModel(BaseModel):
         help_text=_('تاريخ ووقت حذف السجل')
     )
     deleted_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

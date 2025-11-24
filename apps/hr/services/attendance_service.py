@@ -7,7 +7,7 @@ from django.utils import timezone
 from django.db.models import Q, Count, Sum, Avg
 from datetime import date, datetime, timedelta
 from core.services.base import BaseService
-from core.models.attendance import EmployeeAttendance, AttendanceRule, OvertimeRecord, AttendanceDevice
+from core.models.attendance import EmployeeAttendanceProfile, AttendanceRule, AttendanceRecord, AttendanceSummary
 
 
 class AttendanceService(BaseService):
@@ -31,10 +31,10 @@ class AttendanceService(BaseService):
             att_date = att_date or timezone.now().date()
 
             # Check if attendance already exists for this date
-            existing_attendance = EmployeeAttendance.objects.filter(
+            existing_attendance = EmployeeAttendanceProfile.objects.filter(
                 employee=employee,
                 att_date=att_date
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+            ).first()
 
             if existing_attendance and not manual_entry:
                 # Update existing record
@@ -67,7 +67,7 @@ class AttendanceService(BaseService):
                 'updated_by': self.user
             }
 
-            attendance = EmployeeAttendance.objects.create(**attendance_data)
+            attendance = EmployeeAttendanceProfile.objects.create(**attendance_data)
 
             # Calculate attendance status and working hours
             self._calculate_attendance_status(attendance)
@@ -113,7 +113,7 @@ class AttendanceService(BaseService):
             # Check object-level permission
             self.check_object_permission('attendance.view_employeeattendance', employee)
 
-            queryset = EmployeeAttendance.objects.filter(employee=employee).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            queryset = EmployeeAttendanceProfile.objects.filter(employee=employee)
 
             # Apply date filters
             if start_date:
@@ -176,10 +176,10 @@ class AttendanceService(BaseService):
             end_date = date(year, month, monthrange(year, month)[1])
 
             # Get attendance records for the month
-            attendance_records = EmployeeAttendance.objects.filter(
+            attendance_records = EmployeeAttendanceProfile.objects.filter(
                 employee=employee,
                 att_date__range=[start_date, end_date]
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            )
 
             # Calculate summary statistics
             summary = attendance_records.aggregate(
@@ -239,13 +239,13 @@ class AttendanceService(BaseService):
             employees = Employee.objects.filter(
                 department=department,
                 is_active=True
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('job_position')
+            ).select_related('job_position')
 
             # Get attendance records for the date
             attendance_records = EmployeeAttendance.objects.filter(
                 employee__department=department,
                 att_date=report_date
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('employee')
+            ).select_related('employee')
 
             # Create attendance map
             attendance_map = {record.employee_id: record for record in attendance_records}
@@ -315,7 +315,7 @@ class AttendanceService(BaseService):
             attendance = EmployeeAttendance.objects.filter(
                 employee=employee,
                 att_date=att_date
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+            ).first()
 
             if not attendance:
                 return self.format_response(
@@ -327,7 +327,7 @@ class AttendanceService(BaseService):
             overtime_rule = AttendanceRule.objects.filter(
                 rule_type='overtime',
                 is_active=True
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+            ).first()
 
             # Calculate overtime rate
             overtime_rate = 1.5  # Default 150%
@@ -462,7 +462,7 @@ class AttendanceService(BaseService):
         """حساب حالة الحضور"""
         try:
             # Get attendance rules
-            rules = AttendanceRule.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+            rules = AttendanceRule.objects.filter(is_active=True).first()
 
             if not rules:
                 # Default rules
@@ -535,7 +535,7 @@ class AttendanceService(BaseService):
         from core.models.hr import Employee
         import random
 
-        employees = Employee.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields[:10]  # Limit for simulation
+        employees = Employee.objects.filter(is_active=True)[:10]  # Limit for simulation
         synced_records = []
 
         current_date = start_date

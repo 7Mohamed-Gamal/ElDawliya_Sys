@@ -208,7 +208,7 @@ class PurchaseOrder(AuditableModel):
         from django.utils import timezone
         date_str = timezone.now().strftime('%Y%m')
         count = PurchaseOrder.objects.filter(
-            po_date__year=timezone.now().prefetch_related()  # TODO: Add appropriate prefetch_related fields.year,
+            po_date__year=timezone.now().year,
             po_date__month=timezone.now().month
         ).count() + 1
         return f"PO-{date_str}-{count:04d}"
@@ -411,14 +411,15 @@ class PurchaseRequest(AuditableModel):
         related_name='purchase_requests',
         verbose_name=_('طلب بواسطة')
     )
-    department = models.ForeignKey(
-        'hr.Department',
-        on_delete=models.PROTECT,
-        null=True,
-        blank=True,
-        related_name='purchase_requests',
-        verbose_name=_('القسم')
-    )
+    # Temporarily disabled until HR app is restored
+    # department = models.ForeignKey(
+    #     'hr.Department',
+    #     on_delete=models.PROTECT,
+    #     null=True,
+    #     blank=True,
+    #     related_name='purchase_requests',
+    #     verbose_name=_('القسم')
+    # )
     status = models.CharField(
         max_length=20,
         choices=STATUS_CHOICES,
@@ -518,7 +519,7 @@ class PurchaseRequest(AuditableModel):
         from django.utils import timezone
         date_str = timezone.now().strftime('%Y%m')
         count = PurchaseRequest.objects.filter(
-            pr_date__year=timezone.now().prefetch_related()  # TODO: Add appropriate prefetch_related fields.year,
+            pr_date__year=timezone.now().year,
             pr_date__month=timezone.now().month
         ).count() + 1
         return f"PR-{date_str}-{count:04d}"
@@ -775,7 +776,7 @@ class GoodsReceipt(AuditableModel):
         from django.utils import timezone
         date_str = timezone.now().strftime('%Y%m')
         count = GoodsReceipt.objects.filter(
-            grn_date__year=timezone.now().prefetch_related()  # TODO: Add appropriate prefetch_related fields.year,
+            grn_date__year=timezone.now().year,
             grn_date__month=timezone.now().month
         ).count() + 1
         return f"GRN-{date_str}-{count:04d}"
@@ -1047,7 +1048,7 @@ class SupplierQuotation(AuditableModel):
         from django.utils import timezone
         date_str = timezone.now().strftime('%Y%m')
         count = SupplierQuotation.objects.filter(
-            quotation_date__year=timezone.now().prefetch_related()  # TODO: Add appropriate prefetch_related fields.year,
+            quotation_date__year=timezone.now().year,
             quotation_date__month=timezone.now().month
         ).count() + 1
         return f"QUO-{date_str}-{count:04d}"

@@ -126,7 +126,7 @@ def comprehensive_employee_edit(request, emp_id):
 
     transport_record = EmployeeTransport.objects.filter(
         emp=employee, is_active=True
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+    ).first()
 
     # Ensure we have a default work schedule
     from datetime import time
@@ -259,7 +259,7 @@ def comprehensive_employee_edit(request, emp_id):
                         # Check if this component already exists for this employee
                         existing_component = EmployeeSalaryComponent.objects.filter(
                             emp=employee, component=component
-                        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+                        ).first()
 
                         if existing_component:
                             # Update existing component
@@ -317,7 +317,7 @@ def comprehensive_employee_edit(request, emp_id):
         elif tab == 'leave_balances':
             # Handle leave balances update
             updated_count = 0
-            for balance in EmployeeLeaveBalance.objects.filter(emp=employee, year=date.today().prefetch_related()  # TODO: Add appropriate prefetch_related fields.year):
+            for balance in EmployeeLeaveBalance.objects.filter(emp=employee, year=date.today().year):
                 opening_balance = request.POST.get(f'opening_balance_{balance.id}')
                 accrued_balance = request.POST.get(f'accrued_balance_{balance.id}')
                 carried_forward = request.POST.get(f'carried_forward_{balance.id}')
@@ -355,39 +355,39 @@ def comprehensive_employee_edit(request, emp_id):
     social_insurance_form = EmployeeSocialInsuranceForm(instance=social_insurance) if social_insurance else EmployeeSocialInsuranceForm()
 
     # Get salary components for this employee
-    salary_components = EmployeeSalaryComponent.objects.filter(emp=employee).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('component')
+    salary_components = EmployeeSalaryComponent.objects.filter(emp=employee).select_related('component')
 
     # Get available salary components
-    available_allowances = SalaryComponent.objects.filter(component_type='allowance', is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
-    available_deductions = SalaryComponent.objects.filter(component_type='deduction', is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+    available_allowances = SalaryComponent.objects.filter(component_type='allowance', is_active=True)
+    available_deductions = SalaryComponent.objects.filter(component_type='deduction', is_active=True)
 
     transport_form = EmployeeTransportForm(instance=transport_record)
     work_setup_form = EmployeeWorkSetupForm(instance=work_setup) if work_setup else EmployeeWorkSetupForm()
 
     # Get leave balances
     leave_balances = EmployeeLeaveBalance.objects.filter(
-        emp=employee, year=date.today().prefetch_related()  # TODO: Add appropriate prefetch_related fields.year
+        emp=employee, year=date.today().year
     ).select_related('leave_type')
 
     # Get active loans
     active_loans = EmployeeLoan.objects.filter(
         emp=employee, status__in=['Approved', 'Active']
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('loan_type')
+    ).select_related('loan_type')
 
     # Get recent evaluations
     recent_evaluations = EmployeePerformanceEvaluation.objects.filter(
         emp=employee
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('-evaluation_date')[:5]
+    ).order_by('-evaluation_date')[:5]
 
     # Get employee documents
     employee_documents = ExtendedEmployeeDocument.objects.filter(
         emp=employee
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('-created_at')
+    ).order_by('-created_at')
 
     # Get document categories
     document_categories = EmployeeDocumentCategory.objects.filter(
         is_active=True
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('sort_order', 'category_name')
+    ).order_by('sort_order', 'category_name')
 
     context = {
         'employee': employee,
@@ -444,7 +444,7 @@ def calculate_salary_deductions(request, emp_id):
         emp=employee,
         component__component_type='allowance',
         is_active=True
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+    )
 
     total_taxable_income = sum(
         comp.amount for comp in salary_components
@@ -457,7 +457,7 @@ def calculate_salary_deductions(request, emp_id):
     # Get active loan installments
     active_loans = EmployeeLoan.objects.filter(
         emp=employee, status__in=['Approved', 'Active']
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+    )
 
     loan_deductions = sum(loan.installment_amt or Decimal('0.00') for loan in active_loans)
 
@@ -478,7 +478,7 @@ def calculate_salary_deductions(request, emp_id):
 @login_required
 def health_insurance_providers_list(request):
     """قائمة مقدمي خدمات التأمين الصحي"""
-    providers = ExtendedHealthInsuranceProvider.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('provider_name')
+    providers = ExtendedHealthInsuranceProvider.objects.all().order_by('provider_name')
     paginator = Paginator(providers, 25)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -513,7 +513,7 @@ def health_insurance_provider_create(request):
 @login_required
 def social_insurance_job_titles_list(request):
     """قائمة مسميات الوظائف في التأمينات الاجتماعية"""
-    job_titles = SocialInsuranceJobTitle.objects.all().select_related()  # TODO: Add appropriate select_related fields
+    job_titles = SocialInsuranceJobTitle.objects.all()
 
     # Search functionality
     search = request.GET.get('search')
@@ -614,7 +614,7 @@ def social_insurance_job_title_edit(request, job_title_id):
 @login_required
 def salary_components_list(request):
     """قائمة مكونات الراتب"""
-    components = SalaryComponent.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('component_type', 'sort_order', 'component_name')
+    components = SalaryComponent.objects.all().order_by('component_type', 'sort_order', 'component_name')
     paginator = Paginator(components, 25)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -672,7 +672,7 @@ def salary_component_edit(request, component_id):
 @login_required
 def vehicles_list(request):
     """قائمة المركبات"""
-    vehicles = Vehicle.objects.all().select_related()  # TODO: Add appropriate select_related fields
+    vehicles = Vehicle.objects.all()
 
     # Search functionality
     search = request.GET.get('search')
@@ -760,7 +760,7 @@ def vehicle_edit(request, vehicle_id):
 @login_required
 def pickup_points_list(request):
     """قائمة نقاط التجميع"""
-    pickup_points = PickupPoint.objects.all().select_related()  # TODO: Add appropriate select_related fields
+    pickup_points = PickupPoint.objects.all()
 
     # Search functionality
     search = request.GET.get('search')
@@ -839,7 +839,7 @@ def pickup_point_edit(request, pickup_point_id):
 @login_required
 def work_schedules_list(request):
     """قائمة جداول العمل"""
-    schedules = WorkSchedule.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('schedule_name')
+    schedules = WorkSchedule.objects.all().order_by('schedule_name')
     paginator = Paginator(schedules, 25)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -897,7 +897,7 @@ def work_schedule_edit(request, schedule_id):
 @login_required
 def evaluation_criteria_list(request):
     """قائمة معايير التقييم"""
-    criteria = EvaluationCriteria.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('sort_order', 'criteria_name')
+    criteria = EvaluationCriteria.objects.all().order_by('sort_order', 'criteria_name')
     paginator = Paginator(criteria, 25)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -965,7 +965,7 @@ def performance_evaluation_create(request, emp_id):
             evaluation.save()
 
             # Create evaluation scores for all active criteria
-            criteria = EvaluationCriteria.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            criteria = EvaluationCriteria.objects.filter(is_active=True)
             for criterion in criteria:
                 EvaluationScore.objects.create(
                     evaluation=evaluation,
@@ -995,7 +995,7 @@ def performance_evaluation_create(request, emp_id):
 def performance_evaluation_detail(request, evaluation_id):
     """عرض تفاصيل تقييم الأداء"""
     evaluation = get_object_or_404(EmployeePerformanceEvaluation, evaluation_id=evaluation_id)
-    scores = EvaluationScore.objects.filter(evaluation=evaluation).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('criteria')
+    scores = EvaluationScore.objects.filter(evaluation=evaluation).select_related('criteria')
 
     context = {
         'evaluation': evaluation,
@@ -1020,7 +1020,7 @@ def performance_evaluation_edit(request, evaluation_id):
                 formset.save()
 
                 # Calculate overall score
-                scores = EvaluationScore.objects.filter(evaluation=evaluation).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+                scores = EvaluationScore.objects.filter(evaluation=evaluation)
                 total_weighted_score = sum(
                     score.score * score.criteria.weight for score in scores
                 )
@@ -1059,7 +1059,7 @@ def initialize_leave_balances(request, emp_id):
         # Check if employee already has leave balances for current year
         existing_balances = EmployeeLeaveBalance.objects.filter(
             emp=employee, year=current_year
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+        ).count()
 
         if existing_balances > 0:
             return JsonResponse({
@@ -1070,7 +1070,7 @@ def initialize_leave_balances(request, emp_id):
         # Get all active leave types
         try:
             from leaves.models import LeaveType
-            leave_types = LeaveType.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            leave_types = LeaveType.objects.filter(is_active=True)
         except ImportError:
             return JsonResponse({
                 'success': False,
@@ -1287,7 +1287,7 @@ def add_salary_component(request):
         # Check if this component already exists for this employee
         existing_component = EmployeeSalaryComponent.objects.filter(
             emp=employee, component=component
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+        ).first()
 
         if existing_component:
             # Update existing component

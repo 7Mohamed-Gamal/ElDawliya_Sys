@@ -53,7 +53,7 @@ class EmployeeHealthInsuranceForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         """__init__ function"""
         super().__init__(*args, **kwargs)
-        self.fields['provider'].queryset = ExtendedHealthInsuranceProvider.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        self.fields['provider'].queryset = ExtendedHealthInsuranceProvider.objects.filter(is_active=True)
 
         # Add required field indicators
         for field_name, field in self.fields.items():
@@ -106,7 +106,7 @@ class EmployeeSocialInsuranceForm(forms.ModelForm):
         """__init__ function"""
         super().__init__(*args, **kwargs)
         # Set queryset for job_title to only active titles
-        self.fields['job_title'].queryset = SocialInsuranceJobTitle.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        self.fields['job_title'].queryset = SocialInsuranceJobTitle.objects.filter(is_active=True)
 
         # Add labels
         self.fields['insurance_status'].label = 'حالة التأمين'
@@ -176,7 +176,7 @@ class EmployeeDocumentForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # Set queryset for category to only active categories
         from .models_extended import EmployeeDocumentCategory
-        self.fields['category'].queryset = EmployeeDocumentCategory.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        self.fields['category'].queryset = EmployeeDocumentCategory.objects.filter(is_active=True)
 
         # Add labels
         self.fields['category'].label = 'فئة الوثيقة'
@@ -297,7 +297,7 @@ class EmployeeSalaryComponentForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         """__init__ function"""
         super().__init__(*args, **kwargs)
-        self.fields['component'].queryset = SalaryComponent.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        self.fields['component'].queryset = SalaryComponent.objects.filter(is_active=True)
 
 
 class EmployeeTransportForm(forms.ModelForm):
@@ -323,8 +323,8 @@ class EmployeeTransportForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         """__init__ function"""
         super().__init__(*args, **kwargs)
-        self.fields['vehicle'].queryset = Vehicle.objects.filter(vehicle_status='active').prefetch_related()  # TODO: Add appropriate prefetch_related fields
-        self.fields['pickup_point'].queryset = PickupPoint.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        self.fields['vehicle'].queryset = Vehicle.objects.filter(vehicle_status='active')
+        self.fields['pickup_point'].queryset = PickupPoint.objects.filter(is_active=True)
 
         # Add vehicle details display
         self.fields['supervisor_name'] = forms.CharField(
@@ -390,7 +390,7 @@ class EmployeePerformanceEvaluationForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         """__init__ function"""
         super().__init__(*args, **kwargs)
-        self.fields['evaluator'].queryset = Employee.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        self.fields['evaluator'].queryset = Employee.objects.filter(is_active=True)
 
 
 class EmployeeWorkSetupForm(forms.ModelForm):
@@ -417,7 +417,7 @@ class EmployeeWorkSetupForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         """__init__ function"""
         super().__init__(*args, **kwargs)
-        self.fields['work_schedule'].queryset = WorkSchedule.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        self.fields['work_schedule'].queryset = WorkSchedule.objects.filter(is_active=True)
 
 
 # =============================================================================

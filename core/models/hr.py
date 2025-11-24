@@ -6,11 +6,14 @@ import uuid
 from decimal import Decimal
 from datetime import date, timedelta
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
+from django.conf import settings
 from .base import BaseModel, AuditableModel, SoftDeleteModel, AddressModel, ContactModel
+
+User = get_user_model()
 
 
 class Department(BaseModel):
@@ -138,7 +141,7 @@ class Employee(AuditableModel, AddressModel, ContactModel):
     emergency_contact_relation = models.CharField(max_length=50, blank=True, null=True, verbose_name=_('صلة القرابة'))
 
     # System Integration
-    user_account = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True,
+    user_account = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
                                        related_name='employee_profile', verbose_name=_('حساب المستخدم'))
 
     class Meta:
@@ -282,7 +285,7 @@ class EmployeeQualification(BaseModel):
     expiry_date = models.DateField(blank=True, null=True, verbose_name=_('تاريخ انتهاء الصلاحية'))
     attachment = models.FileField(upload_to='employees/qualifications/', blank=True, null=True, verbose_name=_('المرفق'))
     verified = models.BooleanField(default=False, verbose_name=_('تم التحقق'))
-    verified_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('تم التحقق بواسطة'))
+    verified_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, verbose_name=_('تم التحقق بواسطة'))
     verified_at = models.DateTimeField(blank=True, null=True, verbose_name=_('تاريخ التحقق'))
 
     class Meta:
@@ -328,7 +331,7 @@ class EmployeeBankAccount(BaseModel):
             existing_primary = EmployeeBankAccount.objects.filter(
                 employee=self.employee,
                 is_primary=True
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exclude(pk=self.pk)
+            ).exclude(pk=self.pk)
 
             if existing_primary.exists():
                 raise ValidationError(_('يمكن أن يكون هناك حساب أساسي واحد فقط لكل موظف'))
@@ -515,7 +518,7 @@ class EmployeeSalary(AuditableModel):
             existing_current = EmployeeSalary.objects.filter(
                 employee=self.employee,
                 is_current=True
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exclude(pk=self.pk)
+            ).exclude(pk=self.pk)
 
             if existing_current.exists():
                 errors['is_current'] = _('يوجد راتب ساري بالفعل لهذا الموظف')

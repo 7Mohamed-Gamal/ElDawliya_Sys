@@ -8,7 +8,7 @@ class Command(BaseCommand):
     def handle(self, *args, **kwargs):
         """handle function"""
         # Check if Gemini provider exists
-        gemini_exists = AIProvider.objects.filter(name='gemini').prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists()
+        gemini_exists = AIProvider.objects.filter(name='gemini').exists()
         if not gemini_exists:
             self.stdout.write('Creating Gemini provider...')
             AIProvider.objects.create(
@@ -23,7 +23,7 @@ class Command(BaseCommand):
             self.stdout.write('Gemini provider already exists')
 
         # Check if OpenAI provider exists
-        openai_exists = AIProvider.objects.filter(name='openai').prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists()
+        openai_exists = AIProvider.objects.filter(name='openai').exists()
         if not openai_exists:
             self.stdout.write('Creating OpenAI provider...')
             AIProvider.objects.create(
@@ -38,7 +38,7 @@ class Command(BaseCommand):
             self.stdout.write('OpenAI provider already exists')
 
         # Display all providers
-        providers = AIProvider.objects.all().select_related()  # TODO: Add appropriate select_related fields
+        providers = AIProvider.objects.all()
         self.stdout.write('\nCurrent AI Providers:')
         for provider in providers:
             self.stdout.write(f'- {provider.name} ({provider.display_name}): {"Active" if provider.is_active else "Inactive"}')

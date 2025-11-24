@@ -74,7 +74,10 @@ class ProductViewSet(viewsets.ModelViewSet):
                 'total_stock': openapi.Schema(type=openapi.TYPE_NUMBER),
                 'available_stock': openapi.Schema(type=openapi.TYPE_NUMBER),
                 'reserved_stock': openapi.Schema(type=openapi.TYPE_NUMBER),
-                'warehouse_breakdown': openapi.Schema(type=openapi.TYPE_ARRAY),
+                'warehouse_breakdown': openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Schema(type=openapi.TYPE_OBJECT)
+                ),
             }
         )}
     )

@@ -106,7 +106,7 @@ class QueryOptimizationTests(TestCase):
         connection.queries_log.clear()
 
         # محاكاة مشكلة N+1
-        users = User.objects.all().select_related()  # TODO: Add appropriate select_related fields[:10]  # استعلام واحد
+        users = User.objects.all()[:10]  # استعلام واحد
 
         # هذا سيسبب N استعلامات إضافية إذا لم يتم التحسين
         user_data = []
@@ -143,7 +143,7 @@ class QueryOptimizationTests(TestCase):
         connection.queries_log.clear()
 
         # بدون select_related
-        users_without_optimization = list(User.objects.all().select_related()  # TODO: Add appropriate select_related fields[:5])
+        users_without_optimization = list(User.objects.all()[:5])
         queries_without = len(connection.queries)
 
         # الوصول للعلاقات (سيسبب استعلامات إضافية)
@@ -188,7 +188,7 @@ class QueryOptimizationTests(TestCase):
         """tearDownClass function"""
         super().tearDownClass()
         # تنظيف البيانات
-        User.objects.filter(username__startswith='optim_user_').prefetch_related()  # TODO: Add appropriate prefetch_related fields.delete()
+        User.objects.filter(username__startswith='optim_user_').delete()
 
 
 class CacheOptimizationTests(TestCase):
@@ -409,7 +409,7 @@ class ResponseTimeOptimizationTests(TestCase):
         start_time = time.time()
         connection.queries_log.clear()
 
-        users_unoptimized = User.objects.filter(username__startswith='db_optim_user_').prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        users_unoptimized = User.objects.filter(username__startswith='db_optim_user_')
         user_data_unoptimized = []
         for user in users_unoptimized:
             user_data_unoptimized.append({
@@ -426,7 +426,7 @@ class ResponseTimeOptimizationTests(TestCase):
 
         users_optimized = User.objects.filter(
             username__startswith='db_optim_user_'
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.prefetch_related('groups')
+        ).prefetch_related('groups')
 
         user_data_optimized = []
         for user in users_optimized:
@@ -455,7 +455,7 @@ class ResponseTimeOptimizationTests(TestCase):
             print(f"   تحسن الاستعلامات: {query_improvement:+.1f}%")
 
         # تنظيف البيانات
-        User.objects.filter(username__startswith='db_optim_user_').prefetch_related()  # TODO: Add appropriate prefetch_related fields.delete()
+        User.objects.filter(username__startswith='db_optim_user_').delete()
 
         # التحقق من التحسينات
         self.assertLessEqual(optimized_queries, unoptimized_queries,

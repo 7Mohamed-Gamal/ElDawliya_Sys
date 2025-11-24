@@ -219,7 +219,7 @@ class DatabaseOptimizationService:
             stats = {
                 'employees': {
                     'total': Employee.objects.count(),
-                    'active': Employee.objects.filter(working_condition='سارى').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count(),
+                    'active': Employee.objects.filter(working_condition='سارى').count(),
                     'by_department': list(
                         Employee.objects.values('department__dept_name')
                         .annotate(count=Count('emp_id'))
@@ -228,28 +228,28 @@ class DatabaseOptimizationService:
                 },
                 'tasks': {
                     'total': Task.objects.count(),
-                    'active': Task.objects.filter(status__in=['pending', 'in_progress']).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count(),
-                    'completed': Task.objects.filter(status='completed').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count(),
+                    'active': Task.objects.filter(status__in=['pending', 'in_progress']).count(),
+                    'completed': Task.objects.filter(status='completed').count(),
                     'overdue': Task.objects.filter(
-                        end_date__lt=timezone.now().prefetch_related()  # TODO: Add appropriate prefetch_related fields.date(),
+                        end_date__lt=timezone.now().date(),
                         status__in=['pending', 'in_progress']
                     ).count()
                 },
                 'meetings': {
                     'total': Meeting.objects.count(),
-                    'upcoming': Meeting.objects.filter(date__gte=timezone.now().prefetch_related()  # TODO: Add appropriate prefetch_related fields).count(),
+                    'upcoming': Meeting.objects.filter(date__gte=timezone.now()).count(),
                     'this_month': Meeting.objects.filter(
-                        date__month=timezone.now().prefetch_related()  # TODO: Add appropriate prefetch_related fields.month,
+                        date__month=timezone.now().month,
                         date__year=timezone.now().year
                     ).count()
                 },
                 'inventory': {
                     'total_products': TblProducts.objects.count(),
-                    'low_stock': TblProducts.objects.filter(qte_in_stock__lte=10).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+                    'low_stock': TblProducts.objects.filter(qte_in_stock__lte=10).count()
                 },
                 'purchase_orders': {
                     'total': PurchaseRequest.objects.count(),
-                    'pending': PurchaseRequest.objects.filter(status='pending').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+                    'pending': PurchaseRequest.objects.filter(status='pending').count()
                 }
             }
 

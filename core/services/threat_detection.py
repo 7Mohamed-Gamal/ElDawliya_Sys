@@ -444,7 +444,7 @@ class ThreatDetectionEngine:
         user_logs = AuditLog.objects.filter(
             user_id=user_id,
             timestamp__range=[start_date, end_date]
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        )
 
         if user_logs.count() < 10:  # Need minimum activity for profiling
             return None

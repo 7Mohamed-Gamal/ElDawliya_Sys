@@ -75,14 +75,14 @@ class VoucherListView(ListView):
         context['date_to'] = self.request.GET.get('date_to', '')
 
         # إحصائيات الأذونات
-        context['addition_count'] = Voucher.objects.filter(voucher_type='إذن اضافة').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
-        context['disbursement_count'] = Voucher.objects.filter(voucher_type='إذن صرف').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
-        context['client_return_count'] = Voucher.objects.filter(voucher_type='اذن مرتجع عميل').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
-        context['supplier_return_count'] = Voucher.objects.filter(voucher_type='إذن مرتجع مورد').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+        context['addition_count'] = Voucher.objects.filter(voucher_type='إذن اضافة').count()
+        context['disbursement_count'] = Voucher.objects.filter(voucher_type='إذن صرف').count()
+        context['client_return_count'] = Voucher.objects.filter(voucher_type='اذن مرتجع عميل').count()
+        context['supplier_return_count'] = Voucher.objects.filter(voucher_type='إذن مرتجع مورد').count()
 
         # Add low stock count for sidebar
         low_stock_count = Product.objects.filter(
-            quantity__lt=F('minimum_threshold').prefetch_related()  # TODO: Add appropriate prefetch_related fields,
+            quantity__lt=F('minimum_threshold'),
             minimum_threshold__gt=0
         ).count()
         context['low_stock_count'] = low_stock_count
@@ -126,16 +126,16 @@ class VoucherCreateView(CreateView):
             context['page_title'] = 'إضافة إذن جديد'
 
         context['today'] = timezone.now().date().strftime('%Y-%m-%d')
-        context['suppliers'] = Supplier.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
-        context['departments'] = Department.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
-        context['customers'] = Customer.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
-        context['products'] = Product.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
+        context['suppliers'] = Supplier.objects.all().order_by('name')
+        context['departments'] = Department.objects.all().order_by('name')
+        context['customers'] = Customer.objects.all().order_by('name')
+        context['products'] = Product.objects.all().order_by('name')
         context['voucher_type'] = voucher_type
         context['voucher_items'] = []
 
         # Add low stock count for sidebar
         low_stock_count = Product.objects.filter(
-            quantity__lt=F('minimum_threshold').prefetch_related()  # TODO: Add appropriate prefetch_related fields,
+            quantity__lt=F('minimum_threshold'),
             minimum_threshold__gt=0
         ).count()
         context['low_stock_count'] = low_stock_count
@@ -206,16 +206,16 @@ class VoucherUpdateView(UpdateView):
             context['page_title'] = 'تعديل إذن'
 
         context['today'] = timezone.now().date().strftime('%Y-%m-%d')
-        context['suppliers'] = Supplier.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
-        context['departments'] = Department.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
-        context['customers'] = Customer.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
-        context['products'] = Product.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
+        context['suppliers'] = Supplier.objects.all().order_by('name')
+        context['departments'] = Department.objects.all().order_by('name')
+        context['customers'] = Customer.objects.all().order_by('name')
+        context['products'] = Product.objects.all().order_by('name')
         context['voucher_type'] = voucher.voucher_type
         context['voucher_items'] = voucher.items.all()
 
         # Add low stock count for sidebar
         low_stock_count = Product.objects.filter(
-            quantity__lt=F('minimum_threshold').prefetch_related()  # TODO: Add appropriate prefetch_related fields,
+            quantity__lt=F('minimum_threshold'),
             minimum_threshold__gt=0
         ).count()
         context['low_stock_count'] = low_stock_count
@@ -341,7 +341,7 @@ class VoucherDetailView(DetailView):
 
         # الحصول على عناصر الإذن باستخدام استعلام مباشر
         # استخدام استعلام مباشر بدلاً من العلاقة العكسية
-        voucher_items = VoucherItem.objects.filter(voucher=voucher).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('product', 'product__unit')
+        voucher_items = VoucherItem.objects.filter(voucher=voucher).select_related('product', 'product__unit')
 
         # طباعة عدد العناصر للتشخيص
         print(f"Found {voucher_items.count()} items for voucher {voucher.voucher_number}")
@@ -383,7 +383,7 @@ class VoucherDetailView(DetailView):
 
         # Add low stock count for sidebar
         low_stock_count = Product.objects.filter(
-            quantity__lt=F('minimum_threshold').prefetch_related()  # TODO: Add appropriate prefetch_related fields,
+            quantity__lt=F('minimum_threshold'),
             minimum_threshold__gt=0
         ).count()
         context['low_stock_count'] = low_stock_count
@@ -415,7 +415,7 @@ def generate_voucher_number(request):
     count = Voucher.objects.filter(
         date=today,
         voucher_number__startswith=f"{prefix}-{date_part}"
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count() + 1
+    ).count() + 1
 
     # Format with leading zeros for the count (e.g., 001, 002, etc.)
     voucher_number = f"{prefix}-{date_part}-{count:03d}"

@@ -63,7 +63,7 @@ def dashboard(request):
             ).order_by('priority')
         else:
             priority_stats = Task.objects.filter(
-                Q(assigned_to=user).prefetch_related()  # TODO: Add appropriate prefetch_related fields | Q(created_by=user)
+                Q(assigned_to=user) | Q(created_by=user)
             ).values('priority').annotate(count=Count('id')).order_by('priority')
 
         # Task type distribution
@@ -327,7 +327,7 @@ def _get_task_statistics(user):
         )
     else:
         regular_stats = Task.objects.filter(
-            Q(assigned_to=user).prefetch_related()  # TODO: Add appropriate prefetch_related fields | Q(created_by=user)
+            Q(assigned_to=user) | Q(created_by=user)
         ).aggregate(
             total=Count('id'),
             in_progress=Count(Case(When(status='in_progress', then=1), output_field=IntegerField())),
@@ -337,7 +337,7 @@ def _get_task_statistics(user):
                 output_field=IntegerField()
             ))
         )
-        meeting_stats = MeetingTask.objects.filter(assigned_to=user).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+        meeting_stats = MeetingTask.objects.filter(assigned_to=user).aggregate(
             total=Count('id'),
             in_progress=Count(Case(When(status='in_progress', then=1), output_field=IntegerField())),
             completed=Count(Case(When(status='completed', then=1), output_field=IntegerField())),
@@ -439,7 +439,7 @@ def task_detail(request, pk):
                 from meetings.models import MeetingTask
                 related_meeting_tasks = MeetingTask.objects.filter(
                     meeting=unified_task.meeting
-                ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exclude(id=unified_task.raw_id)[:3]
+                ).exclude(id=unified_task.raw_id)[:3]
                 related_tasks.extend([
                     UnifiedTaskManager.get_task_by_id(f"meeting_{t.id}", request.user)
                     for t in related_meeting_tasks
@@ -448,7 +448,7 @@ def task_detail(request, pk):
             # Also get regular tasks from the same meeting
             related_regular_tasks = Task.objects.filter(
                 meeting=unified_task.meeting
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            )
             if unified_task.task_type == 'regular':
                 related_regular_tasks = related_regular_tasks.exclude(id=unified_task.raw_id)
 
@@ -466,8 +466,8 @@ def task_detail(request, pk):
         meeting_stats = None
         if unified_task.meeting:
             from meetings.models import MeetingTask
-            meeting_tasks = MeetingTask.objects.filter(meeting=unified_task.meeting).prefetch_related()  # TODO: Add appropriate prefetch_related fields
-            regular_tasks = Task.objects.filter(meeting=unified_task.meeting).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            meeting_tasks = MeetingTask.objects.filter(meeting=unified_task.meeting)
+            regular_tasks = Task.objects.filter(meeting=unified_task.meeting)
 
             meeting_stats = {
                 'total_meeting_tasks': meeting_tasks.count(),
@@ -688,14 +688,14 @@ def dashboard_stats(request):
 
     # Get stats for the current user if not a superuser
     if not request.user.is_superuser:
-        regular_task_count = Task.objects.filter(assigned_to=request.user).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
-        meeting_task_count = MeetingTask.objects.filter(assigned_to=request.user).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+        regular_task_count = Task.objects.filter(assigned_to=request.user).count()
+        meeting_task_count = MeetingTask.objects.filter(assigned_to=request.user).count()
 
-        regular_completed = Task.objects.filter(assigned_to=request.user, status='completed').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
-        meeting_completed = MeetingTask.objects.filter(assigned_to=request.user, status='completed').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+        regular_completed = Task.objects.filter(assigned_to=request.user, status='completed').count()
+        meeting_completed = MeetingTask.objects.filter(assigned_to=request.user, status='completed').count()
 
         stats = {
-            'meeting_count': Meeting.objects.filter(attendees__user=request.user).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count(),
+            'meeting_count': Meeting.objects.filter(attendees__user=request.user).count(),
             'task_count': regular_task_count + meeting_task_count,
             'completed_task_count': regular_completed + meeting_completed,
             'user_count': User.objects.count()
@@ -705,8 +705,8 @@ def dashboard_stats(request):
         regular_task_count = Task.objects.count()
         meeting_task_count = MeetingTask.objects.count()
 
-        regular_completed = Task.objects.filter(status='completed').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
-        meeting_completed = MeetingTask.objects.filter(status='completed').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+        regular_completed = Task.objects.filter(status='completed').count()
+        meeting_completed = MeetingTask.objects.filter(status='completed').count()
 
         stats = {
             'meeting_count': Meeting.objects.count(),
@@ -733,7 +733,7 @@ def bulk_task_update(request):
             task_ids = form.cleaned_data['task_ids'].split(',')
             task_ids = [int(id.strip()) for id in task_ids if id.strip().isdigit()]
 
-            tasks = Task.objects.filter(id__in=task_ids).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            tasks = Task.objects.filter(id__in=task_ids)
             updated_count = 0
 
             if action == 'update_status':
@@ -870,13 +870,13 @@ def task_stats_api(request):
             ).order_by('status')
         else:
             priority_stats = Task.objects.filter(
-                Q(assigned_to=user).prefetch_related()  # TODO: Add appropriate prefetch_related fields | Q(created_by=user)
+                Q(assigned_to=user) | Q(created_by=user)
             ).values('priority').annotate(
                 count=Count('id')
             ).order_by('priority')
 
             status_stats = Task.objects.filter(
-                Q(assigned_to=user).prefetch_related()  # TODO: Add appropriate prefetch_related fields | Q(created_by=user)
+                Q(assigned_to=user) | Q(created_by=user)
             ).values('status').annotate(
                 count=Count('id')
             ).order_by('status')
@@ -998,7 +998,7 @@ def task_analytics(request):
 
         # Get base queryset
         if user.is_superuser:
-            tasks = Task.objects.all().select_related()  # TODO: Add appropriate select_related fields
+            tasks = Task.objects.all()
         else:
             tasks = Task.objects.for_user(user)
 
@@ -1039,7 +1039,7 @@ def task_analytics(request):
         user_performance = []
         if user.is_superuser:
             from accounts.models import Users_Login_New
-            active_users = Users_Login_New.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            active_users = Users_Login_New.objects.filter(is_active=True)
 
             for u in active_users:
                 user_tasks = tasks.filter(assigned_to=u)
@@ -1124,19 +1124,19 @@ def task_analytics(request):
 @tasks_module_permission_required('tasks', 'view')
 def my_tasks(request):
     """عرض مهامي"""
-    tasks = Task.objects.filter(assigned_to=request.user).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+    tasks = Task.objects.filter(assigned_to=request.user)
     return render(request, 'tasks/my_tasks.html', {'tasks': tasks})
 
 @login_required
 @tasks_module_permission_required('tasks', 'view')
 def completed_tasks(request):
     """عرض المهام المكتملة"""
-    tasks = Task.objects.filter(status='completed').prefetch_related()  # TODO: Add appropriate prefetch_related fields
+    tasks = Task.objects.filter(status='completed')
     return render(request, 'tasks/completed_tasks.html', {'tasks': tasks})
 
 @login_required
 @tasks_module_permission_required('reports', 'view')
 def reports(request):
     """عرض تقارير المهام"""
-    tasks = Task.objects.all().select_related()  # TODO: Add appropriate select_related fields
+    tasks = Task.objects.all()
     return render(request, 'tasks/reports.html', {'tasks': tasks})

@@ -64,7 +64,7 @@ class Command(BaseCommand):
             ]
 
             for content_type in api_content_types:
-                permissions = Permission.objects.filter(content_type=content_type).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+                permissions = Permission.objects.filter(content_type=content_type)
                 for permission in permissions:
                     api_users_group.permissions.add(permission)
 

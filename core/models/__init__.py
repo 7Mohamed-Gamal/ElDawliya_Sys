@@ -18,8 +18,10 @@ from .base import (
 # Audit Models
 from .audit import (
     AuditLog,
-    SystemLog,
-    LoginAttempt,
+    SecurityEvent,
+    SystemMetric,
+    AlertRule,
+    Alert,
 )
 
 # Permission Models
@@ -137,8 +139,10 @@ __all__ = [
 
     # Audit Models
     'AuditLog',
-    'SystemLog',
-    'LoginAttempt',
+    'SecurityEvent',
+    'SystemMetric',
+    'AlertRule',
+    'Alert',
 
     # Permission Models
     'Module',

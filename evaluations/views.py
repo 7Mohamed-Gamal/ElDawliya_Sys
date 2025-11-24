@@ -24,15 +24,15 @@ def dashboard(request):
     # إحصائيات عامة
     total_periods = EvaluationPeriod.objects.count()
     total_evaluations = EmployeeEvaluation.objects.count()
-    completed_evaluations = EmployeeEvaluation.objects.filter(score__isnull=False).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
-    pending_evaluations = EmployeeEvaluation.objects.filter(score__isnull=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+    completed_evaluations = EmployeeEvaluation.objects.filter(score__isnull=False).count()
+    pending_evaluations = EmployeeEvaluation.objects.filter(score__isnull=True).count()
 
     # الفترة النشطة الحالية
     try:
         active_period = EvaluationPeriod.objects.filter(
             start_date__lte=today,
             end_date__gte=today
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+        ).first()
     except Exception as e:
         logger.error(f"Error fetching active evaluation period: {str(e)}")
         active_period = None
@@ -42,7 +42,7 @@ def dashboard(request):
     if active_period:
         active_period_stats = EmployeeEvaluation.objects.filter(
             period=active_period
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+        ).aggregate(
             total_evaluations=Count('eval_id'),
             completed_evaluations=Count('eval_id', filter=Q(score__isnull=False)),
             average_score=Avg('score'),
@@ -64,7 +64,7 @@ def dashboard(request):
     # توزيع الدرجات
     score_distribution = EmployeeEvaluation.objects.filter(
         score__isnull=False
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.extra(
+    ).extra(
         select={
             'score_range': """
                 CASE
@@ -145,8 +145,8 @@ def evaluation_list(request):
     evaluations = paginator.get_page(page_number)
 
     # قوائم للفلترة
-    periods = EvaluationPeriod.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('-start_date')
-    departments = Department.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('dept_name')
+    periods = EvaluationPeriod.objects.all().order_by('-start_date')
+    departments = Department.objects.filter(is_active=True).order_by('dept_name')
 
     context = {
         'evaluations': evaluations,
@@ -188,13 +188,13 @@ def evaluation_detail(request, eval_id):
     previous_evaluations = EmployeeEvaluation.objects.filter(
         emp=evaluation.emp,
         score__isnull=False
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exclude(eval_id=eval_id).order_by('-eval_date')[:5]
+    ).exclude(eval_id=eval_id).order_by('-eval_date')[:5]
 
     # حساب متوسط درجات الموظف
     employee_avg = EmployeeEvaluation.objects.filter(
         emp=evaluation.emp,
         score__isnull=False
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(avg_score=Avg('score'))['avg_score']
+    ).aggregate(avg_score=Avg('score'))['avg_score']
 
     # تحديد مستوى الأداء
     performance_level = None
@@ -317,7 +317,7 @@ def get_period(request, period_id):
     period = get_object_or_404(EvaluationPeriod, period_id=period_id)
 
     # إحصائيات الفترة
-    period_stats = EmployeeEvaluation.objects.filter(period=period).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+    period_stats = EmployeeEvaluation.objects.filter(period=period).aggregate(
         total_evaluations=Count('eval_id'),
         completed_evaluations=Count('eval_id', filter=Q(score__isnull=False)),
         pending_evaluations=Count('eval_id', filter=Q(score__isnull=True)),
@@ -329,7 +329,7 @@ def get_period(request, period_id):
     # تقييمات الفترة
     evaluations = EmployeeEvaluation.objects.filter(
         period=period
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('emp').order_by('-score', 'emp__first_name')
+    ).select_related('emp').order_by('-score', 'emp__first_name')
 
     # توزيع الدرجات
     score_distribution = evaluations.filter(
@@ -393,7 +393,7 @@ def delete_period(request, period_id):
 
     try:
         # التحقق من وجود تقييمات مرتبطة
-        if EmployeeEvaluation.objects.filter(period=period).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists():
+        if EmployeeEvaluation.objects.filter(period=period).exists():
             messages.error(request, f'لا يمكن حذف فترة التقييم {period.period_name} لأنها تحتوي على تقييمات.')
         else:
             period.delete()
@@ -412,12 +412,12 @@ def reports(request):
 
     # إحصائيات عامة
     total_evaluations = EmployeeEvaluation.objects.count()
-    completed_evaluations = EmployeeEvaluation.objects.filter(score__isnull=False).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+    completed_evaluations = EmployeeEvaluation.objects.filter(score__isnull=False).count()
 
     # متوسط الدرجات العام
     overall_avg = EmployeeEvaluation.objects.filter(
         score__isnull=False
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(avg_score=Avg('score'))['avg_score']
+    ).aggregate(avg_score=Avg('score'))['avg_score']
 
     # إحصائيات الأقسام
     department_stats = Department.objects.annotate(
@@ -430,13 +430,13 @@ def reports(request):
     # أفضل الموظفين
     top_performers = EmployeeEvaluation.objects.filter(
         score__isnull=False
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('emp').order_by('-score')[:10]
+    ).select_related('emp').order_by('-score')[:10]
 
     # توزيع الدرجات الشهري
     monthly_stats = EmployeeEvaluation.objects.filter(
         eval_date__isnull=False,
         score__isnull=False
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.extra(
+    ).extra(
         select={'month': "MONTH(eval_date)", 'year': "YEAR(eval_date)"}
     ).values('month', 'year').annotate(
         count=Count('eval_id'),
@@ -488,7 +488,7 @@ def performance_comparison(request):
     # أفضل الموظفين
     top_employees = EmployeeEvaluation.objects.filter(
         score__isnull=False
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('emp').order_by('-score')[:10]
+    ).select_related('emp').order_by('-score')[:10]
 
     # مقارنة الأقسام
     department_comparison = Department.objects.annotate(
@@ -524,7 +524,7 @@ def my_evaluations(request):
     # تقييمات الموظف
     my_evaluations = EmployeeEvaluation.objects.filter(
         emp=employee
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('period').order_by('-eval_date')
+    ).select_related('period').order_by('-eval_date')
 
     # إحصائيات شخصية
     personal_stats = my_evaluations.filter(score__isnull=False).aggregate(
@@ -556,18 +556,18 @@ def my_performance(request):
     performance_trend = EmployeeEvaluation.objects.filter(
         emp=employee,
         score__isnull=False
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('eval_date')
+    ).order_by('eval_date')
 
     # مقارنة مع متوسط القسم
     department_avg = EmployeeEvaluation.objects.filter(
         emp__dept=employee.dept,
         score__isnull=False
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(avg_score=Avg('score'))['avg_score']
+    ).aggregate(avg_score=Avg('score'))['avg_score']
 
     # مقارنة مع متوسط الشركة
     company_avg = EmployeeEvaluation.objects.filter(
         score__isnull=False
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(avg_score=Avg('score'))['avg_score']
+    ).aggregate(avg_score=Avg('score'))['avg_score']
 
     context = {
         'employee': employee,
@@ -589,7 +589,7 @@ def employee_performance_ajax(request, emp_id):
         evaluations = EmployeeEvaluation.objects.filter(
             emp=employee,
             score__isnull=False
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('eval_date')
+        ).order_by('eval_date')
 
         data = {
             'employee_name': f"{employee.first_name} {employee.last_name}",
@@ -613,7 +613,7 @@ def evaluation_stats_ajax(request):
     """إحصائيات التقييمات عبر AJAX"""
     stats = EmployeeEvaluation.objects.filter(
         score__isnull=False
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+    ).aggregate(
         total=Count('eval_id'),
         average=Avg('score'),
         highest=Max('score'),
@@ -623,7 +623,7 @@ def evaluation_stats_ajax(request):
     # توزيع الدرجات
     distribution = EmployeeEvaluation.objects.filter(
         score__isnull=False
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.extra(
+    ).extra(
         select={
             'range': """
                 CASE
@@ -658,7 +658,7 @@ def bulk_create_evaluations(request):
                 employee = get_object_or_404(Employee, emp_id=emp_id)
 
                 # التحقق من عدم وجود تقييم مسبق
-                if not EmployeeEvaluation.objects.filter(emp=employee, period=period).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists():
+                if not EmployeeEvaluation.objects.filter(emp=employee, period=period).exists():
                     EmployeeEvaluation.objects.create(
                         emp=employee,
                         period=period
@@ -688,7 +688,7 @@ def performance_analytics(request):
     monthly_trends = EmployeeEvaluation.objects.filter(
         eval_date__isnull=False,
         score__isnull=False
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.extra(
+    ).extra(
         select={'month': "MONTH(eval_date)", 'year': "YEAR(eval_date)"}
     ).values('month', 'year').annotate(
         avg_score=Avg('score'),

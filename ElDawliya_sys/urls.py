@@ -30,37 +30,37 @@ urlpatterns = [
     path('test/', test_view, name='test'),  # مسار اختبار بسيط
     path('admin/', admin.site.urls),  # لوحة الإدارة الافتراضية
     path('accounts/', include('accounts.urls')),  # مسارات تطبيق الحسابات
-    path('meetings/', include('meetings.urls')),  # مسارات تطبيق الاجتماعات
-    path('tasks/', include('tasks.urls')),  # مسارات تطبيق المهام
+    # path('meetings/', include('meetings.urls')),  # مسارات تطبيق الاجتماعات - معلق مؤقتاً
+    # path('tasks/', include('tasks.urls')),  # مسارات تطبيق المهام - معلق مؤقتاً
     # path('Hr/', include('Hr.urls')), # Disabled: legacy HR app removed
-    path('hr/', include('hr.urls')),  # مسارات نظام الموارد البشرية
-    path('org/', include('org.urls')),
-    path('employees/', include('employees.urls')),
+    # path('hr/', include('hr.urls')),  # مسارات نظام الموارد البشرية - معلق مؤقتاً
+    # path('org/', include('org.urls')), # معلق مؤقتاً
+    # path('employees/', include('employees.urls')), # معلق مؤقتاً
 
-    path('attendance/', include('attendance.urls')),
-    path('inventory/', include('inventory.urls')), # مسارات تطبيق مخزن قطع الغيار
-    path('purchase/', include('Purchase_orders.urls')), # مسارات تطبيق طلبات الشراء
+    # path('attendance/', include('attendance.urls')), # معلق مؤقتاً
+    # path('inventory/', include('inventory.urls')), # مسارات تطبيق مخزن قطع الغيار - معلق مؤقتاً
+    # path('purchase/', include('Purchase_orders.urls')), # مسارات تطبيق طلبات الشراء - معلق مؤقتاً
     path('administrator/', include('administrator.urls')),  # مسارات تطبيق مدير النظام
     path('notifications/', include('notifications.urls')),  # مسارات تطبيق التنبيهات
-    path('audit/', include('audit.urls')),  # مسارات تطبيق تسجيل الأحداث
-    path('employee-tasks/', include('employee_tasks.urls')),  # مسارات تطبيق مهام الموظفين
-    path('cars/', include('cars.urls')),  # مسارات تطبيق السيارات
-    path('core/', include('core.urls')),  # مسارات النظام الأساسي
-    path('companies/', include('companies.urls')),  # مسارات الشركات
-    path('leaves/', include('leaves.urls')),  # مسارات الإجازات
-    path('evaluations/', include('evaluations.urls')),  # مسارات التقييمات
-    path('payrolls/', include('payrolls.urls')),  # مسارات الرواتب
-    path('banks/', include('banks.urls')),  # مسارات البنوك
-    path('reports/', include('reports.urls')),  # مسارات التقارير
-    path('insurance/', include('insurance.urls')),
-    path('training/', include('training.urls')),
-    path('disciplinary/', include('disciplinary.urls')),
-    path('loans/', include('loans.urls')),
-    path('assets/', include('assets.urls')),
-    path('tickets/', include('tickets.urls')),
-    path('workflow/', include('workflow.urls')),
-    path('syssettings/', include('syssettings.urls')),
-    path('rbac/', include('rbac.urls')),
+    # path('audit/', include('audit.urls')),  # مسارات تطبيق تسجيل الأحداث - معلق مؤقتاً
+    # path('employee-tasks/', include('employee_tasks.urls')),  # مسارات تطبيق مهام الموظفين - معطل مؤقتاً
+    # path('cars/', include('cars.urls')),  # مسارات تطبيق السيارات - معلق مؤقتاً
+    # path('core/', include('core.urls')),  # مسارات النظام الأساسي - معلق مؤقتاً
+    # path('companies/', include('companies.urls')),  # مسارات الشركات - معلق مؤقتاً
+    # path('leaves/', include('leaves.urls')),  # مسارات الإجازات - معلق مؤقتاً
+    # path('evaluations/', include('evaluations.urls')),  # مسارات التقييمات - معلق مؤقتاً
+    # path('payrolls/', include('payrolls.urls')),  # مسارات الرواتب - معلق مؤقتاً
+    # path('banks/', include('banks.urls')),  # مسارات البنوك - معلق مؤقتاً
+    # path('reports/', include('reports.urls')),  # مسارات التقارير - معلق مؤقتاً
+    # path('insurance/', include('insurance.urls')), # معلق مؤقتاً
+    # path('training/', include('training.urls')), # معلق مؤقتاً
+    # path('disciplinary/', include('disciplinary.urls')), # معلق مؤقتاً
+    # path('loans/', include('loans.urls')), # معلق مؤقتاً
+    # path('assets/', include('assets.urls')), # معلق مؤقتاً
+    # path('tickets/', include('tickets.urls')), # معلق مؤقتاً
+    # path('workflow/', include('workflow.urls')), # معلق مؤقتاً
+    # path('syssettings/', include('syssettings.urls')), # معلق مؤقتاً
+    # path('rbac/', include('rbac.urls')), # معلق مؤقتاً
     path('api/v1/', include('api.urls')),  # مسارات API
     # path('api/hr/', include('Hr.api.urls')),  # مسارات API الموارد البشرية - معلق مؤقتاً
     path('api/global-search/', global_search_api, name='global_search_api'),  # Global search API endpoint

@@ -423,11 +423,11 @@ class Command(BaseCommand):
             for model, name in models_to_clear:
                 count = model.objects.count()
                 if count > 0:
-                    model.objects.all().select_related()  # TODO: Add appropriate select_related fields.delete()
+                    model.objects.all().delete()
                     self.stdout.write(f'  • تم مسح {count} من {name}')
 
             # Clear non-admin users
-            non_admin_users = User.objects.filter(is_superuser=False).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            non_admin_users = User.objects.filter(is_superuser=False)
             user_count = non_admin_users.count()
             if user_count > 0:
                 non_admin_users.delete()

@@ -24,7 +24,7 @@ class HRAnalyticsService:
             from org.models import Department
 
             total_employees = Employee.objects.count()
-            active_employees = Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+            active_employees = Employee.objects.filter(emp_status='Active').count()
             inactive_employees = total_employees - active_employees
 
             # Department distribution
@@ -70,7 +70,7 @@ class HRAnalyticsService:
             # Overall attendance metrics
             records = AttendanceRecord.objects.filter(
                 date__range=[start_date, end_date]
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            )
 
             total_records = records.count()
             present_records = records.filter(record_type='present').count()
@@ -115,7 +115,7 @@ class HRAnalyticsService:
                 run_date__year=year,
                 run_date__month=month,
                 status='paid'
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            )
 
             if not runs.exists():
                 return {'message': 'No payroll data found for the specified period'}
@@ -174,7 +174,7 @@ class EmployeeLifecycleService:
             if attendance_profile_data:
                 # Get default attendance rule if not specified
                 if 'attendance_rule' not in attendance_profile_data:
-                    default_rule = AttendanceRule.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+                    default_rule = AttendanceRule.objects.filter(is_active=True).first()
                     if default_rule:
                         attendance_profile_data['attendance_rule'] = default_rule
 
@@ -208,7 +208,7 @@ class EmployeeLifecycleService:
             current_salary = EmployeeSalary.objects.filter(
                 emp=employee,
                 is_current=True
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+            ).first()
 
             if current_salary:
                 current_salary.end_date = termination_date
@@ -248,7 +248,7 @@ class PayrollCalculationService:
                 emp=employee,
                 is_current=True,
                 effective_date__lte=period_end
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+            ).first()
 
             if not salary:
                 return {'success': False, 'error': 'No active salary found for employee'}
@@ -261,7 +261,7 @@ class PayrollCalculationService:
                 employee=employee,
                 year=year,
                 month=month
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+            ).first()
 
             # Base calculations
             base_salary = salary.basic_salary

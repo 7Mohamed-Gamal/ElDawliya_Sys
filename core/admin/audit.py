@@ -249,7 +249,7 @@ class SystemMetricAdmin(admin.ModelAdmin):
     def delete_old_metrics(self, request, queryset):
         """Delete metrics older than 90 days"""
         cutoff_date = timezone.now() - timedelta(days=90)
-        old_metrics = SystemMetric.objects.filter(timestamp__lt=cutoff_date).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        old_metrics = SystemMetric.objects.filter(timestamp__lt=cutoff_date)
         count = old_metrics.count()
         old_metrics.delete()
         self.message_user(request, f'تم حذف {count} مقياس قديم')

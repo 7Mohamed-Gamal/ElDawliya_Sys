@@ -370,7 +370,7 @@ class ProjectService(BaseService):
             employee = Employee.objects.get(id=member_data['employee_id'])
 
             # Check if employee is already a team member
-            if ProjectTeamMember.objects.filter(project=project, employee=employee).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists():
+            if ProjectTeamMember.objects.filter(project=project, employee=employee).exists():
                 return self.format_response(
                     success=False,
                     message='الموظف عضو في فريق المشروع بالفعل'
@@ -541,7 +541,7 @@ class ProjectService(BaseService):
             # Get project statistics
             from core.models.projects import Task
 
-            tasks_stats = Task.objects.filter(project=project).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+            tasks_stats = Task.objects.filter(project=project).aggregate(
                 total_tasks=Count('id'),
                 completed_tasks=Count('id', filter=Q(status='completed')),
                 in_progress_tasks=Count('id', filter=Q(status='in_progress')),
@@ -623,7 +623,7 @@ class ProjectService(BaseService):
         # Get the last project number for this year
         last_project = Project.objects.filter(
             created_at__year=year
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('-id').first()
+        ).order_by('-id').first()
 
         if last_project and last_project.project_code:
             # Extract sequence number from last project
@@ -676,7 +676,7 @@ class ProjectService(BaseService):
         """حساب تقدم المشروع"""
         from core.models.projects import Task
 
-        tasks = Task.objects.filter(project=project).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        tasks = Task.objects.filter(project=project)
         total_tasks = tasks.count()
 
         if total_tasks == 0:

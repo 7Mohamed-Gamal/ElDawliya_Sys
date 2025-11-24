@@ -160,7 +160,7 @@ def debug_ai_info(request):
         from api.models import AIConfiguration, AIProvider
 
         # Get all AI providers
-        providers = AIProvider.objects.all().select_related()  # TODO: Add appropriate select_related fields
+        providers = AIProvider.objects.all()
         providers_data = []
         for provider in providers:
             providers_data.append({
@@ -172,7 +172,7 @@ def debug_ai_info(request):
             })
 
         # Get AI configurations
-        configurations = AIConfiguration.objects.all().select_related()  # TODO: Add appropriate select_related fields
+        configurations = AIConfiguration.objects.all()
         configs_data = []
         for config in configurations:
             configs_data.append({

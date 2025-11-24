@@ -52,7 +52,7 @@ class ReportDataService:
         """استخراج بيانات الحضور"""
         queryset = EmployeeAttendance.objects.filter(
             att_date__range=[start_date, end_date]
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('emp', 'emp__dept')
+        ).select_related('emp', 'emp__dept')
 
         if employee_ids:
             queryset = queryset.filter(emp_id__in=employee_ids)
@@ -111,7 +111,7 @@ class ReportDataService:
         queryset = EmployeeLeave.objects.filter(
             start_date__lte=end_date,
             end_date__gte=start_date
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('emp', 'emp__dept', 'leave_type')
+        ).select_related('emp', 'emp__dept', 'leave_type')
 
         if employee_ids:
             queryset = queryset.filter(emp_id__in=employee_ids)
@@ -168,7 +168,7 @@ class ReportDataService:
         queryset = PayrollDetail.objects.filter(
             run__period_start__lte=end_date,
             run__period_end__gte=start_date
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('emp', 'emp__dept', 'run')
+        ).select_related('emp', 'emp__dept', 'run')
 
         if employee_ids:
             queryset = queryset.filter(emp_id__in=employee_ids)
@@ -511,7 +511,7 @@ class ReportSchedulerService:
         due_schedules = ReportSchedule.objects.filter(
             status='active',
             next_run__lte=now
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        )
 
         for schedule in due_schedules:
             try:

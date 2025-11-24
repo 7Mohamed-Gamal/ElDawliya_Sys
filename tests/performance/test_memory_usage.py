@@ -217,7 +217,7 @@ class MemoryUsageTests(TestCase):
         for i in range(50):
             try:
                 # استعلام بسيط
-                list(User.objects.all().select_related()  # TODO: Add appropriate select_related fields[:10])
+                list(User.objects.all()[:10])
 
                 # إغلاق الاتصالات القديمة
                 if i % 10 == 0:
@@ -353,7 +353,7 @@ class ResourceMonitoringTests(TestCase):
                 temp_user.delete()
 
                 # قراءة البيانات
-                list(User.objects.all().select_related()  # TODO: Add appropriate select_related fields[:5])
+                list(User.objects.all()[:5])
 
             except Exception as e:
                 print(f"خطأ في عملية القرص {i}: {str(e)}")

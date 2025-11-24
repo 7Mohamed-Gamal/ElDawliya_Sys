@@ -56,7 +56,7 @@ class TrainingProviderForm(forms.ModelForm):
         email = self.cleaned_data.get('email')
         if email:
             # Check if email already exists (excluding current instance)
-            qs = TrainingProvider.objects.filter(email=email).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            qs = TrainingProvider.objects.filter(email=email)
             if self.instance.pk:
                 qs = qs.exclude(pk=self.instance.pk)
             if qs.exists():
@@ -220,11 +220,11 @@ class EmployeeTrainingForm(forms.ModelForm):
         # Improve employee dropdown display
         self.fields['emp'].queryset = Employee.objects.filter(
             emp_status='Active'
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('first_name', 'last_name')
+        ).order_by('first_name', 'last_name')
         self.fields['emp'].label_from_instance = lambda obj: f"{obj.emp_code} - {obj.first_name} {obj.last_name}"
 
         # Improve course dropdown display
-        self.fields['course'].queryset = TrainingCourse.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('-start_date')
+        self.fields['course'].queryset = TrainingCourse.objects.all().order_by('-start_date')
         self.fields['course'].label_from_instance = lambda obj: f"{obj.course_name} ({obj.start_date})"
 
     def clean(self):
@@ -238,7 +238,7 @@ class EmployeeTrainingForm(forms.ModelForm):
 
         # Check if employee is already enrolled in this course
         if emp and course:
-            existing = EmployeeTraining.objects.filter(emp=emp, course=course).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            existing = EmployeeTraining.objects.filter(emp=emp, course=course)
             if self.instance.pk:
                 existing = existing.exclude(pk=self.instance.pk)
             if existing.exists():
@@ -264,14 +264,14 @@ class EmployeeTrainingSearchForm(forms.Form):
     """نموذج البحث في سجلات التدريب"""
 
     employee = forms.ModelChoiceField(
-        queryset=Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('first_name'),
+        queryset=Employee.objects.filter(emp_status='Active').order_by('first_name'),
         required=False,
         widget=forms.Select(attrs={'class': 'form-select'}),
         label='الموظف'
     )
 
     course = forms.ModelChoiceField(
-        queryset=TrainingCourse.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('-start_date'),
+        queryset=TrainingCourse.objects.all().order_by('-start_date'),
         required=False,
         widget=forms.Select(attrs={'class': 'form-select'}),
         label='الدورة'

@@ -165,5 +165,5 @@ class AIConfiguration(models.Model):
             AIConfiguration.objects.filter(
                 user=self.user,
                 is_default=True
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exclude(id=self.id).update(is_default=False)
+            ).exclude(id=self.id).update(is_default=False)
         super().save(*args, **kwargs)

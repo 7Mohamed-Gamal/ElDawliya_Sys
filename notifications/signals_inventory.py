@@ -31,7 +31,7 @@ if INVENTORY_AVAILABLE:
             # Get users with inventory management permissions
             inventory_managers = User.objects.filter(
                 groups__name__in=['Inventory Manager', 'مدير المخزون']
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.distinct()
+            ).distinct()
 
             for manager in inventory_managers:
                 create_inventory_notification(
@@ -57,7 +57,7 @@ if INVENTORY_AVAILABLE:
 
             inventory_managers = User.objects.filter(
                 groups__name__in=['Inventory Manager', 'مدير المخزون']
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.distinct()
+            ).distinct()
 
             for manager in inventory_managers:
                 create_inventory_notification(
@@ -95,7 +95,7 @@ if INVENTORY_AVAILABLE:
 
                         inventory_managers = User.objects.filter(
                             groups__name__in=['Inventory Manager', 'مدير المخزون']
-                        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.distinct()
+                        ).distinct()
 
                         for manager in inventory_managers:
                             create_inventory_notification(

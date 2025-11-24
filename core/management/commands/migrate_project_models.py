@@ -222,7 +222,7 @@ class Command(BaseCommand):
             # Get default project for orphaned tasks
             default_project = Project.objects.get(code='GENERAL')
 
-            old_tasks = OldTask.objects.all().select_related()  # TODO: Add appropriate select_related fields
+            old_tasks = OldTask.objects.all()
             total_tasks = old_tasks.count()
 
             self.stdout.write(f"Found {total_tasks} tasks to migrate")
@@ -281,7 +281,7 @@ class Command(BaseCommand):
             NewTaskStep = apps.get_model('core', 'TaskStep')
             NewTask = apps.get_model('core', 'Task')
 
-            old_steps = OldTaskStep.objects.all().select_related()  # TODO: Add appropriate select_related fields
+            old_steps = OldTaskStep.objects.all()
             total_steps = old_steps.count()
 
             self.stdout.write(f"Found {total_steps} task steps to migrate")
@@ -330,7 +330,7 @@ class Command(BaseCommand):
             # Get default project for meetings
             meeting_project = Project.objects.get(code='MEETINGS')
 
-            old_meetings = OldMeeting.objects.all().select_related()  # TODO: Add appropriate select_related fields
+            old_meetings = OldMeeting.objects.all()
             total_meetings = old_meetings.count()
 
             self.stdout.write(f"Found {total_meetings} meetings to migrate")
@@ -379,7 +379,7 @@ class Command(BaseCommand):
             NewMeetingAttendee = apps.get_model('core', 'MeetingAttendee')
             NewMeeting = apps.get_model('core', 'Meeting')
 
-            old_attendees = OldAttendee.objects.all().select_related()  # TODO: Add appropriate select_related fields
+            old_attendees = OldAttendee.objects.all()
             total_attendees = old_attendees.count()
 
             self.stdout.write(f"Found {total_attendees} meeting attendees to migrate")
@@ -425,7 +425,7 @@ class Command(BaseCommand):
             # Get meeting project
             meeting_project = Project.objects.get(code='MEETINGS')
 
-            old_meeting_tasks = OldMeetingTask.objects.all().select_related()  # TODO: Add appropriate select_related fields
+            old_meeting_tasks = OldMeetingTask.objects.all()
             total_meeting_tasks = old_meeting_tasks.count()
 
             self.stdout.write(f"Found {total_meeting_tasks} meeting tasks to migrate")

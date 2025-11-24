@@ -28,7 +28,7 @@ if INVENTORY_PURCHASE_AVAILABLE:
 
             purchase_managers = User.objects.filter(
                 groups__name__in=['Purchase Manager', 'مدير المشتريات', 'Inventory Manager', 'مدير المخزون']
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.distinct()
+            ).distinct()
 
             for manager in purchase_managers:
                 create_notification(
@@ -58,7 +58,7 @@ if INVENTORY_PURCHASE_AVAILABLE:
             # Notify inventory managers
             inventory_managers = User.objects.filter(
                 groups__name__in=['Inventory Manager', 'مدير المخزون']
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.distinct()
+            ).distinct()
 
             for manager in inventory_managers:
                 create_notification(
@@ -83,7 +83,7 @@ if INVENTORY_PURCHASE_AVAILABLE:
             existing_request = InventoryPurchaseRequest.objects.filter(
                 product=instance,
                 status='pending'
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists()
+            ).exists()
 
             if not existing_request:
                 # Create automatic purchase request
@@ -102,7 +102,7 @@ if INVENTORY_PURCHASE_AVAILABLE:
 
                 purchase_managers = User.objects.filter(
                     groups__name__in=['Purchase Manager', 'مدير المشتريات']
-                ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.distinct()
+                ).distinct()
 
                 for manager in purchase_managers:
                     create_notification(

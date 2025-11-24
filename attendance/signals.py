@@ -54,7 +54,7 @@ def update_attendance_summary_on_save(sender, instance, created, **kwargs):
                 emp=instance.emp,
                 att_date__year=year,
                 att_date__month=month
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            )
 
             # حساب الإحصائيات
             total_days = monthly_records.count()
@@ -111,7 +111,7 @@ def update_attendance_summary_on_delete(sender, instance, **kwargs):
                     emp=instance.emp,
                     att_date__year=year,
                     att_date__month=month
-                ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+                )
 
                 if monthly_records.exists():
                     # تحديث الإحصائيات
@@ -202,7 +202,7 @@ def update_zk_raw_data_on_mapping(sender, instance, created, **kwargs):
                 device=instance.device,
                 user_id=instance.device_user_id,
                 employee__isnull=True
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            )
 
             if unlinked_records.exists():
                 # ربط البيانات الخام بالموظف
@@ -298,7 +298,7 @@ def create_default_attendance_profile(sender, instance, created, **kwargs):
             from .models import AttendanceRules, EmployeeAttendanceProfile
 
             # البحث عن قاعدة الحضور الافتراضية
-            default_rule = AttendanceRules.objects.filter(is_default=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+            default_rule = AttendanceRules.objects.filter(is_default=True).first()
 
             if default_rule:
                 # إنشاء ملف الحضور
@@ -337,7 +337,7 @@ def cleanup_old_processed_data(sender, instance, **kwargs):
                 device=instance.device,
                 is_processed=True,
                 timestamp__lt=cutoff_date
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            )
 
             # حذف بشكل دوري وليس مع كل سجل
             if old_records.count() > 1000:
@@ -384,7 +384,7 @@ def validate_zk_raw_data(sender, instance, **kwargs):
                 user_id=instance.user_id,
                 timestamp=instance.timestamp,
                 punch_type=instance.punch_type
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exclude(pk=instance.pk).exists()
+            ).exclude(pk=instance.pk).exists()
 
             if existing:
                 logger.warning(f"سجل خام مكرر: جهاز {instance.device.device_name}, مستخدم {instance.user_id}")

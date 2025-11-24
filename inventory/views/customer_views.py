@@ -31,7 +31,7 @@ class CustomerListView(ListView):
             from django.db.models import F
             from inventory.models_local import Product
             low_stock_count = Product.objects.filter(
-                quantity__lt=F('minimum_threshold').prefetch_related()  # TODO: Add appropriate prefetch_related fields,
+                quantity__lt=F('minimum_threshold'),
                 minimum_threshold__gt=0
             ).count()
             context['low_stock_count'] = low_stock_count

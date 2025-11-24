@@ -8,8 +8,7 @@ from django.db.models import Sum, Count, Q
 from datetime import date, timedelta
 from core.services.base import BaseService
 from core.models.leaves import (
-    LeaveType, LeaveBalance, LeaveRequest, LeaveApproval,
-    LeavePolicy, HolidayCalendar
+    LeaveType, LeaveBalance, LeaveRequest, LeaveRecord, PublicHoliday
 )
 
 
@@ -219,7 +218,7 @@ class LeaveService(BaseService):
             # Check object-level permission
             self.check_object_permission('leaves.view_leavebalance', employee)
 
-            queryset = LeaveBalance.objects.filter(employee=employee).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            queryset = LeaveBalance.objects.filter(employee=employee)
 
             if leave_type_id:
                 queryset = queryset.filter(leave_type_id=leave_type_id)
@@ -341,7 +340,7 @@ class LeaveService(BaseService):
             annual_leave_type = LeaveType.objects.filter(
                 code='annual',
                 is_active=True
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+            ).first()
 
             if not annual_leave_type:
                 return self.format_response(
@@ -363,7 +362,7 @@ class LeaveService(BaseService):
                 leave_type=annual_leave_type,
                 min_service_years__lte=service_years,
                 is_active=True
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('-min_service_years').first()
+            ).order_by('-min_service_years').first()
 
             if not leave_policy:
                 # Default entitlement
@@ -431,13 +430,13 @@ class LeaveService(BaseService):
                 status='approved',
                 start_date__lte=end_date,
                 end_date__gte=start_date
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('employee', 'leave_type')
+            ).select_related('employee', 'leave_type')
 
             # Get holidays
             holidays = HolidayCalendar.objects.filter(
                 holiday_date__range=[start_date, end_date],
                 is_active=True
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            )
 
             # Format calendar data
             calendar_events = []
@@ -516,7 +515,7 @@ class LeaveService(BaseService):
                     employee=employee,
                     leave_type=leave_type,
                     year=start_date.year
-                ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+                ).first()
 
                 if not balance or balance.remaining_days < leave_days:
                     return {'valid': False, 'message': 'رصيد الإجازة غير كافي'}
@@ -527,7 +526,7 @@ class LeaveService(BaseService):
                 status__in=['pending', 'approved'],
                 start_date__lte=end_date,
                 end_date__gte=start_date
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists()
+            ).exists()
 
             if overlapping:
                 return {'valid': False, 'message': 'يوجد طلب إجازة متداخل مع هذه الفترة'}
@@ -553,7 +552,7 @@ class LeaveService(BaseService):
                 is_holiday = HolidayCalendar.objects.filter(
                     holiday_date=current_date,
                     is_active=True
-                ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists()
+                ).exists()
                 if is_holiday:
                     current_date += timedelta(days=1)
                     continue
@@ -602,7 +601,7 @@ class LeaveService(BaseService):
                 employee=leave_request.employee,
                 leave_type=leave_request.leave_type,
                 year=leave_request.start_date.year
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+            ).first()
 
             if balance:
                 balance.used_days += leave_request.leave_days

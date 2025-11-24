@@ -173,7 +173,7 @@ class Command(BaseCommand):
 
         # Clear existing departments if using --force
         if force:
-            Department.objects.all().select_related()  # TODO: Add appropriate select_related fields.delete()
+            Department.objects.all().delete()
 
         # Create departments with their modules
         for dept_data in departments:

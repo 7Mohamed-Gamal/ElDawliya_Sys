@@ -29,19 +29,17 @@ urlpatterns = [
     path('attendance/clock-out/', views.ClockOutView.as_view(), name='clock_out'),
     path('attendance/summary/', views.AttendanceSummaryView.as_view(), name='attendance_summary'),
 
-    # Leave management endpoints
-    path('leaves/apply/', views.LeaveApplicationView.as_view(), name='leave_apply'),
-    path('leaves/approve/', views.LeaveApprovalView.as_view(), name='leave_approve'),
-    path('leaves/balance/', views.LeaveBalanceView.as_view(), name='leave_balance'),
+    # Leave management endpoints (using ViewSet)
+    path('leaves/', views.LeaveViewSet.as_view({'get': 'list', 'post': 'create'}), name='leaves'),
+    path('leaves/<int:pk>/', views.LeaveViewSet.as_view({'get': 'retrieve', 'put': 'update', 'delete': 'destroy'}), name='leave_detail'),
 
-    # Payroll endpoints
-    path('payroll/calculate/', views.PayrollCalculationView.as_view(), name='payroll_calculate'),
-    path('payroll/generate/', views.PayrollGenerationView.as_view(), name='payroll_generate'),
-    path('payroll/reports/', views.PayrollReportsView.as_view(), name='payroll_reports'),
+    # Payroll endpoints (using ViewSet)
+    path('payroll/', views.PayrollViewSet.as_view({'get': 'list'}), name='payroll'),
+    path('payroll/<int:pk>/', views.PayrollViewSet.as_view({'get': 'retrieve'}), name='payroll_detail'),
 
-    # Evaluation endpoints
-    path('evaluations/templates/', views.EvaluationTemplatesView.as_view(), name='evaluation_templates'),
-    path('evaluations/submit/', views.EvaluationSubmissionView.as_view(), name='evaluation_submit'),
+    # Evaluation endpoints (using ViewSet)
+    path('evaluations/', views.EvaluationViewSet.as_view({'get': 'list', 'post': 'create'}), name='evaluations'),
+    path('evaluations/<int:pk>/', views.EvaluationViewSet.as_view({'get': 'retrieve', 'put': 'update'}), name='evaluation_detail'),
 
     # Reports and analytics
     path('reports/dashboard/', views.HRDashboardView.as_view(), name='hr_dashboard'),

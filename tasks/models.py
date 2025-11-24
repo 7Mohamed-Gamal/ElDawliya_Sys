@@ -418,7 +418,7 @@ class UnifiedTaskManager:
             else:
                 meeting_tasks = MeetingTask.objects.filter(
                     assigned_to=user
-                ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('assigned_to', 'meeting').prefetch_related('steps')
+                ).select_related('assigned_to', 'meeting').prefetch_related('steps')
 
             for mtask in meeting_tasks:
                 tasks.append(UnifiedTask(mtask, task_type='meeting'))
@@ -505,7 +505,7 @@ class UnifiedTaskManager:
             )
         else:
             regular_stats = Task.objects.filter(
-                models.Q(assigned_to=user).prefetch_related()  # TODO: Add appropriate prefetch_related fields | models.Q(created_by=user)
+                models.Q(assigned_to=user) | models.Q(created_by=user)
             ).aggregate(
                 total=models.Count('id'),
                 completed=models.Count(models.Case(
@@ -526,7 +526,7 @@ class UnifiedTaskManager:
                 ))
             )
 
-            meeting_stats = MeetingTask.objects.filter(assigned_to=user).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+            meeting_stats = MeetingTask.objects.filter(assigned_to=user).aggregate(
                 total=models.Count('id'),
                 completed=models.Count(models.Case(
                     models.When(status='completed', then=1),

@@ -15,6 +15,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey
 from django.utils import timezone
 from django.core.serializers.json import DjangoJSONEncoder
 from django.utils.translation import gettext_lazy as _
+from django.conf import settings
 
 User = get_user_model()
 
@@ -58,7 +59,7 @@ class AuditLog(models.Model):
 
     # User and session information
     user = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -268,7 +269,7 @@ class SecurityEvent(models.Model):
 
     # Target information
     target_user = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,

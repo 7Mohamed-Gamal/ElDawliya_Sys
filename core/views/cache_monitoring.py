@@ -219,11 +219,11 @@ def warm_cache_entries():
             from employees.models import Department, JobPosition
 
             # Cache departments
-            departments = list(Department.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.values())
+            departments = list(Department.objects.filter(is_active=True).values())
             cache_service.set('departments_list', departments, 'daily')
 
             # Cache job positions
-            positions = list(JobPosition.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.values())
+            positions = list(JobPosition.objects.filter(is_active=True).values())
             cache_service.set('job_positions_list', positions, 'daily')
 
         except ImportError:

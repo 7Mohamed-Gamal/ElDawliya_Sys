@@ -312,7 +312,7 @@ class ZKDataProcessor:
     @staticmethod
     def process_all_devices() -> List[AttendanceProcessingLog]:
         """معالجة جميع الأجهزة النشطة"""
-        active_devices = ZKDevice.objects.filter(status='active').prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        active_devices = ZKDevice.objects.filter(status='active')
         logs = []
 
         for device in active_devices:

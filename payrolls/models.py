@@ -177,7 +177,7 @@ class EmployeeSalary(models.Model):
             existing_current = EmployeeSalary.objects.filter(
                 emp=self.emp,
                 is_current=True
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exclude(pk=self.pk)
+            ).exclude(pk=self.pk)
 
             if existing_current.exists():
                 raise ValidationError('يوجد راتب ساري بالفعل لهذا الموظف')
@@ -256,7 +256,7 @@ class PayrollRun(models.Model):
             count = PayrollRun.objects.filter(
                 run_date__year=year,
                 run_date__month=month
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count() + 1
+            ).count() + 1
             self.run_number = f'PR{year}{month:02d}{count:03d}'
 
         if not self.month_year:

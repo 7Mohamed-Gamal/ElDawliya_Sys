@@ -41,20 +41,8 @@ urlpatterns = [
     path('cache/keys/', cache_key_browser, name='cache_key_browser_api'),
     path('cache/health/', cache_health_check, name='cache_health_check'),
 
-    # System Monitoring URLs
-    path('monitoring/', include([
-        path('', 'core.views.monitoring_dashboard.monitoring_dashboard', name='monitoring_dashboard'),
-        path('api/system-metrics/', 'core.views.monitoring_dashboard.system_metrics_api', name='system_metrics_api'),
-        path('api/system-health/', 'core.views.monitoring_dashboard.system_health_api', name='system_health_api'),
-        path('api/performance-metrics/', 'core.views.monitoring_dashboard.performance_metrics_api', name='performance_metrics_api'),
-        path('api/alert-history/', 'core.views.monitoring_dashboard.alert_history_api', name='alert_history_api'),
-        path('api/log-analysis/', 'core.views.monitoring_dashboard.log_analysis_api', name='log_analysis_api'),
-        path('api/resource-history/', 'core.views.monitoring_dashboard.resource_usage_history_api', name='resource_usage_history_api'),
-        path('api/settings/', 'core.views.monitoring_dashboard.monitoring_settings_api', name='monitoring_settings_api'),
-        path('api/test-alert/', 'core.views.monitoring_dashboard.trigger_test_alert_api', name='trigger_test_alert_api'),
-        path('api/export/', 'core.views.monitoring_dashboard.export_monitoring_data_api', name='export_monitoring_data_api'),
-        path('api/reports/', 'core.views.monitoring_dashboard.monitoring_reports_api', name='monitoring_reports_api'),
-    ])),
+    # System Monitoring URLs - Include monitoring dashboard URLs
+    path('monitoring/', include('core.urls.monitoring')),
 
     # Data Integration URLs
     path('integration/', views.integration_dashboard, name='integration_dashboard'),

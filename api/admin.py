@@ -162,5 +162,5 @@ class AIConfigurationAdmin(admin.ModelAdmin):
             AIConfiguration.objects.filter(
                 user=obj.user,
                 is_default=True
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exclude(id=obj.id).update(is_default=False)
+            ).exclude(id=obj.id).update(is_default=False)
         super().save_model(request, obj, form, change)

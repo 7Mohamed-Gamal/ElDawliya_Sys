@@ -5,8 +5,7 @@ ElDawliya System - Development Settings
 Settings for development environment.
 """
 
-# TODO: Replace wildcard import
-# from .base import specific_items
+from .base import *
 
 # ================================================================
 # DEBUG CONFIGURATION
@@ -66,7 +65,7 @@ LOGGING['loggers']['django.db.backends'] = {
 # CACHE CONFIGURATION FOR DEVELOPMENT
 # ================================================================
 
-# Use local memory cache for development
+# Override cache configuration for development
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
@@ -121,5 +120,5 @@ LOGGING['loggers']['hr_system']['level'] = 'DEBUG'
 
 print("🚀 Development mode activated")
 print(f"📊 Debug Toolbar: {'Enabled' if 'debug_toolbar' in INSTALLED_APPS else 'Disabled'}")
-print(f"🗄️ Database: {DATABASES['default']['HOST']}")
+print(f"🗄️ Database: {DATABASES['default']['ENGINE']}")
 print(f"📧 Email Backend: {EMAIL_BACKEND}")

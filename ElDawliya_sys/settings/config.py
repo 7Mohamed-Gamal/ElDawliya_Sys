@@ -32,52 +32,83 @@ class ConfigManager:
 
     def get_database_config(self) -> Dict[str, Any]:
         """Get database configuration with validation."""
-        config = {
-            'ENGINE': 'mssql',
-            'NAME': self.get_required('DB_NAME'),
-            'HOST': self.get_required('DB_HOST'),
-            'PORT': self.get_optional('DB_PORT', '1433'),
-            'USER': self.get_required('DB_USER'),
-            'PASSWORD': self.get_required('DB_PASSWORD'),
-            'OPTIONS': {
-                'driver': self.get_optional('DB_DRIVER', 'ODBC Driver 17 for SQL Server'),
-                'Trusted_Connection': self.get_optional('DB_TRUSTED', 'no'),
-                'MARS_Connection': 'yes',
-                'charset': 'utf8',
-                'collation': 'Arabic_CI_AS',
-                'autocommit': True,
-                'isolation_level': 'read committed',
-                'timeout': 30,
-                'query_timeout': 60,
-                'connection_timeout': 30,
-                'command_timeout': 60,
-            },
-            'TEST': {
-                'NAME': f"test_{self.get_required('DB_NAME')}",
-                'CHARSET': 'utf8',
-                'COLLATION': 'Arabic_CI_AS',
+        db_engine = self.get_optional('DB_ENGINE', 'django.db.backends.sqlite3')
+        
+        if db_engine == 'django.db.backends.sqlite3':
+            # SQLite configuration for development
+            config = {
+                'ENGINE': 'django.db.backends.sqlite3',
+                'NAME': self.base_dir / self.get_optional('DB_NAME', 'db.sqlite3'),
             }
-        }
+        else:
+            # SQL Server configuration for production
+            config = {
+                'ENGINE': 'mssql',
+                'NAME': self.get_required('DB_NAME'),
+                'HOST': self.get_required('DB_HOST'),
+                'PORT': self.get_optional('DB_PORT', '1433'),
+                'USER': self.get_required('DB_USER'),
+                'PASSWORD': self.get_required('DB_PASSWORD'),
+                'OPTIONS': {
+                    'driver': self.get_optional('DB_DRIVER', 'ODBC Driver 17 for SQL Server'),
+                    'Trusted_Connection': self.get_optional('DB_TRUSTED', 'no'),
+                    'MARS_Connection': 'yes',
+                    'charset': 'utf8',
+                    'collation': 'Arabic_CI_AS',
+                    'autocommit': True,
+                    'isolation_level': 'read committed',
+                    'timeout': 30,
+                    'query_timeout': 60,
+                    'connection_timeout': 30,
+                    'command_timeout': 60,
+                },
+                'TEST': {
+                    'NAME': f"test_{self.get_required('DB_NAME')}",
+                    'CHARSET': 'utf8',
+                    'COLLATION': 'Arabic_CI_AS',
+                }
+            }
 
         return config
 
     def get_cache_config(self) -> Dict[str, Any]:
-        """Get cache configuration."""
-        redis_url = self.get_optional('REDIS_URL', 'redis://127.0.0.1:6379/1')
-
-        return {
-            'default': {
-                'BACKEND': 'django_redis.cache.RedisCache',
-                'LOCATION': redis_url,
-                'OPTIONS': {
-                    'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-                    'SERIALIZER': 'django_redis.serializers.json.JSONSerializer',
-                    'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
-                },
-                'KEY_PREFIX': 'hr_system',
-                'TIMEOUT': int(self.get_optional('CACHE_TIMEOUT_MEDIUM', '1800')),
+        """Get cache configuration with fallback to database cache."""
+        # Try Redis first if available
+        try:
+            import redis
+            import django_redis
+            redis_url = self.get_optional('REDIS_URL', 'redis://127.0.0.1:6379/1')
+            
+            # Test Redis connection
+            redis_client = redis.from_url(redis_url)
+            redis_client.ping()
+            
+            return {
+                'default': {
+                    'BACKEND': 'django_redis.cache.RedisCache',
+                    'LOCATION': redis_url,
+                    'OPTIONS': {
+                        'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                        'SERIALIZER': 'django_redis.serializers.json.JSONSerializer',
+                        'COMPRESSOR': 'django_redis.compressors.zlib.ZlibCompressor',
+                    },
+                    'KEY_PREFIX': 'hr_system',
+                    'TIMEOUT': int(self.get_optional('CACHE_TIMEOUT_MEDIUM', '1800')),
+                }
             }
-        }
+        except (ImportError, Exception):
+            # Fall back to database cache
+            return {
+                'default': {
+                    'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+                    'LOCATION': 'cache_table',
+                    'TIMEOUT': int(self.get_optional('CACHE_TIMEOUT_MEDIUM', '1800')),
+                    'OPTIONS': {
+                        'MAX_ENTRIES': 10000,
+                        'CULL_FREQUENCY': 3,
+                    }
+                }
+            }
 
     def get_email_config(self) -> Dict[str, Any]:
         """Get email configuration."""
@@ -226,13 +257,12 @@ class ConfigManager:
         }
 
         # Validate required settings
-        required_settings = [
-            'DJANGO_SECRET_KEY',
-            'DB_NAME',
-            'DB_HOST',
-            'DB_USER',
-            'DB_PASSWORD'
-        ]
+        required_settings = ['DJANGO_SECRET_KEY']
+        
+        # Add database-specific required settings
+        db_engine = self.get_optional('DB_ENGINE', 'django.db.backends.sqlite3')
+        if db_engine != 'django.db.backends.sqlite3':
+            required_settings.extend(['DB_NAME', 'DB_HOST', 'DB_USER', 'DB_PASSWORD'])
 
         for setting in required_settings:
             try:

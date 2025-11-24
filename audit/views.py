@@ -132,7 +132,7 @@ def export_audit_logs(request):
     search = request.GET.get('search')
 
     # Start with all logs
-    queryset = AuditLog.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('-timestamp')
+    queryset = AuditLog.objects.all().order_by('-timestamp')
 
     # Apply filters if they exist
     if user_id:

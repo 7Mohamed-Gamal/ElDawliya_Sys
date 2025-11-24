@@ -7,7 +7,7 @@ User = get_user_model()
 class MeetingForm(forms.ModelForm):
     """MeetingForm class"""
     attendees = forms.ModelMultipleChoiceField(
-        queryset=User.objects.all().select_related()  # TODO: Add appropriate select_related fields,
+        queryset=User.objects.all(),
         required=False,
         widget=forms.SelectMultiple(attrs={'class': 'form-select select2', 'style': 'width: 100%'})
     )

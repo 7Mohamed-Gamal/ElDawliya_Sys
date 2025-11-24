@@ -108,7 +108,7 @@ class EvaluationPeriod(BaseModel):
         active_employees = Employee.objects.filter(
             emp_status='active',
             hire_date__lte=self.end_date
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        )
 
         for employee in active_employees:
             EmployeeEvaluation.objects.get_or_create(
@@ -134,9 +134,9 @@ class EvaluationTemplate(BaseModel):
     max_score = models.PositiveIntegerField(default=100, verbose_name=_('الدرجة القصوى'))
     passing_score = models.PositiveIntegerField(default=60, verbose_name=_('درجة النجاح'))
 
-    # Applicable To
-    departments = models.ManyToManyField('hr.Department', blank=True, verbose_name=_('الأقسام'))
-    job_positions = models.ManyToManyField('hr.JobPosition', blank=True, verbose_name=_('المناصب'))
+    # Applicable To - Temporarily disabled until HR app is restored
+    # departments = models.ManyToManyField('hr.Department', blank=True, verbose_name=_('الأقسام'))
+    # job_positions = models.ManyToManyField('hr.JobPosition', blank=True, verbose_name=_('المناصب'))
 
     class Meta:
         """Meta class"""
@@ -350,7 +350,7 @@ class EmployeeEvaluation(AuditableModel):
         """حفظ محسن مع تحديد القالب والتاريخ المستحق"""
         # تحديد القالب إذا لم يكن محدداً
         if not self.template:
-            default_template = EvaluationTemplate.objects.filter(is_default=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+            default_template = EvaluationTemplate.objects.filter(is_default=True).first()
             if default_template and default_template.is_applicable_to_employee(self.employee):
                 self.template = default_template
 

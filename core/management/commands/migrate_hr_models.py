@@ -101,7 +101,7 @@ class Command(BaseCommand):
             from core.models.hr import Department, JobPosition
 
             # Migrate employees
-            old_employees = OldEmployee.objects.all().select_related()  # TODO: Add appropriate select_related fields
+            old_employees = OldEmployee.objects.all()
             migrated_count = 0
 
             for old_emp in old_employees.iterator(chunk_size=self.batch_size):
@@ -174,7 +174,7 @@ class Command(BaseCommand):
             from payrolls.models import EmployeeSalary as OldSalary
             from core.models.hr import EmployeeSalary, Employee
 
-            old_salaries = OldSalary.objects.all().select_related()  # TODO: Add appropriate select_related fields
+            old_salaries = OldSalary.objects.all()
             migrated_count = 0
 
             for old_salary in old_salaries.iterator(chunk_size=self.batch_size):
@@ -220,7 +220,7 @@ class Command(BaseCommand):
             from core.models.attendance import AttendanceRecord
             from core.models.hr import Employee
 
-            old_records = OldAttendance.objects.all().select_related()  # TODO: Add appropriate select_related fields
+            old_records = OldAttendance.objects.all()
             migrated_count = 0
 
             for old_record in old_records.iterator(chunk_size=self.batch_size):
@@ -263,7 +263,7 @@ class Command(BaseCommand):
             from core.models.hr import Employee
 
             # Migrate leave types first
-            old_leave_types = OldLeaveType.objects.all().select_related()  # TODO: Add appropriate select_related fields
+            old_leave_types = OldLeaveType.objects.all()
             for old_type in old_leave_types:
                 if not self.dry_run:
                     LeaveType.objects.get_or_create(
@@ -278,7 +278,7 @@ class Command(BaseCommand):
                     )
 
             # Migrate leave records
-            old_leaves = OldLeave.objects.filter(status='Approved').prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            old_leaves = OldLeave.objects.filter(status='Approved')
             migrated_count = 0
 
             for old_leave in old_leaves.iterator(chunk_size=self.batch_size):
@@ -323,7 +323,7 @@ class Command(BaseCommand):
             from core.models.hr import Employee
 
             # Migrate evaluation periods
-            old_periods = OldPeriod.objects.all().select_related()  # TODO: Add appropriate select_related fields
+            old_periods = OldPeriod.objects.all()
             for old_period in old_periods:
                 if not self.dry_run:
                     EvaluationPeriod.objects.get_or_create(
@@ -338,7 +338,7 @@ class Command(BaseCommand):
                     )
 
             # Migrate evaluations
-            old_evaluations = OldEvaluation.objects.all().select_related()  # TODO: Add appropriate select_related fields
+            old_evaluations = OldEvaluation.objects.all()
             migrated_count = 0
 
             for old_eval in old_evaluations.iterator(chunk_size=self.batch_size):

@@ -9,8 +9,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from datetime import date, timedelta
 from core.services.base import BaseService
 from core.models.payroll import (
-    SalaryStructure, EmployeeSalary, PayrollPeriod, PayrollRecord,
-    SalaryComponent, Allowance, Deduction, OvertimePayment
+    PayrollRun, PayrollDetail, PayrollBonus, PayrollDeduction
 )
 
 
@@ -40,7 +39,7 @@ class PayrollService(BaseService):
                 SalaryStructure.objects.filter(
                     employee=employee,
                     is_active=True
-                ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.update(is_active=False, updated_by=self.user)
+                ).update(is_active=False, updated_by=self.user)
 
                 # Create new salary structure
                 salary_structure = SalaryStructure.objects.create(
@@ -97,7 +96,7 @@ class PayrollService(BaseService):
                 employee=employee,
                 is_active=True,
                 effective_date__lte=payroll_period.end_date
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('-effective_date').first()
+            ).order_by('-effective_date').first()
 
             if not salary_structure:
                 return self.format_response(
@@ -151,9 +150,9 @@ class PayrollService(BaseService):
                 employees = Employee.objects.filter(
                     id__in=employee_ids,
                     is_active=True
-                ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+                )
             else:
-                employees = Employee.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+                employees = Employee.objects.filter(is_active=True)
 
             processed_count = 0
             error_count = 0
@@ -166,7 +165,7 @@ class PayrollService(BaseService):
                         existing_record = PayrollRecord.objects.filter(
                             employee=employee,
                             payroll_period=payroll_period
-                        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+                        ).first()
 
                         if existing_record:
                             continue
@@ -365,7 +364,7 @@ class PayrollService(BaseService):
             # Get payroll records for the period
             payroll_records = PayrollRecord.objects.filter(
                 payroll_period=payroll_period
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('employee', 'employee__department')
+            ).select_related('employee', 'employee__department')
 
             # Calculate summary statistics
             summary = payroll_records.aggregate(
@@ -429,7 +428,7 @@ class PayrollService(BaseService):
                     employee=employee,
                     is_active=True,
                     effective_date__lte=payroll_period.end_date
-                ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('-effective_date').first()
+                ).order_by('-effective_date').first()
 
                 if not salary_structure:
                     return None
@@ -500,7 +499,7 @@ class PayrollService(BaseService):
             employee=employee,
             is_active=True,
             effective_date__lte=payroll_period.end_date
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        )
 
         total = Decimal('0')
         for allowance in allowances:
@@ -511,7 +510,7 @@ class PayrollService(BaseService):
                 salary_structure = SalaryStructure.objects.filter(
                     employee=employee,
                     is_active=True
-                ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+                ).first()
                 if salary_structure:
                     total += salary_structure.basic_salary * (allowance.percentage / 100)
 
@@ -523,7 +522,7 @@ class PayrollService(BaseService):
             employee=employee,
             is_active=True,
             effective_date__lte=payroll_period.end_date
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        )
 
         total = Decimal('0')
         for deduction in deductions:
@@ -534,7 +533,7 @@ class PayrollService(BaseService):
                 salary_structure = SalaryStructure.objects.filter(
                     employee=employee,
                     is_active=True
-                ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+                ).first()
                 if salary_structure:
                     total += salary_structure.basic_salary * (deduction.percentage / 100)
 
@@ -548,13 +547,13 @@ class PayrollService(BaseService):
             employee=employee,
             overtime_date__range=[payroll_period.start_date, payroll_period.end_date],
             status='approved'
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        )
 
         total_amount = Decimal('0')
         salary_structure = SalaryStructure.objects.filter(
             employee=employee,
             is_active=True
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+        ).first()
 
         if salary_structure:
             # Calculate hourly rate (assuming 8 hours per day, 22 working days per month)

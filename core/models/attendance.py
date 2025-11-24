@@ -439,7 +439,7 @@ class AttendanceSummary(BaseModel):
         attendance_records = AttendanceRecord.objects.filter(
             employee=employee,
             attendance_date__range=[start_date, end_date]
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        )
 
         # حساب الإحصائيات
         summary.present_days = attendance_records.filter(record_type='present').count()

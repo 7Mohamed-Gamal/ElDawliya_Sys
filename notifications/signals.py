@@ -23,10 +23,11 @@ from django.db.models import F
 # from .signals_purchase import specific_items
 # TODO: Replace wildcard import
 # from .signals_inventory_purchase import specific_items
-from meetings.models import Meeting, Attendee
-from tasks.models import Task, TaskStep as MeetingTaskStep
-from inventory.models import TblProducts, TblInvoiceitems
-from Purchase_orders.models import PurchaseRequest, PurchaseRequestItem
+# Temporarily commented out to avoid import errors
+# from meetings.models import Meeting, Attendee
+# from tasks.models import Task, TaskStep as MeetingTaskStep
+# from inventory.models import TblProducts, TblInvoiceitems
+# from Purchase_orders.models import PurchaseRequest, PurchaseRequestItem
 
 from .utils import (
     create_hr_notification,

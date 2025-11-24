@@ -46,17 +46,17 @@ def dashboard(request):
     ).order_by('-generated_at')[:10]
 
     # فئات التقارير
-    categories = ReportCategory.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('sort_order')
+    categories = ReportCategory.objects.filter(is_active=True).order_by('sort_order')
 
     # التقارير المميزة
     featured_templates = ReportTemplate.objects.filter(
         is_featured=True, is_active=True
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('category')[:6]
+    ).select_related('category')[:6]
 
     # الجدولة النشطة
     active_schedules = ReportSchedule.objects.filter(
         status='active'
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('template').order_by('next_run')[:5]
+    ).select_related('template').order_by('next_run')[:5]
 
     context = {
         'usage_stats': usage_stats,
@@ -91,7 +91,7 @@ def category_templates(request, category_id):
     templates = ReportTemplate.objects.filter(
         category=category,
         is_active=True
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('name')
+    ).order_by('name')
 
     # فلترة حسب البحث
     search = request.GET.get('search')
@@ -158,8 +158,8 @@ def generate_report(request, template_id):
             messages.error(request, f'حدث خطأ أثناء إنتاج التقرير: {str(e)}')
 
     # الحصول على البيانات المطلوبة للنموذج
-    departments = Department.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
-    employees = Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields
+    departments = Department.objects.filter(is_active=True)
+    employees = Employee.objects.filter(emp_status='Active')
 
     context = {
         'template': template,
@@ -233,7 +233,7 @@ def my_reports(request):
 
     reports = GeneratedReport.objects.filter(
         generated_by=employee
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('template').order_by('-generated_at')
+    ).select_related('template').order_by('-generated_at')
 
     context = {
         'reports': reports,
@@ -288,7 +288,7 @@ def analytics(request):
     """تحليلات التقارير"""
     # إحصائيات أساسية
     total_reports = GeneratedReport.objects.count()
-    completed_reports = GeneratedReport.objects.filter(status='completed').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+    completed_reports = GeneratedReport.objects.filter(status='completed').count()
 
     context = {
         'total_reports': total_reports,

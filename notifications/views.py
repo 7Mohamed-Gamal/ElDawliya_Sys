@@ -15,28 +15,28 @@ def notification_dashboard(request):
     عرض لوحة التحكم الرئيسية للتنبيهات
     """
     # إحصائيات التنبيهات
-    total_notifications = Notification.objects.filter(user=request.user).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
-    unread_notifications = Notification.objects.filter(user=request.user, is_read=False).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
-    read_notifications = Notification.objects.filter(user=request.user, is_read=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+    total_notifications = Notification.objects.filter(user=request.user).count()
+    unread_notifications = Notification.objects.filter(user=request.user, is_read=False).count()
+    read_notifications = Notification.objects.filter(user=request.user, is_read=True).count()
 
     stats = {
         'total': total_notifications,
         'unread': unread_notifications,
         'read': read_notifications,
-        'hr': Notification.objects.filter(user=request.user, notification_type='hr').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count(),
-        'meetings': Notification.objects.filter(user=request.user, notification_type='meetings').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count(),
-        'inventory': Notification.objects.filter(user=request.user, notification_type='inventory').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count(),
-        'purchase': Notification.objects.filter(user=request.user, notification_type='purchase').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count(),
-        'system': Notification.objects.filter(user=request.user, notification_type='system').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count(),
+        'hr': Notification.objects.filter(user=request.user, notification_type='hr').count(),
+        'meetings': Notification.objects.filter(user=request.user, notification_type='meetings').count(),
+        'inventory': Notification.objects.filter(user=request.user, notification_type='inventory').count(),
+        'purchase': Notification.objects.filter(user=request.user, notification_type='purchase').count(),
+        'system': Notification.objects.filter(user=request.user, notification_type='system').count(),
     }
 
     # التنبيهات حسب الأولوية - استخدام طريقة متوافقة مع SQL Server
     # تجاهل الترتيب الافتراضي لتجنب مشكلة SQL Server مع GROUP BY
-    priority_stats = Notification.objects.filter(user=request.user).prefetch_related()  # TODO: Add appropriate prefetch_related fields.values('priority').annotate(count=Count('id')).order_by()
+    priority_stats = Notification.objects.filter(user=request.user).values('priority').annotate(count=Count('id')).order_by()
     priority_data = {item['priority']: item['count'] for item in priority_stats}
 
     # التنبيهات الأخيرة - استخدام طريقة متوافقة مع SQL Server
-    recent_notifications = list(Notification.objects.filter(user=request.user).prefetch_related()  # TODO: Add appropriate prefetch_related fields)
+    recent_notifications = list(Notification.objects.filter(user=request.user))
     recent_notifications.sort(key=lambda x: x.created_at, reverse=True)
     recent_notifications = recent_notifications[:10]
 
@@ -73,7 +73,7 @@ def notification_list(request, notification_type=None):
         title = f'تنبيهات {dict(Notification.NOTIFICATION_TYPES)[notification_type]}'
     else:
         # استخدام طريقة متوافقة مع SQL Server
-        notifications = list(Notification.objects.filter(user=request.user).prefetch_related()  # TODO: Add appropriate prefetch_related fields)
+        notifications = list(Notification.objects.filter(user=request.user))
         notifications.sort(key=lambda x: x.created_at, reverse=True)
         title = 'جميع التنبيهات'
 
@@ -183,7 +183,7 @@ def user_notifications(request):
     عرض تنبيهات المستخدم الحالي مع خيارات التصفية والترتيب
     """
     # الحصول على جميع تنبيهات المستخدم
-    notifications = list(Notification.objects.filter(user=request.user).prefetch_related()  # TODO: Add appropriate prefetch_related fields)
+    notifications = list(Notification.objects.filter(user=request.user))
     notifications.sort(key=lambda x: x.created_at, reverse=True)
 
     # تطبيق الفلاتر

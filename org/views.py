@@ -78,7 +78,7 @@ class BranchForm(forms.ModelForm):
         """__init__ function"""
         super().__init__(*args, **kwargs)
         # Only show active companies in the dropdown
-        self.fields['company'].queryset = Company.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('name')
+        self.fields['company'].queryset = Company.objects.filter(is_active=True).order_by('name')
         # Make company field required
         self.fields['company'].required = True
         # Add empty label for company dropdown
@@ -141,9 +141,9 @@ class BranchForm(forms.ModelForm):
 def index(request):
     """الصفحة الرئيسية للتنظيم"""
     context = {
-        'total_departments': Department.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count(),
-        'total_jobs': Job.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count(),
-        'total_branches': Branch.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count(),
+        'total_departments': Department.objects.filter(is_active=True).count(),
+        'total_jobs': Job.objects.filter(is_active=True).count(),
+        'total_branches': Branch.objects.filter(is_active=True).count(),
     }
     return render(request, 'org/index.html', context)
 
@@ -229,7 +229,7 @@ def department_detail(request, dept_id):
     department = get_object_or_404(Department, dept_id=dept_id)
 
     # الأقسام الفرعية
-    sub_departments = Department.objects.filter(parent_dept=department, is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+    sub_departments = Department.objects.filter(parent_dept=department, is_active=True)
 
     # عدد الموظفين في القسم
     employees_count = department.employee_set.filter(emp_status='Active').count()
@@ -363,7 +363,7 @@ def branch_detail(request, branch_id):
     branch = get_object_or_404(Branch, branch_id=branch_id)
 
     # الأقسام التابعة للفرع
-    departments = Department.objects.filter(branch=branch, is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+    departments = Department.objects.filter(branch=branch, is_active=True)
 
     context = {
         'branch': branch,

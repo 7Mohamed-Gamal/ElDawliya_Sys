@@ -111,7 +111,7 @@ class TaskForm(forms.ModelForm):
 
         # Limit assigned_to choices for non-superusers
         if self.user and not self.user.is_superuser:
-            self.fields['assigned_to'].queryset = User.objects.filter(id=self.user.id).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            self.fields['assigned_to'].queryset = User.objects.filter(id=self.user.id)
             self.fields['assigned_to'].initial = self.user
             self.fields['assigned_to'].widget.attrs['readonly'] = True
 
@@ -179,7 +179,7 @@ class TaskFilterForm(forms.Form):
     )
 
     assigned_to = forms.ModelChoiceField(
-        queryset=User.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields,
+        queryset=User.objects.filter(is_active=True),
         required=False,
         empty_label='جميع المكلفين',
         widget=forms.Select(attrs={'class': 'form-select'}),
@@ -224,7 +224,7 @@ class BulkTaskUpdateForm(forms.Form):
     )
 
     new_assigned_to = forms.ModelChoiceField(
-        queryset=User.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields,
+        queryset=User.objects.filter(is_active=True),
         required=False,
         widget=forms.Select(attrs={'class': 'form-select'}),
         label='المكلف الجديد'
@@ -321,7 +321,7 @@ class UnifiedTaskFilterForm(forms.Form):
     )
 
     assigned_to = forms.ModelChoiceField(
-        queryset=User.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields,
+        queryset=User.objects.filter(is_active=True),
         required=False,
         empty_label='جميع المكلفين',
         widget=forms.Select(attrs={'class': 'form-select'}),
@@ -351,11 +351,11 @@ class UnifiedTaskFilterForm(forms.Form):
         from meetings.models import Meeting
         if user:
             if user.is_superuser:
-                self.fields['meeting'].queryset = Meeting.objects.all().select_related()  # TODO: Add appropriate select_related fields
+                self.fields['meeting'].queryset = Meeting.objects.all()
             else:
                 # Show meetings where user is attendee or has tasks
                 self.fields['meeting'].queryset = Meeting.objects.filter(
-                    Q(attendees__user=user).prefetch_related()  # TODO: Add appropriate prefetch_related fields |
+                    Q(attendees__user=user) |
                     Q(meeting_tasks__assigned_to=user) |
                     Q(tasks__assigned_to=user)
                 ).distinct()

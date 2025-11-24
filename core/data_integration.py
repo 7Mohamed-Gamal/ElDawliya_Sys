@@ -96,12 +96,12 @@ class DataIntegrationService:
 
         # Validate employee data
         if 'employee_id' in data:
-            if not Employee.objects.filter(emp_id=data['employee_id']).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists():
+            if not Employee.objects.filter(emp_id=data['employee_id']).exists():
                 errors['employee_id'] = ['Employee does not exist']
 
         # Validate department
         if 'department_id' in data:
-            if not Department.objects.filter(id=data['department_id']).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists():
+            if not Department.objects.filter(id=data['department_id']).exists():
                 errors['department_id'] = ['Department does not exist']
 
         return errors
@@ -112,7 +112,7 @@ class DataIntegrationService:
 
         # Validate assigned user
         if 'assigned_to' in data:
-            if not User.objects.filter(id=data['assigned_to']).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists():
+            if not User.objects.filter(id=data['assigned_to']).exists():
                 errors['assigned_to'] = ['Assigned user does not exist']
 
         return errors
@@ -124,7 +124,7 @@ class DataIntegrationService:
         # Validate attendees
         if 'attendees' in data:
             for attendee_id in data['attendees']:
-                if not User.objects.filter(id=attendee_id).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists():
+                if not User.objects.filter(id=attendee_id).exists():
                     errors.setdefault('attendees', []).append(f'User {attendee_id} does not exist')
 
         return errors
@@ -135,7 +135,7 @@ class DataIntegrationService:
 
         # Validate product
         if 'product_id' in data:
-            if not TblProducts.objects.filter(product_id=data['product_id']).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists():
+            if not TblProducts.objects.filter(product_id=data['product_id']).exists():
                 errors['product_id'] = ['Product does not exist']
 
         return errors
@@ -146,7 +146,7 @@ class DataIntegrationService:
 
         # Validate requester
         if 'requested_by' in data:
-            if not User.objects.filter(id=data['requested_by']).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists():
+            if not User.objects.filter(id=data['requested_by']).exists():
                 errors['requested_by'] = ['Requesting user does not exist']
 
         return errors

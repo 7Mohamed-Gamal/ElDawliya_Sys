@@ -120,7 +120,7 @@ class TestDataValidator:
             errors.append(f"أسماء مستخدمين مكررة: {total_users - unique_usernames}")
 
         # Check for users without email
-        users_without_email = User.objects.filter(email='').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+        users_without_email = User.objects.filter(email='').count()
         if users_without_email > 0:
             errors.append(f"مستخدمين بدون بريد إلكتروني: {users_without_email}")
 
@@ -136,7 +136,7 @@ class TestDataValidator:
 
         # Check for users without names
         users_without_names = User.objects.filter(
-            models.Q(first_name='').prefetch_related()  # TODO: Add appropriate prefetch_related fields | models.Q(last_name='')
+            models.Q(first_name='').Q(last_name='')
         ).count()
 
         if users_without_names > 0:
@@ -210,7 +210,7 @@ class TestDataValidator:
                 return True, {'errors': [], 'count': 0, 'note': 'لا توجد موظفين'}
 
             # Check for employees without required fields
-            employees_without_code = Employee.objects.filter(emp_code='').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+            employees_without_code = Employee.objects.filter(emp_code='').count()
             if employees_without_code > 0:
                 errors.append(f"موظفين بدون رمز: {employees_without_code}")
 
@@ -222,25 +222,25 @@ class TestDataValidator:
                 errors.append(f"رموز موظفين مكررة: {total_employees - unique_codes}")
 
             # Check for employees without departments
-            employees_without_dept = Employee.objects.filter(dept__isnull=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+            employees_without_dept = Employee.objects.filter(dept__isnull=True).count()
             if employees_without_dept > 0:
                 errors.append(f"موظفين بدون قسم: {employees_without_dept}")
 
             # Check for employees without jobs
-            employees_without_job = Employee.objects.filter(job__isnull=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+            employees_without_job = Employee.objects.filter(job__isnull=True).count()
             if employees_without_job > 0:
                 errors.append(f"موظفين بدون وظيفة: {employees_without_job}")
 
             # Check for invalid hire dates (future dates)
             future_hire_dates = Employee.objects.filter(
-                hire_date__gt=date.today().prefetch_related()  # TODO: Add appropriate prefetch_related fields
+                hire_date__gt=date.today()
             ).count()
             if future_hire_dates > 0:
                 self.warnings.append(f"موظفين بتاريخ توظيف مستقبلي: {future_hire_dates}")
 
             # Check for invalid birth dates
             invalid_birth_dates = Employee.objects.filter(
-                models.Q(birth_date__gt=date.today().prefetch_related()  # TODO: Add appropriate prefetch_related fields) |
+                models.Q(birth_date__gt=date.today()) |
                 models.Q(birth_date__lt=date.today() - timedelta(days=80*365))
             ).count()
             if invalid_birth_dates > 0:
@@ -277,30 +277,30 @@ class TestDataValidator:
                 return True, {'errors': [], 'count': 0, 'note': 'لا توجد منتجات'}
 
             # Check for products with negative stock
-            negative_stock = TblProducts.objects.filter(qte_in_stock__lt=0).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+            negative_stock = TblProducts.objects.filter(qte_in_stock__lt=0).count()
             if negative_stock > 0:
                 errors.append(f"منتجات برصيد سالب: {negative_stock}")
 
             # Check for products without categories
-            no_category = TblProducts.objects.filter(cat__isnull=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+            no_category = TblProducts.objects.filter(cat__isnull=True).count()
             if no_category > 0:
                 errors.append(f"منتجات بدون فئة: {no_category}")
 
             # Check for products without units
-            no_unit = TblProducts.objects.filter(unit__isnull=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+            no_unit = TblProducts.objects.filter(unit__isnull=True).count()
             if no_unit > 0:
                 errors.append(f"منتجات بدون وحدة قياس: {no_unit}")
 
             # Check for products with zero or negative prices
             invalid_prices = TblProducts.objects.filter(
-                models.Q(unit_price__lte=0).prefetch_related()  # TODO: Add appropriate prefetch_related fields | models.Q(unit_price__isnull=True)
+                models.Q(unit_price__lte=0).Q(unit_price__isnull=True)
             ).count()
             if invalid_prices > 0:
                 errors.append(f"منتجات بأسعار غير صحيحة: {invalid_prices}")
 
             # Check for products below minimum threshold
             below_minimum = TblProducts.objects.filter(
-                qte_in_stock__lt=models.F('minimum_threshold').prefetch_related()  # TODO: Add appropriate prefetch_related fields
+                qte_in_stock__lt=models.F('minimum_threshold')
             ).count()
             if below_minimum > 0:
                 self.warnings.append(f"منتجات تحت الحد الأدنى: {below_minimum}")
@@ -340,30 +340,30 @@ class TestDataValidator:
                 return True, {'errors': [], 'count': 0, 'note': 'لا توجد مهام'}
 
             # Check for tasks with end date before start date
-            invalid_dates = Task.objects.filter(end_date__lt=models.F('start_date').prefetch_related()  # TODO: Add appropriate prefetch_related fields).count()
+            invalid_dates = Task.objects.filter(end_date__lt=models.F('start_date').count()
             if invalid_dates > 0:
                 errors.append(f"مهام بتواريخ غير صحيحة: {invalid_dates}")
 
             # Check for tasks without assigned users
-            no_assignee = Task.objects.filter(assigned_to__isnull=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+            no_assignee = Task.objects.filter(assigned_to__isnull=True).count()
             if no_assignee > 0:
                 errors.append(f"مهام غير مُعيَّنة: {no_assignee}")
 
             # Check for tasks without creators
-            no_creator = Task.objects.filter(created_by__isnull=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+            no_creator = Task.objects.filter(created_by__isnull=True).count()
             if no_creator > 0:
                 errors.append(f"مهام بدون منشئ: {no_creator}")
 
             # Check for invalid progress values
             invalid_progress = Task.objects.filter(
-                models.Q(progress__lt=0).prefetch_related()  # TODO: Add appropriate prefetch_related fields | models.Q(progress__gt=100)
+                models.Q(progress__lt=0).Q(progress__gt=100)
             ).count()
             if invalid_progress > 0:
                 errors.append(f"مهام بنسبة إنجاز غير صحيحة: {invalid_progress}")
 
             # Check for overdue tasks
             overdue_tasks = Task.objects.filter(
-                end_date__lt=date.today().prefetch_related()  # TODO: Add appropriate prefetch_related fields,
+                end_date__lt=date.today(),
                 status__in=['pending', 'in_progress']
             ).count()
             if overdue_tasks > 0:
@@ -389,14 +389,14 @@ class TestDataValidator:
                 return True, {'errors': [], 'count': 0, 'note': 'لا توجد اجتماعات'}
 
             # Check for meetings without creators
-            no_creator = Meeting.objects.filter(created_by__isnull=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+            no_creator = Meeting.objects.filter(created_by__isnull=True).count()
             if no_creator > 0:
                 errors.append(f"اجتماعات بدون منشئ: {no_creator}")
 
             # Check for meetings without attendees
             meetings_without_attendees = Meeting.objects.filter(
                 attendee__isnull=True
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.distinct().count()
+            ).distinct().count()
             if meetings_without_attendees > 0:
                 self.warnings.append(f"اجتماعات بدون حضور: {meetings_without_attendees}")
 
@@ -429,14 +429,14 @@ class TestDataValidator:
             # Check for requests without items
             requests_without_items = PurchaseRequest.objects.filter(
                 purchaserequestitem__isnull=True
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.distinct().count()
+            ).distinct().count()
             if requests_without_items > 0:
                 errors.append(f"طلبات شراء بدون عناصر: {requests_without_items}")
 
             # Check for items with zero or negative quantities
             invalid_quantities = PurchaseRequestItem.objects.filter(
                 quantity_requested__lte=0
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+            ).count()
             if invalid_quantities > 0:
                 errors.append(f"عناصر بكميات غير صحيحة: {invalid_quantities}")
 
@@ -460,20 +460,20 @@ class TestDataValidator:
                 return True, {'errors': [], 'count': 0, 'note': 'لا توجد سجلات حضور'}
 
             # Check for attendance without employees
-            no_employee = EmployeeAttendance.objects.filter(employee__isnull=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+            no_employee = EmployeeAttendance.objects.filter(employee__isnull=True).count()
             if no_employee > 0:
                 errors.append(f"سجلات حضور بدون موظف: {no_employee}")
 
             # Check for check-out before check-in
             invalid_times = EmployeeAttendance.objects.filter(
-                check_out__lt=models.F('check_in').prefetch_related()  # TODO: Add appropriate prefetch_related fields
+                check_out__lt=models.F('check_in')
             ).count()
             if invalid_times > 0:
                 errors.append(f"سجلات بأوقات غير صحيحة: {invalid_times}")
 
             # Check for future attendance dates
             future_attendance = EmployeeAttendance.objects.filter(
-                att_date__gt=date.today().prefetch_related()  # TODO: Add appropriate prefetch_related fields
+                att_date__gt=date.today()
             ).count()
             if future_attendance > 0:
                 self.warnings.append(f"سجلات حضور مستقبلية: {future_attendance}")
@@ -498,13 +498,13 @@ class TestDataValidator:
                 return True, {'errors': [], 'count': 0, 'note': 'لا توجد سجلات رواتب'}
 
             # Check for payroll without employees
-            no_employee = PayrollRecord.objects.filter(employee__isnull=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+            no_employee = PayrollRecord.objects.filter(employee__isnull=True).count()
             if no_employee > 0:
                 errors.append(f"سجلات رواتب بدون موظف: {no_employee}")
 
             # Check for negative salaries
             negative_salaries = PayrollRecord.objects.filter(
-                models.Q(basic_salary__lt=0).prefetch_related()  # TODO: Add appropriate prefetch_related fields |
+                models.Q(basic_salary__lt=0) |
                 models.Q(net_salary__lt=0)
             ).count()
             if negative_salaries > 0:
@@ -512,7 +512,7 @@ class TestDataValidator:
 
             # Check for inconsistent calculations
             inconsistent_calculations = PayrollRecord.objects.filter(
-                net_salary__gt=models.F('gross_salary').prefetch_related()  # TODO: Add appropriate prefetch_related fields
+                net_salary__gt=models.F('gross_salary')
             ).count()
             if inconsistent_calculations > 0:
                 errors.append(f"حسابات رواتب غير متسقة: {inconsistent_calculations}")
@@ -537,13 +537,13 @@ class TestDataValidator:
                 return True, {'errors': [], 'count': 0, 'note': 'لا توجد طلبات إجازات'}
 
             # Check for leaves without employees
-            no_employee = LeaveRequest.objects.filter(employee__isnull=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+            no_employee = LeaveRequest.objects.filter(employee__isnull=True).count()
             if no_employee > 0:
                 errors.append(f"طلبات إجازات بدون موظف: {no_employee}")
 
             # Check for invalid date ranges
             invalid_dates = LeaveRequest.objects.filter(
-                end_date__lt=models.F('start_date').prefetch_related()  # TODO: Add appropriate prefetch_related fields
+                end_date__lt=models.F('start_date')
             ).count()
             if invalid_dates > 0:
                 errors.append(f"طلبات إجازات بتواريخ غير صحيحة: {invalid_dates}")
@@ -551,7 +551,7 @@ class TestDataValidator:
             # Check for zero or negative days
             invalid_days = LeaveRequest.objects.filter(
                 days_requested__lte=0
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+            ).count()
             if invalid_days > 0:
                 errors.append(f"طلبات إجازات بأيام غير صحيحة: {invalid_days}")
 
@@ -573,7 +573,7 @@ class TestDataValidator:
 
             employees_without_users = Employee.objects.filter(
                 user__isnull=True
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+            ).count()
             if employees_without_users > 0:
                 self.warnings.append(f"موظفين بدون حسابات مستخدمين: {employees_without_users}")
 
@@ -582,7 +582,7 @@ class TestDataValidator:
 
             tasks_with_invalid_assignees = Task.objects.filter(
                 assigned_to__is_active=False
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+            ).count()
             if tasks_with_invalid_assignees > 0:
                 self.warnings.append(f"مهام مُعيَّنة لمستخدمين غير نشطين: {tasks_with_invalid_assignees}")
 
@@ -592,7 +592,7 @@ class TestDataValidator:
             products_with_invalid_categories = TblProducts.objects.filter(
                 cat__isnull=False,
                 cat_name__isnull=True
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+            ).count()
             if products_with_invalid_categories > 0:
                 errors.append(f"منتجات بفئات غير صحيحة: {products_with_invalid_categories}")
 
@@ -610,8 +610,8 @@ class TestDataValidator:
 
         # User statistics
         total_users = User.objects.count()
-        active_users = User.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
-        staff_users = User.objects.filter(is_staff=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+        active_users = User.objects.filter(is_active=True).count()
+        staff_users = User.objects.filter(is_staff=True).count()
 
         self.statistics['users'] = {
             'total': total_users,
@@ -625,7 +625,7 @@ class TestDataValidator:
             from employees.models import Employee
 
             total_employees = Employee.objects.count()
-            active_employees = Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+            active_employees = Employee.objects.filter(emp_status='Active').count()
 
             self.statistics['employees'] = {
                 'total': total_employees,
@@ -641,9 +641,9 @@ class TestDataValidator:
             from tasks.models import Task
 
             total_tasks = Task.objects.count()
-            completed_tasks = Task.objects.filter(status='completed').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
-            pending_tasks = Task.objects.filter(status='pending').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
-            in_progress_tasks = Task.objects.filter(status='in_progress').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+            completed_tasks = Task.objects.filter(status='completed').count()
+            pending_tasks = Task.objects.filter(status='pending').count()
+            in_progress_tasks = Task.objects.filter(status='in_progress').count()
 
             self.statistics['tasks'] = {
                 'total': total_tasks,
@@ -662,7 +662,7 @@ class TestDataValidator:
 
             total_products = TblProducts.objects.count()
             low_stock_products = TblProducts.objects.filter(
-                qte_in_stock__lt=models.F('minimum_threshold').prefetch_related()  # TODO: Add appropriate prefetch_related fields
+                qte_in_stock__lt=models.F('minimum_threshold')
             ).count()
 
             self.statistics['inventory'] = {

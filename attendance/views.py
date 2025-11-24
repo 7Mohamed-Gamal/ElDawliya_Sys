@@ -75,7 +75,7 @@ class AttendanceRecordListView(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         """get_context_data function"""
         context = super().get_context_data(**kwargs)
-        context['employees'] = Employee.objects.all().select_related()  # TODO: Add appropriate select_related fields
+        context['employees'] = Employee.objects.all()
         context['record_types'] = AttendanceRecord.RECORD_TYPE_CHOICES
         return context
 
@@ -99,7 +99,7 @@ def mark_attendance(request):
             employee=employee,
             date=today,
             record_type=record_type
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists()
+        ).exists()
 
         if existing_record:
             messages.warning(request, _('لقد قمت بتسجيل الحضور/الانصراف بالفعل اليوم'))
@@ -117,7 +117,7 @@ def mark_attendance(request):
         return redirect('attendance:dashboard')
 
     # Get active employees for staff users
-    employees = Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.annotate(
+    employees = Employee.objects.filter(emp_status='Active').annotate(
         display_name=Concat(
             Coalesce('first_name', Value('')),
             Value(' '),
@@ -156,7 +156,7 @@ class LeaveBalanceListView(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         """get_context_data function"""
         context = super().get_context_data(**kwargs)
-        context['employees'] = Employee.objects.all().select_related()  # TODO: Add appropriate select_related fields
+        context['employees'] = Employee.objects.all()
         context['current_year'] = date.today().year
         return context
 
@@ -167,7 +167,7 @@ def attendance_dashboard(request):
     today = timezone.localtime().date()
 
     # إحصائيات اليوم من جدول EmployeeAttendance
-    today_stats = EmployeeAttendance.objects.filter(att_date=today).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+    today_stats = EmployeeAttendance.objects.filter(att_date=today).aggregate(
         present=Count('att_id', filter=Q(status='Present')),
         absent=Count('att_id', filter=Q(status='Absent')),
         leave=Count('att_id', filter=Q(status='Leave')),
@@ -175,7 +175,7 @@ def attendance_dashboard(request):
     )
 
     # إجمالي عدد الموظفين النشطين
-    total_employees = Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+    total_employees = Employee.objects.filter(emp_status='Active').count()
 
     # حساب النسب المئوية
     if total_employees > 0:
@@ -187,7 +187,7 @@ def attendance_dashboard(request):
     late_records = EmployeeAttendance.objects.filter(
         att_date=today,
         status='Late'
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+    )
     avg_late_minutes = 0
     if late_records.exists():
         total_late_minutes = sum([record.calculate_late_minutes() for record in late_records])
@@ -199,13 +199,13 @@ def attendance_dashboard(request):
         user_attendance = EmployeeAttendance.objects.filter(
             emp=request.user.employee,
             att_date=today
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+        ).first()
 
     # جدول العمل للموظف
     work_schedule = None
     if hasattr(request.user, 'employee'):
         # البحث عن قاعدة الحضور الافتراضية أو المخصصة للموظف
-        default_rule = AttendanceRules.objects.filter(is_default=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+        default_rule = AttendanceRules.objects.filter(is_default=True).first()
         if default_rule:
             work_schedule = {
                 'start_time': default_rule.shift_start,
@@ -220,14 +220,14 @@ def attendance_dashboard(request):
     # إحصائيات الأقسام
     from employees.models import Department
     department_stats = []
-    departments = Department.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+    departments = Department.objects.filter(is_active=True)
 
     for dept in departments:
-        dept_employees = Employee.objects.filter(dept=dept, emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        dept_employees = Employee.objects.filter(dept=dept, emp_status='Active')
         dept_attendance = EmployeeAttendance.objects.filter(
             emp__in=dept_employees,
             att_date=today
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+        ).aggregate(
             present_count=Count('att_id', filter=Q(status='Present')),
             absent_count=Count('att_id', filter=Q(status='Absent')),
             late_count=Count('att_id', filter=Q(status='Late'))
@@ -247,7 +247,7 @@ def attendance_dashboard(request):
 
     for i in range(7):
         day = today - timedelta(days=6-i)
-        day_stats = EmployeeAttendance.objects.filter(att_date=day).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+        day_stats = EmployeeAttendance.objects.filter(att_date=day).aggregate(
             present=Count('att_id', filter=Q(status='Present')),
             absent=Count('att_id', filter=Q(status='Absent')),
             late=Count('att_id', filter=Q(status='Late'))
@@ -498,7 +498,7 @@ def set_default_rule(request, rule_id):
     rule = get_object_or_404(AttendanceRules, rule_id=rule_id)
 
     # إزالة الافتراضية من جميع القواعد
-    AttendanceRules.objects.all().select_related()  # TODO: Add appropriate select_related fields.update(is_default=False)
+    AttendanceRules.objects.all().update(is_default=False)
 
     # تعيين القاعدة الحالية كافتراضية
     rule.is_default = True
@@ -520,11 +520,11 @@ def reports(request):
     this_month = EmployeeAttendance.objects.filter(
         att_date__year=today.year,
         att_date__month=today.month
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+    ).count()
 
     # إحصائيات الحضور اليومي
     daily_stats = EmployeeAttendance.objects.filter(
-        att_date__gte=today - timedelta(days=7).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        att_date__gte=today - timedelta(days=7)
     ).values('att_date').annotate(
         count=Count('att_id')
     ).order_by('att_date')
@@ -583,7 +583,7 @@ def monthly_report(request):
     monthly_stats = EmployeeAttendance.objects.filter(
         att_date__year=year,
         att_date__month=month
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+    ).aggregate(
         total_records=Count('att_id'),
         present_count=Count('att_id', filter=Q(status='Present')),
         absent_count=Count('att_id', filter=Q(status='Absent')),
@@ -594,7 +594,7 @@ def monthly_report(request):
     daily_details = EmployeeAttendance.objects.filter(
         att_date__year=year,
         att_date__month=month
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.values('att_date').annotate(
+    ).values('att_date').annotate(
         count=Count('att_id')
     ).order_by('att_date')
 
@@ -633,7 +633,7 @@ def employee_attendance_report(request, emp_id):
     attendance_records = EmployeeAttendance.objects.filter(
         emp=employee,
         att_date__range=[date_from, date_to]
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('att_date')
+    ).order_by('att_date')
 
     # إحصائيات
     stats = attendance_records.aggregate(
@@ -677,7 +677,7 @@ def check_in(request):
         existing_record = EmployeeAttendance.objects.filter(
             emp=employee,
             att_date=today
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+        ).first()
 
         if existing_record and existing_record.check_in:
             messages.warning(request, 'تم تسجيل الدخول مسبقاً لهذا اليوم.')
@@ -718,7 +718,7 @@ def check_out(request):
         record = EmployeeAttendance.objects.filter(
             emp=employee,
             att_date=today
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+        ).first()
 
         if not record or not record.check_in:
             messages.error(request, 'لم يتم تسجيل الدخول لهذا اليوم.')
@@ -751,7 +751,7 @@ def profile(request):
     # سجلات الحضور الأخيرة
     recent_records = EmployeeAttendance.objects.filter(
         emp=employee
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('-att_date')[:10]
+    ).order_by('-att_date')[:10]
 
     # إحصائيات الشهر الحالي
     today = date.today()
@@ -759,7 +759,7 @@ def profile(request):
         emp=employee,
         att_date__year=today.year,
         att_date__month=today.month
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+    ).aggregate(
         total_days=Count('att_id'),
         present_days=Count('att_id', filter=Q(status='Present')),
         absent_days=Count('att_id', filter=Q(status='Absent')),
@@ -794,7 +794,7 @@ def get_attendance_status(request, emp_id):
         record = EmployeeAttendance.objects.filter(
             emp=employee,
             att_date=today
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+        ).first()
 
         data = {
             'employee_name': f"{employee.first_name} {employee.last_name}",
@@ -826,7 +826,7 @@ def calculate_work_hours(request):
         record = EmployeeAttendance.objects.filter(
             emp=employee,
             att_date=target_date
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+        ).first()
 
         if record and record.check_in and record.check_out:
             work_duration = record.check_out - record.check_in
@@ -863,7 +863,7 @@ def attendance_summary(request, emp_id):
             emp=employee,
             att_date__year=today.year,
             att_date__month=today.month
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        )
 
         summary = monthly_records.aggregate(
             total_days=Count('att_id'),
@@ -908,7 +908,7 @@ def bulk_approve_attendance(request):
         if record_ids:
             EmployeeAttendance.objects.filter(
                 att_id__in=record_ids
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.update(status='Approved')
+            ).update(status='Approved')
 
             messages.success(request, f'تم اعتماد {len(record_ids)} سجل حضور.')
         else:
@@ -921,13 +921,13 @@ def bulk_approve_attendance(request):
 @login_required
 def time_tracking(request):
     """تتبع الوقت"""
-    employees = Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('first_name')
+    employees = Employee.objects.filter(emp_status='Active').order_by('first_name')
 
     # سجلات اليوم
     today = date.today()
     today_records = EmployeeAttendance.objects.filter(
         att_date=today
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('emp')
+    ).select_related('emp')
 
     context = {
         'employees': employees,
@@ -945,7 +945,7 @@ def overtime_records(request):
     records = EmployeeAttendance.objects.filter(
         check_in__isnull=False,
         check_out__isnull=False
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('emp').order_by('-att_date')
+    ).select_related('emp').order_by('-att_date')
 
     context = {
         'records': records,
@@ -961,7 +961,7 @@ def overtime_records(request):
 @user_passes_test(lambda u: u.is_superuser)
 def zk_devices_list(request):
     """قائمة أجهزة ZK"""
-    devices = ZKDevice.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('device_name')
+    devices = ZKDevice.objects.all().order_by('device_name')
 
     context = {
         'devices': devices,
@@ -1106,14 +1106,14 @@ def zk_device_info(request, device_id):
     # آخر سجلات المعالجة
     recent_logs = AttendanceProcessingLog.objects.filter(
         device=device
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('-created_at')[:10]
+    ).order_by('-created_at')[:10]
 
     # إحصائيات الجهاز
-    total_raw_records = ZKAttendanceRaw.objects.filter(device=device).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+    total_raw_records = ZKAttendanceRaw.objects.filter(device=device).count()
     processed_records = ZKAttendanceRaw.objects.filter(
         device=device,
         is_processed=True
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+    ).count()
     unprocessed_records = total_raw_records - processed_records
 
     # آخر مزامنة
@@ -1162,7 +1162,7 @@ def zk_raw_data(request):
 
     context = {
         'page_obj': page_obj,
-        'devices': ZKDevice.objects.all().select_related()  # TODO: Add appropriate select_related fields,
+        'devices': ZKDevice.objects.all(),
         'current_filters': {
             'device': device_id,
             'date_from': date_from,
@@ -1318,7 +1318,7 @@ def zk_processing_logs(request):
 
     context = {
         'page_obj': page_obj,
-        'devices': ZKDevice.objects.all().select_related()  # TODO: Add appropriate select_related fields,
+        'devices': ZKDevice.objects.all(),
         'current_filters': {
             'device': device_id,
             'status': status,
@@ -1346,7 +1346,7 @@ def ajax_zk_device_status(request, device_id):
         unprocessed_count = ZKAttendanceRaw.objects.filter(
             device=device,
             is_processed=False
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+        ).count()
 
         data = {
             'device_name': device.device_name,
@@ -1409,13 +1409,13 @@ def attendance_analytics(request):
     last_30_days = today - timedelta(days=30)
 
     # إحصائيات عامة
-    total_employees = Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+    total_employees = Employee.objects.filter(emp_status='Active').count()
     total_attendance_records = EmployeeAttendance.objects.count()
 
     # إحصائيات آخر 30 يوم
     recent_stats = EmployeeAttendance.objects.filter(
         att_date__gte=last_30_days
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+    ).aggregate(
         total_records=Count('att_id'),
         present_records=Count('att_id', filter=Q(status='Present')),
         absent_records=Count('att_id', filter=Q(status='Absent')),
@@ -1444,7 +1444,7 @@ def attendance_analytics(request):
     top_employees = EmployeeAttendance.objects.filter(
         att_date__gte=last_30_days,
         status='Present'
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.values(
+    ).values(
         'emp__emp_code',
         'emp__first_name',
         'emp__last_name'
@@ -1460,7 +1460,7 @@ def attendance_analytics(request):
 
         month_stats = EmployeeAttendance.objects.filter(
             att_date__range=[month_start, month_end]
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+        ).aggregate(
             total=Count('att_id'),
             present=Count('att_id', filter=Q(status='Present')),
             absent=Count('att_id', filter=Q(status='Absent'))
@@ -1493,10 +1493,10 @@ def generate_attendance_summary(request):
         month = int(request.POST.get('month', date.today().month))
 
         # حذف الملخصات الموجودة لنفس الفترة
-        AttendanceSummary.objects.filter(year=year, month=month).prefetch_related()  # TODO: Add appropriate prefetch_related fields.delete()
+        AttendanceSummary.objects.filter(year=year, month=month).delete()
 
         # إنشاء ملخص لكل موظف
-        employees = Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        employees = Employee.objects.filter(emp_status='Active')
         created_count = 0
 
         for employee in employees:
@@ -1505,7 +1505,7 @@ def generate_attendance_summary(request):
                 emp=employee,
                 att_date__year=year,
                 att_date__month=month
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            )
 
             if monthly_records.exists():
                 stats = monthly_records.aggregate(
@@ -1560,7 +1560,7 @@ def attendance_summaries(request):
     summaries = AttendanceSummary.objects.filter(
         year=year,
         month=month
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('employee').order_by('employee__emp_code')
+    ).select_related('employee').order_by('employee__emp_code')
 
     context = {
         'summaries': summaries,

@@ -39,11 +39,11 @@ def permissions_dashboard(request):
 
     # Get statistics
     stats = {
-        'total_users': User.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count(),
-        'total_roles': Role.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count(),
-        'total_permissions': Permission.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count(),
-        'total_modules': Module.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count(),
-        'pending_approvals': ApprovalWorkflow.objects.filter(status='pending').prefetch_related()  # TODO: Add appropriate prefetch_related fields.count(),
+        'total_users': User.objects.filter(is_active=True).count(),
+        'total_roles': Role.objects.filter(is_active=True).count(),
+        'total_permissions': Permission.objects.filter(is_active=True).count(),
+        'total_modules': Module.objects.filter(is_active=True).count(),
+        'pending_approvals': ApprovalWorkflow.objects.filter(status='pending').count(),
     }
 
     # Get recent activities
@@ -78,7 +78,7 @@ def modules_list(request):
     List all system modules
     قائمة جميع وحدات النظام
     """
-    modules = Module.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.prefetch_related('permissions')
+    modules = Module.objects.filter(is_active=True).prefetch_related('permissions')
 
     # Add permission counts
     for module in modules:
@@ -99,7 +99,7 @@ def roles_list(request):
     List all roles with filtering and search
     قائمة جميع الأدوار مع الفلترة والبحث
     """
-    roles_queryset = Role.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.annotate(
+    roles_queryset = Role.objects.filter(is_active=True).annotate(
         users_count=Count('user_roles', filter=Q(user_roles__is_active=True))
     ).prefetch_related('permissions')
 
@@ -145,7 +145,7 @@ def role_detail(request, role_id):
     # Get users assigned to this role
     user_roles = UserRole.objects.filter(
         role=role, is_active=True
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('user', 'granted_by').order_by('-granted_at')
+    ).select_related('user', 'granted_by').order_by('-granted_at')
 
     # Get role permissions grouped by module
     permissions_by_module = {}
@@ -209,8 +209,8 @@ def assign_role_to_user(request):
             return redirect('core:roles_list')
 
     # GET request - show assignment form
-    users = User.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('username')
-    roles = Role.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('display_name')
+    users = User.objects.filter(is_active=True).order_by('username')
+    roles = Role.objects.filter(is_active=True).order_by('display_name')
 
     context = {
         'users': users,
@@ -460,7 +460,7 @@ def clear_permissions_cache(request):
                 from ..models.permissions import PermissionCache
 
                 cache.clear()
-                PermissionCache.objects.all().select_related()  # TODO: Add appropriate select_related fields.delete()
+                PermissionCache.objects.all().delete()
                 messages.success(request, 'تم مسح ذاكرة التخزين المؤقت لجميع المستخدمين')
 
         except User.DoesNotExist:

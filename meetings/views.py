@@ -18,11 +18,11 @@ def dashboard(request):
     # تصفية الاجتماعات حسب صلاحية الوصول للمستخدم
     if request.user.is_superuser:
         # المدير العام يرى جميع الاجتماعات
-        accessible_meetings = Meeting.objects.all().select_related()  # TODO: Add appropriate select_related fields
+        accessible_meetings = Meeting.objects.all()
     else:
         # المستخدمون العاديون يرون فقط الاجتماعات التي أنشؤوها أو مدعوون إليها
         accessible_meetings = Meeting.objects.filter(
-            Q(created_by=request.user).prefetch_related()  # TODO: Add appropriate prefetch_related fields | Q(attendees__user=request.user)
+            Q(created_by=request.user) | Q(attendees__user=request.user)
         ).distinct()
 
     # إحصائيات الاجتماعات
@@ -70,11 +70,11 @@ def meeting_list(request):
     # تصفية الاجتماعات حسب صلاحية الوصول للمستخدم
     if request.user.is_superuser:
         # المدير العام يرى جميع الاجتماعات
-        meetings = Meeting.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('-date')
+        meetings = Meeting.objects.all().order_by('-date')
     else:
         # المستخدمون العاديون يرون فقط الاجتماعات التي أنشؤوها أو مدعوون إليها
         meetings = Meeting.objects.filter(
-            Q(created_by=request.user).prefetch_related()  # TODO: Add appropriate prefetch_related fields | Q(attendees__user=request.user)
+            Q(created_by=request.user) | Q(attendees__user=request.user)
         ).distinct().order_by('-date')
 
     # تطبيق عوامل التصفية
@@ -359,7 +359,7 @@ def remove_attendee(request, pk):
 @permission_required('meetings.view_meeting', login_url='accounts:access_denied')
 def calendar_view(request):
     """عرض تقويم الاجتماعات"""
-    meetings = Meeting.objects.all().select_related()  # TODO: Add appropriate select_related fields
+    meetings = Meeting.objects.all()
     return render(request, 'meetings/calendar.html', {'meetings': meetings})
 
 @login_required
@@ -404,7 +404,7 @@ def meeting_task_detail(request, task_id):
     steps = task.steps.all().order_by('created_at')
 
     # المهام ذات الصلة من نفس الاجتماع
-    related_tasks = MeetingTask.objects.filter(meeting=task.meeting).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exclude(id=task.id)[:5]
+    related_tasks = MeetingTask.objects.filter(meeting=task.meeting).exclude(id=task.id)[:5]
 
     # إحصائيات مهام الاجتماع
     meeting_tasks_stats = {
@@ -450,7 +450,7 @@ def reports(request):
     creator = request.GET.get('creator')
 
     # تطبيق معايير التصفية على الاستعلام
-    meetings = Meeting.objects.all().select_related()  # TODO: Add appropriate select_related fields
+    meetings = Meeting.objects.all()
 
     if date_from:
         meetings = meetings.filter(date__date__gte=date_from)
@@ -499,7 +499,7 @@ def reports(request):
         meeting_list.append(meeting)
 
     # الحصول على قائمة المستخدمين للفلتر
-    users = User.objects.all().select_related()  # TODO: Add appropriate select_related fields
+    users = User.objects.all()
 
     # التاريخ الحالي للطباعة
     now = timezone.now()

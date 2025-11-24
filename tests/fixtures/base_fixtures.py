@@ -269,7 +269,7 @@ class UserFixtures(BaseFixtureGenerator):
         users = []
 
         # Create superuser
-        if not User.objects.filter(username='admin').prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists():
+        if not User.objects.filter(username='admin').exists():
             admin = User.objects.create_superuser(
                 username='admin',
                 email='admin@eldawliya.com',
@@ -376,9 +376,9 @@ class EmployeeFixtures(BaseFixtureGenerator):
         from org.models import Branch, Department, Job
 
         # Ensure we have required related objects
-        branches = list(Branch.objects.all().select_related()  # TODO: Add appropriate select_related fields)
-        departments = list(Department.objects.all().select_related()  # TODO: Add appropriate select_related fields)
-        jobs = list(Job.objects.all().select_related()  # TODO: Add appropriate select_related fields)
+        branches = list(Branch.objects.all())
+        departments = list(Department.objects.all())
+        jobs = list(Job.objects.all())
 
         if not branches or not departments or not jobs:
             raise ValueError("Must create branches, departments, and jobs before creating employees")
@@ -507,8 +507,8 @@ class InventoryFixtures(BaseFixtureGenerator):
         """Create products"""
         from inventory.models import TblProducts, TblCategories, TblUnitsSpareparts
 
-        categories = list(TblCategories.objects.all().select_related()  # TODO: Add appropriate select_related fields)
-        units = list(TblUnitsSpareparts.objects.all().select_related()  # TODO: Add appropriate select_related fields)
+        categories = list(TblCategories.objects.all())
+        units = list(TblUnitsSpareparts.objects.all())
 
         if not categories or not units:
             raise ValueError("Must create categories and units before creating products")
@@ -557,7 +557,7 @@ class MeetingFixtures(BaseFixtureGenerator):
         from meetings.models import Meeting, Attendee
         from accounts.models import Users_Login_New
 
-        users = list(Users_Login_New.objects.all().select_related()  # TODO: Add appropriate select_related fields)
+        users = list(Users_Login_New.objects.all())
         if not users:
             raise ValueError("Must create users before creating meetings")
 
@@ -637,9 +637,9 @@ class TaskFixtures(BaseFixtureGenerator):
         from meetings.models import Meeting
         from accounts.models import Users_Login_New
 
-        users = list(Users_Login_New.objects.all().select_related()  # TODO: Add appropriate select_related fields)
-        categories = list(TaskCategory.objects.all().select_related()  # TODO: Add appropriate select_related fields)
-        meetings = list(Meeting.objects.all().select_related()  # TODO: Add appropriate select_related fields)
+        users = list(Users_Login_New.objects.all())
+        categories = list(TaskCategory.objects.all())
+        meetings = list(Meeting.objects.all())
 
         if not users:
             raise ValueError("Must create users before creating tasks")
@@ -714,9 +714,9 @@ class PurchaseOrderFixtures(BaseFixtureGenerator):
 
         User = get_user_model()
 
-        users = list(User.objects.all().select_related()  # TODO: Add appropriate select_related fields)
-        vendors = list(Vendor.objects.all().select_related()  # TODO: Add appropriate select_related fields)
-        products = list(TblProducts.objects.all().select_related()  # TODO: Add appropriate select_related fields)
+        users = list(User.objects.all())
+        vendors = list(Vendor.objects.all())
+        products = list(TblProducts.objects.all())
 
         if not users or not vendors or not products:
             raise ValueError("Must create users, vendors, and products before creating purchase requests")
@@ -764,7 +764,7 @@ class AttendanceFixtures(BaseFixtureGenerator):
         from attendance.models import EmployeeAttendance
         from employees.models import Employee
 
-        employees = list(Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields)
+        employees = list(Employee.objects.filter(emp_status='Active'))
         if not employees:
             raise ValueError("Must create active employees before creating attendance records")
 
@@ -889,7 +889,7 @@ class PayrollFixtures(BaseFixtureGenerator):
         from payrolls.models import PayrollRecord, PayrollItem
         from employees.models import Employee
 
-        employees = list(Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields)
+        employees = list(Employee.objects.filter(emp_status='Active'))
         if not employees:
             raise ValueError("Must create employees before creating payroll records")
 
@@ -1012,8 +1012,8 @@ class LeaveFixtures(BaseFixtureGenerator):
         from leaves.models import LeaveRequest, LeaveType
         from employees.models import Employee
 
-        employees = list(Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields)
-        leave_types = list(LeaveType.objects.all().select_related()  # TODO: Add appropriate select_related fields)
+        employees = list(Employee.objects.filter(emp_status='Active'))
+        leave_types = list(LeaveType.objects.all())
 
         if not employees or not leave_types:
             raise ValueError("Must create employees and leave types first")

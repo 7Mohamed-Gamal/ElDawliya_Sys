@@ -39,7 +39,7 @@ def create_custom_permission(app_label, model_name, codename, name):
         content_type = ContentType.objects.get(app_label=app_label, model=model_name)
 
         # Check if permission already exists
-        if Permission.objects.filter(content_type=content_type, codename=codename).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists():
+        if Permission.objects.filter(content_type=content_type, codename=codename).exists():
             return Permission.objects.get(content_type=content_type, codename=codename)
 
         # Create permission

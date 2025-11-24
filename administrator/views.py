@@ -309,7 +309,7 @@ class UserCreateView(CreateView):
     def get_context_data(self, **kwargs):
         """get_context_data function"""
         context = super().get_context_data(**kwargs)
-        context['groups'] = Group.objects.all().select_related()  # TODO: Add appropriate select_related fields
+        context['groups'] = Group.objects.all()
         return context
 
 @method_decorator(login_required, name='dispatch')
@@ -357,7 +357,7 @@ class UserGroupsUpdateView(UpdateView):
     def get_context_data(self, **kwargs):
         """get_context_data function"""
         context = super().get_context_data(**kwargs)
-        context['groups'] = Group.objects.all().select_related()  # TODO: Add appropriate select_related fields
+        context['groups'] = Group.objects.all()
         context['user_groups'] = self.object.groups.all()
         return context
 
@@ -371,7 +371,7 @@ class UserGroupsUpdateView(UpdateView):
 
         # Add user to selected groups
         if group_ids:
-            groups = Group.objects.filter(id__in=group_ids).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            groups = Group.objects.filter(id__in=group_ids)
             user.groups.add(*groups)
 
         messages.success(self.request, f'تم تحديث مجموعات المستخدم {user.username} بنجاح')
@@ -442,7 +442,7 @@ def group_permissions(request, pk):
 def permission_dashboard(request):
     """Django permissions dashboard"""
     app_permissions = {}
-    content_types = ContentType.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('app_label')
+    content_types = ContentType.objects.all().order_by('app_label')
 
     for content_type in content_types:
         app_label = content_type.app_label
@@ -453,7 +453,7 @@ def permission_dashboard(request):
         if model_name not in app_permissions[app_label]:
             app_permissions[app_label][model_name] = []
 
-        permissions = Permission.objects.filter(content_type=content_type).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        permissions = Permission.objects.filter(content_type=content_type)
         for permission in permissions:
             app_permissions[app_label][model_name].append(permission)
 

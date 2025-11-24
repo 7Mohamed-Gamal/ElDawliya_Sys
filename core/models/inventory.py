@@ -823,7 +823,7 @@ class StockMovement(AuditableModel):
         from django.utils import timezone
         date_str = timezone.now().strftime('%Y%m%d')
         count = StockMovement.objects.filter(
-            movement_date__date=timezone.now().prefetch_related()  # TODO: Add appropriate prefetch_related fields.date()
+            movement_date__date=timezone.now().date()
         ).count() + 1
         return f"MOV-{date_str}-{count:04d}"
 

@@ -47,7 +47,7 @@ class ReportEngine(BaseService):
 
     def generate(self, model_class, format='json'):
         """توليد التقرير"""
-        queryset = model_class.objects.all().select_related()  # TODO: Add appropriate select_related fields
+        queryset = model_class.objects.all()
 
         # تطبيق الفلاتر
         for field, filter_data in self.filters.items():
@@ -127,7 +127,7 @@ class AnalyticsService(BaseService):
         # Attendance statistics
         attendance_stats = EmployeeAttendance.objects.filter(
             att_date__range=[start_date, end_date]
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+        ).aggregate(
             total_records=Count('id'),
             present_days=Count('id', filter=Q(status='present')),
             late_days=Count('id', filter=Q(status='late')),
@@ -137,7 +137,7 @@ class AnalyticsService(BaseService):
         # Leave statistics
         leave_stats = LeaveRequest.objects.filter(
             start_date__range=[start_date, end_date]
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+        ).aggregate(
             total_requests=Count('id'),
             approved_requests=Count('id', filter=Q(status='approved')),
             pending_requests=Count('id', filter=Q(status='pending'))
@@ -154,7 +154,7 @@ class AnalyticsService(BaseService):
         """تحليلات المخزون"""
         from core.models.inventory import Product, StockLevel, InventoryMovement
 
-        queryset = StockLevel.objects.all().select_related()  # TODO: Add appropriate select_related fields
+        queryset = StockLevel.objects.all()
         if warehouse_id:
             queryset = queryset.filter(warehouse_id=warehouse_id)
 
@@ -173,7 +173,7 @@ class AnalyticsService(BaseService):
 
         movement_stats = InventoryMovement.objects.filter(
             movement_date__range=[start_date, end_date]
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+        ).aggregate(
             total_movements=Count('id'),
             inbound_movements=Count('id', filter=Q(
                 movement_type__in=['receipt', 'purchase', 'transfer_in']
@@ -192,7 +192,7 @@ class AnalyticsService(BaseService):
         """تحليلات المشاريع"""
         from core.models.projects import Project, Task
 
-        project_queryset = Project.objects.all().select_related()  # TODO: Add appropriate select_related fields
+        project_queryset = Project.objects.all()
         if project_id:
             project_queryset = project_queryset.filter(id=project_id)
 
@@ -208,7 +208,7 @@ class AnalyticsService(BaseService):
         )
 
         # Task statistics
-        task_queryset = Task.objects.all().select_related()  # TODO: Add appropriate select_related fields
+        task_queryset = Task.objects.all()
         if project_id:
             task_queryset = task_queryset.filter(project_id=project_id)
 

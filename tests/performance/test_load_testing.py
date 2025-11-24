@@ -114,7 +114,7 @@ class LoadTestingMixin:
         analysis = self.analyze_load_test_results(results, total_test_time)
 
         # تنظيف المستخدمين
-        User.objects.filter(id__in=user_ids).prefetch_related()  # TODO: Add appropriate prefetch_related fields.delete()
+        User.objects.filter(id__in=user_ids).delete()
 
         return analysis
 
@@ -331,7 +331,7 @@ class DatabaseLoadTests(TestCase):
         print(f"   المستخدمين في الثانية: {total_users_created/total_time:.2f}")
 
         # تنظيف البيانات
-        User.objects.filter(username__startswith='batch_').prefetch_related()  # TODO: Add appropriate prefetch_related fields.delete()
+        User.objects.filter(username__startswith='batch_').delete()
 
         # التحقق من الأداء
         self.assertGreater(total_users_created, 20, "عدد قليل من المستخدمين تم إنشاؤهم")

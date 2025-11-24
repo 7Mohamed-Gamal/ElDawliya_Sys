@@ -164,7 +164,7 @@ class SystemMonitor:
             # Get user statistics
             total_users = User.objects.count()
             active_users_today = User.objects.filter(
-                last_login__gte=timezone.now().prefetch_related()  # TODO: Add appropriate prefetch_related fields - timedelta(days=1)
+                last_login__gte=timezone.now() - timedelta(days=1)
             ).count()
 
             # Get cache statistics
@@ -391,9 +391,11 @@ class PerformanceAnalyzer:
         self.metrics_retention_hours = 24
 
     def record_request_metrics(self, request_path: str, response_time: float,
-        """record_request_metrics function"""
                              query_count: int, status_code: int):
-        """تسجيل مقاييس الطلب"""
+        """
+        record_request_metrics function
+        تسجيل مقاييس الطلب
+        """
 
         metrics = {
             'timestamp': timezone.now().isoformat(),

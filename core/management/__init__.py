@@ -1,1 +1,1 @@
-# Core management package
+# Management commands for core app

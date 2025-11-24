@@ -32,14 +32,14 @@ def dashboard(request):
     current_month = today.strftime('%Y-%m')
 
     # إحصائيات عامة
-    total_employees_with_salary = EmployeeSalary.objects.filter(is_current=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+    total_employees_with_salary = EmployeeSalary.objects.filter(is_current=True).count()
     total_payroll_runs = PayrollRun.objects.count()
-    current_month_runs = PayrollRun.objects.filter(month_year=current_month).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+    current_month_runs = PayrollRun.objects.filter(month_year=current_month).count()
 
     # إجمالي الرواتب الشهرية
     monthly_salary_total = EmployeeSalary.objects.filter(
         is_current=True
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+    ).aggregate(
         total_basic=Sum('basic_salary'),
         total_housing=Sum('housing_allow'),
         total_transport=Sum('transport_allow'),
@@ -66,7 +66,7 @@ def dashboard(request):
     if latest_payroll_run:
         current_run_stats = PayrollDetail.objects.filter(
             run=latest_payroll_run
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+        ).aggregate(
             total_employees=Count('payroll_detail_id'),
             total_net_salary=Sum('net_salary'),
             total_basic=Sum('basic_salary'),
@@ -74,7 +74,7 @@ def dashboard(request):
         )
 
     # توزيع الرواتب حسب النطاقات
-    salary_ranges = EmployeeSalary.objects.filter(is_current=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.extra(
+    salary_ranges = EmployeeSalary.objects.filter(is_current=True).extra(
         select={
             'salary_range': """
                 CASE
@@ -159,7 +159,7 @@ def salary_list(request):
     salaries = paginator.get_page(page_number)
 
     # قوائم للفلترة
-    departments = Department.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('dept_name')
+    departments = Department.objects.filter(is_active=True).order_by('dept_name')
 
     context = {
         'salaries': salaries,
@@ -218,7 +218,7 @@ def salary_detail(request, salary_id):
     # تاريخ الرواتب السابقة للموظف
     salary_history = EmployeeSalary.objects.filter(
         emp=salary.emp
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exclude(salary_id=salary_id).order_by('-effective_date')[:5]
+    ).exclude(salary_id=salary_id).order_by('-effective_date')[:5]
 
     context = {
         'salary': salary,
@@ -309,7 +309,7 @@ def salary_history(request, salary_id):
     # جميع رواتب الموظف
     salary_history = EmployeeSalary.objects.filter(
         emp=current_salary.emp
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('-effective_date')
+    ).order_by('-effective_date')
 
     context = {
         'current_salary': current_salary,
@@ -382,7 +382,7 @@ def payroll_run_detail(request, run_id):
     # تفاصيل الرواتب
     payroll_details = PayrollDetail.objects.filter(
         run=payroll_run
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('emp').order_by('emp__first_name')
+    ).select_related('emp').order_by('emp__first_name')
 
     # إحصائيات التشغيل
     run_stats = payroll_details.aggregate(
@@ -475,12 +475,12 @@ def process_payroll_run(request, run_id):
 
     if request.method == 'POST':
         # معالجة الرواتب - إنشاء تفاصيل الرواتب للموظفين
-        active_salaries = EmployeeSalary.objects.filter(is_current=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('emp')
+        active_salaries = EmployeeSalary.objects.filter(is_current=True).select_related('emp')
 
         created_count = 0
         for salary in active_salaries:
             # التحقق من عدم وجود تفصيل راتب مسبق
-            if not PayrollDetail.objects.filter(run=payroll_run, emp=salary.emp).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exists():
+            if not PayrollDetail.objects.filter(run=payroll_run, emp=salary.emp).exists():
                 # حساب الراتب الصافي
                 basic_salary = salary.basic_salary or 0
                 housing = salary.housing_allow or 0
@@ -584,7 +584,7 @@ def my_payslips(request):
     # كشوف رواتب الموظف
     my_payslips = PayrollDetail.objects.filter(
         emp=employee
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('run').order_by('-run__run_date')
+    ).select_related('run').order_by('-run__run_date')
 
     context = {
         'my_payslips': my_payslips,
@@ -607,7 +607,7 @@ def my_salary(request):
     current_salary = EmployeeSalary.objects.filter(
         emp=employee,
         is_current=True
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+    ).first()
 
     if not current_salary:
         messages.info(request, 'لم يتم تحديد راتب لك بعد.')
@@ -649,11 +649,11 @@ def reports(request):
     today = date.today()
 
     # إحصائيات عامة
-    total_employees_with_salary = EmployeeSalary.objects.filter(is_current=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+    total_employees_with_salary = EmployeeSalary.objects.filter(is_current=True).count()
     total_payroll_runs = PayrollRun.objects.count()
 
     # إجمالي الرواتب الشهرية
-    monthly_totals = EmployeeSalary.objects.filter(is_current=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.aggregate(
+    monthly_totals = EmployeeSalary.objects.filter(is_current=True).aggregate(
         total_basic=Sum('basic_salary'),
         total_allowances=Sum('housing_allow') + Sum('transport_allow') + Sum('other_allow'),
         total_deductions=Sum('gosi_deduction') + Sum('tax_deduction')
@@ -694,7 +694,7 @@ def export_payroll(request):
     writer = csv.writer(response)
     writer.writerow(['الموظف', 'الراتب الأساسي', 'بدل السكن', 'بدل النقل', 'بدلات أخرى', 'GOSI', 'الضريبة', 'الراتب الصافي'])
 
-    salaries = EmployeeSalary.objects.filter(is_current=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('emp')
+    salaries = EmployeeSalary.objects.filter(is_current=True).select_related('emp')
     for salary in salaries:
         net_salary = (
             (salary.basic_salary or 0) +
@@ -754,7 +754,7 @@ def employee_salary_ajax(request, emp_id):
         current_salary = EmployeeSalary.objects.filter(
             emp=employee,
             is_current=True
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+        ).first()
 
         if current_salary:
             data = {
@@ -806,7 +806,7 @@ def bulk_payslip_generation(request):
             payroll_run = get_object_or_404(PayrollRun, run_id=run_id)
 
             # إنتاج كشوف الرواتب
-            payslips = PayrollDetail.objects.filter(run=payroll_run).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            payslips = PayrollDetail.objects.filter(run=payroll_run)
 
             messages.success(request, f'تم إنتاج {payslips.count()} كشف راتب.')
         else:
@@ -822,7 +822,7 @@ def payroll_analytics(request):
     # تحليلات متقدمة للرواتب
 
     # توزيع الرواتب
-    salary_distribution = EmployeeSalary.objects.filter(is_current=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.extra(
+    salary_distribution = EmployeeSalary.objects.filter(is_current=True).extra(
         select={
             'salary_range': """
                 CASE
@@ -894,7 +894,7 @@ def advanced_payroll_processing(request, run_id):
         return redirect('payrolls:payroll_run_detail', run_id=run_id)
 
     # بيانات النموذج
-    departments = Department.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('dept_name')
+    departments = Department.objects.filter(is_active=True).order_by('dept_name')
 
     context = {
         'payroll_run': payroll_run,
@@ -1046,7 +1046,7 @@ def payroll_summary_report(request, run_id):
     # تفاصيل إضافية
     department_breakdown = PayrollDetail.objects.filter(
         run=payroll_run
-    ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.values(
+    ).values(
         'emp__dept__dept_name'
     ).annotate(
         employee_count=Count('payroll_detail_id'),

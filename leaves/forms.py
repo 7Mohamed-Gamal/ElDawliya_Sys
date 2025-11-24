@@ -97,8 +97,8 @@ class EmployeeLeaveForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         # تخصيص خيارات القوائم المنسدلة
-        self.fields['emp'].queryset = Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('first_name', 'last_name')
-        self.fields['leave_type'].queryset = LeaveType.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('leave_name')
+        self.fields['emp'].queryset = Employee.objects.filter(emp_status='Active').order_by('first_name', 'last_name')
+        self.fields['leave_type'].queryset = LeaveType.objects.all().order_by('leave_name')
 
         # إضافة خيارات فارغة
         self.fields['emp'].empty_label = "اختر الموظف"
@@ -146,7 +146,7 @@ class EmployeeLeaveForm(forms.ModelForm):
             overlapping_leaves = EmployeeLeave.objects.filter(
                 emp=emp,
                 status__in=['Pending', 'Approved']
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exclude(pk=self.instance.pk if self.instance.pk else None)
+            ).exclude(pk=self.instance.pk if self.instance.pk else None)
 
             for leave in overlapping_leaves:
                 if (start_date <= leave.end_date and end_date >= leave.start_date):
@@ -162,7 +162,7 @@ class EmployeeLeaveForm(forms.ModelForm):
                     leave_type=leave_type,
                     status='Approved',
                     start_date__year=current_year
-                ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.exclude(pk=self.instance.pk if self.instance.pk else None)
+                ).exclude(pk=self.instance.pk if self.instance.pk else None)
 
                 total_used = sum([(leave.end_date - leave.start_date).days + 1 for leave in used_days])
                 requested_days = (end_date - start_date).days + 1
@@ -206,7 +206,7 @@ class PublicHolidayForm(forms.ModelForm):
         holiday_date = self.cleaned_data.get('holiday_date')
         if holiday_date:
             # التحقق من عدم تكرار التاريخ
-            existing = PublicHoliday.objects.filter(holiday_date=holiday_date).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            existing = PublicHoliday.objects.filter(holiday_date=holiday_date)
             if self.instance and self.instance.pk:
                 existing = existing.exclude(pk=self.instance.pk)
 
@@ -230,7 +230,7 @@ class LeaveSearchForm(forms.Form):
 
     leave_type = forms.ModelChoiceField(
         label='نوع الإجازة',
-        queryset=LeaveType.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('leave_name'),
+        queryset=LeaveType.objects.all().order_by('leave_name'),
         required=False,
         empty_label='جميع الأنواع',
         widget=forms.Select(attrs={
@@ -347,7 +347,7 @@ class LeaveBalanceForm(forms.Form):
 
     employee = forms.ModelChoiceField(
         label='الموظف',
-        queryset=Employee.objects.filter(emp_status='Active').prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('first_name', 'last_name'),
+        queryset=Employee.objects.filter(emp_status='Active').order_by('first_name', 'last_name'),
         required=False,
         empty_label='جميع الموظفين',
         widget=forms.Select(attrs={
@@ -379,7 +379,7 @@ class LeaveBalanceForm(forms.Form):
 
         # إضافة خيارات الأقسام
         from org.models import Department
-        departments = Department.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('dept_name')
+        departments = Department.objects.filter(is_active=True).order_by('dept_name')
         dept_choices = [('', 'جميع الأقسام')] + [(dept.dept_id, dept.dept_name) for dept in departments]
         self.fields['department'].widget.choices = dept_choices
 
@@ -428,7 +428,7 @@ class LeaveReportForm(forms.Form):
 
     leave_type = forms.ModelChoiceField(
         label='نوع الإجازة',
-        queryset=LeaveType.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('leave_name'),
+        queryset=LeaveType.objects.all().order_by('leave_name'),
         required=False,
         empty_label='جميع الأنواع',
         widget=forms.Select(attrs={
@@ -447,7 +447,7 @@ class LeaveReportForm(forms.Form):
 
         # إضافة خيارات الأقسام
         from org.models import Department
-        departments = Department.objects.filter(is_active=True).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('dept_name')
+        departments = Department.objects.filter(is_active=True).order_by('dept_name')
         dept_choices = [('', 'جميع الأقسام')] + [(dept.dept_id, dept.dept_name) for dept in departments]
         self.fields['department'].widget.choices = dept_choices
 

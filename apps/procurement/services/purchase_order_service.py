@@ -506,7 +506,7 @@ class PurchaseOrderService(BaseService):
 
             queryset = PurchaseOrder.objects.filter(
                 order_date__range=[start_date, end_date]
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+            )
 
             # Calculate analytics
             analytics = queryset.aggregate(
@@ -570,7 +570,7 @@ class PurchaseOrderService(BaseService):
         last_po = PurchaseOrder.objects.filter(
             order_date__year=year,
             order_date__month=month
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.order_by('-id').first()
+        ).order_by('-id').first()
 
         if last_po and last_po.po_number:
             # Extract sequence number from last PO

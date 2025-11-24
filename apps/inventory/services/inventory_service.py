@@ -9,8 +9,8 @@ from decimal import Decimal
 from datetime import date, timedelta
 from core.services.base import BaseService
 from core.models.inventory import (
-    Product, Warehouse, InventoryMovement, StockLevel,
-    InventoryAdjustment, StockAlert, InventoryCount
+    Product, Warehouse, StockMovement, StockLevel,
+    ProductCategory, Unit, Supplier, StockTake, StockTakeItem
 )
 
 
@@ -36,7 +36,7 @@ class InventoryService(BaseService):
 
             with transaction.atomic():
                 # Create inventory movement
-                movement = InventoryMovement.objects.create(
+                movement = StockMovement.objects.create(
                     product=product,
                     warehouse=warehouse,
                     movement_type=data['movement_type'],
@@ -137,7 +137,7 @@ class InventoryService(BaseService):
         تنفيذ تسوية مخزون
         Perform stock adjustment
         """
-        self.check_permission('inventory.add_inventoryadjustment')
+        self.check_permission('inventory.add_stockmovement')
 
         required_fields = ['product_id', 'warehouse_id', 'adjustment_type', 'quantity', 'reason']
         self.validate_required_fields(data, required_fields)
@@ -150,7 +150,7 @@ class InventoryService(BaseService):
             stock_level = StockLevel.objects.filter(
                 product=product,
                 warehouse=warehouse
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+            ).first()
 
             if not stock_level:
                 return self.format_response(
@@ -159,8 +159,8 @@ class InventoryService(BaseService):
                 )
 
             with transaction.atomic():
-                # Create adjustment record
-                adjustment = InventoryAdjustment.objects.create(
+                # Create adjustment record as stock movement
+                adjustment = StockMovement.objects.create(
                     product=product,
                     warehouse=warehouse,
                     adjustment_type=data['adjustment_type'],
@@ -237,10 +237,10 @@ class InventoryService(BaseService):
             warehouse = Warehouse.objects.get(id=warehouse_id)
 
             # Check if there's an active count for this warehouse
-            active_count = InventoryCount.objects.filter(
+            active_count = StockTake.objects.filter(
                 warehouse=warehouse,
                 status='in_progress'
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+            ).first()
 
             if active_count:
                 return self.format_response(
@@ -250,7 +250,7 @@ class InventoryService(BaseService):
 
             with transaction.atomic():
                 # Create inventory count
-                count = InventoryCount.objects.create(
+                count = StockTake.objects.create(
                     warehouse=warehouse,
                     count_date=data.get('count_date', timezone.now().date()),
                     count_type=data.get('count_type', 'full'),
@@ -265,19 +265,16 @@ class InventoryService(BaseService):
                 stock_levels = StockLevel.objects.filter(
                     warehouse=warehouse,
                     current_stock__gt=0
-                ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.select_related('product')
+                ).select_related('product')
 
                 count_items_created = 0
                 for stock in stock_levels:
-                    from core.models.inventory import InventoryCountItem
-
-                    InventoryCountItem.objects.create(
-                        inventory_count=count,
+                    StockTakeItem.objects.create(
+                        stock_take=count,
                         product=stock.product,
                         system_quantity=stock.current_stock,
-                        counted_quantity=0,
-                        variance=0,
-                        status='pending',
+                        counted_quantity=None,
+                        variance_quantity=0,
                         created_by=self.user,
                         updated_by=self.user
                     )
@@ -383,20 +380,12 @@ class InventoryService(BaseService):
         الحصول على تنبيهات المخزون
         Get stock alerts
         """
-        self.check_permission('inventory.view_stockalert')
+        self.check_permission('inventory.view_stocklevel')
 
         try:
-            queryset = StockAlert.objects.select_related('product', 'warehouse')
-
-            if warehouse_id:
-                queryset = queryset.filter(warehouse_id=warehouse_id)
-
-            if alert_type:
-                queryset = queryset.filter(alert_type=alert_type)
-
-            # Also get current low stock items
+            # Get current low stock items
             low_stock_items = StockLevel.objects.filter(
-                current_stock__lte=F('reorder_level').prefetch_related()  # TODO: Add appropriate prefetch_related fields
+                quantity_on_hand__lte=F('product__reorder_point')
             ).select_related('product', 'warehouse')
 
             if warehouse_id:
@@ -404,30 +393,17 @@ class InventoryService(BaseService):
 
             alerts = []
 
-            # Add existing alerts
-            for alert in queryset.filter(is_resolved=False):
-                alerts.append({
-                    'id': alert.id,
-                    'type': 'alert',
-                    'alert_type': alert.alert_type,
-                    'product_name': alert.product.name_ar,
-                    'warehouse_name': alert.warehouse.name_ar,
-                    'message': alert.message,
-                    'severity': alert.severity,
-                    'created_at': alert.created_at,
-                })
-
             # Add low stock alerts
             for stock in low_stock_items:
                 alerts.append({
                     'type': 'low_stock',
                     'alert_type': 'low_stock',
-                    'product_name': stock.product.name_ar,
-                    'warehouse_name': stock.warehouse.name_ar,
-                    'current_stock': stock.current_stock,
-                    'reorder_level': stock.reorder_level,
-                    'message': f'المخزون منخفض: {stock.current_stock} متبقي',
-                    'severity': 'medium' if stock.current_stock > 0 else 'high',
+                    'product_name': stock.product.name,
+                    'warehouse_name': stock.warehouse.name,
+                    'current_stock': stock.quantity_on_hand,
+                    'reorder_level': stock.product.reorder_point,
+                    'message': f'المخزون منخفض: {stock.quantity_on_hand} متبقي',
+                    'severity': 'medium' if stock.quantity_on_hand > 0 else 'high',
                 })
 
             return self.format_response(
@@ -507,37 +483,24 @@ class InventoryService(BaseService):
         stock_level = StockLevel.objects.filter(
             product=product,
             warehouse=warehouse
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.first()
+        ).first()
 
         if not stock_level:
             return
 
-        # Check for low stock
-        if stock_level.current_stock <= (stock_level.reorder_level or 0):
-            StockAlert.objects.get_or_create(
-                product=product,
-                warehouse=warehouse,
-                alert_type='low_stock',
-                defaults={
-                    'message': f'المخزون منخفض: {stock_level.current_stock} متبقي',
-                    'severity': 'medium' if stock_level.current_stock > 0 else 'high',
-                    'created_by': self.user,
-                    'updated_by': self.user
-                }
-            )
-
-        # Check for out of stock
-        if stock_level.current_stock <= 0:
-            StockAlert.objects.get_or_create(
-                product=product,
-                warehouse=warehouse,
-                alert_type='out_of_stock',
-                defaults={
-                    'message': f'نفد المخزون: {product.name_ar}',
-                    'severity': 'high',
-                    'created_by': self.user,
-                    'updated_by': self.user
-                }
+        # Log low stock alert (since StockAlert model doesn't exist)
+        if stock_level.quantity_on_hand <= (product.reorder_point or 0):
+            self.log_action(
+                action='alert',
+                resource='stock_alert',
+                details={
+                    'product_id': product.id,
+                    'warehouse_id': warehouse.id,
+                    'alert_type': 'low_stock',
+                    'current_stock': stock_level.quantity_on_hand,
+                    'reorder_point': product.reorder_point
+                },
+                message=f'تنبيه مخزون منخفض: {product.name} - {stock_level.quantity_on_hand} متبقي'
             )
 
     def _generate_stock_summary_report(self, filters):
@@ -568,7 +531,7 @@ class InventoryService(BaseService):
 
     def _generate_movement_history_report(self, filters):
         """إنشاء تقرير تاريخ الحركات"""
-        queryset = InventoryMovement.objects.select_related('product', 'warehouse')
+        queryset = StockMovement.objects.select_related('product', 'warehouse')
 
         if filters:
             if filters.get('start_date'):

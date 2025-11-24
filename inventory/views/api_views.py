@@ -27,7 +27,7 @@ def search_products(request):
     if category_id:
         query &= Q(category_id=category_id)
 
-    products = Product.objects.filter(query).prefetch_related()  # TODO: Add appropriate prefetch_related fields[:20]
+    products = Product.objects.filter(query)[:20]
 
     results = []
     for product in products:
@@ -84,34 +84,34 @@ def get_product_details(request, product_id):
 @login_required
 def get_categories(request):
     """الحصول على قائمة التصنيفات"""
-    categories = Category.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
+    categories = Category.objects.all().order_by('name')
     data = [{'id': category.id, 'name': category.name} for category in categories]
     return JsonResponse({'categories': data})
 
 @login_required
 def get_units(request):
     """الحصول على قائمة وحدات القياس"""
-    units = Unit.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
+    units = Unit.objects.all().order_by('name')
     data = [{'id': unit.id, 'name': unit.name, 'symbol': unit.symbol} for unit in units]
     return JsonResponse({'units': data})
 
 @login_required
 def get_suppliers(request):
     """الحصول على قائمة الموردين"""
-    suppliers = Supplier.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
+    suppliers = Supplier.objects.all().order_by('name')
     data = [{'id': supplier.id, 'name': supplier.name} for supplier in suppliers]
     return JsonResponse({'suppliers': data})
 
 @login_required
 def get_customers(request):
     """الحصول على قائمة العملاء"""
-    customers = Customer.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
+    customers = Customer.objects.all().order_by('name')
     data = [{'id': customer.id, 'name': customer.name} for customer in customers]
     return JsonResponse({'customers': data})
 
 @login_required
 def get_departments(request):
     """الحصول على قائمة الأقسام"""
-    departments = Department.objects.all().select_related()  # TODO: Add appropriate select_related fields.order_by('name')
+    departments = Department.objects.all().order_by('name')
     data = [{'id': department.id, 'name': department.name} for department in departments]
     return JsonResponse({'departments': data})

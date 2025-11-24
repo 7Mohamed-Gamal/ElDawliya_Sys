@@ -93,7 +93,7 @@ class SecurityAnalyzer:
                 ip_address=audit_log.ip_address,
                 action_type='login',
                 response_status__gte=400,
-                timestamp__gte=timezone.now().prefetch_related()  # TODO: Add appropriate prefetch_related fields - timedelta(minutes=15)
+                timestamp__gte=timezone.now() - timedelta(minutes=15)
             ).count()
 
             if recent_failures >= 5:
@@ -183,7 +183,7 @@ class SecurityAnalyzer:
         recent_requests = AuditLog.objects.filter(
             ip_address=audit_log.ip_address,
             timestamp__gte=time_window
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+        ).count()
 
         if recent_requests > 50:  # More than 50 requests in 5 minutes
             indicators.append({
@@ -199,7 +199,7 @@ class SecurityAnalyzer:
                 ip_address=audit_log.ip_address,
                 request_path__startswith='/api/',
                 timestamp__gte=time_window
-            ).prefetch_related()  # TODO: Add appropriate prefetch_related fields.count()
+            ).count()
 
             if api_requests > 30:  # More than 30 API requests in 5 minutes
                 indicators.append({
@@ -253,7 +253,7 @@ class SecurityAnalyzer:
             recent_exports = AuditLog.objects.filter(
                 user=audit_log.user,
                 action_type='export',
-                timestamp__gte=timezone.now().prefetch_related()  # TODO: Add appropriate prefetch_related fields - timedelta(hours=1)
+                timestamp__gte=timezone.now() - timedelta(hours=1)
             ).count()
 
             if recent_exports > 5:  # More than 5 exports in 1 hour
@@ -292,7 +292,7 @@ class SecurityAnalyzer:
             # Check if user normally accesses system at this time
             normal_access = AuditLog.objects.filter(
                 user=audit_log.user,
-                timestamp__hour__range=(current_hour-1, current_hour+1).prefetch_related()  # TODO: Add appropriate prefetch_related fields,
+                timestamp__hour__range=(current_hour-1, current_hour+1),
                 timestamp__gte=timezone.now() - timedelta(days=30)
             ).count()
 
@@ -307,7 +307,7 @@ class SecurityAnalyzer:
         # Check for unusual IP addresses
         user_ips = AuditLog.objects.filter(
             user=audit_log.user,
-            timestamp__gte=timezone.now().prefetch_related()  # TODO: Add appropriate prefetch_related fields - timedelta(days=30)
+            timestamp__gte=timezone.now() - timedelta(days=30)
         ).values_list('ip_address', flat=True).distinct()
 
         if audit_log.ip_address not in user_ips:
@@ -329,7 +329,7 @@ class SecurityAnalyzer:
         recent_logins = AuditLog.objects.filter(
             ip_address=audit_log.ip_address,
             action_type='login',
-            timestamp__gte=timezone.now().prefetch_related()  # TODO: Add appropriate prefetch_related fields - timedelta(minutes=30)
+            timestamp__gte=timezone.now() - timedelta(minutes=30)
         ).values_list('request_data', flat=True)
 
         usernames = set()
@@ -352,7 +352,7 @@ class SecurityAnalyzer:
             user=audit_log.user,
             action_type='login',
             response_status__lt=400,
-            timestamp__gte=timezone.now().prefetch_related()  # TODO: Add appropriate prefetch_related fields - timedelta(minutes=5)
+            timestamp__gte=timezone.now() - timedelta(minutes=5)
         ).count()
 
         return recent_logins > 3  # More than 3 successful logins in 5 minutes
@@ -595,12 +595,12 @@ class SecurityReporter:
         # Get security events in date range
         security_events = SecurityEvent.objects.filter(
             detected_at__range=[start_date, end_date]
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        )
 
         # Get audit logs in date range
         audit_logs = AuditLog.objects.filter(
             timestamp__range=[start_date, end_date]
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        )
 
         # Calculate statistics
         total_events = security_events.count()
@@ -651,7 +651,7 @@ class SecurityReporter:
         user_logs = AuditLog.objects.filter(
             user_id=user_id,
             timestamp__range=[start_date, end_date]
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        )
 
         # Activity statistics
         total_activities = user_logs.count()
@@ -672,7 +672,7 @@ class SecurityReporter:
         security_events = SecurityEvent.objects.filter(
             target_user_id=user_id,
             detected_at__range=[start_date, end_date]
-        ).prefetch_related()  # TODO: Add appropriate prefetch_related fields
+        )
 
         return {
             'user_id': user_id,
