@@ -4,7 +4,7 @@ Unified Project and Task Management Models
 """
 import uuid
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.urls import reverse
@@ -151,15 +151,16 @@ class Project(AuditableModel, SoftDeleteModel):
         help_text=_('من 0 إلى 100')
     )
     manager = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         related_name='managed_projects',
         verbose_name=_('مدير المشروع')
     )
     team_members = models.ManyToManyField(
-        User,
+        settings.AUTH_USER_MODEL,
         through='ProjectMember',
+        through_fields=('project', 'user'),
         related_name='projects',
         verbose_name=_('أعضاء الفريق')
     )
@@ -338,7 +339,7 @@ class ProjectPhase(AuditableModel):
         verbose_name=_('التكلفة الفعلية')
     )
     responsible_person = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         related_name='responsible_phases',
@@ -481,7 +482,7 @@ class ProjectMember(BaseModel):
         verbose_name=_('المشروع')
     )
     user = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='project_memberships',
         verbose_name=_('المستخدم')
@@ -611,7 +612,7 @@ class Task(AuditableModel, SoftDeleteModel):
         verbose_name=_('المهمة الأب')
     )
     assigned_to = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         related_name='assigned_tasks',
@@ -843,7 +844,7 @@ class TimeEntry(BaseModel):
         verbose_name=_('المهمة')
     )
     user = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='time_entries',
         verbose_name=_('المستخدم')
@@ -972,14 +973,15 @@ class Meeting(AuditableModel):
         verbose_name=_('حالة الاجتماع')
     )
     organizer = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='organized_meetings',
         verbose_name=_('منظم الاجتماع')
     )
     attendees = models.ManyToManyField(
-        User,
+        settings.AUTH_USER_MODEL,
         through='MeetingAttendee',
+        through_fields=('meeting', 'user'),
         related_name='meetings',
         verbose_name=_('الحضور')
     )
@@ -1078,7 +1080,7 @@ class MeetingAttendee(BaseModel):
         verbose_name=_('الاجتماع')
     )
     user = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='meeting_attendances',
         verbose_name=_('المستخدم')

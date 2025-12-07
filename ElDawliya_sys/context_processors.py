@@ -38,3 +38,18 @@ def rtl_context_processor(request):
         'current_font': current_font,
         'current_year': datetime.datetime.now().year,
     }
+
+
+def system_info(request):
+    """
+    Provides system information context variables to all templates.
+    
+    Returns:
+        dict: A dictionary containing system information.
+    """
+    return {
+        'system_name': 'نظام الدولية',
+        'system_version': '1.0.0',
+        'current_year': datetime.datetime.now().year,
+        'debug_mode': settings.DEBUG,
+    }

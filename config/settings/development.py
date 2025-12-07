@@ -2,18 +2,21 @@
 Development settings for ElDawliya System.
 """
 
-# TODO: Replace wildcard import
-# from .base import specific_items
+import os
+from .base import *
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
 
-# Database for development
-DATABASES['default'].update({
-    'NAME': os.environ.get('DB_NAME', 'eldawliya_dev'),
-})
+# Database for development - Use SQLite for development
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
 
 # Static files for development
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'

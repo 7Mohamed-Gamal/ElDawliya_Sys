@@ -85,19 +85,19 @@ LOCAL_APPS = [
     'administrator',
     'notifications',
     'core.apps.CoreConfig',  # Re-enabled for testing
+    'audit.apps.AuditConfig',  # Re-enabled for testing
+    'companies.apps.CompaniesConfig',  # Re-enabled for testing
+    'org.apps.OrgConfig',  # Re-enabled for testing
     
-    # Temporarily commented out to resolve model conflicts
-    # 'hr.apps.HrConfig',
-    # 'audit.apps.AuditConfig',
+    # HR System - Re-enabling for testing
+    'hr.apps.HrConfig',
     # 'meetings',
     # 'tasks',
     # 'inventory',
     # 'Purchase_orders',
     # 'cars',
     # 'attendance.apps.AttendanceConfig',
-    # 'org.apps.OrgConfig',
     # 'employees.apps.EmployeesConfig',
-    # 'companies.apps.CompaniesConfig',
     # 'leaves.apps.LeavesConfig',
     # 'evaluations.apps.EvaluationsConfig',
     # 'payrolls.apps.PayrollsConfig',
@@ -131,7 +131,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    # 'audit.middleware.AuditMiddleware',  # Temporarily commented out
+    'audit.middleware.AuditMiddleware',  # Re-enabled for testing
 ]
 
 # ================================================================
@@ -179,6 +179,9 @@ from .config import config_manager
 DATABASES = {
     'default': config_manager.get_database_config()
 }
+
+# Active database setting for router
+ACTIVE_DB = 'default'
 
 # Database router for multi-database support
 DATABASE_ROUTERS = ['ElDawliya_sys.db_router.DatabaseRouter']

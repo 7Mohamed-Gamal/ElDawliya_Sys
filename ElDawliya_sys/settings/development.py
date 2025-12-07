@@ -21,17 +21,18 @@ ALLOWED_HOSTS = ['*']
 # DEVELOPMENT APPS
 # ================================================================
 
-INSTALLED_APPS += [
-    'debug_toolbar',
-]
+# Temporarily disabled debug toolbar due to URL issues
+# INSTALLED_APPS += [
+#     'debug_toolbar',
+# ]
 
 # ================================================================
 # DEVELOPMENT MIDDLEWARE
 # ================================================================
 
-MIDDLEWARE = [
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
-] + MIDDLEWARE
+# MIDDLEWARE = [
+#     'debug_toolbar.middleware.DebugToolbarMiddleware',
+# ] + MIDDLEWARE
 
 # ================================================================
 # DEBUG TOOLBAR CONFIGURATION

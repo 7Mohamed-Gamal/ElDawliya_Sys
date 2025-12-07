@@ -39,6 +39,11 @@ urlpatterns = [
     path('projects/', include('apps.projects.frontend_urls')),
     path('finance/', include('apps.finance.frontend_urls')),
     path('administration/', include('apps.administration.frontend_urls')),
+    
+    # Restored apps URLs
+    path('companies/', include('companies.urls')),
+    path('employees/', include('employees.urls')),
+    path('attendance/', include('attendance.urls')),
 
     # Reports
     path('reports/', views.ReportsView.as_view(), name='reports'),

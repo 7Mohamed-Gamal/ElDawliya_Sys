@@ -604,8 +604,9 @@ def get_wsgi_application():
 
     except Exception as e:
         # If Django can't be loaded due to database error, return the simple application
+        error_message = str(e)
         def simple_app(environ, start_response):
             """simple_app function"""
-            return db_setup_application(environ, start_response, str(e))
+            return db_setup_application(environ, start_response, error_message)
 
         return simple_app

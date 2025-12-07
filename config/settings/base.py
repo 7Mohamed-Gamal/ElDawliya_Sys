@@ -46,6 +46,12 @@ LOCAL_APPS = [
     'apps.projects',
     'apps.finance',
     'apps.administration',
+    # Restored apps
+    'companies.apps.CompaniesConfig',
+    'org.apps.OrgConfig',
+    'banks',
+    'employees',
+    'attendance.apps.AttendanceConfig',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

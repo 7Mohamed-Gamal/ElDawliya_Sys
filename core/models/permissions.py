@@ -359,7 +359,7 @@ class ApprovalStep(models.Model):
     )
     level = models.PositiveIntegerField(verbose_name=_('المستوى'))
     name = models.CharField(max_length=200, verbose_name=_('الاسم'))
-    approvers = models.ManyToManyField(User, related_name='approval_steps', verbose_name=_('المعتمدون'))
+    approvers = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='approval_steps', verbose_name=_('المعتمدون'))
     requires_all = models.BooleanField(default=False, verbose_name=_('يتطلب الجميع'))
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name=_('الحالة'))
     approved_by = models.ForeignKey(
@@ -391,7 +391,7 @@ class PermissionCache(models.Model):
     ذاكرة التخزين المؤقت للصلاحيات المحسوبة لتحسين الأداء
     """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='permission_cache')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='permission_cache')
     permission_hash = models.CharField(max_length=64, verbose_name=_('هاش الصلاحية'))
     permissions_data = models.JSONField(verbose_name=_('بيانات الصلاحيات'))
     created_at = models.DateTimeField(auto_now_add=True)

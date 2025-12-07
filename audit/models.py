@@ -35,7 +35,7 @@ class AuditLog(models.Model):
         null=True,
         blank=True,
         verbose_name=_('المستخدم'),
-        related_name='audit_logs'
+        related_name='audit_app_logs'
     )
 
     # Action details
@@ -71,7 +71,8 @@ class AuditLog(models.Model):
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        verbose_name=_('نوع المحتوى')
+        verbose_name=_('نوع المحتوى'),
+        related_name='audit_app_logs'
     )
     object_id = models.CharField(
         max_length=255,

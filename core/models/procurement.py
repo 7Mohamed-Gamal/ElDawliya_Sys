@@ -5,7 +5,7 @@ Enhanced and Unified Procurement Models
 import uuid
 from decimal import Decimal
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.core.exceptions import ValidationError
@@ -131,13 +131,13 @@ class PurchaseOrder(AuditableModel):
 
     # Approval workflow
     requested_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         related_name='requested_purchase_orders',
         verbose_name=_('طلب بواسطة')
     )
     approved_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -406,7 +406,7 @@ class PurchaseRequest(AuditableModel):
         verbose_name=_('تاريخ الطلب')
     )
     requested_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         related_name='purchase_requests',
         verbose_name=_('طلب بواسطة')
@@ -444,7 +444,7 @@ class PurchaseRequest(AuditableModel):
 
     # Approval workflow
     reviewed_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -457,7 +457,7 @@ class PurchaseRequest(AuditableModel):
         verbose_name=_('تاريخ المراجعة')
     )
     approved_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -698,7 +698,7 @@ class GoodsReceipt(AuditableModel):
         verbose_name=_('المخزن')
     )
     received_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
         related_name='received_goods_receipts',
         verbose_name=_('استلم بواسطة')
@@ -1004,7 +1004,7 @@ class SupplierQuotation(AuditableModel):
 
     # Evaluation
     evaluated_by = models.ForeignKey(
-        User,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
