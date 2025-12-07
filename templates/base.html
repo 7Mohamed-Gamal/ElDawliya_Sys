@@ -447,7 +447,7 @@
     <!-- Sidebar -->
     <nav class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <a href="{% url 'hr:dashboard' %}" class="logo">
+            <a href="{% url 'accounts:home' %}" class="logo">
                 <i class="fas fa-building me-2"></i>
                 <span class="logo-text">نظام الدولية</span>
             </a>
@@ -469,7 +469,7 @@
             <div class="nav-section">
                 <div class="nav-section-title">الموارد البشرية</div>
                 <div class="nav-item">
-                    <a href="{% url 'hr:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                    <a href="{% url 'accounts:home' %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
                         <i class="fas fa-tachometer-alt nav-icon"></i>
                         <span class="nav-text">لوحة التحكم</span>
                     </a>
@@ -480,25 +480,25 @@
             <div class="nav-section">
                 <div class="nav-section-title">الهيكل التنظيمي</div>
                 <div class="nav-item">
-                    <a href="{% url 'companies:list' %}" class="nav-link {% if 'companies' in request.resolver_match.app_name %}active{% endif %}">
+                    <a href="#" class="nav-link">
                         <i class="fas fa-building nav-icon"></i>
                         <span class="nav-text">الشركات</span>
                     </a>
                 </div>
                 <div class="nav-item">
-                    <a href="{% url 'org:branches' %}" class="nav-link">
+                    <a href="#" class="nav-link">
                         <i class="fas fa-code-branch nav-icon"></i>
                         <span class="nav-text">الأفرع</span>
                     </a>
                 </div>
                 <div class="nav-item">
-                    <a href="{% url 'org:departments' %}" class="nav-link">
+                    <a href="#" class="nav-link">
                         <i class="fas fa-sitemap nav-icon"></i>
                         <span class="nav-text">الأقسام</span>
                     </a>
                 </div>
                 <div class="nav-item">
-                    <a href="{% url 'org:jobs' %}" class="nav-link">
+                    <a href="#" class="nav-link">
                         <i class="fas fa-briefcase nav-icon"></i>
                         <span class="nav-text">الوظائف</span>
                     </a>
@@ -509,7 +509,7 @@
             <div class="nav-section">
                 <div class="nav-section-title">إدارة الموظفين</div>
                 <div class="nav-item">
-                    <a href="{% url 'employees:list' %}" class="nav-link {% if 'employees' in request.resolver_match.app_name %}active{% endif %}">
+                    <a href="#" class="nav-link">
                         <i class="fas fa-users nav-icon"></i>
                         <span class="nav-text">الموظفين</span>
                         <span class="nav-badge">{{ total_employees|default:0 }}</span>
@@ -521,20 +521,20 @@
             <div class="nav-section">
                 <div class="nav-section-title">الحضور والوقت</div>
                 <div class="nav-item">
-                    <a href="{% url 'attendance:dashboard' %}" class="nav-link {% if 'attendance' in request.resolver_match.app_name %}active{% endif %}">
+                    <a href="#" class="nav-link">
                         <i class="fas fa-clock nav-icon"></i>
                         <span class="nav-text">الحضور والانصراف</span>
                         <span class="nav-badge">{{ present_today|default:0 }}</span>
                     </a>
                 </div>
                 <div class="nav-item">
-                    <a href="{% url 'attendance:zk_devices_list' %}" class="nav-link">
+                    <a href="#" class="nav-link">
                         <i class="fas fa-fingerprint nav-icon"></i>
                         <span class="nav-text">أجهزة البصمة</span>
                     </a>
                 </div>
                 <div class="nav-item">
-                    <a href="{% url 'attendance:rules_list' %}" class="nav-link">
+                    <a href="#" class="nav-link">
                         <i class="fas fa-calendar-alt nav-icon"></i>
                         <span class="nav-text">قواعد الحضور</span>
                     </a>
@@ -545,20 +545,20 @@
             <div class="nav-section">
                 <div class="nav-section-title">إدارة الإجازات</div>
                 <div class="nav-item">
-                    <a href="{% url 'leaves:dashboard' %}" class="nav-link {% if 'leaves' in request.resolver_match.app_name %}active{% endif %}">
+                    <a href="#" class="nav-link">
                         <i class="fas fa-calendar-times nav-icon"></i>
                         <span class="nav-text">الإجازات</span>
                         <span class="nav-badge">{{ pending_leaves|default:0 }}</span>
                     </a>
                 </div>
                 <div class="nav-item">
-                    <a href="{% url 'leaves:leave_types' %}" class="nav-link">
+                    <a href="#" class="nav-link">
                         <i class="fas fa-list nav-icon"></i>
                         <span class="nav-text">أنواع الإجازات</span>
                     </a>
                 </div>
                 <div class="nav-item">
-                    <a href="{% url 'leaves:balance_report' %}" class="nav-link">
+                    <a href="#" class="nav-link">
                         <i class="fas fa-chart-pie nav-icon"></i>
                         <span class="nav-text">أرصدة الإجازات</span>
                     </a>
@@ -569,19 +569,19 @@
             <div class="nav-section">
                 <div class="nav-section-title">إدارة المرتبات</div>
                 <div class="nav-item">
-                    <a href="{% url 'payrolls:dashboard' %}" class="nav-link {% if 'payrolls' in request.resolver_match.app_name %}active{% endif %}">
+                    <a href="#" class="nav-link">
                         <i class="fas fa-money-bill-wave nav-icon"></i>
                         <span class="nav-text">المرتبات</span>
                     </a>
                 </div>
                 <div class="nav-item">
-                    <a href="{% url 'payrolls:salary_list' %}" class="nav-link">
+                    <a href="#" class="nav-link">
                         <i class="fas fa-coins nav-icon"></i>
                         <span class="nav-text">هيكل المرتبات</span>
                     </a>
                 </div>
                 <div class="nav-item">
-                    <a href="{% url 'payrolls:payroll_runs' %}" class="nav-link">
+                    <a href="#" class="nav-link">
                         <i class="fas fa-play-circle nav-icon"></i>
                         <span class="nav-text">تشغيل المرتبات</span>
                     </a>
@@ -592,20 +592,20 @@
             <div class="nav-section">
                 <div class="nav-section-title">الإدارة المالية</div>
                 <div class="nav-item">
-                    <a href="{% url 'loans:dashboard' %}" class="nav-link {% if 'loans' in request.resolver_match.app_name %}active{% endif %}">
+                    <a href="#" class="nav-link">
                         <i class="fas fa-hand-holding-usd nav-icon"></i>
                         <span class="nav-text">القروض</span>
                         <span class="nav-badge">{{ active_loans|default:0 }}</span>
                     </a>
                 </div>
                 <div class="nav-item">
-                    <a href="{% url 'insurance:dashboard' %}" class="nav-link {% if 'insurance' in request.resolver_match.app_name %}active{% endif %}">
+                    <a href="#" class="nav-link">
                         <i class="fas fa-shield-alt nav-icon"></i>
                         <span class="nav-text">التأمين</span>
                     </a>
                 </div>
                 <div class="nav-item">
-                    <a href="{% url 'banks:list' %}" class="nav-link {% if 'banks' in request.resolver_match.app_name %}active{% endif %}">
+                    <a href="#" class="nav-link">
                         <i class="fas fa-university nav-icon"></i>
                         <span class="nav-text">البنوك</span>
                     </a>
@@ -616,14 +616,14 @@
             <div class="nav-section">
                 <div class="nav-section-title">الأداء والتطوير</div>
                 <div class="nav-item">
-                    <a href="{% url 'evaluations:dashboard' %}" class="nav-link {% if 'evaluations' in request.resolver_match.app_name %}active{% endif %}">
+                    <a href="#" class="nav-link">
                         <i class="fas fa-star nav-icon"></i>
                         <span class="nav-text">تقييم الأداء</span>
                         <span class="nav-badge">{{ pending_evaluations|default:0 }}</span>
                     </a>
                 </div>
                 <div class="nav-item">
-                    <a href="{% url 'training:dashboard' %}" class="nav-link {% if 'training' in request.resolver_match.app_name %}active{% endif %}">
+                    <a href="#" class="nav-link">
                         <i class="fas fa-graduation-cap nav-icon"></i>
                         <span class="nav-text">التدريب</span>
                     </a>
@@ -634,13 +634,13 @@
             <div class="nav-section">
                 <div class="nav-section-title">التقارير والتحليلات</div>
                 <div class="nav-item">
-                    <a href="{% url 'reports:dashboard' %}" class="nav-link {% if 'reports' in request.resolver_match.app_name %}active{% endif %}">
+                    <a href="#" class="nav-link">
                         <i class="fas fa-chart-bar nav-icon"></i>
                         <span class="nav-text">التقارير</span>
                     </a>
                 </div>
                 <div class="nav-item">
-                    <a href="{% url 'reports:analytics' %}" class="nav-link">
+                    <a href="#" class="nav-link">
                         <i class="fas fa-chart-line nav-icon"></i>
                         <span class="nav-text">التحليلات</span>
                     </a>
@@ -671,7 +671,7 @@
                     </a>
                 </div>
                 <div class="nav-item">
-                    <a href="{% url 'payrolls:payroll_analytics' %}" class="nav-link {% if 'payrolls' in request.resolver_match.app_name and 'analytics' in request.resolver_match.url_name %}active{% endif %}">
+                    <a href="#" class="nav-link">
                         <i class="fas fa-chart-pie nav-icon"></i>
                         <span class="nav-text">تحليلات الرواتب</span>
                         <span class="nav-badge ai-badge">Analytics</span>
@@ -702,7 +702,7 @@
                     </a>
                 </div>
                 <div class="nav-item">
-                    <a href="{% url 'hr:settings' %}" class="nav-link">
+                    <a href="#" class="nav-link">
                         <i class="fas fa-sliders-h nav-icon"></i>
                         <span class="nav-text">إعدادات HR</span>
                     </a>
@@ -720,7 +720,7 @@
                     <button class="sidebar-toggle me-3" id="sidebarToggle" onclick="handleSidebarToggle()">
                         <i class="fas fa-bars"></i>
                     </button>
-                    <a href="{% url 'hr:dashboard' %}" class="navbar-brand">
+                    <a href="{% url 'accounts:home' %}" class="navbar-brand">
                         نظام الدولية للموارد البشرية
                     </a>
                 </div>
@@ -742,7 +742,7 @@
                             <li><span class="dropdown-item text-muted">لا توجد إشعارات جديدة</span></li>
                             {% endfor %}
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item text-center" href="{% url 'hr:notifications' %}">عرض الكل</a></li>
+                            <li><a class="dropdown-item text-center" href="#">عرض الكل</a></li>
                         </ul>
                     </div>
 
@@ -756,17 +756,17 @@
                             <i class="fas fa-chevron-down ms-2"></i>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="{% url 'hr:profile' %}">
+                            <li><a class="dropdown-item" href="#">
                                 <i class="fas fa-user me-2"></i>الملف الشخصي
                             </a></li>
-                            <li><a class="dropdown-item" href="{% url 'hr:my_payslips' %}">
+                            <li><a class="dropdown-item" href="#">
                                 <i class="fas fa-file-invoice me-2"></i>كشوف المرتبات
                             </a></li>
-                            <li><a class="dropdown-item" href="{% url 'hr:my_leaves' %}">
+                            <li><a class="dropdown-item" href="#">
                                 <i class="fas fa-calendar-alt me-2"></i>إجازاتي
                             </a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="{% url 'hr:settings' %}">
+                            <li><a class="dropdown-item" href="#">
                                 <i class="fas fa-cog me-2"></i>الإعدادات
                             </a></li>
                             <li><a class="dropdown-item" href="{% url 'accounts:logout' %}">
@@ -782,7 +782,7 @@
         {% block breadcrumb %}
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb breadcrumb-custom">
-                <li class="breadcrumb-item"><a href="{% url 'hr:dashboard' %}">الرئيسية</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
                 {% block breadcrumb_items %}{% endblock %}
             </ol>
         </nav>
