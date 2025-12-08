@@ -993,8 +993,10 @@
         });
 
         // Auto-refresh notifications every 5 minutes
+        // TODO: Re-enable when hr:notifications_count endpoint is available
+        /*
         setInterval(function() {
-            fetch('{% url "hr:notifications_count" %}')
+            fetch('/api/notifications/count/')
                 .then(response => response.json())
                 .then(data => {
                     const badge = document.querySelector('.notification-badge');
@@ -1015,6 +1017,7 @@
                 })
                 .catch(error => console.log('Error fetching notifications:', error));
         }, 300000); // 5 minutes
+        */
 
         // Page loading handling
         document.addEventListener('DOMContentLoaded', function() {
