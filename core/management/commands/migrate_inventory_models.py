@@ -70,7 +70,7 @@ class Command(BaseCommand):
         self.stdout.write('ترحيل تصنيفات المنتجات...')
 
         try:
-            from inventory.models import TblCategories
+            from apps.inventory.models import TblCategories
             from core.models.inventory import ProductCategory
 
             categories_migrated = 0
@@ -105,7 +105,7 @@ class Command(BaseCommand):
         self.stdout.write('ترحيل وحدات القياس...')
 
         try:
-            from inventory.models import TblUnitsSpareparts
+            from apps.inventory.models import TblUnitsSpareparts
             from core.models.inventory import Unit
 
             units_migrated = 0
@@ -141,8 +141,8 @@ class Command(BaseCommand):
         self.stdout.write('ترحيل الموردين...')
 
         try:
-            from inventory.models import TblSuppliers
-            from Purchase_orders.models import Vendor
+            from apps.inventory.models import TblSuppliers
+            from apps.procurement.purchase_orders.models import Vendor
             from core.models.inventory import Supplier
 
             suppliers_migrated = 0
@@ -228,7 +228,7 @@ class Command(BaseCommand):
         self.stdout.write('ترحيل المنتجات...')
 
         try:
-            from inventory.models import TblProducts
+            from apps.inventory.models import TblProducts
             from core.models.inventory import Product, ProductCategory, Unit, Warehouse, StockLevel
 
             products_migrated = 0
@@ -311,8 +311,8 @@ class Command(BaseCommand):
         self.stdout.write('ترحيل أوامر الشراء...')
 
         try:
-            from Purchase_orders.models import PurchaseRequest as OldPurchaseRequest
-            from Purchase_orders.models import PurchaseRequestItem as OldPurchaseRequestItem
+            from apps.procurement.purchase_orders.models import PurchaseRequest as OldPurchaseRequest
+            from apps.procurement.purchase_orders.models import PurchaseRequestItem as OldPurchaseRequestItem
             from core.models.procurement import PurchaseRequest, PurchaseRequestLineItem
             from core.models.inventory import Product, Supplier, Warehouse
 

@@ -2,7 +2,7 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
-from employees.models import Employee
+from apps.hr.employees.models import Employee
 
 
 class HealthInsuranceProvider(models.Model):

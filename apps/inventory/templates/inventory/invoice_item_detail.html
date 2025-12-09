@@ -1,0 +1,108 @@
+{% extends 'inventory/base_inventory.html' %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}تفاصيل عنصر الفاتورة - نظام إدارة المخزن{% endblock %}
+
+{% block page_title %}تفاصيل عنصر الفاتورة{% endblock %}
+
+{% block page_actions %}
+    <div>
+        <a href="{% url 'inventory:invoice_item_edit' object.invoice_code_programing %}" class="btn btn-warning me-2">
+            <i class="fas fa-edit me-1"></i> تعديل
+        </a>
+        <a href="{% url 'inventory:invoice_detail' object.invoice_number %}" class="btn btn-secondary">
+            <i class="fas fa-chevron-right me-1"></i> العودة للفاتورة
+        </a>
+    </div>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0"><i class="fas fa-info-circle me-2 text-primary"></i>معلومات عنصر الفاتورة</h5>
+    </div>
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-md-3 text-muted">رقم الكود:</div>
+            <div class="col-md-9">{{ object.invoice_code_programing }}</div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-3 text-muted">رقم الفاتورة:</div>
+            <div class="col-md-9">{{ object.invoice_number }}</div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-3 text-muted">المنتج:</div>
+            <div class="col-md-9">{{ object.product.product_name }}</div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-3 text-muted">الكود:</div>
+            <div class="col-md-9">{{ object.product.product_id }}</div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-3 text-muted">سعر الوحدة:</div>
+            <div class="col-md-9">{{ object.unit_price }}</div>
+        </div>
+        
+        <h5 class="border-top pt-3 mt-3">بيانات الكميات:</h5>
+        
+        <div class="row g-3 mt-2">
+            <div class="col-md-3">
+                <div class="card text-center bg-light">
+                    <div class="card-body">
+                        <h6 class="text-success">الوارد</h6>
+                        <h3>{{ object.quantity_elwarad|default:0 }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center bg-light">
+                    <div class="card-body">
+                        <h6 class="text-danger">المنصرف</h6>
+                        <h3>{{ object.quantity_elmonsarf|default:0 }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center bg-light">
+                    <div class="card-body">
+                        <h6 class="text-primary">مرتجع العملاء</h6>
+                        <h3>{{ object.quantity_mortagaaomalaa|default:0 }}</h3>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card text-center bg-light">
+                    <div class="card-body">
+                        <h6 class="text-warning">مرتجع الموردين</h6>
+                        <h3>{{ object.quantity_mortagaaelmawarden|default:0 }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h6 class="text-muted mb-3">إجمالي القيمة</h6>
+                        <h3 class="text-primary">
+                            {% if object.quantity_elwarad %}
+                                {{ object.unit_price|multiply:object.quantity_elwarad }}
+                            {% elif object.quantity_elmonsarf %}
+                                {{ object.unit_price|multiply:object.quantity_elmonsarf }}
+                            {% elif object.quantity_mortagaaomalaa %}
+                                {{ object.unit_price|multiply:object.quantity_mortagaaomalaa }}
+                            {% elif object.quantity_mortagaaelmawarden %}
+                                {{ object.unit_price|multiply:object.quantity_mortagaaelmawarden }}
+                            {% else %}
+                                0
+                            {% endif %}
+                        </h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

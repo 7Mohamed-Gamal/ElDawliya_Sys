@@ -8,7 +8,7 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from datetime import date, timedelta
 from .models import DisciplinaryAction
-from employees.models import Employee
+from apps.hr.employees.models import Employee
 
 
 class DisciplinaryActionForm(forms.ModelForm):

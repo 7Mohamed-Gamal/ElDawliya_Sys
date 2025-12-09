@@ -9,7 +9,7 @@ from django.utils.translation import gettext_lazy as _
 from datetime import date, timedelta
 from decimal import Decimal
 from .models import LoanType, EmployeeLoan, LoanInstallment
-from employees.models import Employee
+from apps.hr.employees.models import Employee
 
 
 class LoanTypeForm(forms.ModelForm):

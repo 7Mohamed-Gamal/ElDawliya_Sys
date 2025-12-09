@@ -14,10 +14,10 @@ import logging
 
 # Temporarily disabled - will be replaced with new modular HR apps
 # from Hr.models import Employee, Department
-from tasks.models import Task
-from meetings.models import Meeting
-from inventory.models import TblProducts
-from Purchase_orders.models import PurchaseRequest
+from apps.projects.tasks.models import Task
+from apps.projects.meetings.models import Meeting
+from apps.inventory.models import TblProducts
+from apps.procurement.purchase_orders.models import PurchaseRequest
 
 User = get_user_model()
 logger = logging.getLogger(__name__)
@@ -206,7 +206,7 @@ class UnifiedPermissionService:
                        self.has_module_permission('tasks', 'change'))
 
             elif task_type == 'meeting':
-                from meetings.models import MeetingTask
+                from apps.projects.meetings.models import MeetingTask
                 task = MeetingTask.objects.get(id=task_id)
                 # User can modify if they created it or it's assigned to them
                 return (task.assigned_by == self.user or

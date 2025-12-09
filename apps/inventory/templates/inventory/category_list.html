@@ -1,0 +1,204 @@
+{% extends 'inventory/base_inventory.html' %}
+{% load static %}
+{% load inventory_permission_tags %}
+{% load django_permissions %}
+
+{% block title %}قائمة التصنيفات - نظام إدارة المخزن{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card-header-custom {
+        background-color: #fff;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        padding: 1rem 1.25rem;
+    }
+
+    .card-header-custom h5 {
+        font-weight: 600;
+    }
+
+    .category-card {
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+
+    .category-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    .category-card .card-header {
+        background-color: var(--primary-color);
+        color: white;
+        font-weight: 500;
+        padding: 12px 15px;
+    }
+
+    .category-card .card-body {
+        padding: 15px;
+    }
+
+    .category-count {
+        background-color: rgba(var(--primary-color-rgb), 0.1);
+        color: var(--primary-color);
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        display: inline-block;
+    }
+
+    .empty-state {
+        padding: 50px 20px;
+        text-align: center;
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        margin: 2rem 0;
+    }
+
+    .empty-state .icon {
+        font-size: 4rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .action-buttons {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .action-buttons .btn {
+        margin-left: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row ps-4">
+    <div class="col-12 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="m-0">
+                <i class="fas fa-tags me-2 text-primary"></i>
+                قائمة التصنيفات
+            </h4>
+
+            {% has_inventory_module_permission "categories" "add" as category_perm %}
+            {% if perms|has_perm:category_perm or user|is_admin %}
+            <a href="{% url 'inventory:category_add' %}" class="btn btn-primary">
+                <i class="fas fa-plus-circle ms-1"></i>
+                إضافة تصنيف جديد
+            </a>
+            {% endif %}
+        </div>
+
+        <!-- قائمة التصنيفات -->
+        {% if categories %}
+        <div class="row row-cols-1 row-cols-md-3 g-4">
+            {% for category in categories %}
+            <div class="col">
+                <div class="card category-card">
+                    <div class="card-header">{{ category.name }}</div>
+                    <div class="card-body">
+                        <div class="category-info mb-3">
+                            <span class="category-count">
+                                <i class="fas fa-box-open me-1"></i> {{ category.products.count }} صنف
+                            </span>
+                        </div>
+
+                        <p class="mb-3">{{ category.description|default:"لا يوجد وصف"|truncatechars:100 }}</p>
+
+                        <div class="action-buttons">
+                            <a href="{% url 'inventory:product_list' %}?category={{ category.id }}" class="btn btn-sm btn-outline-primary" title="عرض الأصناف">
+                                <i class="fas fa-eye me-1"></i> الأصناف
+                            </a>
+
+                            {% has_inventory_module_permission "categories" "edit" as edit_perm %}
+                            {% if perms|has_perm:edit_perm or user|is_admin %}
+                            <a href="{% url 'inventory:category_edit' category.id %}" class="btn btn-sm btn-outline-secondary" title="تعديل">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            {% endif %}
+
+                            {% has_inventory_module_permission "categories" "delete" as delete_perm %}
+                            {% if perms|has_perm:delete_perm or user|is_admin %}
+                            <a href="{% url 'inventory:category_delete' category.id %}" class="btn btn-sm btn-outline-danger" title="حذف">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- ترقيم الصفحات -->
+        {% if is_paginated %}
+        <div class="mt-4 d-flex justify-content-center">
+            <nav aria-label="Page navigation">
+                <ul class="pagination">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1" aria-label="الأول">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}" aria-label="السابق">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for i in paginator.page_range %}
+                        {% if page_obj.number == i %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ i }}</span>
+                        </li>
+                        {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ i }}">{{ i }}</a>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}" aria-label="التالي">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ paginator.num_pages }}" aria-label="الأخير">
+                            <span aria-hidden="true">&raquo;&raquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="empty-state">
+            <div class="icon">
+                <i class="fas fa-tag"></i>
+            </div>
+            <h5>لا توجد تصنيفات</h5>
+            <p class="text-muted mb-4">لم يتم إضافة أي تصنيفات بعد.</p>
+
+            {% has_inventory_module_permission "categories" "add" as category_perm %}
+            {% if perms|has_perm:category_perm or user|is_admin %}
+            <div>
+                <a href="{% url 'inventory:category_add' %}" class="btn btn-primary">
+                    <i class="fas fa-plus-circle ms-1"></i> إضافة تصنيف جديد
+                </a>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

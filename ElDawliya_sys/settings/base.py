@@ -79,31 +79,36 @@ THIRD_PARTY_APPS = [
 ]
 
 LOCAL_APPS = [
-    # Core apps (temporarily reduced to avoid model conflicts)
+    # Core apps
     'api.apps.ApiConfig',
     'accounts',
     'administrator',
     'notifications',
-    'core.apps.CoreConfig',  # Re-enabled for testing
-    'audit.apps.AuditConfig',  # Re-enabled for testing
-    'companies.apps.CompaniesConfig',  # Re-enabled for testing
-    'org.apps.OrgConfig',  # Re-enabled for testing
+    'core.apps.CoreConfig',
+    'audit.apps.AuditConfig',
+    'companies.apps.CompaniesConfig',
+    'org.apps.OrgConfig',
     
-    # HR System - Re-enabling for testing
-    'hr.apps.HrConfig',
-    # 'meetings',
-    # 'tasks',
-    # 'inventory',
-    # 'Purchase_orders',
+    # HR System
+    'apps.hr.apps.HrConfig',
+    'apps.hr.attendance.apps.AttendanceConfig',
+    'apps.hr.employees.apps.EmployeesConfig',
+    'apps.hr.leaves.apps.LeavesConfig',
+    'apps.hr.evaluations.apps.EvaluationsConfig',
+    'apps.hr.payroll.apps.PayrollsConfig',
+    'apps.hr.training.apps.TrainingConfig',
+    
+    # Inventory & Procurement
+    'apps.inventory.apps.InventoryConfig',
+    'apps.procurement.purchase_orders.apps.PurchaseOrdersConfig',
+    
+    # Projects
+    'apps.projects.meetings.apps.MeetingsConfig',
+    'apps.projects.tasks.apps.TasksConfig',
+    
+    # Legacy/Root Apps (Not yet consolidated or external)
     # 'cars',
-    # 'attendance.apps.AttendanceConfig',
-    # 'employees.apps.EmployeesConfig',
-    # 'leaves.apps.LeavesConfig',
-    # 'evaluations.apps.EvaluationsConfig',
-    # 'payrolls.apps.PayrollsConfig',
     # 'banks',
-    # 'insurance.apps.InsuranceConfig',
-    # 'training.apps.TrainingConfig',
     # 'loans',
     # 'disciplinary',
     # 'tickets',

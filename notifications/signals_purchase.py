@@ -7,7 +7,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 
 try:
-    from Purchase_orders.models import PurchaseRequest, PurchaseRequestItem
+    from apps.procurement.purchase_orders.models import PurchaseRequest, PurchaseRequestItem
     PURCHASE_AVAILABLE = True
 except ImportError:
     PURCHASE_AVAILABLE = False

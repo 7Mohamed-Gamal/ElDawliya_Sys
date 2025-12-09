@@ -92,9 +92,9 @@ class Command(BaseCommand):
         """Migrate employee data from old models to new core models"""
         try:
             # Import old models
-            from employees.models import Employee as OldEmployee
-            from employees.models import EmployeeBankAccount as OldBankAccount
-            from employees.models import EmployeeDocument as OldDocument
+            from apps.hr.employees.models import Employee as OldEmployee
+            from apps.hr.employees.models import EmployeeBankAccount as OldBankAccount
+            from apps.hr.employees.models import EmployeeDocument as OldDocument
 
             # Import new models
             from core.models.hr import Employee, EmployeeBankAccount, EmployeeDocument
@@ -171,7 +171,7 @@ class Command(BaseCommand):
     def migrate_salaries(self):
         """Migrate salary data"""
         try:
-            from payrolls.models import EmployeeSalary as OldSalary
+            from apps.hr.payroll.models import EmployeeSalary as OldSalary
             from core.models.hr import EmployeeSalary, Employee
 
             old_salaries = OldSalary.objects.all()
@@ -216,7 +216,7 @@ class Command(BaseCommand):
     def migrate_attendance(self):
         """Migrate attendance data"""
         try:
-            from attendance.models import EmployeeAttendance as OldAttendance
+            from apps.hr.attendance.models import EmployeeAttendance as OldAttendance
             from core.models.attendance import AttendanceRecord
             from core.models.hr import Employee
 
@@ -257,8 +257,8 @@ class Command(BaseCommand):
     def migrate_leaves(self):
         """Migrate leave data"""
         try:
-            from leaves.models import LeaveType as OldLeaveType
-            from leaves.models import EmployeeLeave as OldLeave
+            from apps.hr.leaves.models import LeaveType as OldLeaveType
+            from apps.hr.leaves.models import EmployeeLeave as OldLeave
             from core.models.leaves import LeaveType, LeaveRecord
             from core.models.hr import Employee
 
@@ -317,8 +317,8 @@ class Command(BaseCommand):
     def migrate_evaluations(self):
         """Migrate evaluation data"""
         try:
-            from evaluations.models import EvaluationPeriod as OldPeriod
-            from evaluations.models import EmployeeEvaluation as OldEvaluation
+            from apps.hr.evaluations.models import EvaluationPeriod as OldPeriod
+            from apps.hr.evaluations.models import EmployeeEvaluation as OldEvaluation
             from core.models.evaluations import EvaluationPeriod, EmployeeEvaluation
             from core.models.hr import Employee
 

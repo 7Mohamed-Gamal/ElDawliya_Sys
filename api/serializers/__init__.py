@@ -21,9 +21,9 @@ Task = None
 Meeting = None
 
 def get_inventory_models():
-    """Dynamically import inventory models if available"""
+    """Dynamically import apps.inventory models if available"""
     try:
-        from inventory.models import TblProducts, TblCategories, TblSuppliers
+        from apps.inventory.models import TblProducts, TblCategories, TblSuppliers
         return TblProducts, TblCategories, TblSuppliers
     except ImportError:
         return None, None, None
@@ -31,7 +31,7 @@ def get_inventory_models():
 def get_task_model():
     """Dynamically import task model if available"""
     try:
-        from tasks.models import Task
+        from apps.projects.tasks.models import Task
         return Task
     except ImportError:
         return None
@@ -39,7 +39,7 @@ def get_task_model():
 def get_meeting_model():
     """Dynamically import meeting model if available"""
     try:
-        from meetings.models import Meeting
+        from apps.projects.meetings.models import Meeting
         return Meeting
     except ImportError:
         return None

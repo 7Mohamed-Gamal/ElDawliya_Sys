@@ -229,8 +229,8 @@ class TestScenarioManager:
 
     def create_demo_scenarios(self, created_objects):
         """Create specific demo scenarios"""
-        from tasks.models import Task, TaskStep
-        from meetings.models import Meeting
+        from apps.projects.tasks.models import Task, TaskStep
+        from apps.projects.meetings.models import Meeting
         from datetime import timedelta
         from django.utils import timezone
 
@@ -378,7 +378,7 @@ class TestDataValidator:
     def validate_employees(self):
         """Validate employee data"""
         try:
-            from employees.models import Employee
+            from apps.hr.employees.models import Employee
 
             # Check for employees without required fields
             employees_without_code = Employee.objects.filter(emp_code='').count()
@@ -403,7 +403,7 @@ class TestDataValidator:
     def validate_products(self):
         """Validate product data"""
         try:
-            from inventory.models import TblProducts
+            from apps.inventory.models import TblProducts
 
             # Check for products with negative stock
             negative_stock = TblProducts.objects.filter(qte_in_stock__lt=0).count()
@@ -426,7 +426,7 @@ class TestDataValidator:
     def validate_tasks(self):
         """Validate task data"""
         try:
-            from tasks.models import Task
+            from apps.projects.tasks.models import Task
 
             # Check for tasks with end date before start date
             invalid_dates = Task.objects.filter(end_date__lt=models.F('start_date').count()
@@ -449,7 +449,7 @@ class TestDataValidator:
     def validate_meetings(self):
         """Validate meeting data"""
         try:
-            from meetings.models import Meeting, Attendee
+            from apps.projects.meetings.models import Meeting, Attendee
 
             # Check for meetings without attendees
             meetings_without_attendees = Meeting.objects.filter(attendees__isnull=True).count()
@@ -466,7 +466,7 @@ class TestDataValidator:
     def validate_purchase_requests(self):
         """Validate purchase request data"""
         try:
-            from Purchase_orders.models import PurchaseRequest, PurchaseRequestItem
+            from apps.procurement.purchase_orders.models import PurchaseRequest, PurchaseRequestItem
 
             # Check for requests without items
             requests_without_items = PurchaseRequest.objects.filter(items__isnull=True).count()

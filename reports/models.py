@@ -15,7 +15,7 @@ from django.utils import timezone
 from datetime import date, datetime
 import json
 
-from employees.models import Employee
+from apps.hr.employees.models import Employee
 from org.models import Department
 
 

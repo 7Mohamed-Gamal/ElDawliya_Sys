@@ -216,7 +216,7 @@ def warm_cache_entries():
 
         # Warm up common lookups
         try:
-            from employees.models import Department, JobPosition
+            from apps.hr.employees.models import Department, JobPosition
 
             # Cache departments
             departments = list(Department.objects.filter(is_active=True).values())
@@ -231,7 +231,7 @@ def warm_cache_entries():
 
         # Warm up system settings
         try:
-            from inventory.models import SystemSettings
+            from apps.inventory.models import SystemSettings
             settings_obj = SystemSettings.get_settings()
             cache_service.set('system_settings', {
                 'language': settings_obj.language,

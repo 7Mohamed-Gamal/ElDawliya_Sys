@@ -29,14 +29,14 @@ from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
 from reportlab.lib.styles import getSampleStyleSheet
 
 from .models import ReportTemplate, GeneratedReport, ReportCategory
-from employees.models import Employee
+from apps.hr.employees.models import Employee
 from org.models import Department
-from attendance.models import EmployeeAttendance, AttendanceSummary
-from leaves.models import EmployeeLeave, LeaveBalance, LeaveType
-from payrolls.models import PayrollRun, PayrollDetail, EmployeeSalary
+from apps.hr.attendance.models import EmployeeAttendance, AttendanceSummary
+from apps.hr.leaves.models import EmployeeLeave, LeaveBalance, LeaveType
+from apps.hr.payroll.models import PayrollRun, PayrollDetail, EmployeeSalary
 from loans.models import EmployeeLoan, LoanInstallment
-from training.models import TrainingCourse
-from evaluations.models import EmployeeEvaluation
+from apps.hr.training.models import TrainingCourse
+from apps.hr.evaluations.models import EmployeeEvaluation
 
 logger = logging.getLogger(__name__)
 

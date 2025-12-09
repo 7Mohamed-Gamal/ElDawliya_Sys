@@ -1,0 +1,231 @@
+{% extends 'Purchase_orders/base_purchase_orders.html' %}
+{% load static %}
+
+{% block title %}قائمة الموردين - نظام الدولية{% endblock %}
+
+{% block page_title %}قائمة الموردين{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Purchase_orders:dashboard' %}">طلبات الشراء</a></li>
+<li class="breadcrumb-item active">الموردين</li>
+{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">قائمة الموردين</h5>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addVendorModal">
+            <i class="fas fa-plus-circle me-2"></i> إضافة مورد جديد
+        </button>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>اسم المورد</th>
+                        <th>جهة الاتصال</th>
+                        <th>رقم الهاتف</th>
+                        <th>البريد الإلكتروني</th>
+                        <th>العنوان</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for vendor in vendors %}
+                    <tr>
+                        <td>{{ vendor.name }}</td>
+                        <td>{{ vendor.contact_person }}</td>
+                        <td>{{ vendor.phone }}</td>
+                        <td>{{ vendor.email }}</td>
+                        <td>{{ vendor.address|truncatechars:30 }}</td>
+                        <td>
+                            <button class="btn btn-sm btn-warning" onclick="editVendor({{ vendor.id }})">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="deleteVendor({{ vendor.id }})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4">لا يوجد موردين. قم بإضافة موردين جدد.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add Vendor Modal -->
+<div class="modal fade" id="addVendorModal" tabindex="-1" aria-labelledby="addVendorModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addVendorModalLabel">إضافة مورد جديد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="vendorForm">
+                    <div class="mb-3">
+                        <label for="vendorName" class="form-label">اسم المورد</label>
+                        <input type="text" class="form-control" id="vendorName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="contactPerson" class="form-label">جهة الاتصال</label>
+                        <input type="text" class="form-control" id="contactPerson">
+                    </div>
+                    <div class="mb-3">
+                        <label for="phone" class="form-label">رقم الهاتف</label>
+                        <input type="tel" class="form-control" id="phone">
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">البريد الإلكتروني</label>
+                        <input type="email" class="form-control" id="email">
+                    </div>
+                    <div class="mb-3">
+                        <label for="address" class="form-label">العنوان</label>
+                        <textarea class="form-control" id="address" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" onclick="saveVendor()">حفظ</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // الحصول على CSRF token
+    function getCsrfToken() {
+        return document.querySelector('input[name="csrfmiddlewaretoken"]').value;
+    }
+
+    function editVendor(vendorId) {
+        fetch(`/purchase/vendors/${vendorId}/edit/`, {
+            method: 'GET',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            // تعبئة النموذج بالبيانات
+            document.getElementById('vendorName').value = data.name;
+            document.getElementById('contactPerson').value = data.contact_person;
+            document.getElementById('phone').value = data.phone;
+            document.getElementById('email').value = data.email;
+            document.getElementById('address').value = data.address;
+            
+            // تغيير عنوان المودال وإضافة معرف المورد
+            document.getElementById('addVendorModalLabel').textContent = 'تعديل المورد';
+            document.getElementById('vendorForm').dataset.vendorId = vendorId;
+            
+            // إظهار المودال
+            new bootstrap.Modal(document.getElementById('addVendorModal')).show();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('حدث خطأ أثناء تحميل بيانات المورد');
+        });
+    }
+    
+    function deleteVendor(vendorId) {
+        if (confirm('هل أنت متأكد من حذف هذا المورد؟')) {
+            fetch(`/purchase/vendors/${vendorId}/delete/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCsrfToken(),
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => {
+                if (response.ok) {
+                    // إعادة تحميل الصفحة بعد الحذف
+                    window.location.reload();
+                } else {
+                    throw new Error('حدث خطأ أثناء حذف المورد');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert(error.message);
+            });
+        }
+    }
+    
+    function saveVendor() {
+        // التحقق من صحة النموذج
+        const form = document.getElementById('vendorForm');
+        if (!form.checkValidity()) {
+            form.reportValidity();
+            return;
+        }
+        
+        // جمع البيانات من النموذج
+        const vendorData = {
+            name: document.getElementById('vendorName').value,
+            contact_person: document.getElementById('contactPerson').value,
+            phone: document.getElementById('phone').value,
+            email: document.getElementById('email').value,
+            address: document.getElementById('address').value
+        };
+        
+        // تحديد إذا كان هذا تعديل أو إضافة
+        const vendorId = form.dataset.vendorId;
+        const url = vendorId 
+            ? `/purchase/vendors/${vendorId}/update/` 
+            : '/purchase/vendors/create/';
+        const method = vendorId ? 'PUT' : 'POST';
+        
+        // إرسال الطلب إلى الخادم
+        fetch(url, {
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken(),
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify(vendorData)
+        })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error('حدث خطأ أثناء حفظ المورد');
+            }
+        })
+        .then(data => {
+            // إغلاق المودال
+            const modal = bootstrap.Modal.getInstance(document.getElementById('addVendorModal'));
+            modal.hide();
+            
+            // إعادة تحميل الصفحة لعرض التغييرات
+            window.location.reload();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert(error.message);
+        });
+    }
+    
+    // إعادة تعيين النموذج عند فتح مودال الإضافة
+    document.getElementById('addVendorModal').addEventListener('show.bs.modal', function(event) {
+        // التحقق إذا كان الزر الذي فتح المودال هو زر الإضافة
+        if (event.relatedTarget && event.relatedTarget.classList.contains('btn-primary')) {
+            // إعادة تعيين النموذج
+            document.getElementById('vendorForm').reset();
+            document.getElementById('addVendorModalLabel').textContent = 'إضافة مورد جديد';
+            delete document.getElementById('vendorForm').dataset.vendorId;
+        }
+    });
+</script>
+{% endblock %}

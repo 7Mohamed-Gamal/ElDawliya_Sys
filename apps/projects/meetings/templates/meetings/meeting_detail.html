@@ -1,0 +1,616 @@
+{% extends "meetings/base_meetings.html" %}
+{% load static %}
+{% load i18n %}
+{% load django_permissions %}
+
+{% block title %}تفاصيل الاجتماع - {{ meeting.title }}{% endblock %}
+
+{% block page_title %}تفاصيل الاجتماع{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'meetings:dashboard' %}">الاجتماعات</a></li>
+<li class="breadcrumb-item"><a href="{% url 'meetings:list' %}">قائمة الاجتماعات</a></li>
+<li class="breadcrumb-item active">{{ meeting.title }}</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .meeting-header {
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    }
+    
+    .meeting-status {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 2rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .meeting-status-pending {
+        background-color: rgba(255, 152, 0, 0.15);
+        color: #ff9800;
+    }
+    
+    .meeting-status-completed {
+        background-color: rgba(76, 175, 80, 0.15);
+        color: #4caf50;
+    }
+    
+    .meeting-status-cancelled {
+        background-color: rgba(244, 67, 54, 0.15);
+        color: #f44336;
+    }
+    
+    .info-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .info-list li {
+        display: flex;
+        margin-bottom: 0.75rem;
+        align-items: baseline;
+    }
+    
+    .info-list li i {
+        width: 20px;
+        text-align: center;
+        margin-left: 10px;
+        color: var(--primary-color);
+    }
+    
+    .info-label {
+        min-width: 120px;
+        font-weight: 600;
+        color: #6c757d;
+    }
+    
+    .attendee-avatar {
+        width: 40px;
+        height: 40px;
+        background-color: var(--primary-color);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-weight: 500;
+    }
+    
+    .task-card {
+        margin-bottom: 0.75rem;
+        border-radius: 0.5rem;
+        border: none;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+    }
+    
+    .task-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .task-card-link {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+    }
+
+    .task-card-link:hover {
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .task-card.clickable {
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .task-card.clickable:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    }
+    
+    .task-card .progress {
+        height: 6px;
+        border-radius: 3px;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .btn-action {
+        border-radius: 0.375rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+    }
+    
+    .tab-content {
+        padding-top: 1.5rem;
+    }
+    
+    .add-attendee-form {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .status-badge {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-left: 5px;
+    }
+    
+    .status-badge.pending {
+        background-color: #ff9800;
+    }
+    
+    .status-badge.completed {
+        background-color: #4caf50;
+    }
+    
+    .status-badge.in_progress {
+        background-color: #2196f3;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="meeting-header">
+        <div class="d-flex justify-content-between flex-wrap mb-3">
+            <div>
+                <h3 class="mb-1">{{ meeting.title }}</h3>
+                <div>
+                    <span class="meeting-status meeting-status-{{ meeting.status }}">{{ meeting.get_status_display }}</span>
+                </div>
+            </div>
+            <div class="action-buttons">
+                {% if perms.meetings.change_meeting or user|is_admin %}
+                <a href="{% url 'meetings:edit' pk=meeting.pk %}" class="btn btn-primary btn-action">
+                    <i class="fas fa-edit"></i>
+                    <span>تحرير</span>
+                </a>
+                {% endif %}
+                
+                {% if perms.meetings.delete_meeting or user|is_admin %}
+                <button type="button" class="btn btn-danger btn-action" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                    <i class="fas fa-trash-alt"></i>
+                    <span>حذف</span>
+                </button>
+                {% endif %}
+                
+                <a href="{% url 'meetings:list' %}" class="btn btn-outline-secondary btn-action">
+                    <i class="fas fa-arrow-right"></i>
+                    <span>العودة للقائمة</span>
+                </a>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <ul class="info-list">
+                    <li>
+                        <i class="fas fa-calendar-alt"></i>
+                        <span class="info-label">تاريخ الاجتماع:</span>
+                        <span>{{ meeting.date|date:"Y-m-d" }}</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-clock"></i>
+                        <span class="info-label">وقت الاجتماع:</span>
+                        <span>{{ meeting.date|date:"h:i A" }}</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-user"></i>
+                        <span class="info-label">منشئ الاجتماع:</span>
+                        <span>{{ meeting.created_by.get_full_name|default:meeting.created_by.username }}</span>
+                    </li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <ul class="info-list">
+                    <li>
+                        <i class="fas fa-users"></i>
+                        <span class="info-label">عدد الحضور:</span>
+                        <span>{{ meeting.attendees.count }} أشخاص</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-tasks"></i>
+                        <span class="info-label">المهام:</span>
+                        <span>{{ meeting.meeting_tasks.count }} مهمة ({{ completed_count }} مكتملة)</span>
+                    </li>
+                    {% if meeting.status == 'completed' %}
+                    <li>
+                        <i class="fas fa-check-circle"></i>
+                        <span class="info-label">تاريخ الإكمال:</span>
+                        <span>{{ meeting.updated_at|date:"Y-m-d" }}</span>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tabs Navigation -->
+    <ul class="nav nav-tabs" id="meetingTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="details-tab" data-bs-toggle="tab" data-bs-target="#details" type="button" role="tab" aria-controls="details" aria-selected="true">
+                <i class="fas fa-info-circle me-1"></i> التفاصيل
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="attendees-tab" data-bs-toggle="tab" data-bs-target="#attendees" type="button" role="tab" aria-controls="attendees" aria-selected="false">
+                <i class="fas fa-users me-1"></i> الحضور
+                <span class="badge bg-primary ms-1">{{ meeting.attendees.count }}</span>
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="tasks-tab" data-bs-toggle="tab" data-bs-target="#tasks" type="button" role="tab" aria-controls="tasks" aria-selected="false">
+                <i class="fas fa-tasks me-1"></i> المهام
+                <span class="badge bg-primary ms-1">{{ meeting.meeting_tasks.count }}</span>
+            </button>
+        </li>
+    </ul>
+    
+    <div class="tab-content" id="meetingTabsContent">
+        <!-- Details Tab -->
+        <div class="tab-pane fade show active" id="details" role="tabpanel" aria-labelledby="details-tab">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="fas fa-align-left me-2 text-primary"></i> موضوع الاجتماع</h5>
+                </div>
+                <div class="card-body">
+                    <p>{{ meeting.topic|linebreaks }}</p>
+                </div>
+            </div>
+            
+            <!-- Task Progress -->
+            {% if meeting.meeting_tasks.exists %}
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0"><i class="fas fa-chart-pie me-2 text-primary"></i> تقدم المهام</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <canvas id="taskStatusChart" height="200"></canvas>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex flex-column justify-content-center h-100 gap-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="status-badge completed"></span>
+                                        <span>مكتملة</span>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <span class="h4 mb-0">{{ completed_count }}</span>
+                                        <span class="text-muted ms-2">({{ completed_percent|floatformat:0 }}%)</span>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="status-badge in_progress"></span>
+                                        <span>قيد التنفيذ</span>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <span class="h4 mb-0">{{ in_progress_count }}</span>
+                                        <span class="text-muted ms-2">({{ in_progress_percent|floatformat:0 }}%)</span>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="status-badge pending"></span>
+                                        <span>قيد الانتظار</span>
+                                    </div>
+                                    <div class="d-flex align-items-center">
+                                        <span class="h4 mb-0">{{ meeting.meeting_tasks.count|add:"-"|add:completed_count|add:"-"|add:in_progress_count }}</span>
+                                        <span class="text-muted ms-2">({{ pending_percent|floatformat:0 }}%)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Attendees Tab -->
+        <div class="tab-pane fade" id="attendees" role="tabpanel" aria-labelledby="attendees-tab">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0"><i class="fas fa-users me-2 text-primary"></i> قائمة الحضور</h5>
+                    {% if user == meeting.created_by or user|is_admin %}
+                    <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="collapse" data-bs-target="#addAttendeeForm">
+                        <i class="fas fa-plus me-1"></i> إضافة حضور
+                    </button>
+                    {% endif %}
+                </div>
+                
+                <div class="collapse" id="addAttendeeForm">
+                    <div class="card-body border-bottom bg-light">
+                        <form action="{% url 'meetings:add_attendee' pk=meeting.pk %}" method="post" class="add-attendee-form">
+                            {% csrf_token %}
+                            <select name="user" class="form-select">
+                                <option value="" selected disabled>اختر مستخدم...</option>
+                                {% for user in available_users %}
+                                <option value="{{ user.id }}">{{ user.get_full_name|default:user.username }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-primary">إضافة</button>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    {% if meeting.attendees.exists %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>الاسم</th>
+                                    <th>البريد الإلكتروني</th>
+                                    <th>المهام المكلف بها</th>
+                                    {% if user == meeting.created_by or user.is_superuser %}
+                                    <th>إجراءات</th>
+                                    {% endif %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for attendee in meeting.attendees.all %}
+                                <tr>
+                                    <td>
+                                        <div class="attendee-avatar">
+                                            {{ attendee.user.username|slice:":1"|upper }}
+                                        </div>
+                                    </td>
+                                    <td>{{ attendee.user.get_full_name|default:attendee.user.username }}</td>
+                                    <td>{{ attendee.user.email|default:"-" }}</td>
+                                    <td>
+                                        {% for atc in attendee_task_counts %}
+                                            {% if atc.attendee.id == attendee.id %}
+                                                {{ atc.task_count }}
+                                            {% endif %}
+                                        {% endfor %}
+                                    </td>
+                                    {% if user == meeting.created_by or user.is_superuser %}
+                                    <td>
+                                        <a href="{% url 'meetings:remove_attendee' pk=meeting.pk %}?attendee_id={{ attendee.id }}" class="btn btn-sm btn-danger" onclick="return confirm('هل أنت متأكد من إزالة هذا المستخدم من قائمة الحضور؟');">
+                                            <i class="fas fa-times"></i> إزالة
+                                        </a>
+                                    </td>
+                                    {% endif %}
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                        <p>لا يوجد حضور مسجلين في هذا الاجتماع</p>
+                        {% if user == meeting.created_by or user|is_admin %}
+                        <button type="button" class="btn btn-primary mt-2" data-bs-toggle="collapse" data-bs-target="#addAttendeeForm">
+                            <i class="fas fa-plus me-1"></i> إضافة حضور
+                        </button>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tasks Tab -->
+        <div class="tab-pane fade" id="tasks" role="tabpanel" aria-labelledby="tasks-tab">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0"><i class="fas fa-tasks me-2 text-primary"></i> المهام المرتبطة بالاجتماع</h5>
+                    {% if user == meeting.created_by or user.is_superuser %}
+                    <a href="{% url 'meetings:edit' pk=meeting.pk %}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus me-1"></i> إضافة مهام جديدة
+                    </a>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if meeting.meeting_tasks.exists %}
+                    <div class="row">
+                        {% for task in meeting.meeting_tasks.all %}
+                        <div class="col-md-6">
+                            {% if user.is_superuser or user == task.assigned_to %}
+                            <a href="{% url 'meetings:task_detail' task_id=task.id %}" class="task-card-link">
+                                <div class="card task-card clickable">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h6 class="card-title mb-0">
+                                                <span class="status-badge {{ task.status }}"></span>
+                                                {{ task.description }}
+                                            </h6>
+                                            <span class="badge bg-{{ task.status|cut:'pending'|cut:'completed'|cut:'in_progress'|yesno:'warning,success,primary' }}">
+                                                {{ task.get_status_display }}
+                                            </span>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <small class="text-muted">
+                                                <i class="fas fa-user me-1"></i>
+                                                {{ task.assigned_to.get_full_name|default:task.assigned_to.username }}
+                                            </small>
+                                            <small class="text-muted">
+                                                <i class="fas fa-calendar-alt me-1"></i>
+                                                {{ task.end_date|date:"Y-m-d" }}
+                                            </small>
+                                        </div>
+
+                                        {% if task.status == 'in_progress' %}
+                                        <div class="progress">
+                                            <div class="progress-bar bg-primary" role="progressbar" style="width: 50%" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        {% elif task.status == 'completed' %}
+                                        <div class="progress">
+                                            <div class="progress-bar bg-success" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        {% else %}
+                                        <div class="progress">
+                                            <div class="progress-bar bg-warning" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                        </div>
+                                        {% endif %}
+
+                                        <div class="mt-2 text-center">
+                                            <small class="text-primary">
+                                                <i class="fas fa-eye me-1"></i>انقر لعرض التفاصيل
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                            {% else %}
+                            <div class="card task-card">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="card-title mb-0">
+                                            <span class="status-badge {{ task.status }}"></span>
+                                            {{ task.description }}
+                                        </h6>
+                                        <span class="badge bg-{{ task.status|cut:'pending'|cut:'completed'|cut:'in_progress'|yesno:'warning,success,primary' }}">
+                                            {{ task.get_status_display }}
+                                        </span>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <small class="text-muted">
+                                            <i class="fas fa-user me-1"></i>
+                                            {{ task.assigned_to.get_full_name|default:task.assigned_to.username }}
+                                        </small>
+                                        <small class="text-muted">
+                                            <i class="fas fa-calendar-alt me-1"></i>
+                                            {{ task.end_date|date:"Y-m-d" }}
+                                        </small>
+                                    </div>
+
+                                    {% if task.status == 'in_progress' %}
+                                    <div class="progress">
+                                        <div class="progress-bar bg-primary" role="progressbar" style="width: 50%" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    {% elif task.status == 'completed' %}
+                                    <div class="progress">
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: 100%" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    {% else %}
+                                    <div class="progress">
+                                        <div class="progress-bar bg-warning" role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    {% endif %}
+
+                                    <div class="mt-2 text-center">
+                                        <small class="text-muted">
+                                            <i class="fas fa-lock me-1"></i>لا يمكن الوصول
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                        <p>لم يتم إنشاء أية مهام لهذا الاجتماع حتى الآن</p>
+                        {% if user == meeting.created_by or user.is_superuser %}
+                        <a href="{% url 'meetings:edit' pk=meeting.pk %}" class="btn btn-primary mt-2">
+                            <i class="fas fa-plus me-1"></i> إضافة مهام
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Meeting Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">تأكيد الحذف</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>هل أنت متأكد من حذف الاجتماع <strong>"{{ meeting.title }}"</strong>؟</p>
+                <p class="text-danger">سيتم حذف كافة بيانات الاجتماع بما في ذلك الحضور والمهام المرتبطة به.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <form action="{% url 'meetings:delete' pk=meeting.pk %}" method="post">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">تأكيد الحذف</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        {% if meeting.meeting_tasks.exists %}
+        // Task Status Chart
+        const statusCtx = document.getElementById('taskStatusChart').getContext('2d');
+        
+        const taskStatusChart = new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['مكتملة', 'قيد التنفيذ', 'قيد الانتظار'],
+                datasets: [{
+                    data: [
+                        {{ completed_percent|floatformat:0 }}, 
+                        {{ in_progress_percent|floatformat:0 }}, 
+                        {{ pending_percent|floatformat:0 }}
+                    ],
+                    backgroundColor: [
+                        '#4caf50',  // Success
+                        '#2196f3',  // Primary
+                        '#ff9800'   // Warning
+                    ],
+                    borderWidth: 2,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            font: {
+                                size: 12
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        {% endif %}
+    });
+</script>
+{% endblock %}

@@ -8,8 +8,8 @@ from django.utils import timezone
 from django.db.models import F
 
 try:
-    from inventory.models import TblProducts, TblInvoiceitems
-    from inventory.models_local import Product
+    from apps.inventory.models import TblProducts, TblInvoiceitems
+    from apps.inventory.models_local import Product
     INVENTORY_AVAILABLE = True
 except ImportError:
     INVENTORY_AVAILABLE = False

@@ -14,10 +14,10 @@ import json
 from accounts.models import Users_Login_New
 # Temporarily disabled - will be replaced with new modular HR apps
 # from Hr.models import Employee, Department
-from tasks.models import Task
-from meetings.models import Meeting
-from inventory.models import TblProducts
-from Purchase_orders.models import PurchaseRequest, Vendor
+from apps.projects.tasks.models import Task
+from apps.projects.meetings.models import Meeting
+from apps.inventory.models import TblProducts
+from apps.procurement.purchase_orders.models import PurchaseRequest, Vendor
 from core.reporting import ReportingService
 
 

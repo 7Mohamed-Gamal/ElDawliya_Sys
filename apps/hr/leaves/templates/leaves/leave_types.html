@@ -1,0 +1,394 @@
+{% extends 'leaves/base.html' %}
+{% load static %}
+
+{% block title %}أنواع الإجازات{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active">أنواع الإجازات</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .type-card {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+        margin-bottom: 20px;
+    }
+    .type-card:hover {
+        transform: translateY(-5px);
+    }
+    .type-header {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        border-radius: 15px 15px 0 0;
+        padding: 20px;
+    }
+    .type-body {
+        padding: 20px;
+    }
+    .paid-badge {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: #ffc107;
+        color: #000;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>
+                <i class="fas fa-tags me-2"></i>
+                أنواع الإجازات
+            </h1>
+            <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addTypeModal">
+                <i class="fas fa-plus me-1"></i>
+                إضافة نوع جديد
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Leave Types Cards -->
+<div class="row">
+    {% for leave_type in leave_types %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card type-card position-relative">
+            {% if leave_type.is_paid %}
+            <div class="paid-badge">
+                <i class="fas fa-money-bill-wave me-1"></i>
+                مدفوعة
+            </div>
+            {% endif %}
+            
+            <div class="type-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-calendar-check me-2"></i>
+                    {{ leave_type.leave_name }}
+                </h5>
+            </div>
+            
+            <div class="type-body">
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <div class="text-center">
+                            <i class="fas fa-calendar-day text-primary fa-2x mb-2"></i>
+                            <div class="small text-muted">الحد الأقصى سنوياً</div>
+                            <div class="h4 text-primary">
+                                {% if leave_type.max_days_per_year %}
+                                    {{ leave_type.max_days_per_year }} يوم
+                                {% else %}
+                                    غير محدود
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <div class="small text-muted">نوع الإجازة</div>
+                        <div class="fw-bold">
+                            {% if leave_type.is_paid %}
+                                <span class="text-success">مدفوعة الأجر</span>
+                            {% else %}
+                                <span class="text-warning">غير مدفوعة</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="small text-muted">الطلبات هذا الشهر</div>
+                        <div class="fw-bold text-info">{{ leave_type.requests_count|default:0 }}</div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="badge bg-info">{{ leave_type.total_employees|default:0 }} موظف</span>
+                    </div>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-primary" onclick="editLeaveType({{ leave_type.leave_type_id }})" title="تعديل">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-outline-info" onclick="viewTypeStats({{ leave_type.leave_type_id }})" title="إحصائيات">
+                            <i class="fas fa-chart-bar"></i>
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="deleteLeaveType({{ leave_type.leave_type_id }})" title="حذف">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="text-center py-5">
+            <i class="fas fa-tags fa-4x text-muted mb-3"></i>
+            <h4 class="text-muted">لا توجد أنواع إجازات</h4>
+            <p class="text-muted">لم يتم إنشاء أي أنواع إجازات بعد</p>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTypeModal">
+                <i class="fas fa-plus me-1"></i>
+                إضافة نوع جديد
+            </button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Statistics Summary -->
+{% if leave_types %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    ملخص الإحصائيات
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 text-center">
+                        <div class="h3 text-primary">{{ leave_types|length }}</div>
+                        <div class="text-muted">أنواع الإجازات</div>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="h3 text-success">{{ paid_types_count }}</div>
+                        <div class="text-muted">إجازات مدفوعة</div>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="h3 text-warning">{{ unpaid_types_count }}</div>
+                        <div class="text-muted">إجازات غير مدفوعة</div>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="h3 text-info">{{ total_requests_this_month }}</div>
+                        <div class="text-muted">طلبات هذا الشهر</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Add Leave Type Modal -->
+<div class="modal fade" id="addTypeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">إضافة نوع إجازة جديد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addTypeForm">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="leave_name" class="form-label">اسم نوع الإجازة *</label>
+                        <input type="text" class="form-control" name="leave_name" id="leave_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="max_days_per_year" class="form-label">الحد الأقصى سنوياً (أيام)</label>
+                        <input type="number" class="form-control" name="max_days_per_year" id="max_days_per_year" min="0">
+                        <div class="form-text">اتركه فارغاً للإجازات غير المحدودة</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="is_paid" id="is_paid">
+                            <label class="form-check-label" for="is_paid">
+                                إجازة مدفوعة الأجر
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-success" onclick="submitLeaveType()">حفظ</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Leave Type Modal -->
+<div class="modal fade" id="editTypeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تعديل نوع الإجازة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editTypeForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="leave_type_id" id="edit_leave_type_id">
+                    <div class="mb-3">
+                        <label for="edit_leave_name" class="form-label">اسم نوع الإجازة *</label>
+                        <input type="text" class="form-control" name="leave_name" id="edit_leave_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit_max_days_per_year" class="form-label">الحد الأقصى سنوياً (أيام)</label>
+                        <input type="number" class="form-control" name="max_days_per_year" id="edit_max_days_per_year" min="0">
+                        <div class="form-text">اتركه فارغاً للإجازات غير المحدودة</div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="is_paid" id="edit_is_paid">
+                            <label class="form-check-label" for="edit_is_paid">
+                                إجازة مدفوعة الأجر
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" onclick="updateLeaveType()">تحديث</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Type Statistics Modal -->
+<div class="modal fade" id="typeStatsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">إحصائيات نوع الإجازة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="typeStatsContent">
+                <!-- Content will be loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function submitLeaveType() {
+    const form = document.getElementById('addTypeForm');
+    const formData = new FormData(form);
+    
+    fetch('{% url "leaves:add_leave_type" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('حدث خطأ: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ في الاتصال');
+    });
+}
+
+function editLeaveType(typeId) {
+    fetch(`{% url "leaves:get_leave_type" 0 %}`.replace('0', typeId))
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('edit_leave_type_id').value = data.leave_type.leave_type_id;
+            document.getElementById('edit_leave_name').value = data.leave_type.leave_name;
+            document.getElementById('edit_max_days_per_year').value = data.leave_type.max_days_per_year || '';
+            document.getElementById('edit_is_paid').checked = data.leave_type.is_paid;
+            
+            const modal = new bootstrap.Modal(document.getElementById('editTypeModal'));
+            modal.show();
+        } else {
+            alert('حدث خطأ في جلب بيانات نوع الإجازة');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ في الاتصال');
+    });
+}
+
+function updateLeaveType() {
+    const form = document.getElementById('editTypeForm');
+    const formData = new FormData(form);
+    const typeId = document.getElementById('edit_leave_type_id').value;
+    
+    fetch(`{% url "leaves:update_leave_type" 0 %}`.replace('0', typeId), {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('حدث خطأ: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ في الاتصال');
+    });
+}
+
+function deleteLeaveType(typeId) {
+    if (confirm('هل أنت متأكد من حذف هذا النوع؟ سيتم حذف جميع الطلبات المرتبطة به.')) {
+        fetch(`{% url "leaves:delete_leave_type" 0 %}`.replace('0', typeId), {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('حدث خطأ: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('حدث خطأ في الاتصال');
+        });
+    }
+}
+
+function viewTypeStats(typeId) {
+    fetch(`{% url "leaves:leave_type_stats" 0 %}`.replace('0', typeId))
+    .then(response => response.text())
+    .then(html => {
+        document.getElementById('typeStatsContent').innerHTML = html;
+        const modal = new bootstrap.Modal(document.getElementById('typeStatsModal'));
+        modal.show();
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ في جلب الإحصائيات');
+    });
+}
+</script>
+{% endblock %}

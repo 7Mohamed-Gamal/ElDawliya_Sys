@@ -1,0 +1,271 @@
+{% extends 'inventory/base_inventory.html' %}
+{% load static %}
+{% load inventory_permission_tags %}
+
+{% block title %}تقرير حركة الأصناف - نظام إدارة المخزن{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* تنسيقات التقرير */
+    .report-card {
+        border-radius: 10px;
+        border: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        margin-bottom: 1.5rem;
+    }
+
+    .report-card:hover {
+        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+    
+    .report-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        padding: 1.25rem;
+        border-radius: 10px 10px 0 0;
+    }
+    
+    .report-title {
+        margin: 0;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+    }
+    
+    .report-icon {
+        margin-left: 10px;
+        color: var(--primary-color);
+    }
+    
+    .report-filters {
+        background-color: rgba(var(--primary-color-rgb), 0.03);
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+    }
+    
+    /* تنسيق الجداول */
+    .table-responsive {
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .movement-table th {
+        position: sticky;
+        top: 0;
+        background-color: #f8f9fa;
+    }
+    
+    /* بطاقات الملخص */
+    .summary-card {
+        background-color: var(--light-color);
+        border-radius: 10px;
+        padding: 1.25rem;
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+    
+    .summary-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    }
+    
+    .summary-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: var(--primary-color);
+    }
+    
+    .summary-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    /* أزرار التصدير */
+    .export-btn {
+        border-radius: 20px;
+        padding: 0.5rem 1rem;
+    }
+    
+    .export-btn i {
+        margin-left: 5px;
+    }
+    
+    /* طباعة التقرير */
+    @media print {
+        .nav-sidebar, 
+        .report-filters,
+        .export-btn,
+        .navbar-top {
+            display: none;
+        }
+        
+        .main-content {
+            margin: 0;
+            width: 100%;
+            padding: 0;
+        }
+        
+        .report-card {
+            box-shadow: none;
+            border: 1px solid #ddd;
+            break-inside: avoid;
+        }
+        
+        body {
+            font-size: 12px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row ps-4">
+    <div class="col-12 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="m-0">
+                <i class="fas fa-exchange-alt me-2 text-primary"></i>
+                تقرير حركة الأصناف
+            </h4>
+            
+            <div class="export-actions">
+                <button onclick="window.print()" class="btn btn-outline-dark export-btn">
+                    <i class="fas fa-print"></i> طباعة التقرير
+                </button>
+                <button class="btn btn-outline-success export-btn">
+                    <i class="fas fa-file-excel"></i> تصدير إكسل
+                </button>
+            </div>
+        </div>
+        
+        <!-- فلاتر التقارير -->
+        <div class="card report-filters mb-4">
+            <form method="get" action="{% url 'inventory:movement_report' %}" class="mb-0">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">الصنف</label>
+                        <select name="product_id" class="form-select">
+                            <option value="">كل الأصناف</option>
+                            {% for product in products %}
+                            <option value="{{ product.product_id }}" {% if selected_product == product.product_id %}selected{% endif %}>
+                                {{ product.name }} ({{ product.product_id }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label class="form-label">نوع الإذن</label>
+                        <select name="voucher_type" class="form-select">
+                            <option value="">الكل</option>
+                            <option value="إذن اضافة" {% if voucher_type == 'إذن اضافة' %}selected{% endif %}>إذن إضافة</option>
+                            <option value="إذن صرف" {% if voucher_type == 'إذن صرف' %}selected{% endif %}>إذن صرف</option>
+                            <option value="اذن مرتجع عميل" {% if voucher_type == 'اذن مرتجع عميل' %}selected{% endif %}>مرتجع عميل</option>
+                            <option value="إذن مرتجع مورد" {% if voucher_type == 'إذن مرتجع مورد' %}selected{% endif %}>مرتجع مورد</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label class="form-label">الفترة</label>
+                        <div class="input-group">
+                            <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+                            <span class="input-group-text">إلى</span>
+                            <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-2 d-flex align-items-end">
+                        <div class="d-grid gap-2 w-100">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-filter me-1"></i>
+                                تطبيق
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <!-- ملخص الحركة -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="summary-card">
+                    <div class="summary-value">{{ total_items }}</div>
+                    <div class="summary-label">إجمالي عدد الحركات</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="summary-card">
+                    <div class="summary-value">{{ total_added }}</div>
+                    <div class="summary-label">إجمالي الكميات المضافة</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="summary-card">
+                    <div class="summary-value">{{ total_disbursed }}</div>
+                    <div class="summary-label">إجمالي الكميات المنصرفة</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- جدول حركة المخزون -->
+        <div class="card report-card">
+            <div class="report-header d-flex justify-content-between align-items-center">
+                <h5 class="report-title">
+                    <i class="fas fa-exchange-alt report-icon"></i>
+                    حركة الأصناف
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                {% if voucher_items %}
+                <div class="table-responsive">
+                    <table class="table table-hover movement-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>رقم الإذن</th>
+                                <th>التاريخ</th>
+                                <th>نوع الإذن</th>
+                                <th>الصنف</th>
+                                <th>الكمية المضافة</th>
+                                <th>الكمية المنصرفة</th>
+                                <th>المصدر / الجهة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in voucher_items %}
+                            <tr>
+                                <td>{{ item.voucher.voucher_number }}</td>
+                                <td>{{ item.voucher.date }}</td>
+                                <td>{{ item.voucher.voucher_type }}</td>
+                                <td>{{ item.product.name }} ({{ item.product.product_id }})</td>
+                                <td>{% if item.quantity_added %}{{ item.quantity_added }}{% else %}-{% endif %}</td>
+                                <td>{% if item.quantity_disbursed %}{{ item.quantity_disbursed }}{% else %}-{% endif %}</td>
+                                <td>
+                                    {% if item.voucher.voucher_type == 'إذن اضافة' %}
+                                        {{ item.voucher.supplier.name|default:"-" }}
+                                    {% elif item.voucher.voucher_type == 'إذن صرف' %}
+                                        {{ item.voucher.department.name|default:"-" }}
+                                    {% elif item.voucher.voucher_type == 'اذن مرتجع عميل' %}
+                                        {{ item.voucher.customer.name|default:"-" }}
+                                    {% elif item.voucher.voucher_type == 'إذن مرتجع مورد' %}
+                                        {{ item.voucher.supplier.name|default:"-" }}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-exchange-alt fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">لا توجد بيانات متاحة للعرض</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

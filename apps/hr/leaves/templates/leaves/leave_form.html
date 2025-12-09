@@ -1,0 +1,295 @@
+{% extends 'leaves/base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}
+    {% if leave %}
+        تعديل طلب الإجازة
+    {% else %}
+        {{ title|default:"طلب إجازة جديد" }}
+    {% endif %}
+{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item"><a href="{% url 'leaves:leave_list' %}">طلبات الإجازات</a></li>
+<li class="breadcrumb-item active">
+    {% if leave %}تعديل الطلب{% else %}طلب جديد{% endif %}
+</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-card {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border: none;
+    }
+    .form-header {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 15px 15px 0 0;
+        text-align: center;
+    }
+    .form-body {
+        padding: 30px;
+    }
+    .form-group {
+        margin-bottom: 20px;
+    }
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+    }
+    .form-control, .form-select {
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        padding: 12px 15px;
+        transition: all 0.3s;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #28a745;
+        box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+    }
+    .btn-submit {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        padding: 12px 30px;
+        border-radius: 8px;
+        font-weight: 600;
+        transition: all 0.3s;
+    }
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+    }
+    .btn-cancel {
+        background: #6c757d;
+        border: none;
+        padding: 12px 30px;
+        border-radius: 8px;
+        font-weight: 600;
+        color: white;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.3s;
+    }
+    .btn-cancel:hover {
+        background: #5a6268;
+        color: white;
+        text-decoration: none;
+        transform: translateY(-2px);
+    }
+    .alert {
+        border-radius: 8px;
+        border: none;
+    }
+    .required-field::after {
+        content: " *";
+        color: #dc3545;
+    }
+    .help-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+    .form-actions {
+        text-align: center;
+        padding-top: 20px;
+        border-top: 1px solid #e9ecef;
+        margin-top: 30px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="card form-card">
+                <div class="form-header">
+                    <h3 class="mb-0">
+                        <i class="fas fa-calendar-plus me-2"></i>
+                        {% if leave %}
+                            تعديل طلب الإجازة
+                        {% else %}
+                            {{ title|default:"طلب إجازة جديد" }}
+                        {% endif %}
+                    </h3>
+                </div>
+                
+                <div class="form-body">
+                    <!-- عرض الرسائل -->
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <!-- عرض أخطاء النموذج -->
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                    {% endif %}
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <!-- الموظف -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.emp.id_for_label }}" class="form-label required-field">
+                                        {{ form.emp.label }}
+                                    </label>
+                                    {{ form.emp|add_class:"form-select" }}
+                                    {% if form.emp.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {{ form.emp.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- نوع الإجازة -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.leave_type.id_for_label }}" class="form-label required-field">
+                                        {{ form.leave_type.label }}
+                                    </label>
+                                    {{ form.leave_type|add_class:"form-select" }}
+                                    {% if form.leave_type.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {{ form.leave_type.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- تاريخ البداية -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.start_date.id_for_label }}" class="form-label required-field">
+                                        {{ form.start_date.label }}
+                                    </label>
+                                    {{ form.start_date|add_class:"form-control" }}
+                                    {% if form.start_date.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {{ form.start_date.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- تاريخ النهاية -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.end_date.id_for_label }}" class="form-label required-field">
+                                        {{ form.end_date.label }}
+                                    </label>
+                                    {{ form.end_date|add_class:"form-control" }}
+                                    {% if form.end_date.errors %}
+                                        <div class="text-danger small mt-1">
+                                            {{ form.end_date.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- سبب الإجازة -->
+                        <div class="form-group">
+                            <label for="{{ form.reason.id_for_label }}" class="form-label">
+                                {{ form.reason.label }}
+                            </label>
+                            {{ form.reason|add_class:"form-control" }}
+                            {% if form.reason.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.reason.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="help-text">
+                                اكتب سبب طلب الإجازة (اختياري)
+                            </div>
+                        </div>
+
+                        <!-- حالة الطلب (للتعديل فقط) -->
+                        {% if leave %}
+                        <div class="form-group">
+                            <label for="{{ form.status.id_for_label }}" class="form-label">
+                                {{ form.status.label }}
+                            </label>
+                            {{ form.status|add_class:"form-select" }}
+                            {% if form.status.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.status.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        <!-- أزرار الإجراءات -->
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-success btn-submit me-3">
+                                <i class="fas fa-save me-2"></i>
+                                {% if leave %}
+                                    حفظ التعديلات
+                                {% else %}
+                                    إنشاء الطلب
+                                {% endif %}
+                            </button>
+                            
+                            <a href="{% url 'leaves:leave_list' %}" class="btn-cancel">
+                                <i class="fas fa-times me-2"></i>
+                                إلغاء
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // تحسين تجربة المستخدم للتواريخ
+    const startDateInput = document.getElementById('{{ form.start_date.id_for_label }}');
+    const endDateInput = document.getElementById('{{ form.end_date.id_for_label }}');
+    
+    if (startDateInput && endDateInput) {
+        startDateInput.addEventListener('change', function() {
+            // تعيين الحد الأدنى لتاريخ النهاية
+            endDateInput.min = this.value;
+            
+            // إذا كان تاريخ النهاية أقل من تاريخ البداية، قم بمسحه
+            if (endDateInput.value && endDateInput.value < this.value) {
+                endDateInput.value = '';
+            }
+        });
+    }
+    
+    // تأكيد الإرسال
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const submitBtn = form.querySelector('.btn-submit');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>جاري الحفظ...';
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,69 @@
+{% extends 'inventory/base_inventory.html' %}
+{% load static %}
+
+{% block title %}وحدات القياس{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header pb-0 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">وحدات القياس</h5>
+                    <a href="{% url 'inventory:unit_add' %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus me-1"></i>
+                        إضافة وحدة قياس جديدة
+                    </a>
+                </div>
+                <div class="card-body px-0 pt-0 pb-2">
+                    <div class="table-responsive p-0">
+                        <table class="table align-items-center mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">الاسم</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">الرمز</th>
+                                    <th class="text-uppercase text-secondary text-xxs font-weight-bolder opacity-7">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for unit in units %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex px-2 py-1">
+                                            <div class="d-flex flex-column justify-content-center">
+                                                <h6 class="mb-0 text-sm">{{ unit.name }}</h6>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <p class="text-xs font-weight-bold mb-0">{{ unit.symbol|default:"-" }}</p>
+                                    </td>
+                                    <td class="align-middle">
+                                        <a href="{% url 'inventory:unit_edit' unit.id %}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'inventory:unit_delete' unit.id %}" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="3" class="text-center py-4">
+                                        <p class="text-muted">لا توجد وحدات قياس مضافة بعد</p>
+                                        <a href="{% url 'inventory:unit_add' %}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-plus me-1"></i>
+                                            إضافة وحدة قياس جديدة
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

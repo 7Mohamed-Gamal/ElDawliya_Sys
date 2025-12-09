@@ -7,7 +7,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 
 try:
-    from tasks.models import Task, TaskStep
+    from apps.projects.tasks.models import Task, TaskStep
     TASKS_AVAILABLE = True
 except ImportError:
     TASKS_AVAILABLE = False

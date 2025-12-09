@@ -1,0 +1,340 @@
+{% extends 'inventory/base_inventory.html' %}
+{% load static %}
+{% load inventory_permission_tags %}
+
+{% block title %}تقرير الأذونات - نظام إدارة المخزن{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* تنسيقات التقرير */
+    .report-card {
+        border-radius: 10px;
+        border: none;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        margin-bottom: 1.5rem;
+    }
+
+    .report-card:hover {
+        box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+    
+    .report-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        padding: 1.25rem;
+        border-radius: 10px 10px 0 0;
+    }
+    
+    .report-title {
+        margin: 0;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+    }
+    
+    .report-icon {
+        margin-left: 10px;
+        color: var(--primary-color);
+    }
+    
+    .report-filters {
+        background-color: rgba(var(--primary-color-rgb), 0.03);
+        padding: 1rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+    }
+    
+    /* تنسيق الجداول */
+    .table-responsive {
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .vouchers-table th {
+        position: sticky;
+        top: 0;
+        background-color: #f8f9fa;
+    }
+    
+    /* بطاقات الملخص */
+    .summary-card {
+        background-color: var(--light-color);
+        border-radius: 10px;
+        padding: 1.25rem;
+        height: 100%;
+        transition: all 0.3s ease;
+    }
+    
+    .summary-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    }
+    
+    .summary-value {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        color: var(--primary-color);
+    }
+    
+    .summary-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    /* أزرار التصدير */
+    .export-btn {
+        border-radius: 20px;
+        padding: 0.5rem 1rem;
+    }
+    
+    .export-btn i {
+        margin-left: 5px;
+    }
+    
+    /* مؤشرات الحالة */
+    .voucher-type {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    
+    .voucher-type-add {
+        background-color: rgba(25, 135, 84, 0.1);
+        color: #198754;
+    }
+    
+    .voucher-type-disburse {
+        background-color: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+    }
+    
+    .voucher-type-client-return {
+        background-color: rgba(13, 110, 253, 0.1);
+        color: #0d6efd;
+    }
+    
+    .voucher-type-supplier-return {
+        background-color: rgba(255, 193, 7, 0.1);
+        color: #ffc107;
+    }
+    
+    /* طباعة التقرير */
+    @media print {
+        .nav-sidebar, 
+        .report-filters,
+        .export-btn,
+        .navbar-top {
+            display: none;
+        }
+        
+        .main-content {
+            margin: 0;
+            width: 100%;
+            padding: 0;
+        }
+        
+        .report-card {
+            box-shadow: none;
+            border: 1px solid #ddd;
+            break-inside: avoid;
+        }
+        
+        body {
+            font-size: 12px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row ps-4">
+    <div class="col-12 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="m-0">
+                <i class="fas fa-file-alt me-2 text-primary"></i>
+                تقرير الأذونات
+            </h4>
+            
+            <div class="export-actions">
+                <button onclick="window.print()" class="btn btn-outline-dark export-btn">
+                    <i class="fas fa-print"></i> طباعة التقرير
+                </button>
+                <button class="btn btn-outline-success export-btn">
+                    <i class="fas fa-file-excel"></i> تصدير إكسل
+                </button>
+            </div>
+        </div>
+        
+        <!-- فلاتر التقارير -->
+        <div class="card report-filters mb-4">
+            <form method="get" action="{% url 'inventory:voucher_report' %}" class="mb-0">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">نوع الإذن</label>
+                        <select name="voucher_type" class="form-select">
+                            <option value="">كل الأنواع</option>
+                            <option value="إذن اضافة" {% if voucher_type == 'إذن اضافة' %}selected{% endif %}>إذن إضافة</option>
+                            <option value="إذن صرف" {% if voucher_type == 'إذن صرف' %}selected{% endif %}>إذن صرف</option>
+                            <option value="اذن مرتجع عميل" {% if voucher_type == 'اذن مرتجع عميل' %}selected{% endif %}>مرتجع عميل</option>
+                            <option value="إذن مرتجع مورد" {% if voucher_type == 'إذن مرتجع مورد' %}selected{% endif %}>مرتجع مورد</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <label class="form-label">المصدر / الجهة</label>
+                        <div class="input-group">
+                            <select name="source_type" class="form-select">
+                                <option value="">الكل</option>
+                                <option value="supplier" {% if source_type == 'supplier' %}selected{% endif %}>مورد</option>
+                                <option value="department" {% if source_type == 'department' %}selected{% endif %}>قسم</option>
+                                <option value="customer" {% if source_type == 'customer' %}selected{% endif %}>عميل</option>
+                            </select>
+                            <select name="source_id" class="form-select">
+                                <option value="">حدد...</option>
+                                <!-- سيتم ملء هذا بواسطة JavaScript -->
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <label class="form-label">الفترة</label>
+                        <div class="input-group">
+                            <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+                            <span class="input-group-text">إلى</span>
+                            <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-2 d-flex align-items-end">
+                        <div class="d-grid gap-2 w-100">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-filter me-1"></i>
+                                تطبيق
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+        
+        <!-- ملخص الأذونات -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="summary-card">
+                    <div class="summary-value">{{ total_vouchers }}</div>
+                    <div class="summary-label">إجمالي عدد الأذونات</div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="summary-card">
+                    <div class="summary-value">{{ total_value }} ج.م</div>
+                    <div class="summary-label">إجمالي القيمة</div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="summary-card">
+                    <div class="d-flex justify-content-between">
+                        {% for type in vouchers_by_type %}
+                        <div class="text-center">
+                            <div class="summary-value">{{ type.count }}</div>
+                            <div class="summary-label">
+                                {% if type.voucher_type == 'إذن اضافة' %}
+                                    أذون إضافة
+                                {% elif type.voucher_type == 'إذن صرف' %}
+                                    أذون صرف
+                                {% elif type.voucher_type == 'اذن مرتجع عميل' %}
+                                    مرتجع عميل
+                                {% elif type.voucher_type == 'إذن مرتجع مورد' %}
+                                    مرتجع مورد
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- جدول الأذونات -->
+        <div class="card report-card">
+            <div class="report-header d-flex justify-content-between align-items-center">
+                <h5 class="report-title">
+                    <i class="fas fa-file-alt report-icon"></i>
+                    الأذونات
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                {% if vouchers %}
+                <div class="table-responsive">
+                    <table class="table table-hover vouchers-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>رقم الإذن</th>
+                                <th>التاريخ</th>
+                                <th>نوع الإذن</th>
+                                <th>المصدر / الجهة</th>
+                                <th>المستلم</th>
+                                <th>عدد الأصناف</th>
+                                <th>القيمة</th>
+                                <th>ملاحظات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for voucher in vouchers %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'inventory:voucher_detail' voucher.pk %}">
+                                        {{ voucher.voucher_number }}
+                                    </a>
+                                </td>
+                                <td>{{ voucher.date }}</td>
+                                <td>
+                                    {% if voucher.voucher_type == 'إذن اضافة' %}
+                                        <span class="voucher-type voucher-type-add">إذن إضافة</span>
+                                    {% elif voucher.voucher_type == 'إذن صرف' %}
+                                        <span class="voucher-type voucher-type-disburse">إذن صرف</span>
+                                    {% elif voucher.voucher_type == 'اذن مرتجع عميل' %}
+                                        <span class="voucher-type voucher-type-client-return">مرتجع عميل</span>
+                                    {% elif voucher.voucher_type == 'إذن مرتجع مورد' %}
+                                        <span class="voucher-type voucher-type-supplier-return">مرتجع مورد</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if voucher.voucher_type == 'إذن اضافة' %}
+                                        {{ voucher.supplier.name|default:"-" }}
+                                    {% elif voucher.voucher_type == 'إذن صرف' %}
+                                        {{ voucher.department.name|default:"-" }}
+                                    {% elif voucher.voucher_type == 'اذن مرتجع عميل' %}
+                                        {{ voucher.customer.name|default:"-" }}
+                                    {% elif voucher.voucher_type == 'إذن مرتجع مورد' %}
+                                        {{ voucher.supplier.name|default:"-" }}
+                                    {% endif %}
+                                </td>
+                                <td>{{ voucher.recipient|default:"-" }}</td>
+                                <td>{{ voucher.items.count }}</td>
+                                <td>
+                                    {% with total_value=voucher.total_value %}
+                                        {{ total_value|floatformat:2 }} ج.م
+                                    {% endwith %}
+                                </td>
+                                <td>{{ voucher.notes|truncatechars:30|default:"-" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">لا توجد بيانات متاحة للعرض</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

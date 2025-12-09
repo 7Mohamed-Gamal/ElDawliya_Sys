@@ -372,7 +372,7 @@ class EmployeeFixtures(BaseFixtureGenerator):
 
     def create_employees(self, count=50):
         """Create employee fixtures"""
-        from employees.models import Employee
+        from apps.hr.employees.models import Employee
         from org.models import Branch, Department, Job
 
         # Ensure we have required related objects
@@ -443,7 +443,7 @@ class InventoryFixtures(BaseFixtureGenerator):
 
     def create_categories(self, count=10):
         """Create product categories"""
-        from inventory.models import TblCategories
+        from apps.inventory.models import TblCategories
 
         categories = []
         category_names = [
@@ -471,7 +471,7 @@ class InventoryFixtures(BaseFixtureGenerator):
 
     def create_units(self, count=8):
         """Create product units"""
-        from inventory.models import TblUnitsSpareparts
+        from apps.inventory.models import TblUnitsSpareparts
 
         units = []
         unit_names = ['قطعة', 'كيلو', 'متر', 'لتر', 'علبة', 'حزمة', 'صندوق', 'رول']
@@ -488,7 +488,7 @@ class InventoryFixtures(BaseFixtureGenerator):
 
     def create_suppliers(self, count=10):
         """Create suppliers"""
-        from inventory.models import TblSuppliers
+        from apps.inventory.models import TblSuppliers
 
         suppliers = []
         supplier_names = self.generate_supplier_names()
@@ -505,7 +505,7 @@ class InventoryFixtures(BaseFixtureGenerator):
 
     def create_products(self, count=100):
         """Create products"""
-        from inventory.models import TblProducts, TblCategories, TblUnitsSpareparts
+        from apps.inventory.models import TblProducts, TblCategories, TblUnitsSpareparts
 
         categories = list(TblCategories.objects.all())
         units = list(TblUnitsSpareparts.objects.all())
@@ -554,7 +554,7 @@ class MeetingFixtures(BaseFixtureGenerator):
 
     def create_meetings(self, count=30):
         """Create meeting fixtures"""
-        from meetings.models import Meeting, Attendee
+        from apps.projects.meetings.models import Meeting, Attendee
         from accounts.models import Users_Login_New
 
         users = list(Users_Login_New.objects.all())
@@ -604,7 +604,7 @@ class TaskFixtures(BaseFixtureGenerator):
 
     def create_task_categories(self, count=8):
         """Create task categories"""
-        from tasks.models import TaskCategory
+        from apps.projects.tasks.models import TaskCategory
 
         categories = []
         category_data = [
@@ -633,8 +633,8 @@ class TaskFixtures(BaseFixtureGenerator):
 
     def create_tasks(self, count=100):
         """Create task fixtures"""
-        from tasks.models import Task, TaskCategory
-        from meetings.models import Meeting
+        from apps.projects.tasks.models import Task, TaskCategory
+        from apps.projects.meetings.models import Meeting
         from accounts.models import Users_Login_New
 
         users = list(Users_Login_New.objects.all())
@@ -688,7 +688,7 @@ class PurchaseOrderFixtures(BaseFixtureGenerator):
 
     def create_vendors(self, count=15):
         """Create vendor fixtures"""
-        from Purchase_orders.models import Vendor
+        from apps.procurement.purchase_orders.models import Vendor
 
         vendors = []
         vendor_names = self.generate_supplier_names()
@@ -708,8 +708,8 @@ class PurchaseOrderFixtures(BaseFixtureGenerator):
 
     def create_purchase_requests(self, count=50):
         """Create purchase request fixtures"""
-        from Purchase_orders.models import PurchaseRequest, PurchaseRequestItem, Vendor
-        from inventory.models import TblProducts
+        from apps.procurement.purchase_orders.models import PurchaseRequest, PurchaseRequestItem, Vendor
+        from apps.inventory.models import TblProducts
         from django.contrib.auth import get_user_model
 
         User = get_user_model()
@@ -761,8 +761,8 @@ class AttendanceFixtures(BaseFixtureGenerator):
 
     def create_attendance_records(self, count=1000):
         """Create attendance records for employees"""
-        from attendance.models import EmployeeAttendance
-        from employees.models import Employee
+        from apps.hr.attendance.models import EmployeeAttendance
+        from apps.hr.employees.models import Employee
 
         employees = list(Employee.objects.filter(emp_status='Active'))
         if not employees:
@@ -825,7 +825,7 @@ class PayrollFixtures(BaseFixtureGenerator):
 
     def create_salary_structures(self):
         """Create salary structures for different job levels"""
-        from payrolls.models import SalaryStructure, SalaryComponent
+        from apps.hr.payroll.models import SalaryStructure, SalaryComponent
 
         structures = []
 
@@ -886,8 +886,8 @@ class PayrollFixtures(BaseFixtureGenerator):
 
     def create_payroll_records(self, count=200):
         """Create payroll records for employees"""
-        from payrolls.models import PayrollRecord, PayrollItem
-        from employees.models import Employee
+        from apps.hr.payroll.models import PayrollRecord, PayrollItem
+        from apps.hr.employees.models import Employee
 
         employees = list(Employee.objects.filter(emp_status='Active'))
         if not employees:
@@ -959,7 +959,7 @@ class LeaveFixtures(BaseFixtureGenerator):
 
     def create_leave_types(self):
         """Create different types of leaves"""
-        from leaves.models import LeaveType
+        from apps.hr.leaves.models import LeaveType
 
         leave_types_data = [
             {
@@ -1009,8 +1009,8 @@ class LeaveFixtures(BaseFixtureGenerator):
 
     def create_leave_requests(self, count=100):
         """Create leave requests for employees"""
-        from leaves.models import LeaveRequest, LeaveType
-        from employees.models import Employee
+        from apps.hr.leaves.models import LeaveRequest, LeaveType
+        from apps.hr.employees.models import Employee
 
         employees = list(Employee.objects.filter(emp_status='Active'))
         leave_types = list(LeaveType.objects.all())

@@ -351,7 +351,7 @@ class RoutePointForm(forms.ModelForm):
         self.fields['car'].empty_label = "اختر السيارة"
 
         # تخصيص خيارات الموظفين
-        from employees.models import Employee
+        from apps.hr.employees.models import Employee
         self.fields['employees'].queryset = Employee.objects.filter(
             emp_status='Active'
         ).order_by('first_name', 'last_name')

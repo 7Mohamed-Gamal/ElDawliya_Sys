@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}قائمة الموظفين - نظام الدولية{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active">قائمة الموظفين</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-users me-2"></i>قائمة الموظفين</h2>
+    <a href="{% url 'employees:add_employee' %}" class="btn btn-primary">
+        <i class="fas fa-plus me-1"></i>
+        إضافة موظف جديد
+    </a>
+</div>
+
+<!-- Search and Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="search" class="form-label">البحث</label>
+                <input type="text" class="form-control" id="search" name="search" 
+                       placeholder="اسم الموظف أو الكود أو البريد الإلكتروني" 
+                       value="{{ request.GET.search }}">
+            </div>
+            <div class="col-md-3">
+                <label for="department" class="form-label">القسم</label>
+                <select class="form-select" id="department" name="department">
+                    <option value="">جميع الأقسام</option>
+                    {% for dept in departments %}
+                        <option value="{{ dept.dept_id }}" 
+                                {% if request.GET.department == dept.dept_id|stringformat:"s" %}selected{% endif %}>
+                            {{ dept.dept_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="status" class="form-label">الحالة</label>
+                <select class="form-select" id="status" name="status">
+                    <option value="">جميع الحالات</option>
+                    <option value="Active" {% if request.GET.status == "Active" %}selected{% endif %}>نشط</option>
+                    <option value="OnLeave" {% if request.GET.status == "OnLeave" %}selected{% endif %}>في إجازة</option>
+                    <option value="Terminated" {% if request.GET.status == "Terminated" %}selected{% endif %}>منتهي الخدمة</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-outline-primary me-2">
+                    <i class="fas fa-search me-1"></i>
+                    بحث
+                </button>
+                <a href="{% url 'employees:employee_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times me-1"></i>
+                    مسح
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Employees Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>الموظفين ({{ employees.count }} موظف)</span>
+        <div class="btn-group" role="group">
+            <button type="button" class="btn btn-outline-success btn-sm">
+                <i class="fas fa-file-excel me-1"></i>
+                تصدير Excel
+            </button>
+            <button type="button" class="btn btn-outline-danger btn-sm">
+                <i class="fas fa-file-pdf me-1"></i>
+                تصدير PDF
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        {% if employees %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>كود الموظف</th>
+                            <th>الاسم الكامل</th>
+                            <th>القسم</th>
+                            <th>الوظيفة</th>
+                            <th>البريد الإلكتروني</th>
+                            <th>الهاتف</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for employee in employees %}
+                        <tr>
+                            <td>
+                                <strong>{{ employee.emp_code }}</strong>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2">
+                                        {% if employee.first_name and employee.last_name %}
+                                            {{ employee.first_name|first }}{{ employee.last_name|first }}
+                                        {% elif employee.first_name %}
+                                            {{ employee.first_name|first }}{{ employee.first_name|slice:"1:2"|default:"" }}
+                                        {% elif employee.last_name %}
+                                            {{ employee.last_name|first }}{{ employee.last_name|slice:"1:2"|default:"" }}
+                                        {% elif employee.emp_code %}
+                                            {{ employee.emp_code|first }}{{ employee.emp_code|slice:"1:2"|default:"" }}
+                                        {% else %}
+                                            ??
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <strong>{{ employee.first_name }} {{ employee.last_name }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ employee.second_name }} {{ employee.third_name }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>{{ employee.dept.dept_name }}</td>
+                            <td>{{ employee.job.job_title }}</td>
+                            <td>
+                                {% if employee.email %}
+                                    <a href="mailto:{{ employee.email }}">{{ employee.email }}</a>
+                                {% else %}
+                                    <span class="text-muted">غير محدد</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if employee.mobile %}
+                                    <a href="tel:{{ employee.mobile }}">{{ employee.mobile }}</a>
+                                {% else %}
+                                    <span class="text-muted">غير محدد</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if employee.emp_status == "Active" %}
+                                    <span class="badge bg-success">نشط</span>
+                                {% elif employee.emp_status == "OnLeave" %}
+                                    <span class="badge bg-warning">في إجازة</span>
+                                {% elif employee.emp_status == "Terminated" %}
+                                    <span class="badge bg-danger">منتهي الخدمة</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ employee.emp_status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'employees:detail' employee.emp_id %}"
+                                       class="btn btn-outline-info btn-sm" title="عرض التفاصيل">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'employees:edit' employee.emp_id %}"
+                                       class="btn btn-outline-primary btn-sm" title="تعديل">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-outline-danger btn-sm" 
+                                            title="حذف" onclick="confirmDelete({{ employee.emp_id }}, '{{ employee.first_name }} {{ employee.last_name }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">لا توجد موظفين</h5>
+                <p class="text-muted">لم يتم العثور على أي موظفين بناءً على معايير البحث المحددة.</p>
+                <a href="{% url 'employees:add_employee' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i>
+                    إضافة موظف جديد
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if employees.has_other_pages %}
+<nav aria-label="تنقل الصفحات" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if employees.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.department %}&department={{ request.GET.department }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">الأولى</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ employees.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.department %}&department={{ request.GET.department }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">السابقة</a>
+            </li>
+        {% endif %}
+
+        <li class="page-item active">
+            <span class="page-link">{{ employees.number }} من {{ employees.paginator.num_pages }}</span>
+        </li>
+
+        {% if employees.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ employees.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.department %}&department={{ request.GET.department }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">التالية</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ employees.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.department %}&department={{ request.GET.department }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">الأخيرة</a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .avatar-sm {
+        width: 40px;
+        height: 40px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+    
+    .table td {
+        vertical-align: middle;
+    }
+    
+    .btn-group .btn {
+        border-radius: 0.25rem;
+        margin-left: 2px;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function confirmDelete(employeeId, employeeName) {
+    if (confirm('هل أنت متأكد من حذف الموظف "' + employeeName + '"؟\n\nهذا الإجراء لا يمكن التراجع عنه.')) {
+        // Create form and submit
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/employees/' + employeeId + '/delete/';
+        
+        var csrfToken = document.createElement('input');
+        csrfToken.type = 'hidden';
+        csrfToken.name = 'csrfmiddlewaretoken';
+        csrfToken.value = '{{ csrf_token }}';
+        form.appendChild(csrfToken);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Auto-submit search form on select change
+document.getElementById('department').addEventListener('change', function() {
+    this.form.submit();
+});
+
+document.getElementById('status').addEventListener('change', function() {
+    this.form.submit();
+});
+</script>
+{% endblock %}

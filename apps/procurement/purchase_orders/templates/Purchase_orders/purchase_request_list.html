@@ -1,0 +1,154 @@
+{% extends 'Purchase_orders/base_purchase_orders.html' %}
+{% load static %}
+{% load django_permissions %}
+
+{% block title %}قائمة طلبات الشراء - نظام الدولية{% endblock %}
+
+{% block page_title %}قائمة طلبات الشراء{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Purchase_orders:dashboard' %}">طلبات الشراء</a></li>
+<li class="breadcrumb-item active">قائمة طلبات الشراء</li>
+{% endblock %}
+
+{% block content %}
+
+<div class="card shadow-sm">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center py-3">
+        <h5 class="card-title mb-0">
+            <i class="fas fa-clipboard-list me-2 text-primary"></i>قائمة طلبات الشراء
+        </h5>
+        {% if perms.Purchase_orders.add_purchaserequest or user|is_admin %}
+            <div class="mb-3">
+                <a href="{% url 'Purchase_orders:create_purchase_request' %}" class="btn btn-primary">
+                    <i class="fas fa-plus-circle me-1"></i>إنشاء طلب شراء جديد
+                </a>
+            </div>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        <div class="mb-4">
+            <form class="row g-3">
+                <div class="col-md-3">
+                    <label for="startDate" class="form-label">من تاريخ</label>
+                    <input type="date" class="form-control" id="startDate">
+                </div>
+                <div class="col-md-3">
+                    <label for="endDate" class="form-label">إلى تاريخ</label>
+                    <input type="date" class="form-control" id="endDate">
+                </div>
+                <div class="col-md-3">
+                    <label for="status" class="form-label">الحالة</label>
+                    <select class="form-select" id="status">
+                        <option value="">الكل</option>
+                        <option value="pending">قيد الموافقة</option>
+                        <option value="approved">معتمد</option>
+                        <option value="rejected">مرفوض</option>
+                        <option value="completed">مكتمل</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">تطبيق الفلتر</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover table-striped">
+                <thead class="table-light">
+                    <tr>
+                        <th>رقم الطلب</th>
+                        <th>تاريخ الطلب</th>
+                        <th>المورد</th>
+                        <th>مقدم الطلب</th>
+                        <th>الحالة</th>
+                        <th>تاريخ الموافقة</th>
+                        <th style="min-width: 180px;">الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for request in purchase_requests %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'Purchase_orders:purchase_request_detail' pk=request.pk %}">{{ request.request_number }}</a>
+                        </td>
+                        <td>{{ request.request_date|date:"Y-m-d" }}</td>
+                        <td>{{ request.vendor|default:"غير محدد" }}</td>
+                        <td>{{ request.requested_by.get_full_name|default:request.requested_by.username }}</td>
+                        <td>
+                            {% if request.status == 'pending' %}
+                                <span class="badge bg-warning">قيد الموافقة</span>
+                            {% elif request.status == 'approved' %}
+                                <span class="badge bg-success">معتمد</span>
+                            {% elif request.status == 'rejected' %}
+                                <span class="badge bg-danger">مرفوض</span>
+                            {% elif request.status == 'completed' %}
+                                <span class="badge bg-info">مكتمل</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if request.approval_date %}
+                                {{ request.approval_date|date:"Y-m-d" }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1 justify-content-center">
+                                <a href="{% url 'Purchase_orders:purchase_request_detail' pk=request.pk %}" class="btn btn-sm btn-outline-primary" title="عرض التفاصيل">
+                                    <i class="fas fa-eye me-1"></i> عرض
+                                </a>
+
+                                {% if perms.Purchase_orders.change_approval or user|is_admin %}
+                                    <a href="{% url 'Purchase_orders:approve_purchase_request' request.pk %}" class="btn btn-success btn-sm">
+                                        <i class="fas fa-check"></i> الموافقة
+                                    </a>
+                                {% endif %}
+
+                                <a href="#" class="btn btn-sm btn-outline-danger delete-btn" title="حذف الطلب"
+                                   data-request-id="{{ request.pk }}"
+                                   data-request-number="{{ request.request_number }}">
+                                    <i class="fas fa-trash me-1"></i> حذف
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">لا توجد طلبات شراء حتى الآن</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // عند تحميل الصفحة
+    document.addEventListener('DOMContentLoaded', function() {
+        // الحصول على جميع أزرار الحذف
+        const deleteButtons = document.querySelectorAll('.delete-btn');
+
+        // إضافة معالج حدث لكل زر حذف
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+
+                // الحصول على بيانات طلب الشراء
+                const requestId = this.getAttribute('data-request-id');
+                const requestNumber = this.getAttribute('data-request-number');
+
+                // عرض مربع تأكيد الحذف
+                if (confirm(`هل أنت متأكد من رغبتك في حذف طلب الشراء رقم ${requestNumber}؟\nهذا الإجراء لا يمكن التراجع عنه.`)) {
+                    // إذا تم التأكيد، انتقل إلى صفحة حذف طلب الشراء
+                    window.location.href = `/purchase/requests/${requestId}/delete/`;
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

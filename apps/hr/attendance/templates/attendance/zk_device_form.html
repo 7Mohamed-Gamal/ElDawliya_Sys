@@ -1,0 +1,600 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .zk-form-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+    }
+    
+    .form-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        padding: 2rem;
+        margin-top: 2rem;
+    }
+    
+    .form-header {
+        text-align: center;
+        margin-bottom: 2rem;
+        padding-bottom: 1rem;
+        border-bottom: 2px solid #f8f9fa;
+    }
+    
+    .form-header h2 {
+        color: #2c3e50;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .form-header p {
+        color: #6c757d;
+        margin: 0;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    .form-control, .form-select {
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    
+    .form-control.is-invalid, .form-select.is-invalid {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
+    }
+    
+    .invalid-feedback {
+        display: block;
+        width: 100%;
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
+        color: #dc3545;
+    }
+    
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: none;
+        border-radius: 8px;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-secondary {
+        border-radius: 8px;
+        padding: 0.75rem 2rem;
+        font-weight: 600;
+    }
+    
+    .alert {
+        border-radius: 8px;
+        border: none;
+    }
+    
+    .required-field::after {
+        content: " *";
+        color: #dc3545;
+    }
+    
+    .device-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 2rem;
+        margin: 0 auto 1rem;
+    }
+    
+    .form-section {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+        border-left: 4px solid #667eea;
+    }
+    
+    .form-section h4 {
+        color: #2c3e50;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .input-group-text {
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 8px 0 0 8px;
+    }
+    
+    .input-group .form-control {
+        border-radius: 0 8px 8px 0;
+    }
+    
+    @media (max-width: 768px) {
+        .zk-form-header {
+            padding: 1.5rem;
+        }
+        
+        .form-container {
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .btn-primary, .btn-secondary {
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+            width: 100%;
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-section {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="zk-form-header">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h1 class="h2 mb-2">
+                            <i class="fas fa-fingerprint me-3"></i>
+                            {{ title }}
+                        </h1>
+                        <p class="mb-0 opacity-90">
+                            {% if device %}
+                                تعديل إعدادات جهاز الحضور والانصراف
+                            {% else %}
+                                إضافة جهاز حضور وانصراف جديد إلى النظام
+                            {% endif %}
+                        </p>
+                        <nav aria-label="breadcrumb" class="mt-2">
+                            <ol class="breadcrumb bg-transparent p-0 mb-0">
+                                <li class="breadcrumb-item"><a href="{% url 'accounts:home' %}" class="text-white-50">الرئيسية</a></li>
+                                <li class="breadcrumb-item"><a href="#" class="text-white-50">الحضور والانصراف</a></li>
+                                <li class="breadcrumb-item"><a href="{% url 'attendance:zk_devices_list' %}" class="text-white-50">أجهزة ZK</a></li>
+                                <li class="breadcrumb-item active text-white">
+                                    {% if device %}تعديل الجهاز{% else %}إضافة جهاز جديد{% endif %}
+                                </li>
+                            </ol>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Container -->
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-md-12">
+            <div class="form-container">
+                <div class="form-header">
+                    <div class="device-icon">
+                        <i class="fas fa-fingerprint"></i>
+                    </div>
+                    <h2>
+                        {% if device %}
+                            <i class="fas fa-edit text-primary me-2"></i>
+                            تعديل جهاز ZK
+                        {% else %}
+                            <i class="fas fa-plus text-success me-2"></i>
+                            إضافة جهاز ZK جديد
+                        {% endif %}
+                    </h2>
+                    <p>قم بإدخال معلومات جهاز الحضور والانصراف</p>
+                </div>
+
+                <!-- Messages -->
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <!-- Form -->
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    <!-- Device Information Section -->
+                    <div class="form-section">
+                        <h4>
+                            <i class="fas fa-info-circle text-primary"></i>
+                            معلومات الجهاز
+                        </h4>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.device_name.id_for_label }}" class="form-label required-field">
+                                        اسم الجهاز
+                                    </label>
+                                    {{ form.device_name }}
+                                    {% if form.device_name.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.device_name.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.device_serial.id_for_label }}" class="form-label required-field">
+                                        الرقم التسلسلي
+                                    </label>
+                                    {{ form.device_serial }}
+                                    {% if form.device_serial.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.device_serial.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.location.id_for_label }}" class="form-label">
+                                        الموقع
+                                    </label>
+                                    {{ form.location }}
+                                    {% if form.location.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.location.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.status.id_for_label }}" class="form-label required-field">
+                                        حالة الجهاز
+                                    </label>
+                                    {{ form.status }}
+                                    {% if form.status.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.status.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Network Settings Section -->
+                    <div class="form-section">
+                        <h4>
+                            <i class="fas fa-network-wired text-info"></i>
+                            إعدادات الشبكة
+                        </h4>
+                        
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="form-group">
+                                    <label for="{{ form.ip_address.id_for_label }}" class="form-label required-field">
+                                        عنوان IP
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-globe"></i>
+                                        </span>
+                                        {{ form.ip_address }}
+                                    </div>
+                                    {% if form.ip_address.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.ip_address.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.port.id_for_label }}" class="form-label required-field">
+                                        المنفذ
+                                    </label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-plug"></i>
+                                        </span>
+                                        {{ form.port }}
+                                    </div>
+                                    {% if form.port.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.port.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.timezone.id_for_label }}" class="form-label">
+                                        المنطقة الزمنية
+                                    </label>
+                                    {{ form.timezone }}
+                                    {% if form.timezone.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.timezone.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">
+                                        اختياري - سيتم استخدام المنطقة الزمنية الافتراضية إذا لم يتم تحديدها
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-between flex-wrap gap-2">
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-2"></i>
+                                        {% if device %}حفظ التعديلات{% else %}إضافة الجهاز{% endif %}
+                                    </button>
+                                    <a href="{% url 'attendance:zk_devices_list' %}" class="btn btn-secondary">
+                                        <i class="fas fa-times me-2"></i>
+                                        إلغاء
+                                    </a>
+                                </div>
+                                <div>
+                                    {% if device %}
+                                    <button type="button" class="btn btn-outline-success" onclick="testDeviceConnection()">
+                                        <i class="fas fa-plug me-2"></i>
+                                        اختبار الاتصال
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-focus on first input
+    const firstInput = document.querySelector('input[type="text"]');
+    if (firstInput) {
+        firstInput.focus();
+    }
+
+    // Add form validation classes
+    const form = document.querySelector('form');
+    const inputs = form.querySelectorAll('.form-control, .form-select');
+
+    // Add validation classes based on errors
+    inputs.forEach(input => {
+        const errorDiv = input.parentElement.querySelector('.invalid-feedback');
+        if (errorDiv) {
+            input.classList.add('is-invalid');
+        }
+    });
+
+    // Form validation on submit
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        // Get required fields but exclude timezone field
+        const requiredFields = Array.from(form.querySelectorAll('[required]')).filter(field =>
+            field.id !== '{{ form.timezone.id_for_label }}'
+        );
+
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+                isValid = false;
+
+                // Create error message if doesn't exist
+                let errorDiv = field.parentElement.querySelector('.invalid-feedback');
+                if (!errorDiv) {
+                    errorDiv = document.createElement('div');
+                    errorDiv.className = 'invalid-feedback';
+                    errorDiv.textContent = 'هذا الحقل مطلوب';
+                    field.parentElement.appendChild(errorDiv);
+                }
+            } else {
+                field.classList.remove('is-invalid');
+                const errorDiv = field.parentElement.querySelector('.invalid-feedback');
+                if (errorDiv && errorDiv.textContent === 'هذا الحقل مطلوب') {
+                    errorDiv.remove();
+                }
+            }
+        });
+
+        // IP address validation
+        const ipField = document.getElementById('{{ form.ip_address.id_for_label }}');
+        if (ipField && ipField.value) {
+            const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+            if (!ipRegex.test(ipField.value)) {
+                ipField.classList.add('is-invalid');
+                let errorDiv = ipField.parentElement.parentElement.querySelector('.invalid-feedback');
+                if (!errorDiv) {
+                    errorDiv = document.createElement('div');
+                    errorDiv.className = 'invalid-feedback';
+                    ipField.parentElement.parentElement.appendChild(errorDiv);
+                }
+                errorDiv.textContent = 'يرجى إدخال عنوان IP صحيح';
+                isValid = false;
+            }
+        }
+
+        // Port validation
+        const portField = document.getElementById('{{ form.port.id_for_label }}');
+        if (portField && portField.value) {
+            const port = parseInt(portField.value);
+            if (port < 1 || port > 65535) {
+                portField.classList.add('is-invalid');
+                let errorDiv = portField.parentElement.parentElement.querySelector('.invalid-feedback');
+                if (!errorDiv) {
+                    errorDiv = document.createElement('div');
+                    errorDiv.className = 'invalid-feedback';
+                    portField.parentElement.parentElement.appendChild(errorDiv);
+                }
+                errorDiv.textContent = 'يجب أن يكون المنفذ بين 1 و 65535';
+                isValid = false;
+            }
+        }
+
+        if (!isValid) {
+            e.preventDefault();
+            const firstInvalid = form.querySelector('.is-invalid');
+            if (firstInvalid) {
+                firstInvalid.focus();
+                firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        } else {
+            // Show loading state
+            const submitBtn = form.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> جاري الحفظ...';
+            submitBtn.disabled = true;
+        }
+    });
+
+    // Remove validation classes on input
+    inputs.forEach(input => {
+        input.addEventListener('input', function() {
+            this.classList.remove('is-invalid');
+            const errorDiv = this.parentElement.querySelector('.invalid-feedback');
+            if (errorDiv && (errorDiv.textContent === 'هذا الحقل مطلوب' ||
+                           errorDiv.textContent === 'يرجى إدخال عنوان IP صحيح' ||
+                           errorDiv.textContent === 'يجب أن يكون المنفذ بين 1 و 65535')) {
+                errorDiv.remove();
+            }
+        });
+    });
+
+    // Auto-format IP address
+    const ipInput = document.getElementById('{{ form.ip_address.id_for_label }}');
+    if (ipInput) {
+        ipInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/[^0-9.]/g, '');
+            e.target.value = value;
+        });
+    }
+
+    // Port number validation
+    const portInput = document.getElementById('{{ form.port.id_for_label }}');
+    if (portInput) {
+        portInput.addEventListener('input', function(e) {
+            let value = parseInt(e.target.value);
+            if (value > 65535) {
+                e.target.value = 65535;
+            } else if (value < 1 && e.target.value !== '') {
+                e.target.value = 1;
+            }
+        });
+    }
+});
+
+// Test device connection function
+function testDeviceConnection() {
+    const ipField = document.getElementById('{{ form.ip_address.id_for_label }}');
+    const portField = document.getElementById('{{ form.port.id_for_label }}');
+
+    if (!ipField.value || !portField.value) {
+        alert('يرجى إدخال عنوان IP والمنفذ أولاً');
+        return;
+    }
+
+    const testBtn = event.target;
+    const originalContent = testBtn.innerHTML;
+
+    testBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> جاري الاختبار...';
+    testBtn.disabled = true;
+
+    // Simulate connection test (replace with actual AJAX call)
+    setTimeout(() => {
+        testBtn.innerHTML = originalContent;
+        testBtn.disabled = false;
+
+        // This would be replaced with actual connection test
+        const isConnected = Math.random() > 0.5; // Random for demo
+
+        if (isConnected) {
+            alert('تم الاتصال بالجهاز بنجاح!');
+            testBtn.classList.remove('btn-outline-success');
+            testBtn.classList.add('btn-success');
+            testBtn.innerHTML = '<i class="fas fa-check me-2"></i> متصل';
+        } else {
+            alert('فشل الاتصال بالجهاز. يرجى التحقق من عنوان IP والمنفذ.');
+            testBtn.classList.remove('btn-outline-success');
+            testBtn.classList.add('btn-outline-danger');
+            testBtn.innerHTML = '<i class="fas fa-times me-2"></i> غير متصل';
+        }
+    }, 2000);
+}
+</script>
+{% endblock %}

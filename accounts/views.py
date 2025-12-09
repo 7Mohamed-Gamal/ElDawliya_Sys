@@ -4,8 +4,8 @@ from .forms import CustomUserCreationForm, CustomUserLoginForm
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 # Temporarily commented out to avoid import errors
-# from meetings.models import Meeting
-# from tasks.models import Task
+# from apps.projects.meetings.models import Meeting
+# from apps.projects.tasks.models import Task
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
 from django.http import JsonResponse
@@ -306,7 +306,7 @@ def search_hr_data(query, user, limit):
 
     try:
         # Import models from new apps
-        from employees.models import Employee
+        from apps.hr.employees.models import Employee
         from org.models import Department
 
         # Search employees
@@ -367,7 +367,7 @@ def search_inventory_data(query, user, limit):
     results = []
 
     try:
-        from inventory.models import Product
+        from apps.inventory.models import Product
 
         # Search products
         products = Product.objects.filter(
@@ -474,7 +474,7 @@ def search_purchase_orders_data(query, user, limit):
     results = []
 
     try:
-        from Purchase_orders.models import PurchaseRequest
+        from apps.procurement.purchase_orders.models import PurchaseRequest
 
         # Search purchase requests
         requests = PurchaseRequest.objects.filter(

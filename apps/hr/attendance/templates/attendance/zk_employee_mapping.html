@@ -1,0 +1,1200 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}ربط الموظفين بأجهزة ZK{% endblock %}
+
+{% block extra_css %}
+<style>
+    .zk-mapping-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+    }
+
+    .search-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .mappings-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        padding: 2rem;
+    }
+
+    .search-card {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 1.5rem;
+        border: 1px solid #e9ecef;
+    }
+
+    .stats-row {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 0.5rem;
+    }
+
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 0.25rem;
+    }
+
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .mapping-table {
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .mapping-table thead {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+    }
+
+    .mapping-table thead th {
+        border: none;
+        padding: 1rem 0.75rem;
+        font-weight: 600;
+        text-align: center;
+    }
+
+    .mapping-table tbody td {
+        padding: 0.875rem 0.75rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f3f4;
+        text-align: center;
+    }
+
+    .mapping-table tbody tr:hover {
+        background-color: #f8f9fa;
+        transform: scale(1.01);
+        transition: all 0.2s ease;
+    }
+
+    .employee-info {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .employee-name {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .employee-code {
+        font-size: 0.75rem;
+        color: #6c757d;
+        background: #f8f9fa;
+        padding: 0.125rem 0.5rem;
+        border-radius: 8px;
+    }
+
+    .employee-dept {
+        font-size: 0.7rem;
+        color: #6c757d;
+        font-style: italic;
+    }
+
+    .device-badge {
+        background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+        color: #1565c0;
+        padding: 0.375rem 0.75rem;
+        border-radius: 15px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .user-id-badge {
+        background: linear-gradient(135deg, #f3e5f5, #e1bee7);
+        color: #7b1fa2;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        font-family: 'Courier New', monospace;
+    }
+
+    .status-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .status-active {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-inactive {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .last-used-info {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.8rem;
+    }
+
+    .last-used-date {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .last-used-time {
+        color: #6c757d;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        color: #6c757d;
+    }
+
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        color: #dee2e6;
+    }
+
+    .bulk-actions {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid #e9ecef;
+    }
+
+    .btn-add-mapping {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        border: none;
+        color: white;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .btn-add-mapping:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(40,167,69,0.3);
+        color: white;
+    }
+
+    .btn-bulk-action {
+        background: linear-gradient(135deg, #17a2b8, #138496);
+        border: none;
+        color: white;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .btn-bulk-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(23,162,184,0.3);
+        color: white;
+    }
+
+    @media (max-width: 768px) {
+        .zk-mapping-header {
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .mappings-container {
+            padding: 1rem;
+        }
+
+        .mapping-table {
+            font-size: 0.875rem;
+        }
+
+        .mapping-table thead th,
+        .mapping-table tbody td {
+            padding: 0.5rem 0.25rem;
+        }
+
+        .employee-info {
+            font-size: 0.8rem;
+        }
+
+        .stats-row {
+            padding: 0.75rem;
+        }
+
+        .stat-number {
+            font-size: 1.25rem;
+        }
+
+        .bulk-actions {
+            text-align: center;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .mapping-table {
+            font-size: 0.75rem;
+        }
+
+        .device-badge,
+        .user-id-badge,
+        .status-badge {
+            font-size: 0.65rem;
+            padding: 0.2rem 0.4rem;
+        }
+
+        .employee-info {
+            font-size: 0.7rem;
+        }
+    }
+
+    /* Loading states */
+    .btn-loading {
+        position: relative;
+        pointer-events: none;
+    }
+
+    .btn-loading::after {
+        content: '';
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        top: 50%;
+        left: 50%;
+        margin-left: -8px;
+        margin-top: -8px;
+        border: 2px solid transparent;
+        border-top-color: currentColor;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Hover effects */
+    .mapping-card {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .mapping-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Selection checkbox styling */
+    .mapping-checkbox {
+        transform: scale(1.2);
+        margin: 0;
+    }
+
+    .mapping-checkbox:checked {
+        background-color: #667eea;
+        border-color: #667eea;
+    }
+
+    /* Search input styling */
+    .search-input {
+        border-radius: 25px;
+        border: 2px solid #e9ecef;
+        padding: 0.75rem 1.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .search-input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="zk-mapping-header">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h1 class="h2 mb-2">
+                            <i class="fas fa-link me-3"></i>
+                            ربط الموظفين بأجهزة ZK
+                        </h1>
+                        <p class="mb-0 opacity-90">
+                            إدارة ربط الموظفين بأجهزة الحضور والانصراف البيومترية
+                        </p>
+                        <nav aria-label="breadcrumb" class="mt-2">
+                            <ol class="breadcrumb bg-transparent p-0 mb-0">
+                                <li class="breadcrumb-item"><a href="{% url 'accounts:home' %}" class="text-white-50">الرئيسية</a></li>
+                                <li class="breadcrumb-item"><a href="{% url 'attendance:zk_devices_list' %}" class="text-white-50">أجهزة ZK</a></li>
+                                <li class="breadcrumb-item active text-white">ربط الموظفين</li>
+                            </ol>
+                        </nav>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <div class="d-flex gap-2 justify-content-md-end justify-content-center flex-wrap">
+                            <button type="button" class="btn btn-light btn-sm" onclick="syncMappings()">
+                                <i class="fas fa-sync me-1"></i>
+                                مزامنة
+                            </button>
+                            <a href="{% url 'attendance:zk_create_mapping' %}" class="btn btn-add-mapping btn-sm">
+                                <i class="fas fa-plus me-2"></i>
+                                إضافة ربط جديد
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filters -->
+    <div class="row">
+        <div class="col-12">
+            <div class="search-container">
+                <h5 class="mb-3">
+                    <i class="fas fa-search text-primary me-2"></i>
+                    البحث والتصفية
+                </h5>
+                <div class="search-card">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="searchEmployee" class="form-label">البحث عن موظف</label>
+                            <input type="text" class="form-control search-input" id="searchEmployee" 
+                                   placeholder="اسم الموظف أو كود الموظف">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="filterDevice" class="form-label">تصفية حسب الجهاز</label>
+                            <select class="form-select" id="filterDevice">
+                                <option value="">جميع الأجهزة</option>
+                                <!-- Device options will be populated by JavaScript -->
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="filterStatus" class="form-label">تصفية حسب الحالة</label>
+                            <select class="form-select" id="filterStatus">
+                                <option value="">جميع الحالات</option>
+                                <option value="active">نشط</option>
+                                <option value="inactive">غير نشط</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 text-center">
+                            <button type="button" class="btn btn-primary me-2" onclick="applyFilters()">
+                                <i class="fas fa-search me-1"></i>
+                                بحث
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
+                                <i class="fas fa-times me-1"></i>
+                                إلغاء التصفية
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    {% if mappings %}
+    <div class="row">
+        <div class="col-12">
+            <div class="stats-row">
+                <div class="row">
+                    <div class="col-md-3 col-6">
+                        <div class="stat-item">
+                            <div class="stat-number" id="totalMappings">{{ mappings|length }}</div>
+                            <div class="stat-label">إجمالي الربط</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="stat-item">
+                            <div class="stat-number" id="activeMappings">0</div>
+                            <div class="stat-label">الربط النشط</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="stat-item">
+                            <div class="stat-number" id="inactiveMappings">0</div>
+                            <div class="stat-label">الربط غير النشط</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6">
+                        <div class="stat-item">
+                            <div class="stat-number" id="uniqueDevices">0</div>
+                            <div class="stat-label">الأجهزة المستخدمة</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Bulk Actions -->
+    {% if mappings %}
+    <div class="row">
+        <div class="col-12">
+            <div class="bulk-actions" id="bulkActions" style="display: none;">
+                <div class="d-flex justify-content-between align-items-center flex-wrap">
+                    <div class="mb-2 mb-md-0">
+                        <span class="fw-bold">تم تحديد <span id="selectedCount">0</span> عنصر</span>
+                    </div>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button type="button" class="btn btn-bulk-action btn-sm" onclick="bulkActivate()">
+                            <i class="fas fa-check me-1"></i>
+                            تفعيل المحدد
+                        </button>
+                        <button type="button" class="btn btn-outline-warning btn-sm" onclick="bulkDeactivate()">
+                            <i class="fas fa-pause me-1"></i>
+                            إلغاء تفعيل المحدد
+                        </button>
+                        <button type="button" class="btn btn-outline-danger btn-sm" onclick="bulkDelete()">
+                            <i class="fas fa-trash me-1"></i>
+                            حذف المحدد
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Employee Mappings Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="mappings-container">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="mb-0">
+                        <i class="fas fa-users text-primary me-2"></i>
+                        ربط الموظفين
+                    </h4>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-primary btn-sm" onclick="refreshMappings()">
+                            <i class="fas fa-refresh me-1"></i>
+                            تحديث
+                        </button>
+                        <button class="btn btn-outline-info btn-sm" onclick="exportMappings()">
+                            <i class="fas fa-download me-1"></i>
+                            تصدير
+                        </button>
+                    </div>
+                </div>
+
+                {% if mappings %}
+                <div class="table-responsive">
+                    <table class="table mapping-table mb-0" id="mappingsTable">
+                        <thead>
+                            <tr>
+                                <th>
+                                    <input type="checkbox" class="form-check-input mapping-checkbox" id="selectAll">
+                                </th>
+                                <th>الموظف</th>
+                                <th>الجهاز</th>
+                                <th>معرف المستخدم</th>
+                                <th>الحالة</th>
+                                <th>تاريخ التسجيل</th>
+                                <th>آخر استخدام</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for mapping in mappings %}
+                            <tr data-mapping-id="{{ mapping.mapping_id }}" class="mapping-row">
+                                <td>
+                                    <input type="checkbox" class="form-check-input mapping-checkbox row-checkbox"
+                                           value="{{ mapping.mapping_id }}">
+                                </td>
+                                <td>
+                                    <div class="employee-info">
+                                        <span class="employee-name">{{ mapping.employee.first_name }} {{ mapping.employee.last_name }}</span>
+                                        <span class="employee-code">{{ mapping.employee.emp_code }}</span>
+                                        {% if mapping.employee.dept %}
+                                        <span class="employee-dept">{{ mapping.employee.dept.dept_name }}</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="device-badge">
+                                        <i class="fas fa-fingerprint"></i>
+                                        {{ mapping.device.device_name }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="user-id-badge">{{ mapping.device_user_id }}</span>
+                                </td>
+                                <td>
+                                    {% if mapping.is_active %}
+                                        <span class="status-badge status-active">
+                                            <i class="fas fa-check-circle"></i>
+                                            نشط
+                                        </span>
+                                    {% else %}
+                                        <span class="status-badge status-inactive">
+                                            <i class="fas fa-times-circle"></i>
+                                            غير نشط
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="last-used-info">
+                                        <span class="last-used-date">{{ mapping.enrollment_date|date:"Y-m-d" }}</span>
+                                        <span class="last-used-time">{{ mapping.enrollment_date|date:"H:i" }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if mapping.last_used %}
+                                        <div class="last-used-info">
+                                            <span class="last-used-date">{{ mapping.last_used|date:"Y-m-d" }}</span>
+                                            <span class="last-used-time">{{ mapping.last_used|date:"H:i" }}</span>
+                                        </div>
+                                    {% else %}
+                                        <span class="text-muted">لم يستخدم بعد</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-outline-info btn-sm"
+                                                onclick="viewMapping({{ mapping.mapping_id }})" title="عرض التفاصيل">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <a href="{% url 'attendance:zk_edit_mapping' mapping.mapping_id %}"
+                                           class="btn btn-outline-warning btn-sm" title="تعديل الربط">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        {% if mapping.is_active %}
+                                        <button type="button" class="btn btn-outline-secondary btn-sm"
+                                                onclick="toggleMappingStatus({{ mapping.mapping_id }}, false)" title="إلغاء التفعيل">
+                                            <i class="fas fa-pause"></i>
+                                        </button>
+                                        {% else %}
+                                        <button type="button" class="btn btn-outline-success btn-sm"
+                                                onclick="toggleMappingStatus({{ mapping.mapping_id }}, true)" title="تفعيل">
+                                            <i class="fas fa-play"></i>
+                                        </button>
+                                        {% endif %}
+                                        <button type="button" class="btn btn-outline-danger btn-sm"
+                                                onclick="deleteMapping({{ mapping.mapping_id }})" title="حذف الربط">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="fas fa-link"></i>
+                    </div>
+                    <h5>لا توجد ربط للموظفين</h5>
+                    <p>لم يتم ربط أي موظف بأجهزة ZK بعد.</p>
+                    <a href="{% url 'attendance:zk_create_mapping' %}" class="btn btn-add-mapping">
+                        <i class="fas fa-plus me-2"></i>
+                        إضافة أول ربط
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Mapping Details Modal -->
+<div class="modal fade" id="mappingDetailsModal" tabindex="-1" aria-labelledby="mappingDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="mappingDetailsModalLabel">
+                    <i class="fas fa-info-circle me-2"></i>
+                    تفاصيل الربط
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="mappingDetailsContent">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">جاري التحميل...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    تأكيد الحذف
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <i class="fas fa-exclamation-triangle text-danger fa-3x mb-3"></i>
+                    <h6>هل أنت متأكد من حذف هذا الربط؟</h6>
+                </div>
+                <div class="alert alert-warning">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>الموظف:</strong> <span id="employeeNameToDelete"></span>
+                </div>
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>تحذير:</strong> سيتم حذف الربط نهائياً ولا يمكن التراجع عن هذا الإجراء!
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i> إلغاء
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-2"></i> حذف نهائياً
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Delete Confirmation Modal -->
+<div class="modal fade" id="bulkDeleteModal" tabindex="-1" aria-labelledby="bulkDeleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="bulkDeleteModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    تأكيد الحذف المتعدد
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <i class="fas fa-exclamation-triangle text-danger fa-3x mb-3"></i>
+                    <h6>هل أنت متأكد من حذف <span id="bulkDeleteCount">0</span> ربط؟</h6>
+                </div>
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>تحذير:</strong> سيتم حذف جميع الربط المحددة نهائياً ولا يمكن التراجع عن هذا الإجراء!
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i> إلغاء
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmBulkDeleteBtn">
+                    <i class="fas fa-trash me-2"></i> حذف الكل
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sync Progress Modal -->
+<div class="modal fade" id="syncModal" tabindex="-1" aria-labelledby="syncModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="syncModalLabel">
+                    <i class="fas fa-sync fa-spin me-2"></i>
+                    جاري المزامنة
+                </h5>
+            </div>
+            <div class="modal-body">
+                <div class="text-center py-4">
+                    <div class="mb-4">
+                        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                            <span class="visually-hidden">جاري المزامنة...</span>
+                        </div>
+                    </div>
+                    <h6 id="syncMessage" class="mb-3">جاري مزامنة ربط الموظفين، يرجى الانتظار...</h6>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
+                             role="progressbar" style="width: 100%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+
+    // Calculate and update statistics
+    updateStatistics();
+
+    // Initialize checkbox functionality
+    initializeCheckboxes();
+
+    // Populate device filter options
+    populateDeviceFilter();
+});
+
+// Global variables for modals
+let currentMappingId = null;
+const mappingDetailsModal = new bootstrap.Modal(document.getElementById('mappingDetailsModal'));
+const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+const bulkDeleteModal = new bootstrap.Modal(document.getElementById('bulkDeleteModal'));
+const syncModal = new bootstrap.Modal(document.getElementById('syncModal'));
+
+// Update statistics
+function updateStatistics() {
+    const rows = document.querySelectorAll('.mapping-row');
+    let activeCount = 0;
+    let inactiveCount = 0;
+    const devices = new Set();
+
+    rows.forEach(row => {
+        const statusBadge = row.querySelector('.status-badge');
+        if (statusBadge.classList.contains('status-active')) {
+            activeCount++;
+        } else {
+            inactiveCount++;
+        }
+
+        const deviceBadge = row.querySelector('.device-badge');
+        if (deviceBadge) {
+            devices.add(deviceBadge.textContent.trim());
+        }
+    });
+
+    document.getElementById('activeMappings').textContent = activeCount;
+    document.getElementById('inactiveMappings').textContent = inactiveCount;
+    document.getElementById('uniqueDevices').textContent = devices.size;
+}
+
+// Initialize checkbox functionality
+function initializeCheckboxes() {
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const rowCheckboxes = document.querySelectorAll('.row-checkbox');
+    const bulkActions = document.getElementById('bulkActions');
+    const selectedCount = document.getElementById('selectedCount');
+
+    if (!selectAllCheckbox) return;
+
+    // Select all functionality
+    selectAllCheckbox.addEventListener('change', function() {
+        rowCheckboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+        updateBulkActions();
+    });
+
+    // Individual checkbox functionality
+    rowCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const checkedCount = document.querySelectorAll('.row-checkbox:checked').length;
+            selectAllCheckbox.checked = checkedCount === rowCheckboxes.length;
+            selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < rowCheckboxes.length;
+            updateBulkActions();
+        });
+    });
+
+    function updateBulkActions() {
+        const checkedCount = document.querySelectorAll('.row-checkbox:checked').length;
+        if (checkedCount > 0) {
+            bulkActions.style.display = 'block';
+            selectedCount.textContent = checkedCount;
+        } else {
+            bulkActions.style.display = 'none';
+        }
+    }
+}
+
+// Populate device filter options
+function populateDeviceFilter() {
+    const deviceFilter = document.getElementById('filterDevice');
+    const deviceBadges = document.querySelectorAll('.device-badge');
+    const devices = new Set();
+
+    deviceBadges.forEach(badge => {
+        const deviceName = badge.textContent.trim();
+        devices.add(deviceName);
+    });
+
+    devices.forEach(device => {
+        const option = document.createElement('option');
+        option.value = device;
+        option.textContent = device;
+        deviceFilter.appendChild(option);
+    });
+}
+
+// View mapping details
+function viewMapping(mappingId) {
+    currentMappingId = mappingId;
+    const content = document.getElementById('mappingDetailsContent');
+
+    // Show loading
+    content.innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">جاري التحميل...</span>
+            </div>
+        </div>
+    `;
+
+    mappingDetailsModal.show();
+
+    // Fetch mapping details (placeholder - implement actual API call)
+    setTimeout(() => {
+        const row = document.querySelector(`tr[data-mapping-id="${mappingId}"]`);
+        if (row) {
+            const employeeName = row.querySelector('.employee-name').textContent;
+            const employeeCode = row.querySelector('.employee-code').textContent;
+            const deviceName = row.querySelector('.device-badge').textContent.trim();
+            const userId = row.querySelector('.user-id-badge').textContent;
+            const status = row.querySelector('.status-badge').textContent.trim();
+
+            content.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3">معلومات الموظف</h6>
+                        <div class="mb-2"><strong>الاسم:</strong> ${employeeName}</div>
+                        <div class="mb-2"><strong>كود الموظف:</strong> ${employeeCode}</div>
+                        <div class="mb-2"><strong>القسم:</strong> ${row.querySelector('.employee-dept')?.textContent || 'غير محدد'}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-primary mb-3">معلومات الجهاز</h6>
+                        <div class="mb-2"><strong>اسم الجهاز:</strong> ${deviceName}</div>
+                        <div class="mb-2"><strong>معرف المستخدم:</strong> ${userId}</div>
+                        <div class="mb-2"><strong>الحالة:</strong> ${status}</div>
+                    </div>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-12">
+                        <h6 class="text-primary mb-3">معلومات إضافية</h6>
+                        <div class="mb-2"><strong>تاريخ التسجيل:</strong> ${row.cells[5].textContent.trim()}</div>
+                        <div class="mb-2"><strong>آخر استخدام:</strong> ${row.cells[6].textContent.trim()}</div>
+                        <div class="mb-2"><strong>معرف الربط:</strong> ${mappingId}</div>
+                    </div>
+                </div>
+            `;
+        }
+    }, 1000);
+}
+
+// Toggle mapping status
+function toggleMappingStatus(mappingId, newStatus) {
+    const row = document.querySelector(`tr[data-mapping-id="${mappingId}"]`);
+    if (!row) return;
+
+    const statusCell = row.cells[4]; // Status column
+    const actionCell = row.cells[7]; // Actions column
+
+    // Show loading
+    const originalContent = statusCell.innerHTML;
+    statusCell.innerHTML = `
+        <div class="spinner-border spinner-border-sm text-primary" role="status">
+            <span class="visually-hidden">جاري التحديث...</span>
+        </div>
+    `;
+
+    // Simulate API call
+    setTimeout(() => {
+        if (newStatus) {
+            statusCell.innerHTML = `
+                <span class="status-badge status-active">
+                    <i class="fas fa-check-circle"></i>
+                    نشط
+                </span>
+            `;
+            // Update action button
+            const toggleBtn = actionCell.querySelector('.btn-outline-secondary, .btn-outline-success');
+            if (toggleBtn) {
+                toggleBtn.className = 'btn btn-outline-secondary btn-sm';
+                toggleBtn.title = 'إلغاء التفعيل';
+                toggleBtn.onclick = () => toggleMappingStatus(mappingId, false);
+                toggleBtn.innerHTML = '<i class="fas fa-pause"></i>';
+            }
+            showNotification('تم تفعيل الربط بنجاح!', 'success');
+        } else {
+            statusCell.innerHTML = `
+                <span class="status-badge status-inactive">
+                    <i class="fas fa-times-circle"></i>
+                    غير نشط
+                </span>
+            `;
+            // Update action button
+            const toggleBtn = actionCell.querySelector('.btn-outline-secondary, .btn-outline-success');
+            if (toggleBtn) {
+                toggleBtn.className = 'btn btn-outline-success btn-sm';
+                toggleBtn.title = 'تفعيل';
+                toggleBtn.onclick = () => toggleMappingStatus(mappingId, true);
+                toggleBtn.innerHTML = '<i class="fas fa-play"></i>';
+            }
+            showNotification('تم إلغاء تفعيل الربط بنجاح!', 'success');
+        }
+
+        // Update statistics
+        updateStatistics();
+    }, 1000);
+}
+
+// Delete mapping
+function deleteMapping(mappingId) {
+    currentMappingId = mappingId;
+    const row = document.querySelector(`tr[data-mapping-id="${mappingId}"]`);
+    if (row) {
+        const employeeName = row.querySelector('.employee-name').textContent;
+        document.getElementById('employeeNameToDelete').textContent = employeeName;
+    }
+
+    deleteModal.show();
+
+    document.getElementById('confirmDeleteBtn').onclick = function() {
+        // Implement actual delete API call
+        fetch(`/attendance/zk/mapping/${mappingId}/delete/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => {
+            if (response.ok) {
+                deleteModal.hide();
+
+                // Remove the row
+                const row = document.querySelector(`tr[data-mapping-id="${mappingId}"]`);
+                if (row) {
+                    row.remove();
+                    showNotification('تم حذف الربط بنجاح!', 'success');
+                    updateStatistics();
+                }
+            } else {
+                showNotification('فشل في حذف الربط', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showNotification('حدث خطأ أثناء حذف الربط', 'error');
+        });
+    };
+}
+
+// Bulk operations
+function bulkActivate() {
+    const selectedIds = getSelectedMappingIds();
+    if (selectedIds.length === 0) return;
+
+    selectedIds.forEach(id => {
+        toggleMappingStatus(id, true);
+    });
+}
+
+function bulkDeactivate() {
+    const selectedIds = getSelectedMappingIds();
+    if (selectedIds.length === 0) return;
+
+    selectedIds.forEach(id => {
+        toggleMappingStatus(id, false);
+    });
+}
+
+function bulkDelete() {
+    const selectedIds = getSelectedMappingIds();
+    if (selectedIds.length === 0) return;
+
+    document.getElementById('bulkDeleteCount').textContent = selectedIds.length;
+    bulkDeleteModal.show();
+
+    document.getElementById('confirmBulkDeleteBtn').onclick = function() {
+        bulkDeleteModal.hide();
+
+        selectedIds.forEach(id => {
+            const row = document.querySelector(`tr[data-mapping-id="${id}"]`);
+            if (row) {
+                row.remove();
+            }
+        });
+
+        showNotification(`تم حذف ${selectedIds.length} ربط بنجاح!`, 'success');
+        updateStatistics();
+
+        // Clear selections
+        document.getElementById('selectAll').checked = false;
+        document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = false);
+        document.getElementById('bulkActions').style.display = 'none';
+    };
+}
+
+function getSelectedMappingIds() {
+    const selectedCheckboxes = document.querySelectorAll('.row-checkbox:checked');
+    return Array.from(selectedCheckboxes).map(cb => cb.value);
+}
+
+// Search and filter functions
+function applyFilters() {
+    const searchTerm = document.getElementById('searchEmployee').value.toLowerCase();
+    const deviceFilter = document.getElementById('filterDevice').value;
+    const statusFilter = document.getElementById('filterStatus').value;
+
+    const rows = document.querySelectorAll('.mapping-row');
+
+    rows.forEach(row => {
+        const employeeName = row.querySelector('.employee-name').textContent.toLowerCase();
+        const employeeCode = row.querySelector('.employee-code').textContent.toLowerCase();
+        const deviceName = row.querySelector('.device-badge').textContent.trim();
+        const status = row.querySelector('.status-badge').classList.contains('status-active') ? 'active' : 'inactive';
+
+        let showRow = true;
+
+        // Search filter
+        if (searchTerm && !employeeName.includes(searchTerm) && !employeeCode.includes(searchTerm)) {
+            showRow = false;
+        }
+
+        // Device filter
+        if (deviceFilter && deviceName !== deviceFilter) {
+            showRow = false;
+        }
+
+        // Status filter
+        if (statusFilter && status !== statusFilter) {
+            showRow = false;
+        }
+
+        row.style.display = showRow ? '' : 'none';
+    });
+
+    showNotification('تم تطبيق التصفية', 'info');
+}
+
+function clearFilters() {
+    document.getElementById('searchEmployee').value = '';
+    document.getElementById('filterDevice').value = '';
+    document.getElementById('filterStatus').value = '';
+
+    const rows = document.querySelectorAll('.mapping-row');
+    rows.forEach(row => {
+        row.style.display = '';
+    });
+
+    showNotification('تم إلغاء التصفية', 'info');
+}
+
+// Utility functions
+function syncMappings() {
+    syncModal.show();
+
+    setTimeout(() => {
+        syncModal.hide();
+        showNotification('تم مزامنة الربط بنجاح!', 'success');
+        location.reload();
+    }, 3000);
+}
+
+function refreshMappings() {
+    showNotification('جاري تحديث البيانات...', 'info');
+    setTimeout(() => {
+        location.reload();
+    }, 1000);
+}
+
+function exportMappings() {
+    showNotification('جاري تصدير البيانات...', 'info');
+
+    // Create CSV content
+    const rows = document.querySelectorAll('.mapping-row');
+    let csvContent = 'اسم الموظف,كود الموظف,الجهاز,معرف المستخدم,الحالة,تاريخ التسجيل\n';
+
+    rows.forEach(row => {
+        if (row.style.display !== 'none') {
+            const employeeName = row.querySelector('.employee-name').textContent;
+            const employeeCode = row.querySelector('.employee-code').textContent;
+            const deviceName = row.querySelector('.device-badge').textContent.trim();
+            const userId = row.querySelector('.user-id-badge').textContent;
+            const status = row.querySelector('.status-badge').textContent.trim();
+            const enrollmentDate = row.cells[5].textContent.trim();
+
+            csvContent += `"${employeeName}","${employeeCode}","${deviceName}","${userId}","${status}","${enrollmentDate}"\n`;
+        }
+    });
+
+    // Download CSV
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'employee_mappings.csv';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    setTimeout(() => {
+        showNotification('تم تصدير البيانات بنجاح!', 'success');
+    }, 1000);
+}
+
+// Show notification function
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'info'} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'error' ? 'exclamation-circle' : type === 'success' ? 'check-circle' : 'info-circle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    // Add to page
+    document.body.appendChild(notification);
+
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

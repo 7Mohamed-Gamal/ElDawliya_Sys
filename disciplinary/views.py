@@ -13,7 +13,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 
 from .models import DisciplinaryAction
-from employees.models import Employee
+from apps.hr.employees.models import Employee
 from .forms import DisciplinaryActionForm, DisciplinaryActionSearchForm
 
 

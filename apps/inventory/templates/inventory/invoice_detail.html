@@ -1,0 +1,419 @@
+{% extends 'inventory/base_inventory.html' %}
+{% load static %}
+{% load inventory_permission_tags %}
+
+{% block title %}فاتورة {{ invoice.invoice_number }} - نظام إدارة المخزن{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Enhanced Invoice Detail Styles */
+    .invoice-header {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .badge-status {
+        padding: 8px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+    }
+    
+    .badge-status i {
+        margin-left: 0.5rem;
+        font-size: 0.75rem;
+    }
+    
+    .badge-pending {
+        background-color: #fff8e1;
+        color: #f57f17;
+    }
+    
+    .badge-completed {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+    }
+    
+    .badge-cancelled {
+        background-color: #ffebee;
+        color: #c62828;
+    }
+    
+    .badge-in {
+        background-color: #e3f2fd;
+        color: #1565c0;
+    }
+    
+    .badge-out {
+        background-color: #f3e5f5;
+        color: #7b1fa2;
+    }
+    
+    .invoice-meta-item {
+        margin-bottom: 0.75rem;
+    }
+    
+    .invoice-meta-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .invoice-meta-value {
+        font-weight: 600;
+    }
+    
+    .invoice-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary-color);
+    }
+    
+    .invoice-date {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    .invoice-type {
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+    
+    .table-items th {
+        white-space: nowrap;
+        background-color: #f8f9fa;
+    }
+    
+    .table-items .item-total {
+        font-weight: 600;
+    }
+    
+    .invoice-summary {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.25rem;
+    }
+    
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.75rem;
+    }
+    
+    .summary-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .summary-total {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: var(--primary-color);
+        padding-top: 0.5rem;
+        margin-top: 0.5rem;
+        border-top: 1px solid #dee2e6;
+    }
+    
+    .action-buttons .btn {
+        margin-left: 0.5rem;
+        padding: 0.5rem 1rem;
+    }
+    
+    .action-buttons .btn i {
+        margin-left: 0.5rem;
+    }
+    
+    .notes-section {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.25rem;
+    }
+    
+    .print-header {
+        display: none;
+    }
+    
+    @media print {
+        body {
+            background-color: white;
+            font-size: 12pt;
+            color: black;
+        }
+        
+        .container-fluid {
+            width: 100%;
+            max-width: 100%;
+        }
+        
+        .nav-sidebar,
+        .navbar-top,
+        .action-buttons,
+        .breadcrumb {
+            display: none !important;
+        }
+        
+        .print-header {
+            display: block;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .print-header img {
+            max-height: 80px;
+            margin-bottom: 1rem;
+        }
+        
+        .print-header h1 {
+            font-size: 22pt;
+            margin-bottom: 0.5rem;
+        }
+        
+        .main-content {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+        }
+        
+        .card {
+            border: none !important;
+            box-shadow: none !important;
+        }
+        
+        .invoice-header,
+        .invoice-summary,
+        .notes-section {
+            background-color: white !important;
+            margin-bottom: 1.5rem !important;
+            page-break-inside: avoid;
+        }
+        
+        .table-items {
+            border: 1px solid #dee2e6;
+            margin-bottom: 1.5rem;
+        }
+        
+        .summary-total {
+            font-size: 14pt;
+        }
+    }
+    
+    @page {
+        size: A4;
+        margin: 1cm;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row ps-4">
+    <div class="col-12 mb-4">
+        <!-- أزرار العمليات العلوية -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'inventory:dashboard' %}">الرئيسية</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'inventory:invoice_list' %}">الفواتير</a>
+                    </li>
+                    <li class="breadcrumb-item active">
+                        فاتورة {{ invoice.invoice_number }}
+                    </li>
+                </ol>
+            </nav>
+            
+            <div class="action-buttons">
+                <button onclick="window.print()" class="btn btn-outline-dark">
+                    <i class="fas fa-print"></i> طباعة
+                </button>
+                
+                {% if invoice.status == 'pending' %}
+                {% has_inventory_module_permission "invoices" "edit" as can_edit_invoice %}
+                {% if can_edit_invoice %}
+                <a href="{% url 'inventory:invoice_edit' invoice.invoice_number %}" class="btn btn-outline-primary">
+                    <i class="fas fa-edit"></i> تعديل
+                </a>
+                
+                <a href="{% url 'inventory:invoice_complete' invoice.invoice_number %}" class="btn btn-success">
+                    <i class="fas fa-check"></i> تنفيذ الفاتورة
+                </a>
+                
+                <a href="{% url 'inventory:invoice_cancel' invoice.invoice_number %}" class="btn btn-danger">
+                    <i class="fas fa-ban"></i> إلغاء الفاتورة
+                </a>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- رأس الطباعة - يظهر فقط عند الطباعة -->
+        <div class="print-header">
+            <img src="{% static 'img/logo.png' %}" alt="شعار الشركة">
+            <h1>الشركة الدولية</h1>
+            <h2>إدارة المخازن</h2>
+        </div>
+        
+        <!-- معلومات الفاتورة -->
+        <div class="card shadow-sm">
+            <div class="card-body invoice-header">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="invoice-number">فاتورة #{{ invoice.invoice_number }}</span>
+                            <span class="invoice-date me-3">
+                                <i class="fas fa-calendar-alt me-1"></i>
+                                {{ invoice.date|date:"Y/m/d" }}
+                            </span>
+                        </div>
+                        
+                        <div class="invoice-type mb-3">
+                            {% if invoice.invoice_type == 'in' %}
+                            <span class="badge-status badge-in mb-2">
+                                <i class="fas fa-arrow-circle-down"></i>
+                                فاتورة توريد
+                            </span>
+                            {% else %}
+                            <span class="badge-status badge-out mb-2">
+                                <i class="fas fa-arrow-circle-up"></i>
+                                فاتورة صرف
+                            </span>
+                            {% endif %}
+                            
+                            {% if invoice.status == 'pending' %}
+                            <span class="badge-status badge-pending me-2">
+                                <i class="fas fa-clock"></i>
+                                معلقة
+                            </span>
+                            {% elif invoice.status == 'completed' %}
+                            <span class="badge-status badge-completed me-2">
+                                <i class="fas fa-check-circle"></i>
+                                مكتملة
+                            </span>
+                            {% else %}
+                            <span class="badge-status badge-cancelled me-2">
+                                <i class="fas fa-ban"></i>
+                                ملغاة
+                            </span>
+                            {% endif %}
+                        </div>
+                        
+                        {% if invoice.notes %}
+                        <div class="notes-section mt-3">
+                            <h6><i class="fas fa-sticky-note me-1"></i> ملاحظات:</h6>
+                            <p class="mb-0">{{ invoice.notes }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="text-start">
+                            <div class="invoice-meta-item">
+                                <div class="invoice-meta-label">عدد الأصناف:</div>
+                                <div class="invoice-meta-value">{{ invoice.items.count }} صنف</div>
+                            </div>
+                            
+                            <div class="invoice-meta-item">
+                                <div class="invoice-meta-label">إجمالي القيمة:</div>
+                                <div class="invoice-meta-value">{{ invoice.total_amount }} ج.م</div>
+                            </div>
+                             
+                            <div class="invoice-meta-item">
+                                <div class="invoice-meta-label">منشئ الفاتورة:</div>
+                                <div class="invoice-meta-value">{{ invoice.created_by.get_full_name|default:invoice.created_by.username }}</div>
+                            </div>
+                            
+                            {% if invoice.status == 'completed' %}
+                            <div class="invoice-meta-item">
+                                <div class="invoice-meta-label">تاريخ التنفيذ:</div>
+                                <div class="invoice-meta-value">{{ invoice.completed_date|date:"Y/m/d" }}</div>
+                            </div>
+                            
+                            <div class="invoice-meta-item">
+                                <div class="invoice-meta-label">منفذ الفاتورة:</div>
+                                <div class="invoice-meta-value">{{ invoice.completed_by.get_full_name|default:invoice.completed_by.username }}</div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- بنود الفاتورة -->
+        <div class="card shadow-sm mt-4">
+            <div class="card-header bg-transparent">
+                <h5 class="mb-0"><i class="fas fa-boxes me-2"></i> بنود الفاتورة</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover table-items mb-0">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>رقم الصنف</th>
+                                <th>اسم الصنف</th>
+                                <th>الكمية</th>
+                                <th>سعر الوحدة</th>
+                                <th width="15%">الإجمالي</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in invoice.items.all %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ item.product.product_id }}</td>
+                                <td>{{ item.product.name }}</td>
+                                <td>{{ item.quantity }}</td>
+                                <td>{{ item.price }} ج.م</td>
+                                <td class="item-total text-start">{{ item.total_price }} ج.م</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ملخص الفاتورة -->
+        <div class="row mt-4 mb-4">
+            <div class="col-md-6"></div>
+            <div class="col-md-6">
+                <div class="invoice-summary">
+                    <div class="summary-item">
+                        <div>عدد الأصناف:</div>
+                        <div>{{ invoice.items.count }}</div>
+                    </div>
+                    <div class="summary-item">
+                        <div>إجمالي الكميات:</div>
+                        <div>{{ total_quantity }}</div>
+                    </div>
+                    <div class="summary-item summary-total">
+                        <div>إجمالي القيمة:</div>
+                        <div>{{ invoice.total_amount }} ج.م</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- التوقيعات - تظهر فقط في الطباعة -->
+        <div class="row d-none d-print-flex mt-5">
+            <div class="col-md-4 text-center">
+                <p>المستلم</p>
+                <hr class="mt-5 mb-0" style="width: 80%; margin: 0 auto;">
+            </div>
+            <div class="col-md-4 text-center">
+                <p>أمين المخزن</p>
+                <hr class="mt-5 mb-0" style="width: 80%; margin: 0 auto;">
+            </div>
+            <div class="col-md-4 text-center">
+                <p>المدير المسؤول</p>
+                <hr class="mt-5 mb-0" style="width: 80%; margin: 0 auto;">
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

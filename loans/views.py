@@ -10,7 +10,7 @@ from django import forms
 from datetime import date, datetime, timedelta
 from decimal import Decimal
 from .models import LoanType, EmployeeLoan, LoanInstallment
-from employees.models import Employee
+from apps.hr.employees.models import Employee
 from org.models import Department
 from .forms import LoanTypeForm, EmployeeLoanForm, LoanInstallmentForm
 

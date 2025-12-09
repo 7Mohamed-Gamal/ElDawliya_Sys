@@ -1,0 +1,485 @@
+{% extends 'tasks/base_tasks.html' %}
+{% load static %}
+
+{% block title %}{{ unified_task.get_display_title }} - تفاصيل المهمة{% endblock %}
+
+{% block page_title %}تفاصيل المهمة{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'tasks:dashboard' %}">لوحة التحكم</a></li>
+<li class="breadcrumb-item"><a href="{% url 'tasks:list' %}">قائمة المهام</a></li>
+<li class="breadcrumb-item active">تفاصيل المهمة</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .task-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+    
+    .task-type-badge {
+        padding: 6px 16px;
+        border-radius: 25px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-right: 10px;
+    }
+    
+    .priority-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    .status-badge {
+        padding: 6px 16px;
+        border-radius: 25px;
+        font-size: 0.9rem;
+        font-weight: 600;
+    }
+    
+    .progress-circle {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: white;
+        margin: 0 auto;
+    }
+    
+    .step-item {
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        border-left: 4px solid #007bff;
+        background: #f8f9fa;
+        transition: all 0.2s ease;
+    }
+    
+    .step-item:hover {
+        background: #e9ecef;
+        transform: translateX(5px);
+    }
+    
+    .step-item.completed {
+        border-left-color: #28a745;
+        background: #f0fff4;
+    }
+    
+    .related-task-item {
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        background: #f8f9fa;
+        border-left: 3px solid #007bff;
+        transition: all 0.2s ease;
+    }
+    
+    .related-task-item:hover {
+        background: #e9ecef;
+        transform: translateX(3px);
+    }
+    
+    .info-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .action-btn {
+        border-radius: 25px;
+        padding: 8px 20px;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Task Header -->
+<div class="task-header">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <div class="d-flex align-items-center mb-3">
+                <span class="task-type-badge 
+                    {% if unified_task.task_type == 'regular' %}bg-light text-primary
+                    {% else %}bg-light text-info{% endif %}">
+                    {{ unified_task.get_task_type_display }}
+                </span>
+                
+                {% if unified_task.priority %}
+                <span class="priority-badge 
+                    {% if unified_task.priority == 'urgent' %}bg-danger text-white
+                    {% elif unified_task.priority == 'high' %}bg-warning text-dark
+                    {% elif unified_task.priority == 'medium' %}bg-info text-white
+                    {% else %}bg-secondary text-white{% endif %}">
+                    {{ unified_task.get_priority_display }}
+                </span>
+                {% endif %}
+                
+                <span class="status-badge 
+                    {% if unified_task.status == 'completed' %}bg-success text-white
+                    {% elif unified_task.status == 'in_progress' %}bg-primary text-white
+                    {% elif unified_task.is_overdue %}bg-danger text-white
+                    {% else %}bg-secondary text-white{% endif %}">
+                    {{ unified_task.get_status_display }}
+                </span>
+            </div>
+            
+            <h2 class="mb-3">{{ unified_task.get_display_title }}</h2>
+            
+            <div class="row text-white-50">
+                <div class="col-md-6">
+                    <i class="fas fa-user me-2"></i>
+                    <strong>المكلف:</strong> {{ unified_task.assigned_to.username }}
+                </div>
+                {% if unified_task.created_by %}
+                <div class="col-md-6">
+                    <i class="fas fa-user-plus me-2"></i>
+                    <strong>منشئ المهمة:</strong> {{ unified_task.created_by.username }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="col-md-4 text-center">
+            <div class="progress-circle" style="background: conic-gradient(#28a745 {{ unified_task.progress_percentage }}%, rgba(255,255,255,0.3) {{ unified_task.progress_percentage }}%);">
+                {{ unified_task.progress_percentage }}%
+            </div>
+            <p class="mt-2 mb-0 text-white-50">نسبة الإنجاز</p>
+        </div>
+    </div>
+</div>
+
+<!-- Task Details -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card info-card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-info-circle me-2 text-primary"></i>
+                    تفاصيل المهمة
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <h6 class="text-muted mb-2">الوصف</h6>
+                    <p class="mb-0">{{ unified_task.description }}</p>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <h6 class="text-muted mb-1">تاريخ البدء</h6>
+                        <p class="mb-0">
+                            <i class="fas fa-calendar-alt me-2 text-success"></i>
+                            {{ unified_task.start_date|date:"Y-m-d H:i" }}
+                        </p>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <h6 class="text-muted mb-1">تاريخ الانتهاء</h6>
+                        <p class="mb-0 {% if unified_task.is_overdue %}text-danger{% endif %}">
+                            <i class="fas fa-calendar-times me-2 {% if unified_task.is_overdue %}text-danger{% else %}text-warning{% endif %}"></i>
+                            {% if unified_task.end_date %}
+                                {{ unified_task.end_date|date:"Y-m-d H:i" }}
+                                {% if unified_task.is_overdue %}
+                                    <span class="badge bg-danger ms-2">متأخرة</span>
+                                {% elif unified_task.days_until_due <= 3 %}
+                                    <span class="badge bg-warning ms-2">{{ unified_task.days_until_due }} يوم متبقي</span>
+                                {% endif %}
+                            {% else %}
+                                غير محدد
+                            {% endif %}
+                        </p>
+                    </div>
+                    
+                    {% if unified_task.meeting %}
+                    <div class="col-md-6 mb-3">
+                        <h6 class="text-muted mb-1">الاجتماع المرتبط</h6>
+                        <p class="mb-0">
+                            <i class="fas fa-users me-2 text-info"></i>
+                            <a href="{% url 'meetings:detail' unified_task.meeting.id %}" class="text-decoration-none">
+                                {{ unified_task.meeting.title }}
+                            </a>
+                        </p>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="col-md-6 mb-3">
+                        <h6 class="text-muted mb-1">تاريخ الإنشاء</h6>
+                        <p class="mb-0">
+                            <i class="fas fa-clock me-2 text-muted"></i>
+                            {{ unified_task.created_at|date:"Y-m-d H:i" }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Actions Card -->
+        {% if can_edit %}
+        <div class="card info-card mb-4">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-cogs me-2 text-secondary"></i>
+                    الإجراءات
+                </h5>
+            </div>
+            <div class="card-body">
+                <!-- Status Update Form -->
+                <form method="post" class="mb-3">
+                    {% csrf_token %}
+                    <div class="mb-2">
+                        <label class="form-label">تحديث الحالة</label>
+                        {{ status_form.status }}
+                    </div>
+                    <button type="submit" name="update_status" class="btn btn-primary action-btn w-100">
+                        <i class="fas fa-sync me-1"></i> تحديث الحالة
+                    </button>
+                </form>
+                
+                {% if unified_task.task_type == 'regular' %}
+                <a href="{% url 'tasks:edit' unified_task.raw_id %}" class="btn btn-outline-secondary action-btn w-100 mb-2">
+                    <i class="fas fa-edit me-1"></i> تعديل المهمة
+                </a>
+                {% endif %}
+                
+                {% if user.is_superuser %}
+                <button type="button" class="btn btn-outline-danger action-btn w-100" onclick="confirmDelete()">
+                    <i class="fas fa-trash me-1"></i> حذف المهمة
+                </button>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Statistics Card -->
+        <div class="card info-card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar me-2 text-success"></i>
+                    إحصائيات
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <div class="h4 text-primary">{{ total_steps }}</div>
+                        <small class="text-muted">إجمالي الخطوات</small>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="h4 text-success">{{ completed_steps }}</div>
+                        <small class="text-muted">خطوات مكتملة</small>
+                    </div>
+                </div>
+                
+                {% if step_completion_rate > 0 %}
+                <div class="progress mb-2" style="height: 8px;">
+                    <div class="progress-bar bg-success" role="progressbar" 
+                         style="width: {{ step_completion_rate }}%" 
+                         aria-valuenow="{{ step_completion_rate }}" 
+                         aria-valuemin="0" aria-valuemax="100">
+                    </div>
+                </div>
+                <small class="text-muted">{{ step_completion_rate }}% من الخطوات مكتملة</small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Task Steps Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card info-card">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-list-ol me-2 text-info"></i>
+                    خطوات المهمة ({{ total_steps }})
+                </h5>
+                {% if can_edit %}
+                <button type="button" class="btn btn-outline-primary btn-sm" data-bs-toggle="collapse" data-bs-target="#addStepForm">
+                    <i class="fas fa-plus me-1"></i> إضافة خطوة
+                </button>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <!-- Add Step Form -->
+                {% if can_edit %}
+                <div class="collapse mb-4" id="addStepForm">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <form method="post">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    {{ step_form.description.label_tag }}
+                                    {{ step_form.description }}
+                                </div>
+                                <div class="mb-3">
+                                    {{ step_form.notes.label_tag }}
+                                    {{ step_form.notes }}
+                                </div>
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        {{ step_form.completed }}
+                                        {{ step_form.completed.label_tag }}
+                                    </div>
+                                </div>
+                                <button type="submit" name="add_step" class="btn btn-success">
+                                    <i class="fas fa-plus me-1"></i> إضافة الخطوة
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Steps List -->
+                {% for step in steps %}
+                <div class="step-item {% if step.completed %}completed{% endif %}">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center mb-2">
+                                {% if step.completed %}
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                {% else %}
+                                <i class="fas fa-circle text-muted me-2"></i>
+                                {% endif %}
+                                <h6 class="mb-0">{{ step.description }}</h6>
+                            </div>
+                            
+                            {% if step.notes %}
+                            <p class="text-muted mb-2 ms-4">{{ step.notes }}</p>
+                            {% endif %}
+                            
+                            <div class="d-flex align-items-center text-muted small ms-4">
+                                <i class="fas fa-clock me-1"></i>
+                                <span class="me-3">{{ step.date|date:"Y-m-d H:i" }}</span>
+                                
+                                {% if step.created_by %}
+                                <i class="fas fa-user me-1"></i>
+                                <span class="me-3">{{ step.created_by.username }}</span>
+                                {% endif %}
+                                
+                                {% if step.completed and step.completion_date %}
+                                <i class="fas fa-check me-1"></i>
+                                <span>مكتملة في {{ step.completion_date|date:"Y-m-d H:i" }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if can_edit %}
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <form method="post" style="display: inline;">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="step_id" value="{{ step.id }}">
+                                        <button type="submit" name="delete_step" class="dropdown-item text-danger">
+                                            <i class="fas fa-trash me-1"></i> حذف
+                                        </button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-list-ol fa-3x mb-3"></i>
+                    <p>لا توجد خطوات لهذه المهمة بعد</p>
+                    {% if can_edit %}
+                    <button type="button" class="btn btn-primary" data-bs-toggle="collapse" data-bs-target="#addStepForm">
+                        <i class="fas fa-plus me-1"></i> إضافة أول خطوة
+                    </button>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Related Tasks -->
+{% if related_tasks %}
+<div class="row">
+    <div class="col-12">
+        <div class="card info-card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-link me-2 text-warning"></i>
+                    مهام ذات صلة
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for related_task in related_tasks %}
+                <div class="related-task-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="task-type-badge 
+                                {% if related_task.task_type == 'regular' %}bg-primary text-white
+                                {% else %}bg-info text-white{% endif %} me-2">
+                                {{ related_task.get_task_type_display }}
+                            </span>
+                            <a href="{{ related_task.get_absolute_url }}" class="text-decoration-none">
+                                {{ related_task.get_display_title }}
+                            </a>
+                        </div>
+                        <span class="badge 
+                            {% if related_task.status == 'completed' %}bg-success
+                            {% elif related_task.status == 'in_progress' %}bg-primary
+                            {% else %}bg-secondary{% endif %}">
+                            {{ related_task.get_status_display }}
+                        </span>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function confirmDelete() {
+    if (confirm('هل أنت متأكد من حذف هذه المهمة؟ لا يمكن التراجع عن هذا الإجراء.')) {
+        // Implement delete functionality
+        window.location.href = '{% url "tasks:delete" unified_task.raw_id %}';
+    }
+}
+
+// Auto-submit status form on change
+document.addEventListener('DOMContentLoaded', function() {
+    const statusSelect = document.querySelector('select[name="status"]');
+    if (statusSelect) {
+        statusSelect.addEventListener('change', function() {
+            if (confirm('هل تريد تحديث حالة المهمة؟')) {
+                this.form.submit();
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

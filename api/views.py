@@ -29,9 +29,9 @@ from .permissions import HasAPIAccess
 # from Hr.models.core.department_models import Department
 # EmployeeSerializer and DepartmentSerializer temporarily removed
 # Temporarily disabled until apps are restored
-# from inventory.models import TblProducts, TblCategories
-# from tasks.models import Task
-# from meetings.models import Meeting
+# from apps.inventory.models import TblProducts, TblCategories
+# from apps.projects.tasks.models import Task
+# from apps.projects.meetings.models import Meeting
 
 # Import core services
 from core.data_integration import data_integration_service
@@ -145,7 +145,7 @@ class ProductViewSet(APIUsageLogMixin, viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         """Return products with optional filtering"""
         try:
-            from inventory.models import TblProducts
+            from apps.inventory.models import TblProducts
             queryset = TblProducts.objects.all()
 
             # Filter by category
@@ -181,7 +181,7 @@ class CategoryViewSet(APIUsageLogMixin, viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         """Return categories with optional filtering"""
         try:
-            from inventory.models import TblCategories
+            from apps.inventory.models import TblCategories
             return TblCategories.objects.all()
         except ImportError:
             # Return empty queryset if inventory app is not available
@@ -200,7 +200,7 @@ class TaskViewSet(APIUsageLogMixin, viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         """Return tasks with optional filtering"""
         try:
-            from tasks.models import Task
+            from apps.projects.tasks.models import Task
             queryset = Task.objects.all()
 
             # Filter by assigned user
@@ -236,7 +236,7 @@ class MeetingViewSet(APIUsageLogMixin, viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         """Return meetings with optional filtering"""
         try:
-            from meetings.models import Meeting
+            from apps.projects.meetings.models import Meeting
             queryset = Meeting.objects.all()
 
             # Filter by organizer

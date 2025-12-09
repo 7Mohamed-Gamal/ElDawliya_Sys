@@ -432,7 +432,7 @@ index_analyzer = DatabaseIndexAnalyzer()
 # Utility functions for common optimizations
 def get_optimized_employees(filters: Dict = None) -> QuerySet:
     """الحصول على استعلام محسن للموظفين"""
-    from employees.models import Employee
+    from apps.hr.employees.models import Employee
 
     queryset = Employee.objects.select_related(
         'dept', 'job', 'branch', 'manager'
@@ -448,7 +448,7 @@ def get_optimized_employees(filters: Dict = None) -> QuerySet:
 
 def get_optimized_attendance(date_from: datetime = None, date_to: datetime = None) -> QuerySet:
     """الحصول على استعلام محسن للحضور"""
-    from attendance.models import EmployeeAttendance
+    from apps.hr.attendance.models import EmployeeAttendance
 
     queryset = EmployeeAttendance.objects.select_related(
         'employee', 'employee__dept', 'employee__job'
@@ -464,7 +464,7 @@ def get_optimized_attendance(date_from: datetime = None, date_to: datetime = Non
 
 def get_optimized_inventory() -> QuerySet:
     """الحصول على استعلام محسن للمخزون"""
-    from inventory.models import TblProducts
+    from apps.inventory.models import TblProducts
 
     return TblProducts.objects.select_related(
         'cat', 'unit'
@@ -485,7 +485,7 @@ def get_dashboard_stats_cached() -> Dict:
     stats = {}
 
     try:
-        from employees.models import Employee
+        from apps.hr.employees.models import Employee
         stats['total_employees'] = Employee.objects.filter(emp_status='Active').count()
         stats['new_employees_this_month'] = Employee.objects.filter(
             hire_date__gte=timezone.now().replace(day=1)
@@ -494,7 +494,7 @@ def get_dashboard_stats_cached() -> Dict:
         pass
 
     try:
-        from attendance.models import EmployeeAttendance
+        from apps.hr.attendance.models import EmployeeAttendance
         today = timezone.now().date()
         today_attendance = EmployeeAttendance.objects.filter(att_date=today)
         stats['present_today'] = today_attendance.filter(
@@ -505,7 +505,7 @@ def get_dashboard_stats_cached() -> Dict:
         pass
 
     try:
-        from leaves.models import EmployeeLeave
+        from apps.hr.leaves.models import EmployeeLeave
         stats['pending_leaves'] = EmployeeLeave.objects.filter(status='Pending').count()
     except ImportError:
         pass

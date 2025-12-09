@@ -384,14 +384,14 @@ class Command(BaseCommand):
 
         # Import models
         try:
-            from Purchase_orders.models import PurchaseRequest, PurchaseRequestItem, Vendor
-            from tasks.models import Task, TaskStep, TaskCategory
-            from meetings.models import Meeting, Attendee, MeetingTask, MeetingTaskStep
-            from inventory.models import (
+            from apps.procurement.purchase_orders.models import PurchaseRequest, PurchaseRequestItem, Vendor
+            from apps.projects.tasks.models import Task, TaskStep, TaskCategory
+            from apps.projects.meetings.models import Meeting, Attendee, MeetingTask, MeetingTaskStep
+            from apps.inventory.models import (
                 TblProducts, TblInvoices, TblInvoiceitems,
                 TblCategories, TblSuppliers, TblUnitsSpareparts
             )
-            from employees.models import Employee, EmployeeBankAccount, EmployeeDocument
+            from apps.hr.employees.models import Employee, EmployeeBankAccount, EmployeeDocument
             from org.models import Branch, Department, Job
 
             # Clear in reverse dependency order
@@ -443,8 +443,8 @@ class Command(BaseCommand):
         self.stdout.write('🎭 إنشاء سيناريوهات العرض التوضيحي...')
 
         try:
-            from tasks.models import Task, TaskStep
-            from meetings.models import Meeting, MeetingTask, MeetingTaskStep
+            from apps.projects.tasks.models import Task, TaskStep
+            from apps.projects.meetings.models import Meeting, MeetingTask, MeetingTaskStep
             from datetime import datetime, timedelta
             from django.utils import timezone
 

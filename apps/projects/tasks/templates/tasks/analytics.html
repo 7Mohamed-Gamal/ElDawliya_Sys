@@ -1,0 +1,353 @@
+{% extends 'tasks/base_tasks.html' %}
+{% load static %}
+
+{% block title %}تحليلات المهام - نظام الدولية{% endblock %}
+
+{% block page_title %}تحليلات المهام{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'tasks:dashboard' %}">لوحة التحكم</a></li>
+<li class="breadcrumb-item"><a href="{% url 'tasks:reports' %}">التقارير</a></li>
+<li class="breadcrumb-item active">التحليلات</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .analytics-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease;
+    }
+    
+    .analytics-card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .metric-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #2c3e50;
+    }
+    
+    .metric-label {
+        color: #7f8c8d;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .progress-circle {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: white;
+        margin: 0 auto;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+    
+    .user-performance-item {
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        background: #f8f9fa;
+        border-left: 4px solid #007bff;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Key Metrics -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card analytics-card h-100">
+            <div class="card-body text-center">
+                <div class="metric-value text-primary">{{ total_tasks }}</div>
+                <div class="metric-label">إجمالي المهام</div>
+                <small class="text-muted">
+                    {% if user_is_superuser %}جميع المهام في النظام{% else %}مهامك الشخصية{% endif %}
+                </small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card analytics-card h-100">
+            <div class="card-body text-center">
+                <div class="metric-value text-success">{{ completed_tasks }}</div>
+                <div class="metric-label">المهام المكتملة</div>
+                <small class="text-success">{{ completion_rate }}% معدل الإنجاز</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card analytics-card h-100">
+            <div class="card-body text-center">
+                <div class="metric-value text-danger">{{ overdue_tasks }}</div>
+                <div class="metric-label">المهام المتأخرة</div>
+                <small class="text-danger">تحتاج متابعة عاجلة</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card analytics-card h-100">
+            <div class="card-body text-center">
+                <div class="metric-value text-info">{{ avg_completion_days }}</div>
+                <div class="metric-label">متوسط أيام الإنجاز</div>
+                <small class="text-muted">للمهام المكتملة</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <!-- Completion Rate Circle -->
+    <div class="col-lg-4 mb-4">
+        <div class="card analytics-card h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2 text-primary"></i>
+                    معدل الإنجاز
+                </h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="progress-circle" style="background: conic-gradient(#28a745 {{ completion_rate }}%, #e9ecef {{ completion_rate }}%);">
+                    {{ completion_rate }}%
+                </div>
+                <p class="mt-3 mb-0 text-muted">{{ completed_tasks }} من {{ total_tasks }} مهمة</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Status Distribution -->
+    <div class="col-lg-4 mb-4">
+        <div class="card analytics-card h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar me-2 text-info"></i>
+                    توزيع الحالات
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for status in status_distribution %}
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="badge 
+                        {% if status.status == 'completed' %}bg-success
+                        {% elif status.status == 'in_progress' %}bg-primary
+                        {% elif status.status == 'pending' %}bg-secondary
+                        {% elif status.status == 'overdue' %}bg-danger
+                        {% else %}bg-warning{% endif %}">
+                        {% if status.status == 'completed' %}مكتملة
+                        {% elif status.status == 'in_progress' %}قيد التنفيذ
+                        {% elif status.status == 'pending' %}قيد الانتظار
+                        {% elif status.status == 'canceled' %}ملغاة
+                        {% elif status.status == 'deferred' %}مؤجلة
+                        {% else %}{{ status.status }}{% endif %}
+                    </span>
+                    <span class="fw-bold">{{ status.count }}</span>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center">لا توجد بيانات</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Priority Distribution -->
+    <div class="col-lg-4 mb-4">
+        <div class="card analytics-card h-100">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-flag me-2 text-warning"></i>
+                    توزيع الأولويات
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for priority in priority_distribution %}
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="badge 
+                        {% if priority.priority == 'urgent' %}bg-danger
+                        {% elif priority.priority == 'high' %}bg-warning text-dark
+                        {% elif priority.priority == 'medium' %}bg-info
+                        {% else %}bg-secondary{% endif %}">
+                        {% if priority.priority == 'urgent' %}عاجلة
+                        {% elif priority.priority == 'high' %}عالية
+                        {% elif priority.priority == 'medium' %}متوسطة
+                        {% else %}منخفضة{% endif %}
+                    </span>
+                    <span class="fw-bold">{{ priority.count }}</span>
+                </div>
+                {% empty %}
+                <p class="text-muted text-center">لا توجد بيانات</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Monthly Trends -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card analytics-card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2 text-success"></i>
+                    الاتجاهات الشهرية (آخر 6 أشهر)
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>الشهر</th>
+                                <th>المهام المنشأة</th>
+                                <th>المهام المكتملة</th>
+                                <th>معدل الإنجاز</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for trend in monthly_trends %}
+                            <tr>
+                                <td>{{ trend.month_name }}</td>
+                                <td>
+                                    <span class="badge bg-primary">{{ trend.created }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success">{{ trend.completed }}</span>
+                                </td>
+                                <td>
+                                    {% if trend.created > 0 %}
+                                        {% widthratio trend.completed trend.created 100 %}%
+                                    {% else %}
+                                        0%
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">لا توجد بيانات</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- User Performance (Superuser Only) -->
+{% if user_is_superuser and user_performance %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card analytics-card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-users me-2 text-purple"></i>
+                    أداء المستخدمين (أفضل 10)
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for performance in user_performance %}
+                    <div class="col-lg-6 mb-3">
+                        <div class="user-performance-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ performance.user.username }}</h6>
+                                    <small class="text-muted">
+                                        {{ performance.completed_tasks }}/{{ performance.total_tasks }} مهمة
+                                        {% if performance.overdue_tasks > 0 %}
+                                            | <span class="text-danger">{{ performance.overdue_tasks }} متأخرة</span>
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                <div class="text-end">
+                                    <div class="h5 mb-0 
+                                        {% if performance.completion_rate >= 80 %}text-success
+                                        {% elif performance.completion_rate >= 60 %}text-warning
+                                        {% else %}text-danger{% endif %}">
+                                        {{ performance.completion_rate }}%
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Recent Activity -->
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card analytics-card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-clock me-2 text-info"></i>
+                    النشاط الأخير (30 يوم)
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="h3 text-primary">{{ recent_tasks }}</div>
+                        <small class="text-muted">مهام جديدة</small>
+                    </div>
+                    <div class="col-6">
+                        <div class="h3 text-success">{{ recent_completed }}</div>
+                        <small class="text-muted">مهام مكتملة</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card analytics-card">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-download me-2 text-secondary"></i>
+                    تصدير البيانات
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">تصدير تقرير مفصل بجميع المهام والإحصائيات</p>
+                <a href="{% url 'tasks:export_report' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-file-csv me-1"></i>
+                    تصدير تقرير CSV
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add any additional JavaScript for charts if needed
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    });
+</script>
+{% endblock %}

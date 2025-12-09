@@ -8,7 +8,7 @@ from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 from datetime import date, datetime, timedelta
 from .models import HealthInsuranceProvider, EmployeeHealthInsurance, EmployeeSocialInsurance
-from employees.models import Employee
+from apps.hr.employees.models import Employee
 from org.models import Department
 from .forms import HealthInsuranceProviderForm, EmployeeHealthInsuranceForm, EmployeeSocialInsuranceForm
 

@@ -1,0 +1,509 @@
+{% extends 'inventory/base_inventory.html' %}
+{% load static %}
+{% load inventory_permission_tags %}
+
+{% block title %}قائمة الفواتير - نظام إدارة المخزن{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Enhanced Invoice List Styles */
+    .search-section {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .badge-status {
+        padding: 8px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+    }
+    
+    .badge-status i {
+        margin-left: 0.5rem;
+        font-size: 0.75rem;
+    }
+    
+    .badge-pending {
+        background-color: #fff8e1;
+        color: #f57f17;
+    }
+    
+    .badge-completed {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+    }
+    
+    .badge-cancelled {
+        background-color: #ffebee;
+        color: #c62828;
+    }
+    
+    .badge-in {
+        background-color: #e3f2fd;
+        color: #1565c0;
+    }
+    
+    .badge-out {
+        background-color: #f3e5f5;
+        color: #7b1fa2;
+    }
+    
+    .invoice-actions .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .invoice-item {
+        transition: all 0.2s ease;
+    }
+    
+    .invoice-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .invoice-date {
+        font-size: 0.85rem;
+        color: #6c757d;
+    }
+    
+    .invoice-number {
+        font-weight: 600;
+        text-decoration: none;
+        color: var(--primary-color);
+        transition: all 0.2s ease;
+    }
+    
+    .invoice-number:hover {
+        color: var(--secondary-color);
+        text-decoration: underline;
+    }
+    
+    .invoice-summary {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    .pagination-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .page-count {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .empty-state {
+        padding: 60px 20px;
+        text-align: center;
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        margin: 2rem 0;
+    }
+    
+    .empty-state .icon {
+        font-size: 4rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+    
+    .card-accent {
+        border-top: 3px solid var(--primary-color);
+    }
+    
+    .summary-box {
+        border-radius: 8px;
+        padding: 1rem;
+        display: flex;
+        align-items: center;
+        height: 100%;
+    }
+    
+    .summary-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 1rem;
+        font-size: 1.5rem;
+    }
+    
+    .summary-content h5 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+    }
+    
+    .summary-content p {
+        margin-bottom: 0;
+        color: #6c757d;
+        font-size: 0.9rem;
+        line-height: 1;
+    }
+    
+    .summary-incoming {
+        background-color: #e3f2fd;
+    }
+    
+    .summary-incoming .summary-icon {
+        background-color: #1565c0;
+        color: white;
+    }
+    
+    .summary-outgoing {
+        background-color: #f3e5f5;
+    }
+    
+    .summary-outgoing .summary-icon {
+        background-color: #7b1fa2;
+        color: white;
+    }
+    
+    .summary-pending {
+        background-color: #fff8e1;
+    }
+    
+    .summary-pending .summary-icon {
+        background-color: #f57f17;
+        color: white;
+    }
+    
+    .summary-completed {
+        background-color: #e8f5e9;
+    }
+    
+    .summary-completed .summary-icon {
+        background-color: #2e7d32;
+        color: white;
+    }
+    
+     @media (max-width: 768px) {
+        .search-section {
+            padding: 1rem;
+        }
+        
+        .search-section .row > div {
+            margin-bottom: 0.75rem;
+        }
+        
+        .filter-select {
+            width: 100%;
+        }
+        
+        .summary-boxes .col-md-3 {
+            margin-bottom: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row ps-4">
+    <div class="col-12 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="m-0">
+                <i class="fas fa-file-invoice me-2 text-primary"></i>
+                قائمة الفواتير
+            </h4>
+            
+            {% has_inventory_module_permission "invoices" "add" as can_add_invoice %}
+            {% if can_add_invoice %}
+            <a href="{% url 'inventory:invoice_add' %}" class="btn btn-primary">
+                <i class="fas fa-plus-circle ms-1"></i>
+                إضافة فاتورة جديدة
+            </a>
+            {% endif %}
+        </div>
+        
+        <!-- الإحصائيات -->
+        <div class="row g-3 mb-4 summary-boxes">
+            <div class="col-md-3">
+                <div class="summary-box summary-incoming">
+                    <div class="summary-icon">
+                        <i class="fas fa-arrow-circle-down"></i>
+                    </div>
+                    <div class="summary-content">
+                        <h5>{{ incoming_invoices_count }}</h5>
+                        <p>فواتير توريد</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="summary-box summary-outgoing">
+                    <div class="summary-icon">
+                        <i class="fas fa-arrow-circle-up"></i>
+                    </div>
+                    <div class="summary-content">
+                        <h5>{{ outgoing_invoices_count }}</h5>
+                        <p>فواتير صرف</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="summary-box summary-pending">
+                    <div class="summary-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="summary-content">
+                        <h5>{{ pending_invoices_count }}</h5>
+                        <p>فواتير معلقة</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="summary-box summary-completed">
+                    <div class="summary-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="summary-content">
+                        <h5>{{ completed_invoices_count }}</h5>
+                        <p>فواتير مكتملة</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- البحث والفلاتر -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body search-section">
+                <form method="get" action="{% url 'inventory:invoice_list' %}" class="mb-0">
+                    <div class="row g-3">
+                        <!-- بحث -->
+                        <div class="col-md-3">
+                            <div class="input-group">
+                                <input type="text" name="search" class="form-control" placeholder="البحث برقم الفاتورة..." value="{{ request.GET.search|default:'' }}">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- فلتر نوع الفاتورة -->
+                        <div class="col-md-2">
+                            <select name="invoice_type" class="form-select">
+                                <option value="">كل الأنواع</option>
+                                <option value="in" {% if request.GET.invoice_type == 'in' %}selected{% endif %}>فواتير توريد</option>
+                                <option value="out" {% if request.GET.invoice_type == 'out' %}selected{% endif %}>فواتير صرف</option>
+                            </select>
+                        </div>
+                        
+                        <!-- فلتر حالة الفاتورة -->
+                        <div class="col-md-2">
+                            <select name="status" class="form-select">
+                                <option value="">كل الحالات</option>
+                                <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>معلقة</option>
+                                <option value="completed" {% if request.GET.status == 'completed' %}selected{% endif %}>مكتملة</option>
+                                <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>ملغاة</option>
+                            </select>
+                        </div>
+                        
+                        <!-- فلتر التاريخ -->
+                        <div class="col-md-3">
+                            <div class="input-group">
+                                <input type="date" name="date_from" class="form-control" placeholder="من" value="{{ request.GET.date_from|default:'' }}">
+                                <span class="input-group-text">إلى</span>
+                                <input type="date" name="date_to" class="form-control" placeholder="إلى" value="{{ request.GET.date_to|default:'' }}">
+                            </div>
+                        </div>
+                        
+                        <!-- زر إعادة ضبط الفلاتر -->
+                        <div class="col-md-2">
+                            <a href="{% url 'inventory:invoice_list' %}" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-redo ms-1"></i>
+                                إعادة ضبط
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- قائمة الفواتير -->
+        <div class="card card-accent shadow-sm">
+            <div class="card-header bg-transparent">
+                <h5 class="mb-0">
+                    <i class="fas fa-list me-2"></i>
+                    عرض الفواتير
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                {% if invoices %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>رقم الفاتورة</th>
+                                <th>التاريخ</th>
+                                <th>نوع الفاتورة</th>
+                                <th>الحالة</th>
+                                <th>عدد الأصناف</th>
+                                <th>إجمالي القيمة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for invoice in invoices %}
+                            <tr class="invoice-item">
+                                <td>
+                                    <a href="{% url 'inventory:invoice_detail' invoice.invoice_number %}" class="invoice-number">
+                                        {{ invoice.invoice_number }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <div class="invoice-date">{{ invoice.date|date:"Y/m/d" }}</div>
+                                </td>
+                                <td>
+                                    {% if invoice.invoice_type == 'in' %}
+                                    <span class="badge-status badge-in">
+                                        <i class="fas fa-arrow-circle-down"></i>
+                                        توريد
+                                    </span>
+                                    {% else %}
+                                    <span class="badge-status badge-out">
+                                        <i class="fas fa-arrow-circle-up"></i>
+                                        صرف
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if invoice.status == 'pending' %}
+                                    <span class="badge-status badge-pending">
+                                        <i class="fas fa-clock"></i>
+                                        معلقة
+                                    </span>
+                                    {% elif invoice.status == 'completed' %}
+                                    <span class="badge-status badge-completed">
+                                        <i class="fas fa-check-circle"></i>
+                                        مكتملة
+                                    </span>
+                                    {% else %}
+                                    <span class="badge-status badge-cancelled">
+                                        <i class="fas fa-ban"></i>
+                                        ملغاة
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ invoice.items.count }}</td>
+                                <td>{{ invoice.total_amount }} ج.م</td>
+                                <td class="invoice-actions">
+                                    <a href="{% url 'inventory:invoice_detail' invoice.invoice_number %}" class="btn btn-sm btn-outline-primary" title="عرض التفاصيل">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    
+                                    {% has_inventory_module_permission "invoices" "edit" as can_edit_invoice %}
+                                    {% if can_edit_invoice and invoice.status == 'pending' %}
+                                    <a href="{% url 'inventory:invoice_edit' invoice.invoice_number %}" class="btn btn-sm btn-outline-secondary" title="تعديل">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% endif %}
+                                    
+                                    {% has_inventory_module_permission "invoices" "delete" as can_delete_invoice %}
+                                    {% if can_delete_invoice and invoice.status == 'pending' %}
+                                    <a href="{% url 'inventory:invoice_delete' invoice.invoice_number %}" class="btn btn-sm btn-outline-danger" title="حذف">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                    {% endif %}
+                                    
+                                    {% if invoice.status == 'pending' and can_edit_invoice %}
+                                    <a href="{% url 'inventory:invoice_complete' invoice.invoice_number %}" class="btn btn-sm btn-outline-success" title="تنفيذ الفاتورة">
+                                        <i class="fas fa-check"></i>
+                                    </a>
+                                    {% endif %}
+                                    
+                                    {% if invoice.status == 'pending' and can_edit_invoice %}
+                                    <a href="{% url 'inventory:invoice_cancel' invoice.invoice_number %}" class="btn btn-sm btn-outline-danger" title="إلغاء الفاتورة">
+                                        <i class="fas fa-ban"></i>
+                                    </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- ترقيم الصفحات -->
+                {% if is_paginated %}
+                <div class="card-footer bg-white">
+                    <div class="pagination-section">
+                        <span class="page-count">
+                            عرض {{ page_obj.start_index }} إلى {{ page_obj.end_index }} من أصل {{ paginator.count }} فاتورة
+                        </span>
+                        
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination mb-0">
+                                {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.invoice_type %}invoice_type={{ request.GET.invoice_type }}&{% endif %}{% if request.GET.status %}status={{ request.GET.status }}&{% endif %}{% if request.GET.date_from %}date_from={{ request.GET.date_from }}&{% endif %}{% if request.GET.date_to %}date_to={{ request.GET.date_to }}&{% endif %}page=1" aria-label="الأول">
+                                        <span aria-hidden="true">&laquo;&laquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.invoice_type %}invoice_type={{ request.GET.invoice_type }}&{% endif %}{% if request.GET.status %}status={{ request.GET.status }}&{% endif %}{% if request.GET.date_from %}date_from={{ request.GET.date_from }}&{% endif %}{% if request.GET.date_to %}date_to={{ request.GET.date_to }}&{% endif %}page={{ page_obj.previous_page_number }}" aria-label="السابق">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                                {% endif %}
+                                
+                                {% for i in paginator.page_range %}
+                                    {% if page_obj.number == i %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ i }}</span>
+                                    </li>
+                                    {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.invoice_type %}invoice_type={{ request.GET.invoice_type }}&{% endif %}{% if request.GET.status %}status={{ request.GET.status }}&{% endif %}{% if request.GET.date_from %}date_from={{ request.GET.date_from }}&{% endif %}{% if request.GET.date_to %}date_to={{ request.GET.date_to }}&{% endif %}page={{ i }}">{{ i }}</a>
+                                    </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.invoice_type %}invoice_type={{ request.GET.invoice_type }}&{% endif %}{% if request.GET.status %}status={{ request.GET.status }}&{% endif %}{% if request.GET.date_from %}date_from={{ request.GET.date_from }}&{% endif %}{% if request.GET.date_to %}date_to={{ request.GET.date_to }}&{% endif %}page={{ page_obj.next_page_number }}" aria-label="التالي">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.invoice_type %}invoice_type={{ request.GET.invoice_type }}&{% endif %}{% if request.GET.status %}status={{ request.GET.status }}&{% endif %}{% if request.GET.date_from %}date_from={{ request.GET.date_from }}&{% endif %}{% if request.GET.date_to %}date_to={{ request.GET.date_to }}&{% endif %}page={{ paginator.num_pages }}" aria-label="الأخير">
+                                        <span aria-hidden="true">&raquo;&raquo;</span>
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+                {% endif %}
+                {% else %}
+                <!-- حالة عدم وجود فواتير -->
+                <div class="empty-state">
+                    <div class="icon">
+                        <i class="fas fa-file-invoice"></i>
+                    </div>
+                    <h5>لا توجد فواتير</h5>
+                    <p class="text-muted mb-4">لم يتم العثور على فواتير مطابقة لمعايير البحث الخاصة بك.</p>
+                    
+                    {% has_inventory_module_permission "invoices" "add" as can_add_invoice %}
+                    {% if can_add_invoice %}
+                    <div>
+                        <a href="{% url 'inventory:invoice_add' %}" class="btn btn-primary">
+                            <i class="fas fa-plus-circle ms-1"></i> إضافة فاتورة جديدة
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

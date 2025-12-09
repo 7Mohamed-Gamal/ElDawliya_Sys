@@ -75,7 +75,7 @@ class PerformanceDataGenerator(BaseFixtureGenerator):
         """Generate large number of employees"""
         print(f"👥 إنشاء {count} موظف للاختبار...")
 
-        from employees.models import Employee
+        from apps.hr.employees.models import Employee
         from org.models import Branch, Department, Job
 
         # Get related objects
@@ -143,7 +143,7 @@ class PerformanceDataGenerator(BaseFixtureGenerator):
         """Generate large number of products"""
         print(f"📦 إنشاء {count} منتج للاختبار...")
 
-        from inventory.models import TblProducts, TblCategories, TblUnitsSpareparts
+        from apps.inventory.models import TblProducts, TblCategories, TblUnitsSpareparts
 
         categories = list(TblCategories.objects.all())
         units = list(TblUnitsSpareparts.objects.all())
@@ -199,8 +199,8 @@ class PerformanceDataGenerator(BaseFixtureGenerator):
         """Generate large number of tasks"""
         print(f"📋 إنشاء {count} مهمة للاختبار...")
 
-        from tasks.models import Task, TaskCategory
-        from meetings.models import Meeting
+        from apps.projects.tasks.models import Task, TaskCategory
+        from apps.projects.meetings.models import Meeting
 
         users = list(User.objects.all())
         categories = list(TaskCategory.objects.all())
@@ -264,7 +264,7 @@ class PerformanceDataGenerator(BaseFixtureGenerator):
         """Generate large number of meetings"""
         print(f"🤝 إنشاء {count} اجتماع للاختبار...")
 
-        from meetings.models import Meeting, Attendee
+        from apps.projects.meetings.models import Meeting, Attendee
 
         users = list(User.objects.all())
         if not users:
@@ -313,7 +313,7 @@ class PerformanceDataGenerator(BaseFixtureGenerator):
 
     def add_meeting_attendees(self, meetings, users):
         """Add attendees to meetings"""
-        from meetings.models import Attendee
+        from apps.projects.meetings.models import Attendee
 
         attendees_to_create = []
 
@@ -450,8 +450,8 @@ class LoadTestScenarioGenerator:
         """Create data patterns that will stress the database"""
         print("🔍 إنشاء سيناريو الاستعلامات الثقيلة...")
 
-        from tasks.models import Task
-        from employees.models import Employee
+        from apps.projects.tasks.models import Task
+        from apps.hr.employees.models import Employee
 
         # Create tasks with complex relationships
         employees = list(Employee.objects.all()[:100])

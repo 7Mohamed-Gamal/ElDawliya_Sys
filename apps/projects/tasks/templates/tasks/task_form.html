@@ -1,0 +1,165 @@
+{% extends 'tasks/base_tasks.html' %}
+{% load static %}
+
+{% block title %}
+{% if edit %}تعديل مهمة{% else %}إنشاء مهمة جديدة{% endif %} - نظام الدولية
+{% endblock %}
+
+{% block page_title %}
+{% if edit %}تعديل مهمة{% else %}إنشاء مهمة جديدة{% endif %}
+{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'tasks:list' %}">المهام</a></li>
+<li class="breadcrumb-item active">{% if edit %}تعديل{% else %}إنشاء{% endif %}</li>
+{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-header bg-white py-3">
+        <h5 class="card-title mb-0">
+            {% if edit %}
+            تعديل المهمة
+            {% elif meeting %}
+            إنشاء مهمة جديدة للاجتماع: {{ meeting.title }}
+            {% else %}
+            إنشاء مهمة جديدة
+            {% endif %}
+        </h5>
+    </div>
+    <div class="card-body">
+        <form method="post" class="needs-validation" novalidate>
+            {% csrf_token %}
+
+            <div class="row g-3">
+                <div class="col-md-12 mb-3">
+                    <label for="{{ form.title.id_for_label }}" class="form-label">عنوان المهمة</label>
+                    <div class="form-control-wrapper">
+                        {{ form.title }}
+                    </div>
+                    {% if form.title.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.title.errors %}
+                        {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-12 mb-3">
+                    <label for="{{ form.description.id_for_label }}" class="form-label">وصف المهمة <span class="text-danger">*</span></label>
+                    <div class="form-control-wrapper">
+                        {{ form.description }}
+                    </div>
+                    {% if form.description.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.description.errors %}
+                        {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.assigned_to.id_for_label }}" class="form-label">المكلف بالمهمة <span class="text-danger">*</span></label>
+                    <div class="form-control-wrapper">
+                        {% if request.user.is_superuser %}
+                            {{ form.assigned_to }}
+                        {% else %}
+                            <select class="form-select" disabled>
+                                <option>{{ form.assigned_to.value }}</option>
+                            </select>
+                            <input type="hidden" name="assigned_to" value="{{ form.assigned_to.value.id }}" />
+                            <div class="form-text text-muted">
+                                <i class="fas fa-info-circle"></i> فقط المشرفين يمكنهم تغيير المكلف بالمهمة
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% if form.assigned_to.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.assigned_to.errors %}
+                        {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.status.id_for_label }}" class="form-label">الحالة</label>
+                    <div class="form-control-wrapper">
+                        {{ form.status }}
+                    </div>
+                    {% if form.status.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.status.errors %}
+                        {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.start_date.id_for_label }}" class="form-label">تاريخ البدء <span class="text-danger">*</span></label>
+                    <div class="form-control-wrapper">
+                        {{ form.start_date }}
+                    </div>
+                    {% if form.start_date.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.start_date.errors %}
+                        {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label for="{{ form.end_date.id_for_label }}" class="form-label">تاريخ الانتهاء <span class="text-danger">*</span></label>
+                    <div class="form-control-wrapper">
+                        {{ form.end_date }}
+                    </div>
+                    {% if form.end_date.errors %}
+                    <div class="invalid-feedback d-block">
+                        {% for error in form.end_date.errors %}
+                        {{ error }}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% if form.meeting %}
+                <div class="col-md-12 mb-3 d-none">
+                    {{ form.meeting }}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="d-flex justify-content-between mt-4">
+                <a href="{% if meeting %}{% url 'meetings:detail' meeting.id %}{% else %}{% url 'tasks:list' %}{% endif %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-right me-1"></i>
+                    الرجوع
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i>
+                    {% if edit %}تحديث{% else %}حفظ{% endif %} المهمة
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Form validation
+        const form = document.querySelector('form.needs-validation');
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        });
+    });
+</script>
+{% endblock %}

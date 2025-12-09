@@ -82,7 +82,7 @@ class TrainingScenarioGenerator(BaseFixtureGenerator):
         )
 
         # Create sample employees for training
-        from employees.models import Employee
+        from apps.hr.employees.models import Employee
 
         training_employees = []
 
@@ -156,7 +156,7 @@ class TrainingScenarioGenerator(BaseFixtureGenerator):
         training_employees.append(performance_employee)
 
         # Create leave requests for training
-        from leaves.models import LeaveType, LeaveRequest
+        from apps.hr.leaves.models import LeaveType, LeaveRequest
 
         # Create leave types if they don't exist
         annual_leave, _ = LeaveType.objects.get_or_create(
@@ -192,7 +192,7 @@ class TrainingScenarioGenerator(BaseFixtureGenerator):
         )
 
         # Create attendance records for training
-        from attendance.models import EmployeeAttendance
+        from apps.hr.attendance.models import EmployeeAttendance
 
         # Create attendance for the last 30 days
         for days_back in range(30):
@@ -268,7 +268,7 @@ class TrainingScenarioGenerator(BaseFixtureGenerator):
         )
 
         # Create inventory structure for training
-        from inventory.models import TblCategories, TblUnitsSpareparts, TblSuppliers, TblProducts
+        from apps.inventory.models import TblCategories, TblUnitsSpareparts, TblSuppliers, TblProducts
 
         # Categories
         office_supplies = TblCategories.objects.create(
@@ -373,7 +373,7 @@ class TrainingScenarioGenerator(BaseFixtureGenerator):
         training_products.append(normal_product)
 
         # Create purchase requests for training
-        from Purchase_orders.models import Vendor, PurchaseRequest, PurchaseRequestItem
+        from apps.procurement.purchase_orders.models import Vendor, PurchaseRequest, PurchaseRequestItem
 
         # Create vendor
         training_vendor = Vendor.objects.create(
@@ -454,7 +454,7 @@ class TrainingScenarioGenerator(BaseFixtureGenerator):
         )
 
         # Create project meeting
-        from meetings.models import Meeting, Attendee
+        from apps.projects.meetings.models import Meeting, Attendee
 
         project_meeting = Meeting.objects.create(
             title='اجتماع بدء مشروع تطوير النظام الإلكتروني',
@@ -470,7 +470,7 @@ class TrainingScenarioGenerator(BaseFixtureGenerator):
             Attendee.objects.create(meeting=project_meeting, user=attendee)
 
         # Create project tasks with different statuses and priorities
-        from tasks.models import Task, TaskCategory, TaskStep
+        from apps.projects.tasks.models import Task, TaskCategory, TaskStep
 
         # Create task category
         development_category = TaskCategory.objects.create(
@@ -770,7 +770,7 @@ class EdgeCaseScenarioGenerator(BaseFixtureGenerator):
         edge_users.append(special_char_user)
 
         # Create products with edge case values
-        from inventory.models import TblCategories, TblUnitsSpareparts, TblProducts
+        from apps.inventory.models import TblCategories, TblUnitsSpareparts, TblProducts
 
         # Category for edge cases
         edge_category = TblCategories.objects.create(
@@ -826,7 +826,7 @@ class EdgeCaseScenarioGenerator(BaseFixtureGenerator):
         )
 
         # Create tasks with edge case dates
-        from tasks.models import Task, TaskCategory
+        from apps.projects.tasks.models import Task, TaskCategory
 
         edge_category_task = TaskCategory.objects.create(
             name='اختبار الحالات الحدية',

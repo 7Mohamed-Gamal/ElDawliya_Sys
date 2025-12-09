@@ -1,0 +1,111 @@
+{% extends 'inventory/base_inventory.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "إعدادات النظام" %} - {% trans "نظام إدارة المخزن" %}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">{% trans "إعدادات النظام" %}</h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <!-- لغة النظام -->
+                        <div class="mb-4">
+                            <label for="{{ form.language.id_for_label }}" class="form-label">
+                                {% trans "لغة النظام" %}
+                            </label>
+                            {{ form.language }}
+                            {% if form.language.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.language.errors }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">
+                                {% trans "اختر لغة واجهة النظام" %}
+                            </div>
+                        </div>
+
+                        <!-- الخط المستخدم -->
+                        <div class="mb-4">
+                            <label for="{{ form.font_family.id_for_label }}" class="form-label">
+                                {% trans "الخط المستخدم" %}
+                            </label>
+                            {{ form.font_family }}
+                            {% if form.font_family.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.font_family.errors }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">
+                                {% trans "اختر الخط المستخدم في النظام" %}
+                            </div>
+                            <!-- معاينة الخطوط -->
+                            <div class="mt-3 p-3 border rounded">
+                                <h6 class="mb-3">{% trans "معاينة الخطوط" %}</h6>
+                                <p class="mb-2" style="font-family: 'Cairo';">
+                                    Cairo - هذا نص تجريبي بخط القاهرة
+                                </p>
+                                <p class="mb-2" style="font-family: 'Tajawal';">
+                                    Tajawal - هذا نص تجريبي بخط تجوال
+                                </p>
+                                <p class="mb-2" style="font-family: 'Almarai';">
+                                    Almarai - هذا نص تجريبي بخط المراعي
+                                </p>
+                                <p class="mb-2" style="font-family: 'IBM Plex Sans Arabic';">
+                                    IBM Plex - هذا نص تجريبي بخط آي بي إم
+                                </p>
+                                <p class="mb-2" style="font-family: 'Noto Sans Arabic';">
+                                    Noto Sans - هذا نص تجريبي بخط نوتو سانس
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- اتجاه النص -->
+                        <div class="mb-4">
+                            <label for="{{ form.text_direction.id_for_label }}" class="form-label">
+                                {% trans "اتجاه النص" %}
+                            </label>
+                            {{ form.text_direction }}
+                            {% if form.text_direction.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.text_direction.errors }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">
+                                {% trans "اختر اتجاه النص في النظام" %}
+                            </div>
+                        </div>
+
+                        <!-- أزرار التحكم -->
+                        <div class="d-flex justify-content-end gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>
+                                {% trans "حفظ الإعدادات" %}
+                            </button>
+                            <a href="{% url 'inventory:dashboard' %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-1"></i>
+                                {% trans "إلغاء" %}
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- إضافة الخطوط -->
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Almarai:wght@400;700&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap');
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600&display=swap');
+</style>
+{% endblock %} 

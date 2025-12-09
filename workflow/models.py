@@ -1,5 +1,5 @@
 from django.db import models
-from employees.models import Employee
+from apps.hr.employees.models import Employee
 
 
 class WorkflowStep(models.Model):

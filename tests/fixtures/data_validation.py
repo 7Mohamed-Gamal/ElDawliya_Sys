@@ -203,7 +203,7 @@ class TestDataValidator:
         errors = []
 
         try:
-            from employees.models import Employee
+            from apps.hr.employees.models import Employee
 
             count = Employee.objects.count()
             if count == 0:
@@ -269,7 +269,7 @@ class TestDataValidator:
         errors = []
 
         try:
-            from inventory.models import TblProducts, TblCategories, TblUnitsSpareparts
+            from apps.inventory.models import TblProducts, TblCategories, TblUnitsSpareparts
 
             # Check products
             products_count = TblProducts.objects.count()
@@ -333,7 +333,7 @@ class TestDataValidator:
         errors = []
 
         try:
-            from tasks.models import Task
+            from apps.projects.tasks.models import Task
 
             count = Task.objects.count()
             if count == 0:
@@ -382,7 +382,7 @@ class TestDataValidator:
         errors = []
 
         try:
-            from meetings.models import Meeting, Attendee
+            from apps.projects.meetings.models import Meeting, Attendee
 
             count = Meeting.objects.count()
             if count == 0:
@@ -420,7 +420,7 @@ class TestDataValidator:
         errors = []
 
         try:
-            from Purchase_orders.models import PurchaseRequest, PurchaseRequestItem
+            from apps.procurement.purchase_orders.models import PurchaseRequest, PurchaseRequestItem
 
             count = PurchaseRequest.objects.count()
             if count == 0:
@@ -453,7 +453,7 @@ class TestDataValidator:
         errors = []
 
         try:
-            from attendance.models import EmployeeAttendance
+            from apps.hr.attendance.models import EmployeeAttendance
 
             count = EmployeeAttendance.objects.count()
             if count == 0:
@@ -491,7 +491,7 @@ class TestDataValidator:
         errors = []
 
         try:
-            from payrolls.models import PayrollRecord
+            from apps.hr.payroll.models import PayrollRecord
 
             count = PayrollRecord.objects.count()
             if count == 0:
@@ -530,7 +530,7 @@ class TestDataValidator:
         errors = []
 
         try:
-            from leaves.models import LeaveRequest
+            from apps.hr.leaves.models import LeaveRequest
 
             count = LeaveRequest.objects.count()
             if count == 0:
@@ -569,7 +569,7 @@ class TestDataValidator:
 
         try:
             # Check employee-user relationships
-            from employees.models import Employee
+            from apps.hr.employees.models import Employee
 
             employees_without_users = Employee.objects.filter(
                 user__isnull=True
@@ -578,7 +578,7 @@ class TestDataValidator:
                 self.warnings.append(f"موظفين بدون حسابات مستخدمين: {employees_without_users}")
 
             # Check task assignments to valid users
-            from tasks.models import Task
+            from apps.projects.tasks.models import Task
 
             tasks_with_invalid_assignees = Task.objects.filter(
                 assigned_to__is_active=False
@@ -587,7 +587,7 @@ class TestDataValidator:
                 self.warnings.append(f"مهام مُعيَّنة لمستخدمين غير نشطين: {tasks_with_invalid_assignees}")
 
             # Check product-category relationships
-            from inventory.models import TblProducts
+            from apps.inventory.models import TblProducts
 
             products_with_invalid_categories = TblProducts.objects.filter(
                 cat__isnull=False,
@@ -622,7 +622,7 @@ class TestDataValidator:
 
         # Employee statistics
         try:
-            from employees.models import Employee
+            from apps.hr.employees.models import Employee
 
             total_employees = Employee.objects.count()
             active_employees = Employee.objects.filter(emp_status='Active').count()
@@ -638,7 +638,7 @@ class TestDataValidator:
 
         # Task statistics
         try:
-            from tasks.models import Task
+            from apps.projects.tasks.models import Task
 
             total_tasks = Task.objects.count()
             completed_tasks = Task.objects.filter(status='completed').count()
@@ -658,7 +658,7 @@ class TestDataValidator:
 
         # Inventory statistics
         try:
-            from inventory.models import TblProducts
+            from apps.inventory.models import TblProducts
 
             total_products = TblProducts.objects.count()
             low_stock_products = TblProducts.objects.filter(

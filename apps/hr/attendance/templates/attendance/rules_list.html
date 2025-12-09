@@ -1,0 +1,672 @@
+{% extends 'attendance/base_attendance.html' %}
+{% load static %}
+
+{% block title %}قواعد الحضور والانصراف{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active">قواعد الحضور</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .rule-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        margin-bottom: 20px;
+    }
+    .rule-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    .rule-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px 15px 0 0;
+        padding: 20px;
+    }
+    .rule-icon {
+        width: 60px;
+        height: 60px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 15px;
+    }
+    .time-badge {
+        background: rgba(255,255,255,0.2);
+        color: white;
+        padding: 5px 15px;
+        border-radius: 20px;
+        font-weight: bold;
+        margin: 0 5px;
+    }
+    .default-badge {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background: #28a745;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 15px;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 15px;
+        margin-top: 15px;
+    }
+    .stat-item {
+        text-align: center;
+        padding: 10px;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+    .stat-number {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #667eea;
+    }
+    .stat-label {
+        font-size: 0.8rem;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">
+            <i class="fas fa-cogs me-3"></i>قواعد الحضور والانصراف
+        </h2>
+        <p class="text-muted mb-0">إدارة أوقات العمل وقواعد الحضور للموظفين</p>
+    </div>
+    <div>
+        <a href="{% url 'attendance:add_rule' %}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>إضافة قاعدة جديدة
+        </a>
+    </div>
+</div>
+
+<!-- Quick Stats -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0">إجمالي القواعد</h6>
+                        <h3 class="mb-0">{{ total_rules|default:0 }}</h3>
+                    </div>
+                    <div>
+                        <i class="fas fa-cogs fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0">القواعد النشطة</h6>
+                        <h3 class="mb-0">{{ active_rules|default:0 }}</h3>
+                    </div>
+                    <div>
+                        <i class="fas fa-check-circle fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0">الموظفين المرتبطين</h6>
+                        <h3 class="mb-0">{{ assigned_employees|default:0 }}</h3>
+                    </div>
+                    <div>
+                        <i class="fas fa-users fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-3 col-md-6">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0">القاعدة الافتراضية</h6>
+                        <h3 class="mb-0">{{ default_rule.rule_name|default:"غير محدد"|truncatechars:10 }}</h3>
+                    </div>
+                    <div>
+                        <i class="fas fa-star fa-2x opacity-75"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Rules Grid -->
+<div class="row">
+    {% for rule in items %}
+    <div class="col-lg-6 col-xl-4">
+        <div class="card rule-card">
+            {% if rule.is_default %}
+            <div class="default-badge">
+                <i class="fas fa-star me-1"></i>افتراضي
+            </div>
+            {% endif %}
+            
+            <div class="rule-header">
+                <div class="rule-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <h5 class="mb-2">{{ rule.rule_name }}</h5>
+                <div class="d-flex justify-content-center align-items-center">
+                    <span class="time-badge">
+                        <i class="fas fa-sign-in-alt me-1"></i>
+                        {{ rule.shift_start|time:"h:i A" }}
+                    </span>
+                    <i class="fas fa-arrow-right mx-2"></i>
+                    <span class="time-badge">
+                        <i class="fas fa-sign-out-alt me-1"></i>
+                        {{ rule.shift_end|time:"h:i A" }}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <div class="text-center">
+                            <div class="h5 mb-0 text-primary">{{ rule.work_hours|default:8 }}</div>
+                            <small class="text-muted">ساعات العمل</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center">
+                            <div class="h5 mb-0 text-info">{{ rule.break_duration|default:60 }}</div>
+                            <small class="text-muted">دقائق الاستراحة</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <h6 class="mb-2">
+                        <i class="fas fa-info-circle me-2"></i>تفاصيل القاعدة
+                    </h6>
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <div class="stat-item">
+                                <div class="stat-number">{{ rule.late_tolerance|default:15 }}</div>
+                                <div class="stat-label">دقائق التسامح</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="stat-item">
+                                <div class="stat-number">{{ rule.overtime_threshold|default:480 }}</div>
+                                <div class="stat-label">حد الوقت الإضافي</div>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="stat-item">
+                                <div class="stat-number">{{ rule.assigned_count|default:0 }}</div>
+                                <div class="stat-label">موظف مرتبط</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if rule.description %}
+                <div class="mb-3">
+                    <h6 class="mb-2">
+                        <i class="fas fa-file-alt me-2"></i>الوصف
+                    </h6>
+                    <p class="text-muted small mb-0">{{ rule.description|truncatechars:100 }}</p>
+                </div>
+                {% endif %}
+                
+                <div class="mb-3">
+                    <h6 class="mb-2">
+                        <i class="fas fa-calendar-week me-2"></i>أيام العمل
+                    </h6>
+                    <div class="d-flex flex-wrap gap-1">
+                        {% if rule.work_days %}
+                            {% for day in rule.work_days %}
+                            <span class="badge bg-primary">{{ day }}</span>
+                            {% endfor %}
+                        {% else %}
+                            <span class="badge bg-secondary">السبت - الخميس</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="badge bg-{% if rule.is_active %}success{% else %}secondary{% endif %}">
+                            {% if rule.is_active %}نشط{% else %}غير نشط{% endif %}
+                        </span>
+                        {% if rule.is_flexible %}
+                        <span class="badge bg-info">مرن</span>
+                        {% endif %}
+                    </div>
+                    <div class="btn-group" role="group">
+                        <a href="{% url 'attendance:update_rule' rule.pk %}"
+                           class="btn btn-sm btn-outline-primary" title="تعديل">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <button class="btn btn-sm btn-outline-info" 
+                                onclick="viewRuleDetails({{ rule.pk }})" title="تفاصيل">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        {% if not rule.is_default %}
+                        <button class="btn btn-sm btn-outline-success" 
+                                onclick="setAsDefault({{ rule.pk }})" title="تعيين كافتراضي">
+                            <i class="fas fa-star"></i>
+                        </button>
+                        <a href="{% url 'attendance:delete_rule' rule.pk %}"
+                           class="btn btn-sm btn-outline-danger" 
+                           onclick="return confirm('هل أنت متأكد من حذف هذه القاعدة؟')" title="حذف">
+                            <i class="fas fa-trash"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-cogs fa-4x text-muted mb-3"></i>
+                <h4 class="text-muted">لا توجد قواعد حضور</h4>
+                <p class="text-muted mb-4">ابدأ بإنشاء قاعدة حضور جديدة لتنظيم أوقات العمل</p>
+                <a href="{% url 'attendance:add_rule' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>إنشاء قاعدة جديدة
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Rule Details Modal -->
+<div class="modal fade" id="ruleDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-cogs me-2"></i>تفاصيل قاعدة الحضور
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="ruleDetailsContent">
+                <div class="text-center">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">جاري التحميل...</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+                <button type="button" class="btn btn-primary" id="editRuleBtn">
+                    <i class="fas fa-edit me-2"></i>تعديل القاعدة
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Actions Modal -->
+<div class="modal fade" id="bulkActionsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-tasks me-2"></i>إجراءات متعددة
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="bulkActionsForm">
+                    <div class="mb-3">
+                        <label class="form-label">اختر الإجراء</label>
+                        <select class="form-select" name="action" required>
+                            <option value="">-- اختر الإجراء --</option>
+                            <option value="activate">تفعيل القواعد المحددة</option>
+                            <option value="deactivate">إلغاء تفعيل القواعد المحددة</option>
+                            <option value="delete">حذف القواعد المحددة</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">القواعد المحددة</label>
+                        <div id="selectedRules"></div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" onclick="executeBulkAction()">
+                    <i class="fas fa-check me-2"></i>تنفيذ
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// View rule details
+function viewRuleDetails(ruleId) {
+    const modal = new bootstrap.Modal(document.getElementById('ruleDetailsModal'));
+    const content = document.getElementById('ruleDetailsContent');
+    const editBtn = document.getElementById('editRuleBtn');
+    
+    // Show loading
+    content.innerHTML = `
+        <div class="text-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">جاري التحميل...</span>
+            </div>
+        </div>
+    `;
+    
+    modal.show();
+    
+    // Simulate loading rule details
+    setTimeout(() => {
+        content.innerHTML = `
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="mb-3">معلومات أساسية</h6>
+                    <table class="table table-sm">
+                        <tr>
+                            <td><strong>اسم القاعدة:</strong></td>
+                            <td>دوام عادي</td>
+                        </tr>
+                        <tr>
+                            <td><strong>وقت البداية:</strong></td>
+                            <td>08:00 صباحاً</td>
+                        </tr>
+                        <tr>
+                            <td><strong>وقت النهاية:</strong></td>
+                            <td>05:00 مساءً</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ساعات العمل:</strong></td>
+                            <td>8 ساعات</td>
+                        </tr>
+                        <tr>
+                            <td><strong>مدة الاستراحة:</strong></td>
+                            <td>60 دقيقة</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="mb-3">إعدادات متقدمة</h6>
+                    <table class="table table-sm">
+                        <tr>
+                            <td><strong>دقائق التسامح:</strong></td>
+                            <td>15 دقيقة</td>
+                        </tr>
+                        <tr>
+                            <td><strong>حد الوقت الإضافي:</strong></td>
+                            <td>480 دقيقة</td>
+                        </tr>
+                        <tr>
+                            <td><strong>أيام العمل:</strong></td>
+                            <td>السبت - الخميس</td>
+                        </tr>
+                        <tr>
+                            <td><strong>نوع الدوام:</strong></td>
+                            <td>ثابت</td>
+                        </tr>
+                        <tr>
+                            <td><strong>الحالة:</strong></td>
+                            <td><span class="badge bg-success">نشط</span></td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <h6 class="mb-3">الموظفين المرتبطين بهذه القاعدة</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>الموظف</th>
+                                    <th>القسم</th>
+                                    <th>تاريخ التطبيق</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>محمد أحمد</td>
+                                    <td>تقنية المعلومات</td>
+                                    <td>01/01/2024</td>
+                                </tr>
+                                <tr>
+                                    <td>فاطمة علي</td>
+                                    <td>الموارد البشرية</td>
+                                    <td>01/01/2024</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Set edit button action
+        editBtn.onclick = () => {
+            window.location.href = `/attendance/rules/${ruleId}/edit/`;
+        };
+    }, 1000);
+}
+
+// Set rule as default
+function setAsDefault(ruleId) {
+    if (confirm('هل أنت متأكد من تعيين هذه القاعدة كافتراضية؟')) {
+        fetch(`/attendance/rules/${ruleId}/set-default/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('حدث خطأ: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('حدث خطأ في الاتصال');
+        });
+    }
+}
+
+// Bulk actions functionality
+let selectedRules = [];
+
+function toggleRuleSelection(ruleId) {
+    const index = selectedRules.indexOf(ruleId);
+    if (index > -1) {
+        selectedRules.splice(index, 1);
+    } else {
+        selectedRules.push(ruleId);
+    }
+    updateBulkActionsButton();
+}
+
+function updateBulkActionsButton() {
+    const bulkBtn = document.getElementById('bulkActionsBtn');
+    if (bulkBtn) {
+        bulkBtn.style.display = selectedRules.length > 0 ? 'block' : 'none';
+        bulkBtn.textContent = `إجراءات متعددة (${selectedRules.length})`;
+    }
+}
+
+function showBulkActionsModal() {
+    const modal = new bootstrap.Modal(document.getElementById('bulkActionsModal'));
+    const selectedRulesDiv = document.getElementById('selectedRules');
+    
+    selectedRulesDiv.innerHTML = selectedRules.map(id => 
+        `<span class="badge bg-primary me-1">قاعدة ${id}</span>`
+    ).join('');
+    
+    modal.show();
+}
+
+function executeBulkAction() {
+    const form = document.getElementById('bulkActionsForm');
+    const formData = new FormData(form);
+    const action = formData.get('action');
+    
+    if (!action) {
+        alert('يرجى اختيار الإجراء');
+        return;
+    }
+    
+    if (confirm(`هل أنت متأكد من تنفيذ هذا الإجراء على ${selectedRules.length} قاعدة؟`)) {
+        fetch('/attendance/rules/bulk-action/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                action: action,
+                rule_ids: selectedRules
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('حدث خطأ: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('حدث خطأ في الاتصال');
+        });
+    }
+}
+
+// Add selection checkboxes to rule cards
+document.addEventListener('DOMContentLoaded', function() {
+    const ruleCards = document.querySelectorAll('.rule-card');
+    
+    // Add bulk actions button to header
+    const headerDiv = document.querySelector('.d-flex.justify-content-between.align-items-center.mb-4 > div:last-child');
+    if (headerDiv && ruleCards.length > 0) {
+        const bulkBtn = document.createElement('button');
+        bulkBtn.id = 'bulkActionsBtn';
+        bulkBtn.className = 'btn btn-outline-secondary me-2';
+        bulkBtn.style.display = 'none';
+        bulkBtn.innerHTML = '<i class="fas fa-tasks me-2"></i>إجراءات متعددة';
+        bulkBtn.onclick = showBulkActionsModal;
+        headerDiv.insertBefore(bulkBtn, headerDiv.firstChild);
+    }
+    
+    // Add checkboxes to rule cards
+    ruleCards.forEach((card, index) => {
+        const ruleId = index + 1; // This should be the actual rule ID from backend
+        const checkbox = document.createElement('div');
+        checkbox.className = 'form-check position-absolute';
+        checkbox.style.cssText = 'top: 15px; left: 15px; z-index: 10;';
+        checkbox.innerHTML = `
+            <input class="form-check-input" type="checkbox" id="rule_${ruleId}" 
+                   onchange="toggleRuleSelection(${ruleId})">
+            <label class="form-check-label" for="rule_${ruleId}"></label>
+        `;
+        card.style.position = 'relative';
+        card.appendChild(checkbox);
+    });
+});
+
+// Auto-refresh functionality
+let autoRefreshInterval;
+
+function startAutoRefresh() {
+    autoRefreshInterval = setInterval(() => {
+        // Check for updates without full page reload
+        fetch(window.location.href, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.has_updates) {
+                // Show notification about updates
+                showUpdateNotification();
+            }
+        })
+        .catch(error => {
+            console.log('Auto-refresh failed:', error);
+        });
+    }, 30000); // Check every 30 seconds
+}
+
+function showUpdateNotification() {
+    const notification = document.createElement('div');
+    notification.className = 'alert alert-info alert-dismissible fade show position-fixed';
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        <i class="fas fa-info-circle me-2"></i>
+        تم تحديث قواعد الحضور. 
+        <a href="#" onclick="location.reload()" class="alert-link">انقر هنا للتحديث</a>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(notification);
+    
+    // Auto-dismiss after 10 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 10000);
+}
+
+// Start auto-refresh on page load
+document.addEventListener('DOMContentLoaded', function() {
+    startAutoRefresh();
+});
+
+// Stop auto-refresh when page is hidden
+document.addEventListener('visibilitychange', function() {
+    if (document.hidden) {
+        if (autoRefreshInterval) {
+            clearInterval(autoRefreshInterval);
+        }
+    } else {
+        startAutoRefresh();
+    }
+});
+</script>
+{% endblock %}
+

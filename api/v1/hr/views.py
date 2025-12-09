@@ -202,7 +202,7 @@ class AttendanceViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'])
     def bulk_import(self, request):
-        """Bulk import attendance from device"""
+        """Bulk import apps.hr.attendance from device"""
         service = AttendanceService(user=request.user)
 
         result = service.import_attendance_data(request.data)
@@ -297,13 +297,13 @@ class EvaluationViewSet(viewsets.ModelViewSet):
 
 class BulkEmployeeImportView(APIView):
     """
-    Bulk import employees from Excel/CSV
+    Bulk import apps.hr.employees from Excel/CSV
     استيراد مجمع للموظفين من Excel/CSV
     """
     permission_classes = [IsAuthenticated, HasAPIAccess, ModulePermission('hr', 'add')]
 
     @swagger_auto_schema(
-        operation_description="Bulk import employees from file",
+        operation_description="Bulk import apps.hr.employees from file",
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={

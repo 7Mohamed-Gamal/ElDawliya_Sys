@@ -1,0 +1,651 @@
+{% extends 'attendance/base.html' %}
+{% load static %}
+
+{% block title %}لوحة تحكم الحضور - نظام الدولية{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.css">
+<style>
+.attendance-dashboard {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 20px;
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 15px 35px rgba(102, 126, 234, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.attendance-dashboard::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    animation: float 20s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(180deg); }
+}
+
+.stat-card {
+    background: white;
+    border-radius: 15px;
+    padding: 1.8rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    border: 1px solid #e5e7eb;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, var(--card-color, #3b82f6), var(--card-color-dark, #1d4ed8));
+}
+
+.stat-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+}
+
+.stat-icon {
+    width: 70px;
+    height: 70px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    margin-bottom: 1.2rem;
+    background: linear-gradient(135deg, var(--card-color, #3b82f6), var(--card-color-dark, #1d4ed8));
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+}
+
+.stat-value {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, var(--card-color, #3b82f6), var(--card-color-dark, #1d4ed8));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.stat-label {
+    color: #6b7280;
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 0.8rem;
+}
+
+.stat-change {
+    font-size: 0.9rem;
+    font-weight: 600;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.real-time-section {
+    background: white;
+    border-radius: 15px;
+    padding: 1.8rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+}
+
+.employee-status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.employee-card {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 1.2rem;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+.employee-card:hover {
+    background: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.employee-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    margin-bottom: 0.8rem;
+}
+
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-left: 0.5rem;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 currentColor; }
+    70% { box-shadow: 0 0 0 10px transparent; }
+    100% { box-shadow: 0 0 0 0 transparent; }
+}
+
+.chart-container {
+    background: white;
+    border-radius: 15px;
+    padding: 1.8rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+}
+
+.quick-actions {
+    background: white;
+    border-radius: 15px;
+    padding: 1.8rem;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    text-decoration: none;
+    color: white;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    margin-bottom: 1rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.action-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s;
+}
+
+.action-btn:hover::before {
+    left: 100%;
+}
+
+.action-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    color: white;
+    text-decoration: none;
+}
+
+.department-stats {
+    background: white;
+    border-radius: 15px;
+    padding: 1.8rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+}
+
+.dept-item {
+    display: flex;
+    align-items: center;
+    justify-content: between;
+    padding: 1rem 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.dept-item:last-child {
+    border-bottom: none;
+}
+
+.attendance-meter {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: conic-gradient(var(--meter-color) var(--percentage), #e5e7eb 0);
+    position: relative;
+}
+
+.attendance-meter::before {
+    content: '';
+    position: absolute;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: white;
+}
+
+.meter-text {
+    position: relative;
+    z-index: 1;
+    font-weight: 700;
+    font-size: 0.8rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Dashboard Header -->
+        <div class="attendance-dashboard">
+            <div class="row align-items-center" style="position: relative; z-index: 1;">
+                <div class="col-md-8">
+                    <h1 class="h2 mb-3">
+                        <i class="fas fa-clock me-3"></i>
+                        لوحة تحكم الحضور والانصراف
+                    </h1>
+                    <p class="mb-0 opacity-90 fs-5">
+                        متابعة حضور الموظفين في الوقت الفعلي
+                    </p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <div class="d-flex flex-column align-items-md-end">
+                        <div class="mb-3">
+                            <div class="badge bg-light text-dark px-4 py-2 fs-6">
+                                <i class="fas fa-calendar-day me-2"></i>
+                                {{ today|date:"l, d F Y" }}
+                            </div>
+                        </div>
+                        <div>
+                            <div class="badge bg-light text-dark px-4 py-2 fs-6" id="live-clock">
+                                <i class="fas fa-clock me-2"></i>
+                                <span id="current-time">{{ now|time:"H:i:s" }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Real-time Statistics -->
+<div class="row">
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card" style="--card-color: #10b981; --card-color-dark: #059669;">
+            <div class="stat-icon">
+                <i class="fas fa-user-check text-white"></i>
+            </div>
+            <div class="stat-value" id="present-count">{{ today_stats.present_count|default:0 }}</div>
+            <div class="stat-label">حاضر اليوم</div>
+            <div class="stat-change bg-success text-white">
+                <i class="fas fa-arrow-up me-1"></i>
+                {{ today_stats.attendance_rate|default:0|floatformat:1 }}% معدل الحضور
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card" style="--card-color: #f59e0b; --card-color-dark: #d97706;">
+            <div class="stat-icon">
+                <i class="fas fa-clock text-white"></i>
+            </div>
+            <div class="stat-value" id="late-count">{{ today_stats.late_count|default:0 }}</div>
+            <div class="stat-label">متأخر</div>
+            <div class="stat-change bg-warning text-white">
+                <i class="fas fa-clock me-1"></i>
+                متوسط التأخير: {{ avg_late_minutes|default:0 }} دقيقة
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card" style="--card-color: #ef4444; --card-color-dark: #dc2626;">
+            <div class="stat-icon">
+                <i class="fas fa-user-times text-white"></i>
+            </div>
+            <div class="stat-value" id="absent-count">{{ today_stats.absent_count|default:0 }}</div>
+            <div class="stat-label">غائب</div>
+            <div class="stat-change bg-danger text-white">
+                <i class="fas fa-percentage me-1"></i>
+                {{ absence_percentage|default:0|floatformat:1 }}% نسبة الغياب
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="stat-card" style="--card-color: #8b5cf6; --card-color-dark: #7c3aed;">
+            <div class="stat-icon">
+                <i class="fas fa-users text-white"></i>
+            </div>
+            <div class="stat-value">{{ total_employees|default:0 }}</div>
+            <div class="stat-label">إجمالي الموظفين</div>
+            <div class="stat-change bg-primary text-white">
+                <i class="fas fa-building me-1"></i>
+                {{ total_departments|default:0 }} قسم
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Real-time Employee Status -->
+<div class="row">
+    <div class="col-xl-8">
+        <div class="real-time-section">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h4 class="mb-0">
+                    <i class="fas fa-users-cog me-2"></i>
+                    حالة الموظفين في الوقت الفعلي
+                    <span class="status-indicator bg-success"></span>
+                </h4>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-primary btn-sm active" data-filter="all">
+                        الكل
+                    </button>
+                    <button type="button" class="btn btn-outline-success btn-sm" data-filter="present">
+                        حاضر
+                    </button>
+                    <button type="button" class="btn btn-outline-warning btn-sm" data-filter="late">
+                        متأخر
+                    </button>
+                    <button type="button" class="btn btn-outline-danger btn-sm" data-filter="absent">
+                        غائب
+                    </button>
+                </div>
+            </div>
+            
+            <div class="employee-status-grid" id="employee-status-grid">
+                {% for employee in employee_status %}
+                <div class="employee-card" data-status="{{ employee.status }}">
+                    <div class="d-flex align-items-center">
+                        <div class="employee-avatar">
+                            {{ employee.first_name.0 }}{{ employee.last_name.0 }}
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <div class="fw-bold">{{ employee.first_name }} {{ employee.last_name }}</div>
+                            <div class="text-muted small">{{ employee.dept_name }}</div>
+                        </div>
+                        <div class="text-end">
+                            {% if employee.status == 'Present' %}
+                                <span class="badge bg-success">حاضر</span>
+                                <div class="small text-muted">{{ employee.check_in|time:"H:i" }}</div>
+                            {% elif employee.status == 'Late' %}
+                                <span class="badge bg-warning">متأخر</span>
+                                <div class="small text-muted">{{ employee.check_in|time:"H:i" }}</div>
+                            {% elif employee.status == 'Absent' %}
+                                <span class="badge bg-danger">غائب</span>
+                                <div class="small text-muted">---</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12 text-center py-5">
+                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">لا توجد بيانات حضور اليوم</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Chart Section -->
+        <div class="chart-container">
+            <h5 class="mb-4">
+                <i class="fas fa-chart-line me-2"></i>
+                اتجاهات الحضور الأسبوعي
+            </h5>
+            <canvas id="weeklyAttendanceChart" height="300"></canvas>
+        </div>
+    </div>
+    
+    <div class="col-xl-4">
+        <!-- Quick Actions -->
+        <div class="quick-actions mb-4">
+            <h5 class="mb-4">
+                <i class="fas fa-bolt me-2"></i>
+                إجراءات سريعة
+            </h5>
+            
+            <a href="{% url 'attendance:mark' %}" class="action-btn" style="background: linear-gradient(135deg, #10b981, #059669);">
+                <i class="fas fa-user-check me-2"></i>
+                تسجيل حضور
+            </a>
+            
+            <a href="{% url 'attendance:bulk_import' %}" class="action-btn" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+                <i class="fas fa-upload me-2"></i>
+                استيراد بيانات
+            </a>
+            
+            <a href="{% url 'attendance:reports' %}" class="action-btn" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                <i class="fas fa-chart-bar me-2"></i>
+                تقارير الحضور
+            </a>
+            
+            <a href="{% url 'attendance:rules_list' %}" class="action-btn" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                <i class="fas fa-cogs me-2"></i>
+                إدارة القواعد
+            </a>
+        </div>
+        
+        <!-- Department Statistics -->
+        <div class="department-stats">
+            <h5 class="mb-4">
+                <i class="fas fa-building me-2"></i>
+                إحصائيات الأقسام
+            </h5>
+            
+            {% for dept in department_stats %}
+            <div class="dept-item">
+                <div class="flex-grow-1">
+                    <div class="fw-bold">{{ dept.dept_name }}</div>
+                    <div class="text-muted small">{{ dept.present_count }}/{{ dept.total_employees }} موظف</div>
+                </div>
+                <div class="attendance-meter" style="--meter-color: {% if dept.attendance_rate >= 90 %}#10b981{% elif dept.attendance_rate >= 70 %}#f59e0b{% else %}#ef4444{% endif %}; --percentage: {{ dept.attendance_rate }}%;">
+                    <div class="meter-text">{{ dept.attendance_rate|floatformat:0 }}%</div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-4">
+                <i class="fas fa-building fa-2x text-muted mb-2"></i>
+                <p class="text-muted mb-0">لا توجد بيانات أقسام</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script>
+// Live Clock
+function updateClock() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('ar-SA', {
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+    });
+    document.getElementById('current-time').textContent = timeString;
+}
+
+// Update clock every second
+setInterval(updateClock, 1000);
+
+// Weekly Attendance Chart
+const ctx = document.getElementById('weeklyAttendanceChart').getContext('2d');
+const weeklyChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: {{ weekly_labels|safe }},
+        datasets: [{
+            label: 'حاضر',
+            data: {{ weekly_present_data|safe }},
+            backgroundColor: 'rgba(16, 185, 129, 0.8)',
+            borderColor: 'rgb(16, 185, 129)',
+            borderWidth: 2,
+            borderRadius: 8,
+            borderSkipped: false,
+        }, {
+            label: 'غائب',
+            data: {{ weekly_absent_data|safe }},
+            backgroundColor: 'rgba(239, 68, 68, 0.8)',
+            borderColor: 'rgb(239, 68, 68)',
+            borderWidth: 2,
+            borderRadius: 8,
+            borderSkipped: false,
+        }, {
+            label: 'متأخر',
+            data: {{ weekly_late_data|safe }},
+            backgroundColor: 'rgba(245, 158, 11, 0.8)',
+            borderColor: 'rgb(245, 158, 11)',
+            borderWidth: 2,
+            borderRadius: 8,
+            borderSkipped: false,
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'top',
+                labels: {
+                    usePointStyle: true,
+                    padding: 20,
+                    font: {
+                        family: 'Cairo',
+                        size: 12
+                    }
+                }
+            }
+        },
+        scales: {
+            x: {
+                grid: {
+                    display: false
+                },
+                ticks: {
+                    font: {
+                        family: 'Cairo'
+                    }
+                }
+            },
+            y: {
+                beginAtZero: true,
+                grid: {
+                    color: 'rgba(0, 0, 0, 0.1)'
+                },
+                ticks: {
+                    font: {
+                        family: 'Cairo'
+                    }
+                }
+            }
+        },
+        interaction: {
+            intersect: false,
+            mode: 'index'
+        }
+    }
+});
+
+// Employee Status Filter
+document.querySelectorAll('[data-filter]').forEach(button => {
+    button.addEventListener('click', function() {
+        const filter = this.getAttribute('data-filter');
+        
+        // Update active button
+        document.querySelectorAll('[data-filter]').forEach(btn => btn.classList.remove('active'));
+        this.classList.add('active');
+        
+        // Filter employee cards
+        document.querySelectorAll('.employee-card').forEach(card => {
+            const status = card.getAttribute('data-status');
+            if (filter === 'all' || status.toLowerCase() === filter) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    });
+});
+
+// Real-time data updates
+function updateDashboardData() {
+    fetch('{% url "attendance:dashboard_data" %}')
+        .then(response => response.json())
+        .then(data => {
+            // Update statistics
+            document.getElementById('present-count').textContent = data.present_count;
+            document.getElementById('late-count').textContent = data.late_count;
+            document.getElementById('absent-count').textContent = data.absent_count;
+            
+            // Update chart
+            weeklyChart.data.datasets[0].data = data.weekly_present;
+            weeklyChart.data.datasets[1].data = data.weekly_absent;
+            weeklyChart.data.datasets[2].data = data.weekly_late;
+            weeklyChart.update('none');
+            
+            // Update employee status grid if needed
+            if (data.employee_status_updated) {
+                location.reload();
+            }
+        })
+        .catch(error => console.log('Error updating dashboard:', error));
+}
+
+// Update every 30 seconds
+setInterval(updateDashboardData, 30000);
+
+// Initial load animations
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate stat cards
+    gsap.from('.stat-card', {
+        duration: 0.8,
+        y: 30,
+        opacity: 0,
+        stagger: 0.1,
+        ease: 'power2.out'
+    });
+    
+    // Animate employee cards
+    gsap.from('.employee-card', {
+        duration: 0.6,
+        scale: 0.9,
+        opacity: 0,
+        stagger: 0.05,
+        ease: 'back.out(1.7)',
+        delay: 0.5
+    });
+});
+</script>
+{% endblock %}

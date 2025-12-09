@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>تأكيد حذف قاعدة الحضور</h1>
+<p>سيتم حذف: {{ item.rule_name }}</p>
+<form method="post">{% csrf_token %}
+  <button class="btn btn-danger">تأكيد الحذف</button>
+  <a class="btn btn-secondary" href="{% url 'attendance:rules_list' %}">إلغاء</a>
+</form>
+{% endblock %}
+

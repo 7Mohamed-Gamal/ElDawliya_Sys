@@ -1,0 +1,82 @@
+{% extends 'tasks/base_tasks.html' %}
+{% load static %}
+
+{% block title %}مهامي - نظام الدولية{% endblock %}
+
+{% block page_title %}مهامي{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'tasks:dashboard' %}">المهام</a></li>
+<li class="breadcrumb-item active">مهامي</li>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">قائمة مهامي</h5>
+        <a href="{% url 'tasks:create' %}" class="btn btn-primary">
+            <i class="fas fa-plus-circle me-2"></i> إنشاء مهمة جديدة
+        </a>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>العنوان</th>
+                        <th>تاريخ الإنشاء</th>
+                        <th>تاريخ الاستحقاق</th>
+                        <th>الأولوية</th>
+                        <th>الحالة</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in tasks %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'tasks:detail' task.id %}">{{ task.description }}</a>
+                        </td>
+                        <td>{{ task.created_at|date:"Y-m-d" }}</td>
+                        <td>{{ task.end_date|date:"Y-m-d" }}</td>
+                        <td>
+                            {% if task.priority == 'high' %}
+                            <span class="badge bg-danger">عالية</span>
+                            {% elif task.priority == 'medium' %}
+                            <span class="badge bg-warning">متوسطة</span>
+                            {% else %}
+                            <span class="badge bg-info">منخفضة</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if task.status == 'pending' %}
+                            <span class="badge bg-warning">قيد الانتظار</span>
+                            {% elif task.status == 'in_progress' %}
+                            <span class="badge bg-info">قيد التنفيذ</span>
+                            {% elif task.status == 'completed' %}
+                            <span class="badge bg-success">مكتمل</span>
+                            {% elif task.status == 'cancelled' %}
+                            <span class="badge bg-danger">ملغي</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <a href="{% url 'tasks:detail' task.id %}" class="btn btn-sm btn-info">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a href="{% url 'tasks:edit' task.id %}" class="btn btn-sm btn-warning">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4">لا توجد مهام مسندة إليك</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

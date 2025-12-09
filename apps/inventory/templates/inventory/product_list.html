@@ -1,0 +1,595 @@
+{% extends 'inventory/base_inventory.html' %}
+{% load static %}
+{% load django_permissions %}
+
+{% block title %}قائمة أصناف المخزن - نظام إدارة المخزن{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Enhanced Product List Styles */
+    .search-section {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .filter-select {
+        min-width: 180px;
+    }
+
+    .badge-stock {
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .badge-stock i {
+        margin-left: 0.25rem;
+        font-size: 0.7rem;
+    }
+
+    .badge-normal {
+        background-color: #e8f5e9;
+        color: #2e7d32;
+    }
+
+    .badge-low {
+        background-color: #fff8e1;
+        color: #f57f17;
+    }
+
+.badge-out {
+        background-color: #ffebee;
+        color: #c62828;
+    }
+
+    .badge-equal {
+        background-color: #ffebee;
+        color: #c62828;
+    }
+
+    .table-products th {
+        white-space: nowrap;
+    }
+
+    .product-image {
+        width: 40px;
+        height: 40px;
+        object-fit: cover;
+        border-radius: 4px;
+    }
+
+    .product-actions {
+        white-space: nowrap;
+    }
+
+    .product-actions .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.875rem;
+    }
+
+    .pagination-section {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .page-count {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    .empty-state {
+        padding: 60px 20px;
+        text-align: center;
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        margin: 2rem 0;
+    }
+
+    .empty-state .icon {
+        font-size: 4rem;
+        color: #6c757d;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .card-accent {
+        border-top: 3px solid var(--primary-color);
+    }
+
+    @media (max-width: 768px) {
+        .search-section {
+            padding: 1rem;
+        }
+
+        .search-section .row > div {
+            margin-bottom: 0.75rem;
+        }
+
+        .filter-select {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // تحديد عناصر الفلتر التي نريد معالجة التغيير فيها تلقائيًا
+        const categoryFilter = document.querySelector('select[name="category"]');
+        const stockStatusFilter = document.querySelector('select[name="stock_status"]');
+
+        // إضافة معالج حدث التغيير لعنصر التصنيف
+        if (categoryFilter) {
+            categoryFilter.addEventListener('change', function() {
+                // تقديم النموذج تلقائيًا عند تغيير التصنيف
+                this.form.submit();
+            });
+        }
+
+        // إضافة معالج حدث التغيير لعنصر حالة المخزون
+        if (stockStatusFilter) {
+            stockStatusFilter.addEventListener('change', function(event) {
+                const selectedValue = this.value;
+
+                // نتعامل مع الفلتر "مساوى الحد الادنى" بشكل خاص فقط، ونترك باقي الفلاتر للخادم
+                if (selectedValue === 'equal') {
+                    // منع الإرسال التلقائي للنموذج
+                    event.preventDefault();
+
+                    // عرض جميع المنتجات ثم فلترة بالجافاسكريبت
+                    // إعادة توجيه للصفحة بدون معامل الفلترة
+                    const currentUrl = new URL(window.location.href);
+                    currentUrl.searchParams.delete('stock_status');
+
+                    // إضافة علامة خاصة للفلتر المساوي
+                    currentUrl.searchParams.set('eq_filter', 'true');
+
+                    // الانتقال للصفحة
+                    window.location.href = currentUrl.toString();
+                } else {
+                    // تقديم النموذج تلقائيًا عند تغيير حالة المخزون للحالات الأخرى
+                    // ون كل الفلترة على الخادم
+                    this.form.submit();
+                }
+            });
+        }
+
+        // التحقق مما إذا تم اختيار الفلتر مساوى الحد الادنى من القائمة المنسدلة
+        const urlParams = new URLSearchParams(window.location.search);
+        const equalFilter = urlParams.get('eq_filter');
+
+        // الفلترة المساوية بالجافاسكريبت
+        function filterEqualProducts() {
+            // تحديد حالة الفلتر في القائمة المنسدلة
+            if (stockStatusFilter) {
+                stockStatusFilter.value = 'equal';
+            }
+
+            // فلترة المنتجات بالجافاسكريبت للبحث عن المنتجات المساوية للحد الأدنى
+            const productRows = document.querySelectorAll('.table-products tbody tr');
+            let equalCount = 0;
+
+            // حساب المنتجات المساوية للحد الأدنى وإخفاء الباقي
+            productRows.forEach(row => {
+                // البحث عن النص "مساوى الحد الادنى" في صف المنتج
+                const statusCell = row.querySelector('td:nth-child(9)');
+                const isEqualToMinimum = statusCell && statusCell.textContent.includes('مساوى الحد الادنى');
+
+                // إخفاء أو إظهار الصف حسب الفلتر
+                if (isEqualToMinimum) {
+                    row.style.display = '';
+                    equalCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+
+            // تحديث عداد المنتجات المساوية للحد الأدنى
+            const equalCountElement = document.querySelector('.badge-equal + span');
+            if (equalCountElement) {
+                equalCountElement.textContent = equalCount + ' مساوى الحد الادنى';
+            }
+
+            // إضافة عنصر خاص في الجدول إذا لم يتم العثور على عناصر
+            if (equalCount === 0) {
+                const tableBody = document.querySelector('.table-products tbody');
+                if (tableBody) {
+                    // إنشاء صف رسالة فارغة
+                    const emptyRow = document.createElement('tr');
+                    const emptyCell = document.createElement('td');
+                    emptyCell.setAttribute('colspan', '10');
+                    emptyCell.textContent = 'لا توجد منتجات مساوية للحد الأدنى';
+                    emptyCell.style.textAlign = 'center';
+                    emptyCell.style.padding = '20px';
+                    emptyRow.appendChild(emptyCell);
+
+                    // إضافة الصف للجدول
+                    tableBody.appendChild(emptyRow);
+                }
+            }
+
+            // تحديث عنوان الصفحة ليعكس الفلترة
+            const titleElement = document.querySelector('.page-title');
+            if (titleElement) {
+                titleElement.textContent = 'قائمة أصناف المخزن - مساوى الحد الأدنى';
+            }
+        }
+
+        // تنفيذ الفلترة المساوية للحد الأدنى فقط إذا كانت موجودة
+        if (equalFilter === 'true') {
+            filterEqualProducts();
+        }
+
+        // ملاحظة: كل الفلاتر الأخرى (المتوفر، تحت الحد الأدنى، نفذت الكمية)
+        // يتم معالجتها على الخادم عند تقديم النموذج
+
+        // معالجة إضافة تصنيف جديد
+        const saveCategoryBtn = document.getElementById('saveCategoryBtn');
+        if (saveCategoryBtn) {
+            saveCategoryBtn.addEventListener('click', function() {
+                const categoryName = document.getElementById('categoryName').value.trim();
+                const categoryDescription = document.getElementById('categoryDescription').value.trim();
+
+                if (!categoryName) {
+                    alert('من فضلك أدخل اسم التصنيف');
+                    return;
+                }
+
+                // إرسال طلب AJAX لإضافة التصنيف الجديد
+                fetch('{% url "inventory:category_add_ajax" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({
+                        name: categoryName,
+                        description: categoryDescription
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // إضافة التصنيف الجديد إلى القائمة المنسدلة
+                        const option = document.createElement('option');
+                        option.value = data.category_id;
+                        option.textContent = categoryName;
+                        option.selected = true;
+                        categoryFilter.appendChild(option);
+
+                        // إغلاق النافذة المنبثقة
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('addCategoryModal'));
+                        modal.hide();
+
+                        // إعادة تعيين النموذج
+                        document.getElementById('categoryForm').reset();
+
+                        // عرض رسالة نجاح
+                        alert('تم إضافة التصنيف بنجاح');
+
+                        // تقديم النموذج لتحديث الصفحة مع التصنيف الجديد
+                        categoryFilter.form.submit();
+                    } else {
+                        alert('حدث خطأ أثناء إضافة التصنيف: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('حدث خطأ أثناء إضافة التصنيف');
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="row ps-4">
+    <div class="col-12 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="m-0">
+                <i class="fas fa-boxes me-2 text-primary"></i>
+                قائمة أصناف المخزن
+            </h4>
+
+            {% if perms.inventory.add_product or user|is_admin %}
+                <a href="{% url 'inventory:product_add' %}" class="btn btn-primary mb-3">
+                    <i class="fas fa-plus-circle me-1"></i> إضافة صنف جديد
+                </a>
+            {% endif %}
+        </div>
+
+        <!-- البحث والفلاتر -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body search-section">
+                <form method="get" action="{% url 'inventory:product_list' %}" class="mb-0">
+                        {% csrf_token %}
+                    <div class="row g-3">
+                        <!-- بحث -->
+                        <div class="col-md-4">
+                            <div class="input-group">
+                                <input type="text" name="search" class="form-control" placeholder="البحث بالاسم أو الرقم..." value="{{ request.GET.search|default:'' }}">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- فلتر التصنيف -->
+                        <div class="col-md-3">
+                            <div class="input-group">
+                                <select name="category" class="form-select filter-select">
+                                    <option value="">كل التصنيفات</option>
+                                    {% for category in categories %}
+                                    <option value="{{ category.id }}" {% if request.GET.category == category.id|stringformat:"i" %}selected{% endif %}>
+                                        {{ category.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- فلتر حالة المخزون -->
+                        <div class="col-md-3">
+                            <select name="stock_status" class="form-select filter-select">
+                                <option value="">كل الحالات</option>
+                                <option value="normal" {% if request.GET.stock_status == 'normal' %}selected{% endif %}>المتوفر</option>
+                                <option value="equal" {% if request.GET.stock_status == 'equal' %}selected{% endif %}>مساوى الحد الادنى</option>
+                                <option value="low" {% if request.GET.stock_status == 'low' %}selected{% endif %}>تحت الحد الأدنى</option>
+                                <option value="out" {% if request.GET.stock_status == 'out' %}selected{% endif %}>نفذت الكمية</option>
+                            </select>
+                        </div>
+
+                        <!-- زر إعادة ضبط الفلاتر -->
+                        <div class="col-md-2">
+                            <a href="{% url 'inventory:product_list' %}" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-redo ms-1"></i>
+                                إعادة ضبط
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- جدول المنتجات -->
+        <div class="card card-accent shadow-sm">
+            <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-0">
+                        <i class="fas fa-list me-2"></i>
+                        عرض الأصناف
+                    </h5>
+                </div>
+
+                <!-- بيانات المخزون -->
+                <div class="d-flex gap-3">
+                    <div class="d-flex align-items-center">
+                        <span class="badge-stock badge-normal me-2">
+                            <i class="fas fa-check-circle"></i>
+                        </span>
+                        <span>{{ normal_stock_count }} متوفر</span>
+                    </div>
+
+                    <div class="d-flex align-items-center">
+                        <span class="badge-stock badge-equal me-2">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </span>
+                        <span>{{ equal_stock_count|default:"0" }} مساوى الحد الادنى</span>
+                    </div>
+
+                    <div class="d-flex align-items-center">
+                        <span class="badge-stock badge-low me-2">
+                            <i class="fas fa-exclamation-circle"></i>
+                        </span>
+                        <span>{{ low_stock_count }} تحت الحد الأدنى</span>
+                    </div>
+
+                    <div class="d-flex align-items-center">
+                        <span class="badge-stock badge-out me-2">
+                            <i class="fas fa-times-circle"></i>
+                        </span>
+                        <span>{{ out_of_stock }} نفذت الكمية</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                {% if products %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-products mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>رقم الصنف</th>
+                                <th>اسم الصنف</th>
+                                <th>التصنيف</th>
+                                <th>الرصيد الافتتاحي</th>
+                                <th>الرصيد الحالي</th>
+                                <th>وحدة القياس</th>
+                                <th>سعر الوحدة</th>
+                                <th>الموقع</th>
+                                <th>الحالة</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in products %}
+                            <tr>
+                                <td>{{ product.product_id }}</td>
+                                <td>
+                                    {% if product.image %}
+                                    <img src="{{ product.image.url }}" class="product-image me-2" alt="{{ product.name }}">
+                                    {% endif %}
+                                    {{ product.name }}
+                                </td>
+                                <td>{{ product.category.name|default:"-" }}</td>
+                                <td>{{ product.initial_quantity }}</td>
+                                <td>{{ product.quantity }}</td>
+                                <td>{{ product.unit.name|default:"-" }}</td>
+                                <td>{{ product.unit_price }}</td>
+                                <td>{{ product.location|default:"-" }}</td>
+                                <td>
+{% if product.quantity <= 0 %}
+                                    <span class="badge-stock badge-out">
+                                        <i class="fas fa-times-circle"></i>
+                                        نفذت الكمية
+                                    </span>
+                                    {% elif product.quantity == product.minimum_threshold %}
+                                    <span class="badge-stock badge-equal">
+                                        <i class="fas fa-exclamation-circle"></i>
+                                        مساوى الحد الادنى
+                                    </span>
+                                    {% elif product.quantity < product.minimum_threshold %}
+                                    <span class="badge-stock badge-low">
+                                        <i class="fas fa-exclamation-circle"></i>
+                                        تحت الحد الأدنى
+                                    </span>
+                                    {% else %}
+                                    <span class="badge-stock badge-normal">
+                                        <i class="fas fa-check-circle"></i>
+                                        متوفر
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td class="product-actions">
+                                    {% if perms.inventory.change_product or user|is_admin %}
+                                        <a href="{% url 'inventory:product_edit' product.product_id %}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                    {% endif %}
+
+                                    {% if perms.inventory.delete_product or user|is_admin %}
+                                        <button type="button" class="btn btn-sm btn-danger delete-product"
+                                                data-product-id="{{ product.id }}"
+                                                data-product-name="{{ product.name }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    {% endif %}
+
+                                    {% if perms.inventory.add_invoice or user|is_admin %}
+                                        <a href="{% url 'inventory:voucher_add' %}?product={{ product.product_id }}" class="btn btn-sm btn-success">
+                                            <i class="fas fa-plus"></i> إنشاء إذن
+                                        </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- ترقيم الصفحات -->
+                {% if is_paginated %}
+                <div class="card-footer bg-white">
+                    <div class="pagination-section">
+                        <span class="page-count">
+                            عرض {{ page_obj.start_index }} إلى {{ page_obj.end_index }} من أصل {{ paginator.count }} صنف
+                        </span>
+
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination mb-0">
+                                {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.category %}category={{ request.GET.category }}&{% endif %}{% if request.GET.stock_status %}stock_status={{ request.GET.stock_status }}&{% endif %}page=1" aria-label="الأول">
+                                        <span aria-hidden="true">&laquo;&laquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.category %}category={{ request.GET.category }}&{% endif %}{% if request.GET.stock_status %}stock_status={{ request.GET.stock_status }}&{% endif %}page={{ page_obj.previous_page_number }}" aria-label="السابق">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                                {% endif %}
+
+                                {% for i in paginator.page_range %}
+                                    {% if page_obj.number == i %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ i }}</span>
+                                    </li>
+                                    {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.category %}category={{ request.GET.category }}&{% endif %}{% if request.GET.stock_status %}stock_status={{ request.GET.stock_status }}&{% endif %}page={{ i }}">{{ i }}</a>
+                                    </li>
+                                    {% endif %}
+                                {% endfor %}
+
+                                {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.category %}category={{ request.GET.category }}&{% endif %}{% if request.GET.stock_status %}stock_status={{ request.GET.stock_status }}&{% endif %}page={{ page_obj.next_page_number }}" aria-label="التالي">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if request.GET.search %}search={{ request.GET.search }}&{% endif %}{% if request.GET.category %}category={{ request.GET.category }}&{% endif %}{% if request.GET.stock_status %}stock_status={{ request.GET.stock_status }}&{% endif %}page={{ paginator.num_pages }}" aria-label="الأخير">
+                                        <span aria-hidden="true">&raquo;&raquo;</span>
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="empty-state">
+                    <div class="icon">
+                        <i class="fas fa-box-open"></i>
+                    </div>
+                    <h5>لا توجد أصناف</h5>
+                    <p class="text-muted mb-4">لم يتم العثور على أصناف مطابقة لمعايير البحث الخاصة بك.</p>
+
+                    {% has_inventory_module_permission "products" "add" as can_add_product %}
+                    {% if can_add_product %}
+                    <div class="d-flex gap-2 justify-content-center">
+                        <!-- <a href="{% url 'inventory:basic_product_add' %}" class="btn btn-success">
+                            <i class="fas fa-plus-circle ms-1"></i> إضافة صنف (نموذج بسيط)
+                        </a> -->
+                        <a href="{% url 'inventory:product_add' %}" class="btn btn-primary">
+                            <i class="fas fa-plus-circle ms-1"></i> إضافة صنف جديد
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Category Modal -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true" dir="rtl">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="addCategoryModalLabel">إضافة تصنيف جديد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="categoryForm">
+                    <div class="mb-3">
+                        <label for="categoryName" class="form-label">اسم التصنيف</label>
+                        <input type="text" class="form-control" id="categoryName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="categoryDescription" class="form-label">وصف التصنيف</label>
+                        <textarea class="form-control" id="categoryDescription" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" id="saveCategoryBtn">حفظ</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,131 @@
+{% extends "inventory/base_inventory.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}
+{% if form.instance.id %}
+    {% trans "تعديل قسم" %}: {{ form.instance.name }}
+{% else %}
+    {% trans "إضافة قسم جديد" %}
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- العنوان والأزرار -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        {% if form.instance.id %}
+            <h1 class="h3 mb-0 text-gray-800">{% trans "تعديل قسم" %}: {{ form.instance.name }}</h1>
+        {% else %}
+            <h1 class="h3 mb-0 text-gray-800">{% trans "إضافة قسم جديد" %}</h1>
+        {% endif %}
+        <div>
+            <a href="{% url 'inventory:department_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> {% trans "العودة للقائمة" %}
+            </a>
+        </div>
+    </div>
+
+    <!-- نموذج القسم -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">{% trans "بيانات القسم" %}</h6>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                {% if form.errors %}
+                <div class="alert alert-danger">
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <p>{{ field.label }}: {{ error }}</p>
+                        {% endfor %}
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="form-group">
+                            <label for="id_name">{% trans "اسم القسم" %}*</label>
+                            <input type="text" class="form-control" id="id_name" name="name" value="{{ form.instance.name|default_if_none:'' }}" required>
+                            {% if form.name.errors %}
+                                <div class="text-danger">{{ form.name.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="form-group">
+                            <label for="id_code">{% trans "كود القسم" %}</label>
+                            <input type="text" class="form-control" id="id_code" name="code" value="{{ form.instance.code|default:'سيتم إنشاؤه تلقائيًا' }}" readonly>
+                            <small class="form-text text-muted">{% trans "سيتم إنشاء كود القسم تلقائيًا عند الحفظ" %}</small>
+                            {% if form.code.errors %}
+                                <div class="text-danger">{{ form.code.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <div class="form-group">
+                            <label for="id_description">{% trans "الوصف" %}</label>
+                            <textarea class="form-control" id="id_description" name="description" rows="3">{{ form.instance.description|default_if_none:'' }}</textarea>
+                            {% if form.description.errors %}
+                                <div class="text-danger">{{ form.description.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="form-group">
+                            <label for="id_manager">{% trans "مدير القسم" %}</label>
+                            <input type="text" class="form-control" id="id_manager" name="manager" value="{{ form.instance.manager|default_if_none:'' }}">
+                            {% if form.manager.errors %}
+                                <div class="text-danger">{{ form.manager.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="form-group">
+                            <label for="id_location">{% trans "الموقع" %}</label>
+                            <input type="text" class="form-control" id="id_location" name="location" value="{{ form.instance.location|default_if_none:'' }}">
+                            {% if form.location.errors %}
+                                <div class="text-danger">{{ form.location.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label for="id_notes">{% trans "ملاحظات" %}</label>
+                            <textarea class="form-control" id="id_notes" name="notes" rows="2">{{ form.instance.notes|default_if_none:'' }}</textarea>
+                            {% if form.notes.errors %}
+                                <div class="text-danger">{{ form.notes.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-md-12">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> {% trans "حفظ" %}
+                        </button>
+                        <a href="{% url 'inventory:department_list' %}" class="btn btn-secondary">
+                            {% trans "إلغاء" %}
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

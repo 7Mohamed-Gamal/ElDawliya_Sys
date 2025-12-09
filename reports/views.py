@@ -26,7 +26,7 @@ from .services import (
     ReportDataService, ReportGeneratorService,
     ReportSchedulerService, ReportAnalyticsService
 )
-from employees.models import Employee
+from apps.hr.employees.models import Employee
 from org.models import Department
 
 logger = logging.getLogger(__name__)

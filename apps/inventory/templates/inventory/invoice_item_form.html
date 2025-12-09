@@ -1,0 +1,73 @@
+{% extends 'inventory/base_inventory.html' %}
+{% load static %}
+
+{% block title %}إضافة عنصر إلى الفاتورة - نظام إدارة المخزن{% endblock %}
+
+{% block page_title %}إضافة عنصر إلى الفاتورة{% endblock %}
+
+{% block page_actions %}
+    <a href="{% url 'inventory:invoice_list' %}" class="btn btn-secondary">
+        <i class="fas fa-chevron-right me-1"></i> العودة للقائمة
+    </a>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <form method="post" class="row g-3">
+            {% csrf_token %}
+            <div class="col-md-6">
+                <label class="form-label">رقم الفاتورة</label>
+                {{ form.invoice_number }}
+            </div>
+            
+            <div class="col-md-6">
+                <label class="form-label">المنتج</label>
+                {{ form.product }}
+            </div>
+            
+            <div class="col-md-6">
+                <label class="form-label">الكمية (وارد)</label>
+                {{ form.quantity_elwarad }}
+            </div>
+            
+            <div class="col-md-6">
+                <label class="form-label">الكمية (منصرف)</label>
+                {{ form.quantity_elmonsarf }}
+            </div>
+            
+            <div class="col-md-6">
+                <label class="form-label">الكمية (مرتجع العملاء)</label>
+                {{ form.quantity_mortagaaomalaa }}
+            </div>
+            
+            <div class="col-md-6">
+                <label class="form-label">الكمية (مرتجع الموردين)</label>
+                {{ form.quantity_mortagaaelmawarden }}
+            </div>
+            
+            <div class="col-md-6">
+                <label class="form-label">سعر الوحدة</label>
+                {{ form.unit_price }}
+            </div>
+            
+            <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                <a href="{% url 'inventory:invoice_list' %}" class="btn btn-light me-md-2">إلغاء</a>
+                <button type="submit" class="btn btn-primary">حفظ العنصر</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Apply form-control class to all form inputs
+    document.addEventListener('DOMContentLoaded', function() {
+        const formInputs = document.querySelectorAll('input, select, textarea');
+        formInputs.forEach(input => {
+            input.classList.add('form-control');
+        });
+    });
+</script>
+{% endblock %}

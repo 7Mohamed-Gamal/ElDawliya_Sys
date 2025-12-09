@@ -1,0 +1,563 @@
+{% extends "meetings/base_meetings.html" %}
+{% load static %}
+
+{% block title %}تقارير الاجتماعات{% endblock %}
+
+{% block page_title %}تقارير الاجتماعات{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'meetings:dashboard' %}">الاجتماعات</a></li>
+<li class="breadcrumb-item active">تقارير الاجتماعات</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .report-card {
+        border-radius: 0.75rem;
+        overflow: hidden;
+        transition: all 0.3s;
+        margin-bottom: 1.5rem;
+        border: none;
+        box-shadow: 0 5px 12px rgba(0, 0, 0, 0.05);
+    }
+    
+    .report-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    .report-card .card-header {
+        background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+        color: white;
+        font-weight: 600;
+        padding: 1.25rem 1.5rem;
+        border-bottom: none;
+    }
+    
+    .report-card .card-body {
+        padding: 1.5rem;
+    }
+    
+    .filters-card {
+        border-radius: 0.75rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .filters-card .card-body {
+        padding: 1.25rem;
+    }
+    
+    .filters-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        flex-wrap: wrap;
+    }
+    
+    .filters-header h5 {
+        margin-bottom: 0.5rem;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+    
+    .status-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .status-item:last-child {
+        border-bottom: none;
+    }
+    
+    .status-label {
+        display: flex;
+        align-items: center;
+    }
+    
+    .status-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-left: 8px;
+        display: inline-block;
+    }
+    
+    .color-pending {
+        background-color: #ff9800;
+    }
+    
+    .color-completed {
+        background-color: #4caf50;
+    }
+    
+    .color-cancelled {
+        background-color: #f44336;
+    }
+    
+    .status-count {
+        font-weight: 600;
+    }
+    
+    .meeting-list-table {
+        margin-top: 1rem;
+    }
+    
+    .meeting-list-table th {
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    
+    .badge-status {
+        padding: 0.4em 0.6em;
+    }
+    
+    .print-section {
+        display: none;
+    }
+    
+    .stats-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+    
+    .stat-item {
+        flex: 1;
+        min-width: 120px;
+        margin: 0.5rem;
+        text-align: center;
+    }
+    
+    .stat-item h6 {
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stat-item h3 {
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+    
+    @media (max-width: 767.98px) {
+        .filters-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .filters-header .btn-group {
+            margin-top: 0.5rem;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .filters-header .btn {
+            flex: 1;
+            margin: 0 0.25rem;
+        }
+        
+        .chart-container {
+            height: 250px;
+        }
+        
+        .stat-item {
+            min-width: 100px;
+            flex-basis: 45%;
+            margin: 0.25rem;
+        }
+        
+        .stat-item h6 {
+            font-size: 0.8rem;
+        }
+        
+        .stat-item h3 {
+            font-size: 1.2rem;
+        }
+        
+        .table td, .table th {
+            padding: 0.5rem;
+            font-size: 0.875rem;
+        }
+    }
+    
+    @media (max-width: 575.98px) {
+        .chart-container {
+            height: 200px;
+        }
+        
+        .stat-item {
+            flex-basis: 100%;
+        }
+    }
+    
+    @media print {
+        .print-section {
+            display: block;
+        }
+        
+        .print-section h1 {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .print-section .logo {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        
+        .print-section .company-info {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .print-section .report-date {
+            text-align: left;
+            margin-bottom: 2rem;
+        }
+        
+        .no-print {
+            display: none !important;
+        }
+        
+        .card {
+            border: none !important;
+            box-shadow: none !important;
+        }
+        
+        .chart-container {
+            page-break-inside: avoid;
+        }
+    }
+    
+    .table-responsive {
+        overflow-x: auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Print Header Section (only visible when printing) -->
+    <div class="print-section mb-5">
+        <div class="logo">
+            <h1>نظام إدارة الاجتماعات</h1>
+        </div>
+        <div class="company-info">
+            <h4>شركة الدولية لتقنية المعلومات</h4>
+        </div>
+        <div class="report-date">
+            <p>تاريخ التقرير: {{ now|date:"Y-m-d" }}</p>
+        </div>
+        <h2 class="text-center mb-4">تقرير الاجتماعات</h2>
+    </div>
+    
+    <!-- Filters Card -->
+    <div class="card filters-card no-print">
+        <div class="card-body">
+            <div class="filters-header">
+                <h5 class="mb-0"><i class="fas fa-filter me-2 text-primary"></i> خيارات التصفية</h5>
+                <div>
+                    <button class="btn btn-outline-primary btn-sm" onclick="window.print()">
+                        <i class="fas fa-print me-1"></i> طباعة التقرير
+                    </button>
+                    <button class="btn btn-outline-secondary btn-sm ms-2" id="resetFilters">
+                        <i class="fas fa-redo me-1"></i> إعادة ضبط
+                    </button>
+                </div>
+            </div>
+            
+            <form id="report-filters">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">من تاريخ</label>
+                        <input type="date" class="form-control" name="date_from" id="date_from">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">إلى تاريخ</label>
+                        <input type="date" class="form-control" name="date_to" id="date_to">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">حالة الاجتماع</label>
+                        <select class="form-select" name="status" id="status">
+                            <option value="">الكل</option>
+                            <option value="pending">قيد الانتظار</option>
+                            <option value="completed">مكتمل</option>
+                            <option value="cancelled">ملغي</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label class="form-label">من أنشأ الاجتماع</label>
+                        <select class="form-select" name="creator" id="creator">
+                            <option value="">الكل</option>
+                            {% for user in users %}
+                                <option value="{{ user.id }}">{{ user.get_full_name|default:user.username }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="text-end">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i> تطبيق الفلتر
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Meeting Status Distribution -->
+        <div class="col-lg-6">
+            <div class="card report-card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i> توزيع حالات الاجتماعات</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                    <div class="status-stats mt-4">
+                        <div class="status-item">
+                            <div class="status-label">
+                                <span class="status-color color-pending"></span>
+                                <span>قيد الانتظار</span>
+                            </div>
+                            <div class="status-count" id="pending-count">{{ pending_count }}</div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-label">
+                                <span class="status-color color-completed"></span>
+                                <span>مكتملة</span>
+                            </div>
+                            <div class="status-count" id="completed-count">{{ completed_count }}</div>
+                        </div>
+                        <div class="status-item">
+                            <div class="status-label">
+                                <span class="status-color color-cancelled"></span>
+                                <span>ملغية</span>
+                            </div>
+                            <div class="status-count" id="cancelled-count">{{ cancelled_count }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Meetings By Month Chart -->
+        <div class="col-lg-6">
+            <div class="card report-card h-100">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-bar me-2"></i> الاجتماعات حسب الشهر</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="monthlyChart"></canvas>
+                    </div>
+                    <div class="text-center mt-4">
+                        <div class="stats-container">
+                            <div class="stat-item">
+                                <h6>إجمالي الاجتماعات</h6>
+                                <h3 id="total-count">{{ meetings|length }}</h3>
+                            </div>
+                            <div class="stat-item">
+                                <h6>متوسط المهام لكل اجتماع</h6>
+                                <h3 id="avg-tasks">{{ avg_tasks|floatformat:1 }}</h3>
+                            </div>
+                            <div class="stat-item">
+                                <h6>متوسط الحضور</h6>
+                                <h3 id="avg-attendees">{{ avg_attendees|floatformat:1 }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Meeting List -->
+    <div class="card report-card mt-4">
+        <div class="card-header">
+            <h5 class="mb-0"><i class="fas fa-list me-2"></i> قائمة الاجتماعات</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover meeting-list-table" id="meetings-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>عنوان الاجتماع</th>
+                            <th>التاريخ</th>
+                            <th>الوقت</th>
+                            <th>منشئ الاجتماع</th>
+                            <th>عدد الحضور</th>
+                            <th>عدد المهام</th>
+                            <th>المهام المكتملة</th>
+                            <th>الحالة</th>
+                            <th class="no-print">إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for meeting in meetings %}
+                        <tr>
+                            <td>{{ forloop.counter }}</td>
+                            <td>{{ meeting.title }}</td>
+                            <td>{{ meeting.date|date:"Y-m-d" }}</td>
+                            <td>{{ meeting.date|date:"h:i A" }}</td>
+                            <td>{{ meeting.created_by.get_full_name|default:meeting.created_by.username }}</td>
+                            <td>{{ meeting.attendees.count }}</td>
+                            <td>{{ meeting.meeting_tasks.count }}</td>
+                            <td>{{ meeting.completed_tasks_count }}</td>
+                            <td>
+                                <span class="badge bg-{{ meeting.status|cut:'pending'|cut:'completed'|cut:'cancelled'|yesno:'warning,success,danger' }} badge-status">
+                                    {{ meeting.get_status_display }}
+                                </span>
+                            </td>
+                            <td class="no-print">
+                                <a href="{% url 'meetings:detail' pk=meeting.id %}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="10" class="text-center py-4">لا توجد اجتماعات مطابقة لمعايير البحث</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Status Chart
+        const statusCtx = document.getElementById('statusChart').getContext('2d');
+        const statusChart = new Chart(statusCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['قيد الانتظار', 'مكتمل', 'ملغي'],
+                datasets: [{
+                    data: [{{ pending_count }}, {{ completed_count }}, {{ cancelled_count }}],
+                    backgroundColor: ['#ff9800', '#4caf50', '#f44336'],
+                    borderColor: ['#fff', '#fff', '#fff'],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            font: {
+                                size: 12,
+                                family: 'Cairo'
+                            }
+                        }
+                    }
+                },
+                cutout: '65%'
+            }
+        });
+
+        // Monthly Chart
+        const monthlyData = {
+            labels: [
+                {% for month in monthly_data %}
+                "{{ month.month_name }}"{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            datasets: [{
+                label: 'عدد الاجتماعات',
+                data: [
+                    {% for month in monthly_data %}
+                    {{ month.count }}{% if not forloop.last %},{% endif %}
+                    {% endfor %}
+                ],
+                backgroundColor: 'rgba(52, 152, 219, 0.5)',
+                borderColor: 'rgba(52, 152, 219, 1)',
+                borderWidth: 1
+            }]
+        };
+
+        const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+        const monthlyChart = new Chart(monthlyCtx, {
+            type: 'bar',
+            data: monthlyData,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            precision: 0
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+        
+        // Filter form handling
+        const filterForm = document.getElementById('report-filters');
+        if (filterForm) {
+            filterForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                applyFilters();
+            });
+        }
+        
+        // Reset filters button
+        const resetButton = document.getElementById('resetFilters');
+        if (resetButton) {
+            resetButton.addEventListener('click', function() {
+                document.getElementById('date_from').value = '';
+                document.getElementById('date_to').value = '';
+                document.getElementById('status').value = '';
+                document.getElementById('creator').value = '';
+                applyFilters();
+            });
+        }
+        
+        // Function to apply filters
+        function applyFilters() {
+            // Get filter values
+            const dateFrom = document.getElementById('date_from').value;
+            const dateTo = document.getElementById('date_to').value;
+            const status = document.getElementById('status').value;
+            const creator = document.getElementById('creator').value;
+            
+            // Build query string
+            let queryParams = new URLSearchParams();
+            if (dateFrom) queryParams.append('date_from', dateFrom);
+            if (dateTo) queryParams.append('date_to', dateTo);
+            if (status) queryParams.append('status', status);
+            if (creator) queryParams.append('creator', creator);
+            
+            // Redirect to filtered URL
+            window.location.href = `{% url 'meetings:reports' %}?${queryParams.toString()}`;
+        }
+    });
+</script>
+{% endblock %}

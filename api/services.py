@@ -29,9 +29,9 @@ from .models import GeminiConversation, GeminiMessage
 # from Hr.models.employee.employee_models import Employee
 # from Hr.models.core.department_models import Department
 # Temporarily disabled until apps are restored
-# from inventory.models import TblProducts, TblCategories
-# from tasks.models import Task
-# from meetings.models import Meeting
+# from apps.inventory.models import TblProducts, TblCategories
+# from apps.projects.tasks.models import Task
+# from apps.projects.meetings.models import Meeting
 
 logger = logging.getLogger(__name__)
 
@@ -420,7 +420,7 @@ class DataAnalysisService:
         try:
             # First try with the local models (preferred)
             try:
-                from inventory.models_local import Product, Category
+                from apps.inventory.models_local import Product, Category
 
                 products = Product.objects.all()
                 if filters:
@@ -439,7 +439,7 @@ class DataAnalysisService:
             except (ImportError, ModuleNotFoundError):
                 # Try fallback to the original models if local models aren't available
                 try:
-                    from inventory.models import TblProducts, TblCategories
+                    from apps.inventory.models import TblProducts, TblCategories
                     products = TblProducts.objects.all()
                     if filters:
                         if 'category' in filters:
@@ -507,7 +507,7 @@ class DataAnalysisService:
         try:
             # Try with local models first
             try:
-                from inventory.models_local import Product
+                from apps.inventory.models_local import Product
 
                 from django.db import models as django_models
 
@@ -532,7 +532,7 @@ class DataAnalysisService:
             except (ImportError, ModuleNotFoundError):
                 # Try fallback to original models
                 try:
-                    from inventory.models import TblProducts
+                    from apps.inventory.models import TblProducts
 
                     from django.db import models as django_models
 

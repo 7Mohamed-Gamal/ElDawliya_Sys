@@ -1,0 +1,1055 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}إدارة أجهزة ZK{% endblock %}
+
+{% block extra_css %}
+<style>
+    .zk-devices-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+    }
+
+    .stats-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        padding: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        border: 1px solid #dee2e6;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .stat-card .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1rem;
+        font-size: 1.5rem;
+        color: white;
+    }
+
+    .stat-card.online .stat-icon {
+        background: linear-gradient(135deg, #28a745, #20c997);
+    }
+
+    .stat-card.offline .stat-icon {
+        background: linear-gradient(135deg, #dc3545, #fd7e14);
+    }
+
+    .stat-card.maintenance .stat-icon {
+        background: linear-gradient(135deg, #ffc107, #fd7e14);
+    }
+
+    .stat-card.total .stat-icon {
+        background: linear-gradient(135deg, #007bff, #6610f2);
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        color: #6c757d;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .devices-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        padding: 2rem;
+    }
+
+    .device-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        border: 1px solid #e5e7eb;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .device-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 4px;
+        height: 100%;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+
+    .device-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .device-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .device-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        margin-right: 1rem;
+    }
+
+    .device-info h5 {
+        margin: 0 0 0.25rem 0;
+        color: #2c3e50;
+        font-weight: 600;
+    }
+
+    .device-serial {
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+
+    .device-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .detail-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .detail-item i {
+        margin-left: 0.5rem;
+        width: 20px;
+        text-align: center;
+        color: #667eea;
+    }
+
+    .detail-label {
+        font-weight: 600;
+        color: #495057;
+        margin-left: 0.5rem;
+    }
+
+    .detail-value {
+        color: #6c757d;
+    }
+
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .status-badge.online {
+        background: linear-gradient(135deg, #d4edda, #c3e6cb);
+        color: #155724;
+        border: 1px solid #c3e6cb;
+    }
+
+    .status-badge.offline {
+        background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+    }
+
+    .status-badge.maintenance {
+        background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+        color: #856404;
+        border: 1px solid #ffeaa7;
+    }
+
+    .device-actions {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    .device-actions .btn {
+        transition: all 0.3s ease;
+        font-weight: 500;
+        border-radius: 8px;
+    }
+
+    .device-actions .btn:hover {
+        transform: translateY(-2px);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #007bff, #0056b3);
+        border: none;
+    }
+
+    .btn-primary:hover {
+        box-shadow: 0 4px 15px rgba(0,123,255,0.3);
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        border: none;
+    }
+
+    .btn-success:hover {
+        box-shadow: 0 4px 15px rgba(40,167,69,0.3);
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+    }
+
+    .empty-state-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        color: #dee2e6;
+    }
+
+    @media (max-width: 768px) {
+        .zk-devices-header {
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .zk-devices-header h1 {
+            font-size: 1.5rem;
+        }
+
+        .device-details {
+            grid-template-columns: 1fr;
+        }
+
+        .device-actions {
+            justify-content: center;
+            gap: 0.25rem;
+        }
+
+        .device-actions .btn {
+            flex: 1;
+            min-width: 100px;
+            font-size: 0.875rem;
+            padding: 0.5rem 0.75rem;
+        }
+
+        .stat-card {
+            margin-bottom: 1rem;
+        }
+
+        .device-header {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .device-icon {
+            margin-right: 0;
+            margin-bottom: 1rem;
+        }
+
+        .device-info {
+            margin-bottom: 1rem;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .zk-devices-header {
+            padding: 1rem;
+        }
+
+        .devices-container {
+            padding: 1rem;
+        }
+
+        .device-card {
+            padding: 1rem;
+        }
+
+        .device-actions .btn {
+            min-width: 80px;
+            font-size: 0.8rem;
+            padding: 0.4rem 0.6rem;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+        }
+
+        .detail-item {
+            padding: 0.5rem;
+            font-size: 0.875rem;
+        }
+    }
+
+    /* Enhanced hover effects */
+    .device-card {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .device-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Loading states */
+    .btn-loading {
+        position: relative;
+        pointer-events: none;
+    }
+
+    .btn-loading::after {
+        content: '';
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        top: 50%;
+        left: 50%;
+        margin-left: -8px;
+        margin-top: -8px;
+        border: 2px solid transparent;
+        border-top-color: currentColor;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Status indicators */
+    .status-indicator {
+        position: relative;
+        display: inline-block;
+    }
+
+    .status-indicator::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #28a745;
+        animation: pulse 2s infinite;
+    }
+
+    .status-indicator.offline::before {
+        background: #dc3545;
+    }
+
+    .status-indicator.maintenance::before {
+        background: #ffc107;
+    }
+
+    @keyframes pulse {
+        0% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.5; transform: scale(1.2); }
+        100% { opacity: 1; transform: scale(1); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="row">
+        <div class="col-12">
+            <div class="zk-devices-header">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h1 class="h2 mb-2">
+                            <i class="fas fa-fingerprint me-3"></i>
+                            إدارة أجهزة ZK
+                        </h1>
+                        <p class="mb-0 opacity-90">
+                            إدارة ومراقبة أجهزة الحضور والانصراف
+                        </p>
+                        <nav aria-label="breadcrumb" class="mt-2">
+                            <ol class="breadcrumb bg-transparent p-0 mb-0">
+                                <li class="breadcrumb-item"><a href="{% url 'accounts:home' %}" class="text-white-50">الرئيسية</a></li>
+                                <li class="breadcrumb-item"><a href="#" class="text-white-50">الحضور والانصراف</a></li>
+                                <li class="breadcrumb-item active text-white">أجهزة ZK</li>
+                            </ol>
+                        </nav>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <div class="d-flex gap-2 justify-content-md-end justify-content-center flex-wrap">
+                            <button type="button" class="btn btn-light" onclick="syncAllDevices()">
+                                <i class="fas fa-sync me-2"></i>
+                                مزامنة الكل
+                            </button>
+                            <a href="{% url 'attendance:zk_device_create' %}" class="btn btn-warning">
+                                <i class="fas fa-plus me-2"></i>
+                                إضافة جهاز جديد
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row">
+        <div class="col-12">
+            <div class="stats-container">
+                <div class="row">
+                    <div class="col-xl-3 col-md-6 mb-3">
+                        <div class="stat-card total">
+                            <div class="stat-icon">
+                                <i class="fas fa-fingerprint"></i>
+                            </div>
+                            <div class="stat-number" id="totalDevices">{{ devices|length }}</div>
+                            <div class="stat-label">إجمالي الأجهزة</div>
+                        </div>
+                    </div>
+
+
+                    <div class="col-xl-3 col-md-6 mb-3">
+                        <div class="stat-card online">
+                            <div class="stat-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="stat-number" id="connectedDevicesCount">0</div>
+                            <div class="stat-label">الأجهزة المتصلة</div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-3">
+                        <div class="stat-card offline">
+                            <div class="stat-icon">
+                                <i class="fas fa-times-circle"></i>
+                            </div>
+                            <div class="stat-number" id="offlineDevices">0</div>
+                            <div class="stat-label">الأجهزة غير المتصلة</div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-3 col-md-6 mb-3">
+                        <div class="stat-card maintenance">
+                            <div class="stat-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="stat-number" id="unprocessedDataCount">0</div>
+                            <div class="stat-label">البيانات غير المعالجة</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Devices List -->
+    <div class="row">
+        <div class="col-12">
+            <div class="devices-container">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="mb-0">
+                        <i class="fas fa-list text-primary me-2"></i>
+                        قائمة الأجهزة
+                    </h4>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-outline-primary btn-sm" onclick="refreshDeviceStatuses()">
+                            <i class="fas fa-refresh me-1"></i>
+                            تحديث الحالة
+                        </button>
+                    </div>
+                </div>
+
+                {% if devices %}
+                {% for device in devices %}
+                <div class="device-card" id="device-card-{{ device.device_id }}">
+                    <div class="device-header">
+                        <div class="device-icon">
+                            <i class="fas fa-fingerprint"></i>
+                        </div>
+                        <div class="device-info">
+                            <h5>{{ device.device_name }}</h5>
+                            <div class="device-serial">{{ device.device_serial|default:"غير محدد" }}</div>
+                        </div>
+                        <div class="ms-auto">
+                            {% if device.status == 'active' %}
+                                <span class="status-badge online">
+                                    <i class="fas fa-check-circle"></i>
+                                    نشط
+                                </span>
+                            {% elif device.status == 'inactive' %}
+                                <span class="status-badge offline">
+                                    <i class="fas fa-times-circle"></i>
+                                    غير نشط
+                                </span>
+                            {% elif device.status == 'maintenance' %}
+                                <span class="status-badge maintenance">
+                                    <i class="fas fa-tools"></i>
+                                    صيانة
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="device-details">
+                        <div class="detail-item">
+                            <i class="fas fa-network-wired"></i>
+                            <span class="detail-label">عنوان IP:</span>
+                            <span class="detail-value">{{ device.ip_address }}:{{ device.port }}</span>
+                        </div>
+
+                        <div class="detail-item">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span class="detail-label">الموقع:</span>
+                            <span class="detail-value">{{ device.location|default:"غير محدد" }}</span>
+                        </div>
+
+                        <div class="detail-item">
+                            <i class="fas fa-wifi"></i>
+                            <span class="detail-label">حالة الاتصال:</span>
+                            <span class="detail-value" id="connection-status-{{ device.device_id }}">
+                                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                    <span class="visually-hidden">جاري الفحص...</span>
+                                </div>
+                            </span>
+                        </div>
+
+                        <div class="detail-item">
+                            <i class="fas fa-clock"></i>
+                            <span class="detail-label">آخر مزامنة:</span>
+                            <span class="detail-value" id="last-sync-{{ device.device_id }}">
+                                {% if device.last_sync %}
+                                    {{ device.last_sync|date:"Y-m-d H:i" }}
+                                {% else %}
+                                    لم يتم
+                                {% endif %}
+                            </span>
+                        </div>
+
+                        <div class="detail-item">
+                            <i class="fas fa-database"></i>
+                            <span class="detail-label">البيانات غير المعالجة:</span>
+                            <span class="detail-value" id="unprocessed-count-{{ device.device_id }}">
+                                <div class="spinner-border spinner-border-sm text-warning" role="status">
+                                    <span class="visually-hidden">جاري التحميل...</span>
+                                </div>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="device-actions">
+                        <button type="button" class="btn btn-sm btn-success"
+                                onclick="testConnection({{ device.device_id }})"
+                                title="اختبار الاتصال">
+                            <i class="fas fa-plug me-1"></i>
+                            اختبار الاتصال
+                        </button>
+                        <button type="button" class="btn btn-sm btn-primary"
+                                onclick="syncDevice({{ device.device_id }})"
+                                title="مزامنة البيانات">
+                            <i class="fas fa-sync me-1"></i>
+                            مزامنة
+                        </button>
+                        <a href="{% url 'attendance:zk_device_info' device.device_id %}"
+                           class="btn btn-sm btn-outline-info" title="معلومات الجهاز">
+                            <i class="fas fa-info me-1"></i>
+                            معلومات
+                        </a>
+                        <a href="{% url 'attendance:zk_device_edit' device.device_id %}"
+                           class="btn btn-sm btn-outline-warning" title="تعديل الجهاز">
+                            <i class="fas fa-edit me-1"></i>
+                            تعديل
+                        </a>
+                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                onclick="confirmDelete({{ device.device_id }}, '{{ device.device_name }}')"
+                                title="حذف الجهاز">
+                            <i class="fas fa-trash me-1"></i>
+                            حذف
+                        </button>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">
+                        <i class="fas fa-fingerprint"></i>
+                    </div>
+                    <h5>لا توجد أجهزة مسجلة</h5>
+                    <p>لم يتم تسجيل أي أجهزة ZK في النظام بعد</p>
+                    <a href="{% url 'attendance:zk_device_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>
+                        إضافة جهاز جديد
+                    </a>
+                </div>
+                {% endfor %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mt-4">
+        <div class="col-md-4 mb-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <i class="fas fa-database text-primary fa-lg"></i>
+                        </div>
+                    </div>
+                    <h6 class="fw-bold text-primary mb-3">البيانات الخام</h6>
+                    <p class="text-muted small mb-3">عرض وإدارة البيانات الخام من أجهزة ZK</p>
+                    <a href="{% url 'attendance:zk_raw_data' %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-eye me-1"></i> عرض البيانات
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <div class="rounded-circle bg-success bg-opacity-10 d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <i class="fas fa-link text-success fa-lg"></i>
+                        </div>
+                    </div>
+                    <h6 class="fw-bold text-success mb-3">ربط الموظفين</h6>
+                    <p class="text-muted small mb-3">ربط الموظفين بأجهزة ZK</p>
+                    <a href="{% url 'attendance:zk_employee_mapping' %}" class="btn btn-success btn-sm">
+                        <i class="fas fa-users me-1"></i> إدارة الربط
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <div class="rounded-circle bg-info bg-opacity-10 d-inline-flex align-items-center justify-content-center" style="width: 60px; height: 60px;">
+                            <i class="fas fa-list-alt text-info fa-lg"></i>
+                        </div>
+                    </div>
+                    <h6 class="fw-bold text-info mb-3">سجلات المعالجة</h6>
+                    <p class="text-muted small mb-3">عرض سجلات معالجة البيانات</p>
+                    <a href="{% url 'attendance:zk_processing_logs' %}" class="btn btn-info btn-sm">
+                        <i class="fas fa-clipboard-list me-1"></i> عرض السجلات
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    تأكيد الحذف
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <i class="fas fa-exclamation-triangle text-danger fa-3x mb-3"></i>
+                    <h6>هل أنت متأكد من حذف الجهاز؟</h6>
+                </div>
+                <div class="alert alert-warning">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>الجهاز:</strong> <span id="deviceNameToDelete"></span>
+                </div>
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>تحذير:</strong> سيتم حذف جميع البيانات المرتبطة بهذا الجهاز نهائياً!
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i> إلغاء
+                </button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-2"></i> حذف نهائياً
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Sync Progress Modal -->
+<div class="modal fade" id="syncModal" tabindex="-1" aria-labelledby="syncModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="syncModalLabel">
+                    <i class="fas fa-sync fa-spin me-2"></i>
+                    جاري المزامنة
+                </h5>
+            </div>
+            <div class="modal-body">
+                <div class="text-center py-4">
+                    <div class="mb-4">
+                        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                            <span class="visually-hidden">جاري المزامنة...</span>
+                        </div>
+                    </div>
+                    <h6 id="syncMessage" class="mb-3">جاري مزامنة البيانات، يرجى الانتظار...</h6>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
+                             role="progressbar" style="width: 100%"></div>
+                    </div>
+                    <small class="text-muted mt-2 d-block">قد تستغرق هذه العملية بضع دقائق</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Global variables
+let syncModal;
+let deleteModal;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize modals
+    syncModal = new bootstrap.Modal(document.getElementById('syncModal'));
+    deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+
+    // Load initial device statuses
+    loadDeviceStatuses();
+
+    // Refresh statuses every 30 seconds
+    setInterval(loadDeviceStatuses, 30000);
+
+    // Add hover effects to device cards
+    const deviceCards = document.querySelectorAll('.device-card');
+    deviceCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-8px)';
+            this.style.boxShadow = '0 12px 30px rgba(0, 0, 0, 0.2)';
+        });
+
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(-5px)';
+            this.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.15)';
+        });
+    });
+
+    // Add loading states to action buttons
+    const actionButtons = document.querySelectorAll('.device-actions .btn');
+    actionButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            if (this.getAttribute('onclick') && !this.href) {
+                const originalContent = this.innerHTML;
+                const icon = this.querySelector('i');
+
+                if (icon && !icon.classList.contains('fa-spin')) {
+                    icon.className = 'fas fa-spinner fa-spin me-1';
+
+                    // Restore after 3 seconds if still spinning
+                    setTimeout(() => {
+                        if (icon.classList.contains('fa-spin')) {
+                            this.innerHTML = originalContent;
+                        }
+                    }, 3000);
+                }
+            }
+        });
+    });
+});
+
+// Refresh device statuses function
+function refreshDeviceStatuses() {
+    const refreshBtn = event.target.closest('button');
+    const originalContent = refreshBtn.innerHTML;
+
+    refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> جاري التحديث...';
+    refreshBtn.disabled = true;
+
+    loadDeviceStatuses();
+
+    setTimeout(() => {
+        refreshBtn.innerHTML = originalContent;
+        refreshBtn.disabled = false;
+    }, 2000);
+}
+
+// Load device connection statuses
+function loadDeviceStatuses() {
+    {% for device in devices %}
+    loadDeviceStatus({{ device.device_id }});
+    {% endfor %}
+    
+    updateOverviewStats();
+}
+
+// Load individual device status
+function loadDeviceStatus(deviceId) {
+    fetch(`/attendance/zk/ajax/device-status/${deviceId}/`)
+        .then(response => response.json())
+        .then(data => {
+            const connectionElement = document.getElementById(`connection-status-${deviceId}`);
+            const unprocessedElement = document.getElementById(`unprocessed-count-${deviceId}`);
+            const lastSyncElement = document.getElementById(`last-sync-${deviceId}`);
+            
+            if (connectionElement) {
+                if (data.is_online) {
+                    connectionElement.innerHTML = '<span class="status-badge online"><i class="fas fa-check-circle"></i> متصل</span>';
+                } else {
+                    connectionElement.innerHTML = '<span class="status-badge offline"><i class="fas fa-times-circle"></i> غير متصل</span>';
+                }
+            }
+
+            if (unprocessedElement) {
+                if (data.unprocessed_count > 0) {
+                    unprocessedElement.innerHTML = `<span class="badge bg-warning">${data.unprocessed_count}</span>`;
+                } else {
+                    unprocessedElement.innerHTML = '<span class="badge bg-success">0</span>';
+                }
+            }
+
+            if (lastSyncElement && data.last_sync !== 'لم يتم') {
+                lastSyncElement.innerHTML = data.last_sync;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading device status:', error);
+            const connectionElement = document.getElementById(`connection-status-${deviceId}`);
+            connectionElement.innerHTML = '<span class=\"badge bg-secondary\"><i class=\"fas fa-question\"></i> غير معروف</span>';
+        });
+}
+
+// Update overview statistics
+function updateOverviewStats() {
+    // Count connected devices
+    let connectedCount = 0;
+    let totalUnprocessed = 0;
+    
+    {% for device in devices %}
+    const connectionBadge{{ device.device_id }} = document.querySelector(`#connection-status-{{ device.device_id }} .badge`);
+    if (connectionBadge{{ device.device_id }} && connectionBadge{{ device.device_id }}.classList.contains('bg-success')) {
+        connectedCount++;
+    }
+    
+    const unprocessedBadge{{ device.device_id }} = document.querySelector(`#unprocessed-count-{{ device.device_id }} .badge`);
+    if (unprocessedBadge{{ device.device_id }} && !unprocessedBadge{{ device.device_id }}.classList.contains('bg-success')) {
+        const count = parseInt(unprocessedBadge{{ device.device_id }}.textContent) || 0;
+        totalUnprocessed += count;
+    }
+    {% endfor %}
+    
+    const connectedElement = document.getElementById('connectedDevicesCount');
+    const unprocessedElement = document.getElementById('unprocessedDataCount');
+    const offlineElement = document.getElementById('offlineDevices');
+
+    if (connectedElement) connectedElement.textContent = connectedCount;
+    if (unprocessedElement) unprocessedElement.textContent = totalUnprocessed;
+    if (offlineElement) offlineElement.textContent = {{ devices|length }} - connectedCount;
+}
+
+// Test device connection
+function testConnection(deviceId) {
+    const button = event.target.closest('button');
+    const originalContent = button.innerHTML;
+    
+    button.innerHTML = '<i class=\"fas fa-spinner fa-spin\"></i>';
+    button.disabled = true;
+    
+    fetch(`/attendance/zk/devices/${deviceId}/test/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.connection_status) {
+            alert('تم الاتصال بالجهاز بنجاح!');
+            loadDeviceStatus(deviceId);
+        } else {
+            alert('فشل الاتصال بالجهاز: ' + (data.error_message || 'خطأ غير معروف'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ في اختبار الاتصال');
+    })
+    .finally(() => {
+        button.innerHTML = originalContent;
+        button.disabled = false;
+    });
+}
+
+// Sync device data
+function syncDevice(deviceId) {
+    syncModal.show();
+    document.getElementById('syncMessage').textContent = 'جاري مزامنة البيانات من الجهاز...';
+    
+    fetch(`/attendance/zk/devices/${deviceId}/sync/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ days: 7 })
+    })
+    .then(response => response.json())
+    .then(data => {
+        syncModal.hide();
+        
+        if (data.success) {
+            alert(`تم سحب ${data.records_fetched} سجل بنجاح. تم معالجة ${data.records_processed} سجل.`);
+            loadDeviceStatus(deviceId);
+        } else {
+            alert('فشلت عملية المزامنة: ' + (data.error_message || 'خطأ غير معروف'));
+        }
+    })
+    .catch(error => {
+        syncModal.hide();
+        console.error('Error:', error);
+        alert('حدث خطأ في عملية المزامنة');
+    });
+}
+
+// Sync all devices
+function syncAllDevices() {
+    if (confirm('هل تريد مزامنة جميع الأجهزة؟ قد تستغرق هذه العملية بعض الوقت.')) {
+        syncModal.show();
+        document.getElementById('syncMessage').textContent = 'جاري مزامنة جميع الأجهزة...';
+        
+        fetch('{% url "attendance:zk_sync_all" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            syncModal.hide();
+            
+            if (data.success) {
+                alert(`تم معالجة ${data.devices_processed} جهاز. سحب ${data.total_fetched} سجل ومعالجة ${data.total_processed} سجل.`);
+                loadDeviceStatuses();
+            } else {
+                alert('فشلت عملية المزامنة: ' + (data.error || 'خطأ غير معروف'));
+            }
+        })
+        .catch(error => {
+            syncModal.hide();
+            console.error('Error:', error);
+            alert('حدث خطأ في عملية المزامنة');
+        });
+    }
+}
+
+// Confirm device deletion
+function confirmDelete(deviceId, deviceName) {
+    document.getElementById('deviceNameToDelete').textContent = deviceName;
+    
+    document.getElementById('confirmDeleteBtn').onclick = function() {
+        deleteDevice(deviceId);
+    };
+    
+    deleteModal.show();
+}
+
+// Delete device
+function deleteDevice(deviceId) {
+    fetch(`/attendance/zk/devices/${deviceId}/delete/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': '{{ csrf_token }}',
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            deleteModal.hide();
+            const deviceCard = document.getElementById(`device-card-${deviceId}`);
+            if (deviceCard) {
+                deviceCard.remove();
+                // Update statistics
+                updateOverviewStats();
+                // Show success message
+                showNotification('تم حذف الجهاز بنجاح', 'success');
+            }
+        } else {
+            showNotification('فشل في حذف الجهاز', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('حدث خطأ في حذف الجهاز', 'error');
+    });
+}
+
+// Show notification function
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'info'} alert-dismissible fade show position-fixed`;
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    notification.innerHTML = `
+        <i class="fas fa-${type === 'error' ? 'exclamation-circle' : type === 'success' ? 'check-circle' : 'info-circle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+
+    // Add to page
+    document.body.appendChild(notification);
+
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentNode) {
+            notification.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

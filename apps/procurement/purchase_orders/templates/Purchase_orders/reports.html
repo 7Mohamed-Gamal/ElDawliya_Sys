@@ -1,0 +1,194 @@
+{% extends 'Purchase_orders/base_purchase_orders.html' %}
+{% load static %}
+
+{% block title %}تقارير طلبات الشراء - نظام الدولية{% endblock %}
+
+{% block page_title %}تقارير طلبات الشراء{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Purchase_orders:dashboard' %}">طلبات الشراء</a></li>
+<li class="breadcrumb-item active">التقارير</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">توزيع طلبات الشراء حسب الحالة</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="statusChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">إجمالي طلبات الشراء الشهرية</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="monthlyChart" width="400" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">تقرير طلبات الشراء المفصل</h5>
+                <div>
+                    <button class="btn btn-success">
+                        <i class="fas fa-file-excel me-1"></i> تصدير Excel
+                    </button>
+                    <button class="btn btn-danger">
+                        <i class="fas fa-file-pdf me-1"></i> تصدير PDF
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <form class="row g-3">
+                        <div class="col-md-3">
+                            <label for="startDate" class="form-label">من تاريخ</label>
+                            <input type="date" class="form-control" id="startDate">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="endDate" class="form-label">إلى تاريخ</label>
+                            <input type="date" class="form-control" id="endDate">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="status" class="form-label">الحالة</label>
+                            <select class="form-select" id="status">
+                                <option value="">الكل</option>
+                                <option value="pending">قيد الموافقة</option>
+                                <option value="approved">معتمد</option>
+                                <option value="rejected">مرفوض</option>
+                                <option value="completed">مكتمل</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">تطبيق الفلتر</button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>رقم الطلب</th>
+                                <th>التاريخ</th>
+                                <th>المورد</th>
+                                <th>مقدم الطلب</th>
+                                <th>معتمد بواسطة</th>
+                                <th>الإجمالي</th>
+                                <th>الحالة</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for request in recent_requests %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'Purchase_orders:purchase_request_detail' request.id %}">{{ request.request_number }}</a>
+                                </td>
+                                <td>{{ request.request_date|date:"Y-m-d" }}</td>
+                                <td>{{ request.vendor|default:"غير محدد" }}</td>
+                                <td>{{ request.requested_by.get_full_name|default:request.requested_by.username }}</td>
+                                <td>{{ request.approved_by.get_full_name|default:"-" }}</td>
+                                <td>{{ request.total_amount }} ريال</td>
+                                <td>
+                                    {% if request.status == 'pending' %}
+                                    <span class="badge bg-warning">قيد الموافقة</span>
+                                    {% elif request.status == 'approved' %}
+                                    <span class="badge bg-success">معتمد</span>
+                                    {% elif request.status == 'rejected' %}
+                                    <span class="badge bg-danger">مرفوض</span>
+                                    {% elif request.status == 'completed' %}
+                                    <span class="badge bg-info">مكتمل</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-4">لا توجد طلبات شراء</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Status Chart
+        const statusCtx = document.getElementById('statusChart').getContext('2d');
+        const statusChart = new Chart(statusCtx, {
+            type: 'pie',
+            data: {
+                labels: ['قيد الموافقة', 'معتمد', 'مرفوض', 'مكتمل'],
+                datasets: [{
+                    data: [
+                        {{ pending_requests }},
+                        {{ approved_requests }},
+                        {{ rejected_requests }},
+                        {{ completed_requests }}
+                    ],
+                    backgroundColor: [
+                        '#ffc107',
+                        '#28a745',
+                        '#dc3545',
+                        '#17a2b8'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+
+        // Monthly Chart
+        const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+        const monthlyChart = new Chart(monthlyCtx, {
+            type: 'bar',
+            data: {
+                labels: ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'],
+                datasets: [{
+                    label: 'إجمالي طلبات الشراء',
+                    data: [12, 19, 3, 5, 2, 3, 7, 8, 9, 10, 11, 15],
+                    backgroundColor: '#9b59b6',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

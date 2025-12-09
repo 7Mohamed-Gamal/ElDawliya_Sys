@@ -22,10 +22,10 @@ import logging
 # from Hr.models.employee.employee_models import Employee
 # from Hr.models.core.department_models import Department
 # from Hr.models.core.job_position_models import JobPosition
-from tasks.models import Task
-from meetings.models import Meeting
-from inventory.models import TblProducts
-from Purchase_orders.models import PurchaseRequest
+from apps.projects.tasks.models import Task
+from apps.projects.meetings.models import Meeting
+from apps.inventory.models import TblProducts
+from apps.procurement.purchase_orders.models import PurchaseRequest
 
 User = get_user_model()
 logger = logging.getLogger(__name__)

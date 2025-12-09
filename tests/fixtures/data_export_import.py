@@ -197,7 +197,7 @@ class TestDataExporter:
 
                 # Export Employees
                 try:
-                    from employees.models import Employee
+                    from apps.hr.employees.models import Employee
                     if Employee.objects.exists():
                         employees_data = []
                         for emp in Employee.objects.all():
@@ -219,7 +219,7 @@ class TestDataExporter:
 
                 # Export Products
                 try:
-                    from inventory.models import TblProducts
+                    from apps.inventory.models import TblProducts
                     if TblProducts.objects.exists():
                         products_data = []
                         for product in TblProducts.objects.all():
@@ -240,7 +240,7 @@ class TestDataExporter:
 
                 # Export Tasks
                 try:
-                    from tasks.models import Task
+                    from apps.projects.tasks.models import Task
                     if Task.objects.exists():
                         tasks_data = []
                         for task in Task.objects.all():
@@ -396,17 +396,17 @@ class TestScenarioExporter:
             demo_data['data']['users'] = json.loads(serializers.serialize('json', demo_users))
 
             # Export sample employees
-            from employees.models import Employee
+            from apps.hr.employees.models import Employee
             demo_employees = Employee.objects.all()[:10]
             demo_data['data']['employees'] = json.loads(serializers.serialize('json', demo_employees))
 
             # Export sample products
-            from inventory.models import TblProducts
+            from apps.inventory.models import TblProducts
             demo_products = TblProducts.objects.all()[:20]
             demo_data['data']['products'] = json.loads(serializers.serialize('json', demo_products))
 
             # Export sample tasks
-            from tasks.models import Task
+            from apps.projects.tasks.models import Task
             demo_tasks = Task.objects.all()[:15]
             demo_data['data']['tasks'] = json.loads(serializers.serialize('json', demo_tasks))
 

@@ -32,11 +32,11 @@ from core.services.query_optimizer import (
 
 # Import models with error handling
 try:
-    from employees.models import Employee, Department, JobPosition
-    from attendance.models import EmployeeAttendance
-    from leaves.models import EmployeeLeave
-    from payrolls.models import PayrollRun, EmployeeSalary
-    from inventory.models import TblProducts, TblCategories
+    from apps.hr.employees.models import Employee, Department, JobPosition
+    from apps.hr.attendance.models import EmployeeAttendance
+    from apps.hr.leaves.models import EmployeeLeave
+    from apps.hr.payroll.models import PayrollRun, EmployeeSalary
+    from apps.inventory.models import TblProducts, TblCategories
 except ImportError as e:
     # Handle missing models gracefully
     Employee = None

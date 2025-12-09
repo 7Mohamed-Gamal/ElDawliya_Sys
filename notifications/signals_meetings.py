@@ -7,7 +7,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 
 try:
-    from meetings.models import Meeting, Attendee
+    from apps.projects.meetings.models import Meeting, Attendee
     MEETINGS_AVAILABLE = True
 except ImportError:
     MEETINGS_AVAILABLE = False
