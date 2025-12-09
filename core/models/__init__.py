@@ -102,16 +102,17 @@ from .inventory import (
 )
 
 # Procurement Models
-from .procurement import (
-    PurchaseOrder,
-    PurchaseOrderLineItem,
-    PurchaseRequest,
-    PurchaseRequestLineItem,
-    GoodsReceipt,
-    GoodsReceiptLineItem,
-    SupplierQuotation,
-    SupplierQuotationLineItem,
-)
+# Note: PurchaseRequest and PurchaseOrder models moved to apps.procurement.purchase_orders
+# from .procurement import (
+#     PurchaseOrder,
+#     PurchaseOrderLineItem,
+#     PurchaseRequest,
+#     PurchaseRequestLineItem,
+#     GoodsReceipt,
+#     GoodsReceiptLineItem,
+#     SupplierQuotation,
+#     SupplierQuotationLineItem,
+# )
 
 # Project Models
 from .projects import (
@@ -120,11 +121,11 @@ from .projects import (
     ProjectPhase,
     ProjectMilestone,
     ProjectMember,
-    Task,
-    TaskStep,
-    TimeEntry,
-    Meeting,
-    MeetingAttendee,
+    # Task,
+    # TaskStep,
+    # TimeEntry,
+    # Meeting,
+    # MeetingAttendee,
     Document,
 )
 
@@ -205,15 +206,15 @@ __all__ = [
     'StockTake',
     'StockTakeItem',
 
-    # Procurement Models
-    'PurchaseOrder',
-    'PurchaseOrderLineItem',
-    'PurchaseRequest',
-    'PurchaseRequestLineItem',
-    'GoodsReceipt',
-    'GoodsReceiptLineItem',
-    'SupplierQuotation',
-    'SupplierQuotationLineItem',
+    # Procurement Models (moved to apps.procurement.purchase_orders)
+    # 'PurchaseOrder',
+    # 'PurchaseOrderLineItem',
+    # 'PurchaseRequest',
+    # 'PurchaseRequestLineItem',
+    # 'GoodsReceipt',
+    # 'GoodsReceiptLineItem',
+    # 'SupplierQuotation',
+    # 'SupplierQuotationLineItem',
 
     # Project Models
     'ProjectCategory',
@@ -221,10 +222,10 @@ __all__ = [
     'ProjectPhase',
     'ProjectMilestone',
     'ProjectMember',
-    'Task',
-    'TaskStep',
-    'TimeEntry',
-    'Meeting',
-    'MeetingAttendee',
+    # 'Task',  # Moved to apps.projects.tasks
+    # 'TaskStep',
+    # 'TimeEntry',
+    # 'Meeting',  # Moved to apps.projects.meetings
+    # 'MeetingAttendee',
     'Document',
 ]

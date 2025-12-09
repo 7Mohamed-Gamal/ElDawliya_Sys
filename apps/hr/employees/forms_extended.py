@@ -19,7 +19,7 @@ from .models_extended import (
     WorkSchedule, EmployeeWorkSetup, ExtendedEmployeeDocument, EmployeeDocumentCategory
 )
 from apps.hr.leaves.models import LeaveType
-from loans.models import EmployeeLoan, LoanInstallment
+from apps.hr.loans.models import EmployeeLoan, LoanInstallment
 
 
 class EmployeeHealthInsuranceForm(forms.ModelForm):

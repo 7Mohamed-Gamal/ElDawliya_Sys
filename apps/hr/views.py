@@ -19,10 +19,10 @@ try:
     from apps.hr.attendance.models import EmployeeAttendance
     from apps.hr.leaves.models import EmployeeLeave
     from apps.hr.payroll.models import PayrollRun, EmployeeSalary
-    from loans.models import EmployeeLoan
+    from apps.hr.loans.models import EmployeeLoan
     from apps.hr.training.models import TrainingCourse
     from apps.hr.evaluations.models import EmployeeEvaluation
-    from insurance.models import InsurancePolicy
+    from apps.hr.insurance.models import InsurancePolicy
 except ImportError as e:
     # Handle missing apps gracefully
     Employee = None

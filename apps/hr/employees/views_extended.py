@@ -34,7 +34,7 @@ from .forms_extended import (
     EmployeeSalaryComponentFormSet, EvaluationScoreFormSet
 )
 from apps.hr.leaves.models import LeaveType
-from loans.models import EmployeeLoan
+from apps.hr.loans.models import EmployeeLoan
 
 
 @login_required

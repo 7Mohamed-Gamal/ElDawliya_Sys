@@ -20,7 +20,7 @@ from .models import (
 from apps.hr.employees.models import Employee
 from apps.hr.attendance.models import EmployeeAttendance, AttendanceSummary
 from apps.hr.leaves.models import EmployeeLeave, LeaveBalance, LeaveType
-from loans.models import EmployeeLoan, LoanInstallment
+from apps.hr.loans.models import EmployeeLoan, LoanInstallment
 
 logger = logging.getLogger(__name__)
 

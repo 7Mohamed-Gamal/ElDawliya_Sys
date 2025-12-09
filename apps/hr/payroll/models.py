@@ -7,7 +7,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from apps.hr.employees.models import Employee
 from apps.hr.leaves.models import EmployeeLeave, LeaveType
 from apps.hr.attendance.models import EmployeeAttendance, AttendanceSummary
-from loans.models import EmployeeLoan, LoanInstallment
+from apps.hr.loans.models import EmployeeLoan, LoanInstallment
 
 
 class EmployeeSalary(models.Model):

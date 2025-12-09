@@ -102,21 +102,12 @@ LOCAL_APPS = [
     'apps.inventory.apps.InventoryConfig',
     'apps.procurement.purchase_orders.apps.PurchaseOrdersConfig',
     
-    # Projects
-    'apps.projects.meetings.apps.MeetingsConfig',
-    'apps.projects.tasks.apps.TasksConfig',
+    # Projects (TEMPORARILY DISABLED - conflicts with core models)
+    # 'apps.projects.meetings.apps.MeetingsConfig',  # Conflicts with core.Meeting
+    # 'apps.projects.tasks.apps.TasksConfig',  # Conflicts with core.Task
     
-    # Legacy/Root Apps (Not yet consolidated or external)
-    # 'cars',
-    # 'banks',
-    # 'loans',
-    # 'disciplinary',
-    # 'tickets',
-    # 'workflow',
-    # 'assets',
-    # 'rbac',
-    # 'reports',
-    # 'syssettings',
+    # Note: loans, banks, cars, etc. are in _legacy_backup
+    # They need to be moved to apps/ properly via refactor_codebase.py
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
