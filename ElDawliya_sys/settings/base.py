@@ -104,9 +104,9 @@ LOCAL_APPS = [
     
     # Projects (TEMPORARILY DISABLED - conflicts with core models)
     # 'apps.projects.meetings.apps.MeetingsConfig',  # Conflicts with core.Meeting
-    # 'apps.projects.tasks.apps.TasksConfig',  # Conflicts with core.Task
+    'apps.finance.banks.apps.BanksConfig',
     
-    # Note: loans, banks, cars, etc. are in _legacy_backup
+    # Note: loans, cars, etc. are in _legacy_backup
     # They need to be moved to apps/ properly via refactor_codebase.py
 ]
 
