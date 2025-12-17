@@ -1,0 +1,285 @@
+/* Attendance System Custom Styles */
+
+/* RTL Support */
+body {
+    font-family: 'Cairo', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    direction: rtl;
+    text-align: right;
+}
+
+/* Custom Colors */
+:root {
+    --primary-color: #667eea;
+    --secondary-color: #764ba2;
+    --success-color: #28a745;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --info-color: #17a2b8;
+    --light-color: #f8f9fa;
+    --dark-color: #343a40;
+}
+
+/* Navigation Enhancements */
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.3rem;
+}
+
+.navbar-nav .nav-link {
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.navbar-nav .nav-link:hover {
+    transform: translateY(-2px);
+}
+
+/* Card Enhancements */
+.card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+/* Button Enhancements */
+.btn {
+    border-radius: 10px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+}
+
+/* Table Enhancements */
+.table {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.table thead th {
+    border: none;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.table tbody tr {
+    transition: all 0.3s ease;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(102, 126, 234, 0.05);
+    transform: scale(1.01);
+}
+
+/* Badge Enhancements */
+.badge {
+    border-radius: 20px;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+}
+
+/* Avatar Styles */
+.avatar-sm {
+    width: 35px;
+    height: 35px;
+    font-size: 0.9rem;
+}
+
+.avatar-md {
+    width: 50px;
+    height: 50px;
+    font-size: 1.2rem;
+}
+
+.avatar-lg {
+    width: 80px;
+    height: 80px;
+    font-size: 2rem;
+}
+
+/* Progress Bar Enhancements */
+.progress {
+    border-radius: 10px;
+    background-color: rgba(0,0,0,0.1);
+}
+
+.progress-bar {
+    border-radius: 10px;
+    transition: width 0.6s ease;
+}
+
+/* Modal Enhancements */
+.modal-content {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.modal-header {
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    border-radius: 15px 15px 0 0;
+}
+
+.modal-footer {
+    border-top: 1px solid rgba(0,0,0,0.1);
+    border-radius: 0 0 15px 15px;
+}
+
+/* Form Enhancements */
+.form-control, .form-select {
+    border-radius: 10px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* Alert Enhancements */
+.alert {
+    border: none;
+    border-radius: 10px;
+    font-weight: 500;
+}
+
+/* Loading Spinner */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* Custom Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in-up {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+/* Responsive Enhancements */
+@media (max-width: 768px) {
+    .card {
+        margin-bottom: 1rem;
+    }
+    
+    .btn-group-sm .btn {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+    
+    .table-responsive {
+        font-size: 0.9rem;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem !important;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .navbar,
+    .btn,
+    .modal,
+    .alert {
+        display: none !important;
+    }
+    
+    .card {
+        box-shadow: none;
+        border: 1px solid #dee2e6;
+    }
+    
+    .table {
+        font-size: 0.8rem;
+    }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bs-body-bg: #1a1a1a;
+        --bs-body-color: #ffffff;
+    }
+    
+    .card {
+        background-color: #2d2d2d;
+        color: #ffffff;
+    }
+    
+    .table {
+        --bs-table-bg: #2d2d2d;
+        --bs-table-color: #ffffff;
+    }
+    
+    .form-control, .form-select {
+        background-color: #2d2d2d;
+        border-color: #495057;
+        color: #ffffff;
+    }
+}
+
+/* Accessibility Enhancements */
+.btn:focus,
+.form-control:focus,
+.form-select:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+    .card {
+        border: 2px solid #000000;
+    }
+    
+    .btn {
+        border: 2px solid currentColor;
+    }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

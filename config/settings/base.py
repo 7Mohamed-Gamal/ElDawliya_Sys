@@ -34,6 +34,7 @@ THIRD_PARTY_APPS = [
     'drf_yasg',
     'crispy_forms',
     'crispy_bootstrap5',
+    'axes',
 ]
 
 LOCAL_APPS = [
@@ -65,6 +66,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'axes.middleware.AxesMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'core.middleware.audit.AuditMiddleware',
