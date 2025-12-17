@@ -362,115 +362,190 @@ def test_ai_config(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            config_id = data.get('config_id')
+            provider_id = data.get('provider')  # هذا هو المفتاح الصحيح من JavaScript
+            api_key = data.get('api_key')
+            model_name = data.get('model_name')
+            max_tokens = data.get('max_tokens', 1000)
+            temperature = data.get('temperature', 0.7)
             test_message = data.get('message', 'مرحبا، هذا اختبار للاتصال')
 
-            config = AIConfiguration.objects.get(id=config_id, user=request.user)
+            print(f"Testing AI config: provider_id={provider_id}, model_name={model_name}")
+
+            provider = AIProvider.objects.get(id=provider_id)
 
             # اختبار الاتصال حسب نوع المقدم
-            if config.provider.name == 'gemini':
+            if provider.name == 'gemini':
                 # اختبار Gemini
-                import google.generativeai as genai
-                genai.configure(api_key=config.api_key)
-                model = genai.GenerativeModel(config.model_name)
+                try:
+                    import google.generativeai as genai
+                    genai.configure(api_key=api_key)
+                    model = genai.GenerativeModel(model_name)
 
-                response = model.generate_content(
-                    test_message,
-                    generation_config=genai.types.GenerationConfig(
-                        max_output_tokens=config.max_tokens,
-                        temperature=config.temperature,
+                    response = model.generate_content(
+                        test_message,
+                        generation_config=genai.types.GenerationConfig(
+                            max_output_tokens=int(max_tokens),
+                            temperature=float(temperature),
+                        )
                     )
-                )
 
-                return JsonResponse({
-                    'success': True,
-                    'response': response.text,
-                    'provider': config.provider.display_name,
-                    'model': config.model_name
-                })
+                    return JsonResponse({
+                        'success': True,
+                        'response': response.text,
+                        'provider': provider.display_name,
+                        'model': model_name
+                    })
+                except ImportError:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'مكتبة Google Generative AI غير مثبتة. قم بتثبيتها باستخدام: pip install google-generativeai'
+                    })
+                except Exception as e:
+                    return JsonResponse({
+                        'success': False,
+                        'error': f'خطأ في اختبار Gemini: {str(e)}'
+                    })
 
-            elif config.provider.name == 'openai':
-                # اختبار OpenAI (يتطلب تثبيت openai)
+            elif provider.name == 'openai':
+                # اختبار OpenAI
                 try:
                     import openai
-                    openai.api_key = config.api_key
+                    client = openai.OpenAI(api_key=api_key)
 
-                    response = openai.ChatCompletion.create(
-                        model=config.model_name,
+                    response = client.chat.completions.create(
+                        model=model_name,
                         messages=[{"role": "user", "content": test_message}],
-                        max_tokens=config.max_tokens,
-                        temperature=config.temperature
+                        max_tokens=int(max_tokens),
+                        temperature=float(temperature)
                     )
 
                     return JsonResponse({
                         'success': True,
                         'response': response.choices[0].message.content,
-                        'provider': config.provider.display_name,
-                        'model': config.model_name
+                        'provider': provider.display_name,
+                        'model': model_name
                     })
                 except ImportError:
                     return JsonResponse({
                         'success': False,
                         'error': 'مكتبة OpenAI غير مثبتة. قم بتثبيتها باستخدام: pip install openai'
                     })
+                except Exception as e:
+                    return JsonResponse({
+                        'success': False,
+                        'error': f'خطأ في اختبار OpenAI: {str(e)}'
+                    })
 
-            elif config.provider.name == 'ollama':
+            elif provider.name == 'ollama':
                 # اختبار Ollama
                 try:
                     import requests
 
-                    # Use api_key field as base URL, or default
-                    api_url = config.api_key if config.api_key else 'http://localhost:11434'
+                    # Use api_key field as base URL, or default to localhost
+                    api_url = api_key.strip() if api_key and api_key.strip() else 'http://localhost:11434'
 
-                    # Test connection first
+                    # Ensure URL starts with http:// or https://
+                    if not api_url.startswith(('http://', 'https://')):
+                        api_url = f'http://{api_url}'
+
+                    # Remove trailing slash
+                    api_url = api_url.rstrip('/')
+
+                    print(f"Testing Ollama at URL: {api_url}")
+                    print(f"Model: {model_name}")
+                    print(f"Message: {test_message}")
+
+                    # Test connection first - check if Ollama is running
                     try:
                         test_response = requests.get(f"{api_url}/api/tags", timeout=5)
                         if test_response.status_code != 200:
                             return JsonResponse({
                                 'success': False,
-                                'error': f'لا يمكن الاتصال بخدمة Ollama على {api_url}. تأكد من تشغيل Ollama.'
+                                'error': f'لا يمكن الاتصال بخدمة Ollama على {api_url}. تأكد من تشغيل Ollama ورقم المنفذ الصحيح.'
                             })
-                    except requests.exceptions.RequestException:
+                    except requests.exceptions.RequestException as e:
                         return JsonResponse({
                             'success': False,
-                            'error': f'لا يمكن الاتصال بخدمة Ollama على {api_url}. تأكد من تشغيل Ollama.'
+                            'error': f'لا يمكن الاتصال بخدمة Ollama على {api_url}. تأكد من تشغيل Ollama. خطأ: {str(e)}'
                         })
+
+                    # Check if the model is available
+                    try:
+                        models_response = requests.get(f"{api_url}/api/tags", timeout=5)
+                        if models_response.status_code == 200:
+                            models_data = models_response.json()
+                            available_models = [model['name'] for model in models_data.get('models', [])]
+                            print(f"Available models: {available_models}")
+
+                            if model_name not in available_models:
+                                return JsonResponse({
+                                    'success': False,
+                                    'error': f'النموذج "{model_name}" غير متوفر. النماذج المتاحة: {", ".join(available_models)}. قم بتحميل النموذج أولاً باستخدام: ollama pull {model_name}'
+                                })
+                    except Exception as e:
+                        print(f"Could not check available models: {e}")
 
                     # Make the actual test request
                     payload = {
-                        'model': config.model_name,
+                        'model': model_name,
                         'prompt': test_message,
                         'stream': False,
                         'options': {
-                            'temperature': config.temperature,
-                            'num_predict': config.max_tokens
+                            'temperature': float(temperature),
+                            'num_predict': int(max_tokens)
                         }
                     }
+
+                    print(f"Sending request to: {api_url}/api/generate")
+                    print(f"Payload: {payload}")
 
                     response = requests.post(
                         f"{api_url}/api/generate",
                         json=payload,
-                        timeout=30
+                        timeout=60  # Increased timeout for local models
                     )
+
+                    print(f"Response status: {response.status_code}")
 
                     if response.status_code == 200:
                         result = response.json()
-                        response_text = result.get('response', '')
+                        response_text = result.get('response', '').strip()
+
+                        if not response_text:
+                            return JsonResponse({
+                                'success': False,
+                                'error': 'تلقى رد فارغ من النموذج. تحقق من إعدادات النموذج.'
+                            })
 
                         return JsonResponse({
                             'success': True,
-                            'response': response_text,
-                            'provider': config.provider.display_name,
-                            'model': config.model_name,
+                            'response': response_text[:500],  # Limit response length for display
+                            'provider': provider.display_name,
+                            'model': model_name,
                             'api_url': api_url
                         })
                     else:
+                        error_text = response.text
+                        try:
+                            error_json = response.json()
+                            error_text = error_json.get('error', error_text)
+                        except:
+                            pass
+
                         return JsonResponse({
                             'success': False,
-                            'error': f'خطأ من Ollama: {response.status_code} - {response.text}'
+                            'error': f'خطأ من Ollama: {response.status_code} - {error_text}'
                         })
 
+                except ImportError:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'مكتبة requests غير مثبتة. قم بتثبيتها باستخدام: pip install requests'
+                    })
                 except Exception as e:
+                    print(f"Ollama test error: {str(e)}")
+                    import traceback
+                    traceback.print_exc()
                     return JsonResponse({
                         'success': False,
                         'error': f'خطأ في اختبار Ollama: {str(e)}'
@@ -479,11 +554,11 @@ def test_ai_config(request):
             else:
                 return JsonResponse({
                     'success': False,
-                    'error': f'اختبار {config.provider.display_name} غير مدعوم حالياً'
+                    'error': f'اختبار {provider.display_name} غير مدعوم حالياً'
                 })
 
-        except AIConfiguration.DoesNotExist:
-            return JsonResponse({'success': False, 'error': 'الإعداد غير موجود'})
+        except AIProvider.DoesNotExist:
+            return JsonResponse({'success': False, 'error': 'مقدم الخدمة غير موجود'})
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)})
 

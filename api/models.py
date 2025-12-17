@@ -121,7 +121,42 @@ class AIProvider(models.Model):
     api_endpoint = models.URLField(blank=True, null=True)
     is_active = models.BooleanField(default=True)
     requires_api_key = models.BooleanField(default=True)
+    supported_models = models.JSONField(default=list, help_text="قائمة النماذج المدعومة")
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def get_supported_models(self):
+        """الحصول على قائمة النماذج المدعومة"""
+        if not self.supported_models:
+            # قيم افتراضية لكل مقدم خدمة
+            default_models = {
+                'gemini': [
+                    'gemini-1.5-flash',
+                    'gemini-1.5-pro',
+                    'gemini-1.0-pro',
+                    'gemini-pro',
+                    'gemini-pro-vision'
+                ],
+                'openai': [
+                    'gpt-4o',
+                    'gpt-4o-mini',
+                    'gpt-4-turbo',
+                    'gpt-4',
+                    'gpt-3.5-turbo'
+                ],
+                'ollama': [
+                    'llama2',
+                    'llama2:13b',
+                    'llama2:70b',
+                    'codellama',
+                    'mistral',
+                    'mixtral',
+                    'phi',
+                    'gemma',
+                    'qwen'
+                ]
+            }
+            return default_models.get(self.name, [])
+        return self.supported_models
 
     class Meta:
         """Meta class"""

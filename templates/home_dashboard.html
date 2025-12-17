@@ -756,7 +756,7 @@
                         <p>اختر قسماً من القائمة الجانبية للوصول إلى الخدمات المتاحة</p>
 
                         <!-- AI Chat Interface Quick Access -->
-                        <div class="ai-quick-access mt-4 mb-4">
+                        <div class="ai-quick-access mt-4 mb-4" id="aiChatSection">
                             <div class="row justify-content-center">
                                 <div class="col-md-8 col-lg-6">
                                     <a href="{% url 'api:ai_chat' %}" class="ai-chat-button">
@@ -776,6 +776,13 @@
                                     </a>
                                 </div>
                             </div>
+                        </div>
+
+                        <!-- Show AI Chat Button (Hidden by default) -->
+                        <div class="text-center mt-3 mb-4" id="showAiChatBtn" style="display: none;">
+                            <button class="btn btn-outline-primary" onclick="toggleAiChat()">
+                                <i class="fas fa-robot me-2"></i>إظهار المساعد الذكي
+                            </button>
                         </div>
 
                         <div class="mt-4">
@@ -1585,10 +1592,15 @@
                         const welcomeSection = document.getElementById('welcome-section');
                         const deptContainers = document.querySelectorAll('.dept-cards-container');
 
-                        welcomeSection.style.display = 'none';
+                        if (welcomeSection) {
+                            welcomeSection.style.display = 'none';
+                        }
                         deptContainers.forEach(container => {
                             container.classList.remove('active');
                         });
+
+                        // Hide AI Chat
+                        hideAiChat();
 
                         const sysadminCards = document.getElementById('sysadmin-cards');
                         if (sysadminCards) {
@@ -1599,9 +1611,45 @@
                         if (window.innerWidth < 992 && !sidebar.classList.contains('active')) {
                             document.getElementById('sidebarCollapse').click();
                         }
+
+                        // على الأجهزة المحمولة، أغلق السايدبار تلقائيًا بعد الاختيار
+                        if (window.innerWidth < 992 && !sidebar.classList.contains('active')) {
+                            document.getElementById('sidebarCollapse').click();
+                        }
                     });
                 }
             }
+        }
+
+        // Function to toggle AI Chat visibility
+        function toggleAiChat() {
+            const aiChatSection = document.getElementById('aiChatSection');
+            const showAiChatBtn = document.getElementById('showAiChatBtn');
+            const welcomeSection = document.getElementById('welcome-section');
+
+            if (aiChatSection.style.display === 'none') {
+                // Show AI Chat
+                aiChatSection.style.display = 'block';
+                showAiChatBtn.style.display = 'none';
+
+                // Hide welcome section if it's currently shown
+                if (welcomeSection.style.display !== 'none') {
+                    welcomeSection.style.display = 'none';
+                }
+            } else {
+                // Hide AI Chat
+                aiChatSection.style.display = 'none';
+                showAiChatBtn.style.display = 'block';
+            }
+        }
+
+        // Function to hide AI Chat when showing department cards
+        function hideAiChat() {
+            const aiChatSection = document.getElementById('aiChatSection');
+            const showAiChatBtn = document.getElementById('showAiChatBtn');
+
+            aiChatSection.style.display = 'none';
+            showAiChatBtn.style.display = 'block';
         }
 
         // Handle sidebar department clicks
@@ -1619,71 +1667,73 @@
                 // Hide welcome section
                 welcomeSection.style.display = 'none';
 
+                // Hide AI Chat and show the toggle button
+                hideAiChat();
+
                 // Hide all department containers
                 deptContainers.forEach(container => {
                     container.classList.remove('active');
                 });
 
-                // Map of possible department url_names to their container IDs
+                // Map of department data-dept values to their container IDs
                 const deptMapping = {
-                    // Actual values from database (case-sensitive)
-                    'HR': 'hr',                     // الموارد البشرية
-                    'inventory': 'warehouse',       // مخزن قطع الغيار
-                    'meetings_app': 'meetings',     // الاجتماعات
-                    'tasks_app': 'tasks',           // المهام
-                    'Purchase_orders': 'purchase',  // طلبات الشراء
-                    'administrator': 'sysadmin',    // إدارة النظام
-                    'notifications': 'notifications', // التنبيهات
-                    'employee_tasks': 'employee_tasks', // مهام الموظفين
-
-                    // Standard lowercase variations
-                    'hr': 'hr',
-                    'warehouse': 'warehouse',
-                    'meetings': 'meetings',
-                    'tasks': 'tasks',
-                    'purchase': 'purchase',
-                    'purchase_orders': 'purchase',
-                    'sysadmin': 'sysadmin',
-                    'admin': 'sysadmin',
-                    'notifications': 'notifications',
-                    'employee_tasks': 'employee_tasks',
-                    'cars': 'cars',
-
-                    // Arabic names that might be used
-                    'الموارد_البشرية': 'hr',
-                    'المخزن': 'warehouse',
-                    'الاجتماعات': 'meetings',
-                    'مهام الاجتماعات': 'tasks',
-                    'طلبات_الشراء': 'purchase',
-                    'الادارة': 'sysadmin',
-                    'مهام_الموظفين': 'employee_tasks',
-                    'السيارات': 'cars'
+                    'hr': 'hr-cards',
+                    'warehouse': 'warehouse-cards',
+                    'meetings': 'meetings-cards',
+                    'tasks': 'tasks-cards',
+                    'purchase': 'purchase-cards',
+                    'purchase_orders': 'purchase-cards',
+                    'sysadmin': 'sysadmin-cards',
+                    'administrator': 'sysadmin-cards',
+                    'admin': 'sysadmin-cards',
+                    'notifications': 'notifications-cards',
+                    'employee_tasks': 'employee_tasks-cards',
+                    'cars': 'cars-cards',
+                    // Legacy mappings
+                    'HR': 'hr-cards',
+                    'inventory': 'warehouse-cards',
+                    'meetings_app': 'meetings-cards',
+                    'tasks_app': 'tasks-cards',
+                    'Purchase_orders': 'purchase-cards',
+                    'الموارد_البشرية': 'hr-cards',
+                    'المخزن': 'warehouse-cards',
+                    'الاجتماعات': 'meetings-cards',
+                    'مهام الاجتماعات': 'tasks-cards',
+                    'طلبات_الشراء': 'purchase-cards',
+                    'الادارة': 'sysadmin-cards',
+                    'مهام_الموظفين': 'employee_tasks-cards',
+                    'السيارات': 'cars-cards'
                 };
 
-                // Initialize as null to enable partial matching if needed
+                // Try to find the container
                 let selectedContainer = null;
+                let containerId = null;
 
-                // 1. Direct match: deptId + '-cards'
-                let directMatchId = deptId + '-cards';
-                if (document.getElementById(directMatchId)) {
-                    selectedContainer = document.getElementById(directMatchId);
-                }
-                // 2. Using mapping
-                else if (deptMapping[deptId]) {
-                    let containerId = deptMapping[deptId] + '-cards';
+                // 1. Direct lookup in mapping
+                if (deptMapping[deptId]) {
+                    containerId = deptMapping[deptId];
                     selectedContainer = document.getElementById(containerId);
                 }
-                // 3. Try lowercase version with mapping
-                else if (deptMapping[deptId.toLowerCase()]) {
-                    let containerId = deptMapping[deptId.toLowerCase()] + '-cards';
+
+                // 2. Try deptId + '-cards' as fallback
+                if (!selectedContainer) {
+                    containerId = deptId + '-cards';
+                    selectedContainer = document.getElementById(containerId);
+                }
+
+                // 3. Try lowercase version
+                if (!selectedContainer && deptId) {
+                    containerId = deptId.toLowerCase() + '-cards';
                     selectedContainer = document.getElementById(containerId);
                 }
 
                 // If we found a container, show it
                 if (selectedContainer) {
+                    console.log(`Showing container: ${containerId} for dept: ${deptId}`);
                     selectedContainer.classList.add('active');
                 } else {
                     // If no specific container for this department, show a generic message
+                    console.log(`No container found for dept: ${deptId}`);
                     welcomeSection.style.display = 'block';
                     const deptName = this.querySelector('span').textContent;
                     welcomeSection.innerHTML = `

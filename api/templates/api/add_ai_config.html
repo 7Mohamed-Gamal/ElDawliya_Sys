@@ -60,11 +60,12 @@
                     
                     <!-- Model Name -->
                     <div class="mb-4">
-                        <label for="model_name" class="form-label">اسم النموذج</label>
-                        <input type="text" class="form-control" id="model_name" name="model_name" 
-                               value="gemini-1.5-flash" placeholder="مثال: gemini-1.5-flash">
+                        <label for="model_name" class="form-label">اسم النموذج *</label>
+                        <select class="form-select" id="model_name" name="model_name" required>
+                            <option value="">اختر نموذجاً</option>
+                        </select>
                         <div class="form-text" id="modelHelp">
-                            اتركه فارغاً لاستخدام النموذج الافتراضي
+                            اختر النموذج المطلوب من القائمة
                         </div>
                     </div>
                     
@@ -179,6 +180,41 @@
                 </div>
             </div>
         </div>
+
+        <!-- Ollama Information -->
+        <div class="row mt-4" id="ollamaInfo" style="display: none;">
+            <div class="col-12">
+                <div class="card border-info">
+                    <div class="card-header bg-info text-white">
+                        <h6 class="mb-0"><i class="fas fa-server me-2"></i>إعداد Ollama (الذكاء الاصطناعي المحلي)</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>خطوات التثبيت:</h6>
+                                <ol class="small">
+                                    <li>قم بتحميل Ollama من <a href="https://ollama.ai" target="_blank">ollama.ai</a></li>
+                                    <li>قم بتثبيت التطبيق على جهازك</li>
+                                    <li>افتح التطبيق واتركه يعمل في الخلفية</li>
+                                </ol>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>تحميل نموذج:</h6>
+                                <div class="bg-light p-2 rounded small">
+                                    <code>ollama pull llama2</code><br>
+                                    <code>ollama pull mistral</code><br>
+                                    <code>ollama pull codellama</code>
+                                </div>
+                                <p class="small mt-2">
+                                    <strong>ملاحظة:</strong> استخدم <code>http://localhost:11434</code> كعنوان URL إذا كان Ollama يعمل على المنفذ الافتراضي.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
     </div>
 </div>
 {% endblock %}
@@ -190,16 +226,16 @@ function updateProviderInfo() {
     const selectedOption = select.options[select.selectedIndex];
     const description = document.getElementById('providerDescription');
     const modelHelp = document.getElementById('modelHelp');
-    const modelInput = document.getElementById('model_name');
+    const modelSelect = document.getElementById('model_name');
     const providerCards = document.getElementById('providerCards');
     const apiKeySection = document.getElementById('apiKeySection');
-    
+
     if (selectedOption.value) {
         const providerName = selectedOption.dataset.name;
         const requiresKey = selectedOption.dataset.requiresKey === 'true';
-        
+
         description.innerHTML = `<i class="fas fa-info-circle me-1"></i>${selectedOption.dataset.description}`;
-        
+
         // Show/hide API key section
         if (requiresKey) {
             apiKeySection.style.display = 'block';
@@ -208,32 +244,83 @@ function updateProviderInfo() {
             apiKeySection.style.display = 'none';
             document.getElementById('api_key').required = false;
         }
-        
-        // Update model suggestions
-        if (providerName === 'gemini') {
-            modelInput.value = 'gemini-1.5-flash';
-            modelHelp.innerHTML = 'النماذج المقترحة: gemini-1.5-flash, gemini-1.5-pro, gemini-pro';
-        } else if (providerName === 'openai') {
-            modelInput.value = 'gpt-3.5-turbo';
-            modelHelp.innerHTML = 'النماذج المقترحة: gpt-3.5-turbo, gpt-4, gpt-4-turbo';
-        } else if (providerName === 'claude') {
-            modelInput.value = 'claude-3-sonnet';
-            modelHelp.innerHTML = 'النماذج المقترحة: claude-3-sonnet, claude-3-opus, claude-3-haiku';
-        } else {
-            modelInput.value = '';
-            modelHelp.innerHTML = 'أدخل اسم النموذج المطلوب';
-        }
-        
+
+        // Populate model dropdown based on provider
+        populateModelDropdown(providerName);
+        modelHelp.innerHTML = 'اختر النموذج المطلوب من القائمة';
+
         // Show provider cards
         providerCards.style.display = 'block';
         document.querySelectorAll('.provider-card').forEach(card => {
             card.style.display = card.dataset.provider === providerName ? 'block' : 'none';
         });
+
+        // Show Ollama info if Ollama is selected
+        const ollamaInfo = document.getElementById('ollamaInfo');
+        if (providerName === 'ollama') {
+            ollamaInfo.style.display = 'block';
+        } else {
+            ollamaInfo.style.display = 'none';
+        }
     } else {
         description.innerHTML = '';
         providerCards.style.display = 'none';
         apiKeySection.style.display = 'block';
         document.getElementById('api_key').required = true;
+        // Clear model dropdown
+        modelSelect.innerHTML = '<option value="">اختر نموذجاً</option>';
+    }
+}
+
+function populateModelDropdown(providerName) {
+    const modelSelect = document.getElementById('model_name');
+    let models = [];
+
+    // Get models based on provider
+    if (providerName === 'gemini') {
+        models = [
+            {value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash - سريع ومتوازن'},
+            {value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro - أداء عالي'},
+            {value: 'gemini-1.0-pro', label: 'Gemini 1.0 Pro - مستقر'},
+            {value: 'gemini-pro', label: 'Gemini Pro - كلاسيكي'},
+            {value: 'gemini-pro-vision', label: 'Gemini Pro Vision - مع الصور'}
+        ];
+    } else if (providerName === 'openai') {
+        models = [
+            {value: 'gpt-4o', label: 'GPT-4o - الأحدث والأفضل'},
+            {value: 'gpt-4o-mini', label: 'GPT-4o Mini - سريع واقتصادي'},
+            {value: 'gpt-4-turbo', label: 'GPT-4 Turbo - متقدم'},
+            {value: 'gpt-4', label: 'GPT-4 - أداء عالي'},
+            {value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo - سريع'}
+        ];
+    } else if (providerName === 'ollama') {
+        models = [
+            {value: 'llama2', label: 'Llama 2 - أساسي'},
+            {value: 'llama2:13b', label: 'Llama 2 13B - متوسط'},
+            {value: 'llama2:70b', label: 'Llama 2 70B - متقدم'},
+            {value: 'codellama', label: 'CodeLlama - للبرمجة'},
+            {value: 'mistral', label: 'Mistral - سريع وذكي'},
+            {value: 'mixtral', label: 'Mixtral - متعدد المهام'},
+            {value: 'phi', label: 'Phi - صغير وسريع'},
+            {value: 'gemma', label: 'Gemma - من Google'},
+            {value: 'qwen', label: 'Qwen - متعدد اللغات'}
+        ];
+    }
+
+    // Clear existing options
+    modelSelect.innerHTML = '<option value="">اختر نموذجاً</option>';
+
+    // Add new options
+    models.forEach(model => {
+        const option = document.createElement('option');
+        option.value = model.value;
+        option.textContent = model.label;
+        modelSelect.appendChild(option);
+    });
+
+    // Set default selection
+    if (models.length > 0) {
+        modelSelect.value = models[0].value;
     }
 }
 
