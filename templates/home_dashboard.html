@@ -1457,7 +1457,10 @@
 {% block extra_js %}
 {{ block.super }}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    // Wait for DOM to be fully loaded
+    function initializeDashboard() {
+        console.log('Initializing dashboard...');
+
         // Elements
         const sidebar = document.getElementById('sidebar');
         const content = document.getElementById('content');
@@ -1468,6 +1471,16 @@
         const welcomeSection = document.getElementById('welcome-section');
         const pageHeader = document.querySelector('.page-header');
         const messagesContainer = document.querySelector('.container.mt-3'); // حاوية الرسائل
+
+        console.log('Elements found:', {
+            sidebar: !!sidebar,
+            content: !!content,
+            topNavbar: !!topNavbar,
+            sidebarCollapseBtn: !!sidebarCollapseBtn,
+            departmentItems: departmentItems.length,
+            deptContainers: deptContainers.length,
+            welcomeSection: !!welcomeSection
+        });
 
         // Create overlay element for mobile
         const overlay = document.createElement('div');
@@ -1842,6 +1855,15 @@
                 }
             });
         });
-    });
+
+        console.log('Dashboard initialization complete');
+    }
+
+    // Initialize dashboard when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeDashboard);
+    } else {
+        initializeDashboard();
+    }
 </script>
 {% endblock %}
