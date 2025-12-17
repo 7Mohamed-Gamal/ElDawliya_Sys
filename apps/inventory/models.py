@@ -5,7 +5,7 @@ from django.utils.translation import gettext_lazy as _
 class TblCategories(models.Model):
     """TblCategories class"""
     cat_id = models.IntegerField(db_column='CAT_ID', primary_key=True)
-    cat_name = models.CharField(db_column='CAT_Name', max_length=100, db_collation='Arabic_CI_AS', blank=True, null=True)
+    cat_name = models.CharField(db_column='CAT_Name', max_length=100, blank=True, null=True)
 
     class Meta:
         """Meta class"""
@@ -15,7 +15,7 @@ class TblCategories(models.Model):
 class TblCustomers(models.Model):
     """TblCustomers class"""
     customer_id = models.IntegerField(db_column='Customer_ID', primary_key=True)
-    customer_name = models.CharField(db_column='Customer_Name', max_length=100, db_collation='Arabic_CI_AS', blank=True, null=True)
+    customer_name = models.CharField(db_column='Customer_Name', max_length=100, blank=True, null=True)
 
     class Meta:
         """Meta class"""
@@ -24,8 +24,8 @@ class TblCustomers(models.Model):
 
 class TblProducts(models.Model):
     """TblProducts class"""
-    product_id = models.CharField(db_column='Product_ID', primary_key=True, max_length=100, db_collation='Arabic_CI_AS')
-    product_name = models.CharField(db_column='Product_Name', max_length=100, db_collation='Arabic_CI_AS', blank=True, null=True)
+    product_id = models.CharField(db_column='Product_ID', primary_key=True, max_length=100)
+    product_name = models.CharField(db_column='Product_Name', max_length=100, blank=True, null=True)
     initial_balance = models.DecimalField(db_column='Initial_Balance', max_digits=18, decimal_places=2, blank=True, null=True)
     elwarad = models.DecimalField(db_column='ElWarad', max_digits=18, decimal_places=2, blank=True, null=True)
     mortagaaomalaa = models.DecimalField(db_column='MortagaaOmalaa', max_digits=18, decimal_places=2, blank=True, null=True)
@@ -33,15 +33,15 @@ class TblProducts(models.Model):
     mortagaaelmawarden = models.DecimalField(db_column='MortagaaElMawarden', max_digits=18, decimal_places=2, blank=True, null=True)
     qte_in_stock = models.DecimalField(db_column='QTE_IN_STOCK', max_digits=18, decimal_places=2, blank=True, null=True)
     cat = models.ForeignKey(TblCategories, models.DO_NOTHING, db_column='CAT_ID', blank=True, null=True)
-    cat_name = models.CharField(db_column='CAT_Name', max_length=100, db_collation='Arabic_CI_AS', blank=True, null=True)
+    cat_name = models.CharField(db_column='CAT_Name', max_length=100, blank=True, null=True)
     unit = models.ForeignKey('TblUnitsSpareparts', models.DO_NOTHING, db_column='Unit_ID', blank=True, null=True)
-    unit_name = models.CharField(db_column='Unit_Name', max_length=100, db_collation='Arabic_CI_AS', blank=True, null=True)
+    unit_name = models.CharField(db_column='Unit_Name', max_length=100, blank=True, null=True)
     minimum_threshold = models.DecimalField(db_column='Minimum_Threshold', max_digits=18, decimal_places=2, blank=True, null=True)
     maximum_threshold = models.DecimalField(db_column='Maximum_Threshold', max_digits=18, decimal_places=2, blank=True, null=True)
     image_product = models.BinaryField(db_column='Image_Product', blank=True, null=True)
     unit_price = models.DecimalField(db_column='Unit_Price', max_digits=18, decimal_places=2, blank=True, null=True)
-    location = models.CharField(db_column='Location', max_length=50, db_collation='Arabic_CI_AS', blank=True, null=True)
-    expiry_warning = models.CharField(db_column='Expiry_Warning', max_length=10, db_collation='Arabic_CI_AS', blank=True, null=True)
+    location = models.CharField(db_column='Location', max_length=50, blank=True, null=True)
+    expiry_warning = models.CharField(db_column='Expiry_Warning', max_length=10, blank=True, null=True)
 
     class Meta:
         """Meta class"""
@@ -51,15 +51,15 @@ class TblProducts(models.Model):
 class TblInvoices(models.Model):
     """TblInvoices class"""
     invoice_id = models.IntegerField(db_column='Invoice_ID')
-    invoice_number = models.CharField(db_column='Invoice_Number', primary_key=True, max_length=255, db_collation='Arabic_CI_AS')
+    invoice_number = models.CharField(db_column='Invoice_Number', primary_key=True, max_length=255)
     invoice_date = models.DateField(db_column='Invoice_Date', blank=True, null=True)
-    invoice_type = models.CharField(db_column='Invoice_Type', max_length=100, db_collation='Arabic_CI_AS', blank=True, null=True)
+    invoice_type = models.CharField(db_column='Invoice_Type', max_length=100, blank=True, null=True)
     numberofitems = models.IntegerField(db_column='NumberOfItems', blank=True, null=True)
-    recipient = models.CharField(db_column='Recipient', max_length=100, db_collation='Arabic_CI_AS', blank=True, null=True)
+    recipient = models.CharField(db_column='Recipient', max_length=100, blank=True, null=True)
     supplier_id = models.IntegerField(db_column='Supplier_ID', blank=True, null=True)
     customer_id = models.IntegerField(db_column='Customer_ID', blank=True, null=True)
-    customer_invoice_number = models.CharField(db_column='Customer_Invoice_Number', max_length=255, db_collation='Arabic_CI_AS', blank=True, null=True)
-    supplier_invoice_number = models.CharField(db_column='Supplier_Invoice_Number', max_length=255, db_collation='Arabic_CI_AS', blank=True, null=True)
+    customer_invoice_number = models.CharField(db_column='Customer_Invoice_Number', max_length=255, blank=True, null=True)
+    supplier_invoice_number = models.CharField(db_column='Supplier_Invoice_Number', max_length=255, blank=True, null=True)
     total_invoice_value = models.DecimalField(db_column='Total_Invoice_Value', max_digits=18, decimal_places=2, blank=True, null=True)
 
     class Meta:
@@ -71,9 +71,9 @@ class TblInvoiceitems(models.Model):
     """TblInvoiceitems class"""
     invoice_code_programing = models.AutoField(db_column='Invoice_Code_Programing', primary_key=True)
     invoice_id = models.IntegerField(db_column='Invoice_ID', blank=True, null=True)
-    invoice_number = models.CharField(db_column='Invoice_Number', max_length=255, db_collation='Arabic_CI_AS', blank=True, null=True)
+    invoice_number = models.CharField(db_column='Invoice_Number', max_length=255, blank=True, null=True)
     product = models.ForeignKey(TblProducts, models.DO_NOTHING, db_column='Product_ID', blank=True, null=True)
-    product_name = models.CharField(db_column='Product_Name', max_length=100, db_collation='Arabic_CI_AS', blank=True, null=True)
+    product_name = models.CharField(db_column='Product_Name', max_length=100, blank=True, null=True)
     quantity_elwarad = models.DecimalField(db_column='Quantity_ElWarad', max_digits=18, decimal_places=2, blank=True, null=True)
     quantity_elmonsarf = models.DecimalField(db_column='Quantity_ElMonsarf', max_digits=18, decimal_places=2, blank=True, null=True)
     quantity_mortagaaelmawarden = models.DecimalField(db_column='Quantity_MortagaaElMawarden', max_digits=18, decimal_places=2, blank=True, null=True)
@@ -81,16 +81,16 @@ class TblInvoiceitems(models.Model):
     unit_id = models.IntegerField(db_column='Unit_ID', blank=True, null=True)
     unit_price = models.DecimalField(db_column='Unit_Price', max_digits=18, decimal_places=2, blank=True, null=True)
     invoice_date = models.DateField(db_column='Invoice_Date', blank=True, null=True)
-    invoice_type = models.CharField(db_column='Invoice_Type', max_length=100, db_collation='Arabic_CI_AS', blank=True, null=True)
-    recipient = models.CharField(db_column='Recipient', max_length=100, db_collation='Arabic_CI_AS', blank=True, null=True)
-    received_machine = models.CharField(db_column='Received_Machine', max_length=100, db_collation='Arabic_CI_AS', blank=True, null=True)
-    machine_unit = models.CharField(db_column='Machine_Unit', max_length=100, db_collation='Arabic_CI_AS', blank=True, null=True)
-    returninvoicenumber = models.CharField(db_column='ReturnInvoiceNumber', max_length=100, db_collation='Arabic_CI_AS', blank=True, null=True)
+    invoice_type = models.CharField(db_column='Invoice_Type', max_length=100, blank=True, null=True)
+    recipient = models.CharField(db_column='Recipient', max_length=100, blank=True, null=True)
+    received_machine = models.CharField(db_column='Received_Machine', max_length=100, blank=True, null=True)
+    machine_unit = models.CharField(db_column='Machine_Unit', max_length=100, blank=True, null=True)
+    returninvoicenumber = models.CharField(db_column='ReturnInvoiceNumber', max_length=100, blank=True, null=True)
     total_invoice_value = models.DecimalField(db_column='Total_Invoice_Value', max_digits=18, decimal_places=2, blank=True, null=True)
     balance_time_entry = models.DecimalField(db_column='Balance_Time_Entry', max_digits=18, decimal_places=2, blank=True, null=True)
     data_entry_date = models.DateField(db_column='Data_Entry_Date', blank=True, null=True)
-    data_entry_by = models.CharField(db_column='Data_Entry_By', max_length=100, db_collation='Arabic_CI_AS', blank=True, null=True)
-    notes = models.CharField(db_column='Notes', max_length=100, db_collation='Arabic_CI_AS', blank=True, null=True)
+    data_entry_by = models.CharField(db_column='Data_Entry_By', max_length=100, blank=True, null=True)
+    notes = models.CharField(db_column='Notes', max_length=100, blank=True, null=True)
 
     class Meta:
         """Meta class"""
@@ -100,7 +100,7 @@ class TblInvoiceitems(models.Model):
 class TblSuppliers(models.Model):
     """TblSuppliers class"""
     supplier_id = models.IntegerField(db_column='Supplier_ID', primary_key=True)
-    supplier_name = models.CharField(db_column='Supplier_Name', max_length=100, db_collation='Arabic_CI_AS', blank=True, null=True)
+    supplier_name = models.CharField(db_column='Supplier_Name', max_length=100, blank=True, null=True)
 
     class Meta:
         """Meta class"""
@@ -110,7 +110,7 @@ class TblSuppliers(models.Model):
 class TblUnitsSpareparts(models.Model):
     """TblUnitsSpareparts class"""
     unit_id = models.IntegerField(db_column='Unit_ID', primary_key=True)
-    unit_name = models.CharField(db_column='Unit_Name', max_length=100, db_collation='Arabic_CI_AS', blank=True, null=True)
+    unit_name = models.CharField(db_column='Unit_Name', max_length=100, blank=True, null=True)
 
     class Meta:
         """Meta class"""

@@ -500,7 +500,6 @@ class Migration(migrations.Migration):
                     "recipient",
                     models.CharField(
                         blank=True,
-                        db_collation="Arabic_CI_AS",
                         db_column="Recipient",
                         max_length=100,
                         null=True,
@@ -518,7 +517,6 @@ class Migration(migrations.Migration):
                     "customer_invoice_number",
                     models.CharField(
                         blank=True,
-                        db_collation="Arabic_CI_AS",
                         db_column="Customer_Invoice_Number",
                         max_length=255,
                         null=True,
@@ -528,7 +526,6 @@ class Migration(migrations.Migration):
                     "supplier_invoice_number",
                     models.CharField(
                         blank=True,
-                        db_collation="Arabic_CI_AS",
                         db_column="Supplier_Invoice_Number",
                         max_length=255,
                         null=True,
@@ -563,7 +560,6 @@ class Migration(migrations.Migration):
                     "supplier_name",
                     models.CharField(
                         blank=True,
-                        db_collation="Arabic_CI_AS",
                         db_column="Supplier_Name",
                         max_length=100,
                         null=True,
@@ -588,7 +584,6 @@ class Migration(migrations.Migration):
                     "unit_name",
                     models.CharField(
                         blank=True,
-                        db_collation="Arabic_CI_AS",
                         db_column="Unit_Name",
                         max_length=100,
                         null=True,
@@ -800,7 +795,6 @@ class Migration(migrations.Migration):
                 (
                     "product_id",
                     models.CharField(
-                        db_collation="Arabic_CI_AS",
                         db_column="Product_ID",
                         max_length=100,
                         primary_key=True,
@@ -811,7 +805,6 @@ class Migration(migrations.Migration):
                     "product_name",
                     models.CharField(
                         blank=True,
-                        db_collation="Arabic_CI_AS",
                         db_column="Product_Name",
                         max_length=100,
                         null=True,
@@ -881,7 +874,6 @@ class Migration(migrations.Migration):
                     "cat_name",
                     models.CharField(
                         blank=True,
-                        db_collation="Arabic_CI_AS",
                         db_column="CAT_Name",
                         max_length=100,
                         null=True,
@@ -891,7 +883,6 @@ class Migration(migrations.Migration):
                     "unit_name",
                     models.CharField(
                         blank=True,
-                        db_collation="Arabic_CI_AS",
                         db_column="Unit_Name",
                         max_length=100,
                         null=True,
@@ -937,7 +928,6 @@ class Migration(migrations.Migration):
                     "location",
                     models.CharField(
                         blank=True,
-                        db_collation="Arabic_CI_AS",
                         db_column="Location",
                         max_length=50,
                         null=True,
@@ -947,7 +937,6 @@ class Migration(migrations.Migration):
                     "expiry_warning",
                     models.CharField(
                         blank=True,
-                        db_collation="Arabic_CI_AS",
                         db_column="Expiry_Warning",
                         max_length=10,
                         null=True,
@@ -998,7 +987,6 @@ class Migration(migrations.Migration):
                     "invoice_number",
                     models.CharField(
                         blank=True,
-                        db_collation="Arabic_CI_AS",
                         db_column="Invoice_Number",
                         max_length=255,
                         null=True,
@@ -1008,7 +996,6 @@ class Migration(migrations.Migration):
                     "product_name",
                     models.CharField(
                         blank=True,
-                        db_collation="Arabic_CI_AS",
                         db_column="Product_Name",
                         max_length=100,
                         null=True,
@@ -1076,7 +1063,6 @@ class Migration(migrations.Migration):
                     "invoice_type",
                     models.CharField(
                         blank=True,
-                        db_collation="Arabic_CI_AS",
                         db_column="Invoice_Type",
                         max_length=100,
                         null=True,
@@ -1086,7 +1072,6 @@ class Migration(migrations.Migration):
                     "recipient",
                     models.CharField(
                         blank=True,
-                        db_collation="Arabic_CI_AS",
                         db_column="Recipient",
                         max_length=100,
                         null=True,
@@ -1096,7 +1081,6 @@ class Migration(migrations.Migration):
                     "received_machine",
                     models.CharField(
                         blank=True,
-                        db_collation="Arabic_CI_AS",
                         db_column="Received_Machine",
                         max_length=100,
                         null=True,
@@ -1106,7 +1090,6 @@ class Migration(migrations.Migration):
                     "machine_unit",
                     models.CharField(
                         blank=True,
-                        db_collation="Arabic_CI_AS",
                         db_column="Machine_Unit",
                         max_length=100,
                         null=True,
@@ -1116,7 +1099,6 @@ class Migration(migrations.Migration):
                     "returninvoicenumber",
                     models.CharField(
                         blank=True,
-                        db_collation="Arabic_CI_AS",
                         db_column="ReturnInvoiceNumber",
                         max_length=100,
                         null=True,
@@ -1152,7 +1134,6 @@ class Migration(migrations.Migration):
                     "data_entry_by",
                     models.CharField(
                         blank=True,
-                        db_collation="Arabic_CI_AS",
                         db_column="Data_Entry_By",
                         max_length=100,
                         null=True,
@@ -1162,7 +1143,6 @@ class Migration(migrations.Migration):
                     "notes",
                     models.CharField(
                         blank=True,
-                        db_collation="Arabic_CI_AS",
                         db_column="Notes",
                         max_length=100,
                         null=True,

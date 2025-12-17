@@ -479,6 +479,12 @@
     /* AI Chat Interface Button Styles */
     .ai-quick-access {
         margin: 2rem 0;
+        display: none; /* Initially hidden */
+    }
+
+    .ai-quick-access.show {
+        display: block;
+        animation: fadeIn 0.5s ease;
     }
 
     .ai-chat-button {
@@ -588,6 +594,21 @@
         transform: translateX(-3px);
     }
 
+    /* AI Chat Toggle Button Styles */
+    #aiChatToggleBtn {
+        transition: all 0.3s ease;
+    }
+
+    #aiChatToggleBtn.btn-info {
+        background-color: #0dcaf0;
+        border-color: #0dcaf0;
+        color: #000;
+    }
+
+    #aiChatToggleBtn:hover {
+        transform: scale(1.05);
+    }
+
     /* Responsive adjustments for AI Chat button */
     @media (max-width: 768px) {
         .ai-chat-card {
@@ -604,6 +625,10 @@
 
         .ai-chat-subtitle {
             font-size: 0.9rem;
+        }
+
+        #aiChatToggleBtn .d-none.d-md-inline-block {
+            display: none !important;
         }
     }
 </style>
@@ -702,6 +727,14 @@
 
             <!-- User Info and Logout - Always Visible -->
             <div class="d-flex align-items-center">
+                <!-- AI Chat Toggle Button -->
+                <div class="me-2">
+                    <button class="btn btn-outline-info btn-sm" id="aiChatToggleBtn" onclick="toggleAiChat()" title="المساعد الذكي">
+                        <i class="fas fa-robot"></i>
+                        <span class="d-none d-md-inline-block ms-1">المساعد الذكي</span>
+                    </button>
+                </div>
+
                 <div class="user-info me-3 d-flex align-items-center">
                     <i class="fas fa-user-circle text-primary me-2 fs-5"></i>
 <span class="fw-bold">{{ request.user.first_name }} {{ request.user.last_name }}</span>
@@ -1623,34 +1656,92 @@
 
         // Function to toggle AI Chat visibility
         function toggleAiChat() {
+            console.log('Toggle AI Chat called');
             const aiChatSection = document.getElementById('aiChatSection');
-            const showAiChatBtn = document.getElementById('showAiChatBtn');
+            const aiChatToggleBtn = document.getElementById('aiChatToggleBtn');
             const welcomeSection = document.getElementById('welcome-section');
 
-            if (aiChatSection.style.display === 'none') {
-                // Show AI Chat
-                aiChatSection.style.display = 'block';
-                showAiChatBtn.style.display = 'none';
+            if (!aiChatSection || !aiChatToggleBtn) {
+                console.log('AI Chat elements not found');
+                return;
+            }
 
-                // Hide welcome section if it's currently shown
-                if (welcomeSection.style.display !== 'none') {
-                    welcomeSection.style.display = 'none';
+            console.log('Current AI Chat visibility:', aiChatSection.classList.contains('show'));
+
+            if (aiChatSection.classList.contains('show')) {
+                // Hide AI Chat
+                console.log('Hiding AI Chat');
+                aiChatSection.classList.remove('show');
+
+                // Reset button appearance
+                aiChatToggleBtn.classList.remove('btn-info');
+                aiChatToggleBtn.classList.add('btn-outline-info');
+
+                // Show welcome section if no department is selected
+                const activeDept = document.querySelector('.department-item.active');
+                if (!activeDept && welcomeSection) {
+                    welcomeSection.style.display = 'block';
                 }
             } else {
-                // Hide AI Chat
-                aiChatSection.style.display = 'none';
-                showAiChatBtn.style.display = 'block';
+                // Show AI Chat
+                console.log('Showing AI Chat');
+                aiChatSection.classList.add('show');
+
+                // Update button appearance to indicate it's active
+                aiChatToggleBtn.classList.remove('btn-outline-info');
+                aiChatToggleBtn.classList.add('btn-info');
+
+                // Hide welcome section if it's currently shown
+                if (welcomeSection && welcomeSection.style.display !== 'none') {
+                    welcomeSection.style.display = 'none';
+                }
+
+                // Hide any active department cards
+                const deptContainers = document.querySelectorAll('.dept-cards-container');
+                deptContainers.forEach(container => {
+                    container.classList.remove('active');
+                });
+
+                // Remove active class from department items
+                departmentItems.forEach(i => i.classList.remove('active'));
             }
         }
 
         // Function to hide AI Chat when showing department cards
         function hideAiChat() {
+            console.log('Hide AI Chat called');
             const aiChatSection = document.getElementById('aiChatSection');
-            const showAiChatBtn = document.getElementById('showAiChatBtn');
+            const aiChatToggleBtn = document.getElementById('aiChatToggleBtn');
 
-            aiChatSection.style.display = 'none';
-            showAiChatBtn.style.display = 'block';
+            if (aiChatSection) {
+                aiChatSection.classList.remove('show');
+            }
+
+            if (aiChatToggleBtn) {
+                // Reset button appearance
+                aiChatToggleBtn.classList.remove('btn-info');
+                aiChatToggleBtn.classList.add('btn-outline-info');
+            }
         }
+
+        // Initialize AI Chat visibility - show by default if no department is selected
+        function initAiChat() {
+            const initialActiveDept = document.querySelector('.department-item.active');
+            const aiChatSection = document.getElementById('aiChatSection');
+            const aiChatToggleBtn = document.getElementById('aiChatToggleBtn');
+
+            console.log('Initializing AI Chat, active dept:', initialActiveDept);
+
+            if (!initialActiveDept && aiChatSection && aiChatToggleBtn) {
+                console.log('Showing AI Chat by default');
+                aiChatSection.classList.add('show');
+                aiChatToggleBtn.classList.remove('btn-outline-info');
+                aiChatToggleBtn.classList.add('btn-info');
+            }
+        }
+
+        // Initialize AI Chat after a short delay to ensure DOM is ready
+        setTimeout(initAiChat, 100);
 
         // Handle sidebar department clicks
         departmentItems.forEach(item => {
