@@ -1179,78 +1179,41 @@
                         </div>
                     </div>
 
-                    <!-- Employee Tasks Department -->
-                    <div class="dept-cards-container" id="employee_tasks-cards">
-                        <h3 class="mb-3">قسم مهام الموظفين</h3>
+                    <!-- Dynamic Department Cards -->
+                    {% for dept_url_name, modules in department_modules.items %}
+                    <div class="dept-cards-container" id="{{ dept_url_name }}-cards">
+                        {% for dept in user_departments %}
+                            {% if dept.url_name == dept_url_name or dept.name.lower|slugify == dept_url_name %}
+                                <h3 class="mb-3">{{ dept.name }}</h3>
+                            {% endif %}
+                        {% empty %}
+                            <h3 class="mb-3">الوحدات</h3>
+                        {% endfor %}
                         <div class="row">
+                            {% for module in modules %}
                             <div class="col-md-6 col-lg-4">
-                                <a href="#" class="text-decoration-none">
-                                    <div class="card employee_tasks-card">
+                                <a href="{{ module.url }}" class="text-decoration-none">
+                                    <div class="card" style="--background: linear-gradient(to left, {{ module.bg_color }} 0%, {{ module.bg_color|add:'20' }} 100%);">
                                         <div class="card-info">
-                                            <i class="fas fa-home card-icon"></i>
-                                            <p class="title">الصفحة الرئيسية</p>
-                                            <p class="card-subtitle">لوحة تحكم مهام الموظفين</p>
+                                            <i class="fas {{ module.icon }} card-icon" style="color: {{ module.bg_color }};"></i>
+                                            <p class="title">{{ module.name }}</p>
+                                            <p class="card-subtitle">{{ module.description|default:"وصف الوحدة" }}</p>
                                         </div>
                                     </div>
                                 </a>
                             </div>
-                            <div class="col-md-6 col-lg-4">
-                                <a href="#" class="text-decoration-none">
-                                    <div class="card employee_tasks-card">
-                                        <div class="card-info">
-                                            <i class="fas fa-list card-icon"></i>
-                                            <p class="title">قائمة المهام</p>
-                                            <p class="card-subtitle">عرض وإدارة جميع المهام</p>
-                                        </div>
-                                    </div>
-                                </a>
+                            {% empty %}
+                            <div class="col-12">
+                                <div class="text-center py-5">
+                                    <i class="fas fa-cubes fa-4x mb-3 text-muted"></i>
+                                    <h5>لا توجد وحدات</h5>
+                                    <p class="text-muted">لا توجد وحدات متاحة في هذا القسم حالياً.</p>
+                                </div>
                             </div>
-                            <div class="col-md-6 col-lg-4">
-                                <a href="#" class="text-decoration-none">
-                                    <div class="card employee_tasks-card">
-                                        <div class="card-info">
-                                            <i class="fas fa-user-check card-icon"></i>
-                                            <p class="title">مهامي</p>
-                                            <p class="card-subtitle">عرض وإدارة مهامي الشخصية</p>
-                                        </div>
-                                    </div>
-                                </a>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <a href="#" class="text-decoration-none">
-                                    <div class="card employee_tasks-card">
-                                        <div class="card-info">
-                                            <i class="fas fa-plus card-icon"></i>
-                                            <p class="title">إنشاء مهمة جديدة</p>
-                                            <p class="card-subtitle">إضافة مهمة جديدة للنظام</p>
-                                        </div>
-                                    </div>
-                                </a>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <a href="#" class="text-decoration-none">
-                                    <div class="card employee_tasks-card">
-                                        <div class="card-info">
-                                            <i class="fas fa-calendar-alt card-icon"></i>
-                                            <p class="title">التقويم</p>
-                                            <p class="card-subtitle">عرض المهام في تقويم</p>
-                                        </div>
-                                    </div>
-                                </a>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <a href="#" class="text-decoration-none">
-                                    <div class="card employee_tasks-card">
-                                        <div class="card-info">
-                                            <i class="fas fa-chart-bar card-icon"></i>
-                                            <p class="title">التحليلات</p>
-                                            <p class="card-subtitle">إحصائيات وتحليلات المهام</p>
-                                        </div>
-                                    </div>
-                                </a>
-                            </div>
+                            {% endfor %}
                         </div>
                     </div>
+                    {% endfor %}
 
                     <!-- Notifications Department -->
                     <div class="dept-cards-container" id="notifications-cards">

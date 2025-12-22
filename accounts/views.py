@@ -125,11 +125,12 @@ def home_view(request):
     # Check if user is admin
     is_admin = request.user.Role == 'admin'
 
-    # Get departments from administrator app if it's installed
+    # Get departments and modules from administrator app if it's installed
     user_departments = []
     all_departments = []
+    department_modules = {}
     try:
-        from administrator.models import Department
+        from administrator.models import Department, Module
 
         # Get all active departments
         departments = Department.objects.filter(is_active=True).order_by('order')
@@ -149,24 +150,79 @@ def home_view(request):
                 dept.url_name = dept.name.lower().replace(' ', '-')
                 print(f"Set url_name for {dept.name}: {dept.url_name}")
 
-        # Filter departments based on user permissions
+        # Filter departments based on user permissions and get their modules
         for dept in departments:
+            dept_modules = []
             # If department requires admin and user is admin, add it
             if dept.require_admin and is_admin:
                 user_departments.append(dept)
+                # Get active modules for this department
+                modules = Module.objects.filter(
+                    department=dept,
+                    is_active=True
+                ).order_by('order')
+                # Filter modules based on user permissions
+                for module in modules:
+                    if module.require_admin and not is_admin:
+                        continue  # Skip admin-only modules for non-admin users
+                    if module.groups.exists() and not module.groups.filter(id__in=request.user.groups.all()).exists():
+                        continue  # Skip modules restricted to specific groups
+                    dept_modules.append(module)
             # If department doesn't require admin, check group permissions
             elif not dept.require_admin:
                 # If no groups specified, everyone can access
                 if not dept.groups.exists():
                     user_departments.append(dept)
+                    # Get active modules for this department
+                    modules = Module.objects.filter(
+                        department=dept,
+                        is_active=True
+                    ).order_by('order')
+                    # Filter modules based on user permissions
+                    for module in modules:
+                        if module.require_admin and not is_admin:
+                            continue  # Skip admin-only modules for non-admin users
+                        if module.groups.exists() and not module.groups.filter(id__in=request.user.groups.all()).exists():
+                            continue  # Skip modules restricted to specific groups
+                        dept_modules.append(module)
                 # Otherwise, check if user is in any of the allowed groups
                 else:
                     # Check if any of the user's groups are in the department's allowed groups
                     if dept.groups.filter(id__in=request.user.groups.all()).exists():
                         user_departments.append(dept)
+                        # Get active modules for this department
+                        modules = Module.objects.filter(
+                            department=dept,
+                            is_active=True
+                        ).order_by('order')
+                        # Filter modules based on user permissions
+                        for module in modules:
+                            if module.require_admin and not is_admin:
+                                continue  # Skip admin-only modules for non-admin users
+                            if module.groups.exists() and not module.groups.filter(id__in=request.user.groups.all()).exists():
+                                continue  # Skip modules restricted to specific groups
+                            dept_modules.append(module)
+
+            # Store modules for this department
+            if dept.url_name:
+                department_modules[dept.url_name] = dept_modules
+                print(f"DEBUG: Stored {len(dept_modules)} modules for department '{dept.name}' with url_name '{dept.url_name}'")
+            else:
+                dept_url_key = dept.name.lower().replace(' ', '-')
+                department_modules[dept_url_key] = dept_modules
+                print(f"DEBUG: Stored {len(dept_modules)} modules for department '{dept.name}' with generated key '{dept_url_key}'")
+
     except Exception as e:
         # If administrator app is not installed or any error occurs
-        print(f"Error loading departments: {str(e)}")
+        print(f"Error loading departments and modules: {str(e)}")
+        import traceback
+        traceback.print_exc()
+
+    print(f"DEBUG: Final department_modules keys: {list(department_modules.keys())}")
+    for key, modules in department_modules.items():
+        print(f"DEBUG: Department '{key}' has {len(modules)} modules")
+        for module in modules:
+            print(f"  - Module: {module.name}, URL: {module.url}")
 
     context = {
         'meetings_count': meetings_count,
@@ -178,6 +234,7 @@ def home_view(request):
         'user_tasks': user_tasks,
         'user_departments': user_departments,
         'all_departments': all_departments,
+        'department_modules': department_modules,
         'is_admin': is_admin
     }
 
