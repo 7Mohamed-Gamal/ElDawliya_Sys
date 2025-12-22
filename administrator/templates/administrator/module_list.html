@@ -1,0 +1,133 @@
+{% extends 'administrator/base_admin.html' %}
+{% load static %}
+
+{% block title %}الوحدات - لوحة تحكم مدير النظام{% endblock %}
+
+{% block page_icon %}cubes{% endblock %}
+{% block page_header %}إدارة الوحدات{% endblock %}
+
+{% block content %}
+<div class="row">
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cubes me-2"></i>
+                        قائمة الوحدات
+                    </h5>
+                    <a href="{% url 'administrator:module_add' %}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus-circle me-2"></i>
+                        إضافة وحدة جديدة
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if modules %}
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped align-middle">
+                            <thead>
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">الوحدة</th>
+                                    <th scope="col">القسم</th>
+                                    <th scope="col">الأيقونة</th>
+                                    <th scope="col">الرابط</th>
+                                    <th scope="col">الحالة</th>
+                                    <th scope="col">الترتيب</th>
+                                    <th scope="col">الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for module in modules %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>
+                                        <strong>{{ module.name }}</strong>
+                                        {% if module.description %}
+                                        <div class="text-muted small">{{ module.description }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ module.department.name }}</span>
+                                    </td>
+                                    <td>
+                                        <i class="fas {{ module.icon }} fa-lg" style="color: {{ module.bg_color }};"></i>
+                                        <span class="ms-2 text-muted small">{{ module.icon }}</span>
+                                    </td>
+                                    <td>
+                                        <code class="small">{{ module.url }}</code>
+                                    </td>
+                                    <td>
+                                        {% if module.is_active %}
+                                        <span class="badge bg-success">نشط</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">غير نشط</span>
+                                        {% endif %}
+                                        {% if module.require_admin %}
+                                        <br><span class="badge bg-warning mt-1">يتطلب صلاحيات المدير</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ module.order }}</td>
+                                    <td>
+                                        <div class="btn-group">
+                                            <a href="{% url 'administrator:module_edit' module.id %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'administrator:module_delete' module.id %}" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-cubes fa-4x mb-3 text-muted"></i>
+                        <h5>لا توجد وحدات</h5>
+                        <p class="text-muted">لم يتم إنشاء أي وحدات بعد. انقر على زر "إضافة وحدة جديدة" لإنشاء أول وحدة.</p>
+                        <a href="{% url 'administrator:module_add' %}" class="btn btn-primary mt-2">
+                            <i class="fas fa-plus-circle me-2"></i>
+                            إضافة وحدة جديدة
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>
+                        <i class="fas fa-info-circle me-2"></i>
+                        معلومات حول الوحدات
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p>الوحدات هي العناصر الفرعية التي تظهر ضمن الأقسام في الشريط الجانبي للنظام. يمكنك إضافة وتعديل الوحدات حسب حاجتك.</p>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="mb-3">تنبيهات هامة:</h6>
+                            <ul>
+                                <li>يجب ربط كل وحدة بقسم موجود.</li>
+                                <li>يجب استخدام أسماء أيقونات من مكتبة Font Awesome.</li>
+                                <li>تأكد من استخدام رابط فريد وصحيح لكل وحدة.</li>
+                                <li>يمكنك تخصيص لون الخلفية لكل وحدة.</li>
+                                <li>يمكنك ترتيب الوحدات باستخدام خانة "الترتيب".</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="mb-3">روابط مفيدة:</h6>
+                            <ul>
+                                <li><a href="https://fontawesome.com/icons?d=gallery&m=free" target="_blank">مكتبة أيقونات Font Awesome</a></li>
+                                <li><a href="{% url 'administrator:department_list' %}">إدارة الأقسام</a></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+</div>
+{% endblock %}

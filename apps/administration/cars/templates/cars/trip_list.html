@@ -1,0 +1,213 @@
+{% extends 'cars\base.html' %}
+{% load custom_filters %}
+
+{% block title %}الرحلات - نظام إدارة نشاط النقل{% endblock %}
+
+{% block header %}قائمة الرحلات{% endblock %}
+
+{% block content %}
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">إجمالي الرحلات: {{ trips|length }}</h4>
+        <a href="{% url 'cars:trip_add' %}" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> إضافة رحلة جديدة
+        </a>
+    </div>
+
+    <div class="table-container">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>التاريخ</th>
+                    <th>كود السيارة</th>
+                    <th>اسم السيارة</th>
+                    <th>نوع السيارة</th>
+                    <th>المسافة (كم)</th>
+                    <th>تكلفة الوقود</th>
+                    <th>الصيانة والإهلاك</th>
+                    <th>ربح السائق</th>
+                    <th>إجمالي التكلفة</th>
+                    <th>القيمة الضريبية</th>
+                    <th>المستحق</th>
+                    <th>العمليات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for trip in trips %}
+                    <tr>
+                        <td>{{ trip.date|date:"Y-m-d" }}</td>
+                        <td>{{ trip.car.car_code }}</td>
+                        <td>{{ trip.car.car_name }}</td>
+                        <td>
+                            {% if trip.car.car_type == 'microbus' %}
+                                ميكروباص
+                            {% elif trip.car.car_type == 'bus' %}
+                                أتوبيس
+                            {% elif trip.car.car_type == 'passenger' %}
+                                ركاب
+                            {% elif trip.car.car_type == 'private' %}
+                                ملاكي
+                            {% else %}
+                                {{ trip.car.car_type }}
+                            {% endif %}
+                        </td>
+                        <td>{{ trip.distance|floatformat:2 }}</td>
+                        <td>{{ trip.fuel_cost|floatformat:2 }} ج.م</td>
+                        <td>{{ trip.maintenance_cost|add:trip.depreciation_cost|floatformat:2 }} ج.م</td>
+                        <td>{{ trip.driver_profit|floatformat:2 }} ج.م</td>
+                        <td>{{ trip.total_base_cost|floatformat:2 }} ج.م</td>
+                        <td>{{ trip.tax_amount|floatformat:2 }} ج.م</td>
+                        <td>{{ trip.final_price|floatformat:2 }} ج.م</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'cars:trip_edit' trip.id %}" class="btn btn-sm btn-primary" title="تعديل">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{% url 'cars:trip_delete' trip.id %}" class="btn btn-sm btn-danger" title="حذف">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="12" class="text-center py-4">
+                            <div class="alert alert-info mb-0">
+                                لا توجد رحلات مسجلة حاليًا. قم بإضافة رحلة جديدة من خلال زر الإضافة.
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot class="table-secondary">
+                <tr>
+                    <th colspan="4">الإجمالي</th>
+                    <th>{{ trips|length|default:"0" }}</th>
+                    <th>{{ trips|sum:"fuel_cost"|default:"0"|floatformat:2 }} ج.م</th>
+                    <th>{{ trips|sum:"maintenance_cost"|add:trips|sum:"depreciation_cost"|default:"0"|floatformat:2 }} ج.م</th>
+                    <th>{{ trips|sum:"driver_profit"|default:"0"|floatformat:2 }} ج.م</th>
+                    <th>{{ trips|sum:"total_base_cost"|default:"0"|floatformat:2 }} ج.م</th>
+                    <th>{{ trips|sum:"tax_amount"|default:"0"|floatformat:2 }} ج.م</th>
+                    <th>{{ trips|sum:"final_price"|default:"0"|floatformat:2 }} ج.م</th>
+                    <th></th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    
+    {% if trips %}
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">توزيع المسافات حسب السيارات</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="tripDistanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">توزيع التكاليف</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="tripCostChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        {% if trips %}
+        // تجميع البيانات حسب السيارات
+        const carData = {};
+        {% for trip in trips %}
+            if (!carData['{{ trip.car.car_code }}']) {
+                carData['{{ trip.car.car_code }}'] = {
+                    name: '{{ trip.car.car_name }}',
+                    distance: 0,
+                    cost: 0
+                };
+            }
+            carData['{{ trip.car.car_code }}'].distance += {{ trip.distance|floatformat:2 }};
+            carData['{{ trip.car.car_code }}'].cost += {{ trip.final_price|floatformat:2 }};
+        {% endfor %}
+        
+        // تحضير البيانات للرسوم البيانية
+        const carLabels = Object.keys(carData).map(code => code + ' - ' + carData[code].name);
+        const distanceData = Object.keys(carData).map(code => carData[code].distance);
+        const costData = Object.keys(carData).map(code => carData[code].cost);
+        
+        // رسم بياني للمسافات
+        const distanceCtx = document.getElementById('tripDistanceChart').getContext('2d');
+        new Chart(distanceCtx, {
+            type: 'bar',
+            data: {
+                labels: carLabels,
+                datasets: [{
+                    label: 'المسافة (كم)',
+                    data: distanceData,
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'المسافة (كم)'
+                        }
+                    }
+                }
+            }
+        });
+        
+        // رسم بياني للتكاليف
+        const costCtx = document.getElementById('tripCostChart').getContext('2d');
+        new Chart(costCtx, {
+            type: 'pie',
+            data: {
+                labels: [
+                    'تكلفة الوقود', 
+                    'الصيانة والإهلاك', 
+                    'ربح السائق',
+                    'الضريبة'
+                ],
+                datasets: [{
+                    data: [
+                        {{ trips|sum:"fuel_cost"|default:"0" }},
+                        {{ trips|sum:"maintenance_cost"|add:trips|sum:"depreciation_cost"|default:"0" }},
+                        {{ trips|sum:"driver_profit"|default:"0" }},
+                        {{ trips|sum:"tax_amount"|default:"0" }}
+                    ],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.7)',
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(255, 206, 86, 0.7)',
+                        'rgba(75, 192, 192, 0.7)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+        {% endif %}
+    });
+</script>
+{% endblock %}

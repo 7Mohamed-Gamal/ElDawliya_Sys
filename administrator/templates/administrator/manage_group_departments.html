@@ -1,0 +1,141 @@
+{% extends 'administrator/base_admin.html' %}
+{% load static %}
+
+{% block title %}إدارة أقسام المجموعة: {{ group.name }} - نظام الدولية{% endblock %}
+
+{% block page_title %}إدارة أقسام المجموعة: {{ group.name }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'administrator:admin_dashboard' %}">لوحة تحكم المدير</a></li>
+<li class="breadcrumb-item"><a href="{% url 'administrator:permission_dashboard' %}">إدارة الصلاحيات</a></li>
+<li class="breadcrumb-item active">إدارة أقسام المجموعة: {{ group.name }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card shadow-sm">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center py-3 border-bottom">
+                <h5 class="mb-0 fw-semibold">إدارة أقسام المجموعة: {{ group.name }}</h5>
+                <a href="{% url 'administrator:group_detail' pk=group.id %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-arrow-right me-1"></i>
+                    العودة إلى تفاصيل المجموعة
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info mb-4">
+                    <i class="fas fa-info-circle me-2"></i>
+                    حدد الأقسام التي يمكن للمستخدمين في مجموعة <strong>{{ group.name }}</strong> الوصول إليها. سيتمكن المستخدمون من رؤية هذه الأقسام فقط في القائمة الجانبية.
+                </div>
+                
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="py-3 px-3" style="width: 50px;">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="select-all">
+                                        </div>
+                                    </th>
+                                    <th class="py-3 px-3">القسم</th>
+                                    <th class="py-3 px-3">الوصف</th>
+                                    <th class="py-3 px-3">الرابط</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for dept in departments %}
+                                <tr>
+                                    <td class="px-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input department-checkbox" type="checkbox" 
+                                                   name="departments" value="{{ dept.id }}"
+                                                   {% if dept.id in selected_departments %}checked{% endif %}>
+                                        </div>
+                                    </td>
+                                    <td class="px-3">
+                                        <div class="d-flex align-items-center">
+                                            <div class="me-3">
+                                                <i class="fas {{ dept.icon }} fa-lg"></i>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0">{{ dept.name }}</h6>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-3">
+                                        {% if dept.description %}
+                                        {{ dept.description }}
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="px-3">{{ dept.url_name }}</td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-4">
+                                        <div class="mb-3">
+                                            <i class="fas fa-building-slash fa-3x text-muted"></i>
+                                        </div>
+                                        <p class="text-muted">لا توجد أقسام حالياً</p>
+                                        <a href="{% url 'administrator:department_add' %}" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-plus-circle me-1"></i>
+                                            إضافة قسم
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end mt-4">
+                        <a href="{% url 'administrator:group_detail' pk=group.id %}" class="btn btn-outline-secondary me-2">
+                            <i class="fas fa-times me-1"></i>
+                            إلغاء
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>
+                            حفظ التغييرات
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Handle "Select All" checkbox
+        const selectAllCheckbox = document.getElementById('select-all');
+        const departmentCheckboxes = document.querySelectorAll('.department-checkbox');
+        
+        selectAllCheckbox.addEventListener('change', function() {
+            departmentCheckboxes.forEach(checkbox => {
+                checkbox.checked = selectAllCheckbox.checked;
+            });
+        });
+        
+        // Update "Select All" checkbox state based on individual checkboxes
+        function updateSelectAllCheckbox() {
+            const checkedCount = document.querySelectorAll('.department-checkbox:checked').length;
+            selectAllCheckbox.checked = checkedCount === departmentCheckboxes.length;
+            selectAllCheckbox.indeterminate = checkedCount > 0 && checkedCount < departmentCheckboxes.length;
+        }
+        
+        departmentCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateSelectAllCheckbox);
+        });
+        
+        // Initialize "Select All" checkbox state
+        updateSelectAllCheckbox();
+    });
+</script>
+{% endblock %}

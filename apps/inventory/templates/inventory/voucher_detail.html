@@ -1,0 +1,486 @@
+{% extends 'inventory/base_inventory.html' %}
+{% load static %}
+{% load i18n %}
+{% load django_permissions %}
+
+{% block title %}
+{% if voucher.voucher_type == 'إذن اضافة' %}
+    {% trans "تفاصيل إذن اضافة" %} #{{ voucher.voucher_number }}
+{% elif voucher.voucher_type == 'إذن صرف' %}
+    {% trans "تفاصيل إذن صرف" %} #{{ voucher.voucher_number }}
+{% elif voucher.voucher_type == 'اذن مرتجع عميل' %}
+    {% trans "تفاصيل إذن مرتجع عميل" %} #{{ voucher.voucher_number }}
+{% elif voucher.voucher_type == 'إذن مرتجع مورد' %}
+    {% trans "تفاصيل إذن مرتجع مورد" %} #{{ voucher.voucher_number }}
+{% else %}
+    {% trans "تفاصيل إذن" %} #{{ voucher.voucher_number }}
+{% endif %}
+- {% trans "نظام إدارة المخزن" %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* أنماط خاصة بصفحة تفاصيل الإذن */
+    .voucher-header {
+        padding: 1.5rem;
+    }
+
+    .voucher-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--primary-color);
+    }
+
+    .voucher-date {
+        color: #6c757d;
+    }
+
+    .voucher-type {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.875rem;
+        margin-right: 1rem;
+    }
+
+    .voucher-type.addition {
+        background-color: rgba(76, 175, 80, 0.1);
+        color: #4caf50;
+    }
+
+    .voucher-type.disbursement {
+        background-color: rgba(33, 150, 243, 0.1);
+        color: #2196f3;
+    }
+
+    .voucher-type.client-return {
+        background-color: rgba(255, 152, 0, 0.1);
+        color: #ff9800;
+    }
+
+    .voucher-type.supplier-return {
+        background-color: rgba(156, 39, 176, 0.1);
+        color: #9c27b0;
+    }
+
+    .voucher-meta-item {
+        display: flex;
+        margin-bottom: 0.5rem;
+    }
+
+    .voucher-meta-label {
+        font-weight: 600;
+        min-width: 120px;
+        color: #6c757d;
+    }
+
+    .voucher-meta-value {
+        flex: 1;
+    }
+
+    .table-items th {
+        background-color: #f8f9fa;
+    }
+
+    .item-total {
+        font-weight: 600;
+    }
+
+    .voucher-summary {
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+    }
+
+    .summary-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .summary-item:last-child {
+        border-bottom: none;
+        margin-bottom: 0;
+        padding-bottom: 0;
+    }
+
+    /* أنماط خاصة بالطباعة */
+    @media print {
+        .sidebar, .action-buttons, .breadcrumb, .mobile-header {
+            display: none !important;
+        }
+
+        .main-content {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+        }
+
+        .card {
+            box-shadow: none !important;
+            border: 1px solid #dee2e6 !important;
+        }
+
+        .print-header {
+            display: block !important;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .print-header img {
+            height: 80px;
+            margin-bottom: 1rem;
+        }
+
+        .print-header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .print-header h2 {
+            font-size: 1.25rem;
+            color: #6c757d;
+        }
+
+        .table-items {
+            border: 1px solid #dee2e6;
+            margin-bottom: 1.5rem;
+        }
+
+        .summary-total {
+            font-size: 14pt;
+        }
+    }
+
+    @page {
+        size: A4;
+        margin: 1cm;
+    }
+
+    /* إخفاء رأس الطباعة في العرض العادي */
+    .print-header {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row ps-4">
+    <div class="col-12 mb-4">
+        <!-- أزرار العمليات العلوية -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-0">
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'inventory:dashboard' %}">{% trans "الرئيسية" %}</a>
+                    </li>
+                    <li class="breadcrumb-item">
+                        <a href="{% url 'inventory:voucher_list' %}">{% trans "الأذونات" %}</a>
+                    </li>
+                    <li class="breadcrumb-item active">
+                        {% trans "إذن" %} {{ voucher.voucher_number }}
+                    </li>
+                </ol>
+            </nav>
+
+            <div class="action-buttons">
+                <button onclick="window.print()" class="btn btn-outline-dark">
+                    <i class="fas fa-print"></i> {% trans "طباعة" %}
+                </button>
+
+                {% if perms.inventory.change_voucher or user|is_admin %}
+                    <a href="{% url 'inventory:voucher_edit' voucher.voucher_number %}" class="btn btn-primary">
+                        <i class="fas fa-edit me-1"></i> تعديل
+                    </a>
+                {% endif %}
+
+                {% if perms.inventory.delete_voucher or user|is_admin %}
+                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteVoucherModal">
+                        <i class="fas fa-trash me-1"></i> حذف
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- رأس الطباعة - يظهر فقط عند الطباعة -->
+        <div class="print-header">
+            <img src="{% static 'img/logo.png' %}" alt="شعار الشركة">
+            <h1>الشركة الدولية</h1>
+            <h2>إدارة المخازن</h2>
+        </div>
+
+        <!-- معلومات الإذن -->
+        <div class="card shadow-sm">
+            <div class="card-body voucher-header">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="voucher-number">{% trans "إذن" %} #{{ voucher.voucher_number }}</span>
+                            <span class="voucher-date me-3">
+                                <i class="fas fa-calendar-alt me-1"></i>
+                                {{ voucher.date|date:"Y/m/d" }}
+                            </span>
+
+                            {% if voucher.voucher_type == 'إذن اضافة' %}
+                            <span class="voucher-type addition">{% trans "إذن اضافة" %}</span>
+                            {% elif voucher.voucher_type == 'إذن صرف' %}
+                            <span class="voucher-type disbursement">{% trans "إذن صرف" %}</span>
+                            {% elif voucher.voucher_type == 'اذن مرتجع عميل' %}
+                            <span class="voucher-type client-return">{% trans "مرتجع عميل" %}</span>
+                            {% elif voucher.voucher_type == 'إذن مرتجع مورد' %}
+                            <span class="voucher-type supplier-return">{% trans "مرتجع مورد" %}</span>
+                            {% endif %}
+                        </div>
+
+                        <!-- معلومات إضافية حسب نوع الإذن -->
+                        {% if voucher.voucher_type == 'إذن اضافة' or voucher.voucher_type == 'إذن مرتجع مورد' %}
+                        {% if voucher.supplier %}
+                        <div class="mb-2">
+                            <strong>{% trans "المورد" %}:</strong> {{ voucher.supplier.name }}
+                        </div>
+                        {% endif %}
+                        {% if voucher.supplier_voucher_number %}
+                        <div class="mb-2">
+                            <strong>{% trans "رقم إذن المورد" %}:</strong> {{ voucher.supplier_voucher_number }}
+                        </div>
+                        {% endif %}
+                        {% elif voucher.voucher_type == 'إذن صرف' %}
+                        {% if voucher.department %}
+                        <div class="mb-2">
+                            <strong>{% trans "القسم" %}:</strong> {{ voucher.department.name }}
+                        </div>
+                        {% endif %}
+                        {% if voucher.recipient %}
+                        <div class="mb-2">
+                            <strong>{% trans "المستلم" %}:</strong> {{ voucher.recipient }}
+                        </div>
+                        {% endif %}
+                        {% elif voucher.voucher_type == 'اذن مرتجع عميل' %}
+                        {% if voucher.customer %}
+                        <div class="mb-2">
+                            <strong>{% trans "العميل" %}:</strong> {{ voucher.customer.name }}
+                        </div>
+                        {% endif %}
+                        {% endif %}
+
+                        {% if voucher.notes %}
+                        <div class="notes-section mt-3">
+                            <h6><i class="fas fa-sticky-note me-1"></i> {% trans "ملاحظات" %}:</h6>
+                            <p class="mb-0">{{ voucher.notes }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="text-start">
+                            <div class="voucher-meta-item">
+                                <div class="voucher-meta-label">{% trans "عدد الأصناف" %}:</div>
+                                <div class="voucher-meta-value">{{ voucher_items.count }} {% trans "صنف" %}</div>
+                            </div>
+
+                            <div class="voucher-meta-item">
+                                <div class="voucher-meta-label">{% trans "تاريخ الإنشاء" %}:</div>
+                                <div class="voucher-meta-value">{{ voucher.created_at|date:"Y/m/d H:i" }}</div>
+                            </div>
+
+                            <div class="voucher-meta-item">
+                                <div class="voucher-meta-label">{% trans "آخر تحديث" %}:</div>
+                                <div class="voucher-meta-value">{{ voucher.updated_at|date:"Y/m/d H:i" }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- بنود الإذن -->
+        <div class="card shadow-sm mt-4">
+            <div class="card-header bg-transparent">
+                <h5 class="mb-0"><i class="fas fa-boxes me-2"></i> {% trans "بنود الإذن" %}</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover table-items mb-0">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>{% trans "رقم الصنف" %}</th>
+                                <th>{% trans "اسم الصنف" %}</th>
+                                <th>{% trans "الوحدة" %}</th>
+
+                                {% if voucher.voucher_type == 'إذن اضافة' or voucher.voucher_type == 'اذن مرتجع عميل' %}
+                                <th>{% trans "الكمية المضافة" %}</th>
+                                {% else %}
+                                <th>{% trans "الكمية المنصرفة" %}</th>
+                                {% endif %}
+
+                                {% if voucher.voucher_type == 'إذن صرف' %}
+                                <th>{% trans "الماكينة" %}</th>
+                                <th>{% trans "وحدة الماكينة" %}</th>
+                                {% endif %}
+
+                                <th>{% trans "سعر الوحدة" %}</th>
+                                <th>{% trans "الإجمالي" %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if voucher_items %}
+                                {% for item in voucher_items %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ item.product.product_id }}</td>
+                                    <td>{{ item.product.name }}</td>
+                                    <td>{{ item.product.unit.name|default:"-" }}</td>
+
+                                    {% if voucher.voucher_type == 'إذن اضافة' or voucher.voucher_type == 'اذن مرتجع عميل' %}
+                                    <td>{{ item.quantity_added }}</td>
+                                    {% else %}
+                                    <td>{{ item.quantity_disbursed }}</td>
+                                    {% endif %}
+
+                                    {% if voucher.voucher_type == 'إذن صرف' %}
+                                    <td>{{ item.machine|default:"-" }}</td>
+                                    <td>{{ item.machine_unit|default:"-" }}</td>
+                                    {% endif %}
+
+                                    <td>{{ item.unit_price }} {% trans "ج.م" %}</td>
+                                    <td class="item-total text-start">{{ item.total_price }} {% trans "ج.م" %}</td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="{% if voucher.voucher_type == 'إذن صرف' %}9{% else %}7{% endif %}" class="text-center">
+                                        <div class="alert alert-warning mb-0">
+                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                            {% trans "لا توجد أصناف مضافة لهذا الإذن" %}
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ملخص الإذن -->
+        <div class="row mt-4 mb-4">
+            <div class="col-md-6"></div>
+            <div class="col-md-6">
+                <div class="voucher-summary">
+                    <div class="summary-item">
+                        <div>{% trans "عدد الأصناف" %}:</div>
+                        <div>{{ items_count }}</div>
+                    </div>
+
+                    {% if voucher.voucher_type == 'إذن اضافة' or voucher.voucher_type == 'اذن مرتجع عميل' %}
+                    <div class="summary-item">
+                        <div>{% trans "إجمالي الكميات المضافة" %}:</div>
+                        <div>{{ total_quantity_added }}</div>
+                    </div>
+                    {% else %}
+                    <div class="summary-item">
+                        <div>{% trans "إجمالي الكميات المنصرفة" %}:</div>
+                        <div>{{ total_quantity_disbursed }}</div>
+                    </div>
+                    {% endif %}
+
+                    <div class="summary-item summary-total">
+                        <div>{% trans "إجمالي القيمة" %}:</div>
+                        <div>{{ total_value }} {% trans "ج.م" %}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- توقيعات -->
+        <div class="card shadow-sm mt-4">
+            <div class="card-header bg-transparent">
+                <h5 class="mb-0"><i class="fas fa-signature me-2"></i> {% trans "التوقيعات" %}</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <div class="signature-box p-3 border rounded mb-2">
+                            <h6>{% trans "المستلم" %}</h6>
+                            <div class="signature-line mt-5 border-bottom"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="signature-box p-3 border rounded mb-2">
+                            <h6>{% trans "أمين المخزن" %}</h6>
+                            <div class="signature-line mt-5 border-bottom"></div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="signature-box p-3 border rounded mb-2">
+                            <h6>{% trans "المدير المسؤول" %}</h6>
+                            <div class="signature-line mt-5 border-bottom"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Delete Confirmation -->
+<div class="modal fade" id="deleteVoucherModal" tabindex="-1" aria-labelledby="deleteVoucherModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteVoucherModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    {% trans "تأكيد الحذف" %}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <p class="mb-0">
+                        {% trans "هل أنت متأكد من حذف إذن" %} #{{ voucher.voucher_number }}؟
+                    </p>
+                    <p class="mb-0 mt-2">
+                        {% trans "سيتم تعديل أرصدة الأصناف المرتبطة بهذا الإذن والتراجع عن تأثير هذا الإذن على المخزون." %}
+                    </p>
+                </div>
+                <div class="border p-3 rounded mb-3">
+                    <div class="mb-2">
+                        <strong>{% trans "رقم الإذن" %}:</strong> {{ voucher.voucher_number }}
+                    </div>
+                    <div class="mb-2">
+                        <strong>{% trans "نوع الإذن" %}:</strong> {{ voucher.get_voucher_type_display }}
+                    </div>
+                    <div>
+                        <strong>{% trans "عدد الأصناف" %}:</strong> {{ voucher_items.count }}
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>
+                    {% trans "إلغاء" %}
+                </button>
+                <form method="post" action="{% url 'inventory:voucher_delete' voucher.voucher_number %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash-alt me-1"></i>
+                        {% trans "تأكيد الحذف" %}
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // يمكن إضافة أي سلوك JavaScript إضافي هنا
+    });
+</script>
+{% endblock %}

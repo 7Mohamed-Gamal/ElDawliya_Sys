@@ -1,0 +1,497 @@
+{% extends 'base_updated.html' %}
+{% load static %}
+
+{% block title %}الصفحة الرئيسية - نظام الدولية{% endblock %}
+
+{% block page_title %}لوحة التحكم{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">الصفحة الرئيسية</li>
+{% endblock %}
+
+{% block content %}
+<style>
+    .welcome-section {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 2rem;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+    }
+
+    .welcome-title {
+        color: #2c3e50;
+        font-weight: 700;
+        font-size: 2.2rem;
+        margin-bottom: 1rem;
+    }
+
+    .welcome-subtitle {
+        color: #6c757d;
+        font-size: 1.1rem;
+    }
+
+    .stats-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        height: 100%;
+    }
+
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .stats-icon {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+
+    .stats-number {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .stats-title {
+        color: #6c757d;
+        margin-bottom: 0;
+    }
+
+    .primary { color: #4e73df; }
+    .secondary { color: #6f42c1; }
+    .success { color: #1cc88a; }
+    .info { color: #36b9cc; }
+
+    .section-title {
+        color: #2c3e50;
+        font-weight: 600;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+    }
+
+    .card-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: rgba(78, 115, 223, 0.1);
+    }
+
+    .timeline {
+        position: relative;
+    }
+
+    .timeline-item {
+        position: relative;
+        padding-left: 2rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .timeline-badge {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 1rem;
+        height: 1rem;
+        border-radius: 50%;
+        background: #4e73df;
+    }
+
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: 0.5rem;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #e9ecef;
+    }
+
+    .table {
+        margin-bottom: 0;
+    }
+
+    .table th {
+        border-top: none;
+        background: #f8f9fa;
+        font-weight: 600;
+    }
+
+    .btn {
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+
+    .btn:hover {
+        transform: translateY(-2px);
+    }
+
+    @media (max-width: 768px) {
+        .welcome-title {
+            font-size: 1.8rem;
+        }
+
+        .stats-card {
+            margin-bottom: 1rem;
+        }
+    }
+</style>
+
+<div class="welcome-section text-center">
+    <h2 class="welcome-title">مرحباً بك في نظام الشركة الدولية</h2>
+    <p class="welcome-subtitle">نظام إدارة الاجتماعات والمهام للشركة الدولية</p>
+</div>
+
+<!-- Dashboard Stats -->
+<div class="row g-4">
+    <div class="col-md-3 col-sm-6">
+        <div class="stats-card">
+            <i class="fas fa-calendar-alt stats-icon primary"></i>
+            <div class="stats-number primary">{{ meeting_count|default:"0" }}</div>
+            <p class="stats-title">الاجتماعات</p>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stats-card">
+            <i class="fas fa-tasks stats-icon secondary"></i>
+            <div class="stats-number secondary">{{ task_count|default:"0" }}</div>
+            <p class="stats-title">المهام</p>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stats-card">
+            <i class="fas fa-check-circle stats-icon success"></i>
+            <div class="stats-number success">{{ completed_task_count|default:"0" }}</div>
+            <p class="stats-title">المهام المكتملة</p>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6">
+        <div class="stats-card">
+            <i class="fas fa-users stats-icon info"></i>
+            <div class="stats-number info">{{ user_count|default:"0" }}</div>
+            <p class="stats-title">المستخدمين</p>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Access Cards -->
+<h3 class="section-title mb-4 mt-5">
+    <i class="fas fa-th-large me-2"></i>
+    الوصول السريع
+</h3>
+
+<div class="row g-4">
+    <div class="col-lg-4 col-md-6">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="card-icon mb-3">
+                    <i class="fas fa-calendar-alt fa-3x text-primary"></i>
+                </div>
+                <h4 class="card-title">الاجتماعات</h4>
+                <p class="card-text text-muted">إدارة وتنظيم الاجتماعات ومتابعة تفاصيلها</p>
+            </div>
+            <div class="card-footer bg-transparent border-0 pb-4">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <a href="{% url 'meetings:list' %}" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-list me-1"></i> عرض
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{% url 'meetings:create' %}" class="btn btn-primary w-100">
+                            <i class="fas fa-plus me-1"></i> إنشاء
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="card-icon mb-3">
+                    <i class="fas fa-tasks fa-3x text-secondary"></i>
+                </div>
+                <h4 class="card-title">المهام</h4>
+                <p class="card-text text-muted">متابعة المهام المسندة إليك وتحديث حالتها</p>
+            </div>
+            <div class="card-footer bg-transparent border-0 pb-4">
+                <a href="{% url 'tasks:list' %}" class="btn btn-primary w-100">
+                    <i class="fas fa-clipboard-list me-1"></i> عرض المهام
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="card-icon mb-3">
+                    <i class="fas fa-users fa-3x text-info"></i>
+                </div>
+                <h4 class="card-title">شؤون الموظفين</h4>
+                <p class="card-text text-muted">إدارة بيانات الموظفين والأقسام وشؤون الموظفين</p>
+            </div>
+            <div class="card-footer bg-transparent border-0 pb-4">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <a href="{% url 'Hr:employees:list' %}" class="btn btn-outline-info w-100">
+                            <i class="fas fa-list me-1"></i> قائمة
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{% url 'Hr:dashboard' %}" class="btn btn-info w-100">
+                            <i class="fas fa-tachometer-alt me-1"></i> لوحة التحكم
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if request.user.Role == 'admin' %}
+    <div class="col-lg-4 col-md-6">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="card-icon mb-3">
+                    <i class="fas fa-user-cog fa-3x text-success"></i>
+                </div>
+                <h4 class="card-title">إدارة المستخدمين</h4>
+                <p class="card-text text-muted">إدارة حسابات المستخدمين والصلاحيات</p>
+            </div>
+            <div class="card-footer bg-transparent border-0 pb-4">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <a href="{% url 'accounts:dashboard' %}" class="btn btn-outline-success w-100">
+                            <i class="fas fa-users me-1"></i> إدارة
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{% url 'accounts:create_user' %}" class="btn btn-success w-100">
+                            <i class="fas fa-user-plus me-1"></i> إضافة
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- API & AI Section -->
+    <div class="col-lg-4 col-md-6">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="card-icon mb-3">
+                    <i class="fas fa-robot fa-3x text-primary"></i>
+                </div>
+                <h4 class="card-title">API والذكاء الاصطناعي</h4>
+                <p class="card-text text-muted">إدارة API ومحادثة مع الذكاء الاصطناعي</p>
+            </div>
+            <div class="card-footer bg-transparent border-0 pb-4">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <a href="{% url 'api:dashboard' %}" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-tachometer-alt me-1"></i> لوحة التحكم
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{% url 'api:ai_chat' %}" class="btn btn-primary w-100">
+                            <i class="fas fa-comments me-1"></i> محادثة AI
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="card-icon mb-3">
+                    <i class="fas fa-book fa-3x text-success"></i>
+                </div>
+                <h4 class="card-title">وثائق API</h4>
+                <p class="card-text text-muted">استكشف وثائق API التفاعلية والمطورين</p>
+            </div>
+            <div class="card-footer bg-transparent border-0 pb-4">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <a href="/api/v1/docs/" target="_blank" class="btn btn-outline-success w-100">
+                            <i class="fas fa-external-link-alt me-1"></i> Swagger
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="/api/v1/status/" target="_blank" class="btn btn-success w-100">
+                            <i class="fas fa-heartbeat me-1"></i> حالة API
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="card-icon mb-3">
+                    <i class="fas fa-chart-bar fa-3x text-warning"></i>
+                </div>
+                <h4 class="card-title">تحليل البيانات</h4>
+                <p class="card-text text-muted">تحليل ذكي للبيانات باستخدام الذكاء الاصطناعي</p>
+            </div>
+            <div class="card-footer bg-transparent border-0 pb-4">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <a href="{% url 'api:data_analysis' %}" class="btn btn-outline-warning w-100">
+                            <i class="fas fa-chart-line me-1"></i> تحليل
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{% url 'api:usage_stats' %}" class="btn btn-warning w-100">
+                            <i class="fas fa-chart-pie me-1"></i> إحصائيات
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <div class="card-icon mb-3">
+                    <i class="fas fa-cog fa-3x text-info"></i>
+                </div>
+                <h4 class="card-title">إعدادات الذكاء الاصطناعي</h4>
+                <p class="card-text text-muted">إدارة مفاتيح API لمختلف مقدمي خدمات AI</p>
+            </div>
+            <div class="card-footer bg-transparent border-0 pb-4">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <a href="{% url 'api:ai_settings' %}" class="btn btn-outline-info w-100">
+                            <i class="fas fa-robot me-1"></i> إعدادات
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{% url 'api:add_ai_config' %}" class="btn btn-info w-100">
+                            <i class="fas fa-plus me-1"></i> إضافة
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activities -->
+<h3 class="section-title mb-4 mt-5">
+    <i class="fas fa-history me-2"></i>
+    النشاطات الحديثة
+</h3>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="timeline p-4">
+            {% if recent_activities %}
+                {% for activity in recent_activities %}
+                <div class="timeline-item">
+                    <div class="timeline-badge"></div>
+                    <div class="card mb-0">
+                        <div class="card-body py-3">
+                            <h5 class="mb-1 fs-6">{{ activity.title }}</h5>
+                            <p class="text-muted mb-1 small">{{ activity.date }}</p>
+                            <p class="mb-0">{{ activity.description }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-info-circle fa-2x mb-3 text-muted"></i>
+                    <p class="mb-0">لا توجد نشاطات حديثة</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Upcoming Meetings -->
+<h3 class="section-title mb-4 mt-5">
+    <i class="fas fa-calendar me-2"></i>
+    الاجتماعات القادمة
+</h3>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>العنوان</th>
+                        <th>التاريخ</th>
+                        <th>المنشئ</th>
+                        <th>العمليات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if upcoming_meetings %}
+                        {% for meeting in upcoming_meetings %}
+                        <tr>
+                            <td>{{ meeting.title }}</td>
+                            <td>{{ meeting.date }}</td>
+                            <td>{{ meeting.created_by.username }}</td>
+                            <td>
+                                <a href="{% url 'meetings:detail' meeting.id %}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center py-4">
+                                <i class="fas fa-calendar-times fa-2x mb-3 text-muted"></i>
+                                <p class="mb-0">لا توجد اجتماعات قادمة</p>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Set active nav item
+        if (document.querySelector('.nav-link[href="{% url "accounts:home" %}"]')) {
+            document.querySelector('.nav-link[href="{% url "accounts:home" %}"]').classList.add('active');
+        }
+    });
+</script>
+{% endblock %}

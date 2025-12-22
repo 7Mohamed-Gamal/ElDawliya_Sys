@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>تأكيد حذف الإجازة</h1>
+<p>سيتم حذف طلب الإجازة للموظف {{ item.emp.emp_code }} من {{ item.start_date }} إلى {{ item.end_date }}</p>
+<form method="post">{% csrf_token %}
+  <button class="btn btn-danger">تأكيد الحذف</button>
+  <a class="btn btn-secondary" href="{% url 'leaves:employee_leaves' %}">إلغاء</a>
+</form>
+{% endblock %}
+

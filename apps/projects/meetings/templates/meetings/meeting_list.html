@@ -1,0 +1,549 @@
+{% extends 'meetings/base_meetings.html' %}
+{% load static %}
+{% load django_permissions %}
+
+{% block title %}قائمة الاجتماعات{% endblock %}
+
+{% block page_title %}قائمة الاجتماعات{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'meetings:dashboard' %}">الاجتماعات</a></li>
+<li class="breadcrumb-item active">قائمة الاجتماعات</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .filters-card {
+        margin-bottom: 1.5rem;
+        border-radius: 0.5rem;
+    }
+    
+    .meeting-card {
+        border: none;
+        border-radius: 0.8rem;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+        margin-bottom: 1.5rem;
+        transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+        overflow: hidden;
+        position: relative;
+        background: linear-gradient(to bottom, #ffffff, #f9fafb);
+    }
+    
+    .meeting-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Add colored border on the left based on status */
+    .meeting-card.pending {
+        border-right: 4px solid #ff9800;
+    }
+    
+    .meeting-card.completed {
+        border-right: 4px solid #4caf50;
+    }
+    
+    .meeting-card.cancelled {
+        border-right: 4px solid #f44336;
+    }
+    
+    .status-indicator {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-left: 8px;
+        position: relative;
+    }
+    
+    .status-indicator::after {
+        content: '';
+        position: absolute;
+        top: -2px;
+        right: -2px;
+        bottom: -2px;
+        left: -2px;
+        border-radius: 50%;
+        background-color: inherit;
+        opacity: 0.3;
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+            opacity: 0.3;
+        }
+        70% {
+            transform: scale(1.5);
+            opacity: 0;
+        }
+        100% {
+            transform: scale(1.5);
+            opacity: 0;
+        }
+    }
+    
+    .status-pending {
+        background-color: #ff9800;
+    }
+    
+    .status-completed {
+        background-color: #4caf50;
+    }
+    
+    .status-cancelled {
+        background-color: #f44336;
+    }
+    
+    .meeting-date {
+        background-color: rgba(52, 152, 219, 0.1);
+        padding: 8px 12px;
+        border-radius: 6px;
+        display: inline-flex;
+        align-items: center;
+        font-weight: 600;
+        color: #3498db;
+        font-size: 0.9rem;
+        border-right: 3px solid #3498db;
+    }
+    
+    .meeting-time {
+        color: #666;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        margin-top: 8px;
+    }
+    
+    .meeting-time i {
+        color: #999;
+        margin-left: 8px;
+    }
+    
+    .card-text {
+        color: #555;
+        margin: 10px 0;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        height: 1.5rem;
+    }
+    
+    .attendance {
+        background-color: rgba(52, 152, 219, 0.08);
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        color: #2980b9;
+        font-weight: 500;
+        border: 1px solid rgba(52, 152, 219, 0.2);
+    }
+    
+    .attendance i {
+        color: #3498db;
+        font-size: 0.9rem;
+    }
+    
+    .attendance:hover {
+        background-color: rgba(52, 152, 219, 0.15);
+        transform: translateY(-1px);
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+    }
+    
+    .action-buttons .btn {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        border: none;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .action-buttons .btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.1);
+        transform: scale(0);
+        border-radius: 50%;
+        transition: all 0.4s ease;
+    }
+    
+    .action-buttons .btn:hover {
+        transform: translateY(-3px) scale(1.05);
+        box-shadow: 0 5px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .action-buttons .btn:hover::before {
+        transform: scale(1.5);
+    }
+    
+    .action-buttons .btn-outline-primary {
+        border: 1px solid rgba(52, 152, 219, 0.3);
+        background: rgba(52, 152, 219, 0.05);
+        color: #3498db;
+    }
+    
+    .action-buttons .btn-outline-primary:hover {
+        background: rgba(52, 152, 219, 0.15);
+        color: #2980b9;
+    }
+    
+    .action-buttons .btn-primary {
+        background: linear-gradient(135deg, #3498db, #2980b9);
+        box-shadow: 0 2px 6px rgba(52, 152, 219, 0.3);
+    }
+    
+    .action-buttons .btn-primary:hover {
+        box-shadow: 0 4px 10px rgba(52, 152, 219, 0.4);
+    }
+    
+    .add-meeting-btn {
+        position: fixed;
+        bottom: 30px;
+        left: 30px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background-color: var(--primary-color);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        transition: all 0.3s;
+        z-index: 100;
+    }
+    
+    .add-meeting-btn:hover {
+        background-color: var(--secondary-color);
+        transform: translateY(-3px) scale(1.05);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
+        color: white;
+    }
+    
+    .meeting-title {
+        color: #333;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: inline-block;
+        position: relative;
+    }
+    
+    .meeting-title:hover {
+        color: var(--primary-color);
+    }
+    
+    .meeting-title::after {
+        content: '';
+        position: absolute;
+        width: 0;
+        height: 2px;
+        bottom: -2px;
+        left: 0;
+        background-color: var(--primary-color);
+        transition: all 0.3s ease;
+    }
+    
+    .meeting-title:hover::after {
+        width: 100%;
+    }
+
+    .meeting-title.restricted {
+        color: #999;
+        cursor: not-allowed;
+        text-decoration: none;
+    }
+
+    .meeting-title.restricted:hover {
+        color: #999;
+        text-decoration: none;
+    }
+
+    .meeting-title.restricted::after {
+        display: none;
+    }
+
+    .access-indicator {
+        font-size: 0.8rem;
+        padding: 2px 8px;
+        border-radius: 12px;
+        margin-right: 8px;
+    }
+
+    .access-allowed {
+        background-color: rgba(40, 167, 69, 0.1);
+        color: #28a745;
+        border: 1px solid rgba(40, 167, 69, 0.2);
+    }
+
+    .access-restricted {
+        background-color: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+        border: 1px solid rgba(220, 53, 69, 0.2);
+    }
+
+    .meeting-card.restricted {
+        opacity: 0.7;
+        background: linear-gradient(to bottom, #f8f9fa, #e9ecef);
+    }
+
+    .meeting-card.restricted:hover {
+        transform: none;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+    }
+    
+    @media (max-width: 768px) {
+        .filters-container {
+            flex-direction: column;
+        }
+        
+        .filters-container .form-group {
+            margin-bottom: 0.5rem;
+            width: 100%;
+        }
+        
+        .filters-actions {
+            margin-top: 1rem;
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Filters Card -->
+    <div class="card filters-card">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="fas fa-filter me-2 text-primary"></i> تصفية النتائج</h5>
+            <button class="btn btn-sm btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#filtersCollapse">
+                <i class="fas fa-chevron-down"></i>
+            </button>
+        </div>
+        <div class="collapse show" id="filtersCollapse">
+            <div class="card-body px-4 py-3">
+                <form method="get" action="{% url 'meetings:list' %}">
+                    <div class="d-flex flex-wrap gap-3 align-items-end filters-container">
+                        <div class="form-group flex-grow-1">
+                            <label for="search" class="form-label">بحث:</label>
+                            <input type="text" name="search" id="search" class="form-control" placeholder="عنوان أو موضوع الاجتماع..." value="{{ request.GET.search|default:'' }}">
+                        </div>
+                        <div class="form-group flex-grow-1">
+                            <label for="date_from" class="form-label">من تاريخ:</label>
+                            <input type="date" name="date_from" id="date_from" class="form-control" value="{{ request.GET.date_from|default:'' }}">
+                        </div>
+                        <div class="form-group flex-grow-1">
+                            <label for="date_to" class="form-label">إلى تاريخ:</label>
+                            <input type="date" name="date_to" id="date_to" class="form-control" value="{{ request.GET.date_to|default:'' }}">
+                        </div>
+                        <div class="form-group flex-grow-1">
+                            <label for="status" class="form-label">الحالة:</label>
+                            <select name="status" id="status" class="form-select">
+                                <option value="">الكل</option>
+                                <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>قيد الانتظار</option>
+                                <option value="completed" {% if request.GET.status == 'completed' %}selected{% endif %}>مكتمل</option>
+                                <option value="cancelled" {% if request.GET.status == 'cancelled' %}selected{% endif %}>ملغي</option>
+                            </select>
+                        </div>
+                        <div class="filters-actions">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-1"></i> بحث
+                            </button>
+                            <a href="{% url 'meetings:list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i> مسح الفلاتر
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Meetings List -->
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">عدد النتائج: <span class="badge bg-primary">{{ meetings|length }}</span></h5>
+        <div class="btn-group" role="group">
+                <a href="{% url 'meetings:create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus-circle me-1"></i> إنشاء اجتماع جديد
+                </a>
+            <a href="{% url 'meetings:calendar' %}" class="btn btn-outline-primary">
+                <i class="fas fa-calendar me-1"></i> عرض التقويم
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        {% if meetings %}
+            {% for meeting in meetings %}
+                <div class="col-md-6 col-lg-4">
+                    <div class="card meeting-card {{ meeting.status }} {% if not meeting.user_can_access %}restricted{% endif %}"
+                         {% if not meeting.user_can_access %}
+                         data-bs-toggle="tooltip"
+                         data-bs-placement="top"
+                         title="ليس لديك صلاحية للوصول إلى هذا الاجتماع. يجب أن تكون ضمن قائمة الحضور أو مدير عام."
+                         {% endif %}>
+                        <div class="card-header bg-white py-3 px-4 d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <span class="status-indicator status-{{ meeting.status }}"></span>
+                                {% if meeting.user_can_access %}
+                                    <a href="{% url 'meetings:detail' pk=meeting.pk %}" class="meeting-title">{{ meeting.title }}</a>
+                                    <span class="access-indicator access-allowed">
+                                        <i class="fas fa-check-circle"></i> يمكن الوصول
+                                    </span>
+                                {% else %}
+                                    <span class="meeting-title restricted">{{ meeting.title }}</span>
+                                    <span class="access-indicator access-restricted">
+                                        <i class="fas fa-lock"></i> مقيد الوصول
+                                    </span>
+                                {% endif %}
+                            </h5>
+                            <span class="badge bg-{{ meeting.status|cut:'pending'|cut:'completed'|cut:'cancelled'|yesno:'warning,success,danger' }}">
+                                {{ meeting.get_status_display }}
+                            </span>
+                        </div>
+                        <div class="card-body px-4 py-3">
+                            <div class="mb-3">
+                                <div class="meeting-date mb-2">
+                                    <i class="fas fa-calendar-alt me-1"></i> {{ meeting.date|date:"Y-m-d" }}
+                                </div>
+                                <div class="meeting-time">
+                                    <i class="fas fa-clock me-1"></i> {{ meeting.date|date:"h:i A" }}
+                                </div>
+                            </div>
+                            <p class="card-text text-truncate">{{ meeting.topic }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="attendance">
+                                    <i class="fas fa-users me-1"></i>
+                                    <span>{{ meeting.attendees.count }} حاضر</span>
+                                </div>
+                                <div class="action-buttons">
+                                    {% if perms.meetings.change_meeting or user|is_admin or user == meeting.created_by %}
+                                        <a href="{% url 'meetings:edit' pk=meeting.pk %}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-edit"></i> تعديل
+                                        </a>
+                                    {% endif %}
+
+                                    {% if perms.meetings.delete_meeting or user|is_admin or user == meeting.created_by %}
+                                        <button type="button" class="btn btn-sm btn-danger delete-meeting"
+                                                data-meeting-id="{{ meeting.pk }}"
+                                                data-meeting-title="{{ meeting.title }}">
+                                            <i class="fas fa-trash"></i> حذف
+                                        </button>
+                                    {% endif %}
+
+                                    {% if meeting.user_can_access %}
+                                        <a href="{% url 'meetings:detail' pk=meeting.pk %}" class="btn btn-sm btn-primary rounded-circle" title="التفاصيل">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    {% else %}
+                                        <button class="btn btn-sm btn-secondary rounded-circle" title="لا يمكن الوصول" disabled>
+                                            <i class="fas fa-lock"></i>
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="card py-5">
+                    <div class="card-body text-center">
+                        <img src="{% static 'img/no-data.svg' %}" alt="لا توجد اجتماعات" style="max-width: 200px; opacity: 0.7;" class="mb-4">
+                        <h4>لا توجد اجتماعات</h4>
+                        <p class="text-muted">لم يتم العثور على أية اجتماعات تطابق معايير البحث الخاصة بك</p>
+                        <div class="mt-4">
+                            <a href="{% url 'meetings:list' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i> مسح الفلاتر
+                            </a>
+                            <a href="{% url 'meetings:create' %}" class="btn btn-primary ms-2">
+                                <i class="fas fa-plus-circle me-1"></i> إنشاء اجتماع جديد
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Floating Add Button (Mobile only) -->
+    <a href="{% url 'meetings:create' %}" class="add-meeting-btn d-md-none">
+        <i class="fas fa-plus"></i>
+    </a>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Handle delete meeting buttons
+        document.querySelectorAll('.delete-meeting').forEach(function(button) {
+            button.addEventListener('click', function() {
+                const meetingId = this.dataset.meetingId;
+                const meetingTitle = this.dataset.meetingTitle;
+
+                if (confirm(`هل أنت متأكد من حذف الاجتماع "${meetingTitle}"؟\n\nسيتم حذف كافة بيانات الاجتماع بما في ذلك الحضور والمهام المرتبطة به.`)) {
+                    // Create and submit a form for deletion
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `/meetings/${meetingId}/delete/`;
+
+                    // Add CSRF token
+                    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+                    if (csrfToken) {
+                        const csrfInput = document.createElement('input');
+                        csrfInput.type = 'hidden';
+                        csrfInput.name = 'csrfmiddlewaretoken';
+                        csrfInput.value = csrfToken.value;
+                        form.appendChild(csrfInput);
+                    }
+
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        });
+
+        // Add visual feedback for restricted meetings
+        document.querySelectorAll('.meeting-card.restricted').forEach(function(card) {
+            card.addEventListener('click', function(e) {
+                // Prevent any clicks on restricted meeting cards
+                e.preventDefault();
+                e.stopPropagation();
+
+                // Show a brief visual feedback
+                this.style.transform = 'scale(0.98)';
+                setTimeout(() => {
+                    this.style.transform = '';
+                }, 150);
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,445 @@
+{% load static %}
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="{{ current_language }}" dir="{{ text_direction }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}نظام إدارة التنبيهات{% endblock %}</title>
+
+    <!-- Bootstrap RTL/LTR -->
+    {% if text_direction == 'rtl' %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    {% else %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    {% endif %}
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Google Fonts -->
+    {% if system_settings.font_family == 'cairo' or current_font == 'Cairo' %}
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    {% elif system_settings.font_family == 'tajawal' or current_font == 'Tajawal' %}
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    {% elif system_settings.font_family == 'almarai' or current_font == 'Almarai' %}
+    <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@400;700&display=swap" rel="stylesheet">
+    {% elif system_settings.font_family == 'ibm-plex-sans-arabic' or current_font == 'IBM Plex Sans Arabic' %}
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
+    {% elif system_settings.font_family == 'noto-sans-arabic' or current_font == 'Noto Sans Arabic' %}
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    {% else %}
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    {% endif %}
+
+    <style>
+        :root {
+            --font-family: {% if system_settings.font_family %}
+                {% if system_settings.font_family == 'cairo' %}'Cairo'
+                {% elif system_settings.font_family == 'tajawal' %}'Tajawal'
+                {% elif system_settings.font_family == 'almarai' %}'Almarai'
+                {% elif system_settings.font_family == 'ibm-plex-sans-arabic' %}'IBM Plex Sans Arabic'
+                {% elif system_settings.font_family == 'noto-sans-arabic' %}'Noto Sans Arabic'
+                {% else %}'Cairo'
+                {% endif %}
+                {% else %}{{ current_font|default:'Cairo' }}{% endif %}, sans-serif;
+            --primary-color: #ff5722;
+            --secondary-color: #e64a19;
+            --success-color: #4caf50;
+            --info-color: #00bcd4;
+            --warning-color: #ff9800;
+            --danger-color: #f44336;
+            --light-color: #f5f5f5;
+            --dark-color: #37474f;
+            --body-bg: #f5f7fa;
+            --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--body-bg);
+        }
+
+        .navbar {
+            background-color: var(--primary-color);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            color: white !important;
+        }
+
+        .navbar-light .navbar-nav .nav-link {
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        .navbar-light .navbar-nav .nav-link:hover {
+            color: white;
+        }
+
+        .with-sidebar {
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        .page-wrapper {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .content-wrapper {
+            display: flex;
+            flex: 1;
+        }
+
+        .sidebar {
+            width: 250px;
+            background-color: var(--secondary-color);
+            color: white;
+            padding-top: 20px;
+            transition: all 0.3s;
+            position: fixed;
+            height: 100%;
+            z-index: 100;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .sidebar-header h3 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: rgba(255, 255, 255, 0.6);
+            padding: 0 20px;
+            margin: 20px 0 10px;
+        }
+
+        .sidebar-menu-item {
+            margin-bottom: 5px;
+        }
+
+        .sidebar-menu-item a {
+            display: flex;
+            align-items: center;
+            padding: 10px 20px;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: all 0.3s;
+        }
+
+        .sidebar-menu-item a:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .sidebar-menu-item a i {
+            margin-left: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .sidebar-menu-item.active a {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: bold;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            margin-right: 250px;
+            transition: all 0.3s;
+        }
+
+        .sidebar-collapsed .sidebar {
+            width: 70px;
+        }
+
+        .sidebar-collapsed .sidebar-header h3,
+        .sidebar-collapsed .sidebar-title,
+        .sidebar-collapsed .sidebar-menu-item a span {
+            display: none;
+        }
+
+        .sidebar-collapsed .main-content {
+            margin-right: 70px;
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 0;
+                padding: 0;
+                transform: translateX(100%);
+                right: -250px;
+                z-index: 1050;
+            }
+
+            .main-content {
+                margin-right: 0;
+            }
+
+            .sidebar.show {
+                width: 250px;
+                padding-top: 20px;
+                transform: translateX(0);
+                right: 0;
+            }
+
+            /* Overlay for mobile sidebar */
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0, 0, 0, 0.5);
+                z-index: 1040;
+            }
+
+            .sidebar-overlay.show {
+                display: block;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="page-wrapper">
+        <!-- Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-light with-sidebar">
+            <div class="container-fluid">
+                <div class="d-flex align-items-center">
+                    <button id="sidebarToggle" class="btn btn-light me-2">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <a class="navbar-brand" href="{% url 'notifications:dashboard' %}">
+                        <i class="fas fa-bell me-2"></i>
+                        <span>نظام التنبيهات</span>
+                    </a>
+                </div>
+                <div class="d-flex align-items-center">
+                    <div class="user-info me-3 d-flex align-items-center">
+                        <i class="fas fa-user-circle text-light me-2 fs-5"></i>
+                        <span class="text-light fw-bold">{{ request.user.first_name }} {{ request.user.last_name }}</span>
+                    </div>
+                    <a href="{% url 'accounts:logout' %}" class="btn btn-outline-light btn-sm">
+                        <i class="fas fa-sign-out-alt me-1"></i> تسجيل الخروج
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+        <div class="content-wrapper">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <h3><i class="fas fa-bell me-2"></i> التنبيهات</h3>
+                </div>
+                <ul class="sidebar-menu">
+                    <li class="sidebar-menu-item {% if request.path == '/notifications/' %}active{% endif %}">
+                        <a href="{% url 'notifications:dashboard' %}">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>لوحة التحكم</span>
+                        </a>
+                    </li>
+                    
+                    <li class="sidebar-menu-item {% if request.path == '/notifications/list/' %}active{% endif %}">
+                        <a href="{% url 'notifications:list' %}">
+                            <i class="fas fa-list"></i>
+                            <span>جميع التنبيهات</span>
+                        </a>
+                    </li>
+                    
+                    <li class="sidebar-title">أنواع التنبيهات</li>
+                    
+                    <li class="sidebar-menu-item {% if request.path == '/notifications/list/hr/' %}active{% endif %}">
+                        <a href="{% url 'notifications:list_by_type' 'hr' %}">
+                            <i class="fas fa-user-tie"></i>
+                            <span>الموارد البشرية</span>
+                        </a>
+                    </li>
+                    
+                    <li class="sidebar-menu-item {% if request.path == '/notifications/list/meetings/' %}active{% endif %}">
+                        <a href="{% url 'notifications:list_by_type' 'meetings' %}">
+                            <i class="fas fa-users"></i>
+                            <span>الاجتماعات</span>
+                        </a>
+                    </li>
+                    
+                    <li class="sidebar-menu-item {% if request.path == '/notifications/list/inventory/' %}active{% endif %}">
+                        <a href="{% url 'notifications:list_by_type' 'inventory' %}">
+                            <i class="fas fa-boxes"></i>
+                            <span>المخزن</span>
+                        </a>
+                    </li>
+                    
+                    <li class="sidebar-menu-item {% if request.path == '/notifications/list/purchase/' %}active{% endif %}">
+                        <a href="{% url 'notifications:list_by_type' 'purchase' %}">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>المشتريات</span>
+                        </a>
+                    </li>
+                    
+                    <li class="sidebar-menu-item {% if request.path == '/notifications/list/system/' %}active{% endif %}">
+                        <a href="{% url 'notifications:list_by_type' 'system' %}">
+                            <i class="fas fa-cogs"></i>
+                            <span>النظام</span>
+                        </a>
+                    </li>
+                    
+                    <li class="sidebar-title">الإجراءات</li>
+                    
+                    <li class="sidebar-menu-item">
+                        <a href="{% url 'notifications:mark_all_as_read' %}" class="mark-all-read">
+                            <i class="fas fa-check-double"></i>
+                            <span>تعليم الكل كمقروء</span>
+                        </a>
+                    </li>
+
+                    <li class="sidebar-menu-item">
+                        <a href="{% url 'accounts:home' %}">
+                            <i class="fas fa-home"></i>
+                            <span>الصفحة الرئيسية</span>
+                        </a>
+                    </li>
+                </ul>
+            </aside>
+
+            <!-- Main Content -->
+            <div class="main-content">
+                {% if messages %}
+                    <div class="messages">
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <!-- Page Header -->
+                <div class="page-header mb-4">
+                    <h2 class="mb-0">{% block page_title %}التنبيهات{% endblock %}</h2>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-0">
+                            {% block breadcrumb %}
+                            <li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+                            <li class="breadcrumb-item active">التنبيهات</li>
+                            {% endblock %}
+                        </ol>
+                    </nav>
+                </div>
+
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Custom JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Sidebar Toggle
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const pageWrapper = document.querySelector('.page-wrapper');
+            const sidebar = document.querySelector('.sidebar');
+
+            // Create overlay element for mobile
+            const overlay = document.createElement('div');
+            overlay.className = 'sidebar-overlay';
+            document.body.appendChild(overlay);
+
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    pageWrapper.classList.toggle('sidebar-collapsed');
+
+                    // For mobile devices
+                    if (window.innerWidth <= 768) {
+                        sidebar.classList.toggle('show');
+                        overlay.classList.toggle('show');
+                    }
+                });
+            }
+
+            // Close sidebar when clicking on overlay
+            overlay.addEventListener('click', function() {
+                sidebar.classList.remove('show');
+                overlay.classList.remove('show');
+                pageWrapper.classList.remove('sidebar-collapsed');
+            });
+
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 768) {
+                    overlay.classList.remove('show');
+                }
+            });
+
+            // Auto-dismiss alerts after 5 seconds
+            setTimeout(function() {
+                const alerts = document.querySelectorAll('.alert');
+                alerts.forEach(function(alert) {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                });
+            }, 5000);
+
+            // Mark all as read functionality
+            const markAllReadBtn = document.querySelector('.mark-all-read');
+            if (markAllReadBtn) {
+                markAllReadBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    if (confirm('هل أنت متأكد من تعليم جميع التنبيهات كمقروءة؟')) {
+                        fetch(this.href, {
+                            method: 'GET',
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // تحديث الصفحة
+                                window.location.reload();
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                    }
+                });
+            }
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

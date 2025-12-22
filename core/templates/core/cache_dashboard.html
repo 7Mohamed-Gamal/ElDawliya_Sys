@@ -1,0 +1,546 @@
+{% extends 'base/base_enhanced.html' %}
+{% load static %}
+
+{% block title %}مراقبة التخزين المؤقت - نظام الدولية{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+<style>
+.cache-metric {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.cache-metric h3 {
+    margin: 0 0 10px 0;
+    color: #333;
+    font-size: 2rem;
+}
+
+.cache-metric p {
+    margin: 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.status-indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-left: 8px;
+}
+
+.status-healthy { background-color: #10b981; }
+.status-warning { background-color: #f59e0b; }
+.status-error { background-color: #ef4444; }
+
+.cache-operations {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.btn-cache-op {
+    margin: 5px;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.btn-danger { background-color: #ef4444; color: white; }
+.btn-warning { background-color: #f59e0b; color: white; }
+.btn-success { background-color: #10b981; color: white; }
+.btn-info { background-color: #06b6d4; color: white; }
+
+.cache-table {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th,
+.table td {
+    padding: 12px;
+    text-align: right;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.table th {
+    background-color: #f9fafb;
+    font-weight: 600;
+    color: #374151;
+}
+
+.chart-container {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    height: 400px;
+}
+
+.loading {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+}
+
+.error-message {
+    background-color: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #dc2626;
+    padding: 12px;
+    border-radius: 4px;
+    margin: 10px 0;
+}
+
+.success-message {
+    background-color: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #166534;
+    padding: 12px;
+    border-radius: 4px;
+    margin: 10px 0;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">
+                    <i class="fas fa-tachometer-alt me-2"></i>
+                    مراقبة التخزين المؤقت
+                </h1>
+                <div class="d-flex align-items-center">
+                    <span class="badge bg-info me-2">{{ cache_backend }}</span>
+                    <button class="btn btn-outline-primary btn-sm" onclick="refreshData()">
+                        <i class="fas fa-sync-alt"></i> تحديث
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cache Health Status -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="cache-operations">
+                <h5>حالة النظام</h5>
+                <div id="health-status" class="loading">جاري التحقق من حالة النظام...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cache Metrics -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="cache-metric">
+                <h3 id="hit-ratio">--</h3>
+                <p>معدل النجاح (%)</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="cache-metric">
+                <h3 id="total-requests">--</h3>
+                <p>إجمالي الطلبات</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="cache-metric">
+                <h3 id="cache-hits">--</h3>
+                <p>النجاحات</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="cache-metric">
+                <h3 id="cache-misses">--</h3>
+                <p>الإخفاقات</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cache Operations -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="cache-operations">
+                <h5>عمليات التخزين المؤقت</h5>
+                <div id="operation-messages"></div>
+                <button class="btn-cache-op btn-success" onclick="warmCache()">
+                    <i class="fas fa-fire"></i> تسخين التخزين المؤقت
+                </button>
+                <button class="btn-cache-op btn-warning" onclick="resetStats()">
+                    <i class="fas fa-chart-bar"></i> إعادة تعيين الإحصائيات
+                </button>
+                <button class="btn-cache-op btn-info" onclick="showClearPatternDialog()">
+                    <i class="fas fa-filter"></i> مسح نمط محدد
+                </button>
+                <button class="btn-cache-op btn-danger" onclick="clearAllCache()">
+                    <i class="fas fa-trash"></i> مسح جميع البيانات
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Query Performance -->
+        <div class="col-md-6">
+            <div class="cache-table">
+                <h5>أداء الاستعلامات</h5>
+                <div id="query-stats" class="loading">جاري تحميل إحصائيات الاستعلامات...</div>
+            </div>
+        </div>
+
+        <!-- Slow Queries -->
+        <div class="col-md-6">
+            <div class="cache-table">
+                <h5>الاستعلامات البطيئة</h5>
+                <div id="slow-queries" class="loading">جاري تحميل الاستعلامات البطيئة...</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Index Recommendations -->
+        <div class="col-12">
+            <div class="cache-table">
+                <h5>توصيات الفهارس</h5>
+                <div id="index-suggestions" class="loading">جاري تحميل توصيات الفهارس...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Clear Pattern Modal -->
+<div class="modal fade" id="clearPatternModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">مسح نمط محدد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label for="pattern-input" class="form-label">النمط:</label>
+                    <input type="text" class="form-control" id="pattern-input" placeholder="مثال: emp_* أو dashboard_*">
+                    <div class="form-text">استخدم * كرمز بديل</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-danger" onclick="clearPattern()">مسح</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+let refreshInterval;
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadData();
+    
+    // Auto-refresh every 30 seconds
+    refreshInterval = setInterval(loadData, 30000);
+});
+
+function loadData() {
+    loadCacheStats();
+    loadHealthStatus();
+    loadSlowQueries();
+}
+
+function loadCacheStats() {
+    fetch('{% url "core:cache_stats_api" %}')
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                showError('خطأ في تحميل الإحصائيات: ' + data.error);
+                return;
+            }
+            
+            updateCacheMetrics(data);
+            updateQueryStats(data.query_stats);
+            updateIndexSuggestions(data.index_suggestions);
+        })
+        .catch(error => {
+            showError('خطأ في الاتصال: ' + error.message);
+        });
+}
+
+function loadHealthStatus() {
+    fetch('{% url "core:cache_health_check" %}')
+        .then(response => response.json())
+        .then(data => {
+            updateHealthStatus(data);
+        })
+        .catch(error => {
+            document.getElementById('health-status').innerHTML = 
+                '<div class="error-message">خطأ في فحص الحالة: ' + error.message + '</div>';
+        });
+}
+
+function loadSlowQueries() {
+    fetch('{% url "core:slow_queries_api" %}')
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                document.getElementById('slow-queries').innerHTML = 
+                    '<div class="error-message">خطأ في تحميل الاستعلامات البطيئة: ' + data.error + '</div>';
+                return;
+            }
+            
+            updateSlowQueries(data.slow_queries);
+        })
+        .catch(error => {
+            document.getElementById('slow-queries').innerHTML = 
+                '<div class="error-message">خطأ في الاتصال: ' + error.message + '</div>';
+        });
+}
+
+function updateCacheMetrics(data) {
+    const perfStats = data.performance_stats || {};
+    
+    document.getElementById('hit-ratio').textContent = 
+        (perfStats.hit_ratio || 0).toFixed(1);
+    document.getElementById('total-requests').textContent = 
+        (perfStats.total_requests || 0).toLocaleString();
+    document.getElementById('cache-hits').textContent = 
+        (perfStats.cache_hits || 0).toLocaleString();
+    document.getElementById('cache-misses').textContent = 
+        (perfStats.cache_misses || 0).toLocaleString();
+}
+
+function updateHealthStatus(data) {
+    const statusDiv = document.getElementById('health-status');
+    let html = '<div class="d-flex align-items-center mb-3">';
+    
+    const statusClass = data.overall_status === 'healthy' ? 'status-healthy' : 
+                       data.overall_status === 'degraded' ? 'status-warning' : 'status-error';
+    
+    html += `<span class="status-indicator ${statusClass}"></span>`;
+    html += `<strong>الحالة العامة: ${getStatusText(data.overall_status)}</strong>`;
+    html += '</div>';
+    
+    if (data.checks && data.checks.length > 0) {
+        html += '<div class="row">';
+        data.checks.forEach(check => {
+            const checkStatusClass = check.status === 'pass' ? 'status-healthy' : 
+                                   check.status === 'warning' ? 'status-warning' : 'status-error';
+            
+            html += '<div class="col-md-6 mb-2">';
+            html += `<div class="d-flex align-items-center">`;
+            html += `<span class="status-indicator ${checkStatusClass}"></span>`;
+            html += `<div>`;
+            html += `<strong>${check.name}</strong><br>`;
+            html += `<small class="text-muted">${check.message}</small>`;
+            html += `</div>`;
+            html += `</div>`;
+            html += '</div>';
+        });
+        html += '</div>';
+    }
+    
+    statusDiv.innerHTML = html;
+}
+
+function updateQueryStats(queryStats) {
+    const container = document.getElementById('query-stats');
+    
+    if (!queryStats) {
+        container.innerHTML = '<p class="text-muted">لا توجد إحصائيات متاحة</p>';
+        return;
+    }
+    
+    let html = '<div class="row">';
+    html += `<div class="col-6"><strong>إجمالي الاستعلامات:</strong> ${(queryStats.total_queries || 0).toLocaleString()}</div>`;
+    html += `<div class="col-6"><strong>الاستعلامات البطيئة:</strong> ${queryStats.slow_queries || 0}</div>`;
+    html += `<div class="col-6"><strong>نسبة البطء:</strong> ${(queryStats.slow_query_percentage || 0).toFixed(1)}%</div>`;
+    html += `<div class="col-6"><strong>متوسط وقت التنفيذ:</strong> ${(queryStats.avg_execution_time || 0).toFixed(3)}s</div>`;
+    html += '</div>';
+    
+    container.innerHTML = html;
+}
+
+function updateSlowQueries(slowQueries) {
+    const container = document.getElementById('slow-queries');
+    
+    if (!slowQueries || slowQueries.length === 0) {
+        container.innerHTML = '<p class="text-muted">لا توجد استعلامات بطيئة</p>';
+        return;
+    }
+    
+    let html = '<div class="table-responsive"><table class="table table-sm">';
+    html += '<thead><tr><th>الاستعلام</th><th>وقت التنفيذ</th><th>التاريخ</th></tr></thead>';
+    html += '<tbody>';
+    
+    slowQueries.slice(0, 10).forEach(query => {
+        html += '<tr>';
+        html += `<td><code>${query.query.substring(0, 50)}...</code></td>`;
+        html += `<td><span class="badge bg-warning">${query.execution_time.toFixed(3)}s</span></td>`;
+        html += `<td><small>${new Date(query.timestamp).toLocaleString('ar-SA')}</small></td>`;
+        html += '</tr>';
+    });
+    
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+}
+
+function updateIndexSuggestions(suggestions) {
+    const container = document.getElementById('index-suggestions');
+    
+    if (!suggestions || suggestions.length === 0) {
+        container.innerHTML = '<p class="text-muted">لا توجد توصيات للفهارس</p>';
+        return;
+    }
+    
+    let html = '<div class="table-responsive"><table class="table table-sm">';
+    html += '<thead><tr><th>النوع</th><th>الجدول</th><th>التوصية</th><th>الأولوية</th></tr></thead>';
+    html += '<tbody>';
+    
+    suggestions.forEach(suggestion => {
+        const priorityClass = suggestion.priority === 'high' ? 'bg-danger' : 
+                             suggestion.priority === 'medium' ? 'bg-warning' : 'bg-info';
+        
+        html += '<tr>';
+        html += `<td><span class="badge bg-secondary">${suggestion.type}</span></td>`;
+        html += `<td><code>${suggestion.table}</code></td>`;
+        html += `<td>${suggestion.recommendation}</td>`;
+        html += `<td><span class="badge ${priorityClass}">${suggestion.priority}</span></td>`;
+        html += '</tr>';
+    });
+    
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+}
+
+function getStatusText(status) {
+    switch(status) {
+        case 'healthy': return 'سليم';
+        case 'degraded': return 'متدهور';
+        case 'unhealthy': return 'غير سليم';
+        default: return 'غير معروف';
+    }
+}
+
+function refreshData() {
+    loadData();
+    showSuccess('تم تحديث البيانات');
+}
+
+function warmCache() {
+    performCacheOperation('warm_cache', 'جاري تسخين التخزين المؤقت...');
+}
+
+function resetStats() {
+    performCacheOperation('reset_stats', 'جاري إعادة تعيين الإحصائيات...');
+}
+
+function clearAllCache() {
+    if (confirm('هل أنت متأكد من مسح جميع البيانات المخزنة مؤقتاً؟')) {
+        performCacheOperation('clear_all', 'جاري مسح جميع البيانات...');
+    }
+}
+
+function showClearPatternDialog() {
+    const modal = new bootstrap.Modal(document.getElementById('clearPatternModal'));
+    modal.show();
+}
+
+function clearPattern() {
+    const pattern = document.getElementById('pattern-input').value.trim();
+    if (!pattern) {
+        showError('يجب إدخال نمط');
+        return;
+    }
+    
+    const modal = bootstrap.Modal.getInstance(document.getElementById('clearPatternModal'));
+    modal.hide();
+    
+    performCacheOperation('clear_pattern', 'جاري مسح النمط...', {pattern: pattern});
+}
+
+function performCacheOperation(operation, loadingMessage, extraData = {}) {
+    showInfo(loadingMessage);
+    
+    const formData = new FormData();
+    formData.append('operation', operation);
+    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+    
+    Object.keys(extraData).forEach(key => {
+        formData.append(key, extraData[key]);
+    });
+    
+    fetch('{% url "core:cache_operations_api" %}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccess(data.message);
+            setTimeout(loadData, 1000); // Refresh data after operation
+        } else {
+            showError(data.message);
+        }
+    })
+    .catch(error => {
+        showError('خطأ في تنفيذ العملية: ' + error.message);
+    });
+}
+
+function showSuccess(message) {
+    showMessage(message, 'success');
+}
+
+function showError(message) {
+    showMessage(message, 'error');
+}
+
+function showInfo(message) {
+    showMessage(message, 'info');
+}
+
+function showMessage(message, type) {
+    const container = document.getElementById('operation-messages');
+    const className = type === 'success' ? 'success-message' : 
+                     type === 'error' ? 'error-message' : 'info-message';
+    
+    container.innerHTML = `<div class="${className}">${message}</div>`;
+    
+    // Auto-hide after 5 seconds
+    setTimeout(() => {
+        container.innerHTML = '';
+    }, 5000);
+}
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+    if (refreshInterval) {
+        clearInterval(refreshInterval);
+    }
+});
+</script>
+{% endblock %}

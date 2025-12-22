@@ -1,0 +1,648 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}لوحة التقارير - نظام الدولية{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.css" rel="stylesheet">
+<style>
+    .dashboard-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius-lg);
+        padding: var(--spacing-lg);
+        margin-bottom: var(--spacing-md);
+        box-shadow: var(--shadow-sm);
+        transition: var(--transition-base);
+    }
+    
+    .dashboard-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+    }
+    
+    .metric-card {
+        text-align: center;
+        padding: var(--spacing-md);
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+        color: white;
+        border-radius: var(--border-radius-md);
+        margin-bottom: var(--spacing-sm);
+    }
+    
+    .metric-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: var(--spacing-xs);
+    }
+    
+    .metric-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 400px;
+        margin: var(--spacing-md) 0;
+    }
+    
+    .date-range-selector {
+        display: flex;
+        gap: var(--spacing-sm);
+        margin-bottom: var(--spacing-lg);
+        flex-wrap: wrap;
+    }
+    
+    .date-range-btn {
+        padding: var(--spacing-sm) var(--spacing-md);
+        border: 1px solid var(--border-color);
+        background: var(--bg-color);
+        color: var(--text-color);
+        border-radius: var(--border-radius-sm);
+        cursor: pointer;
+        transition: var(--transition-base);
+    }
+    
+    .date-range-btn.active {
+        background: var(--primary-color);
+        color: white;
+        border-color: var(--primary-color);
+    }
+    
+    .date-range-btn:hover {
+        background: var(--primary-light);
+        color: white;
+    }
+    
+    .loading-spinner {
+        display: none;
+        text-align: center;
+        padding: var(--spacing-xl);
+    }
+    
+    .loading-spinner.active {
+        display: block;
+    }
+    
+    .export-controls {
+        display: flex;
+        gap: var(--spacing-sm);
+        margin-bottom: var(--spacing-md);
+        flex-wrap: wrap;
+    }
+    
+    .export-btn {
+        padding: var(--spacing-sm) var(--spacing-md);
+        background: var(--success-color);
+        color: white;
+        border: none;
+        border-radius: var(--border-radius-sm);
+        cursor: pointer;
+        transition: var(--transition-base);
+    }
+    
+    .export-btn:hover {
+        background: var(--success-dark);
+    }
+    
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: var(--spacing-lg);
+        margin-bottom: var(--spacing-xl);
+    }
+    
+    .metrics-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    @media (max-width: 768px) {
+        .date-range-selector {
+            justify-content: center;
+        }
+        
+        .export-controls {
+            justify-content: center;
+        }
+        
+        .chart-container {
+            height: 300px;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0">📊 لوحة التقارير</h1>
+            <p class="text-muted">تحليلات شاملة لنظام الدولية</p>
+        </div>
+        <div class="export-controls">
+            <button class="export-btn" onclick="exportReport('json')">
+                <i class="fas fa-download"></i> تصدير JSON
+            </button>
+            <button class="export-btn" onclick="exportReport('csv')">
+                <i class="fas fa-file-csv"></i> تصدير CSV
+            </button>
+            <button class="export-btn" onclick="generateCustomReport()">
+                <i class="fas fa-cog"></i> تقرير مخصص
+            </button>
+        </div>
+    </div>
+
+    <!-- Date Range Selector -->
+    <div class="date-range-selector">
+        <button class="date-range-btn active" data-range="7d">آخر 7 أيام</button>
+        <button class="date-range-btn" data-range="30d">آخر 30 يوم</button>
+        <button class="date-range-btn" data-range="90d">آخر 90 يوم</button>
+        <button class="date-range-btn" data-range="1y">آخر سنة</button>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div class="loading-spinner" id="loadingSpinner">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">جاري التحميل...</span>
+        </div>
+        <p class="mt-2">جاري تحميل البيانات...</p>
+    </div>
+
+    <!-- Dashboard Content -->
+    <div id="dashboardContent">
+        <!-- Overview Metrics -->
+        <div class="metrics-grid" id="metricsGrid">
+            <!-- Metrics will be populated by JavaScript -->
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="dashboard-grid">
+            <!-- Employee Analytics -->
+            <div class="dashboard-card">
+                <h5 class="card-title mb-3">👥 تحليل الموظفين</h5>
+                <div class="chart-container">
+                    <canvas id="employeeChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Task Analytics -->
+            <div class="dashboard-card">
+                <h5 class="card-title mb-3">📋 تحليل المهام</h5>
+                <div class="chart-container">
+                    <canvas id="taskChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Meeting Analytics -->
+            <div class="dashboard-card">
+                <h5 class="card-title mb-3">🤝 تحليل الاجتماعات</h5>
+                <div class="chart-container">
+                    <canvas id="meetingChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Inventory Analytics -->
+            <div class="dashboard-card">
+                <h5 class="card-title mb-3">📦 تحليل المخزون</h5>
+                <div class="chart-container">
+                    <canvas id="inventoryChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Trends Chart -->
+            <div class="dashboard-card" style="grid-column: 1 / -1;">
+                <h5 class="card-title mb-3">📈 الاتجاهات الزمنية</h5>
+                <div class="chart-container">
+                    <canvas id="trendsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Report Modal -->
+<div class="modal fade" id="customReportModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">إنشاء تقرير مخصص</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="customReportForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label">نوع التقرير</label>
+                            <select class="form-select" name="type">
+                                <option value="summary">ملخص</option>
+                                <option value="detailed">تفصيلي</option>
+                                <option value="analytics">تحليلي</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">الفترة الزمنية</label>
+                            <select class="form-select" name="date_range">
+                                <option value="7d">آخر 7 أيام</option>
+                                <option value="30d">آخر 30 يوم</option>
+                                <option value="90d">آخر 90 يوم</option>
+                                <option value="1y">آخر سنة</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <label class="form-label">الوحدات المطلوبة</label>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="modules" value="employee" checked>
+                                    <label class="form-check-label">الموظفين</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="modules" value="task" checked>
+                                    <label class="form-check-label">المهام</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="modules" value="meeting" checked>
+                                    <label class="form-check-label">الاجتماعات</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="modules" value="inventory" checked>
+                                    <label class="form-check-label">المخزون</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="modules" value="purchase" checked>
+                                    <label class="form-check-label">المشتريات</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <label class="form-label">تنسيق التصدير</label>
+                        <select class="form-select" name="format">
+                            <option value="json">JSON</option>
+                            <option value="csv">CSV</option>
+                            <option value="excel">Excel</option>
+                            <option value="pdf">PDF</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" onclick="submitCustomReport()">إنشاء التقرير</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.min.js"></script>
+<script>
+    let currentDateRange = '30d';
+    let dashboardData = null;
+    let charts = {};
+
+    // Initialize dashboard
+    document.addEventListener('DOMContentLoaded', function() {
+        loadDashboardData();
+        setupEventListeners();
+    });
+
+    function setupEventListeners() {
+        // Date range selector
+        document.querySelectorAll('.date-range-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.date-range-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentDateRange = this.dataset.range;
+                loadDashboardData();
+            });
+        });
+    }
+
+    async function loadDashboardData() {
+        showLoading(true);
+        
+        try {
+            const response = await fetch(`/api/reporting/dashboard/?date_range=${currentDateRange}`, {
+                headers: {
+                    'Authorization': `Bearer ${getAuthToken()}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (!response.ok) {
+                throw new Error('فشل في تحميل البيانات');
+            }
+            
+            dashboardData = await response.json();
+            renderDashboard();
+            
+        } catch (error) {
+            console.error('Error loading dashboard data:', error);
+            showError('حدث خطأ أثناء تحميل البيانات');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    function renderDashboard() {
+        renderMetrics();
+        renderCharts();
+    }
+
+    function renderMetrics() {
+        const metricsGrid = document.getElementById('metricsGrid');
+        const overview = dashboardData.overview;
+        
+        const metrics = [
+            { label: 'إجمالي الموظفين', value: overview.total_employees, icon: '👥' },
+            { label: 'الموظفين النشطين', value: overview.active_employees, icon: '✅' },
+            { label: 'إجمالي المهام', value: overview.total_tasks, icon: '📋' },
+            { label: 'المهام المكتملة', value: overview.completed_tasks_period, icon: '✔️' },
+            { label: 'إجمالي الاجتماعات', value: overview.total_meetings, icon: '🤝' },
+            { label: 'الاجتماعات القادمة', value: overview.upcoming_meetings, icon: '📅' },
+            { label: 'إجمالي المنتجات', value: overview.total_products, icon: '📦' },
+            { label: 'منتجات قليلة المخزون', value: overview.low_stock_products, icon: '⚠️' }
+        ];
+        
+        metricsGrid.innerHTML = metrics.map(metric => `
+            <div class="metric-card">
+                <div class="metric-value">${metric.icon} ${metric.value.toLocaleString('ar-EG')}</div>
+                <div class="metric-label">${metric.label}</div>
+            </div>
+        `).join('');
+    }
+
+    function renderCharts() {
+        // Destroy existing charts
+        Object.values(charts).forEach(chart => chart.destroy());
+        charts = {};
+        
+        // Employee chart
+        if (dashboardData.charts.employee_by_department) {
+            charts.employee = new Chart(document.getElementById('employeeChart'), {
+                type: 'doughnut',
+                data: dashboardData.charts.employee_by_department.data,
+                options: getChartOptions('الموظفين حسب القسم')
+            });
+        }
+        
+        // Task chart
+        if (dashboardData.charts.task_status) {
+            charts.task = new Chart(document.getElementById('taskChart'), {
+                type: 'pie',
+                data: dashboardData.charts.task_status.data,
+                options: getChartOptions('المهام حسب الحالة')
+            });
+        }
+        
+        // Meeting chart
+        if (dashboardData.charts.meeting_status) {
+            charts.meeting = new Chart(document.getElementById('meetingChart'), {
+                type: 'bar',
+                data: dashboardData.charts.meeting_status.data,
+                options: getChartOptions('الاجتماعات حسب الحالة')
+            });
+        }
+        
+        // Inventory chart (placeholder)
+        charts.inventory = new Chart(document.getElementById('inventoryChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['مخزون صحي', 'مخزون قليل', 'نفد المخزون'],
+                datasets: [{
+                    data: [
+                        dashboardData.inventory_analytics.stock_status.healthy_stock,
+                        dashboardData.inventory_analytics.stock_status.low_stock,
+                        dashboardData.inventory_analytics.stock_status.out_of_stock
+                    ],
+                    backgroundColor: ['#28a745', '#ffc107', '#dc3545']
+                }]
+            },
+            options: getChartOptions('حالة المخزون')
+        });
+        
+        // Trends chart
+        charts.trends = new Chart(document.getElementById('trendsChart'), {
+            type: 'line',
+            data: {
+                labels: dashboardData.trends.labels,
+                datasets: [
+                    {
+                        label: 'المهام المكتملة',
+                        data: dashboardData.trends.task_completion,
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        tension: 0.4
+                    },
+                    {
+                        label: 'الاجتماعات',
+                        data: dashboardData.trends.meetings,
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                ...getChartOptions('الاتجاهات الزمنية'),
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    function getChartOptions(title) {
+        return {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: {
+                    display: true,
+                    text: title,
+                    font: {
+                        size: 16,
+                        family: 'Cairo, sans-serif'
+                    }
+                },
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        font: {
+                            family: 'Cairo, sans-serif'
+                        }
+                    }
+                }
+            }
+        };
+    }
+
+    function showLoading(show) {
+        const spinner = document.getElementById('loadingSpinner');
+        const content = document.getElementById('dashboardContent');
+        
+        if (show) {
+            spinner.classList.add('active');
+            content.style.opacity = '0.5';
+        } else {
+            spinner.classList.remove('active');
+            content.style.opacity = '1';
+        }
+    }
+
+    function showError(message) {
+        // Simple error display - could be enhanced with a proper notification system
+        alert(message);
+    }
+
+    function getAuthToken() {
+        // Get CSRF token for Django
+        return document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+    }
+
+    async function exportReport(format) {
+        if (!dashboardData) {
+            showError('لا توجد بيانات للتصدير');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/api/reporting/export/', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${getAuthToken()}`,
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getAuthToken()
+                },
+                body: JSON.stringify({
+                    report_data: dashboardData,
+                    format: format
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error('فشل في تصدير التقرير');
+            }
+            
+            // Download the file
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `dashboard_report_${new Date().toISOString().split('T')[0]}.${format}`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+        } catch (error) {
+            console.error('Error exporting report:', error);
+            showError('حدث خطأ أثناء تصدير التقرير');
+        }
+    }
+
+    function generateCustomReport() {
+        const modal = new bootstrap.Modal(document.getElementById('customReportModal'));
+        modal.show();
+    }
+
+    async function submitCustomReport() {
+        const form = document.getElementById('customReportForm');
+        const formData = new FormData(form);
+        
+        const config = {
+            type: formData.get('type'),
+            date_range: formData.get('date_range'),
+            modules: formData.getAll('modules'),
+            format: formData.get('format')
+        };
+        
+        try {
+            const response = await fetch('/api/reporting/generate/', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${getAuthToken()}`,
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getAuthToken()
+                },
+                body: JSON.stringify(config)
+            });
+            
+            if (!response.ok) {
+                throw new Error('فشل في إنشاء التقرير');
+            }
+            
+            const reportData = await response.json();
+            
+            // Export the custom report
+            await exportCustomReport(reportData, config.format);
+            
+            // Close modal
+            bootstrap.Modal.getInstance(document.getElementById('customReportModal')).hide();
+            
+        } catch (error) {
+            console.error('Error generating custom report:', error);
+            showError('حدث خطأ أثناء إنشاء التقرير المخصص');
+        }
+    }
+
+    async function exportCustomReport(reportData, format) {
+        try {
+            const response = await fetch('/api/reporting/export/', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${getAuthToken()}`,
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getAuthToken()
+                },
+                body: JSON.stringify({
+                    report_data: reportData,
+                    format: format
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error('فشل في تصدير التقرير المخصص');
+            }
+            
+            // Download the file
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `custom_report_${reportData.report_id}.${format}`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+        } catch (error) {
+            console.error('Error exporting custom report:', error);
+            showError('حدث خطأ أثناء تصدير التقرير المخصص');
+        }
+    }
+</script>
+{% endblock %}

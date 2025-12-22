@@ -1,0 +1,217 @@
+{% extends 'inventory/base_inventory.html' %}
+{% load static %}
+
+{% block title %}{{ page_title|default:"إضافة تصنيف" }} - نظام إدارة المخزن{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Enhanced Form Styles */
+    .form-card {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+    
+    .form-card .card-header {
+        border-radius: 0; 
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        display: flex;
+        align-items: center;
+    }
+    
+    .form-section {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.25rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .section-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 1.25rem;
+        color: #3f51b5;
+        display: flex;
+        align-items: center;
+    }
+    
+    .section-title i {
+        margin-left: 0.75rem;
+        opacity: 0.8;
+    }
+    
+    .form-floating {
+        margin-bottom: 1rem;
+    }
+    
+    .form-floating > .form-control {
+        height: calc(3.5rem + 2px);
+        padding: 1rem 0.75rem;
+    }
+    
+    .form-floating > .form-control:focus {
+        border-color: #3f51b5;
+        box-shadow: 0 0 0 0.25rem rgba(63, 81, 181, 0.25);
+    }
+    
+    .form-floating > label {
+        padding: 1rem 0.75rem;
+    }
+    
+    textarea.form-control {
+        min-height: 120px;
+    }
+    
+    /* Button Styles */
+    .btn-action {
+        padding: 0.6rem 1.5rem;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary {
+        background-color: #3f51b5;
+        border-color: #3f51b5;
+    }
+    
+    .btn-primary:hover {
+        background-color: #303f9f;
+        border-color: #303f9f;
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(63, 81, 181, 0.3);
+    }
+    
+    .btn-secondary {
+        background-color: #f8f9fa;
+        border-color: #ced4da;
+        color: #495057;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #e9ecef;
+        border-color: #adb5bd;
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row ps-4">
+    <div class="col-12 mb-4">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-tag me-2"></i>
+                    {{ page_title|default:"إضافة تصنيف جديد" }}
+                </h4>
+                <a href="{% url 'inventory:category_list' %}" class="btn btn-light btn-sm">
+                    <i class="fas fa-arrow-right me-1"></i>
+                    العودة للتصنيفات
+                </a>
+            </div>
+            <div class="card-body p-4">
+                <form method="post" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    
+                    <!-- بيانات التصنيف -->
+                    <div class="form-section">
+                        <div class="section-title">
+                            <i class="fas fa-info-circle"></i>
+                            بيانات التصنيف
+                        </div>
+                        <div class="row g-3">
+                            <!-- اسم التصنيف -->
+                            <div class="col-md-12">
+                                <div class="form-floating">
+                                    <input type="text" class="form-control {% if form.name.errors %}is-invalid{% endif %}" 
+                                        id="id_name" name="name" value="{{ form.name.value|default:'' }}" required>
+                                    <label for="id_name">اسم التصنيف *</label>
+                                    {% if form.name.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.name.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- الوصف -->
+                            <div class="col-md-12">
+                                <div class="form-floating">
+                                    <textarea class="form-control {% if form.description.errors %}is-invalid{% endif %}" 
+                                        id="id_description" name="description" style="height: 120px">{{ form.description.value|default:'' }}</textarea>
+                                    <label for="id_description">الوصف</label>
+                                    {% if form.description.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ form.description.errors }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- أزرار التحكم -->
+                    <div class="mt-4 d-flex justify-content-between">
+                        <a href="{% url 'inventory:category_list' %}" class="btn btn-secondary btn-lg">
+                            <i class="fas fa-times me-1"></i>
+                            إلغاء
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save me-1"></i>
+                            حفظ البيانات
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form validation
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.querySelector('.needs-validation');
+    
+    // Validate on submit
+    form.addEventListener('submit', function (event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            // Show error messages
+            const invalidInputs = form.querySelectorAll(':invalid');
+            invalidInputs.forEach(input => {
+                input.classList.add('is-invalid');
+                
+                // Scroll to first invalid input
+                if (invalidInputs.length > 0) {
+                    invalidInputs[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    invalidInputs[0].focus();
+                }
+            });
+        }
+        
+        form.classList.add('was-validated');
+    });
+    
+    // Live validation as user types
+    const inputs = form.querySelectorAll('input, textarea');
+    inputs.forEach(input => {
+        input.addEventListener('blur', function () {
+            // Clear previous validation state
+            this.classList.remove('is-valid', 'is-invalid');
+            
+            // Validate and add appropriate class
+            if (this.checkValidity()) {
+                this.classList.add('is-valid');
+            } else if (this.value) {
+                this.classList.add('is-invalid');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

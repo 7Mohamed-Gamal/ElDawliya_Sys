@@ -1,0 +1,315 @@
+{% extends 'administrator/base_admin.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} | {{ system_settings.system_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="page-title">{{ page_title }}</h2>
+                <div>
+                    <a href="{% url 'administrator:group_list' %}" class="btn btn-outline-primary me-2">
+                        <i class="fas fa-arrow-right ml-1"></i>
+                        العودة إلى قائمة المجموعات
+                    </a>
+                    <a href="{% url 'administrator:group_edit' pk=group.id %}" class="btn btn-primary me-2">
+                        <i class="fas fa-edit ml-1"></i>
+                        تعديل المجموعة
+                    </a>
+                    <a href="{% url 'administrator:group_permissions' group.id %}" class="btn btn-warning">
+                        <i class="fas fa-user-shield ml-1"></i>
+                        إدارة الصلاحيات
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card border-0 shadow mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">معلومات المجموعة</h5>
+                </div>
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <div class="avatar avatar-xl rounded-circle bg-light mb-3 mx-auto" style="width: 120px; height: 120px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fas fa-users fa-4x text-info"></i>
+                        </div>
+                        <h3>{{ group.name }}</h3>
+                        {% if group.description %}
+                        <p class="text-muted">{{ group.description }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="list-group mt-4">
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-users me-2"></i> عدد المستخدمين</span>
+                            <span class="badge bg-primary rounded-pill">{{ group.user_set.count }}</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-building me-2"></i> الأقسام المتاحة</span>
+                            <span class="badge bg-success rounded-pill">{{ group.allowed_departments.count }}</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-puzzle-piece me-2"></i> الوحدات المتاحة</span>
+                            <span class="badge bg-info rounded-pill">{{ group.allowed_modules.count }}</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-file-alt me-2"></i> القوالب المتاحة</span>
+                            <span class="badge bg-warning rounded-pill">{{ group.template_permissions.count }}</span>
+                        </div>
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-key me-2"></i> الصلاحيات المخصصة</span>
+                            <span class="badge bg-danger rounded-pill">{{ group.custom_permissions.count }}</span>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 mt-4">
+                        <a href="{% url 'administrator:group_permissions' group.id %}" class="btn btn-warning">
+                            <i class="fas fa-user-shield me-1"></i> إدارة صلاحيات المجموعة
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8">
+            <div class="card border-0 shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">المستخدمين في المجموعة</h5>
+                </div>
+                <div class="card-body">
+                    {% if group.user_set.all %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>اسم المستخدم</th>
+                                    <th>البريد الإلكتروني</th>
+                                    <th>آخر دخول</th>
+                                    <th>حالة الحساب</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user in group.user_set.all %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar avatar-sm rounded-circle bg-light me-2" style="width: 35px; height: 35px; display: flex; align-items: center; justify-content: center;">
+                                                <i class="fas fa-user text-primary"></i>
+                                            </div>
+                                            <div>
+                                                {{ user.get_full_name|default:user.username }}
+                                                {% if user.is_staff %}<span class="badge bg-info ms-1">مشرف</span>{% endif %}
+                                                {% if user.is_superuser %}<span class="badge bg-danger ms-1">مدير</span>{% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ user.email }}</td>
+                                    <td>
+                                        {% if user.last_login %}
+                                        {{ user.last_login|date:"Y-m-d H:i" }}
+                                        {% else %}
+                                        <span class="text-muted">لم يسجل دخول بعد</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if user.is_active %}
+                                        <span class="badge bg-success">نشط</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">معطل</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{% url 'administrator:user_permissions' pk=user.id %}" class="btn btn-sm btn-warning">
+                                                <i class="fas fa-user-shield"></i>
+                                            </a>
+                                            <a href="{% url 'administrator:user_permissions' pk=user.id %}" class="btn btn-sm btn-primary">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info text-center">
+                        <i class="fas fa-info-circle me-2"></i>
+                        لا يوجد مستخدمين في هذه المجموعة حالياً.
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Departments, Modules and templates accessed by this group -->
+            <div class="card border-0 shadow mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">الصلاحيات الممنوحة للمجموعة</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="nav nav-tabs mb-3" id="permissionsTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="departments-tab" data-bs-toggle="tab" data-bs-target="#departments" type="button" role="tab" aria-controls="departments" aria-selected="true">
+                                <i class="fas fa-building me-1"></i> الأقسام
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="modules-tab" data-bs-toggle="tab" data-bs-target="#modules" type="button" role="tab" aria-controls="modules" aria-selected="false">
+                                <i class="fas fa-puzzle-piece me-1"></i> الوحدات
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="templates-tab" data-bs-toggle="tab" data-bs-target="#templates" type="button" role="tab" aria-controls="templates" aria-selected="false">
+                                <i class="fas fa-file-alt me-1"></i> القوالب
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="permissions-tab" data-bs-toggle="tab" data-bs-target="#permissions" type="button" role="tab" aria-controls="permissions" aria-selected="false">
+                                <i class="fas fa-key me-1"></i> الصلاحيات التفصيلية
+                            </button>
+                        </li>
+                    </ul>
+                    <div class="tab-content" id="permissionsTabContent">
+                        <div class="tab-pane fade show active" id="departments" role="tabpanel" aria-labelledby="departments-tab">
+                            {% if group.allowed_departments.all %}
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>اسم القسم</th>
+                                            <th>الرمز</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for dept in group.allowed_departments.all %}
+                                        <tr>
+                                            <td>{{ forloop.counter }}</td>
+                                            <td>{{ dept.name }}</td>
+                                            <td>{{ dept.code }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="alert alert-warning text-center">
+                                لا يوجد أقسام متاحة لهذه المجموعة.
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="tab-pane fade" id="modules" role="tabpanel" aria-labelledby="modules-tab">
+                            {% if group.allowed_modules.all %}
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>اسم الوحدة</th>
+                                            <th>الرمز</th>
+                                            <th>القسم</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for module in group.allowed_modules.all %}
+                                        <tr>
+                                            <td>{{ forloop.counter }}</td>
+                                            <td>{{ module.name }}</td>
+                                            <td>{{ module.code }}</td>
+                                            <td>{{ module.department.name }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="alert alert-warning text-center">
+                                لا يوجد وحدات متاحة لهذه المجموعة.
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="tab-pane fade" id="templates" role="tabpanel" aria-labelledby="templates-tab">
+                            {% if group.template_permissions.all %}
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>اسم القالب</th>
+                                            <th>الوحدة</th>
+                                            <th>الوصف</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for template in group.template_permissions.all %}
+                                        <tr>
+                                            <td>{{ forloop.counter }}</td>
+                                            <td>{{ template.name }}</td>
+                                            <td>{{ template.module.name }}</td>
+                                            <td>{{ template.description|default:"-" }}</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="alert alert-warning text-center">
+                                لا يوجد قوالب متاحة لهذه المجموعة.
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="tab-pane fade" id="permissions" role="tabpanel" aria-labelledby="permissions-tab">
+                            {% if group.custom_permissions.all %}
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>الوحدة</th>
+                                            <th>نوع الصلاحية</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for perm in group.custom_permissions.all %}
+                                        <tr>
+                                            <td>{{ forloop.counter }}</td>
+                                            <td>{{ perm.module.name }}</td>
+                                            <td>
+                                                <span class="badge
+                                                    {% if perm.permission_type == 'view' %}bg-primary
+                                                    {% elif perm.permission_type == 'add' %}bg-success
+                                                    {% elif perm.permission_type == 'change' %}bg-warning
+                                                    {% elif perm.permission_type == 'delete' %}bg-danger
+                                                    {% elif perm.permission_type == 'print' %}bg-info
+                                                    {% endif %}
+                                                ">
+                                                    {{ perm.get_permission_type_display }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% else %}
+                            <div class="alert alert-warning text-center">
+                                لا يوجد صلاحيات تفصيلية مخصصة لهذه المجموعة.
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

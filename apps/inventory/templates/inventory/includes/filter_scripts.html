@@ -1,0 +1,38 @@
+{% load static %}
+<!-- تضمين سكريبتات الفلترة المحسنة -->
+<script src="{% static 'inventory/js/api_patch.js' %}"></script>
+<script src="{% static 'inventory/js/product_search_enhanced.js' %}"></script>
+
+<!-- إضافة ميزة تخصيص العرض وإخفاء السكريبتات القديمة بشكل انتقائي -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    console.log('تحميل تحسينات فلترة الأصناف...');
+    
+    // التأكد من تحميل جميع العناصر الضرورية
+    setTimeout(function() {
+      // البحث عن عناصر الفلترة
+      const unitFilter = document.getElementById('modal-unit-filter');
+      
+      // البحث عن النصوص البرمجية التي تحتوي على وظيفة loadUnits
+      const scripts = document.querySelectorAll('script:not([src])');
+      let oldScriptRemoved = false;
+      
+      scripts.forEach(script => {
+        if (script.textContent.includes('function searchProducts()') && 
+          script.textContent.includes('modal-category-filter') && 
+          !script.textContent.includes('loadUnits')) {
+          
+          // نصوص الوظائف القديمة - نحذفها لتجنب التضارب
+          script.remove();
+          oldScriptRemoved = true;
+          console.log('تم إزالة نص برمجي قديم');
+        }
+      });
+      
+      // إذا لم نتمكن من حذف النص البرمجي القديم
+      if (!oldScriptRemoved) {
+        console.log('لم نتمكن من العثور على النص البرمجي القديم للتعديل');
+      }
+    }, 500);
+  });
+</script>

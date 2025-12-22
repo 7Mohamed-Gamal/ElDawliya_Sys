@@ -1,0 +1,164 @@
+{% extends 'administrator/base_admin.html' %}
+{% load static %}
+
+{% block title %}دليل نظام الصلاحيات | {{ system_settings.system_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="page-title">دليل نظام الصلاحيات</h2>
+                <div>
+                    <a href="{% url 'administrator:permission_dashboard' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-shield-alt me-1"></i>
+                        العودة إلى لوحة الصلاحيات
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Left Sidebar with Quick Links -->
+        <div class="col-md-3 mb-4">
+            <div class="card border-0 shadow sticky-top" style="top: 15px; z-index: 1;">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">روابط سريعة</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <a href="#introduction" class="list-group-item list-group-item-action py-3">
+                            <i class="fas fa-info-circle me-2"></i>مقدمة عن نظام الصلاحيات
+                        </a>
+                        <a href="#concepts" class="list-group-item list-group-item-action py-3">
+                            <i class="fas fa-lightbulb me-2"></i>المفاهيم الأساسية
+                        </a>
+                        <a href="#permissions" class="list-group-item list-group-item-action py-3">
+                            <i class="fas fa-key me-2"></i>أنواع الصلاحيات
+                        </a>
+                        <a href="#users-groups" class="list-group-item list-group-item-action py-3">
+                            <i class="fas fa-users me-2"></i>المستخدمين والمجموعات
+                        </a>
+                        <a href="#management" class="list-group-item list-group-item-action py-3">
+                            <i class="fas fa-cogs me-2"></i>إدارة الصلاحيات
+                        </a>
+                        <a href="#workflow" class="list-group-item list-group-item-action py-3">
+                            <i class="fas fa-project-diagram me-2"></i>مسار العمل الموصى به
+                        </a>
+                        <a href="#faq" class="list-group-item list-group-item-action py-3">
+                            <i class="fas fa-question-circle me-2"></i>الأسئلة الشائعة
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow mt-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">أدوات إدارة الصلاحيات</h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <a href="{% url 'administrator:user_list' %}" class="list-group-item list-group-item-action py-3">
+                            <i class="fas fa-user-cog me-2"></i>إدارة المستخدمين
+                        </a>
+                        <a href="{% url 'administrator:group_list' %}" class="list-group-item list-group-item-action py-3">
+                            <i class="fas fa-users-cog me-2"></i>إدارة المجموعات
+                        </a>
+                        <a href="{% url 'administrator:permission_dashboard' %}" class="list-group-item list-group-item-action py-3">
+                            <i class="fas fa-shield-alt me-2"></i>لوحة الصلاحيات
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9">
+            <!-- Introduction Section -->
+            <div class="card border-0 shadow mb-4" id="introduction">
+                <div class="card-header bg-light">
+                    <h3 class="mb-0">مقدمة عن نظام الصلاحيات</h3>
+                </div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <h5 class="text-primary">ما هو نظام الصلاحيات في نظام الدولية؟</h5>
+                        <p>نظام الصلاحيات في نظام الدولية هو نظام قائم على صلاحيات Django المدمجة، ويوفر آلية متكاملة للتحكم في وصول المستخدمين إلى مختلف أجزاء النظام وإمكانيات كل وظيفة.</p>
+                        
+                        <p>يتيح لك نظام الصلاحيات:</p>
+                        <ul>
+                            <li>التحكم الدقيق في صلاحيات المستخدمين على مستوى النظام</li>
+                            <li>تنظيم المستخدمين في مجموعات لتسهيل إدارة الصلاحيات</li>
+                            <li>تحديد من يمكنه عرض، إضافة، تعديل أو حذف البيانات</li>
+                            <li>إنشاء تسلسل هرمي للوصول يتوافق مع هيكل مؤسستك</li>
+                        </ul>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <strong>ملاحظة هامة:</strong> الصلاحيات في نظام الدولية تعتمد على مبدأ "الحد الأدنى من الامتيازات"، حيث يتم منح المستخدمين فقط الصلاحيات الضرورية لأداء مهامهم.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Concepts Section -->
+            <div class="card border-0 shadow mb-4" id="concepts">
+                <div class="card-header bg-light">
+                    <h3 class="mb-0">المفاهيم الأساسية</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="card h-100 border-primary">
+                                <div class="card-header bg-primary text-white">
+                                    <h5 class="mb-0">الصلاحيات (Permissions)</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>الصلاحيات هي القدرة على القيام بإجراء محدد على كائن معين في النظام، مثل عرض، إضافة، تعديل أو حذف سجل.</p>
+                                    <p>كل صلاحية تعبر عن إذن محدد لتنفيذ عملية معينة.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100 border-success">
+                                <div class="card-header bg-success text-white">
+                                    <h5 class="mb-0">المجموعات (Groups)</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>المجموعات هي طريقة لتجميع المستخدمين الذين يشتركون في نفس الصلاحيات.</p>
+                                    <p>تسهل المجموعات إدارة الصلاحيات عن طريق تطبيق مجموعة من الصلاحيات دفعة واحدة على مجموعة من المستخدمين.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card h-100 border-info">
+                                <div class="card-header bg-info text-white">
+                                    <h5 class="mb-0">المستخدمون (Users)</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>المستخدمون هم الأشخاص الذين يتفاعلون مع النظام.</p>
+                                    <p>يمكن منح المستخدمين صلاحيات مباشرة أو من خلال عضويتهم في مجموعات.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card h-100 border-warning">
+                                <div class="card-header bg-warning text-dark">
+                                    <h5 class="mb-0">نموذج الصلاحيات (Permission Model)</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p>نموذج الصلاحيات هو الإطار العام الذي يحدد كيفية تطبيق ومراقبة الصلاحيات في النظام.</p>
+                                    <p>يستخدم نظام الدولية نموذج صلاحيات Django المدمج، مع تحسينات إضافية لتلبية احتياجات العمل المحددة.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

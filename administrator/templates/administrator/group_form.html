@@ -1,0 +1,124 @@
+{% extends 'administrator/base_admin.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} | {{ system_settings.system_name }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="page-title">{{ page_title }}</h2>
+                <div>
+                    <a href="{% url 'administrator:group_list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-right ml-1"></i>
+                        العودة إلى قائمة المجموعات
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card border-0 shadow">
+                <div class="card-header {% if form.instance.id %}bg-primary{% else %}bg-success{% endif %} text-white">
+                    <h5 class="mb-0">
+                        {% if form.instance.id %}
+                            تعديل بيانات المجموعة
+                        {% else %}
+                            إضافة مجموعة جديدة
+                        {% endif %}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label fw-bold">اسم المجموعة <span class="text-danger">*</span></label>
+                                    {{ form.name }}
+                                    {% if form.name.errors %}
+                                    <div class="text-danger mt-1">
+                                        {{ form.name.errors }}
+                                    </div>
+                                    {% endif %}
+                                    <div class="form-text text-muted">يجب أن يكون الاسم فريداً وواضحاً</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label fw-bold">وصف المجموعة</label>
+                                    {{ form.description }}
+                                    {% if form.description.errors %}
+                                    <div class="text-danger mt-1">
+                                        {{ form.description.errors }}
+                                    </div>
+                                    {% endif %}
+                                    <div class="form-text text-muted">وصف مختصر لغرض المجموعة</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="form-group">
+                                    <label class="form-label fw-bold">المستخدمون</label>
+                                    {{ form.users }}
+                                    {% if form.users.errors %}
+                                    <div class="text-danger mt-1">
+                                        {{ form.users.errors }}
+                                    </div>
+                                    {% endif %}
+                                    <div class="form-text text-muted">اختر المستخدمين الذين سينضمون إلى هذه المجموعة</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            بعد إنشاء المجموعة، يمكنك تعيين الصلاحيات التفصيلية الخاصة بها من صفحة إدارة صلاحيات المجموعة.
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <a href="{% url 'administrator:group_list' %}" class="btn btn-outline-secondary">
+                                إلغاء
+                            </a>
+                            <button type="submit" class="btn {% if form.instance.id %}btn-primary{% else %}btn-success{% endif %}">
+                                <i class="fas fa-save me-1"></i>
+                                {% if form.instance.id %}
+                                    حفظ التعديلات
+                                {% else %}
+                                    إضافة المجموعة
+                                {% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function() {
+        // Initialize Select2 for multiple select
+        $('#id_users').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            placeholder: 'اختر المستخدمين',
+            allowClear: true
+        });
+    });
+</script>
+{% endblock %}

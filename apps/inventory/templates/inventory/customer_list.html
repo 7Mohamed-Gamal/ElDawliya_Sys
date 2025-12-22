@@ -1,0 +1,131 @@
+<!-- templates/inventory/customer_list.html - Simplified -->
+{% extends 'inventory/base_inventory.html' %}
+
+{% block title %}قائمة العملاء - نظام إدارة المخزن{% endblock %}
+
+{% block content %}
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="mb-1">قائمة العملاء</h2>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{% url 'inventory:dashboard' %}">الرئيسية</a></li>
+                <li class="breadcrumb-item active" aria-current="page">العملاء</li>
+            </ol>
+        </nav>
+    </div>
+    {% if perms.inventory.add_customer or user.is_superuser %}
+    <a href="{% url 'inventory:customer_add' %}" class="btn btn-primary">
+        <i class="fas fa-plus-circle me-1"></i> إضافة عميل جديد
+    </a>
+    {% endif %}
+</div>
+
+<div class="container-fluid">
+    
+    <div class="card shadow-sm mb-4">
+        <!-- Card Header with Search -->
+        <div class="card-header bg-white py-3">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-6 col-lg-4">
+                    <div class="input-group">
+                        <input type="text" id="searchInput" class="form-control" placeholder="ابحث عن عميل...">
+                        <span class="input-group-text"><i class="fas fa-search"></i></span>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-8 text-md-end">
+                    <span class="text-muted">إجمالي العملاء: <strong>{{ customers|length }}</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card Body with Table -->
+        <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>اسم العميل</th>
+                                    <th>رقم الهاتف</th>
+                                    <th>البريد الإلكتروني</th>
+                                    <th>الإجراءات</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for customer in customers %}
+                                <tr>
+                                    <td>{{ customer.id }}</td>
+                                    <td>{{ customer.name }}</td>
+                                    <td>{{ customer.phone|default:"-" }}</td>
+                                    <td>{{ customer.email|default:"-" }}</td>
+                                    <td>
+                                        {% if perms.inventory.change_customer or user.is_superuser %}
+                                        <a href="{% url 'inventory:customer_edit' customer.id %}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-edit"></i> تعديل
+                                        </a>
+                                        {% endif %}
+                                        
+                                        {% if perms.inventory.delete_customer or user.is_superuser %}
+                                        <a href="{% url 'inventory:customer_delete' customer.id %}" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash"></i> حذف
+                                        </a>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center">
+                                        <p>لا يوجد عملاء حالياً</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+            </div>
+        </div>
+        <div class="card-footer bg-white">
+            {% if perms.inventory.add_customer or user.is_superuser %}
+            <a href="{% url 'inventory:customer_add' %}" class="btn btn-primary">
+                <i class="fas fa-plus-circle"></i> إضافة عميل جديد
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const searchText = this.value.toLowerCase();
+                const tableRows = document.querySelectorAll('tbody tr');
+                
+                tableRows.forEach(function(row) {
+                    const nameCell = row.querySelector('td:nth-child(2)');
+                    const phoneCell = row.querySelector('td:nth-child(3)');
+                    const emailCell = row.querySelector('td:nth-child(4)');
+                    
+                    if (!nameCell) return; // Skip if not a data row
+                    
+                    const name = nameCell.textContent.toLowerCase();
+                    const phone = phoneCell.textContent.toLowerCase();
+                    const email = emailCell.textContent.toLowerCase();
+                    
+                    if (name.includes(searchText) || 
+                        phone.includes(searchText) || 
+                        email.includes(searchText)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

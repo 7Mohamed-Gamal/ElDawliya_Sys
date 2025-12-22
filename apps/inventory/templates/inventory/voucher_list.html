@@ -1,0 +1,243 @@
+{% extends "inventory/base_inventory.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans "قائمة الأذونات" %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">{% trans "قائمة الأذونات" %}</h1>
+        <div class="btn-group">
+            <a href="{% url 'inventory:voucher_add' %}?type=إذن اضافة" class="btn btn-success"><i class="fas fa-plus"></i> {% trans "إذن اضافة" %}</a>
+            <a href="{% url 'inventory:voucher_add' %}?type=إذن صرف" class="btn btn-primary"><i class="fas fa-minus"></i> {% trans "إذن صرف" %}</a>
+            <a href="{% url 'inventory:voucher_add' %}?type=اذن مرتجع عميل" class="btn btn-info"><i class="fas fa-undo"></i> {% trans "مرتجع عميل" %}</a>
+            <a href="{% url 'inventory:voucher_add' %}?type=إذن مرتجع مورد" class="btn btn-warning"><i class="fas fa-redo"></i> {% trans "مرتجع مورد" %}</a>
+        </div>
+    </div>
+
+    <!-- إحصائيات سريعة -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">{% trans "أذونات إضافة" %}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ addition_count }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-plus fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">{% trans "أذونات صرف" %}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ disbursement_count }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-minus fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">{% trans "مرتجع عميل" %}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ client_return_count }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-undo fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">{% trans "مرتجع مورد" %}</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">{{ supplier_return_count }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-redo fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- فلترة البيانات -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">{% trans "بحث وفلترة" %}</h6>
+        </div>
+        <div class="card-body">
+            <form method="get" action="{% url 'inventory:voucher_list' %}">
+                <div class="row">
+                    <div class="col-md-3 form-group">
+                        <label class="control-label">{% trans "بحث" %}</label>
+                        <input type="text" name="search" value="{{ search_query }}" placeholder="{% trans 'رقم الإذن، المورد، المستلم، إلخ' %}" class="form-control">
+                    </div>
+                    <div class="col-md-3 form-group">
+                        <label class="control-label">{% trans "نوع الإذن" %}</label>
+                        <select name="voucher_type" class="form-select">
+                            <option value="">{% trans "الكل" %}</option>
+                            <option value="إذن اضافة" {% if voucher_type == 'إذن اضافة' %}selected{% endif %}>{% trans "إذن اضافة" %}</option>
+                            <option value="إذن صرف" {% if voucher_type == 'إذن صرف' %}selected{% endif %}>{% trans "إذن صرف" %}</option>
+                            <option value="اذن مرتجع عميل" {% if voucher_type == 'اذن مرتجع عميل' %}selected{% endif %}>{% trans "اذن مرتجع عميل" %}</option>
+                            <option value="إذن مرتجع مورد" {% if voucher_type == 'إذن مرتجع مورد' %}selected{% endif %}>{% trans "إذن مرتجع مورد" %}</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2 form-group">
+                        <label class="control-label">{% trans "من تاريخ" %}</label>
+                        <input type="date" name="date_from" value="{{ date_from }}" class="form-control">
+                    </div>
+                    <div class="col-md-2 form-group">
+                        <label class="control-label">{% trans "إلى تاريخ" %}</label>
+                        <input type="date" name="date_to" value="{{ date_to }}" class="form-control">
+                    </div>
+                    <div class="col-md-2 form-group d-flex align-items-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search"></i> {% trans "بحث" %}
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- قائمة الأذونات -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">{% trans "الأذونات" %}</h6>
+        </div>
+        <div class="card-body">
+            {% if vouchers %}
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>{% trans "رقم الإذن" %}</th>
+                            <th>{% trans "نوع الإذن" %}</th>
+                            <th>{% trans "التاريخ" %}</th>
+                            <th>{% trans "المورد/القسم/العميل" %}</th>
+                            <th>{% trans "عدد الأصناف" %}</th>
+                            <th>{% trans "ملاحظات" %}</th>
+                            <th>{% trans "إجراءات" %}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for voucher in vouchers %}
+                        <tr>
+                            <td>{{ voucher.voucher_number }}</td>
+                            <td>
+                                {% if voucher.voucher_type == 'إذن اضافة' %}
+                                    <span class="badge bg-success">{{ voucher.get_voucher_type_display }}</span>
+                                {% elif voucher.voucher_type == 'إذن صرف' %}
+                                    <span class="badge bg-primary">{{ voucher.get_voucher_type_display }}</span>
+                                {% elif voucher.voucher_type == 'اذن مرتجع عميل' %}
+                                    <span class="badge bg-info">{{ voucher.get_voucher_type_display }}</span>
+                                {% elif voucher.voucher_type == 'إذن مرتجع مورد' %}
+                                    <span class="badge bg-warning">{{ voucher.get_voucher_type_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ voucher.date }}</td>
+                            <td>
+                                {% if voucher.supplier %}
+                                    {{ voucher.supplier.name }}
+                                {% elif voucher.department %}
+                                    {{ voucher.department.name }}
+                                {% elif voucher.customer %}
+                                    {{ voucher.customer.name }}
+                                {% endif %}
+                            </td>
+                            <td>{{ voucher.items_count }}</td>
+                            <td>{{ voucher.notes|truncatechars:30 }}</td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'inventory:voucher_detail' voucher.voucher_number %}" class="btn btn-info btn-sm">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'inventory:voucher_edit' voucher.voucher_number %}" class="btn btn-warning btn-sm">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'inventory:voucher_delete' voucher.voucher_number %}" class="btn btn-danger btn-sm">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <div class="pagination justify-content-center mt-4">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if voucher_type %}&voucher_type={{ voucher_type }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" aria-label="First">
+                                    <span aria-hidden="true">&laquo;&laquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if voucher_type %}&voucher_type={{ voucher_type }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                        {% endif %}
+
+                        {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                                <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if voucher_type %}&voucher_type={{ voucher_type }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">{{ num }}</a>
+                                </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if voucher_type %}&voucher_type={{ voucher_type }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if voucher_type %}&voucher_type={{ voucher_type }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}" aria-label="Last">
+                                    <span aria-hidden="true">&raquo;&raquo;</span>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+            {% endif %}
+            {% else %}
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> {% trans "لا توجد أذونات متاحة حالياً" %}
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

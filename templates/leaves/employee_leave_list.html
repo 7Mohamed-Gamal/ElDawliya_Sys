@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>إجازات الموظفين</h1>
+<p><a class="btn btn-primary" href="{% url 'leaves:employee_leave_create' %}">+ إضافة</a></p>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>الموظف</th><th>النوع</th><th>من</th><th>إلى</th><th>الحالة</th><th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for i in items %}
+    <tr>
+      <td>{{ i.emp.emp_code }}</td>
+      <td>{{ i.leave_type.leave_name }}</td>
+      <td>{{ i.start_date }}</td>
+      <td>{{ i.end_date }}</td>
+      <td>{{ i.status }}</td>
+      <td>
+        <a class="btn btn-sm btn-secondary" href="{% url 'leaves:employee_leave_edit' i.pk %}">تعديل</a>
+        <a class="btn btn-sm btn-danger" href="{% url 'leaves:employee_leave_delete' i.pk %}">حذف</a>
+      </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="6">لا توجد إجازات</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+

@@ -1,0 +1,193 @@
+{% extends 'base_updated.html' %}
+{% load static %}
+
+{% block title %}لوحة إدارة المستخدمين - نظام الدولية{% endblock %}
+
+{% block page_title %}لوحة إدارة المستخدمين{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">إدارة المستخدمين</li>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h5 class="mb-0">قائمة المستخدمين</h5>
+                <a href="{% url 'accounts:create_user' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-1"></i> إضافة مستخدم جديد
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>اسم المستخدم</th>
+                                <th>البريد الإلكتروني</th>
+                                <th>الاسم</th>
+                                <th>الدور</th>
+                                <th>الحالة</th>
+                                <th>العمليات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if users %}
+                                {% for user in users %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ user.username }}</td>
+                                    <td>{{ user.email }}</td>
+                                    <td>{{ user.first_name }} {{ user.last_name }}</td>
+                                    <td>
+                                        <span class="badge {% if user.Role == 'admin' %}bg-primary{% else %}bg-info{% endif %}">
+                                            {{ user.get_Role_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if user.is_active %}
+                                        <span class="badge bg-success">نشط</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">غير نشط</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'accounts:edit_permissions' user.id %}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button class="btn btn-sm btn-danger ms-1"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#deleteUserModal"
+                                                data-user-id="{{ user.id }}"
+                                                data-user-name="{{ user.username }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="7" class="text-center">لا يوجد مستخدمين</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stats-card primary">
+            <i class="fas fa-users stats-icon"></i>
+            <div class="stats-number">{{ total_users }}</div>
+            <p class="stats-title">إجمالي المستخدمين</p>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stats-card success">
+            <i class="fas fa-user-shield stats-icon"></i>
+            <div class="stats-number">{{ admin_users }}</div>
+            <p class="stats-title">المشرفين</p>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stats-card info">
+            <i class="fas fa-user-tie stats-icon"></i>
+            <div class="stats-number">{{ employee_users }}</div>
+            <p class="stats-title">الموظفين</p>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="stats-card light">
+            <i class="fas fa-user-check stats-icon"></i>
+            <div class="stats-number">{{ active_users }}</div>
+            <p class="stats-title">المستخدمين النشطين</p>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0">النشاط الأخير</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="timeline p-4">
+                    {% if recent_activities %}
+                        {% for activity in recent_activities %}
+                        <div class="timeline-item">
+                            <div class="timeline-badge">
+                                <i class="fas fa-circle"></i>
+                            </div>
+                            <div class="card mb-0">
+                                <div class="card-body py-3">
+                                    <h5 class="mb-1 fs-6">{{ activity.title }}</h5>
+                                    <p class="text-muted mb-1 small">{{ activity.date }}</p>
+                                    <p class="mb-0">{{ activity.description }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-info-circle fa-2x mb-3 text-muted"></i>
+                            <p class="mb-0">لا توجد أنشطة حديثة</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete User Modal -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">حذف المستخدم</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>هل أنت متأكد من حذف المستخدم <span id="userName"></span>؟</p>
+                <p class="text-danger">هذا الإجراء لا يمكن التراجع عنه.</p>
+            </div>
+            <div class="modal-footer">
+                <form method="post" action="#">
+                    {% csrf_token %}
+                    <input type="hidden" id="userId" name="user_id">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                    <button type="submit" class="btn btn-danger">حذف</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Delete user modal
+        var deleteUserModal = document.getElementById('deleteUserModal');
+        if (deleteUserModal) {
+            deleteUserModal.addEventListener('show.bs.modal', function(event) {
+                var button = event.relatedTarget;
+                var userId = button.getAttribute('data-user-id');
+                var userName = button.getAttribute('data-user-name');
+
+                document.getElementById('userName').textContent = userName;
+                document.getElementById('userId').value = userId;
+            });
+        }
+    });
+</script>
+{% endblock %}

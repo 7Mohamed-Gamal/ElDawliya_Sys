@@ -1,0 +1,444 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}محادثة الذكاء الاصطناعي - نظام الدولية{% endblock %}
+
+{% block page_title %}محادثة مع Gemini AI{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'api:dashboard' %}">API</a></li>
+<li class="breadcrumb-item active">محادثة AI</li>
+{% endblock %}
+
+{% block content %}
+<style>
+    .chat-container {
+        height: 500px;
+        overflow-y: auto;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 1rem;
+        background: #f8f9fa;
+    }
+    
+    .message {
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: flex-start;
+    }
+    
+    .message.user {
+        justify-content: flex-end;
+    }
+    
+    .message-content {
+        max-width: 70%;
+        padding: 0.75rem 1rem;
+        border-radius: 18px;
+        position: relative;
+    }
+    
+    .message.user .message-content {
+        background: #007bff;
+        color: white;
+        margin-left: 1rem;
+    }
+    
+    .message.assistant .message-content {
+        background: white;
+        border: 1px solid #dee2e6;
+        margin-right: 1rem;
+    }
+    
+    .message-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+    }
+    
+    .user-avatar {
+        background: #007bff;
+        color: white;
+    }
+    
+    .ai-avatar {
+        background: #28a745;
+        color: white;
+    }
+    
+    .typing-indicator {
+        display: none;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+    
+    .typing-dots {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 0.75rem 1rem;
+        background: white;
+        border: 1px solid #dee2e6;
+        border-radius: 18px;
+        margin-right: 1rem;
+    }
+    
+    .typing-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #6c757d;
+        animation: typing 1.4s infinite ease-in-out;
+    }
+    
+    .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+    .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+    
+    @keyframes typing {
+        0%, 80%, 100% { transform: scale(0); }
+        40% { transform: scale(1); }
+    }
+    
+    .conversation-item {
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    
+    .conversation-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .conversation-item.active {
+        background-color: #e3f2fd;
+        border-left: 4px solid #2196f3;
+    }
+</style>
+
+<div class="row">
+    <!-- Conversations Sidebar -->
+    <div class="col-lg-3">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-comments me-2"></i>المحادثات
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    <div class="list-group-item conversation-item" onclick="startNewConversation()">
+                        <i class="fas fa-plus text-primary me-2"></i>
+                        <strong>محادثة جديدة</strong>
+                    </div>
+                    {% for conversation in conversations %}
+                    <div class="list-group-item conversation-item" 
+                         onclick="loadConversation('{{ conversation.id }}')">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="mb-1">{{ conversation.title|truncatechars:30 }}</h6>
+                                <small class="text-muted">{{ conversation.updated_at|date:"M d, H:i" }}</small>
+                            </div>
+                            <span class="badge bg-secondary">{{ conversation.messages.count }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Chat Area -->
+    <div class="col-lg-9">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0">
+                        <i class="fas fa-robot me-2"></i>محادثة مع Gemini AI
+                    </h6>
+                    <div>
+                        {% if gemini_available %}
+                            <span class="badge bg-success">متصل</span>
+                        {% else %}
+                            <span class="badge bg-danger">غير متاح</span>
+                            {% if debug_info %}
+                                <button type="button" class="btn btn-sm btn-outline-info ms-2" 
+                                        data-bs-toggle="modal" data-bs-target="#debugModal">
+                                    <i class="fas fa-info-circle"></i>
+                                </button>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <!-- Chat Messages -->
+                <div id="chat-container" class="chat-container">
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-robot fa-3x mb-3"></i>
+                        <h5>مرحباً! كيف يمكنني مساعدتك؟</h5>
+                        <p>يمكنني مساعدتك في:</p>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success me-2"></i>الإجابة على الأسئلة العامة</li>
+                            <li><i class="fas fa-check text-success me-2"></i>تحليل بيانات النظام</li>
+                            <li><i class="fas fa-check text-success me-2"></i>تقديم التوصيات</li>
+                            <li><i class="fas fa-check text-success me-2"></i>شرح وظائف النظام</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <!-- Typing Indicator -->
+                <div id="typing-indicator" class="typing-indicator">
+                    <div class="message-avatar ai-avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="typing-dots">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer">
+                <!-- Message Input -->
+                <form id="chat-form" onsubmit="sendMessage(event)">
+                    <div class="input-group">
+                        <input type="text" id="message-input" class="form-control" 
+                               placeholder="اكتب رسالتك هنا..." required
+                               {% if not gemini_available %}disabled{% endif %}>
+                        <button type="submit" class="btn btn-primary" 
+                                {% if not gemini_available %}disabled{% endif %}>
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                    {% if not gemini_available %}
+                    <small class="text-danger">
+                        <i class="fas fa-exclamation-triangle me-1"></i>
+                        Gemini AI غير متاح. يرجى التحقق من إعدادات GEMINI_API_KEY.
+                    </small>
+                    {% endif %}
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Debug Modal -->
+{% if debug_info %}
+<div class="modal fade" id="debugModal" tabindex="-1" aria-labelledby="debugModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="debugModalLabel"><i class="fas fa-bug me-2"></i>معلومات تشخيصية للذكاء الاصطناعي</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-info">
+            <h6>حالة إعداد الذكاء الاصطناعي</h6>
+            <ul class="list-group list-group-flush mt-2">
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    تم تكوين الخدمة
+                    <span class="badge {% if debug_info.is_configured %}bg-success{% else %}bg-danger{% endif %}">
+                        {% if debug_info.is_configured %}نعم{% else %}لا{% endif %}
+                    </span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    مفتاح API موجود
+                    <span class="badge {% if debug_info.api_key_exists %}bg-success{% else %}bg-danger{% endif %}">
+                        {% if debug_info.api_key_exists %}نعم{% else %}لا{% endif %}
+                    </span>
+                </li>
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    مصدر الإعدادات
+                    <span class="badge bg-info">
+                        {% if debug_info.config_source == 'user_config' %}
+                            إعدادات المستخدم
+                        {% elif debug_info.config_source == 'environment' %}
+                            متغيرات البيئة
+                        {% else %}
+                            غير محدد
+                        {% endif %}
+                    </span>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="mt-3">
+            <h6>خطوات الإصلاح:</h6>
+            <ol>
+                <li>تأكد من إضافة مفتاح Gemini API في ملف <code>.env</code></li>
+                <li>أو قم بإضافة إعدادات Gemini من صفحة <a href="{% url 'api:ai_settings' %}" class="link-primary">إعدادات الذكاء الاصطناعي</a></li>
+                <li>تأكد من تثبيت مكتبة <code>google-generativeai</code> باستخدام:
+                    <code class="d-block mt-1 p-2 bg-light">pip install google-generativeai</code>
+                </li>
+                <li>تحقق من صلاحية مفتاح API من <a href="https://ai.google.dev/" target="_blank" class="link-primary">لوحة تحكم Google AI</a></li>
+            </ol>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+        <a href="{% url 'api:ai_settings' %}" class="btn btn-primary">إعدادات الذكاء الاصطناعي</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentConversationId = null;
+
+function startNewConversation() {
+    currentConversationId = null;
+    document.getElementById('chat-container').innerHTML = `
+        <div class="text-center text-muted py-4">
+            <i class="fas fa-robot fa-3x mb-3"></i>
+            <h5>محادثة جديدة</h5>
+            <p>ابدأ محادثة جديدة مع Gemini AI</p>
+        </div>
+    `;
+    
+    // Remove active class from all conversations
+    document.querySelectorAll('.conversation-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    
+    // Add active class to new conversation
+    document.querySelector('.conversation-item').classList.add('active');
+}
+
+function loadConversation(conversationId) {
+    // This would load conversation history from the server
+    // For now, we'll just set the conversation ID
+    currentConversationId = conversationId;
+    
+    // Update active conversation
+    document.querySelectorAll('.conversation-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    event.target.closest('.conversation-item').classList.add('active');
+    
+    // You could add an AJAX call here to load conversation history
+}
+
+function sendMessage(event) {
+    event.preventDefault();
+    
+    const messageInput = document.getElementById('message-input');
+    const message = messageInput.value.trim();
+    
+    if (!message) return;
+    
+    // Add user message to chat
+    addMessage(message, 'user');
+    
+    // Clear input
+    messageInput.value = '';
+    
+    // Show typing indicator
+    showTypingIndicator();
+    
+    // Send message to AI
+    fetch('{% url "api:ai_chat_api" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('input[name=csrfmiddlewaretoken]')?.value || getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            message: message,
+            conversation_id: currentConversationId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideTypingIndicator();
+        
+        if (data.error) {
+            addMessage('عذراً، حدث خطأ: ' + data.error, 'assistant', true);
+        } else {
+            addMessage(data.response, 'assistant');
+            currentConversationId = data.conversation_id;
+        }
+    })
+    .catch(error => {
+        hideTypingIndicator();
+        addMessage('عذراً، حدث خطأ في الاتصال.', 'assistant', true);
+        console.error('Error:', error);
+    });
+}
+
+// Helper function to get CSRF token from cookies
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+function addMessage(content, role, isError = false) {
+    const chatContainer = document.getElementById('chat-container');
+    
+    // Remove welcome message if exists
+    const welcomeMessage = chatContainer.querySelector('.text-center');
+    if (welcomeMessage) {
+        welcomeMessage.remove();
+    }
+    
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${role}`;
+    
+    const avatar = role === 'user' ? 
+        '<div class="message-avatar user-avatar"><i class="fas fa-user"></i></div>' :
+        '<div class="message-avatar ai-avatar"><i class="fas fa-robot"></i></div>';
+    
+    const messageClass = isError ? 'message-content border-danger text-danger' : 'message-content';
+    
+    if (role === 'user') {
+        messageDiv.innerHTML = `
+            <div class="${messageClass}">${content}</div>
+            ${avatar}
+        `;
+    } else {
+        messageDiv.innerHTML = `
+            ${avatar}
+            <div class="${messageClass}">${content}</div>
+        `;
+    }
+    
+    chatContainer.appendChild(messageDiv);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+function showTypingIndicator() {
+    document.getElementById('typing-indicator').style.display = 'flex';
+    const chatContainer = document.getElementById('chat-container');
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+function hideTypingIndicator() {
+    document.getElementById('typing-indicator').style.display = 'none';
+}
+
+// Handle Enter key in message input
+document.getElementById('message-input').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage(e);
+    }
+});
+</script>
+{% endblock %}

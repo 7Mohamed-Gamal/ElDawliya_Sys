@@ -1,0 +1,333 @@
+{% extends 'inventory/base_inventory.html' %}
+{% load static %}
+{% load inventory_permission_tags %}
+
+{% block title %}إعدادات النظام - إدارة المخزن{% endblock %}
+
+{% block extra_css %}
+<style>
+    .settings-card {
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        margin-bottom: 1.5rem;
+    }
+
+    .settings-card .card-header {
+        background-image: linear-gradient(to left, var(--primary-color), var(--secondary-color));
+        color: white;
+        padding: 1rem 1.25rem;
+        border: none;
+    }
+
+    .settings-card .card-header h5 {
+        margin-bottom: 0;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+    }
+
+    .settings-card .card-header .card-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        background-color: white;
+        border-radius: 5px;
+        color: var(--primary-color);
+        margin-left: 10px;
+    }
+
+    .form-section {
+        margin-bottom: 1.5rem;
+        padding-bottom: 1.5rem;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .form-section:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+        margin-bottom: 0;
+    }
+
+    .section-title {
+        margin-bottom: 1rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        color: var(--primary-color);
+    }
+
+    .section-title i {
+        margin-left: 0.5rem;
+    }
+
+    .form-help {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-top: 0.3rem;
+    }
+
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 24px;
+    }
+
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        right: 0;
+        left: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 34px;
+    }
+
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        right: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+
+    input:checked + .toggle-slider {
+        background-color: var(--primary-color);
+    }
+
+    input:checked + .toggle-slider:before {
+        transform: translateX(-26px);
+    }
+
+    .color-preview {
+        width: 30px;
+        height: 30px;
+        display: inline-block;
+        border-radius: 4px;
+        border: 1px solid #dee2e6;
+        margin-left: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row ps-4">
+    <div class="col-12 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4 class="m-0">
+                <i class="fas fa-cog me-2 text-primary"></i>
+                إعدادات النظام
+            </h4>
+
+            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#resetSettingsModal">
+                <i class="fas fa-redo ms-1"></i>
+                إعادة ضبط
+            </button>
+        </div>
+
+        <form method="post" action="{% url 'inventory:settings' %}" enctype="multipart/form-data">
+            {% csrf_token %}
+
+            <div class="row">
+                <!-- إعدادات المخزون -->
+                <div class="col-md-6">
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <h5>
+                                <span class="card-icon">
+                                    <i class="fas fa-box"></i>
+                                </span>
+                                إعدادات المخزون
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-section">
+                                <h6 class="section-title">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    تنبيهات المخزون
+                                </h6>
+
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <label class="form-label mb-0">تفعيل تنبيهات المخزون</label>
+                                        <label class="toggle-switch mt-0">
+                                            <input type="checkbox" name="enable_stock_alerts" {{ settings.enable_stock_alerts|yesno:"checked," }}>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="form-help">تنبيهات تلقائية عند انخفاض المخزون أو نفاده</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">نسبة الحد الأدنى الافتراضية</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" name="default_min_stock_percentage" value="{{ settings.default_min_stock_percentage }}" min="0" max="100">
+                                        <span class="input-group-text">%</span>
+                                    </div>
+                                    <div class="form-help">نسبة الحد الأدنى من الكمية الأصلية المحددة للمنتج</div>
+                                </div>
+                            </div>
+
+                            <div class="form-section">
+                                <h6 class="section-title">
+                                    <i class="fas fa-file-invoice"></i>
+                                    إعدادات الفواتير
+                                </h6>
+
+                                <div class="mb-3">
+                                    <label class="form-label">بادئة أرقام فواتير التوريد</label>
+                                    <input type="text" class="form-control" name="invoice_in_prefix" value="{{ settings.invoice_in_prefix }}">
+                                    <div class="form-help">مثال: IN-</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">بادئة أرقام فواتير الصرف</label>
+                                    <input type="text" class="form-control" name="invoice_out_prefix" value="{{ settings.invoice_out_prefix }}">
+                                    <div class="form-help">مثال: OUT-</div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <label class="form-label mb-0">منع تعديل الفواتير المكتملة</label>
+                                        <label class="toggle-switch mb-0">
+                                            <input type="checkbox" name="prevent_editing_completed_invoices" {{ settings.prevent_editing_completed_invoices|yesno:"checked," }}>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- إعدادات واجهة المستخدم -->
+                <div class="col-md-6">
+                    <div class="settings-card">
+                        <div class="card-header">
+                            <h5>
+                                <span class="card-icon">
+                                    <i class="fas fa-desktop"></i>
+                                </span>
+                                واجهة المستخدم
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-section">
+                                <h6 class="section-title">
+                                    <i class="fas fa-paint-brush"></i>
+                                    التخصيص
+                                </h6>
+
+                                <div class="mb-3">
+                                    <label class="form-label">اللون الأساسي</label>
+                                    <div class="d-flex align-items-center">
+                                        <div class="color-preview" style="background-color: {{ settings.primary_color }}"></div>
+                                        <input type="color" class="form-control form-control-color" name="primary_color" value="{{ settings.primary_color }}">
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">اللون الثانوي</label>
+                                    <div class="d-flex align-items-center">
+                                        <div class="color-preview" style="background-color: {{ settings.secondary_color }}"></div>
+                                        <input type="color" class="form-control form-control-color" name="secondary_color" value="{{ settings.secondary_color }}">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-section">
+                                <h6 class="section-title">
+                                    <i class="fas fa-table"></i>
+                                    عرض الجداول
+                                </h6>
+
+                                <div class="mb-3">
+                                    <label class="form-label">عدد العناصر في الصفحة</label>
+                                    <select class="form-select" name="items_per_page">
+                                        <option value="10" {% if settings.items_per_page == 10 %}selected{% endif %}>10</option>
+                                        <option value="25" {% if settings.items_per_page == 25 %}selected{% endif %}>25</option>
+                                        <option value="50" {% if settings.items_per_page == 50 %}selected{% endif %}>50</option>
+                                        <option value="100" {% if settings.items_per_page == 100 %}selected{% endif %}>100</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <label class="form-label mb-0">وضع العرض المضغوط</label>
+                                        <label class="toggle-switch mb-0">
+                                            <input type="checkbox" name="compact_tables" {{ settings.compact_tables|yesno:"checked," }}>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                    <div class="form-help">صفوف أضيق في الجداول لعرض المزيد من البيانات</div>
+                                </div>
+                            </div>
+
+                            <div class="form-section">
+                                <h6 class="section-title">
+                                    <i class="fas fa-language"></i>
+                                    خيارات اللغة
+                                </h6>
+
+                                <div class="mb-3">
+                                    <label class="form-label">العملة</label>
+                                    <select class="form-select" name="currency">
+                                        <option value="EGP" {% if settings.currency == 'EGP' %}selected{% endif %}>جنيه مصري (ج.م)</option>
+                                        <option value="USD" {% if settings.currency == 'USD' %}selected{% endif %}>دولار أمريكي ($)</option>
+                                        <option value="EUR" {% if settings.currency == 'EUR' %}selected{% endif %}>يورو (€)</option>
+                                        <option value="SAR" {% if settings.currency == 'SAR' %}selected{% endif %}>ريال سعودي (ر.س)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end mt-4">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save ms-1"></i>
+                    حفظ الإعدادات
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal إعادة ضبط الإعدادات -->
+<div class="modal fade" id="resetSettingsModal" tabindex="-1" aria-labelledby="resetSettingsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resetSettingsModalLabel">تأكيد إعادة ضبط الإعدادات</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                هل أنت متأكد من رغبتك في إعادة ضبط جميع الإعدادات إلى القيم الافتراضية؟
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <form method="post" action="{% url 'inventory:reset_settings' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">إعادة ضبط</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

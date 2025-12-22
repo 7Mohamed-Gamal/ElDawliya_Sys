@@ -1,0 +1,88 @@
+{% extends 'cars\base.html' %}
+
+{% block title %}حذف سيارة - نظام إدارة نشاط النقل{% endblock %}
+
+{% block header %}حذف سيارة{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-6 mx-auto">
+            <div class="card mb-4">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">تأكيد حذف السيارة</h5>
+                </div>
+                <div class="card-body">
+                    <p class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        هل أنت متأكد من رغبتك في حذف السيارة التالية؟ هذا الإجراء لا يمكن التراجع عنه.
+                    </p>
+                    
+                    <div class="table-responsive mb-4">
+                        <table class="table table-bordered table-hover">
+                            <tr>
+                                <th class="table-light" style="width: 30%">كود السيارة</th>
+                                <td>{{ car.car_code }}</td>
+                            </tr>
+                            <tr>
+                                <th class="table-light">اسم السيارة</th>
+                                <td>{{ car.car_name }}</td>
+                            </tr>
+                            <tr>
+                                <th class="table-light">نوع السيارة</th>
+                                <td>
+                                    {% if car.car_type == 'microbus' %}
+                                        ميكروباص
+                                    {% elif car.car_type == 'bus' %}
+                                        أتوبيس
+                                    {% elif car.car_type == 'passenger' %}
+                                        ركاب
+                                    {% elif car.car_type == 'private' %}
+                                        ملاكي
+                                    {% else %}
+                                        {{ car.car_type }}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="table-light">نوع الوقود</th>
+                                <td>
+                                    {% if car.fuel_type == 'diesel' %}
+                                        سولار
+                                    {% elif car.fuel_type == 'gasoline' %}
+                                        بنزين
+                                    {% elif car.fuel_type == 'gas' %}
+                                        غاز
+                                    {% else %}
+                                        {{ car.fuel_type }}
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th class="table-light">الحالة</th>
+                                <td>
+                                    {% if car.car_status == 'active' %}
+                                        <span class="badge bg-success">نشطة</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">غير نشطة</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'car_list' %}" class="btn btn-secondary me-md-2">
+                                <i class="bi bi-x-circle"></i> إلغاء
+                            </a>
+                            <button type="submit" class="btn btn-danger">
+                                <i class="bi bi-trash"></i> تأكيد الحذف
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

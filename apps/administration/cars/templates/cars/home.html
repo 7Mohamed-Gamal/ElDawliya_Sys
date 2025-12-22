@@ -1,0 +1,90 @@
+{% extends 'cars\base.html' %}
+
+{% block title %}الرئيسية - نظام إدارة نشاط النقل{% endblock %}
+
+{% block content %}
+    <h3 class="mb-4">لوحة التحكم الرئيسية</h3>
+    <div class="row">
+        <div class="col-lg-3 col-md-6">
+            <div class="dashboard-stat bg-primary-light">
+                <h4>السيارات النشطة</h4>
+                <div class="stat-value text-primary">{{ active_cars }}</div>
+                <a href="{% url 'cars:car_list' %}" class="btn btn-sm btn-outline-primary mt-3">قائمة السيارات</a>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="dashboard-stat bg-success-light">
+                <h4>إجمالي الرحلات</h4>
+                <div class="stat-value text-success">{{ total_trips }}</div>
+                <a href="{% url 'cars:trip_list' %}" class="btn btn-sm btn-outline-success mt-3">قائمة الرحلات</a>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="dashboard-stat bg-warning-light">
+                <h4>إجمالي المسافات</h4>
+                <div class="stat-value text-warning">{{ total_distance|floatformat:2 }}</div>
+                <small>كيلومتر</small>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6">
+            <div class="dashboard-stat bg-info-light">
+                <h4>إجمالي المستحقات</h4>
+                <div class="stat-value text-info">{{ total_amount|floatformat:2 }}</div>
+                <small>جنيه مصري</small>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">روابط سريعة</h4>
+                </div>
+                <div class="card-body">
+                    <div class="list-group">
+                        <a href="{% url 'cars:car_add' %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-plus-circle me-2"></i> إضافة سيارة جديدة
+                        </a>
+                        <a href="{% url 'cars:trip_add' %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-plus-circle me-2"></i> إضافة رحلة جديدة
+                        </a>
+                        <a href="{% url 'cars:average_price' %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-calculator me-2"></i> حساب متوسط السعر
+                        </a>
+                        <a href="{% url 'cars:reports' %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-chart-bar me-2"></i> عرض التقارير
+                        </a>
+                        <a href="{% url 'cars:settings_edit' %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-cog me-2"></i> تعديل الإعدادات
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header">
+                    <h4 class="card-title mb-0">معلومات النظام</h4>
+                </div>
+                <div class="card-body">
+                    <p>مرحبًا بك في نظام إدارة نشاط النقل، النظام المتكامل لإدارة أسطول السيارات وحساب تكاليف التشغيل.</p>
+                    
+                    <h5 class="mt-4">الميزات الرئيسية</h5>
+                    <ul>
+                        <li>إدارة قاعدة بيانات السيارات والرحلات</li>
+                        <li>حساب متوسط سعر التشغيل بشكل احترافي</li>
+                        <li>تحليل البيانات وإصدار التقارير</li>
+                        <li>متابعة مستمرة للتكاليف والمصروفات</li>
+                        <li>تخصيص الإعدادات حسب احتياجات النشاط</li>
+                    </ul>
+                    
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle me-2"></i> 
+                        للبدء، قم بإضافة سيارات من خلال رابط "إضافة سيارة" ثم انتقل إلى صفحة "حساب متوسط السعر" لمعرفة تكاليف تشغيل كل سيارة.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

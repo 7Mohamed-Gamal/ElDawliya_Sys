@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>{{ company.name }}</h1>
+<p>السجل التجاري: {{ company.commercial_register }}</p>
+<p>الرقم الضريبي: {{ company.tax_number }}</p>
+<p>الهاتف: {{ company.phone }}</p>
+<p>البريد: {{ company.email }}</p>
+<a href="{% url 'companies:list' %}">عودة للقائمة</a>
+{% endblock %}
+

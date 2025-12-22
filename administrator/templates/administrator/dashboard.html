@@ -1,0 +1,193 @@
+{% extends 'administrator/base_admin.html' %}
+{% load static %}
+
+{% block title %}الرئيسية - لوحة تحكم مدير النظام{% endblock %}
+
+{% block page_icon %}tachometer-alt{% endblock %}
+{% block page_header %}لوحة تحكم مدير النظام{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- Welcome Card -->
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <h4 class="mb-3">مرحباً بك في لوحة تحكم مدير النظام</h4>
+                <p>من هنا يمكنك إدارة إعدادات النظام الرئيسية وتخصيص تجربة المستخدم.</p>
+
+                {% if not settings %}
+                <div class="alert alert-warning" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>تنبيه:</strong> لم يتم تهيئة إعدادات النظام بعد.
+                    <a href="{% url 'administrator:settings' %}" class="alert-link">انقر هنا لإعداد النظام</a>.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="col-md-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0">إعدادات النظام</h6>
+                        <h2 class="mb-0 mt-2">{{ settings|yesno:"مهيأة,غير مهيأة" }}</h2>
+                    </div>
+                    <div>
+                        <i class="fas fa-cogs fa-3x opacity-50"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <a href="{% url 'administrator:settings' %}" class="btn btn-sm btn-light">
+                        إدارة الإعدادات <i class="fas fa-arrow-left ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0">الأقسام</h6>
+                        <h2 class="mb-0 mt-2">{{ departments_count }}</h2>
+                    </div>
+                    <div>
+                        <i class="fas fa-building fa-3x opacity-50"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <a href="{% url 'administrator:department_list' %}" class="btn btn-sm btn-light">
+                        إدارة الأقسام <i class="fas fa-arrow-left ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="mb-0">الوحدات</h6>
+                        <h2 class="mb-0 mt-2">{{ modules_count }}</h2>
+                    </div>
+                    <div>
+                        <i class="fas fa-puzzle-piece fa-3x opacity-50"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <a href="{% url 'administrator:module_list' %}" class="btn btn-sm btn-light">
+                        إدارة الوحدات <i class="fas fa-arrow-left ms-1"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="col-md-12 mt-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>
+                    <i class="fas fa-bolt me-2"></i>
+                    إجراءات سريعة
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'administrator:settings' %}" class="card text-decoration-none text-center p-4">
+                            <i class="fas fa-cogs fa-2x text-primary mb-3"></i>
+                            <h6 class="mb-0 text-dark">إعدادات النظام</h6>
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'administrator:database_settings' %}" class="card text-decoration-none text-center p-4">
+                            <i class="fas fa-database fa-2x text-primary mb-3"></i>
+                            <h6 class="mb-0 text-dark">إعدادات قاعدة البيانات</h6>
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'administrator:permission_dashboard' %}" class="card text-decoration-none text-center p-4">
+                            <i class="fas fa-user-lock fa-2x text-primary mb-3"></i>
+                            <h6 class="mb-0 text-dark">إدارة الصلاحيات</h6>
+                        </a>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'administrator:department_add' %}" class="card text-decoration-none text-center p-4">
+                            <i class="fas fa-plus-circle fa-2x text-success mb-3"></i>
+                            <h6 class="mb-0 text-dark">إضافة قسم</h6>
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <a href="{% url 'administrator:module_add' %}" class="card text-decoration-none text-center p-4">
+                            <i class="fas fa-plus-square fa-2x text-success mb-3"></i>
+                            <h6 class="mb-0 text-dark">إضافة وحدة</h6>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- System Info -->
+    <div class="col-md-12 mt-3">
+        <div class="card">
+            <div class="card-header">
+                <h5>
+                    <i class="fas fa-info-circle me-2"></i>
+                    معلومات النظام
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <th style="width: 30%">اسم الشركة:</th>
+                                <td>{{ settings.company_name|default:"غير محدد" }}</td>
+                            </tr>
+                            <tr>
+                                <th>اسم النظام:</th>
+                                <td>{{ settings.system_name|default:"نظام الدولية" }}</td>
+                            </tr>
+                            <tr>
+                                <th>المنطقة الزمنية:</th>
+                                <td>{{ settings.timezone|default:"Asia/Riyadh" }}</td>
+                            </tr>
+                            <tr>
+                                <th>إعدادات قاعدة البيانات:</th>
+                                <td>
+                                    {% if settings %}
+                                        <span class="text-success">محددة</span>
+                                    {% else %}
+                                        <span class="text-danger">غير محددة</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>آخر تحديث للإعدادات:</th>
+                                <td>
+                                    {% if settings %}
+                                        {{ settings.last_modified|date:"Y-m-d H:i" }}
+                                    {% else %}
+                                        غير متوفر
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

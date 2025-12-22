@@ -1,0 +1,154 @@
+{% extends 'cars\base.html' %}
+{% load custom_filters %}
+
+{% block title %}السيارات - نظام إدارة نشاط النقل{% endblock %}
+
+{% block header %}قائمة السيارات{% endblock %}
+
+{% block content %}
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">إجمالي السيارات: {{ cars|length }}</h4>
+        <a href="{% url 'cars:car_add' %}" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> إضافة سيارة جديدة
+        </a>
+    </div>
+
+    <div class="table-container">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>كود السيارة</th>
+                    <th>اسم السيارة</th>
+                    <th>نوع السيارة</th>
+                    <th>نوع الوقود</th>
+                    <th>عدد الركاب</th>
+                    <th>معدل استهلاك الوقود</th>
+                    <th>المسافة الكلية</th>
+                    <th>الحالة</th>
+                    <th>العمليات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for car in cars %}
+                    <tr>
+                        <td>{{ car.car_code }}</td>
+                        <td>{{ car.car_name }}</td>
+                        <td>
+                            {% if car.car_type == 'microbus' %}
+                                ميكروباص
+                            {% elif car.car_type == 'bus' %}
+                                أتوبيس
+                            {% elif car.car_type == 'passenger' %}
+                                ركاب
+                            {% elif car.car_type == 'private' %}
+                                ملاكي
+                            {% else %}
+                                {{ car.car_type }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if car.fuel_type == 'diesel' %}
+                                سولار
+                            {% elif car.fuel_type == 'gasoline' %}
+                                بنزين
+                            {% elif car.fuel_type == 'gas' %}
+                                غاز
+                            {% else %}
+                                {{ car.fuel_type }}
+                            {% endif %}
+                        </td>
+                        <td>{{ car.passengers_count }}</td>
+                        <td>{{ car.fuel_consumption_rate|floatformat:2 }} لتر/كم</td>
+                        <td>{{ car.distance_traveled|floatformat:2 }} كم</td>
+                        <td>
+                            {% if car.car_status == 'active' %}
+                                <span class="badge bg-success">نشطة</span>
+                            {% else %}
+                                <span class="badge bg-secondary">غير نشطة</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'cars:route_point_list' car.id %}" class="btn btn-sm btn-info" title="نقاط خط السير">
+                                    <i class="bi bi-map"></i>
+                                </a>
+                                <a href="{% url 'cars:car_edit' car.id %}" class="btn btn-sm btn-primary" title="تعديل">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{% url 'cars:car_delete' car.id %}" class="btn btn-sm btn-danger" title="حذف">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center py-4">
+                            <div class="alert alert-info mb-0">
+                                لا توجد سيارات مسجلة حاليًا. قم بإضافة سيارة جديدة من خلال زر الإضافة.
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="mt-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">إحصائيات سريعة</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="card bg-primary-light">
+                            <div class="card-body">
+                                <h6>إجمالي السيارات</h6>
+                                <h3>{{ cars|length }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="card bg-success-light">
+                            <div class="card-body">
+                                <h6>السيارات النشطة</h6>
+                                <h3>{{ active_cars_count }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="card bg-warning-light">
+                            <div class="card-body">
+                                <h6>سيارات بوقود سولار</h6>
+                                <h3>{{ diesel_cars_count }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="card bg-info-light">
+                            <div class="card-body">
+                                <h6>سيارات بوقود بنزين/غاز</h6>
+                                <h3>{{ non_diesel_cars_count }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add responsive behavior for the table
+        const tableContainer = document.querySelector('.table-container');
+        
+        if (tableContainer) {
+            // Add a minimum height for the table container
+            tableContainer.style.minHeight = '300px';
+        }
+    });
+</script>
+{% endblock %}

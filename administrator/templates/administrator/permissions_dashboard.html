@@ -1,0 +1,208 @@
+{% extends 'administrator/base_admin.html' %}
+{% load static %}
+
+{% block title %}لوحة الصلاحيات - لوحة تحكم مدير النظام{% endblock %}
+
+{% block page_icon %}user-shield{% endblock %}
+{% block page_header %}لوحة إدارة الصلاحيات{% endblock %}
+
+{% block extra_css %}
+<style>
+    .app-permissions {
+        margin-bottom: 2rem;
+    }
+    
+    .app-header {
+        background-color: rgba(0, 0, 0, 0.03);
+        padding: 0.7rem 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+    
+    .model-permissions {
+        margin-bottom: 1.5rem;
+    }
+    
+    .model-header {
+        background-color: rgba(0, 0, 0, 0.015);
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 0.5rem;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .permissions-list {
+        padding: 0 1rem;
+    }
+    
+    .permission-badge {
+        display: inline-block;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+        padding: 0.35rem 0.7rem;
+        border-radius: 25px;
+    }
+    
+    .perm-add {
+        background-color: #d1e7dd;
+        border: 1px solid #badbcc;
+    }
+    
+    .perm-change {
+        background-color: #fff3cd;
+        border: 1px solid #ffecb5;  
+    }
+    
+    .perm-delete {
+        background-color: #f8d7da;
+        border: 1px solid #f5c2c7;
+    }
+    
+    .perm-view {
+        background-color: #cfe2ff;
+        border: 1px solid #b6d4fe;
+    }
+    
+    .search-box {
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-user-shield me-2"></i>
+                    لوحة الصلاحيات
+                </h5>
+                <div>
+                    <a href="{% url 'administrator:permissions_help' %}" class="btn btn-info btn-sm me-2">
+                        <i class="fas fa-question-circle me-1"></i>
+                        دليل نظام الصلاحيات
+                    </a>
+                    <a href="{% url 'administrator:group_list' %}" class="btn btn-outline-primary btn-sm me-2">
+                        <i class="fas fa-users me-1"></i>
+                        إدارة المجموعات
+                    </a>
+                    <a href="{% url 'administrator:user_list' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-users me-1"></i>
+                        إدارة المستخدمين
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <div class="alert alert-info mb-4">
+                            <h6 class="alert-heading">
+                                <i class="fas fa-info-circle me-2"></i>
+                                معلومات حول الصلاحيات
+                            </h6>
+                            <p>تعرض هذه الصفحة جميع الصلاحيات المتاحة في النظام مرتبة حسب التطبيقات والنماذج. يمكن تعيين هذه الصلاحيات للمستخدمين بشكل مباشر أو من خلال المجموعات.</p>
+                            <hr>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6 class="mb-2">أنواع الصلاحيات:</h6>
+                                    <ul class="mb-0">
+                                        <li><span class="badge perm-add">إضافة</span> - السماح بإضافة سجلات جديدة</li>
+                                        <li><span class="badge perm-change">تعديل</span> - السماح بتعديل السجلات الموجودة</li>
+                                        <li><span class="badge perm-delete">حذف</span> - السماح بحذف السجلات</li>
+                                        <li><span class="badge perm-view">عرض</span> - السماح بعرض السجلات</li>
+                                    </ul>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="mb-2">روابط مفيدة:</h6>
+                                    <ul class="mb-0">
+                                        <li><a href="{% url 'administrator:user_list' %}">إدارة المستخدمين وصلاحياتهم</a></li>
+                                        <li><a href="{% url 'administrator:group_list' %}">إدارة المجموعات وصلاحياتها</a></li>
+                                        <li><a href="{% url 'administrator:permissions_help' %}">دليل نظام الصلاحيات</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="search-box">
+                            <input type="text" id="permissionSearch" class="form-control" placeholder="ابحث عن صلاحية...">
+                            <div class="form-text text-muted">اكتب للبحث في الصلاحيات المتاحة حسب الاسم أو التطبيق</div>
+                        </div>
+                        
+                        {% for app_label, models in app_permissions.items %}
+                        <div class="app-permissions">
+                            <div class="app-header d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0">{{ app_label }}</h5>
+                                <span class="badge bg-primary">{{ models.values|length }} نموذج</span>
+                            </div>
+                            
+                            {% for model_name, permissions in models.items %}
+                            <div class="model-permissions">
+                                <div class="model-header d-flex justify-content-between align-items-center">
+                                    <h6 class="mb-0">{{ model_name }}</h6>
+                                    <span class="badge bg-secondary">{{ permissions|length }} صلاحية</span>
+                                </div>
+                                
+                                <div class="permissions-list">
+                                    {% for permission in permissions %}
+                                    <span class="permission-badge {% if 'add' in permission.codename %}perm-add{% elif 'change' in permission.codename %}perm-change{% elif 'delete' in permission.codename %}perm-delete{% elif 'view' in permission.codename %}perm-view{% endif %}">
+                                        {{ permission.name }}
+                                    </span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Search functionality for permissions
+        $('#permissionSearch').on('keyup', function() {
+            var value = $(this).val().toLowerCase();
+            
+            // First hide all app sections
+            $('.app-permissions').hide();
+            
+            // Then show those that match the search term
+            $('.permissions-list').filter(function() {
+                var hasMatch = $(this).text().toLowerCase().indexOf(value) > -1;
+                if (hasMatch) {
+                    $(this).closest('.app-permissions').show();
+                    $(this).closest('.model-permissions').show();
+                } else {
+                    // Check if app name matches
+                    var appMatches = $(this).closest('.app-permissions').find('.app-header').text().toLowerCase().indexOf(value) > -1;
+                    if (appMatches) {
+                        $(this).closest('.app-permissions').show();
+                    }
+                    
+                    // Check if model name matches
+                    var modelMatches = $(this).closest('.model-permissions').find('.model-header').text().toLowerCase().indexOf(value) > -1;
+                    if (modelMatches) {
+                        $(this).closest('.app-permissions').show();
+                        $(this).closest('.model-permissions').show();
+                    } else {
+                        $(this).closest('.model-permissions').hide();
+                    }
+                }
+            });
+            
+            // If search is empty, show all
+            if (value === '') {
+                $('.app-permissions').show();
+                $('.model-permissions').show();
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,138 @@
+{% extends 'Purchase_orders/base_purchase_orders.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}مراجعة طلب الشراء - نظام الدولية{% endblock %}
+
+{% block page_title %}مراجعة طلب الشراء #{{ purchase_request.request_number }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Purchase_orders:dashboard' %}">طلبات الشراء</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Purchase_orders:purchase_request_list' %}">قائمة طلبات الشراء</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Purchase_orders:purchase_request_detail' pk=purchase_request.pk %}">تفاصيل الطلب #{{ purchase_request.request_number }}</a></li>
+<li class="breadcrumb-item active">مراجعة الطلب</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-end mb-4">
+    <a href="{% url 'Purchase_orders:purchase_request_detail' pk=purchase_request.pk %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-1"></i> العودة للطلب
+    </a>
+</div>
+
+<!-- معلومات الطلب -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-0">معلومات الطلب</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-6">
+                <p><strong>رقم الطلب:</strong> {{ purchase_request.request_number }}</p>
+                <p><strong>تاريخ الطلب:</strong> {{ purchase_request.request_date|date:"Y-m-d H:i" }}</p>
+                <p><strong>مقدم الطلب:</strong> {{ purchase_request.requested_by.get_full_name|default:purchase_request.requested_by.username }}</p>
+            </div>
+            <div class="col-md-6">
+                <p>
+                    <strong>الحالة الحالية:</strong>
+                    {% if purchase_request.status == 'pending' %}
+                        <span class="badge bg-warning">قيد الانتظار</span>
+                    {% elif purchase_request.status == 'approved' %}
+                        <span class="badge bg-success">تمت الموافقة</span>
+                    {% elif purchase_request.status == 'rejected' %}
+                        <span class="badge bg-danger">مرفوض</span>
+                    {% elif purchase_request.status == 'completed' %}
+                        <span class="badge bg-info">مكتمل</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- عناصر الطلب -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="card-title mb-0">عناصر الطلب</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>كود الصنف</th>
+                        <th>اسم الصنف</th>
+                        <th>الكمية المطلوبة</th>
+                        <th>الكمية في المخزون</th>
+                        <th>الحد الأدنى</th>
+                        <th>ملاحظات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in purchase_request.items.all %}
+                    <tr>
+                        <td>{{ item.product.product_id }}</td>
+                        <td>{{ item.product.product_name }}</td>
+                        <td>{{ item.quantity_requested }}</td>
+                        <td>{{ item.product.qte_in_stock }}</td>
+                        <td>{{ item.product.minimum_threshold }}</td>
+                        <td>{{ item.notes|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center">لا توجد عناصر في هذا الطلب</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- نموذج المراجعة -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">مراجعة الطلب</h5>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label for="{{ form.status.id_for_label }}" class="form-label">تحديث الحالة</label>
+                {{ form.status|add_class:"form-control" }}
+                {% if form.status.errors %}
+                <div class="text-danger">
+                    {% for error in form.status.errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ form.notes.id_for_label }}" class="form-label">ملاحظات المراجعة</label>
+                {{ form.notes|add_class:"form-control" }}
+                {% if form.notes.errors %}
+                <div class="text-danger">
+                    {% for error in form.notes.errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <div class="form-text">يرجى إضافة سبب الموافقة أو الرفض أو أي ملاحظات أخرى</div>
+            </div>
+
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'Purchase_orders:purchase_request_detail' pk=purchase_request.pk %}" class="btn btn-secondary">
+                    <i class="fas fa-times me-1"></i> إلغاء
+                </a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save me-1"></i> حفظ المراجعة
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

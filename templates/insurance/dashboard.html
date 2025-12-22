@@ -1,0 +1,431 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}التأمينات - نظام الدولية{% endblock %}
+
+{% block extra_css %}
+<style>
+.insurance-dashboard-header {
+    background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 30px rgba(6, 182, 212, 0.2);
+}
+
+.insurance-stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    border: 1px solid #e5e7eb;
+}
+
+.insurance-stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.insurance-stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin-bottom: 1rem;
+}
+
+.insurance-stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.insurance-stat-label {
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+}
+
+.insurance-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    border-radius: 10px;
+    text-decoration: none;
+    color: white;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    margin-bottom: 0.5rem;
+}
+
+.insurance-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    color: white;
+    text-decoration: none;
+}
+
+.insurance-policy-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+}
+
+.insurance-status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.status-active {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-expired {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.status-expiring {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.provider-item {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.provider-item:last-child {
+    border-bottom: none;
+}
+
+.coverage-meter {
+    background: #f3f4f6;
+    border-radius: 10px;
+    height: 8px;
+    margin-top: 0.5rem;
+}
+
+.coverage-fill {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 0.3s ease;
+    background: linear-gradient(135deg, #06b6d4, #0891b2);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Insurance Dashboard Header -->
+        <div class="insurance-dashboard-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="h2 mb-2">
+                        <i class="fas fa-shield-alt me-3"></i>
+                        إدارة التأمينات
+                    </h1>
+                    <p class="mb-0 opacity-90">
+                        إدارة التأمين الصحي والاجتماعي للموظفين
+                    </p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <a href="#" class="btn btn-light btn-lg">
+                        <i class="fas fa-plus me-2"></i>
+                        إضافة تأمين جديد
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Key Statistics -->
+<div class="row">
+    <div class="col-xl-3 col-md-6">
+        <div class="insurance-stat-card">
+            <div class="insurance-stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                <i class="fas fa-heartbeat text-white"></i>
+            </div>
+            <div class="insurance-stat-value text-success">{{ health_insurance_count|default:0 }}</div>
+            <div class="insurance-stat-label">تأمين صحي نشط</div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="insurance-stat-card">
+            <div class="insurance-stat-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+                <i class="fas fa-users text-white"></i>
+            </div>
+            <div class="insurance-stat-value text-primary">{{ social_insurance_count|default:0 }}</div>
+            <div class="insurance-stat-label">تأمين اجتماعي (GOSI)</div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="insurance-stat-card">
+            <div class="insurance-stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                <i class="fas fa-exclamation-triangle text-white"></i>
+            </div>
+            <div class="insurance-stat-value text-warning">{{ expiring_soon|default:0 }}</div>
+            <div class="insurance-stat-label">ينتهي قريباً</div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="insurance-stat-card">
+            <div class="insurance-stat-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                <i class="fas fa-building text-white"></i>
+            </div>
+            <div class="insurance-stat-value text-purple">{{ total_providers|default:0 }}</div>
+            <div class="insurance-stat-label">مقدمي الخدمة</div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions and Insurance Providers -->
+<div class="row">
+    <div class="col-xl-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>
+                    إجراءات سريعة
+                </h5>
+            </div>
+            <div class="card-body">
+                <a href="#" class="insurance-action-btn" style="background: linear-gradient(135deg, #10b981, #059669);">
+                    <i class="fas fa-heartbeat me-2"></i>
+                    إضافة تأمين صحي
+                </a>
+                
+                <a href="#" class="insurance-action-btn" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+                    <i class="fas fa-users me-2"></i>
+                    إضافة تأمين اجتماعي
+                </a>
+                
+                <a href="#" class="insurance-action-btn" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                    <i class="fas fa-building me-2"></i>
+                    إدارة مقدمي الخدمة
+                </a>
+                
+                <a href="#" class="insurance-action-btn" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    التقارير
+                </a>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-building me-2"></i>
+                    مقدمي الخدمة
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for provider in insurance_providers %}
+                <div class="provider-item">
+                    <div>
+                        <h6 class="mb-0">{{ provider.provider_name }}</h6>
+                        <small class="text-muted">{{ provider.provider_type }}</small>
+                    </div>
+                    <div>
+                        <span class="badge bg-primary">{{ provider.employees_count|default:0 }}</span>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-3">
+                    <i class="fas fa-building fa-2x mb-2 opacity-50"></i>
+                    <p>لا توجد مقدمي خدمة</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    آخر بوالص التأمين
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for policy in recent_policies %}
+                <div class="insurance-policy-card">
+                    <div class="row align-items-center">
+                        <div class="col-md-1">
+                            <div class="text-center">
+                                <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="mb-1">{{ policy.employee.get_full_name }}</h6>
+                            <small class="text-muted">{{ policy.policy_type }}</small>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted">مقدم الخدمة:</small>
+                            <div>{{ policy.provider.provider_name }}</div>
+                        </div>
+                        <div class="col-md-2">
+                            <small class="text-muted">ينتهي في:</small>
+                            <div>{{ policy.end_date|date:"Y/m/d" }}</div>
+                        </div>
+                        <div class="col-md-2">
+                            {% if policy.is_active %}
+                                <span class="insurance-status-badge status-active">نشط</span>
+                            {% elif policy.is_expiring_soon %}
+                                <span class="insurance-status-badge status-expiring">ينتهي قريباً</span>
+                            {% else %}
+                                <span class="insurance-status-badge status-expired">منتهي</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if policy.coverage_details %}
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <small class="text-muted">التغطية:</small>
+                            <p class="mb-0">{{ policy.coverage_details|truncatewords:10 }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-shield-alt fa-3x mb-3 opacity-50"></i>
+                    <p>لا توجد بوالص تأمين حديثة</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Insurance Coverage and Alerts -->
+<div class="row mt-4">
+    <div class="col-xl-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    تغطية التأمين
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span>التأمين الصحي</span>
+                        <span class="text-muted">{{ health_coverage_percentage|default:0|floatformat:1 }}%</span>
+                    </div>
+                    <div class="coverage-meter">
+                        <div class="coverage-fill" style="width: {{ health_coverage_percentage|default:0 }}%;"></div>
+                    </div>
+                    <small class="text-muted">{{ health_insurance_count|default:0 }} من {{ total_employees|default:0 }} موظف</small>
+                </div>
+                
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span>التأمين الاجتماعي</span>
+                        <span class="text-muted">{{ social_coverage_percentage|default:0|floatformat:1 }}%</span>
+                    </div>
+                    <div class="coverage-meter">
+                        <div class="coverage-fill" style="width: {{ social_coverage_percentage|default:0 }}%;"></div>
+                    </div>
+                    <small class="text-muted">{{ social_insurance_count|default:0 }} من {{ total_employees|default:0 }} موظف</small>
+                </div>
+                
+                <div class="row text-center mt-4">
+                    <div class="col-4">
+                        <div class="h4 text-success mb-0">{{ active_policies|default:0 }}</div>
+                        <small class="text-muted">بوليصة نشطة</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="h4 text-warning mb-0">{{ expiring_policies|default:0 }}</div>
+                        <small class="text-muted">تنتهي قريباً</small>
+                    </div>
+                    <div class="col-4">
+                        <div class="h4 text-danger mb-0">{{ expired_policies|default:0 }}</div>
+                        <small class="text-muted">منتهية</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    تنبيهات التأمين
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if insurance_alerts %}
+                    {% for alert in insurance_alerts %}
+                    <div class="alert alert-{{ alert.type }} alert-dismissible fade show" role="alert">
+                        <i class="fas fa-{{ alert.icon }} me-2"></i>
+                        {{ alert.message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                <div class="text-center text-muted py-3">
+                    <i class="fas fa-check-circle fa-2x mb-2 text-success"></i>
+                    <p>لا توجد تنبيهات</p>
+                </div>
+                {% endif %}
+                
+                <div class="mt-4">
+                    <h6>البوالص المنتهية قريباً:</h6>
+                    {% for expiring in expiring_policies_list %}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <span class="fw-medium">{{ expiring.employee.get_full_name }}</span>
+                            <br>
+                            <small class="text-muted">{{ expiring.provider.provider_name }}</small>
+                        </div>
+                        <div class="text-end">
+                            <div class="text-warning fw-bold">{{ expiring.end_date|date:"m/d" }}</div>
+                            <small class="text-muted">{{ expiring.days_until_expiry }} يوم</small>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted">لا توجد بوالص تنتهي قريباً</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-refresh dashboard every 5 minutes
+setInterval(function() {
+    location.reload();
+}, 300000);
+</script>
+{% endblock %}

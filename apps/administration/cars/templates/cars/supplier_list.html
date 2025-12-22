@@ -1,0 +1,123 @@
+{% extends 'cars\base.html' %}
+{% load custom_filters %}
+
+{% block title %}الموردين - نظام إدارة نشاط النقل{% endblock %}
+
+{% block header %}قائمة الموردين{% endblock %}
+
+{% block content %}
+    <div class="mb-3 d-flex justify-content-between align-items-center">
+        <h4 class="mb-0">إجمالي الموردين: {{ suppliers|length }}</h4>
+        <a href="{% url 'cars:supplier_add' %}" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> إضافة مورد جديد
+        </a>
+    </div>
+
+    <div class="table-container">
+        <table class="table table-striped table-hover">
+            <thead class="table-dark">
+                <tr>
+                    <th>اسم المورد</th>
+                    <th>الشخص المسؤول</th>
+                    <th>رقم الهاتف</th>
+                    <th>البريد الإلكتروني</th>
+                    <th>عدد السيارات</th>
+                    <th>العمليات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for supplier_data in suppliers %}
+                    <tr>
+                        <td>{{ supplier_data.supplier.name }}</td>
+                        <td>{{ supplier_data.supplier.contact_person|default:"-" }}</td>
+                        <td>{{ supplier_data.supplier.phone|default:"-" }}</td>
+                        <td>{{ supplier_data.supplier.email|default:"-" }}</td>
+                        <td>{{ supplier_data.cars_count }}</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'cars:supplier_edit' supplier_data.supplier.id %}" class="btn btn-sm btn-primary" title="تعديل">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{% url 'cars:supplier_delete' supplier_data.supplier.id %}" class="btn btn-sm btn-danger" title="حذف">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4">
+                            <div class="alert alert-info mb-0">
+                                لا يوجد موردين مسجلين حاليًا. قم بإضافة مورد جديد من خلال زر الإضافة.
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="mt-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">إحصائيات الموردين</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-4 mb-3">
+                        <div class="card bg-primary-light">
+                            <div class="card-body">
+                                <h6>إجمالي الموردين</h6>
+                                <h3>{{ suppliers|length }}</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card bg-success-light">
+                            <div class="card-body">
+                                <h6>إجمالي السيارات المرتبطة</h6>
+                                {% with total_cars=0 %}
+                                    {% for supplier_data in suppliers %}
+                                        {% with total_cars=total_cars|add:supplier_data.cars_count %}{% endwith %}
+                                    {% endfor %}
+                                    <h3>{{ total_cars }}</h3>
+                                {% endwith %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="card bg-info-light">
+                            <div class="card-body">
+                                <h6>متوسط السيارات لكل مورد</h6>
+                                {% if suppliers|length > 0 %}
+                                    {% with total_cars=0 %}
+                                        {% for supplier_data in suppliers %}
+                                            {% with total_cars=total_cars|add:supplier_data.cars_count %}{% endwith %}
+                                        {% endfor %}
+                                        <h3>{{ total_cars|divide:suppliers|length|floatformat:1 }}</h3>
+                                    {% endwith %}
+                                {% else %}
+                                    <h3>0.0</h3>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add responsive behavior for the table
+        const tableContainer = document.querySelector('.table-container');
+        
+        if (tableContainer) {
+            // Add a minimum height for the table container
+            tableContainer.style.minHeight = '300px';
+        }
+    });
+</script>
+{% endblock %}

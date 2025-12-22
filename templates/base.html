@@ -1,0 +1,1062 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}نظام الدولية للموارد البشرية{% endblock %}</title>
+    
+    <!-- Bootstrap 5 RTL -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts - Arabic Support -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #06b6d4;
+            --purple: #8b5cf6;
+            --indigo: #6366f1;
+            --dark: #1e293b;
+            --light: #f8fafc;
+        }
+
+        * {
+            font-family: 'Cairo', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            background: linear-gradient(135deg, var(--dark) 0%, #334155 100%);
+            height: 100vh;
+            width: 280px;
+            position: fixed;
+            top: 0;
+            right: 0;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            box-shadow: -2px 0 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .sidebar.collapsed {
+            width: 80px;
+        }
+
+        .sidebar.collapsed .sidebar-nav {
+            padding: 1rem 0.5rem;
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .sidebar-header .logo {
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar.collapsed .logo-text {
+            display: none;
+        }
+
+        .sidebar-nav {
+            padding: 1rem 0;
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+        }
+
+        /* Custom scrollbar for webkit browsers */
+        .sidebar-nav::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .nav-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .nav-section-title {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 0.5rem 1.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .sidebar.collapsed .nav-section-title {
+            display: none;
+        }
+
+        .nav-item {
+            margin: 0.25rem 0;
+        }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 0.75rem 1.5rem;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            border-radius: 0;
+            position: relative;
+        }
+
+        .nav-link:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            transform: translateX(-3px);
+        }
+
+        .nav-link.active {
+            background: linear-gradient(135deg, var(--primary), #1d4ed8);
+            color: white;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+        }
+
+        .nav-link.active::before {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: white;
+        }
+
+        .nav-icon {
+            width: 20px;
+            margin-left: 1rem;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .sidebar.collapsed .nav-text {
+            display: none;
+        }
+
+        .nav-badge {
+            background: var(--danger);
+            color: white;
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 50px;
+            margin-right: auto;
+        }
+
+        .sidebar.collapsed .nav-badge {
+            display: none;
+        }
+
+        /* AI-specific navigation styles */
+        .ai-badge {
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            color: white;
+            font-size: 0.65rem;
+            padding: 0.15rem 0.4rem;
+            border-radius: 50px;
+            margin-right: auto;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+        }
+
+        .nav-external {
+            font-size: 0.8rem;
+            margin-right: auto;
+            opacity: 0.7;
+        }
+
+        /* AI section special styling */
+        .nav-section:has(.ai-badge) .nav-section-title {
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+        }
+
+        /* AI navigation hover effects */
+        .nav-link:has(.ai-badge):hover {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(99, 102, 241, 0.1));
+            transform: translateX(-5px);
+        }
+
+        .nav-link:has(.ai-badge):hover .ai-badge {
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.5);
+            transform: scale(1.05);
+        }
+
+        .main-content {
+            margin-right: 280px;
+            transition: all 0.3s ease;
+            min-height: 100vh;
+        }
+
+        .main-content.expanded {
+            margin-right: 80px;
+        }
+
+        .top-navbar {
+            background: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            border-radius: 0 0 15px 15px;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            color: var(--dark);
+            text-decoration: none;
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--primary);
+        }
+
+        .sidebar-toggle {
+            background: none;
+            border: none;
+            color: var(--dark);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-toggle:hover {
+            background: var(--light);
+        }
+
+        .content-wrapper {
+            padding: 2rem;
+        }
+
+        .dropdown-menu {
+            border: none;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            border-radius: 12px;
+        }
+
+        .dropdown-item {
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            margin: 0.25rem;
+            transition: all 0.3s ease;
+        }
+
+        .dropdown-item:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateX(-2px);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            background: var(--danger);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid white;
+        }
+
+        .breadcrumb-custom {
+            background: none;
+            padding: 0;
+            margin-bottom: 1.5rem;
+        }
+
+        .breadcrumb-custom .breadcrumb-item a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .breadcrumb-custom .breadcrumb-item.active {
+            color: var(--secondary);
+        }
+
+        .footer {
+            background: white;
+            padding: 2rem;
+            margin-top: 3rem;
+            border-radius: 15px 15px 0 0;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            color: var(--secondary);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(100%);
+            }
+            
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-right: 0;
+            }
+            
+            .content-wrapper {
+                padding: 1rem;
+            }
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.3s ease;
+        }
+
+        .loading-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Mobile responsive sidebar */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(100%);
+                transition: transform 0.3s ease;
+            }
+
+            .sidebar.show {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-right: 0;
+            }
+
+            .main-content.expanded {
+                margin-right: 0;
+            }
+        }
+
+        /* Smooth scrolling for sidebar navigation */
+        .sidebar-nav {
+            scroll-behavior: smooth;
+        }
+
+        /* Focus styles for better accessibility */
+        .nav-link:focus {
+            outline: 2px solid rgba(255, 255, 255, 0.5);
+            outline-offset: 2px;
+        }
+
+        /* Improved hover effects for better UX */
+        .nav-section {
+            transition: all 0.2s ease;
+        }
+
+        .nav-section:hover {
+            background: rgba(255, 255, 255, 0.02);
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading-overlay hidden" id="loadingOverlay">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <a href="{% url 'accounts:home' %}" class="logo">
+                <i class="fas fa-building me-2"></i>
+                <span class="logo-text">نظام الدولية</span>
+            </a>
+        </div>
+
+        <div class="sidebar-nav">
+            <!-- Main System Navigation -->
+            <div class="nav-section">
+                <div class="nav-section-title">النظام الرئيسي</div>
+                <div class="nav-item">
+                    <a href="{% url 'accounts:home' %}" class="nav-link">
+                        <i class="fas fa-home nav-icon"></i>
+                        <span class="nav-text">الصفحة الرئيسية</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Dashboard Section -->
+            <div class="nav-section">
+                <div class="nav-section-title">الموارد البشرية</div>
+                <div class="nav-item">
+                    <a href="{% url 'accounts:home' %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                        <i class="fas fa-tachometer-alt nav-icon"></i>
+                        <span class="nav-text">لوحة التحكم</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Organizational Structure -->
+            <div class="nav-section">
+                <div class="nav-section-title">الهيكل التنظيمي</div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-building nav-icon"></i>
+                        <span class="nav-text">الشركات</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-code-branch nav-icon"></i>
+                        <span class="nav-text">الأفرع</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-sitemap nav-icon"></i>
+                        <span class="nav-text">الأقسام</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-briefcase nav-icon"></i>
+                        <span class="nav-text">الوظائف</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Employee Management -->
+            <div class="nav-section">
+                <div class="nav-section-title">إدارة الموظفين</div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-users nav-icon"></i>
+                        <span class="nav-text">الموظفين</span>
+                        <span class="nav-badge">{{ total_employees|default:0 }}</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Attendance & Time -->
+            <div class="nav-section">
+                <div class="nav-section-title">الحضور والوقت</div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-clock nav-icon"></i>
+                        <span class="nav-text">الحضور والانصراف</span>
+                        <span class="nav-badge">{{ present_today|default:0 }}</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-fingerprint nav-icon"></i>
+                        <span class="nav-text">أجهزة البصمة</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-calendar-alt nav-icon"></i>
+                        <span class="nav-text">قواعد الحضور</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Leave Management -->
+            <div class="nav-section">
+                <div class="nav-section-title">إدارة الإجازات</div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-calendar-times nav-icon"></i>
+                        <span class="nav-text">الإجازات</span>
+                        <span class="nav-badge">{{ pending_leaves|default:0 }}</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-list nav-icon"></i>
+                        <span class="nav-text">أنواع الإجازات</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-chart-pie nav-icon"></i>
+                        <span class="nav-text">أرصدة الإجازات</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Payroll Management -->
+            <div class="nav-section">
+                <div class="nav-section-title">إدارة المرتبات</div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-money-bill-wave nav-icon"></i>
+                        <span class="nav-text">المرتبات</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-coins nav-icon"></i>
+                        <span class="nav-text">هيكل المرتبات</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-play-circle nav-icon"></i>
+                        <span class="nav-text">تشغيل المرتبات</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Financial Management -->
+            <div class="nav-section">
+                <div class="nav-section-title">الإدارة المالية</div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-hand-holding-usd nav-icon"></i>
+                        <span class="nav-text">القروض</span>
+                        <span class="nav-badge">{{ active_loans|default:0 }}</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-shield-alt nav-icon"></i>
+                        <span class="nav-text">التأمين</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-university nav-icon"></i>
+                        <span class="nav-text">البنوك</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Performance & Development -->
+            <div class="nav-section">
+                <div class="nav-section-title">الأداء والتطوير</div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-star nav-icon"></i>
+                        <span class="nav-text">تقييم الأداء</span>
+                        <span class="nav-badge">{{ pending_evaluations|default:0 }}</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-graduation-cap nav-icon"></i>
+                        <span class="nav-text">التدريب</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Reports & Analytics -->
+            <div class="nav-section">
+                <div class="nav-section-title">التقارير والتحليلات</div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-chart-bar nav-icon"></i>
+                        <span class="nav-text">التقارير</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-chart-line nav-icon"></i>
+                        <span class="nav-text">التحليلات</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Artificial Intelligence -->
+            <div class="nav-section">
+                <div class="nav-section-title">الذكاء الاصطناعي</div>
+                <div class="nav-item">
+                    <a href="{% url 'api:dashboard' %}" class="nav-link {% if 'api' in request.resolver_match.app_name and request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                        <i class="fas fa-robot nav-icon"></i>
+                        <span class="nav-text">لوحة تحكم AI</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{% url 'api:ai_chat' %}" class="nav-link {% if 'api' in request.resolver_match.app_name and 'chat' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-comments nav-icon"></i>
+                        <span class="nav-text">المحادثة الذكية</span>
+                        <span class="nav-badge ai-badge">AI</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{% url 'api:data_analysis' %}" class="nav-link {% if 'api' in request.resolver_match.app_name and 'analysis' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-brain nav-icon"></i>
+                        <span class="nav-text">التحليل الذكي</span>
+                        <span class="nav-badge ai-badge">Smart</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-chart-pie nav-icon"></i>
+                        <span class="nav-text">تحليلات الرواتب</span>
+                        <span class="nav-badge ai-badge">Analytics</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="{% url 'api:ai_settings' %}" class="nav-link {% if 'api' in request.resolver_match.app_name and 'settings' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-cogs nav-icon"></i>
+                        <span class="nav-text">إعدادات AI</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="/api/v1/docs/" target="_blank" class="nav-link">
+                        <i class="fas fa-book nav-icon"></i>
+                        <span class="nav-text">وثائق API</span>
+                        <i class="fas fa-external-link-alt nav-external"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- System Settings -->
+            <div class="nav-section">
+                <div class="nav-section-title">الإعدادات</div>
+                <div class="nav-item">
+                    <a href="{% url 'admin:index' %}" class="nav-link">
+                        <i class="fas fa-cogs nav-icon"></i>
+                        <span class="nav-text">إدارة النظام</span>
+                    </a>
+                </div>
+                <div class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-sliders-h nav-icon"></i>
+                        <span class="nav-text">إعدادات HR</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content" id="mainContent">
+        <!-- Top Navbar -->
+        <nav class="top-navbar">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <button class="sidebar-toggle me-3" id="sidebarToggle" onclick="handleSidebarToggle()">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <a href="{% url 'accounts:home' %}" class="navbar-brand">
+                        نظام الدولية للموارد البشرية
+                    </a>
+                </div>
+
+                <div class="user-menu">
+                    <!-- Notifications -->
+                    <div class="dropdown">
+                        <button class="btn btn-link position-relative" type="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-bell fa-lg text-muted"></i>
+                            {% if notifications_count > 0 %}
+                            <span class="notification-badge">{{ notifications_count }}</span>
+                            {% endif %}
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><h6 class="dropdown-header">الإشعارات</h6></li>
+                            {% for notification in recent_notifications %}
+                            <li><a class="dropdown-item" href="{{ notification.url }}">{{ notification.message }}</a></li>
+                            {% empty %}
+                            <li><span class="dropdown-item text-muted">لا توجد إشعارات جديدة</span></li>
+                            {% endfor %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-center" href="#">عرض الكل</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- User Dropdown -->
+                    <div class="dropdown">
+                        <button class="btn btn-link d-flex align-items-center" type="button" data-bs-toggle="dropdown">
+                            <img src="{{ user.profile.photo.url|default:'/static/img/default-avatar.png' }}" 
+                                 alt="{{ user.get_full_name }}" 
+                                 class="user-avatar me-2">
+                            <span class="fw-medium">{{ user.get_full_name|default:user.username }}</span>
+                            <i class="fas fa-chevron-down ms-2"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#">
+                                <i class="fas fa-user me-2"></i>الملف الشخصي
+                            </a></li>
+                            <li><a class="dropdown-item" href="#">
+                                <i class="fas fa-file-invoice me-2"></i>كشوف المرتبات
+                            </a></li>
+                            <li><a class="dropdown-item" href="#">
+                                <i class="fas fa-calendar-alt me-2"></i>إجازاتي
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="#">
+                                <i class="fas fa-cog me-2"></i>الإعدادات
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'accounts:logout' %}">
+                                <i class="fas fa-sign-out-alt me-2"></i>تسجيل الخروج
+                            </a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Breadcrumb -->
+        {% block breadcrumb %}
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb breadcrumb-custom">
+                <li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+                {% block breadcrumb_items %}{% endblock %}
+            </ol>
+        </nav>
+        {% endblock %}
+
+        <!-- Content Wrapper -->
+        <div class="content-wrapper">
+            <!-- Messages -->
+            {% if messages %}
+            <div class="alert-container">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %} me-2"></i>
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Main Content -->
+            {% block content %}{% endblock %}
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="mb-0">&copy; {{ current_year }} نظام الدولية للموارد البشرية. جميع الحقوق محفوظة.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0">الإصدار 1.0.0 | تطوير فريق الدولية</p>
+                </div>
+            </div>
+        </footer>
+    </main>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+
+    <!-- Custom JavaScript -->
+    <script>
+        // Unified Sidebar Toggle Function
+        function handleSidebarToggle() {
+            if (window.innerWidth <= 768) {
+                toggleMobileSidebar();
+            } else {
+                toggleDesktopSidebar();
+            }
+        }
+
+        // Desktop Sidebar Toggle
+        function toggleDesktopSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('expanded');
+
+            // Save sidebar state
+            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+        }
+
+        // Restore sidebar state on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const mainContent = document.getElementById('mainContent');
+            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+
+            if (isCollapsed && window.innerWidth > 768) {
+                sidebar.classList.add('collapsed');
+                mainContent.classList.add('expanded');
+            }
+        });
+
+        // Mobile Sidebar Toggle
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('show');
+
+            // Add overlay for mobile
+            if (window.innerWidth <= 768) {
+                let overlay = document.getElementById('sidebarOverlay');
+                if (!overlay) {
+                    overlay = document.createElement('div');
+                    overlay.id = 'sidebarOverlay';
+                    overlay.className = 'sidebar-overlay';
+                    overlay.style.cssText = `
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(0, 0, 0, 0.5);
+                        z-index: 999;
+                        opacity: 0;
+                        visibility: hidden;
+                        transition: all 0.3s ease;
+                    `;
+                    document.body.appendChild(overlay);
+
+                    overlay.addEventListener('click', function() {
+                        sidebar.classList.remove('show');
+                        overlay.style.opacity = '0';
+                        overlay.style.visibility = 'hidden';
+                    });
+                }
+
+                if (sidebar.classList.contains('show')) {
+                    overlay.style.opacity = '1';
+                    overlay.style.visibility = 'visible';
+                } else {
+                    overlay.style.opacity = '0';
+                    overlay.style.visibility = 'hidden';
+                }
+            }
+        }
+
+        // Enhanced sidebar scrolling for active items
+        function scrollToActiveNavItem() {
+            const activeItem = document.querySelector('.nav-link.active');
+            const sidebarNav = document.querySelector('.sidebar-nav');
+
+            if (activeItem && sidebarNav) {
+                const itemTop = activeItem.offsetTop;
+                const itemHeight = activeItem.offsetHeight;
+                const navHeight = sidebarNav.offsetHeight;
+                const scrollTop = sidebarNav.scrollTop;
+
+                // Check if item is not fully visible
+                if (itemTop < scrollTop || itemTop + itemHeight > scrollTop + navHeight) {
+                    sidebarNav.scrollTo({
+                        top: itemTop - navHeight / 2 + itemHeight / 2,
+                        behavior: 'smooth'
+                    });
+                }
+            }
+        }
+
+        // Keyboard navigation for sidebar
+        function initSidebarKeyboardNavigation() {
+            const sidebarNav = document.querySelector('.sidebar-nav');
+            const navLinks = sidebarNav.querySelectorAll('.nav-link');
+
+            navLinks.forEach((link, index) => {
+                link.addEventListener('keydown', function(e) {
+                    let targetIndex = index;
+
+                    switch(e.key) {
+                        case 'ArrowDown':
+                            e.preventDefault();
+                            targetIndex = Math.min(index + 1, navLinks.length - 1);
+                            break;
+                        case 'ArrowUp':
+                            e.preventDefault();
+                            targetIndex = Math.max(index - 1, 0);
+                            break;
+                        case 'Home':
+                            e.preventDefault();
+                            targetIndex = 0;
+                            break;
+                        case 'End':
+                            e.preventDefault();
+                            targetIndex = navLinks.length - 1;
+                            break;
+                    }
+
+                    if (targetIndex !== index) {
+                        navLinks[targetIndex].focus();
+                        // Ensure focused item is visible
+                        navLinks[targetIndex].scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'nearest'
+                        });
+                    }
+                });
+            });
+        }
+
+        // Auto-hide alerts after 5 seconds
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+
+        // Loading overlay functions
+        function showLoading() {
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.add('hidden');
+        }
+
+        // AJAX Setup with CSRF
+        $.ajaxSetup({
+            beforeSend: function(xhr, settings) {
+                if (!this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", $('[name=csrfmiddlewaretoken]').val());
+                }
+            }
+        });
+
+        // Auto-refresh notifications every 5 minutes
+        // TODO: Re-enable when hr:notifications_count endpoint is available
+        /*
+        setInterval(function() {
+            fetch('/api/notifications/count/')
+                .then(response => response.json())
+                .then(data => {
+                    const badge = document.querySelector('.notification-badge');
+                    if (data.count > 0) {
+                        if (badge) {
+                            badge.textContent = data.count;
+                        } else {
+                            // Create badge if it doesn't exist
+                            const bellIcon = document.querySelector('.fa-bell').parentElement;
+                            const newBadge = document.createElement('span');
+                            newBadge.className = 'notification-badge';
+                            newBadge.textContent = data.count;
+                            bellIcon.appendChild(newBadge);
+                        }
+                    } else if (badge) {
+                        badge.remove();
+                    }
+                })
+                .catch(error => console.log('Error fetching notifications:', error));
+        }, 300000); // 5 minutes
+        */
+
+        // Page loading handling
+        document.addEventListener('DOMContentLoaded', function() {
+            hideLoading();
+
+            // Initialize sidebar enhancements
+            scrollToActiveNavItem();
+            initSidebarKeyboardNavigation();
+
+            // Handle window resize for mobile sidebar
+            window.addEventListener('resize', function() {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('sidebarOverlay');
+
+                if (window.innerWidth > 768) {
+                    sidebar.classList.remove('show');
+                    if (overlay) {
+                        overlay.style.opacity = '0';
+                        overlay.style.visibility = 'hidden';
+                    }
+                }
+            });
+        });
+
+        // Form submission loading
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', function() {
+                showLoading();
+            });
+        });
+
+        // Link navigation loading
+        document.querySelectorAll('a[href]:not([href^="#"]):not([href^="javascript:"]):not([target="_blank"])').forEach(link => {
+            link.addEventListener('click', function() {
+                showLoading();
+            });
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

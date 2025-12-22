@@ -1,0 +1,264 @@
+{% extends 'administrator/base_admin.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - نظام الدولية{% endblock %}
+
+{% block page_title %}{{ page_title }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'administrator:admin_dashboard' %}">مدير النظام</a></li>
+<li class="breadcrumb-item"><a href="{% url 'administrator:user_permission_list' %}">المستخدمين</a></li>
+<li class="breadcrumb-item active">{{ user_obj.username }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light py-3">
+                <h5 class="mb-0 fw-semibold">
+                    <i class="fas fa-user-circle text-primary me-2"></i>معلومات المستخدم
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <div class="avatar-circle mx-auto mb-3">
+                        <span class="avatar-initials">{{ user_obj.username|first|upper }}</span>
+                    </div>
+                    <h4 class="mb-1">{{ user_obj.get_full_name|default:user_obj.username }}</h4>
+                    <p class="text-muted mb-0">{{ user_obj.email }}</p>
+                    <div class="mt-2">
+                        {% if user_obj.is_superuser %}
+                            <span class="badge bg-danger">مشرف النظام</span>
+                        {% elif user_obj.Role == 'admin' %}
+                            <span class="badge bg-primary">مدير</span>
+                        {% else %}
+                            <span class="badge bg-secondary">موظف</span>
+                        {% endif %}
+                        
+                        {% if user_obj.is_active %}
+                            <span class="badge bg-success">نشط</span>
+                        {% else %}
+                            <span class="badge bg-danger">غير نشط</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="user-info">
+                    <div class="info-item d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">اسم المستخدم</span>
+                        <span class="fw-medium">{{ user_obj.username }}</span>
+                    </div>
+                    <div class="info-item d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">الاسم الكامل</span>
+                        <span class="fw-medium">{{ user_obj.get_full_name|default:"-" }}</span>
+                    </div>
+                    <div class="info-item d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">البريد الإلكتروني</span>
+                        <span class="fw-medium">{{ user_obj.email|default:"-" }}</span>
+                    </div>
+                    <div class="info-item d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">الدور</span>
+                        <span class="fw-medium">
+                            {% if user_obj.is_superuser %}
+                                مشرف النظام
+                            {% elif user_obj.Role == 'admin' %}
+                                مدير
+                            {% else %}
+                                موظف
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="info-item d-flex justify-content-between py-2 border-bottom">
+                        <span class="text-muted">تاريخ الانضمام</span>
+                        <span class="fw-medium">{{ user_obj.date_joined|date:"Y-m-d" }}</span>
+                    </div>
+                    <div class="info-item d-flex justify-content-between py-2">
+                        <span class="text-muted">آخر تسجيل دخول</span>
+                        <span class="fw-medium">{{ user_obj.last_login|date:"Y-m-d H:i"|default:"-" }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer bg-white py-3">
+                <div class="d-flex justify-content-center">
+                    <a href="#" class="btn btn-outline-primary me-2">
+                        <i class="fas fa-edit me-1"></i>
+                        تعديل
+                    </a>
+                    <a href="#" class="btn btn-outline-danger">
+                        <i class="fas fa-trash-alt me-1"></i>
+                        حذف
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center py-3">
+                <h5 class="mb-0 fw-semibold">
+                    <i class="fas fa-users text-primary me-2"></i>المجموعات
+                </h5>
+                <a href="{% url 'administrator:manage_user_groups' user_id=user_obj.id %}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-edit me-1"></i>
+                    إدارة المجموعات
+                </a>
+            </div>
+            <div class="card-body">
+                {% if user_groups %}
+                    <div class="row">
+                        {% for group in user_groups %}
+                            <div class="col-md-6 mb-3">
+                                <div class="d-flex align-items-center p-3 border rounded">
+                                    <div class="flex-shrink-0 me-3">
+                                        <div class="avatar-circle-sm bg-light">
+                                            <i class="fas fa-users text-primary"></i>
+                                        </div>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0">{{ group.name }}</h6>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <div class="mb-3">
+                            <i class="fas fa-users-slash fa-3x text-muted"></i>
+                        </div>
+                        <p class="text-muted mb-0">المستخدم لا ينتمي إلى أي مجموعة</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center py-3">
+                <h5 class="mb-0 fw-semibold">
+                    <i class="fas fa-key text-primary me-2"></i>الصلاحيات
+                </h5>
+                <a href="{% url 'administrator:manage_user_permissions' user_id=user_obj.id %}" class="btn btn-sm btn-primary">
+                    <i class="fas fa-edit me-1"></i>
+                    إدارة الصلاحيات
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    يمكنك إدارة صلاحيات المستخدم بالنقر على زر "إدارة الصلاحيات" أعلاه.
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header bg-light py-2">
+                                <h6 class="mb-0">صلاحيات الأقسام</h6>
+                            </div>
+                            <div class="card-body p-0">
+                                <ul class="list-group list-group-flush">
+                                    {% for dept_perm in user_dept_permissions %}
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>{{ dept_perm.department.name }}</span>
+                                            <span class="badge bg-success">مسموح</span>
+                                        </li>
+                                    {% empty %}
+                                        <li class="list-group-item text-center text-muted">
+                                            لا توجد صلاحيات أقسام محددة
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header bg-light py-2">
+                                <h6 class="mb-0">صلاحيات الوحدات</h6>
+                            </div>
+                            <div class="card-body p-0">
+                                <ul class="list-group list-group-flush">
+                                    {% for module_perm in user_module_permissions %}
+                                        <li class="list-group-item">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <span>{{ module_perm.module.name }}</span>
+                                                <div>
+                                                    {% if module_perm.can_view %}
+                                                        <span class="badge bg-info me-1">عرض</span>
+                                                    {% endif %}
+                                                    {% if module_perm.can_add %}
+                                                        <span class="badge bg-success me-1">إضافة</span>
+                                                    {% endif %}
+                                                    {% if module_perm.can_edit %}
+                                                        <span class="badge bg-warning me-1">تعديل</span>
+                                                    {% endif %}
+                                                    {% if module_perm.can_delete %}
+                                                        <span class="badge bg-danger me-1">حذف</span>
+                                                    {% endif %}
+                                                    {% if module_perm.can_print %}
+                                                        <span class="badge bg-secondary">طباعة</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </li>
+                                    {% empty %}
+                                        <li class="list-group-item text-center text-muted">
+                                            لا توجد صلاحيات وحدات محددة
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .avatar-circle {
+        width: 80px;
+        height: 80px;
+        background-color: #3f51b5;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        font-size: 32px;
+        font-weight: 600;
+    }
+    
+    .avatar-circle-sm {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 16px;
+    }
+    
+    .avatar-initials {
+        text-transform: uppercase;
+    }
+    
+    .user-info {
+        font-size: 0.95rem;
+    }
+    
+    .info-item {
+        padding: 8px 0;
+    }
+    
+    .fw-medium {
+        font-weight: 500;
+    }
+</style>
+{% endblock %}

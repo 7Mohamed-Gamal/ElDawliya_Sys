@@ -1,0 +1,182 @@
+{% extends 'cars/base.html' %}
+
+{% block title %}الإعدادات - نظام إدارة نشاط النقل{% endblock %}
+
+{% block header %}إعدادات وتكاليف التشغيل{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="alert alert-info mb-4">
+                <i class="bi bi-info-circle me-2"></i>
+                تؤثر هذه الإعدادات على حسابات متوسط سعر التشغيل لجميع السيارات. يرجى التأكد من صحة القيم المدخلة.
+            </div>
+            
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">أسعار الوقود</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.diesel_price.id_for_label }}" class="form-label">سعر السولار (ج.م)</label>
+                                {{ form.diesel_price }}
+                                {% if form.diesel_price.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.diesel_price.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.gasoline_price.id_for_label }}" class="form-label">سعر البنزين (ج.م)</label>
+                                {{ form.gasoline_price }}
+                                {% if form.gasoline_price.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.gasoline_price.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="{{ form.gas_price.id_for_label }}" class="form-label">سعر الغاز (ج.م)</label>
+                                {{ form.gas_price }}
+                                {% if form.gas_price.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.gas_price.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">معدلات التكاليف (ج.م/كم)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.maintenance_rate.id_for_label }}" class="form-label">معدل الصيانة لكل كم (ج.م)</label>
+                                {{ form.maintenance_rate }}
+                                {% if form.maintenance_rate.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.maintenance_rate.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.depreciation_rate.id_for_label }}" class="form-label">معدل الإهلاك لكل كم (ج.م)</label>
+                                {{ form.depreciation_rate }}
+                                {% if form.depreciation_rate.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.depreciation_rate.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.license_rate.id_for_label }}" class="form-label">معدل ترخيص السيارة لكل كم (ج.م)</label>
+                                {{ form.license_rate }}
+                                {% if form.license_rate.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.license_rate.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.driver_profit_rate.id_for_label }}" class="form-label">معدل ربح السائق لكل كم (ج.م)</label>
+                                {{ form.driver_profit_rate }}
+                                {% if form.driver_profit_rate.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.driver_profit_rate.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">الضرائب</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="{{ form.tax_rate.id_for_label }}" class="form-label">نسبة الضريبة (%)</label>
+                            {{ form.tax_rate }}
+                            {% if form.tax_rate.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.tax_rate.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{% url 'cars:home' %}" class="btn btn-secondary me-md-2">
+                        <i class="bi bi-x-circle"></i> إلغاء
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> حفظ الإعدادات
+                    </button>
+                </div>
+            </form>
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">تأثير الإعدادات</h5>
+                </div>
+                <div class="card-body">
+                    <p>تؤثر هذه الإعدادات على الحسابات التالية:</p>
+                    <ul>
+                        <li>حساب متوسط سعر التشغيل لكل سيارة</li>
+                        <li>حساب تكاليف الرحلات الجديدة</li>
+                        <li>التقارير المالية والإحصائيات</li>
+                    </ul>
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        ملاحظة: تغيير الإعدادات لا يؤثر على الرحلات السابقة المسجلة في النظام.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add input validation for numeric fields
+        const numericInputs = document.querySelectorAll('input[type="number"]');
+        numericInputs.forEach(input => {
+            input.addEventListener('input', function() {
+                const value = parseFloat(this.value);
+                if (value < 0) {
+                    this.value = 0;
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

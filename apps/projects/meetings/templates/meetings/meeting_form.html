@@ -1,0 +1,426 @@
+{% extends "meetings/base_meetings.html" %}
+{% load static %}
+
+{% block title %}{% if edit %}تحرير الاجتماع - {{ meeting.title }}{% else %}إنشاء اجتماع جديد{% endif %}{% endblock %}
+
+{% block page_title %}{% if edit %}تحرير الاجتماع{% else %}إنشاء اجتماع جديد{% endif %}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'meetings:dashboard' %}">الاجتماعات</a></li>
+<li class="breadcrumb-item"><a href="{% url 'meetings:list' %}">قائمة الاجتماعات</a></li>
+<li class="breadcrumb-item active">{% if edit %}تحرير الاجتماع{% else %}إنشاء اجتماع{% endif %}</li>
+{% endblock %}
+
+{% block extra_css %}
+{% if select2_enabled %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" />
+{% endif %}
+<style>
+    .form-card {
+        border-radius: 0.75rem;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        border: none;
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-card .card-header {
+        background-color: white;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        padding: 1.25rem 1.5rem;
+    }
+    
+    .form-card .card-body {
+        padding: 1.5rem;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #495057;
+    }
+    
+    .form-text {
+        font-size: 0.85rem;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 0.5rem;
+        padding: 0.75rem;
+        border: 1px solid #ced4da;
+        transition: all 0.3s;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.1);
+    }
+    
+    .select2-container--bootstrap-5 .select2-selection {
+        border-radius: 0.5rem;
+        padding: 0.5rem;
+        height: auto;
+        min-height: 45px;
+    }
+    
+    .select2-container--bootstrap-5 .select2-selection--multiple .select2-search .select2-search__field {
+        height: auto;
+        min-height: 35px;
+    }
+    
+    .select2-container--bootstrap-5 .select2-dropdown {
+        border-radius: 0.5rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .required-indicator {
+        color: #dc3545;
+        margin-right: 3px;
+    }
+    
+    .task-assignment-row {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.75rem;
+    }
+    
+    .task-item {
+        flex: 1;
+        position: relative;
+    }
+    
+    .task-number {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+        font-weight: 500;
+    }
+    
+    .task-assignment {
+        width: 200px;
+        margin-right: 10px;
+    }
+    
+    #task-assignment-container {
+        margin-top: 10px;
+    }
+    
+    .highlight-section {
+        background-color: rgba(52, 152, 219, 0.05);
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .btn-form-submit {
+        padding: 0.75rem 2rem;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Form submission info alert -->
+    {% if form.errors %}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <h5 class="alert-heading">
+            <i class="fas fa-exclamation-triangle me-2"></i> يوجد أخطاء في النموذج
+        </h5>
+        <p>يرجى تصحيح الأخطاء التالية:</p>
+        <ul>
+            {% for field in form %}
+                {% for error in field.errors %}
+                    <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                {% endfor %}
+            {% endfor %}
+            {% for error in form.non_field_errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+
+    <!-- Main Form -->
+    <form method="post" action="{% if edit %}{% url 'meetings:edit' pk=meeting.pk %}{% else %}{% url 'meetings:create' %}{% endif %}">
+        {% csrf_token %}
+        
+        <!-- Meeting Details Card -->
+        <div class="card form-card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-info-circle me-2 text-primary"></i> معلومات الاجتماع الأساسية</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <!-- Title Field -->
+                    <div class="col-md-12 mb-3">
+                        <label for="{{ form.title.id_for_label }}" class="form-label">
+                            <span class="required-indicator">*</span> عنوان الاجتماع
+                        </label>
+                        {{ form.title }}
+                        {% if form.title.errors %}
+                            <div class="invalid-feedback d-block">{{ form.title.errors }}</div>
+                        {% endif %}
+                        <div class="form-text">أدخل عنواناً واضحاً ومختصراً للاجتماع</div>
+                    </div>
+
+                    <!-- Date Field -->
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.date.id_for_label }}" class="form-label">
+                            <span class="required-indicator">*</span> تاريخ ووقت الاجتماع
+                        </label>
+                        {{ form.date }}
+                        {% if form.date.errors %}
+                            <div class="invalid-feedback d-block">{{ form.date.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Status Field -->
+                    <div class="col-md-6 mb-3">
+                        <label for="{{ form.status.id_for_label }}" class="form-label">
+                            حالة الاجتماع
+                        </label>
+                        {{ form.status }}
+                        {% if form.status.errors %}
+                            <div class="invalid-feedback d-block">{{ form.status.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Topic Field -->
+                    <div class="col-md-12 mb-3">
+                        <label for="{{ form.topic.id_for_label }}" class="form-label">
+                            <span class="required-indicator">*</span> موضوع الاجتماع
+                        </label>
+                        {{ form.topic }}
+                        {% if form.topic.errors %}
+                            <div class="invalid-feedback d-block">{{ form.topic.errors }}</div>
+                        {% endif %}
+                        <div class="form-text">أدخل وصفاً تفصيلياً لموضوع الاجتماع وأهدافه</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Attendees Card -->
+        <div class="card form-card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-users me-2 text-primary"></i> الحضور</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <label for="{{ form.attendees.id_for_label }}" class="form-label">
+                            اختر الأشخاص المشاركين في الاجتماع
+                        </label>
+                        {{ form.attendees }}
+                        {% if form.attendees.errors %}
+                            <div class="invalid-feedback d-block">{{ form.attendees.errors }}</div>
+                        {% endif %}
+                        <div class="form-text">يمكنك اختيار أكثر من شخص من القائمة. للبحث، اكتب جزء من اسم المستخدم</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Tasks Card -->
+        <div class="card form-card">
+            <div class="card-header">
+                <h5 class="card-title mb-0"><i class="fas fa-tasks me-2 text-primary"></i> المهام المرتبطة بالاجتماع</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-12 mb-3">
+                        <label for="{{ form.tasks.id_for_label }}" class="form-label">
+                            قائمة المهام
+                        </label>
+                        {{ form.tasks }}
+                        {% if form.tasks.errors %}
+                            <div class="invalid-feedback d-block">{{ form.tasks.errors }}</div>
+                        {% endif %}
+                        <div class="form-text">أدخل كل مهمة في سطر منفصل</div>
+                        
+                        <!-- Task assignments container -->
+                        <div class="highlight-section" id="task-assignment-container" style="display: none;">
+                            <h6 class="mb-3">تعيين المهام لأعضاء الفريق</h6>
+                            <div class="task-lines-container"></div>
+                            
+                            <div class="text-muted mt-3">
+                                <i class="fas fa-info-circle me-1"></i>
+                                ملاحظة: لا يمكن تعيين مهام إلا للأشخاص المختارين في قائمة الحضور
+                            </div>
+                        </div>
+                        
+                        {{ form.task_assignments }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Submit Buttons -->
+        <div class="d-flex justify-content-between mb-4">
+            <a href="{% if edit %}{% url 'meetings:detail' pk=meeting.pk %}{% else %}{% url 'meetings:list' %}{% endif %}" class="btn btn-outline-secondary btn-lg">
+                <i class="fas fa-times me-1"></i> إلغاء
+            </a>
+            <button type="submit" class="btn btn-primary btn-lg btn-form-submit">
+                <i class="fas fa-save me-1"></i> {% if edit %}حفظ التغييرات{% else %}إنشاء الاجتماع{% endif %}
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if select2_enabled %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+{% endif %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        {% if select2_enabled %}
+        // Initialize Select2
+        $('.select2').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'اختر من القائمة',
+            width: '100%'
+        });
+        {% endif %}
+        
+        // Task assignment functionality
+        const tasksTextarea = document.getElementById('tasks-textarea');
+        const taskAssignmentContainer = document.getElementById('task-assignment-container');
+        const taskAssignmentsInput = document.getElementById('task-assignments');
+        const taskLinesContainer = document.querySelector('.task-lines-container');
+        
+        // Initialize task assignments object
+        let taskAssignments = {};
+        
+        // If editing a meeting with existing task assignments, try to load them
+        if (taskAssignmentsInput.value) {
+            try {
+                taskAssignments = JSON.parse(taskAssignmentsInput.value);
+                console.log("Loaded existing task assignments:", taskAssignments);
+            } catch (e) {
+                console.error("Error parsing task assignments:", e);
+                taskAssignments = {};
+            }
+        }
+        
+        // Function to update the task assignments
+        function updateTaskAssignments() {
+            // Get all lines from the textarea
+            const taskLines = tasksTextarea.value.split('\n').filter(line => line.trim());
+            
+            // If no tasks, hide the assignments container
+            if (taskLines.length === 0) {
+                taskAssignmentContainer.style.display = 'none';
+                return;
+            }
+            
+            // Show the container and clear previous content
+            taskAssignmentContainer.style.display = 'block';
+            taskLinesContainer.innerHTML = '';
+            
+            // Selected attendees for assignment dropdown
+            const attendeeSelect = document.getElementById('id_attendees');
+            const selectedAttendees = Array.from(attendeeSelect.selectedOptions).map(option => ({ 
+                id: option.value, 
+                text: option.text 
+            }));
+            
+            // Create assignment rows for each task
+            taskLines.forEach((task, index) => {
+                if (!task.trim()) return;
+                
+                const taskId = `task-${index}`;
+                
+                // Create task assignment row
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'task-assignment-row';
+                
+                // Task display
+                const taskDiv = document.createElement('div');
+                taskDiv.className = 'task-item form-control';
+                taskDiv.innerText = task;
+                taskDiv.title = task;
+                
+                // Add task number
+                const taskNum = document.createElement('span');
+                taskNum.className = 'task-number';
+                taskNum.innerText = `#${index + 1}`;
+                taskDiv.appendChild(taskNum);
+                
+                // Create assignment select
+                const assignDiv = document.createElement('div');
+                assignDiv.className = 'task-assignment';
+                
+                const assignSelect = document.createElement('select');
+                assignSelect.className = 'form-select task-assignment-select';
+                assignSelect.dataset.taskId = taskId;
+                
+                // Default option (no assignment)
+                const defaultOption = document.createElement('option');
+                defaultOption.value = '';
+                defaultOption.text = 'غير معين';
+                assignSelect.appendChild(defaultOption);
+                
+                // Add attendee options
+                selectedAttendees.forEach(attendee => {
+                    const option = document.createElement('option');
+                    option.value = attendee.id;
+                    option.text = attendee.text;
+                    
+                    // Pre-select if there's a saved assignment
+                    if (taskAssignments[taskId] === attendee.id) {
+                        option.selected = true;
+                    }
+                    
+                    assignSelect.appendChild(option);
+                });
+                
+                // Event listener for select change
+                assignSelect.addEventListener('change', function() {
+                    const taskId = this.dataset.taskId;
+                    const assigneeId = this.value;
+                    
+                    if (assigneeId) {
+                        taskAssignments[taskId] = assigneeId;
+                    } else {
+                        delete taskAssignments[taskId];
+                    }
+                    
+                    // Update the hidden input with the JSON
+                    taskAssignmentsInput.value = JSON.stringify(taskAssignments);
+                    console.log('Updated task assignments:', taskAssignments);
+                });
+                
+                assignDiv.appendChild(assignSelect);
+                
+                // Add elements to the row
+                rowDiv.appendChild(taskDiv);
+                rowDiv.appendChild(assignDiv);
+                
+                // Add row to container
+                taskLinesContainer.appendChild(rowDiv);
+            });
+        }
+        
+        // Update assignments when tasks change
+        if (tasksTextarea) {
+            // Initial run to display existing tasks
+            updateTaskAssignments();
+            
+            // Add event listener for textarea changes
+            tasksTextarea.addEventListener('input', updateTaskAssignments);
+            
+            // Also update when attendees change to refresh the dropdown options
+            const attendeeSelect = document.getElementById('id_attendees');
+            if (attendeeSelect) {
+                attendeeSelect.addEventListener('change', updateTaskAssignments);
+            }
+        }
+    });
+</script>
+{% endblock %}

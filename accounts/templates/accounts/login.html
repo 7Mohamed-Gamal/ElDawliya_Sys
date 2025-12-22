@@ -1,0 +1,320 @@
+{% load static %}
+{% load widget_tweaks %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تسجيل الدخول - نظام الدولية</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/style_updated.css' %}">
+    <style>
+        :root {
+            --primary-color: #1a56db;
+            --secondary-color: #2563eb;
+            --medium: #6b7280;
+        }
+        
+        body {
+            background-color: #f5f7fb;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Cairo', sans-serif;
+        }
+        
+        .login-container {
+            width: 100%;
+            max-width: 420px;
+            padding: 15px;
+        }
+        
+        .login-card {
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+            background-color: #ffffff;
+        }
+        
+        .login-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            text-align: center;
+            padding: 2.5rem 1rem 2rem;
+            position: relative;
+        }
+        
+        .login-header h2 {
+            margin: 0;
+            font-weight: 800;
+            font-size: 1.9rem;
+            text-shadow: 0px 2px 4px rgba(0,0,0,0.5);
+            line-height: 1.4;
+            padding: 0.3rem 0;
+            color: white;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .login-header h2::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            bottom: -5px;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 3px;
+            background: rgba(255,255,255,0.7);
+            border-radius: 3px;
+        }
+        
+        .login-body {
+            padding: 2rem;
+            background-color: white;
+        }
+        
+        .logo-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: rgba(255, 255, 255, 0.95);
+            text-shadow: 0px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .login-form .form-control {
+            height: calc(3rem + 2px);
+            font-size: 1.1rem;
+        }
+        
+        .login-form .form-label {
+            font-weight: 600;
+        }
+        
+        .btn-login {
+            height: 3rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-login:hover {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            transform: translateY(-1px);
+        }
+        
+        .login-footer {
+            text-align: center;
+            margin-top: 1.5rem;
+            color: var(--medium);
+        }
+        
+        .wave {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 15px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23ffffff' fill-opacity='1' d='M0,160L48,144C96,128,192,96,288,106.7C384,117,480,171,576,186.7C672,203,768,181,864,154.7C960,128,1056,96,1152,96C1248,96,1344,128,1392,144L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E");
+            background-size: cover;
+        }
+        
+        .info-icon {
+            cursor: pointer;
+            margin-right: 5px;
+            vertical-align: middle;
+            color: var(--primary-color);
+            transition: transform 0.3s ease;
+        }
+        
+        .info-icon:hover {
+            transform: scale(1.1);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1050;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+        }
+        
+        .modal-content {
+            background-color: #ffffff;
+            margin: 10% auto;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 380px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal-header {
+            padding: 15px;
+            background: linear-gradient(135deg, var(--primary-color), #4a90e2);
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header .modal-title {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        .modal-close {
+            font-size: 1.4rem;
+            cursor: pointer;
+            color: #ffffff;
+            transition: color 0.3s ease;
+        }
+        
+        .modal-close:hover {
+            color: #f1f1f1;
+        }
+        
+        .modal-body {
+            padding: 20px;
+            background: linear-gradient(to bottom, #fbfbfb, #eaeff5);
+            font-size: 1rem;
+            color: #333;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="logo-icon">
+                    <i class="fas fa-building"></i>
+                </div>
+                <h2>نظام شركة الدولية إنترناشونال</h2>
+                <div class="wave"></div>
+            </div>
+            <div class="login-body">
+                {% if messages %}
+                    <div class="mb-4">
+                    {% for message in messages %}
+                        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %} alert-dismissible fade show" role="alert">
+                            <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% elif message.tags == 'warning' %}fa-exclamation-triangle{% else %}fa-info-circle{% endif %} me-2"></i>
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                    </div>
+                {% endif %}
+                <form method="post" class="login-form needs-validation" novalidate>
+                    {% csrf_token %}
+                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                    <div class="mb-4">
+                        <label for="username" class="form-label">اسم المستخدم</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-user"></i>
+                            </span>
+                            {{ form.username|add_class:"form-control"|attr:"placeholder:أدخل اسم المستخدم"|attr:"required:required" }}
+                        </div>
+                        {% if form.username.errors %}
+                            <div class="invalid-feedback d-block">{{ form.username.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-4">
+                        <label for="password" class="form-label">كلمة المرور</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-lock"></i>
+                            </span>
+                            {{ form.password|add_class:"form-control"|attr:"placeholder:أدخل كلمة المرور"|attr:"required:required" }}
+                        </div>
+                        {% if form.password.errors %}
+                            <div class="invalid-feedback d-block">{{ form.password.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" name="login_button" value="submit" class="btn btn-primary btn-login">
+                            <i class="fas fa-sign-in-alt ml-2"></i>
+                            تسجيل الدخول
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="login-footer">
+            <p>
+                © {{ current_year|default:"2025" }} نظام الدولية. جميع الحقوق محفوظة.
+                <i class="fas fa-info-circle info-icon" id="infoBtn" aria-label="معلومات"></i>
+            </p>
+        </div>
+    </div>
+
+    <div id="infoModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">معلومات النظام</h5>
+                <span class="modal-close" id="infoClose">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>تم تطوير وبرمجة هذا النظام بواسطة الأستاذ محمد جمال<br>
+                مدير إدارة الموارد البشرية<br>
+                هاتف / 01007902026</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/main.js' %}"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var infoBtn = document.getElementById('infoBtn');
+            var infoModal = document.getElementById('infoModal');
+            var infoClose = document.getElementById('infoClose');
+
+            infoBtn.addEventListener('click', function() {
+                infoModal.style.display = 'block';
+            });
+            infoClose.addEventListener('click', function() {
+                infoModal.style.display = 'none';
+            });
+            window.addEventListener('click', function(e) {
+                if (e.target === infoModal) {
+                    infoModal.style.display = 'none';
+                }
+            });
+
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+
+            const csrftoken = getCookie('csrftoken');
+            if (csrftoken) {
+                const csrfInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
+                if (csrfInput) {
+                    csrfInput.value = csrftoken;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

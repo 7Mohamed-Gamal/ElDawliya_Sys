@@ -1,0 +1,492 @@
+{% extends 'evaluations/base.html' %}
+{% load static %}
+
+{% block title %}فترات التقييم{% endblock %}
+
+{% block breadcrumb_items %}
+<li class="breadcrumb-item active">فترات التقييم</li>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .period-card {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease;
+        margin-bottom: 20px;
+        overflow: hidden;
+    }
+    .period-card:hover {
+        transform: translateY(-5px);
+    }
+    .period-header {
+        background: linear-gradient(135deg, #ffc107 0%, #ff8f00 100%);
+        color: white;
+        padding: 20px;
+    }
+    .period-body {
+        padding: 20px;
+    }
+    .active-badge {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: #28a745;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: bold;
+    }
+    .progress-circle {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.2rem;
+        margin: 0 auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1>
+                <i class="fas fa-calendar-alt me-2"></i>
+                فترات التقييم
+            </h1>
+            <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#addPeriodModal">
+                <i class="fas fa-plus me-1"></i>
+                إضافة فترة جديدة
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Periods Cards -->
+<div class="row">
+    {% for period in periods %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card period-card position-relative">
+            {% if period.is_active %}
+            <div class="active-badge">
+                <i class="fas fa-play me-1"></i>
+                نشطة
+            </div>
+            {% endif %}
+            
+            <div class="period-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-calendar-check me-2"></i>
+                    {{ period.period_name }}
+                </h5>
+            </div>
+            
+            <div class="period-body">
+                <div class="row mb-3">
+                    <div class="col-6">
+                        <div class="text-center">
+                            <i class="fas fa-calendar-day text-primary fa-2x mb-2"></i>
+                            <div class="small text-muted">تاريخ البداية</div>
+                            <div class="fw-bold">{{ period.start_date|date:"Y/m/d" }}</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center">
+                            <i class="fas fa-calendar-times text-danger fa-2x mb-2"></i>
+                            <div class="small text-muted">تاريخ النهاية</div>
+                            <div class="fw-bold">{{ period.end_date|date:"Y/m/d" }}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <!-- Progress Circle -->
+                <div class="text-center mb-3">
+                    <div class="progress-circle bg-light border">
+                        {{ period.progress_percentage|floatformat:0 }}%
+                    </div>
+                    <small class="text-muted">نسبة الإنجاز</small>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-4 text-center">
+                        <div class="text-primary fw-bold">{{ period.total_employees }}</div>
+                        <small class="text-muted">موظف</small>
+                    </div>
+                    <div class="col-4 text-center">
+                        <div class="text-success fw-bold">{{ period.completed_evaluations }}</div>
+                        <small class="text-muted">مكتمل</small>
+                    </div>
+                    <div class="col-4 text-center">
+                        <div class="text-warning fw-bold">{{ period.pending_evaluations }}</div>
+                        <small class="text-muted">معلق</small>
+                    </div>
+                </div>
+                
+                <div class="progress mb-3" style="height: 8px;">
+                    <div class="progress-bar bg-warning" style="width: {{ period.progress_percentage }}%"></div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <div class="small text-muted">متوسط الدرجات</div>
+                        <div class="h5 text-warning">{{ period.average_score|floatformat:1|default:"لا يوجد" }}</div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        {% if period.is_active %}
+                            <span class="badge bg-success">نشطة</span>
+                        {% elif period.is_upcoming %}
+                            <span class="badge bg-info">قادمة</span>
+                        {% elif period.is_completed %}
+                            <span class="badge bg-secondary">مكتملة</span>
+                        {% else %}
+                            <span class="badge bg-warning">منتهية</span>
+                        {% endif %}
+                    </div>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-primary" onclick="viewPeriodDetails({{ period.period_id }})" title="عرض التفاصيل">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn btn-outline-warning" onclick="editPeriod({{ period.period_id }})" title="تعديل">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        {% if not period.is_active %}
+                        <button class="btn btn-outline-success" onclick="activatePeriod({{ period.period_id }})" title="تفعيل">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        {% endif %}
+                        <button class="btn btn-outline-danger" onclick="deletePeriod({{ period.period_id }})" title="حذف">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="text-center py-5">
+            <i class="fas fa-calendar-alt fa-4x text-muted mb-3"></i>
+            <h4 class="text-muted">لا توجد فترات تقييم</h4>
+            <p class="text-muted">لم يتم إنشاء أي فترات تقييم بعد</p>
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPeriodModal">
+                <i class="fas fa-plus me-1"></i>
+                إضافة فترة جديدة
+            </button>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Statistics Summary -->
+{% if periods %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    ملخص الإحصائيات
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 text-center">
+                        <div class="h3 text-primary">{{ periods|length }}</div>
+                        <div class="text-muted">فترات التقييم</div>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="h3 text-success">{{ active_periods_count }}</div>
+                        <div class="text-muted">فترات نشطة</div>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="h3 text-warning">{{ total_evaluations }}</div>
+                        <div class="text-muted">إجمالي التقييمات</div>
+                    </div>
+                    <div class="col-md-3 text-center">
+                        <div class="h3 text-info">{{ overall_average|floatformat:1 }}</div>
+                        <div class="text-muted">المتوسط العام</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Add Period Modal -->
+<div class="modal fade" id="addPeriodModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">إضافة فترة تقييم جديدة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addPeriodForm">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="period_name" class="form-label">اسم فترة التقييم *</label>
+                        <input type="text" class="form-control" name="period_name" id="period_name" required>
+                        <div class="form-text">مثال: تقييم الربع الأول 2025</div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="start_date" class="form-label">تاريخ البداية *</label>
+                                <input type="date" class="form-control" name="start_date" id="start_date" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="end_date" class="form-label">تاريخ النهاية *</label>
+                                <input type="date" class="form-control" name="end_date" id="end_date" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="is_active" id="is_active">
+                            <label class="form-check-label" for="is_active">
+                                تفعيل الفترة فوراً
+                            </label>
+                            <div class="form-text">سيتم إلغاء تفعيل الفترات الأخرى تلقائياً</div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-warning" onclick="submitPeriod()">حفظ</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Period Modal -->
+<div class="modal fade" id="editPeriodModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تعديل فترة التقييم</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editPeriodForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="period_id" id="edit_period_id">
+                    <div class="mb-3">
+                        <label for="edit_period_name" class="form-label">اسم فترة التقييم *</label>
+                        <input type="text" class="form-control" name="period_name" id="edit_period_name" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit_start_date" class="form-label">تاريخ البداية *</label>
+                                <input type="date" class="form-control" name="start_date" id="edit_start_date" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="edit_end_date" class="form-label">تاريخ النهاية *</label>
+                                <input type="date" class="form-control" name="end_date" id="edit_end_date" required>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" onclick="updatePeriod()">تحديث</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Period Details Modal -->
+<div class="modal fade" id="periodDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تفاصيل فترة التقييم</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="periodDetailsContent">
+                <!-- Content will be loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Validate date range
+document.getElementById('start_date').addEventListener('change', validateDateRange);
+document.getElementById('end_date').addEventListener('change', validateDateRange);
+
+function validateDateRange() {
+    const startDate = document.getElementById('start_date').value;
+    const endDate = document.getElementById('end_date').value;
+    
+    if (startDate && endDate) {
+        if (new Date(endDate) <= new Date(startDate)) {
+            alert('تاريخ النهاية يجب أن يكون بعد تاريخ البداية');
+            document.getElementById('end_date').value = '';
+        }
+    }
+    
+    // Set minimum end date
+    if (startDate) {
+        document.getElementById('end_date').min = startDate;
+    }
+}
+
+function submitPeriod() {
+    const form = document.getElementById('addPeriodForm');
+    const formData = new FormData(form);
+    
+    fetch('{% url "evaluations:add_period" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('حدث خطأ: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ في الاتصال');
+    });
+}
+
+function editPeriod(periodId) {
+    fetch(`{% url "evaluations:get_period" 0 %}`.replace('0', periodId))
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('edit_period_id').value = data.period.period_id;
+            document.getElementById('edit_period_name').value = data.period.period_name;
+            document.getElementById('edit_start_date').value = data.period.start_date;
+            document.getElementById('edit_end_date').value = data.period.end_date;
+            
+            const modal = new bootstrap.Modal(document.getElementById('editPeriodModal'));
+            modal.show();
+        } else {
+            alert('حدث خطأ في جلب بيانات الفترة');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ في الاتصال');
+    });
+}
+
+function updatePeriod() {
+    const form = document.getElementById('editPeriodForm');
+    const formData = new FormData(form);
+    const periodId = document.getElementById('edit_period_id').value;
+    
+    fetch(`{% url "evaluations:update_period" 0 %}`.replace('0', periodId), {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        } else {
+            alert('حدث خطأ: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ في الاتصال');
+    });
+}
+
+function viewPeriodDetails(periodId) {
+    fetch(`{% url "evaluations:period_details" 0 %}`.replace('0', periodId))
+    .then(response => response.text())
+    .then(html => {
+        document.getElementById('periodDetailsContent').innerHTML = html;
+        const modal = new bootstrap.Modal(document.getElementById('periodDetailsModal'));
+        modal.show();
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('حدث خطأ في جلب التفاصيل');
+    });
+}
+
+function activatePeriod(periodId) {
+    if (confirm('هل أنت متأكد من تفعيل هذه الفترة؟ سيتم إلغاء تفعيل الفترات الأخرى.')) {
+        fetch(`{% url "evaluations:activate_period" 0 %}`.replace('0', periodId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('حدث خطأ: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('حدث خطأ في الاتصال');
+        });
+    }
+}
+
+function deletePeriod(periodId) {
+    if (confirm('هل أنت متأكد من حذف هذه الفترة؟ سيتم حذف جميع التقييمات المرتبطة بها.')) {
+        fetch(`{% url "evaluations:delete_period" 0 %}`.replace('0', periodId), {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('حدث خطأ: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('حدث خطأ في الاتصال');
+        });
+    }
+}
+</script>
+{% endblock %}

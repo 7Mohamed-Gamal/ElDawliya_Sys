@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}أرصدة الإجازات{% endblock %}
+{% block content %}
+<div class="container py-4">
+  <h1 class="h4 mb-3"><i class="fas fa-balance-scale me-2"></i> أرصدة الإجازات</h1>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>الموظف</th>
+        <th>نوع الإجازة</th>
+        <th>السنة</th>
+        <th>المخصصة</th>
+        <th>المستخدمة</th>
+        <th>المتبقية</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for b in balances %}
+      <tr>
+        <td>{{ b.employee.emp_full_name }}</td>
+        <td>{{ b.leave_type.name }}</td>
+        <td>{{ b.year }}</td>
+        <td>{{ b.allocated_days }}</td>
+        <td>{{ b.used_days }}</td>
+        <td>{{ b.remaining_days }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="6" class="text-center text-muted">لا توجد أرصدة</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

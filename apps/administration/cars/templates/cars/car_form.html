@@ -1,0 +1,156 @@
+{% extends 'cars/base.html' %}
+
+{% block title %}{{ title }} - نظام إدارة نشاط النقل{% endblock %}
+
+{% block header %}{{ title }}{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">بيانات السيارة الأساسية</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.car_code.id_for_label }}" class="form-label">كود السيارة</label>
+                                {{ form.car_code }}
+                                {% if form.car_code.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.car_code.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="{{ form.car_name.id_for_label }}" class="form-label">اسم السيارة</label>
+                                {{ form.car_name }}
+                                {% if form.car_name.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.car_name.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.car_type.id_for_label }}" class="form-label">نوع السيارة</label>
+                                {{ form.car_type }}
+                                {% if form.car_type.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.car_type.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="{{ form.supplier.id_for_label }}" class="form-label">المورد</label>
+                                {{ form.supplier }}
+                                {% if form.supplier.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.supplier.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.fuel_type.id_for_label }}" class="form-label">نوع الوقود</label>
+                                {{ form.fuel_type }}
+                                {% if form.fuel_type.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.fuel_type.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.passengers_count.id_for_label }}" class="form-label">عدد الركاب</label>
+                                {{ form.passengers_count }}
+                                {% if form.passengers_count.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.passengers_count.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="{{ form.car_status.id_for_label }}" class="form-label">حالة السيارة</label>
+                                {{ form.car_status }}
+                                {% if form.car_status.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.car_status.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">بيانات التشغيل</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.distance_traveled.id_for_label }}" class="form-label">المسافة المقطوعة (كم)</label>
+                                {{ form.distance_traveled }}
+                                {% if form.distance_traveled.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.distance_traveled.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="{{ form.fuel_consumption_rate.id_for_label }}" class="form-label">معدل استهلاك الوقود (لتر/كم)</label>
+                                {{ form.fuel_consumption_rate }}
+                                {% if form.fuel_consumption_rate.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.fuel_consumption_rate.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{% url 'cars:car_list' %}" class="btn btn-secondary me-md-2">
+                        <i class="fas fa-times-circle"></i> إلغاء
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> حفظ البيانات
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends 'inventory/base_inventory.html' %}
+{% load static %}
+{% load inventory_permission_tags %}
+
+{% block title %}تأكيد حذف التصنيف - نظام إدارة المخزن{% endblock %}
+
+{% block extra_css %}
+<style>
+    .delete-card {
+        border-radius: 10px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        border-top: 3px solid #dc3545;
+    }
+
+    .delete-icon {
+        font-size: 3rem;
+        color: #dc3545;
+        margin-bottom: 1rem;
+    }
+
+    .category-info {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+
+    .category-info p {
+        margin-bottom: 5px;
+    }
+
+    .category-info strong {
+        color: #495057;
+    }
+
+    .btn-action {
+        min-width: 120px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row ps-4">
+    <div class="col-md-8 mx-auto mb-4">
+        <div class="card delete-card">
+            <div class="card-header bg-white text-center py-4">
+                <i class="fas fa-exclamation-triangle delete-icon"></i>
+                <h4 class="mb-0">تأكيد حذف التصنيف</h4>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-warning mb-4">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <strong>تحذير:</strong> سيؤدي حذف هذا التصنيف إلى إزالته نهائياً من قاعدة البيانات. هذا الإجراء لا يمكن التراجع عنه.
+                </div>
+
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>تنبيه:</strong> إذا كان هناك أصناف مرتبطة بهذا التصنيف، فقد يؤثر حذفه على تلك الأصناف.
+                </div>
+
+                <div class="category-info">
+                    <h5 class="mb-3">معلومات التصنيف:</h5>
+                    <p><strong>اسم التصنيف:</strong> {{ object.name }}</p>
+                    <p><strong>الوصف:</strong> {{ object.description|default:"غير محدد" }}</p>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-center gap-3 mt-4">
+                        <a href="{% url 'inventory:category_list' %}" class="btn btn-secondary btn-action">
+                            <i class="fas fa-times me-1"></i>
+                            إلغاء
+                        </a>
+                        <button type="submit" class="btn btn-danger btn-action">
+                            <i class="fas fa-trash-alt me-1"></i>
+                            تأكيد الحذف
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

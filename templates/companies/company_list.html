@@ -1,0 +1,255 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .company-card {
+        background: white;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        height: 100%;
+        border: 1px solid #e9ecef;
+    }
+
+    .company-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+
+    .company-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #6f42c1, #5a2d91);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+        color: white;
+        font-size: 1.5rem;
+    }
+
+    .stats-badge {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        margin: 0.25rem 0;
+        display: inline-block;
+        font-size: 0.875rem;
+        color: #495057;
+    }
+
+    .page-header {
+        background: linear-gradient(135deg, #6f42c1, #5a2d91);
+        color: white;
+        border-radius: 15px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .btn-light {
+        background: rgba(255,255,255,0.9);
+        border: none;
+        color: #6f42c1;
+        font-weight: 600;
+    }
+
+    .btn-light:hover {
+        background: white;
+        color: #5a2d91;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <i class="fas fa-building fa-3x"></i>
+                    </div>
+                    <div>
+                        <h1 class="mb-2">إدارة الشركات</h1>
+                        <p class="mb-0 opacity-75">
+                            إدارة وتنظيم الشركات والمؤسسات في النظام
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="{% url 'companies:create' %}" class="btn btn-light btn-lg">
+                    <i class="fas fa-plus me-2"></i>
+                    إضافة شركة جديدة
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <form method="get" class="d-flex">
+                <input type="text" name="search" class="form-control me-2"
+                       placeholder="البحث في الشركات..." value="{{ search }}">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Companies List -->
+    <div class="row">
+        {% for company in companies %}
+        <div class="col-xl-4 col-md-6">
+            <div class="company-card">
+                <div class="company-icon">
+                    <i class="fas fa-building"></i>
+                </div>
+                <h5 class="mb-2">{{ company.name }}</h5>
+
+                {% if company.name_en %}
+                <p class="text-muted mb-2">
+                    <i class="fas fa-globe me-1"></i>
+                    {{ company.name_en }}
+                </p>
+                {% endif %}
+
+                {% if company.tax_number %}
+                <p class="text-muted mb-2">
+                    <i class="fas fa-receipt me-1"></i>
+                    الرقم الضريبي: {{ company.tax_number }}
+                </p>
+                {% endif %}
+
+                {% if company.commercial_register %}
+                <p class="text-muted mb-2">
+                    <i class="fas fa-file-contract me-1"></i>
+                    السجل التجاري: {{ company.commercial_register }}
+                </p>
+                {% endif %}
+
+                {% if company.phone %}
+                <p class="text-muted mb-3">
+                    <i class="fas fa-phone me-1"></i>
+                    {{ company.phone }}
+                </p>
+                {% endif %}
+
+                {% if company.email %}
+                <p class="text-muted mb-3">
+                    <i class="fas fa-envelope me-1"></i>
+                    {{ company.email }}
+                </p>
+                {% endif %}
+
+                <div class="mb-3">
+                    <span class="stats-badge">
+                        <i class="fas fa-code-branch me-1"></i>
+                        {{ company.branch_count|default:0 }} فرع
+                    </span>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="badge bg-success">نشط</span>
+                    </div>
+                    <div>
+                        <a href="{% url 'companies:detail' company.company_id %}"
+                           class="btn btn-sm btn-outline-primary me-1">
+                            <i class="fas fa-eye me-1"></i>
+                            عرض
+                        </a>
+                        <a href="{% url 'companies:edit' company.company_id %}"
+                           class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-edit me-1"></i>
+                            تعديل
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="text-center py-5">
+                <i class="fas fa-building fa-3x text-muted mb-3"></i>
+                <h4 class="text-muted">لا توجد شركات</h4>
+                {% if search %}
+                <p class="text-muted">لم يتم العثور على شركات تطابق البحث "{{ search }}"</p>
+                <a href="{% url 'companies:list' %}" class="btn btn-primary">عرض جميع الشركات</a>
+                {% else %}
+                <p class="text-muted">لم يتم إضافة أي شركات بعد</p>
+                <a href="{% url 'companies:create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>
+                    إضافة أول شركة
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if companies.has_other_pages %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    {% if companies.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if search %}&search={{ search }}{% endif %}">الأولى</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ companies.previous_page_number }}{% if search %}&search={{ search }}{% endif %}">السابقة</a>
+                        </li>
+                    {% endif %}
+
+                    <li class="page-item active">
+                        <span class="page-link">
+                            صفحة {{ companies.number }} من {{ companies.paginator.num_pages }}
+                        </span>
+                    </li>
+
+                    {% if companies.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ companies.next_page_number }}{% if search %}&search={{ search }}{% endif %}">التالية</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ companies.paginator.num_pages }}{% if search %}&search={{ search }}{% endif %}">الأخيرة</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add hover effects to cards
+    const cards = document.querySelectorAll('.company-card');
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.borderColor = '#6f42c1';
+        });
+
+        card.addEventListener('mouseleave', function() {
+            this.style.borderColor = '#e9ecef';
+        });
+    });
+});
+</script>
+{% endblock %}
+

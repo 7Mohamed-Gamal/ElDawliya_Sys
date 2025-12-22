@@ -1,0 +1,359 @@
+{% extends 'administrator/base_admin.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} - لوحة تحكم مدير النظام{% endblock %}
+
+{% block page_icon %}file-code{% endblock %}
+{% block page_header %}{{ page_title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .app-section {
+        margin-bottom: 2rem;
+        border-radius: 0.5rem;
+        overflow: hidden;
+    }
+
+    .app-header {
+        padding: 1rem;
+        color: white;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+    }
+
+    .app-header i {
+        margin-left: 0.75rem;
+        font-size: 1.25rem;
+    }
+
+    .template-list {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .template-item {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        transition: all 0.2s;
+    }
+
+    .template-item:hover {
+        background-color: rgba(0,0,0,0.02);
+    }
+
+    .template-name {
+        flex: 1;
+    }
+
+    .template-path {
+        font-family: monospace;
+        background-color: #f8f9fa;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        color: #495057;
+        direction: ltr;
+        text-align: left;
+        display: inline-block;
+        min-width: 200px;
+    }
+
+    .copy-btn {
+        margin-right: 0.5rem;
+        cursor: pointer;
+        color: #6c757d;
+        transition: all 0.2s;
+    }
+
+    .copy-btn:hover {
+        color: var(--bs-primary);
+    }
+
+    .search-container {
+        margin-bottom: 1.5rem;
+    }
+
+    .app-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 50rem;
+        margin-right: 0.5rem;
+        color: white;
+    }
+
+    /* App specific colors */
+    .app-hr {
+        background-color: #28a745;
+    }
+
+    .app-inventory {
+        background-color: #fd7e14;
+    }
+
+    .app-tasks {
+        background-color: #6f42c1;
+    }
+
+    .app-meetings {
+        background-color: #e83e8c;
+    }
+
+    .app-purchase {
+        background-color: #20c997;
+    }
+
+    .app-administrator {
+        background-color: #0d6efd;
+    }
+
+    .app-accounts {
+        background-color: #6c757d;
+    }
+
+    .app-common {
+        background-color: #17a2b8;
+    }
+
+    /* Tooltip styles */
+    .tooltip-inner {
+        max-width: 300px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-file-code me-2"></i>
+                    دليل القوالب المتاحة في النظام
+                </h5>
+                <div>
+                    <form method="post" class="d-inline-block me-2">
+                        {% csrf_token %}
+                        <button type="submit" name="refresh_templates" class="btn btn-success btn-sm">
+                            <i class="fas fa-sync-alt me-1"></i>
+                            تحديث القوالب
+                        </button>
+                    </form>
+                    <a href="{% url 'administrator:admin_dashboard' %}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-arrow-right me-1"></i>
+                        العودة إلى لوحة تحكم المدير
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    استخدم هذه الصفحة للحصول على مسارات القوالب الصحيحة عند إنشاء صلاحيات القوالب. يمكنك البحث عن القالب المطلوب ونسخ مساره مباشرة.
+                    يمكنك أيضًا تحديث القوالب بالضغط على زر "تحديث القوالب" لاكتشاف القوالب الجديدة في النظام.
+                </div>
+
+                <div class="alert alert-success">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <i class="fas fa-magic me-2"></i>
+                            يمكنك إنشاء صلاحيات قوالب تلقائيًا من القوالب المكتشفة. اضغط على زر "إنشاء صلاحيات القوالب" بجانب كل قسم لإنشاء صلاحيات لهذا القسم فقط.
+                        </div>
+                        <form method="post" action="{% url 'administrator:create_templates_from_paths' %}">
+                            {% csrf_token %}
+                            <input type="hidden" name="app_name" value="all">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-magic me-1"></i>
+                                إنشاء جميع صلاحيات القوالب
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                {% if messages %}
+                <div class="mb-3">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'warning' %}fa-exclamation-triangle{% elif message.tags == 'error' %}fa-times-circle{% else %}fa-info-circle{% endif %} me-2"></i>
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Search Box -->
+                <div class="search-container">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" class="form-control" id="searchTemplates" placeholder="ابحث عن قالب...">
+                    </div>
+                </div>
+
+                <!-- App Sections -->
+                <div class="row" id="appSections">
+                    {% for app_name, templates in app_templates.items %}
+                    <div class="col-md-6 mb-4 app-container">
+                        <div class="app-section shadow-sm">
+                            <div class="app-header app-{{ app_name|lower }}">
+                                <div class="d-flex align-items-center">
+                                    {% if app_name == 'Hr' %}
+                                    <i class="fas fa-users"></i>
+                                    <span class="me-2">الموارد البشرية</span>
+                                    {% elif app_name == 'inventory' %}
+                                    <i class="fas fa-boxes"></i>
+                                    <span class="me-2">المخزن</span>
+                                    {% elif app_name == 'tasks' %}
+                                    <i class="fas fa-tasks"></i>
+                                    <span class="me-2">المهام</span>
+                                    {% elif app_name == 'meetings' %}
+                                    <i class="fas fa-handshake"></i>
+                                    <span class="me-2">الاجتماعات</span>
+                                    {% elif app_name == 'Purchase_orders' %}
+                                    <i class="fas fa-shopping-cart"></i>
+                                    <span class="me-2">طلبات الشراء</span>
+                                    {% elif app_name == 'administrator' %}
+                                    <i class="fas fa-cogs"></i>
+                                    <span class="me-2">مدير النظام</span>
+                                    {% elif app_name == 'accounts' %}
+                                    <i class="fas fa-user-circle"></i>
+                                    <span class="me-2">الحسابات</span>
+                                    {% elif app_name == 'common' %}
+                                    <i class="fas fa-file-alt"></i>
+                                    <span class="me-2">القوالب المشتركة</span>
+                                    {% else %}
+                                    <i class="fas fa-folder"></i>
+                                    <span class="me-2">{{ app_name }}</span>
+                                    {% endif %}
+                                </div>
+                                <div class="ms-auto d-flex align-items-center">
+                                    <form method="post" action="{% url 'administrator:create_templates_from_paths' %}" class="me-2">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="app_name" value="{{ app_name }}">
+                                        <button type="submit" class="btn btn-sm btn-success" title="إنشاء صلاحيات القوالب من هذا القسم">
+                                            <i class="fas fa-magic me-1"></i>
+                                            إنشاء صلاحيات القوالب
+                                        </button>
+                                    </form>
+                                    <span class="badge bg-light text-dark">{{ templates|length }} قالب</span>
+                                </div>
+                            </div>
+                            <div class="template-list">
+                                {% for template_item in templates %}
+                                <div class="template-item">
+                                    <div class="template-name">{{ template_item.name }}</div>
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-copy copy-btn" data-path="{{ template_item.path }}" data-bs-toggle="tooltip" title="نسخ مسار القالب"></i>
+                                        <div class="template-path">{{ template_item.path }}</div>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <!-- No Results Message -->
+                <div id="noResults" class="text-center py-5 d-none">
+                    <i class="fas fa-search fa-3x mb-3 text-muted"></i>
+                    <h5>لا توجد نتائج</h5>
+                    <p class="text-muted">لم يتم العثور على قوالب تطابق بحثك</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>
+                    <i class="fas fa-info-circle me-2"></i>
+                    إرشادات استخدام مسارات القوالب
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="mb-3">كيفية استخدام مسارات القوالب:</h6>
+                        <ul>
+                            <li>انسخ مسار القالب المطلوب واستخدمه في حقل "مسار القالب" عند إنشاء صلاحية قالب جديدة.</li>
+                            <li>تأكد من أن مسار القالب يشير إلى القالب الصحيح الذي تريد التحكم في صلاحياته.</li>
+                            <li>استخدم مسارات القوالب الموجودة كمرجع لإنشاء صلاحيات قوالب جديدة.</li>
+                            <li>تأكد من أن مسار القالب يتوافق مع القسم الذي تنتمي إليه الصلاحية.</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="mb-3">أمثلة على استخدام مسارات القوالب:</h6>
+                        <ul>
+                            <li>لإنشاء صلاحية للتحكم في قالب قائمة الموظفين، استخدم المسار <code>Hr/employees/employee_list.html</code></li>
+                            <li>لإنشاء صلاحية للتحكم في قالب إضافة منتج جديد، استخدم المسار <code>inventory/product_form.html</code></li>
+                            <li>لإنشاء صلاحية للتحكم في قالب تقرير المخزون، استخدم المسار <code>inventory/stock_report.html</code></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(function() {
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+
+        // Copy path to clipboard
+        $('.copy-btn').click(function() {
+            var path = $(this).data('path');
+            navigator.clipboard.writeText(path).then(function() {
+                // Show success message
+                Swal.fire({
+                    title: 'تم النسخ!',
+                    text: 'تم نسخ مسار القالب: ' + path,
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+            }, function(err) {
+                console.error('Could not copy text: ', err);
+            });
+        });
+
+        // Search functionality
+        $('#searchTemplates').on('keyup', function() {
+            var value = $(this).val().toLowerCase();
+            var foundResults = false;
+
+            // Hide/show app sections based on search
+            $('.app-container').each(function() {
+                var appHasResults = false;
+
+                // Check each template item in this app
+                $(this).find('.template-item').each(function() {
+                    var templateText = $(this).text().toLowerCase();
+                    var templateMatch = templateText.indexOf(value) > -1;
+
+                    $(this).toggle(templateMatch);
+
+                    if (templateMatch) {
+                        appHasResults = true;
+                        foundResults = true;
+                    }
+                });
+
+                // Show/hide the entire app section
+                $(this).toggle(appHasResults);
+            });
+
+            // Show/hide no results message
+            $('#noResults').toggleClass('d-none', foundResults);
+        });
+    });
+</script>
+{% endblock %}

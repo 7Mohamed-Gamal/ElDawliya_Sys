@@ -1,0 +1,175 @@
+{% extends 'notifications/base_notifications.html' %}
+{% load static %}
+
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'notifications:dashboard' %}">التنبيهات</a></li>
+{% if notification.notification_type == 'hr' %}
+<li class="breadcrumb-item"><a href="{% url 'notifications:list_by_type' 'hr' %}">تنبيهات الموارد البشرية</a></li>
+{% elif notification.notification_type == 'meetings' %}
+<li class="breadcrumb-item"><a href="{% url 'notifications:list_by_type' 'meetings' %}">تنبيهات الاجتماعات</a></li>
+{% elif notification.notification_type == 'inventory' %}
+<li class="breadcrumb-item"><a href="{% url 'notifications:list_by_type' 'inventory' %}">تنبيهات المخزن</a></li>
+{% elif notification.notification_type == 'purchase' %}
+<li class="breadcrumb-item"><a href="{% url 'notifications:list_by_type' 'purchase' %}">تنبيهات المشتريات</a></li>
+{% elif notification.notification_type == 'system' %}
+<li class="breadcrumb-item"><a href="{% url 'notifications:list_by_type' 'system' %}">تنبيهات النظام</a></li>
+{% endif %}
+<li class="breadcrumb-item active">{{ notification.title|truncatechars:30 }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0">
+                    <i class="{{ notification.icon }} me-2 
+                        {% if notification.notification_type == 'hr' %}text-primary
+                        {% elif notification.notification_type == 'meetings' %}text-info
+                        {% elif notification.notification_type == 'inventory' %}text-success
+                        {% elif notification.notification_type == 'purchase' %}text-warning
+                        {% elif notification.notification_type == 'system' %}text-secondary
+                        {% endif %}"></i>
+                    {{ notification.title }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                        {% if notification.notification_type == 'hr' %}
+                        <span class="badge bg-primary">الموارد البشرية</span>
+                        {% elif notification.notification_type == 'meetings' %}
+                        <span class="badge bg-info">الاجتماعات</span>
+                        {% elif notification.notification_type == 'inventory' %}
+                        <span class="badge bg-success">المخزن</span>
+                        {% elif notification.notification_type == 'purchase' %}
+                        <span class="badge bg-warning">المشتريات</span>
+                        {% elif notification.notification_type == 'system' %}
+                        <span class="badge bg-secondary">النظام</span>
+                        {% endif %}
+                        
+                        {% if notification.priority == 'urgent' %}
+                        <span class="badge bg-danger">أولوية عاجلة</span>
+                        {% elif notification.priority == 'high' %}
+                        <span class="badge bg-warning">أولوية عالية</span>
+                        {% elif notification.priority == 'medium' %}
+                        <span class="badge bg-info">أولوية متوسطة</span>
+                        {% elif notification.priority == 'low' %}
+                        <span class="badge bg-success">أولوية منخفضة</span>
+                        {% endif %}
+                        
+                        {% if notification.is_read %}
+                        <span class="badge bg-secondary">مقروءة</span>
+                        {% else %}
+                        <span class="badge bg-danger">غير مقروءة</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="p-3 bg-light rounded">
+                        {{ notification.message|linebreaks }}
+                    </div>
+                </div>
+                
+                {% if notification.url %}
+                <div class="d-grid gap-2">
+                    <a href="{{ notification.url }}" class="btn btn-primary">
+                        <i class="fas fa-external-link-alt me-1"></i>
+                        الانتقال إلى الرابط
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-white">
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        <i class="fas fa-clock me-1"></i>
+                        تم الإنشاء: {{ notification.created_at|date:"Y-m-d H:i" }}
+                    </small>
+                    {% if notification.is_read %}
+                    <small class="text-muted">
+                        <i class="fas fa-check-circle me-1"></i>
+                        تمت القراءة: {{ notification.read_at|date:"Y-m-d H:i" }}
+                    </small>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2 text-primary"></i>
+                    معلومات التنبيه
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>النوع</span>
+                        {% if notification.notification_type == 'hr' %}
+                        <span class="badge bg-primary rounded-pill">الموارد البشرية</span>
+                        {% elif notification.notification_type == 'meetings' %}
+                        <span class="badge bg-info rounded-pill">الاجتماعات</span>
+                        {% elif notification.notification_type == 'inventory' %}
+                        <span class="badge bg-success rounded-pill">المخزن</span>
+                        {% elif notification.notification_type == 'purchase' %}
+                        <span class="badge bg-warning rounded-pill">المشتريات</span>
+                        {% elif notification.notification_type == 'system' %}
+                        <span class="badge bg-secondary rounded-pill">النظام</span>
+                        {% endif %}
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>الأولوية</span>
+                        {% if notification.priority == 'urgent' %}
+                        <span class="badge bg-danger rounded-pill">عاجلة</span>
+                        {% elif notification.priority == 'high' %}
+                        <span class="badge bg-warning rounded-pill">عالية</span>
+                        {% elif notification.priority == 'medium' %}
+                        <span class="badge bg-info rounded-pill">متوسطة</span>
+                        {% elif notification.priority == 'low' %}
+                        <span class="badge bg-success rounded-pill">منخفضة</span>
+                        {% endif %}
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>الحالة</span>
+                        {% if notification.is_read %}
+                        <span class="badge bg-secondary rounded-pill">مقروءة</span>
+                        {% else %}
+                        <span class="badge bg-danger rounded-pill">غير مقروءة</span>
+                        {% endif %}
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>تاريخ الإنشاء</span>
+                        <span>{{ notification.created_at|date:"Y-m-d H:i" }}</span>
+                    </li>
+                    {% if notification.is_read %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>تاريخ القراءة</span>
+                        <span>{{ notification.read_at|date:"Y-m-d H:i" }}</span>
+                    </li>
+                    {% endif %}
+                </ul>
+                
+                <div class="mt-4">
+                    {% if notification.url %}
+                    <a href="{{ notification.url }}" class="btn btn-primary w-100 mb-2">
+                        <i class="fas fa-external-link-alt me-1"></i>
+                        الانتقال إلى الرابط
+                    </a>
+                    {% endif %}
+                    
+                    <a href="javascript:history.back()" class="btn btn-outline-secondary w-100">
+                        <i class="fas fa-arrow-right me-1"></i>
+                        الرجوع
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

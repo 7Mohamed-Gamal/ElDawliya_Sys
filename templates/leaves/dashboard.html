@@ -1,0 +1,389 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}إدارة الإجازات - نظام الدولية{% endblock %}
+
+{% block extra_css %}
+<style>
+.leaves-dashboard-header {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 30px rgba(16, 185, 129, 0.2);
+}
+
+.leaves-stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    border: 1px solid #e5e7eb;
+}
+
+.leaves-stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.leaves-stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin-bottom: 1rem;
+}
+
+.leaves-stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.leaves-stat-label {
+    color: #6b7280;
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+}
+
+.leave-request-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+}
+
+.leave-status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.status-pending {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-approved {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.status-rejected {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.leave-action-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    border-radius: 10px;
+    text-decoration: none;
+    color: white;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    margin-bottom: 0.5rem;
+}
+
+.leave-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    color: white;
+    text-decoration: none;
+}
+
+.leave-type-item {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.leave-type-item:last-child {
+    border-bottom: none;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Leaves Dashboard Header -->
+        <div class="leaves-dashboard-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="h2 mb-2">
+                        <i class="fas fa-calendar-alt me-3"></i>
+                        إدارة الإجازات
+                    </h1>
+                    <p class="mb-0 opacity-90">
+                        طلبات الإجازات وإدارة أرصدة الموظفين
+                    </p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <a href="{% url 'leaves:create' %}" class="btn btn-light btn-lg">
+                        <i class="fas fa-calendar-plus me-2"></i>
+                        طلب إجازة جديد
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Key Statistics -->
+<div class="row">
+    <div class="col-xl-3 col-md-6">
+        <div class="leaves-stat-card">
+            <div class="leaves-stat-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                <i class="fas fa-clock text-white"></i>
+            </div>
+            <div class="leaves-stat-value text-warning">{{ pending_requests|default:0 }}</div>
+            <div class="leaves-stat-label">طلبات في الانتظار</div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="leaves-stat-card">
+            <div class="leaves-stat-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+                <i class="fas fa-check-circle text-white"></i>
+            </div>
+            <div class="leaves-stat-value text-success">{{ approved_requests|default:0 }}</div>
+            <div class="leaves-stat-label">طلبات معتمدة</div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="leaves-stat-card">
+            <div class="leaves-stat-icon" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+                <i class="fas fa-times-circle text-white"></i>
+            </div>
+            <div class="leaves-stat-value text-danger">{{ rejected_requests|default:0 }}</div>
+            <div class="leaves-stat-label">طلبات مرفوضة</div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="leaves-stat-card">
+            <div class="leaves-stat-icon" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                <i class="fas fa-calendar-day text-white"></i>
+            </div>
+            <div class="leaves-stat-value text-purple">{{ total_leave_days|default:0 }}</div>
+            <div class="leaves-stat-label">إجمالي أيام الإجازات</div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions and Recent Requests -->
+<div class="row">
+    <div class="col-xl-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt me-2"></i>
+                    إجراءات سريعة
+                </h5>
+            </div>
+            <div class="card-body">
+                <a href="{% url 'leaves:create' %}" class="leave-action-btn" style="background: linear-gradient(135deg, #10b981, #059669);">
+                    <i class="fas fa-calendar-plus me-2"></i>
+                    طلب إجازة جديد
+                </a>
+                
+                <a href="{% url 'leaves:leave_list' %}" class="leave-action-btn" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">
+                    <i class="fas fa-list me-2"></i>
+                    عرض جميع الطلبات
+                </a>
+                
+                <a href="{% url 'leaves:balance_report' %}" class="leave-action-btn" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    تقرير الأرصدة
+                </a>
+                
+                <a href="{% url 'leaves:leave_types' %}" class="leave-action-btn" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                    <i class="fas fa-cogs me-2"></i>
+                    أنواع الإجازات
+                </a>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-list-alt me-2"></i>
+                    أنواع الإجازات
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for leave_type in leave_types %}
+                <div class="leave-type-item">
+                    <div>
+                        <h6 class="mb-1">{{ leave_type.name }}</h6>
+                        <small class="text-muted">{{ leave_type.max_days }} يوم كحد أقصى</small>
+                    </div>
+                    <div>
+                        <span class="badge bg-primary">{{ leave_type.requests_count|default:0 }}</span>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-3">
+                    <i class="fas fa-list-alt fa-2x mb-2 opacity-50"></i>
+                    <p>لا توجد أنواع إجازات</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    آخر طلبات الإجازات
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for request in recent_requests %}
+                <div class="leave-request-card">
+                    <div class="row align-items-center">
+                        <div class="col-md-1">
+                            <div class="text-center">
+                                <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <i class="fas fa-user"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <h6 class="mb-1">{{ request.employee.get_full_name }}</h6>
+                            <small class="text-muted">{{ request.leave_type.name }}</small>
+                        </div>
+                        <div class="col-md-3">
+                            <small class="text-muted">من:</small>
+                            <div>{{ request.start_date|date:"Y/m/d" }}</div>
+                            <small class="text-muted">إلى:</small>
+                            <div>{{ request.end_date|date:"Y/m/d" }}</div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <div class="fw-bold">{{ request.total_days }}</div>
+                                <small class="text-muted">يوم</small>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            {% if request.status == 'pending' %}
+                                <span class="leave-status-badge status-pending">في الانتظار</span>
+                            {% elif request.status == 'approved' %}
+                                <span class="leave-status-badge status-approved">معتمد</span>
+                            {% elif request.status == 'rejected' %}
+                                <span class="leave-status-badge status-rejected">مرفوض</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if request.reason %}
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <small class="text-muted">السبب:</small>
+                            <p class="mb-0">{{ request.reason|truncatewords:15 }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-calendar-alt fa-3x mb-3 opacity-50"></i>
+                    <p>لا توجد طلبات إجازات حديثة</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Additional Statistics -->
+<div class="row mt-4">
+    <div class="col-xl-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    إحصائيات الشهر الحالي
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="mb-2">
+                            <div class="h4 text-primary mb-0">{{ month_requests|default:0 }}</div>
+                            <small class="text-muted">طلبات جديدة</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="mb-2">
+                            <div class="h4 text-success mb-0">{{ month_approved|default:0 }}</div>
+                            <small class="text-muted">معتمدة</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="mb-2">
+                            <div class="h4 text-warning mb-0">{{ month_days|default:0 }}</div>
+                            <small class="text-muted">إجمالي الأيام</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-calendar-check me-2"></i>
+                    الإجازات القادمة
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for upcoming in upcoming_leaves %}
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div>
+                        <h6 class="mb-0">{{ upcoming.employee.get_full_name }}</h6>
+                        <small class="text-muted">{{ upcoming.leave_type.name }}</small>
+                    </div>
+                    <div class="text-end">
+                        <div class="fw-bold">{{ upcoming.start_date|date:"m/d" }}</div>
+                        <small class="text-muted">{{ upcoming.total_days }} يوم</small>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-3">
+                    <i class="fas fa-calendar-check fa-2x mb-2 opacity-50"></i>
+                    <p>لا توجد إجازات قادمة</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Auto-refresh dashboard every 5 minutes
+setInterval(function() {
+    location.reload();
+}, 300000);
+</script>
+{% endblock %}

@@ -1,0 +1,611 @@
+{% extends 'insurance/base.html' %}
+{% load static %}
+
+{% block title %}لوحة تحكم التأمينات{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+    }
+
+    .insurance-card {
+        border-radius: 15px;
+        border: none;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        margin-bottom: 15px;
+        transition: transform 0.3s ease;
+    }
+
+    .insurance-card:hover {
+        transform: translateY(-3px);
+    }
+
+    .expiry-warning {
+        background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+        color: #000;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+
+    .expiry-danger {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+
+    .quick-action-btn {
+        height: 120px;
+        border-radius: 15px;
+        border: none;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+    }
+
+    .quick-action-btn:hover {
+        transform: scale(1.05);
+    }
+
+    .insurance-status {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-weight: bold;
+        font-size: 0.9rem;
+    }
+
+    .status-active {
+        background: #28a745;
+        color: white;
+    }
+
+    .status-expiring {
+        background: #ffc107;
+        color: #000;
+    }
+
+    .status-expired {
+        background: #dc3545;
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">
+            <i class="fas fa-tachometer-alt me-2"></i>
+            لوحة تحكم التأمينات
+        </h1>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row">
+    <div class="col-md-3">
+        <div class="stat-card text-center">
+            <i class="fas fa-users fa-2x mb-3"></i>
+            <div class="stat-number">{{ stats.total_employees }}</div>
+            <div>إجمالي الموظفين</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card text-center">
+            <i class="fas fa-heartbeat fa-2x mb-3"></i>
+            <div class="stat-number">{{ stats.health_insured }}</div>
+            <div>مؤمن صحياً</div>
+            <small>{{ stats.health_coverage }}% تغطية</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card text-center">
+            <i class="fas fa-shield-alt fa-2x mb-3"></i>
+            <div class="stat-number">{{ stats.social_insured }}</div>
+            <div>مؤمن اجتماعياً</div>
+            <small>{{ stats.social_coverage }}% تغطية</small>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card text-center">
+            <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+            <div class="stat-number">{{ stats.expiring_soon }}</div>
+            <div>ينتهي قريباً</div>
+            <small>خلال 30 يوم</small>
+        </div>
+    </div>
+</div>
+
+<!-- Expiry Alerts -->
+{% if expiry_alerts %}
+<div class="row">
+    <div class="col-12">
+        <h3 class="mb-3">
+            <i class="fas fa-bell me-2"></i>
+            تنبيهات انتهاء الصلاحية
+        </h3>
+        {% for alert in expiry_alerts %}
+        <div class="{% if alert.days_left <= 7 %}expiry-danger{% else %}expiry-warning{% endif %}">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <strong>{{ alert.employee_name }}</strong> - {{ alert.insurance_type }}
+                    <br>
+                    <small>{{ alert.policy_details }}</small>
+                </div>
+                <div class="text-end">
+                    <div class="fw-bold">{{ alert.end_date|date:"Y/m/d" }}</div>
+                    <small>{{ alert.days_left }} يوم متبقي</small>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Quick Actions -->
+<div class="row mt-4">
+    <div class="col-12">
+        <h3 class="mb-3">الإجراءات السريعة</h3>
+    </div>
+    <div class="col-md-3">
+        <button class="btn btn-danger quick-action-btn w-100" data-bs-toggle="modal"
+            data-bs-target="#newHealthInsuranceModal">
+            <i class="fas fa-heartbeat fa-2x d-block mb-2"></i>
+            تأمين صحي جديد
+        </button>
+    </div>
+    <div class="col-md-3">
+        <button class="btn btn-warning quick-action-btn w-100" data-bs-toggle="modal"
+            data-bs-target="#newSocialInsuranceModal">
+            <i class="fas fa-shield-alt fa-2x d-block mb-2"></i>
+            تأمين اجتماعي جديد
+        </button>
+    </div>
+    <div class="col-md-3">
+        <a href="{% url 'insurance:providers' %}"
+            class="btn btn-info quick-action-btn w-100 d-flex flex-column justify-content-center align-items-center text-decoration-none">
+            <i class="fas fa-hospital fa-2x mb-2"></i>
+            إدارة المزودين
+        </a>
+    </div>
+    <div class="col-md-3">
+        <a href="{% url 'insurance:reports' %}"
+            class="btn btn-primary quick-action-btn w-100 d-flex flex-column justify-content-center align-items-center text-decoration-none">
+            <i class="fas fa-chart-bar fa-2x mb-2"></i>
+            التقارير
+        </a>
+    </div>
+</div>
+
+<!-- Recent Insurance Records -->
+<div class="row mt-5">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    آخر سجلات التأمين
+                </h5>
+            </div>
+            <div class="card-body">
+                {% for record in recent_records %}
+                <div class="insurance-card">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-3">
+                                <div class="d-flex align-items-center">
+                                    <div
+                                        class="avatar-sm bg-danger rounded-circle d-flex align-items-center justify-content-center me-2">
+                                        <i class="fas fa-user text-white"></i>
+                                    </div>
+                                    <div>
+                                        <div class="fw-bold">{{ record.employee_name }}</div>
+                                        <small class="text-muted">{{ record.employee_code }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="text-center">
+                                    {% if record.insurance_type == 'health' %}
+                                    <i class="fas fa-heartbeat text-danger fa-2x"></i>
+                                    <div class="small">تأمين صحي</div>
+                                    {% else %}
+                                    <i class="fas fa-shield-alt text-warning fa-2x"></i>
+                                    <div class="small">تأمين اجتماعي</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="text-center">
+                                    <div class="fw-bold">{{ record.start_date|date:"Y/m/d" }}</div>
+                                    <small class="text-muted">إلى</small>
+                                    <div class="fw-bold">{{ record.end_date|date:"Y/m/d" }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="text-center">
+                                    {% if record.status == 'active' %}
+                                    <span class="insurance-status status-active">نشط</span>
+                                    {% elif record.status == 'expiring' %}
+                                    <span class="insurance-status status-expiring">ينتهي قريباً</span>
+                                    {% else %}
+                                    <span class="insurance-status status-expired">منتهي</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-info"
+                                        onclick="viewInsurance('{{ record.insurance_type }}', {{ record.id }})"
+                                        title="عرض">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-outline-warning"
+                                        onclick="editInsurance('{{ record.insurance_type }}', {{ record.id }})"
+                                        title="تعديل">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-outline-success"
+                                        onclick="renewInsurance('{{ record.insurance_type }}', {{ record.id }})"
+                                        title="تجديد">
+                                        <i class="fas fa-redo"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-4">
+                    <i class="fas fa-shield-alt fa-2x text-muted mb-2 d-block"></i>
+                    <p class="text-muted">لا توجد سجلات تأمين حديثة</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <!-- Insurance Coverage -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-pie me-2"></i>
+                    نسب التغطية
+                </h6>
+            </div>
+            <div class="card-body">
+                <canvas id="coverageChart" height="200"></canvas>
+            </div>
+        </div>
+
+        <!-- Top Providers -->
+        <div class="card mb-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-hospital me-2"></i>
+                    أهم المزودين
+                </h6>
+            </div>
+            <div class="card-body">
+                {% for provider in top_providers %}
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div>
+                        <div class="fw-bold">{{ provider.provider_name }}</div>
+                        <small class="text-muted">{{ provider.contact_no }}</small>
+                    </div>
+                    <span class="badge bg-danger">{{ provider.employee_count }}</span>
+                </div>
+                {% if not forloop.last %}
+                <hr class="my-2">{% endif %}
+                {% empty %}
+                <p class="text-muted text-center">لا توجد مزودين</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Monthly Premiums -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-money-bill-wave me-2"></i>
+                    الأقساط الشهرية
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <div class="text-danger fw-bold">{{ monthly_premiums.health|floatformat:0 }}</div>
+                        <small class="text-muted">تأمين صحي</small>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-warning fw-bold">{{ monthly_premiums.social|floatformat:0 }}</div>
+                        <small class="text-muted">تأمين اجتماعي</small>
+                    </div>
+                </div>
+                <hr>
+                <div class="text-center">
+                    <div class="h5 text-primary">{{ monthly_premiums.total|floatformat:0 }} ر.س</div>
+                    <small class="text-muted">إجمالي شهري</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Health Insurance Modal -->
+<div class="modal fade" id="newHealthInsuranceModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تأمين صحي جديد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newHealthInsuranceForm">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="health_employee" class="form-label">الموظف *</label>
+                                <select class="form-select" name="employee" id="health_employee" required>
+                                    <option value="">-- اختر الموظف --</option>
+                                    {% for employee in employees %}
+                                    <option value="{{ employee.emp_id }}">{{ employee.full_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="health_provider" class="form-label">مزود الخدمة *</label>
+                                <select class="form-select" name="provider" id="health_provider" required>
+                                    <option value="">-- اختر المزود --</option>
+                                    {% for provider in providers %}
+                                    <option value="{{ provider.provider_id }}">{{ provider.provider_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="health_policy_no" class="form-label">رقم البوليصة *</label>
+                                <input type="text" class="form-control" name="policy_no" id="health_policy_no" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="health_premium" class="form-label">القسط الشهري</label>
+                                <input type="number" class="form-control" name="premium" id="health_premium" step="0.01"
+                                    min="0">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="health_start_date" class="form-label">تاريخ البداية *</label>
+                                <input type="date" class="form-control" name="start_date" id="health_start_date"
+                                    required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="health_end_date" class="form-label">تاريخ النهاية *</label>
+                                <input type="date" class="form-control" name="end_date" id="health_end_date" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="health_dependents" class="form-label">عدد المعالين</label>
+                        <input type="number" class="form-control" name="dependents" id="health_dependents" min="0"
+                            value="0">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-danger" onclick="submitHealthInsurance()">حفظ التأمين</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- New Social Insurance Modal -->
+<div class="modal fade" id="newSocialInsuranceModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">تأمين اجتماعي جديد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="newSocialInsuranceForm">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="social_employee" class="form-label">الموظف *</label>
+                        <select class="form-select" name="employee" id="social_employee" required>
+                            <option value="">-- اختر الموظف --</option>
+                            {% for employee in employees %}
+                            <option value="{{ employee.emp_id }}">{{ employee.full_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="social_gosi_no" class="form-label">رقم التأمينات الاجتماعية *</label>
+                        <input type="text" class="form-control" name="gosi_no" id="social_gosi_no" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="social_start_date" class="form-label">تاريخ البداية *</label>
+                                <input type="date" class="form-control" name="start_date" id="social_start_date"
+                                    required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="social_end_date" class="form-label">تاريخ النهاية</label>
+                                <input type="date" class="form-control" name="end_date" id="social_end_date">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="social_contribution" class="form-label">المساهمة الشهرية</label>
+                        <input type="number" class="form-control" name="contribution" id="social_contribution"
+                            step="0.01" min="0">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-warning" onclick="submitSocialInsurance()">حفظ التأمين</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Set today's date as default
+    document.getElementById('health_start_date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('social_start_date').value = new Date().toISOString().split('T')[0];
+
+    // Coverage Chart
+    const coverageCtx = document.getElementById('coverageChart');
+    if (coverageCtx) {
+        new Chart(coverageCtx.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['تأمين صحي', 'تأمين اجتماعي', 'غير مؤمن'],
+                datasets: [{
+                    data: {{ coverage_data| safe }
+        },
+            backgroundColor: [
+            '#dc3545',
+            '#ffc107',
+            '#6c757d'
+        ]
+            }]
+        },
+    options: {
+        responsive: true,
+            plugins: {
+            legend: {
+                position: 'bottom',
+                    labels: {
+                    font: {
+                        size: 10
+                    }
+                }
+            }
+        }
+    }
+    });
+}
+
+    function submitHealthInsurance() {
+        const form = document.getElementById('newHealthInsuranceForm');
+        const formData = new FormData(form);
+
+        fetch('{% url "insurance:add_health_insurance" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('حدث خطأ: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('حدث خطأ في الاتصال');
+            });
+    }
+
+    function submitSocialInsurance() {
+        const form = document.getElementById('newSocialInsuranceForm');
+        const formData = new FormData(form);
+
+        fetch('{% url "insurance:add_social_insurance" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('حدث خطأ: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('حدث خطأ في الاتصال');
+            });
+    }
+
+    function viewInsurance(type, id) {
+        window.location.href = `{% url "insurance:insurance_detail" "health" 0 %}`.replace('health', type).replace('0', id);
+    }
+
+    function editInsurance(type, id) {
+        // Implement edit functionality
+        alert('سيتم تنفيذ وظيفة التعديل قريباً');
+    }
+
+    function renewInsurance(type, id) {
+        if (confirm('هل تريد تجديد هذا التأمين؟')) {
+            fetch(`{% url "insurance:renew_insurance" "health" 0 %}`.replace('health', type).replace('0', id), {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('حدث خطأ: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('حدث خطأ في الاتصال');
+                });
+        }
+    }
+</script>
+{% endblock %}

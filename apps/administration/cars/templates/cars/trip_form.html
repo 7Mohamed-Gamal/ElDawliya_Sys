@@ -1,0 +1,197 @@
+{% extends 'cars\base.html' %}
+
+{% block title %}{{ title }} - نظام إدارة نشاط النقل{% endblock %}
+
+{% block header %}{{ title }}{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">بيانات الرحلة</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="{{ form.date.id_for_label }}" class="form-label">تاريخ الرحلة</label>
+                                {{ form.date }}
+                                {% if form.date.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.date.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="{{ form.car.id_for_label }}" class="form-label">السيارة</label>
+                                {{ form.car }}
+                                {% if form.car.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.car.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="{{ form.distance.id_for_label }}" class="form-label">المسافة المقطوعة (كم)</label>
+                                {{ form.distance }}
+                                {% if form.distance.errors %}
+                                    <div class="text-danger">
+                                        {% for error in form.distance.errors %}
+                                            {{ error }}
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if form.instance.pk %}
+                            <div class="alert alert-info mt-4">
+                                <p><strong>ملاحظة:</strong> سيتم إعادة حساب التكاليف عند تحديث الرحلة.</p>
+                                
+                                <p><strong>التكاليف الحالية:</strong></p>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <p>تكلفة الوقود: {{ form.instance.fuel_cost|floatformat:2 }} ج.م</p>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <p>تكلفة الصيانة: {{ form.instance.maintenance_cost|floatformat:2 }} ج.م</p>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <p>تكلفة الإهلاك: {{ form.instance.depreciation_cost|floatformat:2 }} ج.م</p>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <p>ربح السائق: {{ form.instance.driver_profit|floatformat:2 }} ج.م</p>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <p>القيمة الضريبية: {{ form.instance.tax_amount|floatformat:2 }} ج.م</p>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <p><strong>الإجمالي: {{ form.instance.final_price|floatformat:2 }} ج.م</strong></p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info mt-4">
+                                <p><strong>ملاحظة:</strong> سيتم حساب التكاليف تلقائيًا عند إضافة الرحلة بناءً على:</p>
+                                <ul>
+                                    <li>معدل استهلاك الوقود للسيارة</li>
+                                    <li>نوع الوقود وأسعار الوقود الحالية</li>
+                                    <li>معدلات الصيانة والإهلاك وربح السائق</li>
+                                    <li>المسافة المقطوعة في هذه الرحلة</li>
+                                </ul>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{% url 'cars:trip_list' %}" class="btn btn-secondary me-md-2">
+                        <i class="bi bi-x-circle"></i> إلغاء
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> حفظ الرحلة
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div class="row mt-4">
+        <div class="col-md-8 mx-auto">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">السيارات النشطة</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>كود السيارة</th>
+                                    <th>اسم السيارة</th>
+                                    <th>نوع السيارة</th>
+                                    <th>نوع الوقود</th>
+                                    <th>معدل استهلاك الوقود</th>
+                                </tr>
+                            </thead>
+                            <tbody id="active-cars">
+                                <!-- سيتم تعبئة هذا الجدول باستخدام JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // تحديث جدول السيارات النشطة
+        const carSelect = document.getElementById('{{ form.car.id_for_label }}');
+        const activeCarsTable = document.getElementById('active-cars');
+        
+        if (carSelect && activeCarsTable) {
+            // عرض معلومات السيارات من القائمة المنسدلة
+            let carsInfo = [];
+            
+            Array.from(carSelect.options).forEach(option => {
+                if (option.value) {
+                    // استخراج معلومات السيارة من نص الخيار
+                    // يفترض أن نص الخيار يحتوي على معلومات السيارة بتنسيق "CAR001 - هيونداي إلنترا (ملاكي)"
+                    const optionText = option.text;
+                    const carCodeMatch = optionText.match(/^([A-Z0-9]+)/);
+                    const carCode = carCodeMatch ? carCodeMatch[1] : '';
+                    
+                    // إضافة السيارة للعرض في الجدول
+                    carsInfo.push({
+                        code: carCode,
+                        name: optionText
+                    });
+                }
+            });
+            
+            // عرض السيارات في الجدول
+            carsInfo.forEach(car => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${car.code}</td>
+                    <td colspan="4">${car.name}</td>
+                `;
+                activeCarsTable.appendChild(row);
+            });
+        }
+        
+        // التحقق من قيمة المسافة (يجب أن تكون موجبة)
+        const distanceInput = document.getElementById('{{ form.distance.id_for_label }}');
+        if (distanceInput) {
+            distanceInput.addEventListener('input', function() {
+                if (this.value < 0) {
+                    this.value = 0;
+                }
+            });
+        }
+        
+        // تنسيق التاريخ
+        const dateInput = document.getElementById('{{ form.date.id_for_label }}');
+        if (dateInput && !dateInput.value) {
+            // وضع تاريخ اليوم إذا لم يكن هناك تاريخ مُحدد
+            dateInput.valueAsDate = new Date();
+        }
+    });
+</script>
+{% endblock %}

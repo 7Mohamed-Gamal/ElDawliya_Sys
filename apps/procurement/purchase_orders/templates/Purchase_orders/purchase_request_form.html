@@ -1,0 +1,753 @@
+{% extends 'Purchase_orders/base_purchase_orders.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}إنشاء طلب شراء - نظام الدولية{% endblock %}
+
+{% block page_title %}إنشاء طلب شراء جديد{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Purchase_orders:dashboard' %}">طلبات الشراء</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Purchase_orders:purchase_request_list' %}">قائمة طلبات الشراء</a></li>
+<li class="breadcrumb-item active">إنشاء طلب جديد</li>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-end mb-4">
+    <a href="{% url 'Purchase_orders:purchase_request_list' %}" class="btn btn-secondary">
+        <i class="fas fa-arrow-left me-1"></i> العودة للقائمة
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="card-title mb-0">بيانات طلب الشراء</h5>
+    </div>
+    <div class="card-body">
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ form.request_number.id_for_label }}" class="form-label">رقم الطلب</label>
+                        {{ form.request_number|add_class:"form-control"|attr:"readonly:readonly" }}
+                        {% if form.request_number.errors %}
+                        <div class="text-danger">
+                            {% for error in form.request_number.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="{{ form.vendor.id_for_label }}" class="form-label">المورد</label>
+                        {{ form.vendor|add_class:"form-select" }}
+                        {% if form.vendor.errors %}
+                        <div class="text-danger">
+                            {% for error in form.vendor.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label for="{{ form.notes.id_for_label }}" class="form-label">ملاحظات</label>
+                {{ form.notes|add_class:"form-control" }}
+                {% if form.notes.errors %}
+                <div class="text-danger">
+                    {% for error in form.notes.errors %}
+                    {{ error }}
+                    {% endfor %}
+                </div>
+                {% endif %}
+                <div class="form-text">يمكنك إضافة أي ملاحظات أو تفاصيل إضافية متعلقة بالطلب</div>
+            </div>
+
+            <!-- قسم اختيار الأصناف -->
+            <div class="card mt-4">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list me-2"></i>اختيار أصناف قطع الغيار
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <!-- شريط البحث -->
+                    <div class="row mb-3">
+                        <div class="col-md-8">
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <input type="text" id="searchProducts" class="form-control" placeholder="ابحث عن قطع الغيار بالاسم أو الكود...">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <select id="categoryFilter" class="form-select">
+                                <option value="">جميع التصنيفات</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- جدول قطع الغيار المتاحة -->
+                    <div class="table-responsive mb-3" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-striped table-hover" id="productsTable">
+                            <thead class="table-dark sticky-top">
+                                <tr>
+                                    <th width="5%">اختيار</th>
+                                    <th width="15%">كود الصنف</th>
+                                    <th width="30%">اسم الصنف</th>
+                                    <th width="15%">التصنيف</th>
+                                    <th width="10%">الوحدة</th>
+                                    <th width="10%">المخزون الحالي</th>
+                                    <th width="10%">الحد الأدنى</th>
+                                    <th width="5%">الحالة</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productsTableBody">
+                                <tr>
+                                    <td colspan="8" class="text-center">
+                                        <div class="spinner-border text-primary" role="status">
+                                            <span class="visually-hidden">جاري التحميل...</span>
+                                        </div>
+                                        <p class="mt-2">جاري تحميل قطع الغيار...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- الأصناف المختارة -->
+                    <div class="selected-items-section">
+                        <h6 class="mb-3">
+                            <i class="fas fa-shopping-cart me-2"></i>الأصناف المختارة للطلب
+                            <span class="badge bg-primary ms-2" id="selectedItemsCount">0</span>
+                        </h6>
+
+                        <div id="selectedItemsContainer">
+                            <div class="alert alert-info text-center" id="noItemsMessage">
+                                <i class="fas fa-info-circle me-2"></i>
+                                لم يتم اختيار أي أصناف بعد. اختر الأصناف من الجدول أعلاه.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between mt-4">
+                <button type="reset" class="btn btn-secondary">
+                    <i class="fas fa-undo me-1"></i> إعادة تعيين
+                </button>
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                    <i class="fas fa-save me-1"></i> حفظ الطلب
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .selected-item-card {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 10px;
+        background-color: #f8f9fa;
+        transition: all 0.3s ease;
+    }
+
+    .selected-item-card:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .product-status-badge {
+        font-size: 0.75rem;
+    }
+
+    .stock-warning {
+        color: #dc3545;
+        font-weight: bold;
+    }
+
+    .stock-normal {
+        color: #28a745;
+        font-weight: bold;
+    }
+
+    .quantity-input {
+        max-width: 120px;
+    }
+
+    .remove-item-btn {
+        border: none;
+        background: none;
+        color: #dc3545;
+        font-size: 1.2rem;
+        cursor: pointer;
+        padding: 0;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+
+    .remove-item-btn:hover {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: rgba(0,123,255,0.1);
+    }
+
+    .sticky-top {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    /* Fix for table header visibility */
+    .table-dark th {
+        background-color: #212529 !important;
+        color: #ffffff !important;
+        border-color: #32383e !important;
+    }
+
+    .table-dark.sticky-top th {
+        background-color: #212529 !important;
+        color: #ffffff !important;
+    }
+
+    /* Ensure proper contrast for table headers */
+    #productsTable thead.table-dark th {
+        background-color: #343a40 !important;
+        color: #ffffff !important;
+        font-weight: 600;
+        text-align: center;
+        vertical-align: middle;
+        border-bottom: 2px solid #dee2e6;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    let allProducts = [];
+    let selectedItems = [];
+    let categories = [];
+
+    // تحميل البيانات عند تحميل الصفحة
+    loadProducts();
+    loadCategories();
+
+    // تحميل قطع الغيار
+    function loadProducts() {
+        $.ajax({
+            url: '{% url "Purchase_orders:get_products_api" %}',
+            method: 'GET',
+            success: function(response) {
+                allProducts = response.results || response.products || [];
+                displayProducts(allProducts);
+            },
+            error: function(xhr, status, error) {
+                console.error('خطأ في تحميل قطع الغيار:', error);
+                $('#productsTableBody').html(`
+                    <tr>
+                        <td colspan="8" class="text-center text-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            حدث خطأ في تحميل قطع الغيار. يرجى المحاولة مرة أخرى.
+                        </td>
+                    </tr>
+                `);
+            }
+        });
+    }
+
+    // تحميل التصنيفات
+    function loadCategories() {
+        $.ajax({
+            url: '/inventory/api/get-categories/',
+            method: 'GET',
+            success: function(response) {
+                categories = response.categories || [];
+                populateCategoryFilter();
+            },
+            error: function(xhr, status, error) {
+                console.error('خطأ في تحميل التصنيفات:', error);
+            }
+        });
+    }
+
+    // ملء قائمة التصنيفات
+    function populateCategoryFilter() {
+        const categorySelect = $('#categoryFilter');
+        categorySelect.empty().append('<option value="">جميع التصنيفات</option>');
+
+        categories.forEach(function(category) {
+            categorySelect.append(`<option value="${category.id}">${category.name}</option>`);
+        });
+    }
+
+    // عرض قطع الغيار في الجدول
+    function displayProducts(products) {
+        const tbody = $('#productsTableBody');
+        tbody.empty();
+
+        if (products.length === 0) {
+            tbody.html(`
+                <tr>
+                    <td colspan="8" class="text-center">
+                        <i class="fas fa-search me-2"></i>
+                        لا توجد قطع غيار متاحة أو لا توجد نتائج للبحث.
+                    </td>
+                </tr>
+            `);
+            return;
+        }
+
+        products.forEach(function(product) {
+            const isSelected = selectedItems.some(item => item.product_id === product.product_id);
+            const stockStatus = getStockStatus(product);
+            const stockClass = stockStatus.isLow ? 'stock-warning' : 'stock-normal';
+
+            const row = `
+                <tr data-product-id="${product.product_id}" ${isSelected ? 'class="table-secondary"' : ''}>
+                    <td>
+                        <input type="checkbox" class="form-check-input product-checkbox"
+                               value="${product.product_id}" ${isSelected ? 'checked disabled' : ''}>
+                    </td>
+                    <td><strong>${product.product_id}</strong></td>
+                    <td>${product.product_name || product.name || ''}</td>
+                    <td>${product.cat_name || product.category_name || '-'}</td>
+                    <td>${product.unit_name || '-'}</td>
+                    <td class="${stockClass}">${product.qte_in_stock || product.quantity || 0}</td>
+                    <td>${product.minimum_threshold || '-'}</td>
+                    <td>
+                        <span class="badge ${stockStatus.badgeClass} product-status-badge">
+                            ${stockStatus.text}
+                        </span>
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+    }
+
+    // تحديد حالة المخزون
+    function getStockStatus(product) {
+        const currentStock = parseFloat(product.qte_in_stock || product.quantity || 0);
+        const minThreshold = parseFloat(product.minimum_threshold || 0);
+
+        if (currentStock <= 0) {
+            return { isLow: true, text: 'نفد المخزون', badgeClass: 'bg-danger' };
+        } else if (minThreshold > 0 && currentStock <= minThreshold) {
+            return { isLow: true, text: 'مخزون منخفض', badgeClass: 'bg-warning' };
+        } else {
+            return { isLow: false, text: 'متوفر', badgeClass: 'bg-success' };
+        }
+    }
+
+    // البحث في قطع الغيار
+    $('#searchProducts').on('input', function() {
+        const searchTerm = $(this).val().toLowerCase();
+        const categoryFilter = $('#categoryFilter').val();
+        filterProducts(searchTerm, categoryFilter);
+    });
+
+    // فلترة حسب التصنيف
+    $('#categoryFilter').on('change', function() {
+        const categoryFilter = $(this).val();
+        const searchTerm = $('#searchProducts').val().toLowerCase();
+        filterProducts(searchTerm, categoryFilter);
+    });
+
+    // فلترة قطع الغيار
+    function filterProducts(searchTerm, categoryFilter) {
+        let filteredProducts = allProducts;
+
+        if (searchTerm) {
+            filteredProducts = filteredProducts.filter(product => {
+                const productName = (product.product_name || product.name || '').toLowerCase();
+                const productId = (product.product_id || '').toLowerCase();
+                return productName.includes(searchTerm) || productId.includes(searchTerm);
+            });
+        }
+
+        if (categoryFilter) {
+            filteredProducts = filteredProducts.filter(product => {
+                return product.cat_id == categoryFilter || product.category_id == categoryFilter;
+            });
+        }
+
+        displayProducts(filteredProducts);
+    }
+
+    // اختيار/إلغاء اختيار صنف
+    $(document).on('change', '.product-checkbox', function() {
+        const productId = $(this).val();
+        const isChecked = $(this).is(':checked');
+        const isDisabled = $(this).is(':disabled');
+
+        console.log('=== CHECKBOX CHANGE EVENT ==='); // Debug log
+        console.log('Product ID:', productId); // Debug log
+        console.log('Is checked:', isChecked); // Debug log
+        console.log('Is disabled:', isDisabled); // Debug log
+        console.log('Current selectedItems:', selectedItems.map(item => item.product_id)); // Debug log
+
+        // تجاهل التغيير إذا كان الـ checkbox معطلاً
+        if (isDisabled) {
+            console.log('Checkbox is disabled, ignoring change event'); // Debug log
+            return;
+        }
+
+        if (isChecked) {
+            console.log('Checkbox checked, calling addProductToSelection'); // Debug log
+            addProductToSelection(productId);
+        } else {
+            console.log('Checkbox unchecked, calling removeProductFromSelection'); // Debug log
+            removeProductFromSelection(productId);
+        }
+
+        console.log('=== CHECKBOX CHANGE EVENT END ==='); // Debug log
+    });
+
+    // إضافة صنف للاختيار
+    function addProductToSelection(productId) {
+        console.log('=== ADD PRODUCT START ==='); // Debug log
+        console.log('Adding product to selection:', productId); // Debug log
+        console.log('Current selectedItems count:', selectedItems.length); // Debug log
+        console.log('Current selectedItems:', selectedItems.map(item => item.product_id)); // Debug log
+
+        const product = allProducts.find(p => p.product_id === productId);
+        if (!product) {
+            console.error('Product not found in allProducts:', productId); // Debug log
+            console.error('Available products:', allProducts.map(p => p.product_id)); // Debug log
+            return;
+        }
+
+        // التحقق من عدم وجود الصنف مسبقاً
+        const alreadySelected = selectedItems.some(item => item.product_id === productId);
+        console.log('Product already selected:', alreadySelected); // Debug log
+
+        if (alreadySelected) {
+            console.warn('Product already selected, skipping:', productId); // Debug log
+            return;
+        }
+
+        const selectedItem = {
+            product_id: product.product_id,
+            product_name: product.product_name || product.name,
+            unit_name: product.unit_name || '',
+            current_stock: product.qte_in_stock || product.quantity || 0,
+            minimum_threshold: product.minimum_threshold || 0,
+            quantity_requested: 1,
+            notes: ''
+        };
+
+        selectedItems.push(selectedItem);
+        console.log('Product added to selection. Total selected:', selectedItems.length); // Debug log
+        console.log('Updated selectedItems:', selectedItems.map(item => item.product_id)); // Debug log
+
+        console.log('Calling updateSelectedItemsDisplay...'); // Debug log
+        updateSelectedItemsDisplay();
+
+        console.log('Calling updateProductTableSelection...'); // Debug log
+        updateProductTableSelection();
+
+        console.log('=== ADD PRODUCT END ==='); // Debug log
+    }
+
+    // إزالة صنف من الاختيار
+    function removeProductFromSelection(productId) {
+        console.log('=== REMOVE PRODUCT START ==='); // Debug log
+        console.log('Removing product from selection:', productId); // Debug log
+        console.log('Selected items before removal:', selectedItems.length); // Debug log
+        console.log('Items before:', selectedItems.map(item => item.product_id)); // Debug log
+
+        // التحقق من وجود الصنف في المصفوفة
+        const itemExists = selectedItems.some(item => item.product_id === productId);
+        console.log('Item exists in array:', itemExists); // Debug log
+
+        if (!itemExists) {
+            console.warn('Product not found in selectedItems array:', productId);
+            return;
+        }
+
+        // إزالة الصنف من المصفوفة
+        const originalLength = selectedItems.length;
+        selectedItems = selectedItems.filter(item => item.product_id !== productId);
+        const newLength = selectedItems.length;
+
+        console.log('Selected items after removal:', newLength); // Debug log
+        console.log('Items after:', selectedItems.map(item => item.product_id)); // Debug log
+        console.log('Removal successful:', originalLength > newLength); // Debug log
+
+        // تحديث العرض
+        console.log('Calling updateSelectedItemsDisplay...'); // Debug log
+        updateSelectedItemsDisplay();
+
+        console.log('Calling updateProductTableSelection...'); // Debug log
+        updateProductTableSelection();
+
+        // التأكد من إعادة تمكين الـ checkbox (إضافي للتأكد)
+        setTimeout(function() {
+            const checkbox = $(`.product-checkbox[value="${productId}"]`);
+            if (checkbox.length > 0) {
+                const isStillSelected = selectedItems.some(item => item.product_id === productId);
+                if (!isStillSelected) {
+                    checkbox.prop('checked', false).prop('disabled', false);
+                    checkbox.closest('tr').removeClass('table-secondary');
+                    console.log('Checkbox re-enabled for product (delayed check):', productId); // Debug log
+                } else {
+                    console.warn('Product still in selectedItems, not re-enabling checkbox:', productId);
+                }
+            } else {
+                console.warn('Checkbox not found for product:', productId); // Debug log
+            }
+        }, 50);
+
+        console.log('=== REMOVE PRODUCT END ==='); // Debug log
+    }
+
+    // تحديث عرض الأصناف المختارة
+    function updateSelectedItemsDisplay() {
+        const container = $('#selectedItemsContainer');
+        const countBadge = $('#selectedItemsCount');
+        const noItemsMessage = $('#noItemsMessage');
+
+        console.log('Updating selected items display. Count:', selectedItems.length); // Debug log
+        console.log('Container found:', container.length > 0); // Debug log
+        console.log('Current cards in container:', container.find('.selected-item-card').length); // Debug log
+
+        // تحديث عداد الأصناف المختارة
+        countBadge.text(selectedItems.length);
+
+        // إزالة جميع البطاقات الموجودة بطريقة أكثر قوة
+        container.find('.selected-item-card').each(function() {
+            $(this).remove();
+        });
+
+        // التأكد من إزالة جميع البطاقات
+        container.children('.selected-item-card').remove();
+
+        if (selectedItems.length === 0) {
+            noItemsMessage.show();
+            console.log('No items selected, showing no items message'); // Debug log
+            console.log('Cards remaining after removal:', container.find('.selected-item-card').length); // Debug log
+            return;
+        }
+
+        noItemsMessage.hide();
+
+        selectedItems.forEach(function(item, index) {
+            const stockStatus = item.current_stock <= item.minimum_threshold ? 'stock-warning' : 'stock-normal';
+
+            const itemCard = `
+                <div class="selected-item-card" data-product-id="${item.product_id}">
+                    <div class="row align-items-center">
+                        <div class="col-md-3">
+                            <strong>${item.product_id}</strong><br>
+                            <small class="text-muted">${item.product_name}</small>
+                        </div>
+                        <div class="col-md-2">
+                            <small class="text-muted">المخزون الحالي:</small><br>
+                            <span class="${stockStatus}">${item.current_stock} ${item.unit_name}</span>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small">الكمية المطلوبة *</label>
+                            <input type="number" class="form-control quantity-input"
+                                   name="items[${index}][quantity_requested]"
+                                   value="${item.quantity_requested}"
+                                   min="0.01" step="0.01" required
+                                   data-product-id="${item.product_id}">
+                            <input type="hidden" name="items[${index}][product_id]" value="${item.product_id}">
+                        </div>
+                        <div class="col-md-1">
+                            <small class="text-muted">الوحدة:</small><br>
+                            <span class="badge bg-info">${item.unit_name || 'غير محدد'}</span>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small">ملاحظات</label>
+                            <input type="text" class="form-control"
+                                   name="items[${index}][notes]"
+                                   value="${item.notes}"
+                                   placeholder="ملاحظات اختيارية..."
+                                   data-product-id="${item.product_id}">
+                        </div>
+                        <div class="col-md-1 text-end">
+                            <button type="button" class="remove-item-btn"
+                                    data-product-id="${item.product_id}"
+                                    title="إزالة الصنف">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            container.append(itemCard);
+            console.log('Appended card for product:', item.product_id); // Debug log
+        });
+
+        console.log('Selected items display updated. Cards created:', selectedItems.length); // Debug log
+        console.log('Final cards in container:', container.find('.selected-item-card').length); // Debug log
+
+        // التحقق من أن البطاقات تم إنشاؤها بشكل صحيح
+        if (selectedItems.length !== container.find('.selected-item-card').length) {
+            console.error('Mismatch between selectedItems and displayed cards!');
+            console.error('Expected:', selectedItems.length, 'Actual:', container.find('.selected-item-card').length);
+        }
+    }
+
+    // تحديث اختيار الأصناف في الجدول
+    function updateProductTableSelection() {
+        console.log('=== UPDATE TABLE SELECTION START ==='); // Debug log
+        console.log('Updating table selection for', selectedItems.length, 'selected items'); // Debug log
+
+        let updatedCount = 0;
+        $('.product-checkbox').each(function() {
+            const productId = $(this).val();
+            const isSelected = selectedItems.some(item => item.product_id === productId);
+            const row = $(this).closest('tr');
+            const wasChecked = $(this).is(':checked');
+            const wasDisabled = $(this).is(':disabled');
+
+            // تحديث حالة الـ checkbox
+            $(this).prop('checked', isSelected);
+
+            // تعطيل الـ checkbox فقط إذا كان مختاراً
+            $(this).prop('disabled', isSelected);
+
+            // تحديث مظهر الصف
+            if (isSelected) {
+                row.addClass('table-secondary');
+            } else {
+                row.removeClass('table-secondary');
+            }
+
+            // تسجيل التغييرات للتشخيص
+            if (wasChecked !== isSelected || wasDisabled !== isSelected) {
+                console.log(`Updated checkbox for ${productId}: checked ${wasChecked}->${isSelected}, disabled ${wasDisabled}->${isSelected}`);
+                updatedCount++;
+            }
+        });
+
+        console.log(`Updated ${updatedCount} checkboxes. Selected items count:`, selectedItems.length); // Debug log
+        console.log('=== UPDATE TABLE SELECTION END ==='); // Debug log
+    }
+
+    // إزالة صنف من الأصناف المختارة
+    $(document).on('click', '.remove-item-btn', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const productId = $(this).data('product-id');
+        console.log('=== REMOVE BUTTON CLICKED ==='); // Debug log
+        console.log('Remove button clicked for product:', productId); // Debug log
+
+        if (productId) {
+            // استدعاء دالة الإزالة الرئيسية
+            removeProductFromSelection(productId);
+
+            // فحص احتياطي للتأكد من إزالة البطاقة
+            setTimeout(function() {
+                const remainingCard = $(`.selected-item-card[data-product-id="${productId}"]`);
+                if (remainingCard.length > 0) {
+                    console.warn('Card still exists after removal, forcing DOM removal'); // Debug log
+                    remainingCard.fadeOut(300, function() {
+                        $(this).remove();
+
+                        // تحديث العداد والرسائل يدوياً
+                        const currentCount = $('#selectedItemsContainer .selected-item-card').length;
+                        $('#selectedItemsCount').text(currentCount);
+
+                        if (currentCount === 0) {
+                            $('#noItemsMessage').show();
+                        }
+
+                        // إعادة تمكين الـ checkbox يدوياً
+                        const checkbox = $(`.product-checkbox[value="${productId}"]`);
+                        if (checkbox.length > 0) {
+                            checkbox.prop('checked', false).prop('disabled', false);
+                            checkbox.closest('tr').removeClass('table-secondary');
+                            console.log('Manually re-enabled checkbox for:', productId);
+                        }
+                    });
+                } else {
+                    console.log('Card successfully removed by primary method'); // Debug log
+                }
+            }, 150);
+
+        } else {
+            console.error('Product ID not found for remove button');
+        }
+
+        console.log('=== REMOVE BUTTON CLICKED END ==='); // Debug log
+    });
+
+    // تحديث الكمية في البيانات
+    $(document).on('input', '.quantity-input', function() {
+        const productId = $(this).data('product-id');
+        const quantity = parseFloat($(this).val()) || 0;
+
+        const item = selectedItems.find(item => item.product_id === productId);
+        if (item) {
+            item.quantity_requested = quantity;
+        }
+    });
+
+    // تحديث الملاحظات في البيانات
+    $(document).on('input', 'input[name*="[notes]"]', function() {
+        const productId = $(this).data('product-id');
+        const notes = $(this).val();
+
+        const item = selectedItems.find(item => item.product_id === productId);
+        if (item) {
+            item.notes = notes;
+        }
+    });
+
+    // التحقق من صحة النموذج قبل الإرسال
+    $('form').on('submit', function(e) {
+        if (selectedItems.length === 0) {
+            e.preventDefault();
+            alert('يرجى اختيار صنف واحد على الأقل لطلب الشراء.');
+            return false;
+        }
+
+        // التحقق من صحة الكميات
+        let hasInvalidQuantity = false;
+        $('.quantity-input').each(function() {
+            const quantity = parseFloat($(this).val()) || 0;
+            if (quantity <= 0) {
+                hasInvalidQuantity = true;
+                $(this).addClass('is-invalid');
+            } else {
+                $(this).removeClass('is-invalid');
+            }
+        });
+
+        if (hasInvalidQuantity) {
+            e.preventDefault();
+            alert('يرجى إدخال كميات صحيحة لجميع الأصناف المختارة.');
+            return false;
+        }
+
+        return true;
+    });
+});
+</script>
+{% endblock %}

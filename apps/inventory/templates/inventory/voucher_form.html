@@ -1,0 +1,1257 @@
+{% extends "inventory/base_inventory.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}
+{% if form.instance.voucher_number %}
+    {% trans "تعديل إذن" %}: {{ form.instance.voucher_number }}
+{% else %}
+    {% if voucher_type == 'إذن اضافة' %}
+        {% trans "إضافة إذن اضافة جديد" %}
+    {% elif voucher_type == 'إذن صرف' %}
+        {% trans "إضافة إذن صرف جديد" %}
+    {% elif voucher_type == 'اذن مرتجع عميل' %}
+        {% trans "إضافة إذن مرتجع عميل جديد" %}
+    {% elif voucher_type == 'إذن مرتجع مورد' %}
+        {% trans "إضافة إذن مرتجع مورد جديد" %}
+    {% else %}
+        {% trans "إضافة إذن جديد" %}
+    {% endif %}
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- العنوان والأزرار -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        {% if form.instance.voucher_number %}
+            <h1 class="h3 mb-0 text-gray-800">{% trans "تعديل إذن" %}: {{ form.instance.voucher_number }}</h1>
+        {% else %}
+            {% if voucher_type == 'إذن اضافة' %}
+                <h1 class="h3 mb-0 text-gray-800">{% trans "إذن اضافة جديد" %}</h1>
+            {% elif voucher_type == 'إذن صرف' %}
+                <h1 class="h3 mb-0 text-gray-800">{% trans "إذن صرف جديد" %}</h1>
+            {% elif voucher_type == 'اذن مرتجع عميل' %}
+                <h1 class="h3 mb-0 text-gray-800">{% trans "إذن مرتجع عميل جديد" %}</h1>
+            {% elif voucher_type == 'إذن مرتجع مورد' %}
+                <h1 class="h3 mb-0 text-gray-800">{% trans "إذن مرتجع مورد جديد" %}</h1>
+            {% else %}
+                <h1 class="h3 mb-0 text-gray-800">{% trans "إذن جديد" %}</h1>
+            {% endif %}
+        {% endif %}
+        <div>
+            <a href="{% url 'inventory:voucher_list' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> {% trans "العودة للقائمة" %}
+            </a>
+        </div>
+    </div>
+
+    <!-- نموذج الإذن -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">{% trans "بيانات الإذن" %}</h6>
+        </div>
+        <div class="card-body">
+            <form method="post" id="voucher-form">
+                {% csrf_token %}
+                <!-- تعليمات استخدام النموذج -->
+                <div class="alert alert-info mb-4">
+                    <h5><i class="fas fa-info-circle"></i> تعليمات استخدام</h5>
+                    <ul class="mb-0">
+                        <li>يمكنك البحث عن الصنف بإدخال الكود مباشرة في حقل كود الصنف.</li>
+                        <li>يمكنك استخدام قسم البحث والفلترة أدناه للبحث عن الأصناف وإضافتها.</li>
+                        <li>يمكنك استخدام قارئ الباركود <i class="fas fa-barcode"></i> للبحث السريع عن الأصناف.</li>
+                        <li>بعد إضافة الصنف، أدخل الكمية المطلوبة.</li>
+                        <li>يمكنك إضافة المزيد من الأصناف بالضغط على زر "إضافة صنف".</li>
+                    </ul>
+                </div>
+
+                {% if form.errors %}
+                <div class="alert alert-danger">
+                    {% for field in form %}
+                        {% for error in field.errors %}
+                            <p>{{ field.label }}: {{ error }}</p>
+                        {% endfor %}
+                    {% endfor %}
+                    {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <input type="hidden" name="voucher_type" id="id_voucher_type" value="{% if voucher_type %}{{ voucher_type }}{% else %}{{ form.instance.voucher_type }}{% endif %}">
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="form-group">
+                            <label for="id_voucher_number">{% trans "رقم الإذن" %}*</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="id_voucher_number" name="voucher_number" value="{{ form.instance.voucher_number|default_if_none:'' }}" required>
+                                {% if not form.instance.voucher_number %}
+                                <button type="button" id="generate-number-btn" class="btn btn-outline-secondary">
+                                    <i class="fas fa-sync-alt"></i>
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="form-group">
+                            <label for="id_date">{% trans "تاريخ الإذن" %}*</label>
+                            <input type="date" class="form-control" id="id_date" name="date" value="{{ form.instance.date|date:'Y-m-d'|default:today }}" required>
+                        </div>
+                    </div>
+
+                    {% if voucher_type == 'إذن اضافة' or form.instance.voucher_type == 'إذن اضافة' %}
+                    <!-- حقول إذن الإضافة -->
+                    <div class="col-md-4 mb-3">
+                        <div class="form-group">
+                            <label for="id_supplier">{% trans "المورد" %}*</label>
+                            <div class="input-group">
+                                <select class="form-select" id="id_supplier" name="supplier" required>
+                                    <option value="">---------</option>
+                                    {% for supplier in suppliers %}
+                                    <option value="{{ supplier.id }}" {% if supplier.id == form.instance.supplier_id %}selected{% endif %}>{{ supplier.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <a href="{% url 'inventory:supplier_add' %}?next={{ request.path }}" class="btn btn-outline-secondary" target="_blank">
+                                    <i class="fas fa-plus"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="form-group">
+                            <label for="id_supplier_voucher_number">{% trans "رقم إذن طلب الشراء" %}*</label>
+                            <input type="text" class="form-control" id="id_supplier_voucher_number" name="supplier_voucher_number" value="{{ form.instance.supplier_voucher_number|default_if_none:'' }}" required>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if voucher_type == 'إذن صرف' or form.instance.voucher_type == 'إذن صرف' %}
+                    <!-- حقول إذن الصرف -->
+                    <div class="col-md-4 mb-3">
+                        <div class="form-group">
+                            <label for="id_department">{% trans "القسم" %}*</label>
+                            <div class="input-group">
+                                <select class="form-select" id="id_department" name="department" required>
+                                    <option value="">---------</option>
+                                    {% for department in departments %}
+                                    <option value="{{ department.id }}" {% if department.id == form.instance.department_id %}selected{% endif %}>{{ department.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <a href="{% url 'inventory:department_add' %}?next={{ request.path }}" class="btn btn-outline-secondary" target="_blank">
+                                    <i class="fas fa-plus"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="form-group">
+                            <label for="id_recipient">{% trans "المستلم" %}*</label>
+                            <input type="text" class="form-control" id="id_recipient" name="recipient" value="{{ form.instance.recipient|default_if_none:'' }}" required>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if voucher_type == 'اذن مرتجع عميل' or form.instance.voucher_type == 'اذن مرتجع عميل' %}
+                    <!-- حقول إذن مرتجع عميل -->
+                    <div class="col-md-4 mb-3">
+                        <div class="form-group">
+                            <label for="id_customer">{% trans "العميل" %}*</label>
+                            <div class="input-group">
+                                <select class="form-select" id="id_customer" name="customer" required>
+                                    <option value="">---------</option>
+                                    {% for customer in customers %}
+                                    <option value="{{ customer.id }}" {% if customer.id == form.instance.customer_id %}selected{% endif %}>{{ customer.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <a href="{% url 'inventory:customer_add' %}?next={{ request.path }}" class="btn btn-outline-secondary" target="_blank">
+                                    <i class="fas fa-plus"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="form-group">
+                            <label for="id_return_voucher_number">{% trans "رقم إذن المرتجع" %}*</label>
+                            <input type="text" class="form-control" id="id_return_voucher_number" name="return_voucher_number" value="{{ form.instance.return_voucher_number|default_if_none:'' }}" required>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if voucher_type == 'إذن مرتجع مورد' or form.instance.voucher_type == 'إذن مرتجع مورد' %}
+                    <!-- حقول إذن مرتجع مورد -->
+                    <div class="col-md-4 mb-3">
+                        <div class="form-group">
+                            <label for="id_supplier">{% trans "المورد" %}*</label>
+                            <div class="input-group">
+                                <select class="form-select" id="id_supplier" name="supplier" required>
+                                    <option value="">---------</option>
+                                    {% for supplier in suppliers %}
+                                    <option value="{{ supplier.id }}" {% if supplier.id == form.instance.supplier_id %}selected{% endif %}>{{ supplier.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <a href="{% url 'inventory:supplier_add' %}?next={{ request.path }}" class="btn btn-outline-secondary" target="_blank">
+                                    <i class="fas fa-plus"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="form-group">
+                            <label for="id_supplier_voucher_number">{% trans "رقم الإذن للمورد" %}*</label>
+                            <input type="text" class="form-control" id="id_supplier_voucher_number" name="supplier_voucher_number" value="{{ form.instance.supplier_voucher_number|default_if_none:'' }}" required>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- حقول مشتركة -->
+                    <div class="col-md-12 mb-3">
+                        <div class="form-group">
+                            <label for="id_notes">{% trans "ملاحظات" %}</label>
+                            <textarea class="form-control" id="id_notes" name="notes" rows="3">{{ form.instance.notes|default_if_none:'' }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- جدول الأصناف -->
+                <div class="card mt-4">
+                    <div class="card-header py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="m-0 font-weight-bold text-primary">{% trans "الأصناف" %}</h6>
+                            <button type="button" id="add-item-btn" class="btn btn-sm btn-primary">
+                                <i class="fas fa-plus"></i> {% trans "إضافة صنف" %}
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="items-table">
+                                <thead>
+                                    <tr>
+                                        <th width="15%">
+                                            {% trans "كود الصنف" %}
+                                            <i class="fas fa-info-circle text-info" data-bs-toggle="tooltip" title="يمكنك البحث عن الصنف بإدخال الكود مباشرة أو استخدام قسم البحث والفلترة أدناه"></i>
+                                        </th>
+                                        <th width="20%">{% trans "اسم الصنف" %}</th>
+                                        <th width="10%">{% trans "الرصيد الحالي" %}</th>
+                                        <th width="15%">{% trans "الوحدة" %}</th>
+
+                                        {% if voucher_type == 'إذن اضافة' or form.instance.voucher_type == 'إذن اضافة' or voucher_type == 'اذن مرتجع عميل' or form.instance.voucher_type == 'اذن مرتجع عميل' %}
+                                        <th width="10%">{% trans "الكمية المضافة" %}*</th>
+                                        {% else %}
+                                        <th width="10%">{% trans "الكمية المنصرفة" %}*</th>
+                                        {% endif %}
+
+                                        {% if voucher_type == 'إذن صرف' or form.instance.voucher_type == 'إذن صرف' %}
+                                        <th width="15%">{% trans "الماكينة" %}</th>
+                                        <th width="15%">{% trans "وحدة الماكينة" %}</th>
+                                        {% endif %}
+
+                                        <th width="5%"></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% if voucher_items %}
+                                        <!-- Hidden management form fields for Django formset -->
+                                        <input type="hidden" name="form-TOTAL_FORMS" value="{{ voucher_items|length }}">
+                                        <input type="hidden" name="form-INITIAL_FORMS" value="{{ voucher_items|length }}">
+                                        <input type="hidden" name="form-MIN_NUM_FORMS" value="0">
+                                        <input type="hidden" name="form-MAX_NUM_FORMS" value="1000">
+
+                                        {% for item in voucher_items %}
+                                            <tr class="item-row">
+                                                <td>
+                                                    <div class="product-code-container">
+                                                        <input type="text" class="form-control product-code" name="form-{{ forloop.counter0 }}-product_code" value="{{ item.product.product_id }}" required>
+                                                        <input type="hidden" class="product-id" name="form-{{ forloop.counter0 }}-product" value="{{ item.product.product_id }}">
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span class="product-name">{{ item.product.name }}</span>
+                                                </td>
+                                                <td>
+                                                    <span class="current-stock">{{ item.product.quantity }}</span>
+                                                </td>
+                                                <td>
+                                                    <span class="unit-name">{{ item.product.unit.name|default_if_none:'' }}</span>
+                                                </td>
+
+                                                {% if form.instance.voucher_type == 'إذن اضافة' or form.instance.voucher_type == 'اذن مرتجع عميل' %}
+                                                <td>
+                                                    <input type="number" class="form-control quantity" name="form-{{ forloop.counter0 }}-quantity" value="{{ item.quantity_added|default_if_none:'0' }}" min="0.01" step="0.01" required>
+                                                </td>
+                                                {% else %}
+                                                <td>
+                                                    <input type="number" class="form-control quantity" name="form-{{ forloop.counter0 }}-quantity" value="{{ item.quantity_disbursed|default_if_none:'0' }}" min="0.01" step="0.01" max="{{ item.product.quantity|default_if_none:'0' }}" required>
+                                                </td>
+                                                {% endif %}
+
+                                                {% if form.instance.voucher_type == 'إذن صرف' %}
+                                                <td>
+                                                    <input type="text" class="form-control machine-name" name="form-{{ forloop.counter0 }}-machine_name" value="{{ item.machine|default_if_none:'' }}">
+                                                </td>
+                                                <td>
+                                                    <input type="text" class="form-control machine-unit" name="form-{{ forloop.counter0 }}-machine_unit" value="{{ item.machine_unit|default_if_none:'' }}">
+                                                </td>
+                                                {% endif %}
+
+                                                <td>
+                                                    <button type="button" class="btn btn-sm btn-danger delete-row">
+                                                        <i class="fas fa-trash"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <!-- Hidden management form fields for Django formset -->
+                                        <input type="hidden" name="form-TOTAL_FORMS" value="1">
+                                        <input type="hidden" name="form-INITIAL_FORMS" value="0">
+                                        <input type="hidden" name="form-MIN_NUM_FORMS" value="0">
+                                        <input type="hidden" name="form-MAX_NUM_FORMS" value="1000">
+
+                                        <tr class="item-row">
+                                            <td>
+                                                <div class="product-code-container">
+                                                    <input type="text" class="form-control product-code" name="form-0-product_code" value="" required>
+                                                    <input type="hidden" class="product-id" name="form-0-product" value="">
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <span class="product-name"></span>
+                                            </td>
+                                            <td>
+                                                <span class="current-stock">0</span>
+                                            </td>
+                                            <td>
+                                                <span class="unit-name"></span>
+                                            </td>
+
+                                            {% if voucher_type == 'إذن اضافة' or form.instance.voucher_type == 'إذن اضافة' or voucher_type == 'اذن مرتجع عميل' or form.instance.voucher_type == 'اذن مرتجع عميل' %}
+                                            <td>
+                                                <input type="number" class="form-control quantity" name="form-0-quantity" value="0" min="0.01" step="0.01" required>
+                                            </td>
+                                            {% else %}
+                                            <td>
+                                                <input type="number" class="form-control quantity" name="form-0-quantity" value="0" min="0.01" step="0.01" max="0" required>
+                                            </td>
+                                            {% endif %}
+
+                                            {% if voucher_type == 'إذن صرف' or form.instance.voucher_type == 'إذن صرف' %}
+                                            <td>
+                                                <input type="text" class="form-control machine-name" name="form-0-machine_name" value="">
+                                            </td>
+                                            <td>
+                                                <input type="text" class="form-control machine-unit" name="form-0-machine_unit" value="">
+                                            </td>
+                                            {% endif %}
+
+                                            <td>
+                                                <button type="button" class="btn btn-sm btn-danger delete-row">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- قسم البحث والفلترة المدمج -->
+                <div class="card mt-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">{% trans "بحث وفلترة الأصناف" %}</h6>
+                    </div>
+                    <div class="card-body">
+                        <!-- قسم البحث والفلترة -->
+                        <div class="search-section mb-3 p-3 bg-light rounded">
+                            <div class="row g-2">
+                                <!-- بحث بالاسم أو الكود -->
+                                <div class="col-md-12 mb-2">
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white">
+                                            <i class="fas fa-search"></i>
+                                        </span>
+                                        <input type="text" id="inline-search-input" class="form-control" placeholder="البحث بالاسم أو الرقم أو التصنيف..." autocomplete="off">
+                                        <button type="button" id="inline-search-btn" class="btn btn-primary">
+                                            بحث
+                                        </button>
+                                        <button type="button" id="inline-barcode-btn" class="btn btn-secondary">
+                                            <i class="fas fa-barcode me-1"></i>مسح الباركود
+                                        </button>
+                                    </div>
+                                    <div class="form-text text-muted">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        يمكنك البحث عن طريق كود الصنف، اسم الصنف، التصنيف أو الوحدة
+                                    </div>
+                                </div>
+
+                                <div class="col-md-12">
+                                    <div class="row g-2">
+                                        <!-- فلتر التصنيف -->
+                                        <div class="col-md-4">
+                                            <label for="inline-category-filter" class="form-label mb-1">التصنيف</label>
+                                            <select id="inline-category-filter" class="form-select">
+                                                <option value="">كل التصنيفات</option>
+                                                <!-- سيتم ملؤها ديناميكياً -->
+                                            </select>
+                                        </div>
+
+                                        <!-- فلتر الوحدة -->
+                                        <div class="col-md-4">
+                                            <label for="inline-unit-filter" class="form-label mb-1">الوحدة</label>
+                                            <select id="inline-unit-filter" class="form-select">
+                                                <option value="">كل الوحدات</option>
+                                                <!-- سيتم ملؤها ديناميكياً -->
+                                            </select>
+                                        </div>
+
+                                        <!-- فلتر حالة المخزون -->
+                                        <div class="col-md-4">
+                                            <label for="inline-stock-filter" class="form-label mb-1">حالة المخزون</label>
+                                            <select id="inline-stock-filter" class="form-select">
+                                                <option value="">كل الحالات</option>
+                                                <option value="available">متوفر</option>
+                                                <option value="out">نفذ</option>
+                                                <option value="low">منخفض</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- عداد نتائج البحث -->
+                        <div class="search-results-counter mb-2 d-flex justify-content-between align-items-center">
+                            <span id="inline-results-count" class="badge bg-info">0 نتيجة</span>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="inline-auto-search-toggle" checked>
+                                <label class="form-check-label" for="inline-auto-search-toggle">بحث تلقائي</label>
+                            </div>
+                        </div>
+
+                        <!-- جدول المنتجات -->
+                        <div class="table-responsive">
+                            <table class="table table-hover table-striped border" id="inline-products-table">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>رقم الصنف</th>
+                                        <th>اسم الصنف</th>
+                                        <th>التصنيف</th>
+                                        <th>الرصيد الحالي</th>
+                                        <th>وحدة القياس</th>
+                                        <th>الإجراءات</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- سيتم ملؤها ديناميكياً -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- رسالة عند عدم وجود نتائج -->
+                        <div id="inline-no-products-message" class="text-center py-5 d-none">
+                            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                            <h6 class="mb-2">لم يتم العثور على أصناف مطابقة</h6>
+                            <p class="text-muted mb-0">جرب تغيير كلمات البحث أو إزالة الفلاتر</p>
+                        </div>
+
+                        <!-- مؤشر التحميل -->
+                        <div id="inline-loading-indicator" class="text-center py-5 d-none">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">جاري التحميل...</span>
+                            </div>
+                            <p class="mt-3 mb-0">جاري تحميل الأصناف...</p>
+                        </div>
+
+                        <!-- أزرار التحكم -->
+                        <div class="mt-3 d-flex justify-content-between">
+                            <button type="button" id="inline-reset-filters" class="btn btn-outline-secondary">
+                                <i class="fas fa-redo me-1"></i>إعادة ضبط الفلاتر
+                            </button>
+                            <button type="button" id="inline-add-selected" class="btn btn-success" disabled>
+                                <i class="fas fa-plus-circle me-1"></i>إضافة الأصناف المحددة
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- زر الحفظ -->
+                <div class="mt-4 text-center">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> {% trans "حفظ الإذن" %}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- نافذة قارئ الباركود -->
+<div class="modal fade" id="barcodeScannerModal" tabindex="-1" aria-labelledby="barcodeScannerModalLabel" aria-hidden="true" dir="rtl">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="barcodeScannerModalLabel">
+                    <i class="fas fa-barcode me-2"></i>مسح الباركود
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- قسم قارئ الباركود -->
+                <div id="barcode-scanner-container">
+                    <div class="text-center py-3">
+                        <div id="barcode-scanner-preview" class="mx-auto mb-3" style="width: 100%; max-width: 400px; height: 300px; border: 1px solid #ddd; background-color: #f8f9fa; position: relative;">
+                            <video id="barcode-scanner-video" style="width: 100%; height: 100%; object-fit: cover;"></video>
+                            <div id="barcode-scanner-loading" class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-light bg-opacity-75">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">جاري التحميل...</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-muted mb-2">ضع الباركود في منتصف الكاميرا للمسح التلقائي</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إغلاق</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* مؤشر التحميل للصفوف */
+    tr.item-row.loading {
+        position: relative;
+        opacity: 0.7;
+    }
+
+    tr.item-row.loading::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.7) url('{% static "inventory/img/loading.gif" %}') no-repeat center center;
+        background-size: 20px;
+        z-index: 1;
+    }
+
+    /* تنسيق حقول الإدخال */
+    .product-code-container {
+        position: relative;
+    }
+
+    /* تنسيق الصفوف عند التركيز */
+    tr.item-row:focus-within {
+        background-color: #f8f9fa;
+    }
+
+    /* تنسيق حقول الإدخال عند التركيز */
+    .product-code:focus, .quantity:focus {
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+
+    /* تنسيق رسائل الخطأ */
+    .row-error-message {
+        font-size: 0.8rem;
+        color: #dc3545;
+        margin-top: 0.25rem;
+    }
+
+    /* تم إزالة تنسيق نافذة البحث */
+
+    /* عداد نتائج البحث */
+    .search-results-counter {
+        font-size: 0.85rem;
+        color: #6c757d;
+        margin-bottom: 0.5rem;
+    }
+
+    /* تحسين مظهر أزرار الإجراءات */
+    .action-buttons .btn {
+        margin-right: 0.25rem;
+    }
+
+    /* تنسيق مؤشر التحميل في نافذة البحث */
+    #loading-indicator .spinner-border {
+        width: 3rem;
+        height: 3rem;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<!-- السكريبتات الأساسية -->
+<script src="{% static 'inventory/js/voucher_form.js' %}"></script>
+
+<!-- سكريبت الفلترة المحسنة والبحث المدمج -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // تحميل ميزات الفلترة المحسنة
+        if (typeof loadEnhancedFilterFeatures === 'function') {
+            loadEnhancedFilterFeatures();
+        }
+
+        // ربط زر مسح الباركود بنافذة الباركود
+        const inlineBarcodeScanBtn = document.getElementById('inline-barcode-btn');
+        const barcodeScannerModal = new bootstrap.Modal(document.getElementById('barcodeScannerModal'));
+
+        // تفعيل زر الباركود في البحث المدمج
+        if (inlineBarcodeScanBtn) {
+            inlineBarcodeScanBtn.addEventListener('click', function() {
+                // فتح نافذة الباركود
+                barcodeScannerModal.show();
+
+                // تفعيل الكاميرا (يتم تنفيذه من خلال سكريبت منفصل)
+                if (typeof initBarcodeScanner === 'function') {
+                    setTimeout(initBarcodeScanner, 500);
+                }
+            });
+        }
+
+        // تهيئة البحث المدمج
+        initInlineSearch();
+    });
+
+    /**
+     * تهيئة البحث المدمج
+     * Initializes the inline search functionality
+     */
+    function initInlineSearch() {
+        // عناصر البحث المدمج
+        const searchInput = document.getElementById('inline-search-input');
+        const searchBtn = document.getElementById('inline-search-btn');
+        const categoryFilter = document.getElementById('inline-category-filter');
+        const unitFilter = document.getElementById('inline-unit-filter');
+        const stockFilter = document.getElementById('inline-stock-filter');
+        const resultsTable = document.getElementById('inline-products-table').querySelector('tbody');
+        const noResultsMsg = document.getElementById('inline-no-products-message');
+        const loadingIndicator = document.getElementById('inline-loading-indicator');
+        const resultsCount = document.getElementById('inline-results-count');
+        const resetFiltersBtn = document.getElementById('inline-reset-filters');
+        const addSelectedBtn = document.getElementById('inline-add-selected');
+        const autoSearchToggle = document.getElementById('inline-auto-search-toggle');
+
+        // التأكد من وجود العناصر
+        if (!searchInput || !searchBtn || !resultsTable) {
+            console.warn('لم يتم العثور على عناصر البحث المدمج');
+            return;
+        }
+
+        // تحميل التصنيفات والوحدات
+        loadCategories();
+        loadUnits();
+
+        // إضافة أحداث البحث
+        searchBtn.addEventListener('click', performSearch);
+
+        // البحث التلقائي عند تغيير الفلاتر
+        if (categoryFilter) categoryFilter.addEventListener('change', autoSearch);
+        if (unitFilter) unitFilter.addEventListener('change', autoSearch);
+        if (stockFilter) stockFilter.addEventListener('change', autoSearch);
+
+        // البحث عند الكتابة إذا كان البحث التلقائي مفعل
+        if (searchInput && autoSearchToggle) {
+            searchInput.addEventListener('input', function() {
+                if (autoSearchToggle.checked) {
+                    // تأخير بسيط لتجنب البحث مع كل حرف
+                    clearTimeout(window.searchTimeout);
+                    window.searchTimeout = setTimeout(performSearch, 300);
+                }
+            });
+        }
+
+        // إعادة ضبط الفلاتر
+        if (resetFiltersBtn) {
+            resetFiltersBtn.addEventListener('click', function() {
+                if (searchInput) searchInput.value = '';
+                if (categoryFilter) categoryFilter.value = '';
+                if (unitFilter) unitFilter.value = '';
+                if (stockFilter) stockFilter.value = '';
+                performSearch();
+            });
+        }
+
+        // إضافة الأصناف المحددة
+        if (addSelectedBtn) {
+            addSelectedBtn.addEventListener('click', addSelectedProducts);
+        }
+
+        // تنفيذ بحث أولي
+        setTimeout(performSearch, 500);
+
+        /**
+         * تنفيذ البحث
+         * Performs the search based on current filters
+         */
+        function performSearch() {
+            // إظهار مؤشر التحميل
+            if (loadingIndicator) {
+                loadingIndicator.classList.remove('d-none');
+            }
+
+            // إخفاء رسالة عدم وجود نتائج
+            if (noResultsMsg) {
+                noResultsMsg.classList.add('d-none');
+            }
+
+            // جمع معايير البحث
+            const searchTerm = searchInput ? searchInput.value.trim() : '';
+            const category = categoryFilter ? categoryFilter.value : '';
+            const unit = unitFilter ? unitFilter.value : '';
+            const stock = stockFilter ? stockFilter.value : '';
+
+            // استدعاء API البحث
+            fetchProducts(searchTerm, category, unit, stock);
+        }
+
+        /**
+         * البحث التلقائي
+         * Auto search when filters change if auto-search is enabled
+         */
+        function autoSearch() {
+            if (autoSearchToggle && autoSearchToggle.checked) {
+                performSearch();
+            }
+        }
+
+        /**
+         * جلب المنتجات من الخادم
+         * Fetches products from the server based on search criteria
+         */
+        function fetchProducts(searchTerm, category, unit, stock) {
+            // الحصول على رمز CSRF
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+            if (!csrfToken) {
+                console.error('لم يتم العثور على رمز CSRF');
+                return;
+            }
+
+            // استدعاء API البحث
+            fetch('/inventory/api/search-products/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken.value
+                },
+                body: JSON.stringify({
+                    search_term: searchTerm,
+                    category_id: category,
+                    unit_id: unit,
+                    stock_status: stock
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`خطأ في الاستجابة: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                // إخفاء مؤشر التحميل
+                if (loadingIndicator) {
+                    loadingIndicator.classList.add('d-none');
+                }
+
+                // طباعة بنية البيانات للتصحيح
+                console.log('بيانات API:', data);
+                if (data.products && data.products.length > 0) {
+                    console.log('نموذج المنتج:', data.products[0]);
+                }
+
+                // عرض النتائج
+                displayResults(data);
+            })
+            .catch(error => {
+                console.error('خطأ في جلب المنتجات:', error);
+
+                // إخفاء مؤشر التحميل
+                if (loadingIndicator) {
+                    loadingIndicator.classList.add('d-none');
+                }
+
+                // عرض رسالة الخطأ
+                if (resultsTable) {
+                    resultsTable.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="text-center text-danger">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                حدث خطأ أثناء جلب البيانات. يرجى المحاولة مرة أخرى.
+                            </td>
+                        </tr>
+                    `;
+                }
+            });
+        }
+
+        /**
+         * عرض نتائج البحث
+         * Displays search results in the table
+         */
+        function displayResults(data) {
+            console.log('عرض النتائج:', data);
+            if (!resultsTable) return;
+
+            // التحقق من وجود نتائج
+            if (!data.success || !data.products || data.products.length === 0) {
+                // عرض رسالة عدم وجود نتائج
+                if (noResultsMsg) {
+                    noResultsMsg.classList.remove('d-none');
+                }
+
+                resultsTable.innerHTML = '';
+
+                // تحديث عداد النتائج
+                if (resultsCount) {
+                    resultsCount.textContent = '0 نتيجة';
+                }
+
+                // تعطيل زر إضافة المحدد
+                if (addSelectedBtn) {
+                    addSelectedBtn.disabled = true;
+                }
+
+                return;
+            }
+
+            // إخفاء رسالة عدم وجود نتائج
+            if (noResultsMsg) {
+                noResultsMsg.classList.add('d-none');
+            }
+
+            // تحديث عداد النتائج
+            if (resultsCount) {
+                resultsCount.textContent = `${data.products.length} نتيجة`;
+            }
+
+            // تفعيل زر إضافة المحدد إذا كانت هناك نتائج
+            if (addSelectedBtn) {
+                addSelectedBtn.disabled = false;
+            }
+
+            // إنشاء صفوف النتائج
+            let html = '';
+            data.products.forEach(product => {
+                // التعامل مع اختلاف أسماء الخصائص في استجابة API
+                const productId = product.id || product.product_id;
+                const productCode = product.code || product.product_code || product.product_id;
+                const productName = product.name || product.product_name;
+                const productQuantity = product.quantity || product.stock_quantity || 0;
+                const categoryName = product.category_name || product.category || '';
+                const unitName = product.unit_name || product.unit || '';
+
+                const stockClass = productQuantity <= 0 ? 'text-danger' : (productQuantity < 5 ? 'text-warning' : 'text-success');
+
+                html += `
+                    <tr data-product-id="${productId}" data-product-code="${productCode}">
+                        <td>${productCode}</td>
+                        <td>${productName}</td>
+                        <td>${categoryName}</td>
+                        <td class="${stockClass}">${productQuantity}</td>
+                        <td>${unitName}</td>
+                        <td>
+                            <div class="d-flex">
+                                <button type="button" class="btn btn-sm btn-success me-1 add-product-btn"
+                                        data-product-id="${productId}"
+                                        data-product-code="${productCode}"
+                                        data-product-name="${productName}"
+                                        data-product-quantity="${productQuantity}"
+                                        data-product-unit="${unitName}">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                                <div class="form-check ms-2 mt-1">
+                                    <input class="form-check-input product-select-checkbox" type="checkbox" value="${productId}">
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            // إضافة النتائج للجدول
+            resultsTable.innerHTML = html;
+
+            // إضافة أحداث للأزرار
+            resultsTable.querySelectorAll('.add-product-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const productData = {
+                        id: this.dataset.productId,
+                        code: this.dataset.productCode,
+                        name: this.dataset.productName,
+                        quantity: this.dataset.productQuantity,
+                        unit: this.dataset.productUnit
+                    };
+
+                    addProductToVoucher(productData);
+                });
+            });
+        }
+
+        /**
+         * تحميل التصنيفات
+         * Loads categories for the filter dropdown
+         */
+        function loadCategories() {
+            if (!categoryFilter) return;
+
+            // الحصول على رمز CSRF
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+            if (!csrfToken) return;
+
+            fetch('/inventory/api/categories/', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken.value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.categories) {
+                    // إضافة التصنيفات للقائمة المنسدلة
+                    data.categories.forEach(category => {
+                        const option = document.createElement('option');
+                        option.value = category.id;
+                        option.textContent = category.name;
+                        categoryFilter.appendChild(option);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('خطأ في تحميل التصنيفات:', error);
+            });
+        }
+
+        /**
+         * تحميل الوحدات
+         * Loads units for the filter dropdown
+         */
+        function loadUnits() {
+            if (!unitFilter) return;
+
+            // الحصول على رمز CSRF
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]');
+            if (!csrfToken) return;
+
+            fetch('/inventory/api/units/', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken.value
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.units) {
+                    // إضافة الوحدات للقائمة المنسدلة
+                    data.units.forEach(unit => {
+                        const option = document.createElement('option');
+                        option.value = unit.id;
+                        option.textContent = unit.name;
+                        unitFilter.appendChild(option);
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('خطأ في تحميل الوحدات:', error);
+            });
+        }
+
+        /**
+         * إضافة منتج للإذن
+         * Adds a product to the voucher
+         */
+        function addProductToVoucher(productData) {
+            // التأكد من وجود بيانات المنتج
+            if (!productData) {
+                console.error('لم يتم توفير بيانات المنتج');
+                return;
+            }
+
+            // طباعة بيانات المنتج للتصحيح
+            console.log('بيانات المنتج الأصلية:', productData);
+
+            // التعامل مع اختلاف أسماء الخصائص
+            const productId = productData.id || productData.product_id || '';
+            const productCode = productData.code || productData.product_code || productData.product_id || '';
+            const productName = productData.name || productData.product_name || '';
+            const productQuantity = productData.quantity || productData.stock_quantity || 0;
+            const unitName = productData.unit || productData.unit_name || '';
+
+            console.log('بيانات المنتج بعد المعالجة:', {
+                productId,
+                productCode,
+                productName,
+                productQuantity,
+                unitName
+            });
+
+            // التحقق من وجود المنتج بالفعل في الإذن
+            const existingRows = document.querySelectorAll('tr.item-row');
+            let existingRow = null;
+
+            existingRows.forEach(row => {
+                const productIdInput = row.querySelector('.product-id');
+                if (productIdInput && productIdInput.value === productId) {
+                    existingRow = row;
+                }
+            });
+
+            if (existingRow) {
+                // إذا كان المنتج موجود بالفعل، زيادة الكمية
+                const quantityInput = existingRow.querySelector('.quantity');
+                if (quantityInput) {
+                    const currentQty = parseFloat(quantityInput.value) || 0;
+                    quantityInput.value = (currentQty + 1).toFixed(2);
+                }
+
+                // تمييز الصف لفترة وجيزة
+                existingRow.classList.add('bg-success', 'bg-opacity-25');
+                setTimeout(() => {
+                    existingRow.classList.remove('bg-success', 'bg-opacity-25');
+                }, 1000);
+
+                // التمرير إلى الصف
+                existingRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                // إضافة صف جديد
+                document.getElementById('add-item-btn').click();
+
+                // الحصول على الصف الجديد (آخر صف)
+                const newRow = document.querySelector('tr.item-row:last-child');
+                if (!newRow) return;
+
+                // تعبئة بيانات المنتج
+                const productIdInput = newRow.querySelector('.product-id');
+                const productCodeInput = newRow.querySelector('.product-code');
+                const productNameSpan = newRow.querySelector('.product-name');
+                const currentStockSpan = newRow.querySelector('.current-stock');
+                const unitNameSpan = newRow.querySelector('.unit-name');
+                const quantityInput = newRow.querySelector('.quantity');
+
+                if (productIdInput) productIdInput.value = productId;
+                if (productCodeInput) productCodeInput.value = productCode;
+                if (productNameSpan) productNameSpan.textContent = productName;
+                if (currentStockSpan) currentStockSpan.textContent = productQuantity;
+                if (unitNameSpan) unitNameSpan.textContent = unitName;
+
+                // تعيين الكمية الافتراضية
+                if (quantityInput) {
+                    quantityInput.value = '1.00';
+
+                    // التحقق من نوع الإذن وتعيين الحد الأقصى للكمية إذا كان إذن صرف
+                    const voucherType = document.getElementById('id_voucher_type').value;
+                    if (voucherType !== 'إذن اضافة' && voucherType !== 'اذن مرتجع عميل') {
+                        quantityInput.max = productQuantity;
+                    }
+                }
+
+                // تمييز الصف الجديد
+                newRow.classList.add('bg-success', 'bg-opacity-25');
+                setTimeout(() => {
+                    newRow.classList.remove('bg-success', 'bg-opacity-25');
+                }, 1000);
+
+                // التمرير إلى الصف الجديد
+                newRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        /**
+         * إضافة المنتجات المحددة
+         * Adds all selected products to the voucher
+         */
+        function addSelectedProducts() {
+            const checkboxes = document.querySelectorAll('.product-select-checkbox:checked');
+            if (checkboxes.length === 0) {
+                alert('يرجى تحديد منتج واحد على الأقل');
+                return;
+            }
+
+            // إضافة كل منتج محدد
+            checkboxes.forEach(checkbox => {
+                const row = checkbox.closest('tr');
+                if (!row) return;
+
+                const addBtn = row.querySelector('.add-product-btn');
+                if (addBtn) {
+                    // استخدام زر الإضافة لإضافة المنتج
+                    addBtn.click();
+
+                    // إلغاء تحديد المربع
+                    checkbox.checked = false;
+                }
+            });
+
+            // تعطيل زر الإضافة بعد الإضافة
+            addSelectedBtn.disabled = true;
+
+            // إعادة تفعيله بعد فترة وجيزة
+            setTimeout(() => {
+                addSelectedBtn.disabled = false;
+            }, 1000);
+        }
+    }
+</script>
+
+<!-- سكريبت قارئ الباركود -->
+<script>
+    /**
+     * تهيئة قارئ الباركود
+     * Initializes the barcode scanner
+     */
+    function initBarcodeScanner() {
+        console.log('تهيئة قارئ الباركود...');
+
+        // التحقق من دعم الكاميرا
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            alert('متصفحك لا يدعم الوصول إلى الكاميرا');
+            return;
+        }
+
+        const videoElement = document.getElementById('barcode-scanner-video');
+        const loadingElement = document.getElementById('barcode-scanner-loading');
+
+        if (!videoElement || !loadingElement) {
+            console.error('لم يتم العثور على عناصر قارئ الباركود');
+            return;
+        }
+
+        // طلب الوصول إلى الكاميرا
+        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+            .then(stream => {
+                videoElement.srcObject = stream;
+                videoElement.play();
+
+                // إخفاء مؤشر التحميل
+                loadingElement.style.display = 'none';
+
+                // بدء قراءة الباركود
+                startBarcodeDetection(videoElement, stream);
+            })
+            .catch(error => {
+                console.error('خطأ في الوصول إلى الكاميرا:', error);
+                alert('تعذر الوصول إلى الكاميرا. يرجى التحقق من الأذونات.');
+
+                // إخفاء مؤشر التحميل وعرض رسالة الخطأ
+                if (loadingElement) {
+                    loadingElement.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            تعذر الوصول إلى الكاميرا. يرجى التحقق من الأذونات.
+                        </div>
+                    `;
+                }
+            });
+    }
+
+    /**
+     * بدء اكتشاف الباركود
+     * Starts barcode detection on the video stream
+     */
+    function startBarcodeDetection(videoElement, stream) {
+        // محاولة تحميل مكتبة قراءة الباركود
+        if (typeof BarcodeDetector !== 'undefined') {
+            // استخدام واجهة برمجة التطبيقات الأصلية للباركود إذا كانت متوفرة
+            const barcodeDetector = new BarcodeDetector({
+                formats: ['qr_code', 'code_39', 'code_128', 'ean_13', 'ean_8', 'upc_a', 'upc_e']
+            });
+
+            // دالة اكتشاف الباركود
+            const detectBarcode = async () => {
+                try {
+                    if (videoElement.readyState === videoElement.HAVE_ENOUGH_DATA) {
+                        const barcodes = await barcodeDetector.detect(videoElement);
+
+                        if (barcodes.length > 0) {
+                            // تم العثور على باركود
+                            handleBarcodeDetected(barcodes[0].rawValue);
+                            return;
+                        }
+                    }
+                } catch (error) {
+                    console.error('خطأ في اكتشاف الباركود:', error);
+                }
+
+                // استمرار في البحث عن الباركود
+                requestAnimationFrame(detectBarcode);
+            };
+
+            // بدء اكتشاف الباركود
+            detectBarcode();
+        } else {
+            // إذا كانت واجهة برمجة التطبيقات الأصلية غير متوفرة، تحميل مكتبة خارجية
+            loadExternalBarcodeLibrary();
+        }
+    }
+
+    /**
+     * تحميل مكتبة خارجية لقراءة الباركود
+     * Loads an external barcode library if the native API is not available
+     */
+    function loadExternalBarcodeLibrary() {
+        console.log('تحميل مكتبة خارجية لقراءة الباركود...');
+
+        // هنا يمكن تحميل مكتبة خارجية مثل QuaggaJS أو ZXing
+        // هذا مجرد مثال، يمكن استبداله بالمكتبة المفضلة
+
+        // إضافة رسالة للمستخدم
+        const loadingElement = document.getElementById('barcode-scanner-loading');
+        if (loadingElement) {
+            loadingElement.innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="fas fa-info-circle me-2"></i>
+                    متصفحك لا يدعم قراءة الباركود الأصلية. جاري تحميل مكتبة بديلة...
+                </div>
+            `;
+        }
+
+        // يمكن إضافة كود تحميل المكتبة هنا
+    }
+
+    /**
+     * معالجة اكتشاف الباركود
+     * Handles a detected barcode
+     */
+    function handleBarcodeDetected(barcodeValue) {
+        console.log('تم اكتشاف باركود:', barcodeValue);
+
+        // إغلاق نافذة الباركود
+        const barcodeScannerModal = bootstrap.Modal.getInstance(document.getElementById('barcodeScannerModal'));
+        if (barcodeScannerModal) {
+            barcodeScannerModal.hide();
+        }
+
+        // إيقاف تشغيل الكاميرا
+        const videoElement = document.getElementById('barcode-scanner-video');
+        if (videoElement && videoElement.srcObject) {
+            videoElement.srcObject.getTracks().forEach(track => track.stop());
+        }
+
+        // البحث في القسم المدمج
+        const searchInput = document.getElementById('inline-search-input');
+        if (searchInput) {
+            searchInput.value = barcodeValue;
+
+            // تنفيذ البحث
+            const searchBtn = document.getElementById('inline-search-btn');
+            if (searchBtn) {
+                searchBtn.click();
+            }
+        }
+    }
+</script>
+
+<!-- تحميل سكريبت الفلترة المحسنة -->
+<script src="{% static 'inventory/js/filter_script_loader.js' %}"></script>
+{% endblock %}

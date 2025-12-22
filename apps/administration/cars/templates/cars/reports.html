@@ -1,0 +1,362 @@
+{% extends 'cars\base.html' %}
+{% load custom_filters %}
+
+{% block title %}التقارير - نظام إدارة نشاط النقل{% endblock %}
+
+{% block header %}التقارير والإحصائيات{% endblock %}
+
+{% block content %}
+    <div class="mb-4">
+        <div class="row text-center">
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="dashboard-stat bg-primary-light">
+                    <h4>إجمالي المسافات</h4>
+                    <div class="stat-value text-primary">{{ total_distance|floatformat:2 }}</div>
+                    <small>كيلومتر</small>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="dashboard-stat bg-success-light">
+                    <h4>إجمالي المستحقات</h4>
+                    <div class="stat-value text-success">{{ total_amount|floatformat:2 }}</div>
+                    <small>جنيه مصري</small>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="dashboard-stat bg-warning-light">
+                    <h4>إجمالي الوقود</h4>
+                    <div class="stat-value text-warning">{{ total_fuel|floatformat:2 }}</div>
+                    <small>جنيه مصري</small>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="dashboard-stat bg-info-light">
+                    <h4>أرباح السائقين</h4>
+                    <div class="stat-value text-info">{{ total_profit|floatformat:2 }}</div>
+                    <small>جنيه مصري</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">تقرير السيارات</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>كود السيارة</th>
+                                    <th>اسم السيارة</th>
+                                    <th>عدد الرحلات</th>
+                                    <th>إجمالي المسافة</th>
+                                    <th>إجمالي المستحق</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for car in car_report %}
+                                    <tr>
+                                        <td>{{ car.car_code }}</td>
+                                        <td>{{ car.car_name }}</td>
+                                        <td>{{ car.trips_count|default:"0" }}</td>
+                                        <td>{{ car.total_distance|default:"0"|floatformat:2 }} كم</td>
+                                        <td>{{ car.total_amount|default:"0"|floatformat:2 }} ج.م</td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="text-center">لا توجد بيانات متاحة</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="chart-container mt-3">
+                        <canvas id="carDistanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">تقرير حسب نوع السيارة</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>نوع السيارة</th>
+                                    <th>عدد السيارات</th>
+                                    <th>عدد الرحلات</th>
+                                    <th>إجمالي المسافة</th>
+                                    <th>إجمالي المستحق</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for type_data in car_type_report %}
+                                    <tr>
+                                        <td>
+                                            {% if type_data.car_type == 'microbus' %}
+                                                ميكروباص
+                                            {% elif type_data.car_type == 'bus' %}
+                                                أتوبيس
+                                            {% elif type_data.car_type == 'passenger' %}
+                                                ركاب
+                                            {% elif type_data.car_type == 'private' %}
+                                                ملاكي
+                                            {% else %}
+                                                {{ type_data.car_type }}
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ type_data.cars_count|default:"0" }}</td>
+                                        <td>{{ type_data.trips_count|default:"0" }}</td>
+                                        <td>{{ type_data.total_distance|default:"0"|floatformat:2 }} كم</td>
+                                        <td>{{ type_data.total_amount|default:"0"|floatformat:2 }} ج.م</td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="text-center">لا توجد بيانات متاحة</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer">
+                    <div class="chart-container mt-3">
+                        <canvas id="carTypeChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mb-4">
+        <div class="card-header bg-success text-white">
+            <h5 class="card-title mb-0">تحليل التكاليف</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-8">
+                        <div class="alert alert-info">
+                            <p class="text-center"><i class="bi bi-info-circle"></i> إضغط على "حساب الكل" لعرض الرسم البياني</p>
+                            <div class="chart-container">
+                                <canvas id="carDistanceChart"></canvas>
+                            </div>
+                        </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="alert alert-info">
+                        <h5><i class="bi bi-lightbulb"></i> تحليل التكاليف</h5>
+                        <p>يوضح الرسم البياني توزيع التكاليف لتشغيل أسطول السيارات:</p>
+                        <ul>
+                            <li>تكلفة الوقود: {{ total_fuel|default:"0"|floatformat:2 }} ج.م</li>
+                            <li>أرباح السائقين: {{ total_profit|default:"0"|floatformat:2 }} ج.م</li>
+                            <li>باقي التكاليف: {{ total_amount|default:"0"|floatformat:2 }} ج.م</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">تقرير الفعالية</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">متوسط تكلفة الكيلومتر</h5>
+                            {% if total_distance > 0 %}
+                                <h3 class="text-center">{{ total_amount|default:"0"|floatformat:2|default:"0"|stringformat:"s"|add:" ÷ "|add:total_distance|floatformat:2|stringformat:"s"|add:" = " }} 
+                                {{ total_amount|default:"0"|floatformat:2|default:"0"|stringformat:"f"|default:"0"|add:"0"|add:"0"|divide:total_distance|default:"1"|floatformat:2 }} ج.م</h3>
+                            {% else %}
+                                <h3 class="text-center">0.00 ج.م</h3>
+                            {% endif %}
+                            <p class="text-muted">إجمالي المستحقات ÷ إجمالي المسافة</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">متوسط مسافة الرحلة</h5>
+                            {% if car_report.count > 0 %}
+                                <h3 class="text-center">{{ total_distance|floatformat:2|default:"0"|stringformat:"s"|add:" ÷ "|add:car_report.count|stringformat:"s"|add:" = " }}
+                                {{ total_distance|floatformat:2|default:"0"|stringformat:"f"|default:"0"|add:"0"|add:"0"|divide:car_report.count|default:"1"|floatformat:2 }} كم</h3>
+                            {% else %}
+                                <h3 class="text-center">0.00 كم</h3>
+                            {% endif %}
+                            <p class="text-muted">إجمالي المسافة ÷ عدد الرحلات</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">متوسط المستحق للرحلة</h5>
+                            {% if car_report.count > 0 %}
+                                <h3 class="text-center">{{ total_amount|floatformat:2|default:"0"|stringformat:"s"|add:" ÷ "|add:car_report.count|stringformat:"s"|add:" = " }}
+                                {{ total_amount|floatformat:2|default:"0"|stringformat:"f"|default:"0"|add:"0"|add:"0"|divide:car_report.count|default:"1"|floatformat:2 }} ج.م</h3>
+                            {% else %}
+                                <h3 class="text-center">0.00 ج.م</h3>
+                            {% endif %}
+                            <p class="text-muted">إجمالي المستحقات ÷ عدد الرحلات</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // بيانات السيارات
+        const carLabels = [{% for car in car_report %}'{{ car.car_code }} - {{ car.car_name }}',{% endfor %}];
+        const carDistances = [{% for car in car_report %}{{ car.total_distance|default:"0" }},{% endfor %}];
+        const carAmounts = [{% for car in car_report %}{{ car.total_amount|default:"0" }},{% endfor %}];
+        
+        // بيانات أنواع السيارات
+        const typeLabels = [{% for type_data in car_type_report %}
+            {% if type_data.car_type == 'microbus' %}'ميكروباص'{% elif type_data.car_type == 'bus' %}'أتوبيس'{% elif type_data.car_type == 'passenger' %}'ركاب'{% elif type_data.car_type == 'private' %}'ملاكي'{% else %}'{{ type_data.car_type }}'{% endif %},
+        {% endfor %}];
+        const typeAmounts = [{% for type_data in car_type_report %}{{ type_data.total_amount|default:"0" }},{% endfor %}];
+        const typeDistances = [{% for type_data in car_type_report %}{{ type_data.total_distance|default:"0" }},{% endfor %}];
+        
+        // رسم بياني لمسافات السيارات
+        const carDistanceCtx = document.getElementById('carDistanceChart').getContext('2d');
+        new Chart(carDistanceCtx, {
+            type: 'bar',
+            data: {
+                labels: carLabels,
+                datasets: [{
+                    label: 'المسافة (كم)',
+                    data: carDistances,
+                    backgroundColor: 'rgba(54, 162, 235, 0.7)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'المسافة (كم)'
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'المسافات حسب السيارات'
+                    }
+                }
+            }
+        });
+        
+        // رسم بياني لأنواع السيارات
+        const carTypeCtx = document.getElementById('carTypeChart').getContext('2d');
+        new Chart(carTypeCtx, {
+            type: 'bar',
+            data: {
+                labels: typeLabels,
+                datasets: [{
+                    label: 'إجمالي المستحق (ج.م)',
+                    data: typeAmounts,
+                    backgroundColor: 'rgba(75, 192, 192, 0.7)',
+                    yAxisID: 'y1'
+                }, {
+                    label: 'المسافة (كم)',
+                    data: typeDistances,
+                    backgroundColor: 'rgba(255, 159, 64, 0.7)',
+                    type: 'line',
+                    fill: false,
+                    borderColor: 'rgba(255, 159, 64, 1)',
+                    yAxisID: 'y'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'المسافة (كم)'
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'إجمالي المستحق (ج.م)'
+                        },
+                        grid: {
+                            drawOnChartArea: false
+                        },
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'تحليل حسب نوع السيارة'
+                    }
+                }
+            }
+        });
+        
+        // رسم بياني لتوزيع التكاليف
+        const costBreakdownCtx = document.getElementById('costBreakdownChart').getContext('2d');
+        new Chart(costBreakdownCtx, {
+            type: 'pie',
+            data: {
+                labels: ['تكلفة الوقود', 'أرباح السائقين', 'تكاليف أخرى'],
+                datasets: [{
+                    data: [
+                        {{ total_fuel|default:"0" }}, 
+                        {{ total_profit|default:"0" }}, 
+                        {{ total_amount|default:"0"|add:"-"|add:total_fuel|default:"0"|add:"-"|add:total_profit|default:"0" }}
+                    ],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.7)',
+                        'rgba(54, 162, 235, 0.7)',
+                        'rgba(255, 206, 86, 0.7)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'توزيع التكاليف'
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

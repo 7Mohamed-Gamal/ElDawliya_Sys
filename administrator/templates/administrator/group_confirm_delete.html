@@ -1,0 +1,113 @@
+{% extends 'administrator/base_admin.html' %}
+{% load static %}
+
+{% block title %}{{ page_title }} | {{ system_settings.system_name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2 class="page-title">{{ page_title }}</h2>
+                <div>
+                    <a href="{% url 'administrator:group_list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-right ml-1"></i>
+                        العودة إلى قائمة المجموعات
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="card border-0 shadow">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0">تأكيد حذف المجموعة</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning mb-4">
+                        <div class="d-flex">
+                            <div class="me-3">
+                                <i class="fas fa-exclamation-triangle fa-2x text-warning"></i>
+                            </div>
+                            <div>
+                                <h5 class="alert-heading">تحذير!</h5>
+                                <p>أنت على وشك حذف مجموعة "{{ group.name }}". هذا الإجراء لا يمكن التراجع عنه.</p>
+                                <p class="mb-0">سيتم إلغاء ارتباط المستخدمين بهذه المجموعة وحذف كافة الصلاحيات المرتبطة بها.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card mb-4">
+                        <div class="card-body">
+                            <h5 class="card-title">معلومات المجموعة</h5>
+                            <div class="list-group list-group-flush">
+                                <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <span><i class="fas fa-tag me-2"></i> اسم المجموعة:</span>
+                                    <span class="fw-bold">{{ group.name }}</span>
+                                </div>
+                                {% if group.description %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <span><i class="fas fa-info-circle me-2"></i> وصف المجموعة:</span>
+                                    <span>{{ group.description }}</span>
+                                </div>
+                                {% endif %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <span><i class="fas fa-users me-2"></i> عدد المستخدمين:</span>
+                                    <span class="badge bg-primary">{{ group.user_set.count }}</span>
+                                </div>
+                                <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    <span><i class="fas fa-key me-2"></i> عدد الصلاحيات:</span>
+                                    <span class="badge bg-danger">{{ group.permissions.count }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if group.user_set.all %}
+                    <div class="alert alert-danger mb-4">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        <strong>تنبيه:</strong> هناك {{ group.user_set.count }} مستخدم مرتبط بهذه المجموعة. سيتم إلغاء ارتباطهم بالمجموعة عند الحذف، وقد يفقدون بعض الصلاحيات.
+                    </div>
+                    {% endif %}
+
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        
+                        <div class="form-check mb-4">
+                            <input class="form-check-input" type="checkbox" id="confirmDelete" required>
+                            <label class="form-check-label" for="confirmDelete">
+                                أؤكد أنني أريد حذف مجموعة "{{ group.name }}" وأدرك أن هذا الإجراء لا يمكن التراجع عنه.
+                            </label>
+                        </div>
+                        
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'administrator:group_list' %}" class="btn btn-outline-secondary">
+                                إلغاء
+                            </a>
+                            <button type="submit" class="btn btn-danger" id="deleteBtn" disabled>
+                                <i class="fas fa-trash me-1"></i> حذف المجموعة
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        $('#confirmDelete').change(function() {
+            if ($(this).is(':checked')) {
+                $('#deleteBtn').prop('disabled', false);
+            } else {
+                $('#deleteBtn').prop('disabled', true);
+            }
+        });
+    });
+</script>
+{% endblock %}

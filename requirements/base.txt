@@ -1,0 +1,94 @@
+# ElDawliya System - Base Requirements
+# Core packages required for all environments
+
+# ----------------------------------------------------------------
+# Core Framework & Essential Packages
+# ----------------------------------------------------------------
+Django==4.2.26
+djangorestframework==3.15.2
+django-filter==23.2
+python-dotenv==1.0.1
+pytz==2023.3
+requests==2.31.0
+urllib3>=2.0.7
+
+# ----------------------------------------------------------------
+# Database
+# ----------------------------------------------------------------
+mssql-django==1.4.1
+pyodbc>=5.0.0  # Updated for Python 3.13 support
+
+# ----------------------------------------------------------------
+# Asynchronous Tasks & Caching
+# ----------------------------------------------------------------
+celery==5.3.4
+redis==5.0.1
+django-celery-beat==2.5.0
+django-celery-results==2.5.1
+django-redis==5.4.0
+channels==4.0.0
+channels-redis==4.1.0
+daphne>=4.0.0
+
+# ----------------------------------------------------------------
+# User Interface & Frontend Components
+# ----------------------------------------------------------------
+django-crispy-forms==2.1
+crispy-bootstrap5==0.7
+django-bootstrap5==23.3
+django-tables2==2.5.3
+django-widget-tweaks==1.4.12
+django-select2==8.4.1
+django-ckeditor==6.5.1
+
+# ----------------------------------------------------------------
+# Authentication & Security
+# ----------------------------------------------------------------
+djangorestframework-simplejwt==5.5.1  # Updated from 5.3.0 to fix CVE-2024-22513
+cryptography==43.0.3
+django-allauth==65.3.0  # Updated from 0.54.0 to fix multiple security vulnerabilities
+django-axes==6.4.0
+
+# ----------------------------------------------------------------
+# File Handling, Reporting & Media
+# ----------------------------------------------------------------
+Pillow==11.0.0
+django-cleanup==8.0.0
+openpyxl==3.1.2
+xlsxwriter>=3.1.0
+reportlab==4.0.4
+WeasyPrint==59.0
+django-import-export==3.3.1
+
+# ----------------------------------------------------------------
+# HR Specific Integrations
+# ----------------------------------------------------------------
+pyzk==0.9  # For ZK attendance devices
+
+# ----------------------------------------------------------------
+# Data Science & Analytics
+# ----------------------------------------------------------------
+pandas>=2.2.3  # Updated for Python 3.13 support (first version with 3.13 compatibility)
+numpy>=1.26.0,<2.0  # Updated for Python 3.13 support
+matplotlib>=3.9.0  # Updated for Python 3.13 support
+
+# ----------------------------------------------------------------
+# Internationalization & Localization
+# ----------------------------------------------------------------
+python-bidi>=0.4.2
+arabic-reshaper>=3.0.0
+
+# ----------------------------------------------------------------
+# Utilities & Helper Libraries
+# ----------------------------------------------------------------
+python-dateutil==2.8.2
+humanize>=4.7.0
+
+# ----------------------------------------------------------------
+# Production Deployment
+# ----------------------------------------------------------------
+gunicorn==23.0.0
+whitenoise==6.6.0
+django-environ>=0.10.0
+django-cors-headers
+sentry-sdk==2.8.0  # Error tracking

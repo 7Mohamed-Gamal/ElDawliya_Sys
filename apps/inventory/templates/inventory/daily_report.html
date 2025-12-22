@@ -1,0 +1,123 @@
+{% extends 'inventory/base_inventory.html' %}
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">التقرير اليومي - {{ date|date:"Y/m/d" }}</h2>
+
+    <!-- إحصائيات الفواتير -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4>إحصائيات الفواتير</h4>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body">
+                            <h5>إجمالي الفواتير</h5>
+                            <h3>{{ invoice_stats.total }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <h5>فواتير الإضافة</h5>
+                            <h3>{{ invoice_stats.addition }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <h5>فواتير الصرف</h5>
+                            <h3>{{ invoice_stats.withdrawal }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <h5>المرتجعات</h5>
+                            <h3>{{ invoice_stats.customer_return|add:invoice_stats.supplier_return }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- الأصناف المضافة اليوم -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h4>الأصناف المضافة اليوم</h4>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>كود الصنف</th>
+                            <th>اسم الصنف</th>
+                            <th>الكمية</th>
+                            <th>التصنيف</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for product in today_products %}
+                        <tr>
+                            <td>{{ product.product_id }}</td>
+                            <td>{{ product.product_name }}</td>
+                            <td>{{ product.qte_in_stock }}</td>
+                            <td>{{ product.category }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center">لا توجد أصناف مضافة اليوم</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- الفواتير اليومية -->
+    <div class="card">
+        <div class="card-header">
+            <h4>الفواتير اليومية</h4>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>رقم الفاتورة</th>
+                            <th>نوع الفاتورة</th>
+                            <th>المستلم</th>
+                            <th>التاريخ</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for invoice in today_invoices %}
+                        <tr>
+                            <td>{{ invoice.invoice_number }}</td>
+                            <td>{{ invoice.invoice_type }}</td>
+                            <td>{{ invoice.recipient }}</td>
+                            <td>{{ invoice.invoice_date|date:"Y/m/d H:i" }}</td>
+                            <td>
+                                <a href="{% url 'inventory:invoice_detail' invoice.pk %}" class="btn btn-sm btn-info">التفاصيل</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="text-center">لا توجد فواتير اليوم</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,673 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}لوحة تحكم التقارير - نظام الدولية{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.css">
+<style>
+.reports-dashboard-header {
+    background: linear-gradient(135deg, #1e293b 0%, #334155 50%, #475569 100%);
+    color: white;
+    border-radius: 20px;
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 20px 40px rgba(30, 41, 59, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.reports-dashboard-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+    animation: move 20s linear infinite;
+}
+
+@keyframes move {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(-40px, -40px); }
+}
+
+.report-category-card {
+    background: white;
+    border-radius: 15px;
+    padding: 1.8rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    border: 1px solid #e5e7eb;
+    text-decoration: none;
+    color: inherit;
+    position: relative;
+    overflow: hidden;
+}
+
+.report-category-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(var(--category-color), 0.1), transparent);
+    transition: left 0.6s;
+}
+
+.report-category-card:hover::before {
+    left: 100%;
+}
+
+.report-category-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+    text-decoration: none;
+    color: inherit;
+}
+
+.category-icon {
+    width: 70px;
+    height: 70px;
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    margin-bottom: 1.2rem;
+    background: linear-gradient(135deg, rgb(var(--category-color)), rgba(var(--category-color), 0.8));
+    box-shadow: 0 8px 20px rgba(var(--category-color), 0.3);
+}
+
+.featured-reports {
+    background: white;
+    border-radius: 15px;
+    padding: 1.8rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+}
+
+.featured-report-item {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 1.2rem;
+    margin-bottom: 1rem;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.featured-report-item:hover {
+    background: white;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateX(-5px);
+}
+
+.featured-report-item:last-child {
+    margin-bottom: 0;
+}
+
+.report-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-item {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+    transition: all 0.3s ease;
+}
+
+.stat-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--stat-color), var(--stat-color-dark));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    color: #6b7280;
+    font-weight: 500;
+}
+
+.quick-generate {
+    background: white;
+    border-radius: 15px;
+    padding: 1.8rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+}
+
+.generate-btn {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 0.8rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    margin: 0.25rem;
+}
+
+.generate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+    color: white;
+    text-decoration: none;
+}
+
+.recent-reports {
+    background: white;
+    border-radius: 15px;
+    padding: 1.8rem;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+}
+
+.report-item {
+    display: flex;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid #f1f5f9;
+    transition: all 0.3s ease;
+}
+
+.report-item:hover {
+    background: #f8fafc;
+    margin: 0 -1rem;
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+.report-item:last-child {
+    border-bottom: none;
+}
+
+.report-icon {
+    width: 45px;
+    height: 45px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 1rem;
+    font-size: 18px;
+}
+
+.report-content {
+    flex: 1;
+}
+
+.report-title {
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+}
+
+.report-meta {
+    font-size: 0.875rem;
+    color: #6b7280;
+}
+
+.report-status {
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.charts-section {
+    background: white;
+    border-radius: 15px;
+    padding: 1.8rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    border: 1px solid #e5e7eb;
+}
+
+.chart-tabs {
+    border-bottom: 2px solid #f1f5f9;
+    margin-bottom: 1.5rem;
+}
+
+.chart-tab {
+    background: none;
+    border: none;
+    padding: 1rem 1.5rem;
+    font-weight: 500;
+    color: #6b7280;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.chart-tab.active {
+    color: #3b82f6;
+    border-bottom-color: #3b82f6;
+}
+
+.chart-content {
+    display: none;
+}
+
+.chart-content.active {
+    display: block;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Reports Dashboard Header -->
+        <div class="reports-dashboard-header">
+            <div class="row align-items-center" style="position: relative; z-index: 1;">
+                <div class="col-md-8">
+                    <h1 class="h2 mb-3">
+                        <i class="fas fa-chart-bar me-3"></i>
+                        مركز التقارير والتحليلات
+                    </h1>
+                    <p class="mb-0 opacity-90 fs-5">
+                        تقارير شاملة وتحليلات متقدمة لجميع أنظمة الموارد البشرية
+                    </p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <div class="d-flex flex-column align-items-md-end">
+                        <div class="mb-3">
+                            <div class="badge bg-light text-dark px-4 py-2 fs-6">
+                                <i class="fas fa-file-alt me-2"></i>
+                                {{ usage_stats.report_statistics.total_reports|default:0 }} تقرير منتج
+                            </div>
+                        </div>
+                        <div>
+                            <div class="badge bg-light text-dark px-4 py-2 fs-6">
+                                <i class="fas fa-download me-2"></i>
+                                {{ usage_stats.report_statistics.total_downloads|default:0 }} تحميل
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Overview -->
+<div class="report-stats-grid">
+    <div class="stat-item" style="--stat-color: #10b981; --stat-color-dark: #059669;">
+        <div class="stat-number">{{ usage_stats.report_statistics.completed_reports|default:0 }}</div>
+        <div class="stat-label">تقارير مكتملة</div>
+    </div>
+    <div class="stat-item" style="--stat-color: #3b82f6; --stat-color-dark: #1d4ed8;">
+        <div class="stat-number">{{ usage_stats.access_statistics.unique_users|default:0 }}</div>
+        <div class="stat-label">مستخدمين نشطين</div>
+    </div>
+    <div class="stat-item" style="--stat-color: #f59e0b; --stat-color-dark: #d97706;">
+        <div class="stat-number">{{ active_schedules.count|default:0 }}</div>
+        <div class="stat-label">تقارير مجدولة</div>
+    </div>
+    <div class="stat-item" style="--stat-color: #8b5cf6; --stat-color-dark: #7c3aed;">
+        <div class="stat-number">{{ usage_stats.report_statistics.avg_execution_time|default:0|floatformat:1 }}s</div>
+        <div class="stat-label">متوسط وقت الإنتاج</div>
+    </div>
+</div>
+
+<!-- Report Categories -->
+<div class="row">
+    <div class="col-12">
+        <h3 class="mb-4">
+            <i class="fas fa-folder-open me-2"></i>
+            فئات التقارير
+        </h3>
+    </div>
+</div>
+
+<div class="row">
+    {% for category in categories %}
+    <div class="col-xl-4 col-md-6">
+        <a href="{% url 'reports:category_templates' category.category_id %}" 
+           class="report-category-card" 
+           style="--category-color: {{ category.color|slice:'1:'|default:'59, 130, 246' }};">
+            <div class="category-icon">
+                <i class="{{ category.icon }} text-white"></i>
+            </div>
+            <h5 class="mb-2">{{ category.name }}</h5>
+            <p class="text-muted mb-3">{{ category.description|truncatewords:15 }}</p>
+            <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">
+                    <i class="fas fa-file-alt me-1"></i>
+                    {{ category.template_count|default:0 }} قالب
+                </small>
+                <i class="fas fa-arrow-left"></i>
+            </div>
+        </a>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center py-5">
+        <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+        <p class="text-muted">لا توجد فئات تقارير متاحة</p>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Featured Reports and Quick Actions -->
+<div class="row mt-4">
+    <div class="col-xl-8">
+        <!-- Featured Reports -->
+        <div class="featured-reports">
+            <h5 class="mb-4">
+                <i class="fas fa-star me-2"></i>
+                التقارير المميزة
+            </h5>
+            
+            {% for template in featured_templates %}
+            <div class="featured-report-item" onclick="generateReport({{ template.template_id }})">
+                <div class="d-flex align-items-center">
+                    <div class="report-icon" style="background: {{ template.category.color }};">
+                        <i class="{{ template.category.icon }} text-white"></i>
+                    </div>
+                    <div class="flex-grow-1 ms-3">
+                        <div class="report-title">{{ template.name }}</div>
+                        <div class="report-meta">{{ template.description|truncatewords:10 }}</div>
+                    </div>
+                    <div class="text-end">
+                        <div class="generate-btn">
+                            <i class="fas fa-play me-2"></i>
+                            إنتاج
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-4">
+                <i class="fas fa-star fa-2x text-muted mb-2"></i>
+                <p class="text-muted">لا توجد تقارير مميزة</p>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Charts and Analytics -->
+        <div class="charts-section">
+            <div class="chart-tabs">
+                <button class="chart-tab active" data-chart="usage">استخدام التقارير</button>
+                <button class="chart-tab" data-chart="categories">التوزيع حسب الفئة</button>
+                <button class="chart-tab" data-chart="trends">الاتجاهات الشهرية</button>
+            </div>
+            
+            <div class="chart-content active" id="usage-chart">
+                <canvas id="usageChart" height="300"></canvas>
+            </div>
+            
+            <div class="chart-content" id="categories-chart">
+                <canvas id="categoriesChart" height="300"></canvas>
+            </div>
+            
+            <div class="chart-content" id="trends-chart">
+                <canvas id="trendsChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-4">
+        <!-- Quick Generate -->
+        <div class="quick-generate">
+            <h5 class="mb-4">
+                <i class="fas fa-zap me-2"></i>
+                إنتاج سريع
+            </h5>
+            
+            <div class="d-flex flex-wrap">
+                <a href="{% url 'reports:generate_report' 1 %}" class="generate-btn" style="background: linear-gradient(135deg, #10b981, #059669);">
+                    <i class="fas fa-user-clock me-2"></i>
+                    تقرير الحضور
+                </a>
+                
+                <a href="{% url 'reports:generate_report' 2 %}" class="generate-btn" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                    <i class="fas fa-calendar-alt me-2"></i>
+                    تقرير الإجازات
+                </a>
+                
+                <a href="{% url 'reports:generate_report' 3 %}" class="generate-btn" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);">
+                    <i class="fas fa-money-bill-wave me-2"></i>
+                    تقرير الرواتب
+                </a>
+                
+                <a href="{% url 'reports:generate_report' 4 %}" class="generate-btn" style="background: linear-gradient(135deg, #ef4444, #dc2626);">
+                    <i class="fas fa-users me-2"></i>
+                    تقرير الموظفين
+                </a>
+            </div>
+        </div>
+        
+        <!-- Recent Reports -->
+        <div class="recent-reports">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="mb-0">
+                    <i class="fas fa-history me-2"></i>
+                    التقارير الأخيرة
+                </h5>
+                <a href="{% url 'reports:my_reports' %}" class="btn btn-outline-primary btn-sm">
+                    عرض الكل
+                </a>
+            </div>
+            
+            {% for report in recent_reports %}
+            <div class="report-item">
+                <div class="report-icon" style="background: {{ report.template.category.color }};">
+                    <i class="{{ report.template.category.icon }} text-white"></i>
+                </div>
+                <div class="report-content">
+                    <div class="report-title">{{ report.name|truncatewords:4 }}</div>
+                    <div class="report-meta">
+                        {{ report.generated_at|timesince }} مضت • 
+                        {{ report.generated_by.emp_full_name|default:"نظام" }}
+                    </div>
+                </div>
+                <div class="text-end">
+                    {% if report.status == 'completed' %}
+                        <span class="report-status bg-success text-white">مكتمل</span>
+                        <div class="mt-2">
+                            <a href="{% url 'reports:download_report' report.report_id %}" 
+                               class="btn btn-outline-primary btn-sm">
+                                <i class="fas fa-download"></i>
+                            </a>
+                        </div>
+                    {% elif report.status == 'processing' %}
+                        <span class="report-status bg-warning text-white">معالجة</span>
+                    {% elif report.status == 'failed' %}
+                        <span class="report-status bg-danger text-white">فشل</span>
+                    {% else %}
+                        <span class="report-status bg-secondary text-white">انتظار</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center py-4">
+                <i class="fas fa-file-alt fa-2x text-muted mb-2"></i>
+                <p class="text-muted">لا توجد تقارير حديثة</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Report Generation Modal -->
+<div class="modal fade" id="generateReportModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-cogs me-2"></i>
+                    إنتاج تقرير سريع
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="quickReportForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">نوع التقرير</label>
+                                <select class="form-select" id="reportType" required>
+                                    <option value="">اختر نوع التقرير</option>
+                                    <option value="attendance">تقرير الحضور</option>
+                                    <option value="leaves">تقرير الإجازات</option>
+                                    <option value="payroll">تقرير الرواتب</option>
+                                    <option value="employees">تقرير الموظفين</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">صيغة الإخراج</label>
+                                <select class="form-select" id="outputFormat">
+                                    <option value="pdf">PDF</option>
+                                    <option value="excel">Excel</option>
+                                    <option value="html">HTML</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">من تاريخ</label>
+                                <input type="date" class="form-control" id="startDate" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">إلى تاريخ</label>
+                                <input type="date" class="form-control" id="endDate" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">القسم (اختياري)</label>
+                        <select class="form-select" id="department">
+                            <option value="">جميع الأقسام</option>
+                            {% for dept in departments %}
+                            <option value="{{ dept.dept_id }}">{{ dept.dept_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" onclick="submitQuickReport()">
+                    <i class="fas fa-play me-2"></i>
+                    إنتاج التقرير
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script>
+// Chart Tab Switching
+document.querySelectorAll('.chart-tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+        // Remove active class from all tabs and contents
+        document.querySelectorAll('.chart-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.chart-content').forEach(c => c.classList.remove('active'));
+        
+        // Add active class to clicked tab and corresponding content
+        this.classList.add('active');
+        document.getElementById(this.dataset.chart + '-chart').classList.add('active');
+    });
+});
+
+// Usage Chart
+const usageCtx = document.getElementById('usageChart').getContext('2d');
+const usageChart = new Chart(usageCtx, {
+    type: 'doughnut',
+    data: {
+        labels: ['مكتملة', 'معالجة', 'فشلت'],
+        datasets: [{
+            data: [
+                {{ usage_stats.report_statistics.completed_reports|default:0 }},
+                {{ usage_stats.report_statistics.total_reports|default:0 }} - {{ usage_stats.report_statistics.completed_reports|default:0 }} - {{ usage_stats.report_statistics.failed_reports|default:0 }},
+                {{ usage_stats.report_statistics.failed_reports|default:0 }}
+            ],
+            backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+            borderWidth: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+
+// Generate Report Function
+function generateReport(templateId) {
+    window.location.href = `{% url 'reports:generate_report' 0 %}`.replace('0', templateId);
+}
+
+// Quick Report Generation
+function submitQuickReport() {
+    const form = document.getElementById('quickReportForm');
+    const formData = new FormData(form);
+    
+    // Show loading state
+    const modal = bootstrap.Modal.getInstance(document.getElementById('generateReportModal'));
+    modal.hide();
+    
+    // Show progress toast
+    showToast('جاري إنتاج التقرير...', 'info');
+    
+    // Simulate report generation (replace with actual implementation)
+    setTimeout(() => {
+        showToast('تم إنتاج التقرير بنجاح!', 'success');
+    }, 3000);
+}
+
+// Utility function for showing toasts
+function showToast(message, type = 'info') {
+    // Implementation depends on your toast library
+    console.log(`${type}: ${message}`);
+}
+
+// Set default dates
+document.addEventListener('DOMContentLoaded', function() {
+    const today = new Date();
+    const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, today.getDate());
+    
+    document.getElementById('startDate').value = lastMonth.toISOString().split('T')[0];
+    document.getElementById('endDate').value = today.toISOString().split('T')[0];
+});
+</script>
+{% endblock %}

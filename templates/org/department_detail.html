@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ department.dept_name }} - نظام الدولية{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">
+                    <i class="fas fa-building me-2"></i>
+                    {{ department.dept_name }}
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>معلومات القسم</h6>
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>اسم القسم:</strong></td>
+                                <td>{{ department.dept_name }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>الفرع:</strong></td>
+                                <td>{{ department.branch.branch_name }}</td>
+                            </tr>
+                            {% if department.parent_dept %}
+                            <tr>
+                                <td><strong>القسم الرئيسي:</strong></td>
+                                <td>{{ department.parent_dept.dept_name }}</td>
+                            </tr>
+                            {% endif %}
+                            <tr>
+                                <td><strong>عدد الموظفين:</strong></td>
+                                <td>{{ employees_count }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        {% if sub_departments %}
+                        <h6>الأقسام الفرعية</h6>
+                        <ul class="list-group">
+                            {% for sub_dept in sub_departments %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ sub_dept.dept_name }}
+                                <span class="badge bg-primary rounded-pill">{{ sub_dept.employee_set.count }}</span>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <a href="{% url 'org:departments' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>
+                        العودة للأقسام
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

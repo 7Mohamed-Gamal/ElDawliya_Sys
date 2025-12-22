@@ -1,0 +1,412 @@
+{% extends 'administrator/base_admin.html' %}
+{% load static %}
+
+{% block title %}إعدادات النظام - لوحة تحكم مدير النظام{% endblock %}
+
+{% block page_icon %}cogs{% endblock %}
+{% block page_header %}إعدادات النظام{% endblock %}
+
+{% block extra_css %}
+<style>
+    .settings-form .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .settings-form .card-header h5 {
+        font-weight: 600;
+    }
+
+    .form-card {
+        border-top: 4px solid var(--primary-color);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5>
+                    <i class="fas fa-cog me-2"></i>
+                    إعدادات النظام
+                </h5>
+            </div>
+            <div class="card-body">
+                <p>من هنا يمكنك تعديل إعدادات النظام الأساسية مثل معلومات الشركة وإعدادات العرض.</p>
+
+                <!-- عرض رسائل النجاح والخطأ -->
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {% if message.tags == 'success' %}
+                                <i class="fas fa-check-circle me-2"></i>
+                            {% elif message.tags == 'error' %}
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                            {% else %}
+                                <i class="fas fa-info-circle me-2"></i>
+                            {% endif %}
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    لتعديل إعدادات قاعدة البيانات، يرجى
+                    <a href="{% url 'administrator:database_settings' %}" class="alert-link">النقر هنا</a>.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <form method="post" enctype="multipart/form-data" class="settings-form">
+            {% csrf_token %}
+
+            <!-- Company Information -->
+            <div class="card mb-4 form-card">
+                <div class="card-header bg-light">
+                    <h5>
+                        <i class="fas fa-building me-2"></i>
+                        معلومات الشركة
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="{{ form.company_name.id_for_label }}" class="form-label">
+                                    {{ form.company_name.label }}*
+                                </label>
+                                {{ form.company_name }}
+                                {% if form.company_name.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.company_name.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="{{ form.system_name.id_for_label }}" class="form-label">
+                                    {{ form.system_name.label }}*
+                                </label>
+                                {{ form.system_name }}
+                                {% if form.system_name.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.system_name.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="{{ form.company_phone.id_for_label }}" class="form-label">
+                                    {{ form.company_phone.label }}
+                                </label>
+                                {{ form.company_phone }}
+                                {% if form.company_phone.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.company_phone.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="{{ form.company_email.id_for_label }}" class="form-label">
+                                    {{ form.company_email.label }}
+                                </label>
+                                {{ form.company_email }}
+                                {% if form.company_email.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.company_email.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label for="{{ form.company_address.id_for_label }}" class="form-label">
+                                    {{ form.company_address.label }}
+                                </label>
+                                {{ form.company_address }}
+                                {% if form.company_address.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.company_address.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="{{ form.company_website.id_for_label }}" class="form-label">
+                                    {{ form.company_website.label }}
+                                </label>
+                                {{ form.company_website }}
+                                {% if form.company_website.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.company_website.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="{{ form.company_logo.id_for_label }}" class="form-label">
+                                    {{ form.company_logo.label }}
+                                </label>
+                                {{ form.company_logo }}
+                                {% if settings.company_logo %}
+                                    <div class="mt-2">
+                                        <img src="{{ settings.company_logo.url }}" alt="الشعار الحالي" class="img-thumbnail" style="max-height: 80px;">
+                                    </div>
+                                {% endif %}
+                                {% if form.company_logo.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.company_logo.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Language and UI Settings -->
+            <div class="card mb-4 form-card">
+                <div class="card-header bg-light">
+                    <h5>
+                        <i class="fas fa-language me-2"></i>
+                        إعدادات اللغة والواجهة
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="{{ form.language.id_for_label }}" class="form-label">
+                                    {{ form.language.label }}
+                                </label>
+                                {{ form.language }}
+                                {% if form.language.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.language.errors }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    اختر لغة واجهة النظام
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="{{ form.font_family.id_for_label }}" class="form-label">
+                                    {{ form.font_family.label }}
+                                </label>
+                                {{ form.font_family }}
+                                {% if form.font_family.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.font_family.errors }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    اختر الخط المستخدم في النظام
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="{{ form.text_direction.id_for_label }}" class="form-label">
+                                    {{ form.text_direction.label }}
+                                </label>
+                                {{ form.text_direction }}
+                                {% if form.text_direction.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.text_direction.errors }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    اختر اتجاه النص في النظام
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- معاينة الخطوط -->
+                        <div class="col-12 mt-3">
+                            <div class="p-3 border rounded">
+                                <h6 class="mb-3">معاينة الخطوط</h6>
+                                <p class="mb-2" style="font-family: 'Cairo';">Cairo - هذا نص تجريبي بخط القاهرة</p>
+                                <p class="mb-2" style="font-family: 'Tajawal';">Tajawal - هذا نص تجريبي بخط تجوال</p>
+                                <p class="mb-2" style="font-family: 'Almarai';">Almarai - هذا نص تجريبي بخط المراعي</p>
+                                <p class="mb-2" style="font-family: 'IBM Plex Sans Arabic';">IBM Plex - هذا نص تجريبي بخط آي بي إم</p>
+                                <p class="mb-2" style="font-family: 'Noto Sans Arabic';">Noto Sans - هذا نص تجريبي بخط نوتو سانس</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Configuration -->
+            <div class="card mb-4 form-card">
+                <div class="card-header bg-light">
+                    <h5>
+                        <i class="fas fa-sliders-h me-2"></i>
+                        إعدادات النظام
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="{{ form.timezone.id_for_label }}" class="form-label">
+                                    {{ form.timezone.label }}*
+                                </label>
+                                {{ form.timezone }}
+                                {% if form.timezone.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.timezone.errors }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    اختر المنطقة الزمنية المناسبة لموقعك
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="{{ form.date_format.id_for_label }}" class="form-label">
+                                    {{ form.date_format.label }}*
+                                </label>
+                                {{ form.date_format }}
+                                {% if form.date_format.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.date_format.errors }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    اختر تنسيق عرض التاريخ في النظام
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-check form-switch mt-4">
+                                {{ form.enable_debugging }}
+                                <label class="form-check-label" for="{{ form.enable_debugging.id_for_label }}">
+                                    {{ form.enable_debugging.label }}
+                                </label>
+                                {% if form.enable_debugging.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.enable_debugging.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="form-check form-switch mt-4">
+                                {{ form.maintenance_mode }}
+                                <label class="form-check-label" for="{{ form.maintenance_mode.id_for_label }}">
+                                    {{ form.maintenance_mode.label }}
+                                </label>
+                                {% if form.maintenance_mode.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.maintenance_mode.errors }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="row mb-4">
+                <div class="col-12 text-end">
+                    <a href="{% url 'administrator:admin_dashboard' %}" class="btn btn-light me-2">
+                        إلغاء
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-1"></i>
+                        حفظ الإعدادات
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Change form fields styling
+        document.querySelectorAll('input[type="file"]').forEach(function(input) {
+            input.classList.add('form-control');
+        });
+
+        document.querySelectorAll('.form-check-input').forEach(function(input) {
+            input.style.float = 'right';
+            input.style.marginLeft = '0.5em';
+        });
+
+        // إضافة تأكيد قبل الحفظ
+        const form = document.querySelector('.settings-form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                // التحقق من الحقول المطلوبة
+                const requiredFields = form.querySelectorAll('input[required], select[required]');
+                let hasErrors = false;
+
+                requiredFields.forEach(function(field) {
+                    if (!field.value.trim()) {
+                        hasErrors = true;
+                        field.classList.add('is-invalid');
+                    } else {
+                        field.classList.remove('is-invalid');
+                    }
+                });
+
+                if (hasErrors) {
+                    e.preventDefault();
+                    alert('يرجى ملء جميع الحقول المطلوبة');
+                    return false;
+                }
+
+                // إظهار رسالة تحميل
+                const submitBtn = form.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> جاري الحفظ...';
+                }
+            });
+        }
+
+        // إزالة رسائل التنبيه تلقائياً بعد 5 ثوان
+        setTimeout(function() {
+            const alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                if (alert.classList.contains('alert-success')) {
+                    alert.style.transition = 'opacity 0.5s';
+                    alert.style.opacity = '0';
+                    setTimeout(function() {
+                        alert.remove();
+                    }, 500);
+                }
+            });
+        }, 5000);
+    });
+</script>
+{% endblock %}

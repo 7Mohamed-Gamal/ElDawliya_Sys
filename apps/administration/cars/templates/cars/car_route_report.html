@@ -1,0 +1,136 @@
+{% extends 'cars\base.html' %}
+
+{% block title %}تقرير خط سير السيارة - نظام إدارة نشاط النقل{% endblock %}
+
+{% block header %}تقرير خط سير السيارة: {{ car.car_name }}{% endblock %}
+
+{% block content %}
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">معلومات السيارة</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong>كود السيارة:</strong> {{ car.car_code }}</p>
+                    <p><strong>اسم السيارة:</strong> {{ car.car_name }}</p>
+                    <p>
+                        <strong>نوع السيارة:</strong> 
+                        {% if car.car_type == 'microbus' %}
+                            ميكروباص
+                        {% elif car.car_type == 'bus' %}
+                            أتوبيس
+                        {% elif car.car_type == 'passenger' %}
+                            ركاب
+                        {% elif car.car_type == 'private' %}
+                            ملاكي
+                        {% else %}
+                            {{ car.car_type }}
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <p>
+                        <strong>المورد:</strong> 
+                        {% if car.supplier %}
+                            {{ car.supplier.name }}
+                        {% else %}
+                            لا يوجد مورد
+                        {% endif %}
+                    </p>
+                    <p>
+                        <strong>نوع الوقود:</strong> 
+                        {% if car.fuel_type == 'diesel' %}
+                            سولار
+                        {% elif car.fuel_type == 'gasoline' %}
+                            بنزين
+                        {% elif car.fuel_type == 'gas' %}
+                            غاز
+                        {% else %}
+                            {{ car.fuel_type }}
+                        {% endif %}
+                    </p>
+                    <p>
+                        <strong>الحالة:</strong> 
+                        {% if car.car_status == 'active' %}
+                            <span class="badge bg-success">نشطة</span>
+                        {% else %}
+                            <span class="badge bg-secondary">غير نشطة</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0">خط سير السيارة</h5>
+        </div>
+        <div class="card-body">
+            {% if route_points %}
+                <div class="route-timeline">
+                    {% for point in route_points %}
+                        <div class="route-point mb-4">
+                            <div class="d-flex align-items-start">
+                                <div class="route-point-number bg-info text-white rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                    {{ point.order }}
+                                </div>
+                                <div class="route-point-content w-100">
+                                    <div class="card">
+                                        <div class="card-header d-flex justify-content-between align-items-center">
+                                            <h5 class="mb-0">{{ point.point_name }}</h5>
+                                            <span class="badge bg-secondary">{{ point.departure_time }}</span>
+                                        </div>
+                                        <div class="card-body">
+                                            <h6>الموظفين:</h6>
+                                            {% if point.employees.all %}
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm table-bordered">
+                                                        <thead class="table-light">
+                                                            <tr>
+                                                                <th>الاسم</th>
+                                                                <th>المسمى الوظيفي</th>
+                                                                <th>رقم الهاتف</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {% for employee in point.employees.all %}
+                                                                <tr>
+                                                                    <td>{{ employee.name }}</td>
+                                                                    <td>{{ employee.job_title }}</td>
+                                                                    <td>{{ employee.phone }}</td>
+                                                                </tr>
+                                                            {% endfor %}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            {% else %}
+                                                <div class="alert alert-light">
+                                                    لا يوجد موظفين مرتبطين بهذه النقطة
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    لا توجد نقاط خط سير مسجلة لهذه السيارة.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="mt-3">
+        <a href="{% url 'cars:route_point_list' car.id %}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> العودة لقائمة نقاط خط السير
+        </a>
+        <a href="javascript:window.print();" class="btn btn-primary ms-2">
+            <i class="bi bi-printer"></i> طباعة التقرير
+        </a>
+    </div>
+{% endblock %}

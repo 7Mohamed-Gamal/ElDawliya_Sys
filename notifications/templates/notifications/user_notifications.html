@@ -1,0 +1,277 @@
+{% extends 'notifications/base_notifications.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - نظام الدولية{% endblock %}
+
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'notifications:dashboard' %}">التنبيهات</a></li>
+<li class="breadcrumb-item active">{{ title }}</li>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <!-- بطاقات الإحصائيات -->
+    <div class="col-md-12 mb-4">
+        <div class="row">
+            <div class="col-md-4 col-sm-6 mb-3">
+                <div class="card bg-primary text-white h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">إجمالي التنبيهات</h6>
+                                <h2 class="mt-2 mb-0">{{ stats.total }}</h2>
+                            </div>
+                            <i class="fas fa-bell fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 col-sm-6 mb-3">
+                <div class="card bg-danger text-white h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">غير مقروءة</h6>
+                                <h2 class="mt-2 mb-0">{{ stats.unread }}</h2>
+                            </div>
+                            <i class="fas fa-envelope fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4 col-sm-6 mb-3">
+                <div class="card bg-success text-white h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-0">مقروءة</h6>
+                                <h2 class="mt-2 mb-0">{{ stats.read }}</h2>
+                            </div>
+                            <i class="fas fa-check-circle fa-2x opacity-50"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- فلاتر البحث -->
+    <div class="col-md-12 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0">
+                    <i class="fas fa-filter me-2 text-primary"></i>
+                    تصفية التنبيهات
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="get" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="type" class="form-label">نوع التنبيه</label>
+                        <select class="form-select" id="type" name="type">
+                            <option value="">جميع الأنواع</option>
+                            {% for type_code, type_name in notification_types %}
+                            <option value="{{ type_code }}" {% if selected_type == type_code %}selected{% endif %}>{{ type_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="is_read" class="form-label">حالة القراءة</label>
+                        <select class="form-select" id="is_read" name="is_read">
+                            <option value="">الكل</option>
+                            <option value="read" {% if selected_read == 'read' %}selected{% endif %}>مقروءة</option>
+                            <option value="unread" {% if selected_read == 'unread' %}selected{% endif %}>غير مقروءة</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="priority" class="form-label">الأولوية</label>
+                        <select class="form-select" id="priority" name="priority">
+                            <option value="">جميع الأولويات</option>
+                            {% for priority_code, priority_name in priority_levels %}
+                            <option value="{{ priority_code }}" {% if selected_priority == priority_code %}selected{% endif %}>{{ priority_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                        <div class="d-grid gap-2 w-100">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-search me-1"></i> بحث
+                            </button>
+                            <a href="{% url 'notifications:user_notifications' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-redo me-1"></i> إعادة ضبط
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- قائمة التنبيهات -->
+    <div class="col-md-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bell me-2 text-primary"></i>
+                        تنبيهاتي
+                        {% if selected_type or selected_read or selected_priority %}
+                        <small class="text-muted">(تم تطبيق الفلاتر)</small>
+                        {% endif %}
+                    </h5>
+                    <a href="{% url 'notifications:mark_all_as_read' %}" class="btn btn-sm btn-outline-primary mark-all-read">
+                        <i class="fas fa-check-double me-1"></i> تعليم الكل كمقروء
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if notifications %}
+                <div class="list-group">
+                    {% for notification in notifications %}
+                    <a href="{% url 'notifications:detail' notification.pk %}" class="list-group-item list-group-item-action {% if not notification.is_read %}list-group-item-light{% endif %}">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">
+                                <i class="{{ notification.icon }} me-2
+                                    {% if notification.notification_type == 'hr' %}text-primary
+                                    {% elif notification.notification_type == 'meetings' %}text-info
+                                    {% elif notification.notification_type == 'inventory' %}text-success
+                                    {% elif notification.notification_type == 'purchase' %}text-warning
+                                    {% elif notification.notification_type == 'system' %}text-secondary
+                                    {% endif %}"></i>
+                                {{ notification.title }}
+                                {% if not notification.is_read %}
+                                <span class="badge bg-danger">جديد</span>
+                                {% endif %}
+                            </h6>
+                            <small>{{ notification.created_at|date:"Y-m-d H:i" }}</small>
+                        </div>
+                        <p class="mb-1 text-truncate">{{ notification.message }}</p>
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <small class="text-muted">
+                                <span class="badge
+                                    {% if notification.notification_type == 'hr' %}bg-primary
+                                    {% elif notification.notification_type == 'meetings' %}bg-info
+                                    {% elif notification.notification_type == 'inventory' %}bg-success
+                                    {% elif notification.notification_type == 'purchase' %}bg-warning
+                                    {% elif notification.notification_type == 'system' %}bg-secondary
+                                    {% endif %}">
+                                    {{ notification.get_notification_type_display }}
+                                </span>
+                                <span class="badge
+                                    {% if notification.priority == 'low' %}bg-secondary
+                                    {% elif notification.priority == 'medium' %}bg-info
+                                    {% elif notification.priority == 'high' %}bg-warning
+                                    {% elif notification.priority == 'urgent' %}bg-danger
+                                    {% endif %} ms-1">
+                                    {{ notification.get_priority_display }}
+                                </span>
+                            </small>
+                            {% if not notification.is_read %}
+                            <a href="{% url 'notifications:mark_as_read' notification.pk %}?next={% url 'notifications:detail' notification.pk %}" class="btn btn-sm btn-outline-success">
+                                <i class="fas fa-check"></i> تعليم كمقروء
+                            </a>
+                            {% else %}
+                            <span class="badge bg-success">
+                                <i class="fas fa-check-double"></i> مقروء
+                            </span>
+                            {% endif %}
+                        </div>
+                    </a>
+                    {% endfor %}
+                </div>
+
+                <!-- Pagination -->
+                {% if notifications.has_other_pages %}
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if notifications.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% if selected_type %}&type={{ selected_type }}{% endif %}{% if selected_read %}&is_read={{ selected_read }}{% endif %}{% if selected_priority %}&priority={{ selected_priority }}{% endif %}" aria-label="First">
+                                <span aria-hidden="true">&laquo;&laquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ notifications.previous_page_number }}{% if selected_type %}&type={{ selected_type }}{% endif %}{% if selected_read %}&is_read={{ selected_read }}{% endif %}{% if selected_priority %}&priority={{ selected_priority }}{% endif %}" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" aria-label="First">
+                                <span aria-hidden="true">&laquo;&laquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        {% endif %}
+
+                        {% for i in notifications.paginator.page_range %}
+                            {% if notifications.number == i %}
+                            <li class="page-item active"><a class="page-link" href="#">{{ i }}</a></li>
+                            {% elif i > notifications.number|add:'-3' and i < notifications.number|add:'3' %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ i }}{% if selected_type %}&type={{ selected_type }}{% endif %}{% if selected_read %}&is_read={{ selected_read }}{% endif %}{% if selected_priority %}&priority={{ selected_priority }}{% endif %}">{{ i }}</a>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+
+                        {% if notifications.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ notifications.next_page_number }}{% if selected_type %}&type={{ selected_type }}{% endif %}{% if selected_read %}&is_read={{ selected_read }}{% endif %}{% if selected_priority %}&priority={{ selected_priority }}{% endif %}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ notifications.paginator.num_pages }}{% if selected_type %}&type={{ selected_type }}{% endif %}{% if selected_read %}&is_read={{ selected_read }}{% endif %}{% if selected_priority %}&priority={{ selected_priority }}{% endif %}" aria-label="Last">
+                                <span aria-hidden="true">&raquo;&raquo;</span>
+                            </a>
+                        </li>
+                        {% else %}
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" aria-label="Last">
+                                <span aria-hidden="true">&raquo;&raquo;</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+                {% else %}
+                <div class="alert alert-info text-center">
+                    <i class="fas fa-info-circle me-2"></i>
+                    لا توجد تنبيهات متاحة{% if selected_type or selected_read or selected_priority %} بناءً على معايير البحث المحددة{% endif %}.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ block.super }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // تحديث الفلاتر تلقائيًا عند التغيير
+        const filterForm = document.querySelector('form');
+        const filterSelects = filterForm.querySelectorAll('select');
+
+        filterSelects.forEach(select => {
+            select.addEventListener('change', function() {
+                filterForm.submit();
+            });
+        });
+    });
+</script>
+{% endblock %}

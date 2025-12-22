@@ -1,0 +1,641 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}لوحة تحكم التدريب - نظام الدولية{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.css">
+<style>
+:root {
+    --training-primary: #3b82f6;
+    --training-secondary: #1e40af;
+    --training-success: #10b981;
+    --training-warning: #f59e0b;
+    --training-danger: #ef4444;
+    --training-purple: #8b5cf6;
+    --training-indigo: #6366f1;
+}
+
+.training-header {
+    background: linear-gradient(135deg, var(--training-primary) 0%, var(--training-secondary) 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 30px rgba(59, 130, 246, 0.2);
+}
+
+.training-stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    border-left: 4px solid transparent;
+}
+
+.training-stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.training-stat-card.active {
+    border-left-color: var(--training-primary);
+}
+
+.training-stat-card.upcoming {
+    border-left-color: var(--training-warning);
+}
+
+.training-stat-card.completed {
+    border-left-color: var(--training-success);
+}
+
+.training-stat-card.trainees {
+    border-left-color: var(--training-purple);
+}
+
+.training-stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin-bottom: 1rem;
+}
+
+.training-course-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    border: 1px solid #e5e7eb;
+    position: relative;
+    overflow: hidden;
+}
+
+.training-course-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--training-primary), var(--training-secondary));
+}
+
+.training-course-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.course-status-badge {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 50px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-active {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.status-upcoming {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-completed {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-cancelled {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.progress-ring {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: conic-gradient(var(--training-primary) var(--progress, 0%), #e5e7eb 0%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.progress-ring::before {
+    content: '';
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: white;
+    position: absolute;
+}
+
+.progress-text {
+    position: relative;
+    z-index: 1;
+    font-weight: 700;
+    font-size: 0.875rem;
+    color: var(--training-primary);
+}
+
+.trainee-avatar {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    border: 2px solid white;
+    margin-left: -10px;
+    transition: all 0.2s ease;
+}
+
+.trainee-avatar:hover {
+    transform: scale(1.1);
+    z-index: 2;
+    position: relative;
+}
+
+.quick-action-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-radius: 10px;
+    text-decoration: none;
+    color: white;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    margin-bottom: 0.75rem;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    color: white;
+    text-decoration: none;
+}
+
+.skills-chart {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.skill-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.skill-item:last-child {
+    border-bottom: none;
+}
+
+.skill-progress {
+    width: 100px;
+    height: 6px;
+    background: #f3f4f6;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.skill-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--training-primary), var(--training-secondary));
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.upcoming-session {
+    background: #f8fafc;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.75rem;
+    border-left: 3px solid var(--training-warning);
+}
+
+.session-time {
+    color: var(--training-primary);
+    font-weight: 600;
+    font-size: 0.875rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Training Dashboard Header -->
+        <div class="training-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="h2 mb-2">
+                        <i class="fas fa-graduation-cap me-3"></i>
+                        لوحة تحكم التدريب والتطوير
+                    </h1>
+                    <p class="mb-0 opacity-90">
+                        منصة شاملة لإدارة برامج التدريب وتطوير مهارات الموظفين
+                    </p>
+                </div>
+                <div class="col-md-4 text-md-end">
+                    <a href="{% url 'training:create_course' %}" class="btn btn-light btn-lg">
+                        <i class="fas fa-plus me-2"></i>
+                        برنامج تدريبي جديد
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Training Statistics -->
+<div class="row">
+    <div class="col-xl-3 col-md-6">
+        <div class="training-stat-card active">
+            <div class="training-stat-icon" style="background: linear-gradient(135deg, var(--training-primary), var(--training-secondary));">
+                <i class="fas fa-chalkboard-teacher text-white"></i>
+            </div>
+            <div class="h2 mb-1" style="color: var(--training-primary);">{{ active_courses|default:0 }}</div>
+            <div class="text-muted mb-2">برامج تدريبية نشطة</div>
+            <div class="small" style="color: var(--training-primary);">
+                <i class="fas fa-clock me-1"></i>
+                {{ total_hours|default:0 }} ساعة تدريبية
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="training-stat-card upcoming">
+            <div class="training-stat-icon" style="background: linear-gradient(135deg, var(--training-warning), #d97706);">
+                <i class="fas fa-calendar-alt text-white"></i>
+            </div>
+            <div class="h2 mb-1 text-warning">{{ upcoming_courses|default:0 }}</div>
+            <div class="text-muted mb-2">برامج قادمة</div>
+            <div class="small text-warning">
+                <i class="fas fa-arrow-right me-1"></i>
+                {{ upcoming_sessions|default:0 }} جلسة قادمة
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="training-stat-card trainees">
+            <div class="training-stat-icon" style="background: linear-gradient(135deg, var(--training-purple), #7c3aed);">
+                <i class="fas fa-users text-white"></i>
+            </div>
+            <div class="h2 mb-1" style="color: var(--training-purple);">{{ total_trainees|default:0 }}</div>
+            <div class="text-muted mb-2">متدربين مسجلين</div>
+            <div class="small" style="color: var(--training-purple);">
+                <i class="fas fa-chart-line me-1"></i>
+                {{ completion_rate|default:0|floatformat:1 }}% معدل الإنجاز
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6">
+        <div class="training-stat-card completed">
+            <div class="training-stat-icon" style="background: linear-gradient(135deg, var(--training-success), #059669);">
+                <i class="fas fa-medal text-white"></i>
+            </div>
+            <div class="h2 mb-1 text-success">{{ completed_courses|default:0 }}</div>
+            <div class="text-muted mb-2">برامج مكتملة</div>
+            <div class="small text-success">
+                <i class="fas fa-certificate me-1"></i>
+                {{ certificates_issued|default:0 }} شهادة صادرة
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="row">
+    <!-- Active Training Courses -->
+    <div class="col-xl-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 py-3">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="mb-0">
+                            <i class="fas fa-book me-2"></i>
+                            البرامج التدريبية النشطة
+                        </h5>
+                    </div>
+                    <div class="col-auto">
+                        <div class="btn-group btn-group-sm">
+                            <button class="btn btn-outline-secondary active" data-filter="all">الكل</button>
+                            <button class="btn btn-outline-secondary" data-filter="active">نشط</button>
+                            <button class="btn btn-outline-secondary" data-filter="upcoming">قادم</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                {% for course in active_courses_list %}
+                <div class="training-course-card">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div class="d-flex align-items-start mb-3">
+                                <div class="me-3">
+                                    {% if course.image %}
+                                    <img src="{{ course.image.url }}" alt="{{ course.title }}" 
+                                         class="rounded" width="60" height="60" style="object-fit: cover;">
+                                    {% else %}
+                                    <div class="bg-primary text-white rounded d-flex align-items-center justify-content-center" 
+                                         style="width: 60px; height: 60px;">
+                                        <i class="fas fa-graduation-cap"></i>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">{{ course.title }}</h6>
+                                    <p class="text-muted small mb-2">{{ course.description|truncatewords:15 }}</p>
+                                    <div class="d-flex align-items-center flex-wrap">
+                                        <span class="course-status-badge status-{{ course.status|lower }} me-2">
+                                            {{ course.get_status_display }}
+                                        </span>
+                                        <small class="text-muted me-3">
+                                            <i class="fas fa-clock me-1"></i>
+                                            {{ course.duration_hours }} ساعة
+                                        </small>
+                                        <small class="text-muted me-3">
+                                            <i class="fas fa-calendar me-1"></i>
+                                            {{ course.start_date|date:"Y/m/d" }}
+                                        </small>
+                                        <small class="text-muted">
+                                            <i class="fas fa-user me-1"></i>
+                                            {{ course.instructor_name }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <small class="text-muted">المتدربين المسجلين</small>
+                                    <div class="d-flex align-items-center mt-1">
+                                        <div class="d-flex">
+                                            {% for trainee in course.enrolled_trainees|slice:":5" %}
+                                            <img src="{{ trainee.emp.photo.url|default:'/static/img/default-avatar.png' }}" 
+                                                 alt="{{ trainee.emp.full_name }}" 
+                                                 class="trainee-avatar"
+                                                 title="{{ trainee.emp.full_name }}">
+                                            {% endfor %}
+                                            {% if course.total_trainees > 5 %}
+                                            <div class="trainee-avatar bg-secondary text-white d-flex align-items-center justify-content-center" 
+                                                 style="font-size: 0.75rem;">
+                                                +{{ course.total_trainees|add:"-5" }}
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                        <small class="text-muted ms-2">{{ course.total_trainees }} متدرب</small>
+                                    </div>
+                                </div>
+                                <div class="col-sm-6">
+                                    <small class="text-muted">معدل الحضور</small>
+                                    <div class="d-flex align-items-center mt-1">
+                                        <div class="progress flex-grow-1 me-2" style="height: 6px;">
+                                            <div class="progress-bar bg-success" 
+                                                 style="width: {{ course.attendance_rate }}%"></div>
+                                        </div>
+                                        <small class="text-success fw-bold">{{ course.attendance_rate|floatformat:0 }}%</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            <div class="progress-ring" style="--progress: {{ course.progress_percentage }}%;">
+                                <div class="progress-text">{{ course.progress_percentage|floatformat:0 }}%</div>
+                            </div>
+                            <div class="mt-2">
+                                <small class="text-muted">التقدم العام</small>
+                            </div>
+                            <div class="mt-3">
+                                <a href="{% url 'training:course_detail' course.course_id %}" 
+                                   class="btn btn-sm btn-outline-primary me-1">
+                                    <i class="fas fa-eye"></i> عرض
+                                </a>
+                                <a href="{% url 'training:course_sessions' course.course_id %}" 
+                                   class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-calendar-alt"></i> الجلسات
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="text-center py-5">
+                    <i class="fas fa-graduation-cap fa-3x text-muted mb-3"></i>
+                    <p class="text-muted">لا توجد برامج تدريبية نشطة حالياً</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% if active_courses_list %}
+            <div class="card-footer bg-white border-0 text-center">
+                <a href="{% url 'training:courses' %}" class="btn btn-outline-primary">
+                    عرض جميع البرامج
+                    <i class="fas fa-arrow-left ms-2"></i>
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="col-xl-4">
+        <!-- Quick Actions -->
+        <div class="quick-action-card">
+            <h5 class="mb-3">
+                <i class="fas fa-bolt me-2"></i>
+                إجراءات سريعة
+            </h5>
+            
+            <a href="{% url 'training:create_course' %}" 
+               class="action-btn" 
+               style="background: linear-gradient(135deg, var(--training-primary), var(--training-secondary));">
+                <i class="fas fa-plus me-2"></i>
+                برنامج تدريبي جديد
+            </a>
+            
+            <a href="{% url 'training:schedule_session' %}" 
+               class="action-btn" 
+               style="background: linear-gradient(135deg, var(--training-warning), #d97706);">
+                <i class="fas fa-calendar-plus me-2"></i>
+                جدولة جلسة
+            </a>
+            
+            <a href="{% url 'training:enroll_trainees' %}" 
+               class="action-btn" 
+               style="background: linear-gradient(135deg, var(--training-success), #059669);">
+                <i class="fas fa-user-plus me-2"></i>
+                تسجيل متدربين
+            </a>
+            
+            <a href="{% url 'training:certificates' %}" 
+               class="action-btn" 
+               style="background: linear-gradient(135deg, var(--training-purple), #7c3aed);">
+                <i class="fas fa-certificate me-2"></i>
+                إصدار شهادات
+            </a>
+            
+            <a href="{% url 'training:reports' %}" 
+               class="action-btn" 
+               style="background: linear-gradient(135deg, var(--training-indigo), #4f46e5);">
+                <i class="fas fa-chart-bar me-2"></i>
+                تقارير التدريب
+            </a>
+        </div>
+        
+        <!-- Upcoming Sessions -->
+        <div class="quick-action-card">
+            <h5 class="mb-3">
+                <i class="fas fa-calendar-alt me-2"></i>
+                الجلسات القادمة
+            </h5>
+            
+            {% for session in upcoming_sessions_list %}
+            <div class="upcoming-session">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="fw-medium mb-1">{{ session.course.title }}</div>
+                        <small class="text-muted">{{ session.session_title }}</small>
+                    </div>
+                    <div class="text-end">
+                        <div class="session-time">{{ session.start_time|time:"H:i" }}</div>
+                        <small class="text-muted">{{ session.session_date|date:"m/d" }}</small>
+                    </div>
+                </div>
+                <div class="mt-2 d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        <i class="fas fa-map-marker-alt me-1"></i>
+                        {{ session.location|default:"قاعة افتراضية" }}
+                    </small>
+                    <small class="text-muted">
+                        <i class="fas fa-users me-1"></i>
+                        {{ session.attendees_count }}/{{ session.max_attendees }}
+                    </small>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center text-muted py-3">
+                <i class="fas fa-calendar-check me-1"></i>
+                لا توجد جلسات مجدولة
+            </div>
+            {% endfor %}
+            
+            {% if upcoming_sessions_list %}
+            <div class="text-center mt-3">
+                <a href="{% url 'training:sessions_calendar' %}" class="btn btn-outline-primary btn-sm">
+                    عرض التقويم الكامل
+                </a>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Skills Development Chart -->
+        <div class="skills-chart">
+            <h5 class="mb-3">
+                <i class="fas fa-chart-line me-2"></i>
+                تطوير المهارات
+            </h5>
+            
+            {% for skill in top_skills %}
+            <div class="skill-item">
+                <div>
+                    <div class="fw-medium">{{ skill.name }}</div>
+                    <small class="text-muted">{{ skill.trainees_count }} متدرب</small>
+                </div>
+                <div class="text-end">
+                    <div class="skill-progress">
+                        <div class="skill-progress-bar" style="width: {{ skill.progress_percentage }}%;"></div>
+                    </div>
+                    <small class="text-muted">{{ skill.progress_percentage|floatformat:0 }}%</small>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center text-muted py-3">
+                <i class="fas fa-info-circle me-1"></i>
+                لا توجد بيانات مهارات متاحة
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+<script>
+// Filter functionality
+document.querySelectorAll('[data-filter]').forEach(button => {
+    button.addEventListener('click', function() {
+        // Remove active class from all buttons
+        document.querySelectorAll('[data-filter]').forEach(btn => btn.classList.remove('active'));
+        
+        // Add active class to clicked button
+        this.classList.add('active');
+        
+        const filter = this.dataset.filter;
+        
+        // Filter course cards
+        document.querySelectorAll('.training-course-card').forEach(card => {
+            if (filter === 'all') {
+                card.style.display = 'block';
+            } else {
+                const status = card.querySelector('.course-status-badge').textContent.trim().toLowerCase();
+                if (status.includes(filter) || card.classList.contains(filter)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            }
+        });
+    });
+});
+
+// Auto-refresh data every 5 minutes
+setInterval(function() {
+    fetch('{% url "training:dashboard_data" %}')
+        .then(response => response.json())
+        .then(data => {
+            // Update statistics
+            document.querySelector('.training-stat-card.active .h2').textContent = data.active_courses;
+            document.querySelector('.training-stat-card.upcoming .h2').textContent = data.upcoming_courses;
+            document.querySelector('.training-stat-card.trainees .h2').textContent = data.total_trainees;
+            document.querySelector('.training-stat-card.completed .h2').textContent = data.completed_courses;
+        })
+        .catch(error => console.log('Error updating dashboard:', error));
+}, 300000); // 5 minutes
+
+// Animate progress rings on load
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.progress-ring').forEach(ring => {
+        const progress = getComputedStyle(ring).getPropertyValue('--progress');
+        ring.style.setProperty('--progress', '0%');
+        
+        setTimeout(() => {
+            ring.style.setProperty('--progress', progress);
+        }, 500);
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends 'Purchase_orders/base_purchase_orders.html' %}
+{% load static %}
+
+{% block title %}طلبات الشراء المرفوضة - نظام الدولية{% endblock %}
+
+{% block page_title %}طلبات الشراء المرفوضة{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
+<li class="breadcrumb-item"><a href="{% url 'Purchase_orders:dashboard' %}">طلبات الشراء</a></li>
+<li class="breadcrumb-item active">الطلبات المرفوضة</li>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">قائمة طلبات الشراء المرفوضة</h5>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>رقم الطلب</th>
+                        <th>تاريخ الطلب</th>
+                        <th>تاريخ الرفض</th>
+                        <th>المورد</th>
+                        <th>مرفوض بواسطة</th>
+                        <th>سبب الرفض</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for request in purchase_requests %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'Purchase_orders:purchase_request_detail' request.id %}">{{ request.request_number }}</a>
+                        </td>
+                        <td>{{ request.request_date|date:"Y-m-d" }}</td>
+                        <td>{{ request.approval_date|date:"Y-m-d" }}</td>
+                        <td>{{ request.vendor|default:"غير محدد" }}</td>
+                        <td>{{ request.approved_by.get_full_name|default:request.approved_by.username }}</td>
+                        <td>{{ request.notes|truncatechars:30 }}</td>
+                        <td>
+                            <a href="{% url 'Purchase_orders:purchase_request_detail' request.id %}" class="btn btn-sm btn-info">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-4">لا توجد طلبات شراء مرفوضة</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

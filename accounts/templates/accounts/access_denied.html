@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="صفحة رفض الوصول - نظام إدارة الصلاحيات">
+    <title>رفض الوصول | {{ system_settings.system_name }}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
+    
+    <!-- Bootstrap RTL CSS -->
+    <link rel="stylesheet" href="{% static 'css/bootstrap.rtl.min.css' %}">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="{% static 'css/fontawesome.all.min.css' %}">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <!-- Google Fonts - Cairo -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #235ee8;
+            --primary-gradient: linear-gradient(135deg, #2b47b8, #235ee8);
+            --secondary-color: #fa5555;
+            --accent-color: #00c7b0;
+            --success-color: #38b54a; 
+            --dark-color: #1a2850;
+            --light-color: #f8f9fc;
+            --text-color: #495d8b;
+            --text-muted: #8094ae;
+            --border-color: #e5e9f2;
+            --danger-gradient: linear-gradient(135deg, #ff4949, #ff1111);
+        }
+        
+        * {
+            transition: all 0.2s ease;
+        }
+        
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            background-color: var(--light-color);
+            font-family: 'Cairo', sans-serif;
+            color: var(--text-color);
+            line-height: 1.6;
+            position: relative;
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .main-wrapper {
+            flex: 1 0 auto;
+            padding-top: 70px; /* Space for the fixed navbar */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Custom navbar styling */
+        .navbar {
+            background: var(--dark-color);
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+            padding: 0.8rem 1.5rem;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1030;
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .navbar-brand i {
+            color: #fabc03;
+            font-size: 1.25em;
+            margin-left: 0.7rem;
+            filter: drop-shadow(0px 2px 3px rgba(0, 0, 0, 0.3));
+        }
+        
+        .navbar-dark .navbar-nav .nav-link {
+            color: rgba(255, 255, 255, 0.85);
+            font-weight: 600;
+            font-size: 0.95rem;
+            padding: 0.8rem 1rem;
+            border-radius: 5px;
+            margin: 0 0.2rem;
+        }
+        
+        .navbar-dark .navbar-nav .nav-link:hover {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Background patterns */
+        .pattern-dots {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            z-index: -2;
+            pointer-events: none;
+            opacity: 0.4;
+            background-image: radial-gradient(var(--text-muted) 1px, transparent 1px);
+            background-size: 20px 20px;
+        }
+        
+        .gradient-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -3;
+            background: linear-gradient(135deg, rgba(35, 94, 232, 0.05) 0%, rgba(0, 199, 176, 0.07) 100%);
+        }
+        
+        /* Card styling */
+        .access-denied-container {
+            max-width: 100%;
+            padding: 0 15px;
+        }
+        
+        .access-denied-card {
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            border: none;
+            transform: translateY(0);
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            opacity: 0;
+            animation: fadeInUp 0.8s ease forwards 0.3s;
+            background-color: white;
+            position: relative;
+        }
+        
+        .access-denied-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            box-shadow: 0 40px 80px rgba(0, 0, 0, 0.2);
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+            z-index: -1;
+        }
+        
+        .access-denied-card:hover {
+            transform: translateY(-10px);
+        }
+        
+        .access-denied-card:hover::after {
+            opacity: 1;
+        }
+        
+        .card-header {
+            background: var(--danger-gradient);
+            border-bottom: none;
+            padding: 1.8rem 2rem;
+            position: relative;
+        }
+        
+        .card-header::before {
+            content: '';
+            position: absolute;
+            top: -20%;
+            right: -20%;
+            width: 100%;
+            height: 250%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: rotate(25deg);
+        }
+        
+        .card-header h3 {
+            font-weight: 800;
+            position: relative;
+            z-index: 1;
+            margin: 0;
+            letter-spacing: 0.5px;
+            font-size: 1.75rem;
+        }
+        
+        .card-body {
+            padding: 3.5rem 2.5rem;
+            position: relative;
+        }
+        
+        /* Icon & Image */
+        .icon-container {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+        
+        .lock-icon {
+            font-size: 4rem;
+            color: var(--secondary-color);
+            filter: drop-shadow(0 5px 10px rgba(250, 85, 85, 0.3));
+            animation: pulse 3s infinite;
+        }
+        
+        .error-image {
+            max-height: 200px;
+            margin: 1rem 0 2rem;
+            filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.15));
+            animation: float 4s ease-in-out infinite;
+        }
+        
+        /* Typography */
+        .access-denied-title {
+            font-weight: 700;
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark-color);
+        }
+        
+        .access-denied-message {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-bottom: 2.5rem;
+            line-height: 1.8;
+            max-width: 90%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        /* Buttons */
+        .action-buttons {
+            margin-top: 2.5rem;
+        }
+        
+        .btn-action {
+            padding: 0.875rem 2rem;
+            font-weight: 700;
+            border-radius: 50px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            letter-spacing: 0.5px;
+            font-size: 1rem;
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .btn-action::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.1));
+            z-index: -1;
+        }
+        
+        .btn-primary {
+            background-image: var(--primary-gradient);
+            border-color: transparent;
+        }
+        
+        .btn-primary:hover, .btn-primary:focus {
+            background-position: right center;
+            box-shadow: 0 8px 25px rgba(35, 94, 232, 0.3);
+            transform: translateY(-3px);
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+            border-color: transparent;
+        }
+        
+        .btn-secondary:hover, .btn-secondary:focus {
+            background-color: #5a6268;
+            box-shadow: 0 8px 25px rgba(108, 117, 125, 0.3);
+            transform: translateY(-3px);
+        }
+        
+        .button-icon {
+            margin-left: 0.6rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .btn-action:hover .button-icon {
+            transform: translateX(-5px);
+        }
+        
+        /* Animations */
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.08);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-15px);
+            }
+            100% {
+                transform: translateY(0px);
+            }
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Responsive Adjustments */
+        @media (max-width: 992px) {
+            .card-body {
+                padding: 2.5rem 1.5rem;
+            }
+            
+            .access-denied-title {
+                font-size: 1.5rem;
+            }
+            
+            .access-denied-message {
+                font-size: 1rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .main-wrapper {
+                padding-top: 60px;
+            }
+            
+            .navbar {
+                padding: 0.6rem 1rem;
+            }
+            
+            .navbar-brand {
+                font-size: 1.3rem;
+            }
+            
+            .btn-action {
+                width: 100%;
+                margin-bottom: 0.75rem;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="gradient-bg"></div>
+<div class="pattern-dots"></div>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+        <a class="navbar-brand" href="#">
+            <i class="fas fa-shield-alt"></i>
+            نظام الصلاحيات
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto">
+                <!-- Empty navbar structure for future use -->
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<div class="main-wrapper">
+    <div class="container access-denied-container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 col-xl-7">
+                <div class="access-denied-card card">
+                    <div class="card-header text-white">
+                        <h3 class="text-center">
+                            <i class="fas fa-exclamation-triangle me-3"></i>
+                            رفض الوصول
+                        </h3>
+                    </div>
+                    <div class="card-body text-center">
+                        <div class="icon-container">
+                            <i class="fas fa-lock lock-icon"></i>
+                        </div>
+                        
+                        <img src="{% static 'images/access-denied.png' %}" alt="رفض الوصول" class="img-fluid error-image">
+                        
+                        <h4 class="access-denied-title">عذراً، ليس لديك صلاحية الوصول إلى هذه الصفحة</h4>
+                        
+                        <p class="access-denied-message">
+                            لا تملك الصلاحيات اللازمة للوصول إلى هذه الصفحة. إذا كنت تعتقد أن هذا خطأ، يرجى التواصل مع مدير النظام.
+                        </p>
+                        
+                        <div class="d-grid gap-3 d-md-flex justify-content-center action-buttons">
+                            <a href="{% url 'accounts:home' %}" class="btn btn-primary btn-action">
+                                العودة للصفحة الرئيسية
+                                <i class="fas fa-home button-icon"></i>
+                            </a>
+                            <a href="javascript:history.back()" class="btn btn-secondary btn-action">
+                                العودة للصفحة السابقة
+                                <i class="fas fa-arrow-left button-icon"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap Bundle with Popper -->
+<script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+<!-- Font Awesome JS -->
+<script src="{% static 'js/fontawesome.all.min.js' %}"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Buttons hover effect
+        document.querySelectorAll('.btn-action').forEach(function(btn) {
+            btn.addEventListener('mouseenter', function() {
+                this.querySelector('.button-icon').style.transform = 'translateX(-8px)';
+            });
+            btn.addEventListener('mouseleave', function() {
+                this.querySelector('.button-icon').style.transform = 'translateX(0)';
+            });
+        });
+        
+        // Add subtle parallax effect to background
+        document.addEventListener('mousemove', function(e) {
+            const moveX = (e.clientX / window.innerWidth) * 15;
+            const moveY = (e.clientY / window.innerHeight) * 15;
+            
+            document.querySelector('.pattern-dots').style.transform = 
+                `translate(${moveX}px, ${moveY}px)`;
+        });
+    });
+</script>
+</body>
+</html>

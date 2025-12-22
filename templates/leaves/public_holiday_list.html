@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>العطلات الرسمية</h1>
+<p><a class="btn btn-primary" href="{% url 'leaves:holiday_create' %}">+ إضافة</a></p>
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>التاريخ</th><th>الوصف</th><th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for i in items %}
+    <tr>
+      <td>{{ i.holiday_date }}</td>
+      <td>{{ i.description }}</td>
+      <td>
+        <a class="btn btn-sm btn-secondary" href="{% url 'leaves:holiday_edit' i.pk %}">تعديل</a>
+        <a class="btn btn-sm btn-danger" href="{% url 'leaves:holiday_delete' i.pk %}">حذف</a>
+      </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="3">لا توجد عطلات</td></tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+

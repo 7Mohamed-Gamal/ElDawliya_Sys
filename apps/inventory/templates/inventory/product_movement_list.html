@@ -1,0 +1,76 @@
+<!-- templates/inventory/product_movement_list.html -->
+{% extends 'inventory/base_inventory.html' %}
+{% load inventory_permission_tags %}
+
+{% block title %}حركات الأصناف - نظام إدارة المخزن{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card shadow">
+            <!-- Card Header -->
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">
+                    <i class="fas fa-exchange-alt me-2"></i>
+                    حركات الأصناف
+                </h4>
+            </div>
+
+            <!-- Search Bar -->
+            <div class="card-body">
+                <form method="get" class="mb-4">
+                    <div class="row g-2">
+                        <div class="col-md-8">
+                            <div class="input-group">
+                                <input type="text" name="search" class="form-control" 
+                                    placeholder="البحث برقم الصنف أو الاسم..." 
+                                    value="{{ request.GET.search|default:'' }}">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search"></i> بحث
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>رقم الصنف</th>
+                                <th>اسم الصنف</th>
+                                <th>الوحدة</th>
+                                <th>الرصيد الحالي</th>
+                                <th>الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for product in products %}
+                            <tr>
+                                <td>{{ product.product_id }}</td>
+                                <td>{{ product.name }}</td>
+                                <td>{{ product.unit|default:"-" }}</td>
+                                <td>{{ product.quantity }}</td>
+                                <td>
+                                    <a href="{% url 'inventory:product_movements' product.product_id %}" 
+                                       class="btn btn-sm btn-primary">
+                                        <i class="fas fa-exchange-alt"></i> عرض الحركات
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-4">
+                                    <i class="fas fa-exclamation-circle text-muted mb-2" style="font-size: 2rem;"></i>
+                                    <p class="mb-0 text-muted">لا توجد أصناف متاحة</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

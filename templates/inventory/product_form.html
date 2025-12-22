@@ -1,0 +1,539 @@
+{% extends 'inventory/base_inventory.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4" dir="rtl">
+    <div class="card form-card">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h4 class="mb-0">
+                <i class="fas fa-box-open me-2"></i>
+                {{ page_title|default:"بيانات الصنف" }}
+            </h4>
+            <a href="{% url 'inventory:product_list' %}" class="btn btn-light btn-sm">
+                <i class="fas fa-arrow-right me-1"></i>
+                العودة للقائمة
+            </a>
+        </div>
+        <div class="card-body p-4">
+            <form method="post" class="needs-validation" enctype="multipart/form-data" novalidate>
+                {% csrf_token %}
+
+                <div class="row g-4">
+                    <!-- Basic Information Section -->
+                    <div class="col-12 mb-4">
+                        <div class="form-section">
+                            <h6 class="section-title">
+                                <i class="fas fa-info-circle"></i>
+                                البيانات الأساسية
+                            </h6>
+
+                            <div class="row g-3">
+                                <!-- Product ID -->
+                                <div class="col-md-6">
+                                    <label for="product_id" class="form-label required-label">رقم الصنف</label>
+                                    <input type="text" class="form-control" id="product_id" name="product_id"
+                                           value="{{ form.product_id.value|default:'' }}" required>
+                                    <small class="text-muted">رمز فريد لتعريف المنتج</small>
+                                </div>
+
+                                <!-- Product Name -->
+                                <div class="col-md-6">
+                                    <label for="name" class="form-label required-label">اسم الصنف</label>
+                                    <input type="text" class="form-control" id="name" name="name"
+                                           value="{{ form.name.value|default:'' }}" required>
+                                </div>
+
+                                <!-- Category -->
+                                <div class="col-md-6">
+                                    <label for="category" class="form-label">التصنيف</label>
+                                    <div class="input-group">
+                                        <select class="form-select" id="category" name="category">
+                                            <option value="">اختر التصنيف</option>
+                                            {% for category in categories %}
+                                                <option value="{{ category.id }}" {% if form.category.value == category.id %}selected{% endif %}>
+                                                    {{ category.name }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Location -->
+                                <div class="col-md-6">
+                                    <label for="location" class="form-label">الموقع في المخزن</label>
+                                    <input type="text" class="form-control" id="location" name="location"
+                                           value="{{ form.location.value|default:'' }}">
+                                    <small class="text-muted">مثال: رف 3، قسم A</small>
+                                </div>
+
+                                <!-- Description -->
+                                <div class="col-md-12 mt-3">
+                                    <label for="description" class="form-label">وصف الصنف</label>
+                                    <textarea class="form-control" id="description" name="description" rows="3">{{ form.description.value|default:'' }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Inventory Details Section -->
+                    <div class="col-12 mb-4">
+                        <div class="form-section">
+                            <h6 class="section-title">
+                                <i class="fas fa-boxes"></i>
+                                المخزون والأسعار
+                            </h6>
+
+                            <div class="row g-3">
+                                <!-- Initial Balance -->
+                                <div class="col-md-4">
+                                    <label for="quantity" class="form-label">الكمية المتوفرة</label>
+                                    <input type="number" class="form-control" id="quantity" name="quantity"
+                                           value="{{ form.quantity.value|default:'0' }}" min="0" step="0.01">
+                                </div>
+
+                                <!-- Unit -->
+                                <div class="col-md-4">
+                                    <label for="unit" class="form-label">وحدة القياس</label>
+                                    <div class="input-group">
+                                        <select class="form-select" id="unit" name="unit">
+                                            <option value="">اختر الوحدة</option>
+                                            {% for unit in units %}
+                                                <option value="{{ unit.id }}" {% if form.unit.value == unit.id %}selected{% endif %}>
+                                                    {{ unit.name }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addUnitModal">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                    </div>
+                                    <div id="unitDebugInfo" style="display: none;">
+                                        <small class="text-muted">قيمة وحدة القياس: <span id="unitValue"></span></small>
+                                    </div>
+                                </div>
+
+                                <!-- Unit Price -->
+                                <div class="col-md-4">
+                                    <label for="unit_price" class="form-label">سعر الوحدة</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="unit_price" name="unit_price"
+                                               value="{{ form.unit_price.value|default:'0' }}" min="0" step="0.01">
+                                        <span class="input-group-text">$</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Thresholds Section -->
+                    <div class="col-12 mb-4">
+                        <div class="form-section">
+                            <h6 class="section-title">
+                                <i class="fas fa-chart-line"></i>
+                                حدود المخزون
+                            </h6>
+
+                            <div class="row g-3">
+                                <!-- Min Threshold -->
+                                <div class="col-md-6">
+                                    <label for="minimum_threshold" class="form-label">الحد الأدنى</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="minimum_threshold" name="minimum_threshold"
+                                               value="{{ form.minimum_threshold.value|default:'0' }}" min="0" step="0.01">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-exclamation-triangle text-warning"></i>
+                                        </span>
+                                    </div>
+                                    <small class="text-muted">سيتم التنبيه عندما ينخفض المخزون عن هذا المستوى</small>
+                                </div>
+
+                                <!-- Max Threshold -->
+                                <div class="col-md-6">
+                                    <label for="maximum_threshold" class="form-label">الحد الأقصى</label>
+                                    <div class="input-group">
+                                        <input type="number" class="form-control" id="maximum_threshold" name="maximum_threshold"
+                                               value="{{ form.maximum_threshold.value|default:'0' }}" min="0" step="0.01">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-level-up-alt text-success"></i>
+                                        </span>
+                                    </div>
+                                    <small class="text-muted">المستوى الأقصى الموصى به للمخزون</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Image Section -->
+                    <div class="col-12 mb-4">
+                        <div class="form-section">
+                            <h6 class="section-title">
+                                <i class="fas fa-image"></i>
+                                صورة الصنف
+                            </h6>
+
+                            <div class="row g-3">
+                                <div class="col-md-12">
+                                    <label for="image" class="form-label">صورة الصنف</label>
+                                    <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                                    {% if form.image.value %}
+                                    <div class="mt-2">
+                                        <img src="{{ form.image.value.url }}" alt="{{ form.name.value }}" style="max-width: 200px; max-height: 200px;" class="img-thumbnail">
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <!-- Hidden fields for new category and unit -->
+                <input type="hidden" name="new_category" id="new_category_checkbox" value="false">
+                <input type="hidden" name="new_category_name" id="new_category_name">
+                <input type="hidden" name="new_category_description" id="new_category_description">
+
+                <input type="hidden" name="new_unit" id="new_unit_checkbox" value="false">
+                <input type="hidden" name="new_unit_name" id="new_unit_name">
+                <input type="hidden" name="new_unit_symbol" id="new_unit_symbol">
+
+                <div class="d-flex justify-content-between mt-4">
+                    <a href="{% url 'inventory:product_list' %}" class="btn btn-light">
+                        <i class="fas fa-times me-1"></i>
+                        إلغاء
+                    </a>
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="fas fa-save me-2"></i>
+                        حفظ البيانات
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-card {
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+
+    .form-section {
+        background-color: #f8f9fa;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+        border-right: 4px solid #3f51b5;
+        transition: transform 0.3s ease;
+    }
+
+    .form-section:hover {
+        transform: translateY(-3px);
+    }
+
+    .section-title {
+        font-weight: 600;
+        color: #3f51b5;
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.2rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .section-title i {
+        margin-left: 10px;
+        width: 24px;
+        height: 24px;
+        line-height: 24px;
+        text-align: center;
+        background-color: #3f51b5;
+        color: white;
+        border-radius: 50%;
+        font-size: 0.8rem;
+    }
+
+    .form-control, .form-select {
+        border: 1.5px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        transition: all 0.3s;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #3f51b5;
+        box-shadow: 0 0 0 0.25rem rgba(63,81,181,0.25);
+    }
+
+    .required-label::after {
+        content: '*';
+        color: #f44336;
+        margin-right: 4px;
+    }
+
+    .text-muted {
+        font-size: 0.85rem;
+    }
+
+    .btn {
+        transition: all 0.3s ease;
+        border-radius: 8px;
+    }
+
+    .btn-primary {
+        background-color: #3f51b5;
+        border-color: #3f51b5;
+    }
+
+    .btn-primary:hover {
+        background-color: #303f9f;
+        border-color: #303f9f;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+</style>
+
+<!-- Category Modal -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-labelledby="addCategoryModalLabel" aria-hidden="true" dir="rtl">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="addCategoryModalLabel">إضافة تصنيف جديد</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="categoryForm">
+                    <div class="mb-3">
+                        <label for="categoryName" class="form-label">اسم التصنيف</label>
+                        <input type="text" class="form-control" id="categoryName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="categoryDescription" class="form-label">وصف التصنيف</label>
+                        <textarea class="form-control" id="categoryDescription" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" id="saveCategoryBtn">حفظ</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Unit Modal -->
+<div class="modal fade" id="addUnitModal" tabindex="-1" aria-labelledby="addUnitModalLabel" aria-hidden="true" dir="rtl">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="addUnitModalLabel">إضافة وحدة قياس جديدة</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="unitForm">
+                    <div class="mb-3">
+                        <label for="unitName" class="form-label">اسم الوحدة</label>
+                        <input type="text" class="form-control" id="unitName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="unitSymbol" class="form-label">رمز الوحدة</label>
+                        <input type="text" class="form-control" id="unitSymbol">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
+                <button type="button" class="btn btn-primary" id="saveUnitBtn">حفظ</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Form validation
+    (function() {
+        'use strict'
+
+        // Initialize unit dropdown debug info
+        const unitDropdown = document.getElementById('unit');
+        if (unitDropdown) {
+            unitDropdown.addEventListener('change', function() {
+                const unitDebugInfo = document.getElementById('unitDebugInfo');
+                const unitValue = document.getElementById('unitValue');
+
+                if (unitDebugInfo && unitValue) {
+                    unitDebugInfo.style.display = 'block';
+                    unitValue.textContent = this.value;
+                }
+
+                console.log("Unit dropdown changed to:", this.value);
+            });
+        }
+
+        var forms = document.querySelectorAll('.needs-validation')
+        Array.prototype.slice.call(forms).forEach(function(form) {
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault()
+                    event.stopPropagation()
+                }
+
+                // Check if we have a new unit selected
+                const unitDropdown = document.getElementById('unit');
+                if (unitDropdown && unitDropdown.value === "new") {
+                    // Make sure the hidden fields are properly set
+                    const newUnitCheckbox = document.getElementById('new_unit_checkbox');
+                    const newUnitName = document.getElementById('new_unit_name');
+                    const newUnitSymbol = document.getElementById('new_unit_symbol');
+
+                    // Double-check that the values are set correctly
+                    if (newUnitCheckbox.value !== "true" || !newUnitName.value) {
+                        console.error("New unit fields not properly set!");
+                        // Set them again to be safe
+                        newUnitCheckbox.value = "true";
+                        // Make sure the name attributes are set
+                        newUnitCheckbox.setAttribute('name', 'new_unit');
+                        newUnitName.setAttribute('name', 'new_unit_name');
+                        newUnitSymbol.setAttribute('name', 'new_unit_symbol');
+                    }
+
+                    console.log("Form submission - New unit checkbox:", newUnitCheckbox.value);
+                    console.log("Form submission - New unit name:", newUnitName.value);
+                }
+
+                // Same check for category
+                const categoryDropdown = document.getElementById('category');
+                if (categoryDropdown && categoryDropdown.value === "new") {
+                    // Make sure the hidden fields are properly set
+                    const newCategoryCheckbox = document.getElementById('new_category_checkbox');
+                    const newCategoryName = document.getElementById('new_category_name');
+
+                    // Double-check that the values are set correctly
+                    if (newCategoryCheckbox.value !== "true" || !newCategoryName.value) {
+                        console.error("New category fields not properly set!");
+                        // Set them again to be safe
+                        newCategoryCheckbox.value = "true";
+                        // Make sure the name attributes are set
+                        newCategoryCheckbox.setAttribute('name', 'new_category');
+                        newCategoryName.setAttribute('name', 'new_category_name');
+                    }
+                }
+
+                form.classList.add('was-validated')
+            }, false)
+        })
+    })()
+
+    // Handle add category functionality
+    document.getElementById('saveCategoryBtn').addEventListener('click', function() {
+        const categoryName = document.getElementById('categoryName').value.trim();
+        const categoryDescription = document.getElementById('categoryDescription').value.trim();
+
+        if (!categoryName) {
+            alert('من فضلك أدخل اسم التصنيف');
+            return;
+        }
+
+        // Add the new category to the dropdown
+        const categoryDropdown = document.getElementById('category');
+        const newOption = document.createElement('option');
+        newOption.value = "new"; // Special value to indicate a new category
+        newOption.textContent = categoryName + " (جديد)";
+        newOption.selected = true;
+        categoryDropdown.appendChild(newOption);
+
+        // Set the hidden fields for the new category
+        document.getElementById('new_category_checkbox').value = "true";
+        document.getElementById('new_category_name').value = categoryName;
+        document.getElementById('new_category_description').value = categoryDescription;
+
+        // Ensure the hidden fields are properly set as form elements
+        const newCategoryCheckbox = document.getElementById('new_category_checkbox');
+        const newCategoryName = document.getElementById('new_category_name');
+        const newCategoryDescription = document.getElementById('new_category_description');
+
+        // Make sure these fields have the 'name' attribute set correctly
+        newCategoryCheckbox.setAttribute('name', 'new_category');
+        newCategoryName.setAttribute('name', 'new_category_name');
+        newCategoryDescription.setAttribute('name', 'new_category_description');
+
+        console.log("New category checkbox value:", newCategoryCheckbox.value);
+        console.log("New category name value:", newCategoryName.value);
+        console.log("New category description value:", newCategoryDescription.value);
+
+        // Close the modal and reset form
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addCategoryModal'));
+        modal.hide();
+        document.getElementById('categoryForm').reset();
+
+        // Show success message
+        alert('تمت إضافة التصنيف الجديد. سيتم حفظه عند حفظ المنتج.');
+    });
+
+    // Handle add unit functionality
+    document.getElementById('saveUnitBtn').addEventListener('click', function() {
+        const unitName = document.getElementById('unitName').value.trim();
+        const unitSymbol = document.getElementById('unitSymbol').value.trim();
+
+        if (!unitName) {
+            alert('من فضلك أدخل اسم الوحدة');
+            return;
+        }
+
+        // Add the new unit to the dropdown
+        const unitDropdown = document.getElementById('unit');
+
+        // Remove any existing "new" option to avoid duplicates
+        Array.from(unitDropdown.options).forEach(option => {
+            if (option.value === "new") {
+                unitDropdown.removeChild(option);
+            }
+        });
+
+        const newOption = document.createElement('option');
+        newOption.value = "new"; // Special value to indicate a new unit
+        newOption.textContent = unitName + (unitSymbol ? ` (${unitSymbol})` : '') + " (جديد)";
+        newOption.selected = true;
+        unitDropdown.appendChild(newOption);
+
+        // Set the hidden fields for the new unit
+        const newUnitCheckbox = document.getElementById('new_unit_checkbox');
+        const newUnitName = document.getElementById('new_unit_name');
+        const newUnitSymbol = document.getElementById('new_unit_symbol');
+
+        // Set values
+        newUnitCheckbox.value = "true";
+        newUnitName.value = unitName;
+        newUnitSymbol.value = unitSymbol;
+
+        // Make sure these fields have the 'name' attribute set correctly
+        newUnitCheckbox.setAttribute('name', 'new_unit');
+        newUnitName.setAttribute('name', 'new_unit_name');
+        newUnitSymbol.setAttribute('name', 'new_unit_symbol');
+
+        // Update debug info
+        const unitDebugInfo = document.getElementById('unitDebugInfo');
+        const unitValue = document.getElementById('unitValue');
+
+        if (unitDebugInfo && unitValue) {
+            unitDebugInfo.style.display = 'block';
+            unitValue.textContent = 'new - ' + unitName;
+        }
+
+        console.log("New unit checkbox value:", newUnitCheckbox.value);
+        console.log("New unit name value:", newUnitName.value);
+        console.log("New unit symbol value:", newUnitSymbol.value);
+
+        // Close the modal and reset form
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addUnitModal'));
+        modal.hide();
+        document.getElementById('unitForm').reset();
+
+        // Show success message
+        alert('تمت إضافة وحدة القياس الجديدة. سيتم حفظها عند حفظ المنتج.');
+    });
+</script>
+{% endblock %}

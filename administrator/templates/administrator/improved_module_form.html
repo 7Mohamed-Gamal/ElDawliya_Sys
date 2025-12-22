@@ -1,0 +1,482 @@
+{% extends 'administrator/base_admin.html' %}
+{% load static %}
+
+{% block title %}
+    {% if form.instance.pk %}
+        تعديل الوحدة - {{ form.instance.name }}
+    {% else %}
+        إضافة وحدة جديدة
+    {% endif %} - لوحة تحكم مدير النظام
+{% endblock %}
+
+{% block page_icon %}puzzle-piece{% endblock %}
+{% block page_header %}
+    {% if form.instance.pk %}
+        تعديل الوحدة - {{ form.instance.name }}
+    {% else %}
+        إضافة وحدة جديدة
+    {% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .module-icon-preview {
+        width: 48px;
+        height: 48px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        color: white;
+        border-radius: 8px;
+    }
+    
+    .url-helper {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+        border: 1px solid #e9ecef;
+    }
+    
+    .url-helper-title {
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: #495057;
+    }
+    
+    .icon-selector-container {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 20px;
+        border: 1px solid #e9ecef;
+    }
+    
+    .icon-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+        gap: 10px;
+        margin-top: 15px;
+    }
+    
+    .icon-item {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        background-color: #e9ecef;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .icon-item:hover {
+        background-color: #dee2e6;
+        transform: scale(1.1);
+    }
+    
+    .icon-item.selected {
+        background-color: #0d6efd;
+        color: white;
+    }
+    
+    .module-preview {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 20px;
+        border: 1px solid #e9ecef;
+        display: flex;
+        align-items: center;
+    }
+    
+    .module-preview-title {
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: #495057;
+    }
+    
+    .module-preview-content {
+        display: flex;
+        align-items: center;
+    }
+    
+    .module-preview-icon {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        margin-right: 15px;
+        color: white;
+    }
+    
+    .module-preview-text {
+        flex: 1;
+    }
+    
+    .module-preview-name {
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    
+    .module-preview-url {
+        font-family: monospace;
+        color: #0d6efd;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0">
+                    <i class="fas fa-{% if form.instance.pk %}edit{% else %}plus-circle{% endif %} me-2"></i>
+                    {% if form.instance.pk %}
+                        تعديل بيانات الوحدة
+                    {% else %}
+                        إضافة وحدة جديدة
+                    {% endif %}
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="url-helper">
+                    <div class="url-helper-title">
+                        <i class="fas fa-link me-2"></i>
+                        اختيار سريع للرابط
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">اختر من الروابط الشائعة</label>
+                        {{ form.common_url_selector }}
+                        <div class="form-text">يمكنك اختيار رابط من القائمة أو إدخال رابط مخصص أدناه</div>
+                    </div>
+                </div>
+                
+                <form method="post" id="moduleForm">
+                    {% csrf_token %}
+                    
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        يرجى تصحيح الأخطاء أدناه.
+                    </div>
+                    {% endif %}
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">
+                                {{ form.name.label }}*
+                            </label>
+                            {{ form.name }}
+                            {% if form.name.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.name.errors }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">اسم الوحدة كما سيظهر في النظام</div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="{{ form.department.id_for_label }}" class="form-label">
+                                {{ form.department.label }}*
+                            </label>
+                            {{ form.department }}
+                            {% if form.department.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.department.errors }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">القسم الذي تنتمي إليه هذه الوحدة</div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.url.id_for_label }}" class="form-label">
+                                {{ form.url.label }}*
+                            </label>
+                            {{ form.url }}
+                            {% if form.url.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.url.errors }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">الرابط الذي سيتم توجيه المستخدم إليه. مثال: /inventory/ أو /tasks/view/</div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="{{ form.order.id_for_label }}" class="form-label">
+                                {{ form.order.label }}
+                            </label>
+                            {{ form.order }}
+                            {% if form.order.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.order.errors }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">ترتيب ظهور الوحدة داخل القسم (الأرقام الأقل تظهر في الأعلى)</div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.icon.id_for_label }}" class="form-label">
+                                {{ form.icon.label }}*
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-question" id="icon-preview"></i>
+                                </span>
+                                {{ form.icon }}
+                            </div>
+                            {% if form.icon.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.icon.errors }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">مثال: fa-users أو fa-cog. <a href="https://fontawesome.com/icons?d=gallery&m=free" target="_blank">استعرض الأيقونات</a></div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="{{ form.bg_color.id_for_label }}" class="form-label">
+                                {{ form.bg_color.label }}
+                            </label>
+                            <div class="input-group">
+                                <div class="module-icon-preview me-2" id="color-preview" style="background-color: #3498db;">
+                                    <i class="fas fa-question" id="color-icon-preview"></i>
+                                </div>
+                                {{ form.bg_color }}
+                            </div>
+                            {% if form.bg_color.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.bg_color.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label for="{{ form.description.id_for_label }}" class="form-label">
+                                {{ form.description.label }}
+                            </label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.description.errors }}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-check form-switch">
+                                {{ form.is_active }}
+                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                    {{ form.is_active.label }}
+                                </label>
+                            </div>
+                            {% if form.is_active.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.is_active.errors }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">إذا كان غير نشط، لن يظهر في قائمة الوحدات</div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="form-check form-switch">
+                                {{ form.require_admin }}
+                                <label class="form-check-label" for="{{ form.require_admin.id_for_label }}">
+                                    {{ form.require_admin.label }}
+                                </label>
+                            </div>
+                            {% if form.require_admin.errors %}
+                            <div class="invalid-feedback d-block">
+                                {{ form.require_admin.errors }}
+                            </div>
+                            {% endif %}
+                            <div class="form-text">إذا كان مفعلاً، فقط المدراء يمكنهم الوصول إلى هذه الوحدة</div>
+                        </div>
+                    </div>
+                    
+                    <div class="icon-selector-container">
+                        <div class="url-helper-title">
+                            <i class="fas fa-icons me-2"></i>
+                            اختيار سريع للأيقونة
+                        </div>
+                        <div class="form-text mb-2">انقر على أيقونة لاختيارها</div>
+                        <div class="icon-grid" id="iconGrid">
+                            <!-- سيتم إضافة الأيقونات هنا بواسطة جافاسكريبت -->
+                        </div>
+                    </div>
+                    
+                    <div class="module-preview">
+                        <div class="module-preview-title">معاينة الوحدة</div>
+                        <div class="module-preview-content">
+                            <div class="module-preview-icon" id="preview-icon-container" style="background-color: #3498db;">
+                                <i class="fas fa-question" id="preview-icon"></i>
+                            </div>
+                            <div class="module-preview-text">
+                                <div class="module-preview-name" id="preview-name">اسم الوحدة</div>
+                                <div class="module-preview-url" id="preview-url">/url/path/</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'administrator:module_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-chevron-right me-1"></i>
+                            العودة للقائمة
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-1"></i>
+                            {% if form.instance.pk %}
+                                حفظ التغييرات
+                            {% else %}
+                                إضافة الوحدة
+                            {% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Iconos comunes para el selector rápido
+        const commonIcons = [
+            'users', 'user', 'user-tie', 'user-cog', 'user-edit', 'user-plus', 'user-shield',
+            'box', 'boxes', 'clipboard', 'clipboard-list', 'clipboard-check', 'tasks',
+            'file', 'file-alt', 'file-invoice', 'file-pdf', 'file-excel', 'file-word',
+            'chart-bar', 'chart-line', 'chart-pie', 'chart-area', 'analytics',
+            'cog', 'cogs', 'tools', 'wrench', 'sliders-h', 'database',
+            'money-bill', 'money-check', 'credit-card', 'cash-register', 'wallet',
+            'truck', 'shipping-fast', 'dolly', 'warehouse', 'store',
+            'calendar', 'calendar-alt', 'calendar-check', 'clock', 'history',
+            'envelope', 'comment', 'comments', 'phone', 'bell', 'bullhorn',
+            'home', 'building', 'city', 'industry', 'map-marker', 'map',
+            'search', 'filter', 'sort', 'list', 'th-list', 'table',
+            'print', 'download', 'upload', 'sync', 'redo', 'undo',
+            'plus', 'minus', 'times', 'check', 'edit', 'trash',
+            'lock', 'unlock', 'shield', 'key', 'user-lock', 'fingerprint',
+            'tag', 'tags', 'bookmark', 'star', 'heart', 'thumbs-up',
+            'info-circle', 'question-circle', 'exclamation-circle', 'exclamation-triangle'
+        ];
+        
+        // Generar grid de iconos
+        const iconGrid = document.getElementById('iconGrid');
+        commonIcons.forEach(icon => {
+            const iconItem = document.createElement('div');
+            iconItem.className = 'icon-item';
+            iconItem.dataset.icon = icon;
+            iconItem.innerHTML = `<i class="fas fa-${icon}"></i>`;
+            iconGrid.appendChild(iconItem);
+        });
+        
+        // Icon preview
+        const iconInput = document.getElementById('{{ form.icon.id_for_label }}');
+        const iconPreview = document.getElementById('icon-preview');
+        const colorIconPreview = document.getElementById('color-icon-preview');
+        const previewIcon = document.getElementById('preview-icon');
+        
+        function updateIconPreview() {
+            const iconValue = iconInput.value.trim();
+            const iconClass = iconValue ? 'fas ' + iconValue : 'fas fa-question';
+            iconPreview.className = iconClass;
+            colorIconPreview.className = iconClass;
+            previewIcon.className = iconClass;
+            
+            // Actualizar selección en el grid
+            document.querySelectorAll('.icon-item').forEach(item => {
+                item.classList.remove('selected');
+                if (iconValue === 'fa-' + item.dataset.icon) {
+                    item.classList.add('selected');
+                }
+            });
+        }
+        
+        // Color preview
+        const colorInput = document.getElementById('{{ form.bg_color.id_for_label }}');
+        const colorPreview = document.getElementById('color-preview');
+        const previewIconContainer = document.getElementById('preview-icon-container');
+        
+        function updateColorPreview() {
+            const colorValue = colorInput.value;
+            colorPreview.style.backgroundColor = colorValue;
+            previewIconContainer.style.backgroundColor = colorValue;
+        }
+        
+        // Nombre y URL preview
+        const nameInput = document.getElementById('{{ form.name.id_for_label }}');
+        const urlInput = document.getElementById('{{ form.url.id_for_label }}');
+        const previewName = document.getElementById('preview-name');
+        const previewUrl = document.getElementById('preview-url');
+        
+        function updateNamePreview() {
+            previewName.textContent = nameInput.value || 'اسم الوحدة';
+        }
+        
+        function updateUrlPreview() {
+            previewUrl.textContent = urlInput.value || '/url/path/';
+        }
+        
+        // Selector de URL común
+        const urlSelector = document.getElementById('id_common_url_selector');
+        urlSelector.addEventListener('change', function() {
+            const selectedUrl = this.value;
+            if (selectedUrl) {
+                urlInput.value = selectedUrl;
+                updateUrlPreview();
+            }
+        });
+        
+        // Selector de iconos
+        document.querySelectorAll('.icon-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const icon = this.dataset.icon;
+                iconInput.value = 'fa-' + icon;
+                updateIconPreview();
+            });
+        });
+        
+        // Initial preview
+        updateIconPreview();
+        updateColorPreview();
+        updateNamePreview();
+        updateUrlPreview();
+        
+        // Update on change
+        iconInput.addEventListener('input', updateIconPreview);
+        iconInput.addEventListener('change', updateIconPreview);
+        
+        colorInput.addEventListener('input', updateColorPreview);
+        colorInput.addEventListener('change', updateColorPreview);
+        
+        nameInput.addEventListener('input', updateNamePreview);
+        nameInput.addEventListener('change', updateNamePreview);
+        
+        urlInput.addEventListener('input', updateUrlPreview);
+        urlInput.addEventListener('change', updateUrlPreview);
+        
+        // Form field styling
+        document.querySelectorAll('input[type="checkbox"]').forEach(function(el) {
+            el.classList.add('form-check-input');
+            el.style.float = 'right';
+            el.style.marginLeft = '0.5em';
+        });
+    });
+</script>
+{% endblock %}

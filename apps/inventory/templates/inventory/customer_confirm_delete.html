@@ -1,0 +1,25 @@
+{% extends "inventory/base_inventory.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header bg-danger text-white">
+            <h5 class="mb-0">تأكيد حذف العميل</h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-warning" role="alert">
+                هل أنت متأكد من حذف العميل "{{ object.name }}"؟
+            </div>
+            
+            <form method="post">
+                {% csrf_token %}
+                <div class="d-flex justify-content-end">
+                    <a href="{% url 'inventory:customer_list' %}" class="btn btn-secondary ml-2">إلغاء</a>
+                    <button type="submit" class="btn btn-danger mr-2">تأكيد الحذف</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,852 @@
+{% load static %}
+{% load i18n %}
+{% load inventory_permission_tags %}
+<!DOCTYPE html>
+<html lang="{{ current_language }}" dir="{{ text_direction }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% trans "نظام إدارة المخزن" %}{% endblock %}</title>
+
+    <!-- Bootstrap RTL/LTR -->
+    {% if text_direction == 'rtl' %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
+    {% else %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    {% endif %}
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Google Fonts -->
+    {% if system_settings.font_family == 'cairo' or current_font == 'Cairo' %}
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    {% elif system_settings.font_family == 'tajawal' or current_font == 'Tajawal' %}
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    {% elif system_settings.font_family == 'almarai' or current_font == 'Almarai' %}
+    <link href="https://fonts.googleapis.com/css2?family=Almarai:wght@400;700&display=swap" rel="stylesheet">
+    {% elif system_settings.font_family == 'ibm-plex-sans-arabic' or current_font == 'IBM Plex Sans Arabic' %}
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
+    {% elif system_settings.font_family == 'noto-sans-arabic' or current_font == 'Noto Sans Arabic' %}
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    {% else %}
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    {% endif %}
+
+    <style>
+        :root {
+            --font-family: {% if system_settings.font_family %}
+                {% if system_settings.font_family == 'cairo' %}'Cairo'
+                {% elif system_settings.font_family == 'tajawal' %}'Tajawal'
+                {% elif system_settings.font_family == 'almarai' %}'Almarai'
+                {% elif system_settings.font_family == 'ibm-plex-sans-arabic' %}'IBM Plex Sans Arabic'
+                {% elif system_settings.font_family == 'noto-sans-arabic' %}'Noto Sans Arabic'
+                {% else %}'Cairo'
+                {% endif %}
+                {% else %}{{ current_font|default:'Cairo' }}{% endif %}, sans-serif;
+            --primary-color: #3f51b5;
+            --secondary-color: #ff4081;
+            --success-color: #4caf50;
+            --info-color: #00bcd4;
+            --warning-color: #ff9800;
+            --danger-color: #f44336;
+            --light-color: #f5f5f5;
+            --dark-color: #212121;
+            --body-bg: #f5f7fa;
+            --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--body-bg);
+            overflow-x: hidden;
+        }
+
+        /* Layout */
+        .page-wrapper {
+            display: flex;
+            flex-direction: column;
+            min-height: 100%;
+        }
+
+        .content-wrapper {
+            flex: 1;
+            display: flex;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 250px;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            right: 0;
+            z-index: 100;
+            padding: 0;
+            background: linear-gradient(180deg, var(--primary-color) 0%, #303f9f 100%);
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s ease;
+            overflow-y: auto;
+        }
+
+        /* Collapsed sidebar - only show icons */
+        .sidebar-collapsed .sidebar {
+            width: 70px;
+        }
+
+        .sidebar-collapsed .sidebar-brand span,
+        .sidebar-collapsed .nav-sidebar .nav-link span,
+        .sidebar-collapsed .low-stock-alert {
+            display: none;
+        }
+
+        .sidebar-collapsed .nav-sidebar .nav-link {
+            justify-content: center;
+            padding: 15px 0;
+        }
+
+        .sidebar-collapsed .nav-sidebar .nav-link i {
+            margin-left: 0;
+        }
+
+        /* Adjust content margin when sidebar is collapsed */
+        .sidebar-collapsed .main-content {
+            margin-right: 70px;
+            width: calc(100% - 70px);
+        }
+
+        .sidebar-header {
+            padding: 20px 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-brand {
+            color: white;
+            font-weight: 700;
+            font-size: 1.2rem;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+
+        .sidebar-brand i {
+            font-size: 1.5rem;
+            margin-left: 10px;
+        }
+
+        .sidebar-collapse .sidebar-brand span {
+            display: none;
+        }
+
+        .sidebar-collapse .sidebar-icon {
+            margin-left: 0;
+        }
+
+        .sidebar-toggle {
+            color: white;
+            background: transparent;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        .nav-sidebar {
+            padding: 0;
+            margin: 0 0 20px;
+            list-style: none;
+        }
+
+        .nav-item {
+            position: relative;
+        }
+
+        .nav-sidebar .nav-link {
+            color: rgba(255, 255, 255, 0.8);
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-sidebar .nav-link:hover {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .nav-sidebar .nav-link.active {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.2);
+            font-weight: 600;
+        }
+
+        .nav-sidebar .nav-link.active::before {
+            content: '';
+            position: absolute;
+            inset: 0 0 0 auto;
+            width: 4px;
+            background-color: var(--secondary-color);
+        }
+
+        .nav-sidebar .nav-link i {
+            font-size: 1.1rem;
+            margin-left: 15px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .sidebar-collapse .nav-sidebar .nav-link span {
+            display: none;
+        }
+
+        .sidebar-collapse .nav-sidebar .nav-link {
+            justify-content: center;
+            padding: 15px 0;
+        }
+
+        .sidebar-collapse .nav-sidebar .nav-link i {
+            margin-left: 0;
+        }
+
+        /* Low stock alert in sidebar */
+        .low-stock-alert {
+            background-color: rgba(255, 255, 255, 0.1);
+            margin: 0 15px 15px;
+            padding: 15px;
+            border-radius: 5px;
+            color: white;
+            font-size: 0.9rem;
+        }
+
+        .sidebar-collapse .low-stock-alert {
+            display: none;
+        }
+
+        .low-stock-count {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: block;
+            margin-top: 5px;
+        }
+
+        .low-stock-alert a {
+            color: white;
+            text-decoration: none;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+            font-size: 0.85rem;
+        }
+
+        .low-stock-alert a i {
+            margin-left: 5px;
+        }
+
+        .badge-alert {
+            position: absolute;
+            top: 10px;
+            left: 15px;
+            padding: 3px 6px;
+            border-radius: 50%;
+            background-color: var(--danger-color);
+            color: white;
+            font-size: 0.7rem;
+            min-width: 18px;
+            height: 18px;
+            text-align: center;
+            line-height: 12px;
+        }
+
+        /* Main content */
+        .main-content {
+            margin-right: 250px;
+            padding: 20px 30px 30px;
+            width: calc(100% - 250px);
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-collapse .main-content {
+            margin-right: 70px;
+            width: calc(100% - 70px);
+        }
+
+        .page-header {
+            margin-bottom: 30px;
+        }
+
+        .page-title {
+            font-weight: 600;
+            margin: 0;
+        }
+
+        /* Navbar (top) */
+        .navbar-top {
+            background-color: white;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+            padding: 12px 30px;
+            z-index: 99;
+        }
+
+        .navbar-nav .nav-link {
+            color: #444;
+            padding: 8px 15px;
+            position: relative;
+        }
+
+        .navbar-top .user-menu {
+            display: flex;
+            align-items: center;
+        }
+
+        .user-menu .dropdown-toggle::after {
+            display: none;
+        }
+
+        .user-menu .dropdown-menu {
+            border-radius: 5px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            border: none;
+            padding: 0;
+            min-width: 220px;
+            margin-top: 10px;
+        }
+
+        .user-menu .dropdown-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px;
+            border-radius: 5px 5px 0 0;
+        }
+
+        .user-menu .dropdown-item {
+            padding: 12px 20px;
+        }
+
+        .user-menu .dropdown-item i {
+            margin-left: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Cards */
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .card-header {
+            padding: 15px 20px;
+            background-color: white;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            font-weight: 600;
+        }
+
+        .card-header .card-title {
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        /* Buttons */
+        .btn {
+            border-radius: 5px;
+            padding: 8px 15px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: #303f9f;
+            border-color: #303f9f;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+        }
+
+        .btn-success:hover {
+            background-color: #43a047;
+            border-color: #43a047;
+            transform: translateY(-2px);
+        }
+
+        .btn-info {
+            background-color: var(--info-color);
+            border-color: var(--info-color);
+            color: white;
+        }
+
+        .btn-info:hover {
+            background-color: #00acc1;
+            border-color: #00acc1;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .btn-warning {
+            background-color: var(--warning-color);
+            border-color: var(--warning-color);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background-color: #fb8c00;
+            border-color: #fb8c00;
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            border-color: var(--danger-color);
+        }
+
+        .btn-danger:hover {
+            background-color: #e53935;
+            border-color: #e53935;
+            transform: translateY(-2px);
+        }
+
+        .btn-light {
+            background-color: #f8f9fa;
+            border-color: #f8f9fa;
+            color: #495057;
+        }
+
+        .btn-light:hover {
+            background-color: #e9ecef;
+            border-color: #e9ecef;
+            color: #495057;
+            transform: translateY(-2px);
+        }
+
+        .btn-icon {
+            width: 38px;
+            height: 38px;
+            padding: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .btn-icon i {
+            font-size: 1rem;
+        }
+
+        /* Tables */
+        .table {
+            margin-bottom: 0;
+        }
+
+        .table th {
+            font-weight: 600;
+            background-color: var(--light-color);
+            padding: 12px 15px;
+            border-top: none;
+            color: #555;
+        }
+
+        .table td {
+            padding: 12px 15px;
+            vertical-align: middle;
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: rgba(0, 0, 0, 0.01);
+        }
+
+        .table-responsive {
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+        }
+
+        /* Forms */
+        .form-control {
+            padding: 10px 15px;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+
+        .form-control:focus {
+            box-shadow: 0 0 0 0.25rem rgba(63, 81, 181, 0.25);
+        }
+
+        .form-label {
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 70px;
+            }
+
+            .sidebar-brand span,
+            .nav-sidebar .nav-link span,
+            .low-stock-alert {
+                display: none;
+            }
+
+            .nav-sidebar .nav-link {
+                justify-content: center;
+                padding: 15px 0;
+            }
+
+            .nav-sidebar .nav-link i {
+                margin-left: 0;
+            }
+
+            .main-content {
+                margin-right: 70px;
+                width: calc(100% - 70px);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(100%);
+                width: 250px;
+                z-index: 1050;
+                right: -250px;
+            }
+
+            .sidebar.show {
+                transform: translateX(0);
+                right: 0;
+            }
+
+            .sidebar-brand span,
+            .nav-sidebar .nav-link span,
+            .low-stock-alert {
+                display: block;
+            }
+
+            .nav-sidebar .nav-link {
+                justify-content: flex-start;
+                padding: 15px 20px;
+            }
+
+            .nav-sidebar .nav-link i {
+                margin-left: 15px;
+            }
+
+            .main-content {
+                margin-right: 0;
+                width: 100%;
+            }
+
+            .mobile-header {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                z-index: 99;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 15px;
+                background-color: var(--primary-color);
+                color: white;
+            }
+
+            .mobile-toggle {
+                font-size: 1.2rem;
+                color: white;
+                background: transparent;
+                border: none;
+                cursor: pointer;
+            }
+
+            .page-content {
+                padding-top: 60px;
+            }
+
+            /* Overlay for mobile sidebar */
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0, 0, 0, 0.5);
+                z-index: 1040;
+            }
+
+            .sidebar-overlay.show {
+                display: block;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="page-wrapper">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <a href="{% url 'inventory:dashboard' %}" class="sidebar-brand">
+                    <i class="fas fa-warehouse sidebar-icon"></i>
+                    <span>نظام المخزن</span>
+                </a>
+                <button class="sidebar-toggle d-none d-md-block">
+                    <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+
+            <ul class="nav-sidebar">
+                <li class="nav-item">
+                    <a href="{% url 'inventory:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                        <i class="fas fa-home"></i>
+                        <span>الرئيسية</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'inventory:product_list' %}" class="nav-link {% if 'product' in request.resolver_match.url_name and 'movement' not in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-box"></i>
+                        <span>أصناف المخزن</span>
+                        {% if low_stock_count > 0 %}
+                        <span class="badge-alert">{{ low_stock_count }}</span>
+                        {% endif %}
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'inventory:product_movement_list' %}" class="nav-link {% if 'product_movement' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-exchange-alt"></i>
+                        <span>حركات الصنف</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'inventory:category_list' %}" class="nav-link {% if 'category' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-tags"></i>
+                        <span>التصنيفات</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'inventory:unit_list' %}" class="nav-link {% if 'unit' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-ruler"></i>
+                        <span>وحدات القياس</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'inventory:supplier_list' %}" class="nav-link {% if 'supplier' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-truck"></i>
+                        <span>الموردين</span>
+                    </a>
+                </li>
+                {% has_inventory_module_permission "customers" "view" as customer_view_perm %}
+                {% if user.is_superuser or user|has_inventory_perm:customer_view_perm %}
+                <li class="nav-item">
+                    <a href="{% url 'inventory:customer_list' %}" class="nav-link {% if 'customer' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-users"></i>
+                        <span>العملاء</span>
+                    </a>
+                </li>
+                {% endif %}
+                <li class="nav-item">
+                    <a href="{% url 'inventory:invoice_list' %}" class="nav-link {% if 'invoice' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-file-invoice"></i>
+                        <span>الفواتير</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'inventory:stock_report' %}" class="nav-link {% if 'stock_report' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>تقارير المخزون</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'inventory:settings' %}" class="nav-link {% if 'settings' in request.resolver_match.url_name %}active{% endif %}">
+                        <i class="fas fa-cog"></i>
+                        <span>الإعدادات</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'accounts:home' %}" class="nav-link">
+                        <i class="fas fa-chevron-circle-right"></i>
+                        <span>النظام الرئيسي</span>
+                    </a>
+                </li>
+            </ul>
+
+            {% if low_stock_count > 0 %}
+            <div class="low-stock-alert">
+                <i class="fas fa-exclamation-triangle"></i> تنبيه المخزون
+                <span class="low-stock-count">{{ low_stock_count }}</span>
+                <span>صنف تحت الحد الأدنى</span>
+
+                <a href="{% url 'inventory:product_list' %}?stock_status=low">
+                    <i class="fas fa-arrow-left"></i> عرض القائمة
+                </a>
+            </div>
+            {% endif %}
+        </aside>
+
+        <!-- Mobile Header (visible only on small screens) -->
+        <div class="mobile-header d-md-none">
+            <div class="mobile-brand">
+                <i class="fas fa-warehouse me-2"></i>
+                نظام المخزن
+            </div>
+            <button class="mobile-toggle" id="toggleSidebar">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            {% if messages %}
+            <div class="alerts-container">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        // Sidebar toggle functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const body = document.querySelector('body');
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+            const sidebarToggle = document.querySelector('.sidebar-toggle');
+            const mobileToggle = document.querySelector('#toggleSidebar');
+
+            // Create overlay element for mobile
+            const overlay = document.createElement('div');
+            overlay.className = 'sidebar-overlay';
+            document.body.appendChild(overlay);
+
+            // Toggle sidebar function
+            function toggleSidebar() {
+                // For desktop view - collapse/expand sidebar
+                body.classList.toggle('sidebar-collapsed');
+
+                // For mobile view
+                if (window.innerWidth <= 768) {
+                    sidebar.classList.toggle('show');
+                    overlay.classList.toggle('show');
+                }
+
+                // Save state to localStorage
+                const sidebarState = (window.innerWidth <= 768 && sidebar.classList.contains('show')) ||
+                                   (window.innerWidth > 768 && body.classList.contains('sidebar-collapsed'))
+                                   ? 'collapsed' : 'expanded';
+                localStorage.setItem('inventorySidebarState', sidebarState);
+            }
+
+            // Initialize sidebar state from localStorage
+            function initSidebarState() {
+                const savedState = localStorage.getItem('inventorySidebarState');
+
+                // Default to expanded on desktop, collapsed on mobile
+                const defaultState = window.innerWidth <= 768 ? 'collapsed' : 'expanded';
+                const sidebarState = savedState || defaultState;
+
+                if (sidebarState === 'collapsed') {
+                    if (window.innerWidth <= 768) {
+                        // Mobile view - hide sidebar
+                        sidebar.classList.remove('show');
+                    } else {
+                        // Desktop view - collapse sidebar to icons only
+                        body.classList.add('sidebar-collapsed');
+                    }
+                } else {
+                    if (window.innerWidth <= 768) {
+                        // Mobile view - show sidebar
+                        sidebar.classList.add('show');
+                        overlay.classList.add('show');
+                    } else {
+                        // Desktop view - expand sidebar
+                        body.classList.remove('sidebar-collapsed');
+                    }
+                }
+            }
+
+            // Desktop toggle
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', toggleSidebar);
+            }
+
+            // Mobile toggle
+            if (mobileToggle) {
+                mobileToggle.addEventListener('click', toggleSidebar);
+            }
+
+            // Initialize sidebar state
+            initSidebarState();
+
+            // Close sidebar when clicking on overlay
+            overlay.addEventListener('click', function() {
+                sidebar.classList.remove('show');
+                overlay.classList.remove('show');
+            });
+
+            // Close sidebar when clicking outside on mobile
+            document.addEventListener('click', function(e) {
+                if (window.innerWidth <= 768 &&
+                    sidebar.classList.contains('show') &&
+                    !sidebar.contains(e.target) &&
+                    e.target !== mobileToggle) {
+                    sidebar.classList.remove('show');
+                    overlay.classList.remove('show');
+                }
+            });
+
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 768) {
+                    overlay.classList.remove('show');
+                }
+            });
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

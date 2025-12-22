@@ -1,0 +1,726 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}نظام إدارة نشاط النقل - نظام الدولية{% endblock %}</title>
+
+    <!-- Bootstrap RTL CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-color: #27ae60;
+            --primary-hover: #219653;
+            --secondary-color: #2c3e50;
+            --secondary-hover: #1a252f;
+            --success-color: #2ecc71;
+            --success-hover: #27ae60;
+            --danger-color: #e74c3c;
+            --danger-hover: #c0392b;
+            --warning-color: #f39c12;
+            --warning-hover: #d35400;
+            --info-color: #3498db;
+            --info-hover: #2980b9;
+            --light-color: #ecf0f1;
+            --light-hover: #bdc3c7;
+            --dark-color: #2c3e50;
+            --dark-hover: #1a252f;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: #f8f9fa;
+            line-height: 1.6;
+        }
+
+        /* Navbar Styling */
+        .navbar {
+            background-color: var(--primary-color);
+            box-shadow: var(--box-shadow);
+            padding: 0.8rem 1rem;
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            color: white !important;
+            font-size: 1.3rem;
+            letter-spacing: 0.5px;
+        }
+
+        .navbar-light .navbar-nav .nav-link {
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+        }
+
+        .navbar-light .navbar-nav .nav-link:hover {
+            color: white;
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .with-sidebar {
+            padding-left: 0;
+            padding-right: 0;
+        }
+
+        /* Page Layout */
+        .page-wrapper {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .content-wrapper {
+            display: flex;
+            flex: 1;
+        }
+
+        /* Sidebar Styling */
+        .sidebar {
+            width: 250px;
+            background-color: var(--secondary-color);
+            color: white;
+            padding-top: 20px;
+            transition: var(--transition);
+            position: fixed;
+            height: 100%;
+            z-index: 100;
+            overflow-y: auto;
+            box-shadow: inset -2px 0 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .sidebar-header h3 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: white;
+            font-weight: 600;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu-item {
+            margin-bottom: 5px;
+        }
+
+        .sidebar-menu-item a {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: rgba(255, 255, 255, 0.85);
+            text-decoration: none;
+            transition: var(--transition);
+            border-radius: 0 30px 30px 0;
+            margin-right: 5px;
+        }
+
+        .sidebar-menu-item a:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .sidebar-menu-item a i {
+            margin-left: 12px;
+            width: 24px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .sidebar-menu-item.active a {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(39, 174, 96, 0.3);
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 25px;
+            margin-right: 250px;
+            transition: var(--transition);
+        }
+
+        .sidebar-collapsed .sidebar {
+            width: 70px;
+        }
+
+        .sidebar-collapsed .sidebar-header h3,
+        .sidebar-collapsed .sidebar-menu-item a span {
+            display: none;
+        }
+
+        .sidebar-collapsed .main-content {
+            margin-right: 70px;
+        }
+
+        /* Card Styling */
+        .card {
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            margin-bottom: 25px;
+            border: none;
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            transform: translateY(-3px);
+        }
+
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: var(--border-radius) var(--border-radius) 0 0 !important;
+            padding: 18px 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-title {
+            margin-bottom: 0;
+            font-weight: 700;
+            color: var(--secondary-color);
+            font-size: 1.25rem;
+        }
+
+        .card-body {
+            padding: 25px;
+        }
+
+        /* Button Styling */
+        .btn {
+            border-radius: var(--border-radius);
+            padding: 0.5rem 1.2rem;
+            font-weight: 500;
+            transition: var(--transition);
+            letter-spacing: 0.3px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            border-color: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--secondary-hover);
+            border-color: var(--secondary-hover);
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            border-color: var(--success-color);
+        }
+
+        .btn-success:hover {
+            background-color: var(--success-hover);
+            border-color: var(--success-hover);
+        }
+
+        .btn-danger {
+            background-color: var(--danger-color);
+            border-color: var(--danger-color);
+        }
+
+        .btn-danger:hover {
+            background-color: var(--danger-hover);
+            border-color: var(--danger-hover);
+        }
+
+        .btn-warning {
+            background-color: var(--warning-color);
+            border-color: var(--warning-color);
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background-color: var(--warning-hover);
+            border-color: var(--warning-hover);
+            color: white;
+        }
+
+        .btn-info {
+            background-color: var(--info-color);
+            border-color: var(--info-color);
+            color: white;
+        }
+
+        .btn-info:hover {
+            background-color: var(--info-hover);
+            border-color: var(--info-hover);
+            color: white;
+        }
+
+        .btn-light {
+            background-color: var(--light-color);
+            border-color: var(--light-color);
+            color: var(--dark-color);
+        }
+
+        .btn-light:hover {
+            background-color: var(--light-hover);
+            border-color: var(--light-hover);
+            color: var(--dark-color);
+        }
+
+        .btn-outline-primary {
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        .btn-outline-primary:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-outline-secondary {
+            color: var(--secondary-color);
+            border-color: var(--secondary-color);
+        }
+
+        .btn-outline-secondary:hover {
+            background-color: var(--secondary-color);
+            color: white;
+        }
+
+        /* Table Styling */
+        .table {
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .table th {
+            font-weight: 600;
+            background-color: #f1f5f9;
+            color: var(--secondary-color);
+            padding: 12px 15px;
+            text-align: right;
+            border-bottom: 2px solid #e9ecef;
+            vertical-align: middle;
+        }
+
+        .table td {
+            padding: 12px 15px;
+            border-top: 1px solid #e9ecef;
+            vertical-align: middle;
+        }
+
+        .table tbody tr:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+
+        .table-striped tbody tr:nth-of-type(odd) {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+
+        /* Stat Card Styling */
+        .stat-card {
+            border-radius: var(--border-radius);
+            padding: 25px;
+            margin-bottom: 25px;
+            color: white;
+            position: relative;
+            overflow: hidden;
+            min-height: 140px;
+            box-shadow: var(--box-shadow);
+            transition: var(--transition);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .stat-card .stat-icon {
+            position: absolute;
+            bottom: -20px;
+            left: 10px;
+            font-size: 5rem;
+            opacity: 0.2;
+            transition: var(--transition);
+        }
+
+        .stat-card:hover .stat-icon {
+            transform: scale(1.1) rotate(10deg);
+            opacity: 0.3;
+        }
+
+        .stat-card .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+        }
+
+        .stat-card .stat-title {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-card.primary {
+            background-color: var(--primary-color);
+            background-image: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+        }
+
+        .stat-card.success {
+            background-color: var(--success-color);
+            background-image: linear-gradient(135deg, var(--success-color) 0%, var(--success-hover) 100%);
+        }
+
+        .stat-card.warning {
+            background-color: var(--warning-color);
+            background-image: linear-gradient(135deg, var(--warning-color) 0%, var(--warning-hover) 100%);
+        }
+
+        .stat-card.danger {
+            background-color: var(--danger-color);
+            background-image: linear-gradient(135deg, var(--danger-color) 0%, var(--danger-hover) 100%);
+        }
+
+        .stat-card.info {
+            background-color: var(--info-color);
+            background-image: linear-gradient(135deg, var(--info-color) 0%, var(--info-hover) 100%);
+        }
+
+        .stat-card.secondary {
+            background-color: var(--secondary-color);
+            background-image: linear-gradient(135deg, var(--secondary-color) 0%, var(--secondary-hover) 100%);
+        }
+
+        /* Alert Styling */
+        .alert {
+            border-radius: var(--border-radius);
+            border: none;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .alert-success {
+            background-color: rgba(46, 204, 113, 0.15);
+            color: var(--success-color);
+            border-right: 4px solid var(--success-color);
+        }
+
+        .alert-danger {
+            background-color: rgba(231, 76, 60, 0.15);
+            color: var(--danger-color);
+            border-right: 4px solid var(--danger-color);
+        }
+
+        .alert-warning {
+            background-color: rgba(243, 156, 18, 0.15);
+            color: var(--warning-color);
+            border-right: 4px solid var(--warning-color);
+        }
+
+        .alert-info {
+            background-color: rgba(52, 152, 219, 0.15);
+            color: var(--info-color);
+            border-right: 4px solid var(--info-color);
+        }
+
+        /* Form Controls */
+        .form-control {
+            border-radius: var(--border-radius);
+            padding: 0.6rem 1rem;
+            border: 1px solid #ced4da;
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(39, 174, 96, 0.25);
+        }
+
+        .form-label {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: var(--secondary-color);
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 0;
+                padding: 0;
+                transform: translateX(100%);
+                right: -250px;
+                z-index: 1050;
+            }
+
+            .main-content {
+                margin-right: 0;
+                padding: 15px;
+            }
+
+            .sidebar.show {
+                width: 250px;
+                padding-top: 20px;
+                transform: translateX(0);
+                right: 0;
+            }
+
+            /* Overlay for mobile sidebar */
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: rgba(0, 0, 0, 0.5);
+                z-index: 1040;
+            }
+
+            .sidebar-overlay.show {
+                display: block;
+            }
+
+            .card-header {
+                padding: 15px 20px;
+            }
+
+            .card-body {
+                padding: 20px;
+            }
+
+            .btn {
+                padding: 0.4rem 1rem;
+            }
+
+            .table th, .table td {
+                padding: 10px 12px;
+            }
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="page-wrapper">
+        <!-- Navbar -->
+        <nav class="navbar navbar-expand-lg navbar-light with-sidebar">
+            <div class="container-fluid">
+                <div class="d-flex align-items-center">
+                    <button id="sidebarToggle" class="btn btn-light me-2">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <a class="navbar-brand" href="{% url 'cars:home' %}">
+                        <i class="fas fa-car me-2"></i>
+                        <span>نظام إدارة نشاط النقل</span>
+                    </a>
+                </div>
+                <div class="d-flex align-items-center">
+                    <div class="user-info me-3 d-flex align-items-center">
+                        <i class="fas fa-user-circle text-light me-2 fs-5"></i>
+                        <span class="text-light fw-bold">{{ request.user.first_name }} {{ request.user.last_name }}</span>
+                    </div>
+                    <a href="{% url 'accounts:logout' %}" class="btn btn-outline-light btn-sm">
+                        <i class="fas fa-sign-out-alt me-1"></i> تسجيل الخروج
+                    </a>
+                </div>
+            </div>
+        </nav>
+
+        <div class="content-wrapper">
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <h3><i class="fas fa-car me-2"></i> نظام النقل</h3>
+                </div>
+                <ul class="sidebar-menu">
+                    <li class="sidebar-menu-item {% if request.path == '/cars/' %}active{% endif %}">
+                        <a href="{% url 'cars:home' %}">
+                            <i class="fas fa-home"></i>
+                            <span>الرئيسية</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item {% if '/cars/cars/' in request.path and not '/cars/cars/add/' in request.path %}active{% endif %}">
+                        <a href="{% url 'cars:car_list' %}">
+                            <i class="fas fa-car"></i>
+                            <span>قائمة السيارات</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item {% if request.path == '/cars/cars/add/' %}active{% endif %}">
+                        <a href="{% url 'cars:car_add' %}">
+                            <i class="fas fa-plus-circle"></i>
+                            <span>إضافة سيارة</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item {% if '/cars/suppliers/' in request.path and not '/cars/suppliers/add/' in request.path %}active{% endif %}">
+                        <a href="{% url 'cars:supplier_list' %}">
+                            <i class="fas fa-people-carry"></i>
+                            <span>قائمة الموردين</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item {% if request.path == '/cars/suppliers/add/' %}active{% endif %}">
+                        <a href="{% url 'cars:supplier_add' %}">
+                            <i class="fas fa-user-plus"></i>
+                            <span>إضافة مورد</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item {% if '/cars/trips/' in request.path %}active{% endif %}">
+                        <a href="{% url 'cars:trip_list' %}">
+                            <i class="fas fa-route"></i>
+                            <span>الرحلات</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item {% if '/cars/employees/' in request.path %}active{% endif %}">
+                        <a href="{% url 'cars:employee_list' %}">
+                            <i class="fas fa-users"></i>
+                            <span>الموظفين</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item {% if request.path == '/cars/average-price/' %}active{% endif %}">
+                        <a href="{% url 'cars:average_price' %}">
+                            <i class="fas fa-calculator"></i>
+                            <span>متوسط السعر</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item {% if request.path == '/cars/reports/' %}active{% endif %}">
+                        <a href="{% url 'cars:reports' %}">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>التقارير</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item {% if request.path == '/cars/settings/' %}active{% endif %}">
+                        <a href="{% url 'cars:settings_edit' %}">
+                            <i class="fas fa-cog"></i>
+                            <span>الإعدادات</span>
+                        </a>
+                    </li>
+                    <li class="sidebar-menu-item">
+                        <a href="{% url 'accounts:home' %}">
+                            <i class="fas fa-arrow-left"></i>
+                            <span>العودة للرئيسية</span>
+                        </a>
+                    </li>
+                </ul>
+            </aside>
+
+            <!-- Main Content -->
+            <div class="main-content">
+                {% if messages %}
+                    <div class="messages">
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <!-- Custom JavaScript -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Sidebar Toggle
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const pageWrapper = document.querySelector('.page-wrapper');
+            const sidebar = document.querySelector('.sidebar');
+
+            // Create overlay element for mobile
+            const overlay = document.createElement('div');
+            overlay.className = 'sidebar-overlay';
+            document.body.appendChild(overlay);
+
+            if (sidebarToggle) {
+                sidebarToggle.addEventListener('click', function() {
+                    pageWrapper.classList.toggle('sidebar-collapsed');
+
+                    // For mobile devices
+                    if (window.innerWidth <= 768) {
+                        sidebar.classList.toggle('show');
+                        overlay.classList.toggle('show');
+                    }
+                });
+            }
+
+            // Close sidebar when clicking on overlay
+            overlay.addEventListener('click', function() {
+                sidebar.classList.remove('show');
+                overlay.classList.remove('show');
+                pageWrapper.classList.remove('sidebar-collapsed');
+            });
+
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                if (window.innerWidth > 768) {
+                    overlay.classList.remove('show');
+                }
+            });
+
+            // Auto-dismiss alerts after 5 seconds
+            setTimeout(function() {
+                const alerts = document.querySelectorAll('.alert');
+                alerts.forEach(function(alert) {
+                    const bsAlert = new bootstrap.Alert(alert);
+                    bsAlert.close();
+                });
+            }, 5000);
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,79 @@
+{% extends 'cars\base.html' %}
+
+{% block title %}{{ title }} - نظام إدارة نشاط النقل{% endblock %}
+
+{% block header %}{{ title }}{% endblock %}
+
+{% block content %}
+    <div class="card">
+        <div class="card-body">
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.point_name.id_for_label }}" class="form-label">اسم النقطة</label>
+                            {{ form.point_name }}
+                            {% if form.point_name.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.point_name.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.departure_time.id_for_label }}" class="form-label">وقت المغادرة</label>
+                            {{ form.departure_time }}
+                            {% if form.departure_time.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.departure_time.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.order.id_for_label }}" class="form-label">الترتيب</label>
+                            {{ form.order }}
+                            {% if form.order.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.order.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mb-3">
+                    <div class="col-md-12">
+                        <div class="form-group">
+                            <label for="{{ form.employees.id_for_label }}" class="form-label">الموظفين</label>
+                            {{ form.employees }}
+                            {% if form.employees.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.employees.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">يمكنك اختيار أكثر من موظف باستخدام مفتاح Ctrl أثناء النقر</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'cars:route_point_list' car.id %}" class="btn btn-secondary">
+                        <i class="bi bi-arrow-left"></i> العودة
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> حفظ
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
