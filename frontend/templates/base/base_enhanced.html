@@ -116,33 +116,33 @@
                 <div class="nav-section-enhanced">
                     <div class="nav-section-title-enhanced">الموارد البشرية</div>
                     <div class="nav-item-enhanced">
-                        <a href="#" class="nav-link-enhanced">
+                        <a href="#" class="nav-link-enhanced hr-dashboard" data-section="hr">
                             <i class="nav-icon-enhanced fas fa-tachometer-alt"></i>
                             <span class="nav-text">لوحة التحكم</span>
                         </a>
                     </div>
                     <div class="nav-item-enhanced">
-                        <a href="#" class="nav-link-enhanced">
+                        <a href="{% url 'hr:employees' %}" class="nav-link-enhanced">
                             <i class="nav-icon-enhanced fas fa-users"></i>
                             <span class="nav-text">الموظفين</span>
                             <span class="nav-badge-enhanced">{{ total_employees|default:0 }}</span>
                         </a>
                     </div>
                     <div class="nav-item-enhanced">
-                        <a href="#" class="nav-link-enhanced">
+                        <a href="{% url 'hr:attendance' %}" class="nav-link-enhanced">
                             <i class="nav-icon-enhanced fas fa-clock"></i>
                             <span class="nav-text">الحضور والانصراف</span>
                         </a>
                     </div>
                     <div class="nav-item-enhanced">
-                        <a href="#" class="nav-link-enhanced">
+                        <a href="{% url 'hr:leaves' %}" class="nav-link-enhanced">
                             <i class="nav-icon-enhanced fas fa-calendar-times"></i>
                             <span class="nav-text">الإجازات</span>
                             <span class="nav-badge-enhanced">{{ pending_leaves|default:0 }}</span>
                         </a>
                     </div>
                     <div class="nav-item-enhanced">
-                        <a href="#" class="nav-link-enhanced">
+                        <a href="{% url 'hr:salaries' %}" class="nav-link-enhanced">
                             <i class="nav-icon-enhanced fas fa-money-bill-wave"></i>
                             <span class="nav-text">المرتبات</span>
                         </a>
@@ -153,19 +153,25 @@
                 <div class="nav-section-enhanced">
                     <div class="nav-section-title-enhanced">المخزون والمشتريات</div>
                     <div class="nav-item-enhanced">
-                        <a href="#" class="nav-link-enhanced">
+                        <a href="#" class="nav-link-enhanced inventory-dashboard" data-section="inventory">
+                            <i class="nav-icon-enhanced fas fa-boxes"></i>
+                            <span class="nav-text">لوحة التحكم</span>
+                        </a>
+                    </div>
+                    <div class="nav-item-enhanced">
+                        <a href="{% url 'inventory:items' %}" class="nav-link-enhanced">
                             <i class="nav-icon-enhanced fas fa-boxes"></i>
                             <span class="nav-text">المخزون</span>
                         </a>
                     </div>
                     <div class="nav-item-enhanced">
-                        <a href="#" class="nav-link-enhanced">
+                        <a href="{% url 'inventory:purchase_orders' %}" class="nav-link-enhanced">
                             <i class="nav-icon-enhanced fas fa-shopping-cart"></i>
                             <span class="nav-text">أوامر الشراء</span>
                         </a>
                     </div>
                     <div class="nav-item-enhanced">
-                        <a href="#" class="nav-link-enhanced">
+                        <a href="{% url 'inventory:suppliers' %}" class="nav-link-enhanced">
                             <i class="nav-icon-enhanced fas fa-truck"></i>
                             <span class="nav-text">الموردين</span>
                         </a>
@@ -176,19 +182,25 @@
                 <div class="nav-section-enhanced">
                     <div class="nav-section-title-enhanced">المشاريع والمهام</div>
                     <div class="nav-item-enhanced">
-                        <a href="#" class="nav-link-enhanced">
+                        <a href="#" class="nav-link-enhanced projects-dashboard" data-section="projects">
+                            <i class="nav-icon-enhanced fas fa-project-diagram"></i>
+                            <span class="nav-text">لوحة التحكم</span>
+                        </a>
+                    </div>
+                    <div class="nav-item-enhanced">
+                        <a href="{% url 'projects:list' %}" class="nav-link-enhanced">
                             <i class="nav-icon-enhanced fas fa-project-diagram"></i>
                             <span class="nav-text">المشاريع</span>
                         </a>
                     </div>
                     <div class="nav-item-enhanced">
-                        <a href="#" class="nav-link-enhanced">
+                        <a href="{% url 'projects:tasks' %}" class="nav-link-enhanced">
                             <i class="nav-icon-enhanced fas fa-tasks"></i>
                             <span class="nav-text">المهام</span>
                         </a>
                     </div>
                     <div class="nav-item-enhanced">
-                        <a href="#" class="nav-link-enhanced">
+                        <a href="{% url 'projects:meetings' %}" class="nav-link-enhanced">
                             <i class="nav-icon-enhanced fas fa-calendar-alt"></i>
                             <span class="nav-text">الاجتماعات</span>
                         </a>
@@ -199,32 +211,113 @@
                 <div class="nav-section-enhanced">
                     <div class="nav-section-title-enhanced">التقارير والتحليلات</div>
                     <div class="nav-item-enhanced">
-                        <a href="#" class="nav-link-enhanced">
+                        <a href="#" class="nav-link-enhanced reports-dashboard" data-section="reports">
+                            <i class="nav-icon-enhanced fas fa-chart-bar"></i>
+                            <span class="nav-text">لوحة التحكم</span>
+                        </a>
+                    </div>
+                    <div class="nav-item-enhanced">
+                        <a href="{% url 'reports:list' %}" class="nav-link-enhanced">
                             <i class="nav-icon-enhanced fas fa-chart-bar"></i>
                             <span class="nav-text">التقارير</span>
                         </a>
                     </div>
                     <div class="nav-item-enhanced">
-                        <a href="#" class="nav-link-enhanced">
+                        <a href="{% url 'reports:analytics' %}" class="nav-link-enhanced">
                             <i class="nav-icon-enhanced fas fa-chart-line"></i>
                             <span class="nav-text">التحليلات</span>
                         </a>
                     </div>
                 </div>
 
-                <!-- Settings Section -->
+                <!-- Administration Section -->
                 <div class="nav-section-enhanced">
-                    <div class="nav-section-title-enhanced">الإعدادات</div>
+                    <div class="nav-section-title-enhanced">الإدارة والإعدادات</div>
                     <div class="nav-item-enhanced">
-                        <a href="#" class="nav-link-enhanced">
+                        <a href="#" class="nav-link-enhanced administration-dashboard" data-section="administration">
+                            <i class="nav-icon-enhanced fas fa-cogs"></i>
+                            <span class="nav-text">لوحة التحكم</span>
+                        </a>
+                    </div>
+                    <div class="nav-item-enhanced">
+                        <a href="{% url 'administration:settings' %}" class="nav-link-enhanced">
                             <i class="nav-icon-enhanced fas fa-cogs"></i>
                             <span class="nav-text">إعدادات النظام</span>
                         </a>
                     </div>
                     <div class="nav-item-enhanced">
-                        <a href="#" class="nav-link-enhanced">
+                        <a href="{% url 'administration:users' %}" class="nav-link-enhanced">
                             <i class="nav-icon-enhanced fas fa-users-cog"></i>
                             <span class="nav-text">إدارة المستخدمين</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Finance Section -->
+                <div class="nav-section-enhanced">
+                    <div class="nav-section-title-enhanced">المالية والمحاسبة</div>
+                    <div class="nav-item-enhanced">
+                        <a href="#" class="nav-link-enhanced finance-dashboard" data-section="finance">
+                            <i class="nav-icon-enhanced fas fa-money-bill-wave"></i>
+                            <span class="nav-text">لوحة التحكم</span>
+                        </a>
+                    </div>
+                    <div class="nav-item-enhanced">
+                        <a href="{% url 'finance:invoices' %}" class="nav-link-enhanced">
+                            <i class="nav-icon-enhanced fas fa-file-invoice-dollar"></i>
+                            <span class="nav-text">الفواتير</span>
+                        </a>
+                    </div>
+                    <div class="nav-item-enhanced">
+                        <a href="{% url 'finance:accounts' %}" class="nav-link-enhanced">
+                            <i class="nav-icon-enhanced fas fa-coins"></i>
+                            <span class="nav-text">الحسابات</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Procurement Section -->
+                <div class="nav-section-enhanced">
+                    <div class="nav-section-title-enhanced">المشتريات والعقود</div>
+                    <div class="nav-item-enhanced">
+                        <a href="#" class="nav-link-enhanced procurement-dashboard" data-section="procurement">
+                            <i class="nav-icon-enhanced fas fa-shopping-cart"></i>
+                            <span class="nav-text">لوحة التحكم</span>
+                        </a>
+                    </div>
+                    <div class="nav-item-enhanced">
+                        <a href="{% url 'procurement:contracts' %}" class="nav-link-enhanced">
+                            <i class="nav-icon-enhanced fas fa-file-contract"></i>
+                            <span class="nav-text">العقود</span>
+                        </a>
+                    </div>
+                    <div class="nav-item-enhanced">
+                        <a href="{% url 'procurement:suppliers' %}" class="nav-link-enhanced">
+                            <i class="nav-icon-enhanced fas fa-handshake"></i>
+                            <span class="nav-text">الموردين</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Companies Section -->
+                <div class="nav-section-enhanced">
+                    <div class="nav-section-title-enhanced">الشركات والعملاء</div>
+                    <div class="nav-item-enhanced">
+                        <a href="#" class="nav-link-enhanced companies-dashboard" data-section="companies">
+                            <i class="nav-icon-enhanced fas fa-building"></i>
+                            <span class="nav-text">لوحة التحكم</span>
+                        </a>
+                    </div>
+                    <div class="nav-item-enhanced">
+                        <a href="{% url 'companies:list' %}" class="nav-link-enhanced">
+                            <i class="nav-icon-enhanced fas fa-building"></i>
+                            <span class="nav-text">الشركات</span>
+                        </a>
+                    </div>
+                    <div class="nav-item-enhanced">
+                        <a href="{% url 'companies:clients' %}" class="nav-link-enhanced">
+                            <i class="nav-icon-enhanced fas fa-users"></i>
+                            <span class="nav-text">العملاء</span>
                         </a>
                     </div>
                 </div>

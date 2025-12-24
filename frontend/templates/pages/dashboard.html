@@ -1,0 +1,1640 @@
+{% extends "base/base_enhanced.html" %}
+{% load static %}
+
+{% block title %}لوحة التحكم - نظام الدولية{% endblock %}
+
+{% block page_title %}لوحة التحكم{% endblock %}
+
+{% block page_description %}مرحباً بك في نظام الدولية الشامل{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- Welcome Section -->
+    <div class="welcome-section mb-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="card-enhanced welcome-card">
+                    <div class="card-body-enhanced">
+                        <div class="welcome-content">
+                            <div class="welcome-text">
+                                <h2 class="welcome-title">
+                                    <i class="fas fa-hand-paper me-2"></i>
+                                    مرحباً {{ user.get_full_name|default:user.username }}
+                                </h2>
+                                <p class="welcome-subtitle">مرحباً بك في نظام إدارة الدولية الشامل</p>
+                                <div class="welcome-stats">
+                                    <div class="stat-item">
+                                        <span class="stat-number">{{ total_employees|default:0 }}</span>
+                                        <span class="stat-label">موظف</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-number">{{ active_projects|default:0 }}</span>
+                                        <span class="stat-label">مشروع نشط</span>
+                                    </div>
+                                    <div class="stat-item">
+                                        <span class="stat-number">{{ total_inventory|default:0 }}</span>
+                                        <span class="stat-label">عنصر مخزون</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="welcome-image">
+                                <img src="{% static 'images/dashboard-welcome.svg' %}" alt="مرحباً" class="img-fluid">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions Section -->
+    <div class="quick-actions-section mb-4">
+        <div class="row">
+            <div class="col-12">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <i class="fas fa-bolt me-2"></i>
+                        الإجراءات السريعة
+                    </h3>
+                </div>
+                <div class="quick-actions-grid">
+                    <a href="#" class="quick-action-card" data-action="add-employee">
+                        <div class="action-icon">
+                            <i class="fas fa-user-plus"></i>
+                        </div>
+                        <div class="action-content">
+                            <h4>إضافة موظف جديد</h4>
+                            <p>إضافة موظف جديد للنظام</p>
+                        </div>
+                    </a>
+                    <a href="#" class="quick-action-card" data-action="create-project">
+                        <div class="action-icon">
+                            <i class="fas fa-plus-circle"></i>
+                        </div>
+                        <div class="action-content">
+                            <h4>مشروع جديد</h4>
+                            <p>إنشاء مشروع جديد</p>
+                        </div>
+                    </a>
+                    <a href="#" class="quick-action-card" data-action="inventory-check">
+                        <div class="action-icon">
+                            <i class="fas fa-boxes"></i>
+                        </div>
+                        <div class="action-content">
+                            <h4>جرد المخزون</h4>
+                            <p>إجراء جرد للمخزون</p>
+                        </div>
+                    </a>
+                    <a href="#" class="quick-action-card" data-action="generate-report">
+                        <div class="action-icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <div class="action-content">
+                            <h4>تقرير جديد</h4>
+                            <p>إنشاء تقرير تحليلي</p>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Sections Cards -->
+    <div class="sections-grid" id="sectionsGrid">
+        <!-- Default Dashboard Content -->
+        <div class="row" id="defaultDashboard">
+            <div class="col-12">
+                <div class="section-header">
+                    <h3 class="section-title">
+                        <i class="fas fa-th-large me-2"></i>
+                        الأقسام الرئيسية
+                    </h3>
+                </div>
+            </div>
+
+            <!-- HR Section Card -->
+            <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+                <div class="section-card" data-section="hr">
+                    <div class="section-card-header">
+                        <div class="section-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h4 class="section-title">الموارد البشرية</h4>
+                    </div>
+                    <div class="section-card-body">
+                        <p class="section-description">إدارة الموظفين والحضور والمرتبات</p>
+                        <div class="section-stats">
+                            <div class="stat-item">
+                                <span class="stat-number">{{ total_employees|default:0 }}</span>
+                                <span class="stat-label">موظف</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number">{{ present_today|default:0 }}</span>
+                                <span class="stat-label">حاضر اليوم</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="section-card-footer">
+                        <button class="btn btn-primary section-btn" data-section="hr">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            عرض التفاصيل
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inventory Section Card -->
+            <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+                <div class="section-card" data-section="inventory">
+                    <div class="section-card-header">
+                        <div class="section-icon">
+                            <i class="fas fa-boxes"></i>
+                        </div>
+                        <h4 class="section-title">المخزون والمشتريات</h4>
+                    </div>
+                    <div class="section-card-body">
+                        <p class="section-description">إدارة المخزون والموردين وأوامر الشراء</p>
+                        <div class="section-stats">
+                            <div class="stat-item">
+                                <span class="stat-number">{{ total_inventory|default:0 }}</span>
+                                <span class="stat-label">عنصر</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number">{{ low_stock_items|default:0 }}</span>
+                                <span class="stat-label">منخفض المخزون</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="section-card-footer">
+                        <button class="btn btn-primary section-btn" data-section="inventory">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            عرض التفاصيل
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Projects Section Card -->
+            <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+                <div class="section-card" data-section="projects">
+                    <div class="section-card-header">
+                        <div class="section-icon">
+                            <i class="fas fa-project-diagram"></i>
+                        </div>
+                        <h4 class="section-title">المشاريع والمهام</h4>
+                    </div>
+                    <div class="section-card-body">
+                        <p class="section-description">إدارة المشاريع والمهام والاجتماعات</p>
+                        <div class="section-stats">
+                            <div class="stat-item">
+                                <span class="stat-number">{{ active_projects|default:0 }}</span>
+                                <span class="stat-label">مشروع نشط</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number">{{ pending_tasks|default:0 }}</span>
+                                <span class="stat-label">مهمة معلقة</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="section-card-footer">
+                        <button class="btn btn-primary section-btn" data-section="projects">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            عرض التفاصيل
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Finance Section Card -->
+            <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+                <div class="section-card" data-section="finance">
+                    <div class="section-card-header">
+                        <div class="section-icon">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                        <h4 class="section-title">المالية والمحاسبة</h4>
+                    </div>
+                    <div class="section-card-body">
+                        <p class="section-description">إدارة الحسابات والفواتير والتقارير المالية</p>
+                        <div class="section-stats">
+                            <div class="stat-item">
+                                <span class="stat-number">{{ monthly_revenue|default:0 }}</span>
+                                <span class="stat-label">إيراد شهري</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number">{{ pending_invoices|default:0 }}</span>
+                                <span class="stat-label">فاتورة معلقة</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="section-card-footer">
+                        <button class="btn btn-primary section-btn" data-section="finance">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            عرض التفاصيل
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Section Card -->
+            <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+                <div class="section-card" data-section="reports">
+                    <div class="section-card-header">
+                        <div class="section-icon">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        <h4 class="section-title">التقارير والتحليلات</h4>
+                    </div>
+                    <div class="section-card-body">
+                        <p class="section-description">عرض التقارير والتحليلات والإحصائيات</p>
+                        <div class="section-stats">
+                            <div class="stat-item">
+                                <span class="stat-number">{{ total_reports|default:0 }}</span>
+                                <span class="stat-label">تقرير</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number">{{ weekly_views|default:0 }}</span>
+                                <span class="stat-label">مشاهدة أسبوعية</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="section-card-footer">
+                        <button class="btn btn-primary section-btn" data-section="reports">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            عرض التفاصيل
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Administration Section Card -->
+            <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+                <div class="section-card" data-section="administration">
+                    <div class="section-card-header">
+                        <div class="section-icon">
+                            <i class="fas fa-cogs"></i>
+                        </div>
+                        <h4 class="section-title">الإدارة والإعدادات</h4>
+                    </div>
+                    <div class="section-card-body">
+                        <p class="section-description">إدارة النظام والمستخدمين والإعدادات</p>
+                        <div class="section-stats">
+                            <div class="stat-item">
+                                <span class="stat-number">{{ total_users|default:0 }}</span>
+                                <span class="stat-label">مستخدم</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number">{{ system_alerts|default:0 }}</span>
+                                <span class="stat-label">تنبيه نظام</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="section-card-footer">
+                        <button class="btn btn-primary section-btn" data-section="administration">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            عرض التفاصيل
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Procurement Section Card -->
+            <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+                <div class="section-card" data-section="procurement">
+                    <div class="section-card-header">
+                        <div class="section-icon">
+                            <i class="fas fa-shopping-cart"></i>
+                        </div>
+                        <h4 class="section-title">المشتريات والعقود</h4>
+                    </div>
+                    <div class="section-card-body">
+                        <p class="section-description">إدارة المشتريات والعقود والمزايدات</p>
+                        <div class="section-stats">
+                            <div class="stat-item">
+                                <span class="stat-number">{{ active_contracts|default:0 }}</span>
+                                <span class="stat-label">عقد نشط</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number">{{ pending_orders|default:0 }}</span>
+                                <span class="stat-label">طلب معلق</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="section-card-footer">
+                        <button class="btn btn-primary section-btn" data-section="procurement">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            عرض التفاصيل
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Companies Section Card -->
+            <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+                <div class="section-card" data-section="companies">
+                    <div class="section-card-header">
+                        <div class="section-icon">
+                            <i class="fas fa-building"></i>
+                        </div>
+                        <h4 class="section-title">الشركات والعملاء</h4>
+                    </div>
+                    <div class="section-card-body">
+                        <p class="section-description">إدارة الشركات والعملاء والجهات المعنية</p>
+                        <div class="section-stats">
+                            <div class="stat-item">
+                                <span class="stat-number">{{ total_companies|default:0 }}</span>
+                                <span class="stat-label">شركة</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-number">{{ active_clients|default:0 }}</span>
+                                <span class="stat-label">عميل نشط</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="section-card-footer">
+                        <button class="btn btn-primary section-btn" data-section="companies">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            عرض التفاصيل
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section Details Views -->
+        <div class="section-details" id="sectionDetails" style="display: none;">
+            <!-- HR Section Details -->
+            <div class="section-detail-view" id="hr-section" style="display: none;">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="section-header">
+                            <button class="btn btn-ghost back-to-dashboard mb-3">
+                                <i class="fas fa-arrow-right me-2"></i>
+                                العودة للوحة التحكم
+                            </button>
+                            <h3 class="section-title">
+                                <i class="fas fa-users me-2"></i>
+                                الموارد البشرية
+                            </h3>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="detail-card">
+                            <div class="detail-card-header">
+                                <div class="detail-icon">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <h5>الموظفين</h5>
+                            </div>
+                            <div class="detail-card-body">
+                                <p>عرض وإدارة جميع الموظفين في النظام</p>
+                            </div>
+                            <div class="detail-card-footer">
+                                <a href="{% url 'hr:employees' %}" class="btn btn-primary">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    عرض الموظفين
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="detail-card">
+                            <div class="detail-card-header">
+                                <div class="detail-icon">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <h5>الحضور والانصراف</h5>
+                            </div>
+                            <div class="detail-card-body">
+                                <p>تتبع حضور الموظفين ومغادراتهم</p>
+                            </div>
+                            <div class="detail-card-footer">
+                                <a href="{% url 'hr:attendance' %}" class="btn btn-primary">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    إدارة الحضور
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="detail-card">
+                            <div class="detail-card-header">
+                                <div class="detail-icon">
+                                    <i class="fas fa-calendar-times"></i>
+                                </div>
+                                <h5>الإجازات</h5>
+                            </div>
+                            <div class="detail-card-body">
+                                <p>إدارة طلبات الإجازات والموافقات</p>
+                            </div>
+                            <div class="detail-card-footer">
+                                <a href="{% url 'hr:leaves' %}" class="btn btn-primary">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    إدارة الإجازات
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="detail-card">
+                            <div class="detail-card-header">
+                                <div class="detail-icon">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                </div>
+                                <h5>المرتبات</h5>
+                            </div>
+                            <div class="detail-card-body">
+                                <p>إدارة مرتبات الموظفين والبدلات</p>
+                            </div>
+                            <div class="detail-card-footer">
+                                <a href="{% url 'hr:salaries' %}" class="btn btn-primary">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    إدارة المرتبات
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="detail-card">
+                            <div class="detail-card-header">
+                                <div class="detail-icon">
+                                    <i class="fas fa-user-tie"></i>
+                                </div>
+                                <h5>الوظائف والمناصب</h5>
+                            </div>
+                            <div class="detail-card-body">
+                                <p>إدارة الوظائف والمسميات الوظيفية</p>
+                            </div>
+                            <div class="detail-card-footer">
+                                <a href="{% url 'hr:positions' %}" class="btn btn-primary">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    إدارة الوظائف
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="detail-card">
+                            <div class="detail-card-header">
+                                <div class="detail-icon">
+                                    <i class="fas fa-graduation-cap"></i>
+                                </div>
+                                <h5>التدريب والتطوير</h5>
+                            </div>
+                            <div class="detail-card-body">
+                                <p>إدارة برامج التدريب والتطوير</p>
+                            </div>
+                            <div class="detail-card-footer">
+                                <a href="{% url 'hr:training' %}" class="btn btn-primary">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    إدارة التدريب
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inventory Section Details -->
+            <div class="section-detail-view" id="inventory-section" style="display: none;">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="section-header">
+                            <button class="btn btn-ghost back-to-dashboard mb-3">
+                                <i class="fas fa-arrow-right me-2"></i>
+                                العودة للوحة التحكم
+                            </button>
+                            <h3 class="section-title">
+                                <i class="fas fa-boxes me-2"></i>
+                                المخزون والمشتريات
+                            </h3>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="detail-card">
+                            <div class="detail-card-header">
+                                <div class="detail-icon">
+                                    <i class="fas fa-boxes"></i>
+                                </div>
+                                <h5>المخزون</h5>
+                            </div>
+                            <div class="detail-card-body">
+                                <p>عرض وإدارة جميع عناصر المخزون</p>
+                            </div>
+                            <div class="detail-card-footer">
+                                <a href="{% url 'inventory:items' %}" class="btn btn-primary">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    عرض المخزون
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="detail-card">
+                            <div class="detail-card-header">
+                                <div class="detail-icon">
+                                    <i class="fas fa-shopping-cart"></i>
+                                </div>
+                                <h5>أوامر الشراء</h5>
+                            </div>
+                            <div class="detail-card-body">
+                                <p>إدارة أوامر الشراء والطلبات</p>
+                            </div>
+                            <div class="detail-card-footer">
+                                <a href="{% url 'inventory:purchase_orders' %}" class="btn btn-primary">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    أوامر الشراء
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="detail-card">
+                            <div class="detail-card-header">
+                                <div class="detail-icon">
+                                    <i class="fas fa-truck"></i>
+                                </div>
+                                <h5>الموردين</h5>
+                            </div>
+                            <div class="detail-card-body">
+                                <p>إدارة قاعدة بيانات الموردين</p>
+                            </div>
+                            <div class="detail-card-footer">
+                                <a href="{% url 'inventory:suppliers' %}" class="btn btn-primary">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    إدارة الموردين
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="detail-card">
+                            <div class="detail-card-header">
+                                <div class="detail-icon">
+                                    <i class="fas fa-tags"></i>
+                                </div>
+                                <h5>التصنيفات</h5>
+                            </div>
+                            <div class="detail-card-body">
+                                <p>إدارة تصنيفات وفئات المخزون</p>
+                            </div>
+                            <div class="detail-card-footer">
+                                <a href="{% url 'inventory:categories' %}" class="btn btn-primary">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    إدارة التصنيفات
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="detail-card">
+                            <div class="detail-card-header">
+                                <div class="detail-icon">
+                                    <i class="fas fa-clipboard-list"></i>
+                                </div>
+                                <h5>الجرد</h5>
+                            </div>
+                            <div class="detail-card-body">
+                                <p>إجراء جرد دوري للمخزون</p>
+                            </div>
+                            <div class="detail-card-footer">
+                                <a href="{% url 'inventory:inventory_count' %}" class="btn btn-primary">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    إجراء الجرد
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Projects Section Details -->
+            <div class="section-detail-view" id="projects-section" style="display: none;">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="section-header">
+                            <button class="btn btn-ghost back-to-dashboard mb-3">
+                                <i class="fas fa-arrow-right me-2"></i>
+                                العودة للوحة التحكم
+                            </button>
+                            <h3 class="section-title">
+                                <i class="fas fa-project-diagram me-2"></i>
+                                المشاريع والمهام
+                            </h3>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="detail-card">
+                            <div class="detail-card-header">
+                                <div class="detail-icon">
+                                    <i class="fas fa-project-diagram"></i>
+                                </div>
+                                <h5>المشاريع</h5>
+                            </div>
+                            <div class="detail-card-body">
+                                <p>عرض وإدارة جميع المشاريع</p>
+                            </div>
+                            <div class="detail-card-footer">
+                                <a href="{% url 'projects:list' %}" class="btn btn-primary">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    عرض المشاريع
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="detail-card">
+                            <div class="detail-card-header">
+                                <div class="detail-icon">
+                                    <i class="fas fa-tasks"></i>
+                                </div>
+                                <h5>المهام</h5>
+                            </div>
+                            <div class="detail-card-body">
+                                <p>إدارة المهام والتكليفات</p>
+                            </div>
+                            <div class="detail-card-footer">
+                                <a href="{% url 'projects:tasks' %}" class="btn btn-primary">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    إدارة المهام
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="detail-card">
+                            <div class="detail-card-header">
+                                <div class="detail-icon">
+                                    <i class="fas fa-calendar-alt"></i>
+                                </div>
+                                <h5>الاجتماعات</h5>
+                            </div>
+                            <div class="detail-card-body">
+                                <p>جدولة وإدارة الاجتماعات</p>
+                            </div>
+                            <div class="detail-card-footer">
+                                <a href="{% url 'projects:meetings' %}" class="btn btn-primary">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    إدارة الاجتماعات
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="detail-card">
+                            <div class="detail-card-header">
+                                <div class="detail-icon">
+                                    <i class="fas fa-chart-gantt"></i>
+                                </div>
+                                <h5>خطط المشاريع</h5>
+                            </div>
+                            <div class="detail-card-body">
+                                <p>إدارة خطط وجداول المشاريع</p>
+                            </div>
+                            <div class="detail-card-footer">
+                                <a href="{% url 'projects:plans' %}" class="btn btn-primary">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    خطط المشاريع
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Finance Section Details -->
+            <div class="section-detail-view" id="finance-section" style="display: none;">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="section-header">
+                            <button class="btn btn-ghost back-to-dashboard mb-3">
+                                <i class="fas fa-arrow-right me-2"></i>
+                                العودة للوحة التحكم
+                            </button>
+                            <h3 class="section-title">
+                                <i class="fas fa-money-bill-wave me-2"></i>
+                                المالية والمحاسبة
+                            </h3>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="detail-card">
+                            <div class="detail-card-header">
+                                <div class="detail-icon">
+                                    <i class="fas fa-file-invoice-dollar"></i>
+                                </div>
+                                <h5>الفواتير</h5>
+                            </div>
+                            <div class="detail-card-body">
+                                <p>إدارة الفواتير والمدفوعات</p>
+                            </div>
+                            <div class="detail-card-footer">
+                                <a href="{% url 'finance:invoices' %}" class="btn btn-primary">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    إدارة الفواتير
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="detail-card">
+                            <div class="detail-card-header">
+                                <div class="detail-icon">
+                                    <i class="fas fa-coins"></i>
+                                </div>
+                                <h5>الحسابات</h5>
+                            </div>
+                            <div class="detail-card-body">
+                                <p>إدارة الحسابات المصرفية</p>
+                            </div>
+                            <div class="detail-card-footer">
+                                <a href="{% url 'finance:accounts' %}" class="btn btn-primary">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    إدارة الحسابات
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="detail-card">
+                            <div class="detail-card-header">
+                                <div class="detail-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <h5>التقارير المالية</h5>
+                            </div>
+                            <div class="detail-card-body">
+                                <p>عرض التقارير والتحليلات المالية</p>
+                            </div>
+                            <div class="detail-card-footer">
+                                <a href="{% url 'finance:reports' %}" class="btn btn-primary">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    التقارير المالية
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Section Details -->
+            <div class="section-detail-view" id="reports-section" style="display: none;">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="section-header">
+                            <button class="btn btn-ghost back-to-dashboard mb-3">
+                                <i class="fas fa-arrow-right me-2"></i>
+                                العودة للوحة التحكم
+                            </button>
+                            <h3 class="section-title">
+                                <i class="fas fa-chart-bar me-2"></i>
+                                التقارير والتحليلات
+                            </h3>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="detail-card">
+                            <div class="detail-card-header">
+                                <div class="detail-icon">
+                                    <i class="fas fa-chart-bar"></i>
+                                </div>
+                                <h5>تقارير الموارد البشرية</h5>
+                            </div>
+                            <div class="detail-card-body">
+                                <p>تقارير الموظفين والحضور والأداء</p>
+                            </div>
+                            <div class="detail-card-footer">
+                                <a href="{% url 'reports:hr' %}" class="btn btn-primary">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    تقارير الموارد البشرية
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="detail-card">
+                            <div class="detail-card-header">
+                                <div class="detail-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <h5>تقارير المالية</h5>
+                            </div>
+                            <div class="detail-card-body">
+                                <p>التقارير المالية والمحاسبية</p>
+                            </div>
+                            <div class="detail-card-footer">
+                                <a href="{% url 'reports:finance' %}" class="btn btn-primary">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    التقارير المالية
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="detail-card">
+                            <div class="detail-card-header">
+                                <div class="detail-icon">
+                                    <i class="fas fa-project-diagram"></i>
+                                </div>
+                                <h5>تقارير المشاريع</h5>
+                            </div>
+                            <div class="detail-card-body">
+                                <p>تقارير تقدم وأداء المشاريع</p>
+                            </div>
+                            <div class="detail-card-footer">
+                                <a href="{% url 'reports:projects' %}" class="btn btn-primary">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    تقارير المشاريع
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="detail-card">
+                            <div class="detail-card-header">
+                                <div class="detail-icon">
+                                    <i class="fas fa-boxes"></i>
+                                </div>
+                                <h5>تقارير المخزون</h5>
+                            </div>
+                            <div class="detail-card-body">
+                                <p>تقارير المخزون والمشتريات</p>
+                            </div>
+                            <div class="detail-card-footer">
+                                <a href="{% url 'reports:inventory' %}" class="btn btn-primary">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    تقارير المخزون
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="detail-card">
+                            <div class="detail-card-header">
+                                <div class="detail-icon">
+                                    <i class="fas fa-tachometer-alt"></i>
+                                </div>
+                                <h5>لوحة المقاييس</h5>
+                            </div>
+                            <div class="detail-card-body">
+                                <p>المقاييس والمؤشرات الأساسية</p>
+                            </div>
+                            <div class="detail-card-footer">
+                                <a href="{% url 'reports:dashboard' %}" class="btn btn-primary">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    لوحة المقاييس
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Administration Section Details -->
+            <div class="section-detail-view" id="administration-section" style="display: none;">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="section-header">
+                            <button class="btn btn-ghost back-to-dashboard mb-3">
+                                <i class="fas fa-arrow-right me-2"></i>
+                                العودة للوحة التحكم
+                            </button>
+                            <h3 class="section-title">
+                                <i class="fas fa-cogs me-2"></i>
+                                الإدارة والإعدادات
+                            </h3>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="detail-card">
+                            <div class="detail-card-header">
+                                <div class="detail-icon">
+                                    <i class="fas fa-users-cog"></i>
+                                </div>
+                                <h5>إدارة المستخدمين</h5>
+                            </div>
+                            <div class="detail-card-body">
+                                <p>إدارة حسابات المستخدمين والصلاحيات</p>
+                            </div>
+                            <div class="detail-card-footer">
+                                <a href="{% url 'administration:users' %}" class="btn btn-primary">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    إدارة المستخدمين
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="detail-card">
+                            <div class="detail-card-header">
+                                <div class="detail-icon">
+                                    <i class="fas fa-cogs"></i>
+                                </div>
+                                <h5>إعدادات النظام</h5>
+                            </div>
+                            <div class="detail-card-body">
+                                <p>إعدادات النظام والتكوينات العامة</p>
+                            </div>
+                            <div class="detail-card-footer">
+                                <a href="{% url 'administration:settings' %}" class="btn btn-primary">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    إعدادات النظام
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="detail-card">
+                            <div class="detail-card-header">
+                                <div class="detail-icon">
+                                    <i class="fas fa-database"></i>
+                                </div>
+                                <h5>إدارة البيانات</h5>
+                            </div>
+                            <div class="detail-card-body">
+                                <p>النسخ الاحتياطي والاستعادة</p>
+                            </div>
+                            <div class="detail-card-footer">
+                                <a href="{% url 'administration:backup' %}" class="btn btn-primary">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    إدارة البيانات
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Procurement Section Details -->
+            <div class="section-detail-view" id="procurement-section" style="display: none;">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="section-header">
+                            <button class="btn btn-ghost back-to-dashboard mb-3">
+                                <i class="fas fa-arrow-right me-2"></i>
+                                العودة للوحة التحكم
+                            </button>
+                            <h3 class="section-title">
+                                <i class="fas fa-shopping-cart me-2"></i>
+                                المشتريات والعقود
+                            </h3>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="detail-card">
+                            <div class="detail-card-header">
+                                <div class="detail-icon">
+                                    <i class="fas fa-file-contract"></i>
+                                </div>
+                                <h5>العقود</h5>
+                            </div>
+                            <div class="detail-card-body">
+                                <p>إدارة العقود والالتزامات</p>
+                            </div>
+                            <div class="detail-card-footer">
+                                <a href="{% url 'procurement:contracts' %}" class="btn btn-primary">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    إدارة العقود
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="detail-card">
+                            <div class="detail-card-header">
+                                <div class="detail-icon">
+                                    <i class="fas fa-gavel"></i>
+                                </div>
+                                <h5>المناقصات</h5>
+                            </div>
+                            <div class="detail-card-body">
+                                <p>إدارة المناقصات والمزايدات</p>
+                            </div>
+                            <div class="detail-card-footer">
+                                <a href="{% url 'procurement:tenders' %}" class="btn btn-primary">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    إدارة المناقصات
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="detail-card">
+                            <div class="detail-card-header">
+                                <div class="detail-icon">
+                                    <i class="fas fa-handshake"></i>
+                                </div>
+                                <h5>الموردين</h5>
+                            </div>
+                            <div class="detail-card-body">
+                                <p>قاعدة بيانات الموردين والشركاء</p>
+                            </div>
+                            <div class="detail-card-footer">
+                                <a href="{% url 'procurement:suppliers' %}" class="btn btn-primary">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    إدارة الموردين
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Companies Section Details -->
+            <div class="section-detail-view" id="companies-section" style="display: none;">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="section-header">
+                            <button class="btn btn-ghost back-to-dashboard mb-3">
+                                <i class="fas fa-arrow-right me-2"></i>
+                                العودة للوحة التحكم
+                            </button>
+                            <h3 class="section-title">
+                                <i class="fas fa-building me-2"></i>
+                                الشركات والعملاء
+                            </h3>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="detail-card">
+                            <div class="detail-card-header">
+                                <div class="detail-icon">
+                                    <i class="fas fa-building"></i>
+                                </div>
+                                <h5>الشركات</h5>
+                            </div>
+                            <div class="detail-card-body">
+                                <p>إدارة الشركات والجهات المعنية</p>
+                            </div>
+                            <div class="detail-card-footer">
+                                <a href="{% url 'companies:list' %}" class="btn btn-primary">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    إدارة الشركات
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="detail-card">
+                            <div class="detail-card-header">
+                                <div class="detail-icon">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <h5>العملاء</h5>
+                            </div>
+                            <div class="detail-card-body">
+                                <p>قاعدة بيانات العملاء والشركاء</p>
+                            </div>
+                            <div class="detail-card-footer">
+                                <a href="{% url 'companies:clients' %}" class="btn btn-primary">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    إدارة العملاء
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 mb-4">
+                        <div class="detail-card">
+                            <div class="detail-card-header">
+                                <div class="detail-icon">
+                                    <i class="fas fa-address-book"></i>
+                                </div>
+                                <h5>جهات الاتصال</h5>
+                            </div>
+                            <div class="detail-card-body">
+                                <p>إدارة جهات الاتصال والتواصل</p>
+                            </div>
+                            <div class="detail-card-footer">
+                                <a href="{% url 'companies:contacts' %}" class="btn btn-primary">
+                                    <i class="fas fa-arrow-left me-2"></i>
+                                    جهات الاتصال
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Dashboard Styles */
+.dashboard-container {
+    padding: 1.5rem 0;
+}
+
+.welcome-section {
+    margin-bottom: 2rem;
+}
+
+.welcome-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 1rem;
+    overflow: hidden;
+}
+
+.welcome-content {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.welcome-text {
+    flex: 1;
+}
+
+.welcome-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.welcome-subtitle {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    margin-bottom: 1.5rem;
+}
+
+.welcome-stats {
+    display: flex;
+    gap: 2rem;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-number {
+    display: block;
+    font-size: 1.8rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    opacity: 0.8;
+    margin-top: 0.25rem;
+}
+
+.welcome-image {
+    flex-shrink: 0;
+}
+
+.welcome-image img {
+    width: 150px;
+    height: 150px;
+    object-fit: contain;
+}
+
+.quick-actions-section {
+    margin-bottom: 2rem;
+}
+
+.section-header {
+    margin-bottom: 1.5rem;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+}
+
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.quick-action-card {
+    display: flex;
+    align-items: center;
+    padding: 1.25rem;
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    text-decoration: none;
+    color: #374151;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.quick-action-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-color: #3b82f6;
+}
+
+.action-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.5rem;
+    background: #eff6ff;
+    color: #3b82f6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    margin-left: 1rem;
+    flex-shrink: 0;
+}
+
+.action-content {
+    flex: 1;
+}
+
+.action-content h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: #1f2937;
+}
+
+.action-content p {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+.sections-grid {
+    position: relative;
+}
+
+/* Section Cards */
+.section-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 1rem;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    height: 100%;
+}
+
+.section-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    border-color: #3b82f6;
+}
+
+.section-card-header {
+    padding: 1.5rem 1.5rem 1rem;
+    text-align: center;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.section-icon {
+    width: 4rem;
+    height: 4rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin: 0 auto 1rem;
+}
+
+.section-card-header h4 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+}
+
+.section-card-body {
+    padding: 1.5rem;
+}
+
+.section-description {
+    color: #6b7280;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+}
+
+.section-stats {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.section-stats .stat-item {
+    flex: 1;
+    text-align: center;
+    padding: 0.75rem;
+    background: #f8fafc;
+    border-radius: 0.5rem;
+}
+
+.section-stats .stat-number {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    display: block;
+    line-height: 1;
+}
+
+.section-stats .stat-label {
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+}
+
+.section-card-footer {
+    padding: 1.5rem;
+    padding-top: 0;
+}
+
+.section-btn {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    font-weight: 500;
+}
+
+/* Detail Cards */
+.detail-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 1rem;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    height: 100%;
+}
+
+.detail-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-color: #3b82f6;
+}
+
+.detail-card-header {
+    padding: 1.5rem 1.5rem 1rem;
+    text-align: center;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.detail-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    margin: 0 auto 1rem;
+}
+
+.detail-card-header h5 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+}
+
+.detail-card-body {
+    padding: 1.5rem;
+}
+
+.detail-card-body p {
+    color: #6b7280;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.detail-card-footer {
+    padding: 1.5rem;
+    padding-top: 0;
+}
+
+/* Back to Dashboard Button */
+.back-to-dashboard {
+    background: transparent;
+    border: 1px solid #d1d5db;
+    color: #374151;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.back-to-dashboard:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .welcome-content {
+        flex-direction: column;
+        text-align: center;
+        gap: 1.5rem;
+    }
+
+    .welcome-stats {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    .quick-actions-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .welcome-image img {
+        width: 120px;
+        height: 120px;
+    }
+}
+
+@media (max-width: 576px) {
+    .section-stats {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .section-stats .stat-item {
+        padding: 0.5rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Dashboard Section Navigation
+document.addEventListener('DOMContentLoaded', function() {
+    const defaultDashboard = document.getElementById('defaultDashboard');
+    const sectionDetails = document.getElementById('sectionDetails');
+    const sectionDetailViews = document.querySelectorAll('.section-detail-view');
+    const backButtons = document.querySelectorAll('.back-to-dashboard');
+    const sectionButtons = document.querySelectorAll('.section-btn');
+
+    // Handle section button clicks
+    sectionButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const section = this.getAttribute('data-section');
+            showSectionDetails(section);
+        });
+    });
+
+    // Handle back to dashboard buttons
+    backButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            showDefaultDashboard();
+        });
+    });
+
+    // Handle sidebar navigation integration
+    const sidebarLinks = document.querySelectorAll('.sidebar-nav-menu .nav-link-enhanced[data-section]');
+    sidebarLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const section = this.getAttribute('data-section');
+            if (section) {
+                showSectionDetails(section);
+            }
+        });
+    });
+
+    function showSectionDetails(section) {
+        // Hide default dashboard
+        defaultDashboard.style.display = 'none';
+
+        // Hide all section details
+        sectionDetailViews.forEach(view => {
+            view.style.display = 'none';
+        });
+
+        // Show section details container
+        sectionDetails.style.display = 'block';
+
+        // Show specific section
+        const sectionElement = document.getElementById(section + '-section');
+        if (sectionElement) {
+            sectionElement.style.display = 'block';
+
+            // Smooth scroll to top
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        }
+
+        // Update URL hash for bookmarking
+        window.location.hash = 'section-' + section;
+    }
+
+    function showDefaultDashboard() {
+        // Show default dashboard
+        defaultDashboard.style.display = 'block';
+
+        // Hide section details
+        sectionDetails.style.display = 'none';
+
+        // Hide all section detail views
+        sectionDetailViews.forEach(view => {
+            view.style.display = 'none';
+        });
+
+        // Clear URL hash
+        history.replaceState(null, null, window.location.pathname);
+
+        // Smooth scroll to top
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    }
+
+    // Handle browser back/forward navigation
+    window.addEventListener('hashchange', function() {
+        const hash = window.location.hash;
+        if (hash.startsWith('#section-')) {
+            const section = hash.replace('#section-', '');
+            showSectionDetails(section);
+        } else {
+            showDefaultDashboard();
+        }
+    });
+
+    // Check initial hash on page load
+    if (window.location.hash.startsWith('#section-')) {
+        const section = window.location.hash.replace('#section-', '');
+        showSectionDetails(section);
+    }
+
+    // Handle quick actions
+    const quickActions = document.querySelectorAll('.quick-action-card');
+    quickActions.forEach(action => {
+        action.addEventListener('click', function(e) {
+            e.preventDefault();
+            const actionType = this.getAttribute('data-action');
+
+            // Handle different quick actions
+            switch(actionType) {
+                case 'add-employee':
+                    // Redirect to add employee page or show modal
+                    window.location.href = '/hr/employees/add/';
+                    break;
+                case 'create-project':
+                    window.location.href = '/projects/create/';
+                    break;
+                case 'inventory-check':
+                    window.location.href = '/inventory/count/';
+                    break;
+                case 'generate-report':
+                    window.location.href = '/reports/generate/';
+                    break;
+                default:
+                    console.log('Quick action:', actionType);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
