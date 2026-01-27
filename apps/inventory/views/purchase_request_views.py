@@ -10,7 +10,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 from django.utils import timezone
 
-from apps.inventory.decorators import apps.inventory_module_permission_required, inventory_class_permission_required
+from apps.inventory.decorators import inventory_module_permission_required, inventory_class_permission_required
 from apps.inventory.models_local import Product, PurchaseRequest
 from apps.inventory.forms import PurchaseRequestForm
 

@@ -1,0 +1,412 @@
+INFO 2026-01-27 14:21:56,941 autoreload 39056 21580 Watching for file changes with StatReloader
+INFO 2026-01-27 14:22:01,740 basehttp 39056 27056 "GET / HTTP/1.1" 302 0
+INFO 2026-01-27 14:22:01,808 basehttp 39056 27056 "GET /accounts/login/ HTTP/1.1" 200 10967
+INFO 2026-01-27 14:22:01,863 basehttp 39056 27056 "GET /static/css/style_updated.css HTTP/1.1" 200 12592
+INFO 2026-01-27 14:22:01,866 basehttp 39056 35504 "GET /static/js/main.js HTTP/1.1" 200 14817
+WARNING 2026-01-27 14:22:02,588 log 39056 35504 Not Found: /favicon.ico
+WARNING 2026-01-27 14:22:02,588 basehttp 39056 35504 "GET /favicon.ico HTTP/1.1" 404 4712
+INFO 2026-01-27 14:22:08,843 basehttp 39056 35504 "POST /accounts/login/ HTTP/1.1" 200 11509
+INFO 2026-01-27 14:22:54,789 autoreload 25116 23716 Watching for file changes with StatReloader
+INFO 2026-01-27 14:23:02,695 basehttp 25116 19028 "POST /accounts/login/ HTTP/1.1" 302 0
+ERROR 2026-01-27 14:23:02,991 log 25116 19028 Internal Server Error: /dashboard/
+Traceback (most recent call last):
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\core\handlers\base.py", line 220, in _get_response
+    response = response.render()
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\response.py", line 114, in render
+    self.content = self.rendered_content
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\response.py", line 92, in rendered_content
+    return template.render(context, self._request)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\backends\django.py", line 107, in render
+    return self.template.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 172, in render
+    return self._render(context)
+           ~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 164, in _render
+    return self.nodelist.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 1018, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 979, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\loader_tags.py", line 134, in render
+    compiled_parent = self.get_parent(context)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\loader_tags.py", line 131, in get_parent
+    return self.find_template(parent, context)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\loader_tags.py", line 109, in find_template
+    template, origin = context.template.engine.find_template(
+                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        template_name,
+        ^^^^^^^^^^^^^^
+        skip=history,
+        ^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\loaders\cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\loaders\base.py", line 28, in get_template
+    return Template(
+        contents,
+    ...<2 lines>...
+        self.engine,
+    )
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 155, in __init__
+    self.nodelist = self.compile_nodelist()
+                    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 197, in compile_nodelist
+    nodelist = parser.parse()
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 519, in parse
+    raise self.error(token, e)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 517, in parse
+    compiled_result = compile_func(self, token)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 519, in parse
+    raise self.error(token, e)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 517, in parse
+    compiled_result = compile_func(self, token)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\loader_tags.py", line 228, in do_block
+    raise TemplateSyntaxError(
+        "'%s' tag with name '%s' appears more than once" % (bits[0], block_name)
+    )
+django.template.exceptions.TemplateSyntaxError: 'block' tag with name 'page_title' appears more than once
+ERROR 2026-01-27 14:23:03,028 basehttp 25116 19028 "GET /dashboard/ HTTP/1.1" 500 249966
+ERROR 2026-01-27 14:50:10,629 log 25116 38752 Internal Server Error: /dashboard/
+Traceback (most recent call last):
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\core\handlers\base.py", line 220, in _get_response
+    response = response.render()
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\response.py", line 114, in render
+    self.content = self.rendered_content
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\response.py", line 92, in rendered_content
+    return template.render(context, self._request)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\backends\django.py", line 107, in render
+    return self.template.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 172, in render
+    return self._render(context)
+           ~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 164, in _render
+    return self.nodelist.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 1018, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 979, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\loader_tags.py", line 134, in render
+    compiled_parent = self.get_parent(context)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\loader_tags.py", line 131, in get_parent
+    return self.find_template(parent, context)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\loader_tags.py", line 109, in find_template
+    template, origin = context.template.engine.find_template(
+                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        template_name,
+        ^^^^^^^^^^^^^^
+        skip=history,
+        ^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\loaders\cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\loaders\base.py", line 28, in get_template
+    return Template(
+        contents,
+    ...<2 lines>...
+        self.engine,
+    )
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 155, in __init__
+    self.nodelist = self.compile_nodelist()
+                    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 197, in compile_nodelist
+    nodelist = parser.parse()
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 519, in parse
+    raise self.error(token, e)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 517, in parse
+    compiled_result = compile_func(self, token)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 519, in parse
+    raise self.error(token, e)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 517, in parse
+    compiled_result = compile_func(self, token)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\loader_tags.py", line 228, in do_block
+    raise TemplateSyntaxError(
+        "'%s' tag with name '%s' appears more than once" % (bits[0], block_name)
+    )
+django.template.exceptions.TemplateSyntaxError: 'block' tag with name 'page_title' appears more than once
+ERROR 2026-01-27 14:50:10,655 basehttp 25116 38752 "GET /dashboard/ HTTP/1.1" 500 249966
+ERROR 2026-01-27 14:50:41,740 log 25116 38752 Internal Server Error: /dashboard/
+Traceback (most recent call last):
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\core\handlers\base.py", line 220, in _get_response
+    response = response.render()
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\response.py", line 114, in render
+    self.content = self.rendered_content
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\response.py", line 92, in rendered_content
+    return template.render(context, self._request)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\backends\django.py", line 107, in render
+    return self.template.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 172, in render
+    return self._render(context)
+           ~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 164, in _render
+    return self.nodelist.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 1018, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 979, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\loader_tags.py", line 134, in render
+    compiled_parent = self.get_parent(context)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\loader_tags.py", line 131, in get_parent
+    return self.find_template(parent, context)
+           ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\loader_tags.py", line 109, in find_template
+    template, origin = context.template.engine.find_template(
+                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        template_name,
+        ^^^^^^^^^^^^^^
+        skip=history,
+        ^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\engine.py", line 159, in find_template
+    template = loader.get_template(name, skip=skip)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\loaders\cached.py", line 57, in get_template
+    template = super().get_template(template_name, skip)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\loaders\base.py", line 28, in get_template
+    return Template(
+        contents,
+    ...<2 lines>...
+        self.engine,
+    )
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 155, in __init__
+    self.nodelist = self.compile_nodelist()
+                    ~~~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 197, in compile_nodelist
+    nodelist = parser.parse()
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 519, in parse
+    raise self.error(token, e)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 517, in parse
+    compiled_result = compile_func(self, token)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\loader_tags.py", line 234, in do_block
+    nodelist = parser.parse(("endblock",))
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 519, in parse
+    raise self.error(token, e)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 517, in parse
+    compiled_result = compile_func(self, token)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\loader_tags.py", line 228, in do_block
+    raise TemplateSyntaxError(
+        "'%s' tag with name '%s' appears more than once" % (bits[0], block_name)
+    )
+django.template.exceptions.TemplateSyntaxError: 'block' tag with name 'page_title' appears more than once
+ERROR 2026-01-27 14:50:41,757 basehttp 25116 38752 "GET /dashboard/ HTTP/1.1" 500 249966
+INFO 2026-01-27 15:12:59,275 autoreload 396 15564 Watching for file changes with StatReloader
+INFO 2026-01-27 15:13:05,702 basehttp 396 36196 "GET /dashboard/ HTTP/1.1" 302 0
+INFO 2026-01-27 15:13:05,735 basehttp 396 36196 "GET /accounts/login/?next=/dashboard/ HTTP/1.1" 200 10967
+ERROR 2026-01-27 15:13:41,441 log 396 29020 Internal Server Error: /dashboard/
+Traceback (most recent call last):
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\core\handlers\base.py", line 220, in _get_response
+    response = response.render()
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\response.py", line 114, in render
+    self.content = self.rendered_content
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\response.py", line 92, in rendered_content
+    return template.render(context, self._request)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\backends\django.py", line 107, in render
+    return self.template.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 172, in render
+    return self._render(context)
+           ~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 164, in _render
+    return self.nodelist.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 1018, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 979, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 164, in _render
+    return self.nodelist.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 1018, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 979, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 1018, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 979, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\defaulttags.py", line 480, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\urls\base.py", line 98, in reverse
+    resolved_url = resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\urls\resolvers.py", line 831, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'employees' not found. 'employees' is not a valid view function or pattern name.
+ERROR 2026-01-27 15:13:41,478 basehttp 396 29020 "GET /dashboard/ HTTP/1.1" 500 213175
+ERROR 2026-01-27 15:15:29,256 log 396 29020 Internal Server Error: /dashboard/
+Traceback (most recent call last):
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\core\handlers\base.py", line 220, in _get_response
+    response = response.render()
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\response.py", line 114, in render
+    self.content = self.rendered_content
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\response.py", line 92, in rendered_content
+    return template.render(context, self._request)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\backends\django.py", line 107, in render
+    return self.template.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 172, in render
+    return self._render(context)
+           ~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 164, in _render
+    return self.nodelist.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 1018, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 979, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 164, in _render
+    return self.nodelist.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 1018, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 979, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 1018, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 979, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\defaulttags.py", line 480, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\urls\base.py", line 98, in reverse
+    resolved_url = resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\urls\resolvers.py", line 831, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'employees' not found. 'employees' is not a valid view function or pattern name.
+ERROR 2026-01-27 15:15:29,288 basehttp 396 29020 "GET /dashboard/ HTTP/1.1" 500 213175
+ERROR 2026-01-27 15:15:30,667 log 396 29020 Internal Server Error: /dashboard/
+Traceback (most recent call last):
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\core\handlers\exception.py", line 55, in inner
+    response = get_response(request)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\core\handlers\base.py", line 220, in _get_response
+    response = response.render()
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\response.py", line 114, in render
+    self.content = self.rendered_content
+                   ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\response.py", line 92, in rendered_content
+    return template.render(context, self._request)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\backends\django.py", line 107, in render
+    return self.template.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 172, in render
+    return self._render(context)
+           ~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 164, in _render
+    return self.nodelist.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 1018, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 979, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\loader_tags.py", line 159, in render
+    return compiled_parent._render(context)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 164, in _render
+    return self.nodelist.render(context)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 1018, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 979, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\loader_tags.py", line 65, in render
+    result = block.nodelist.render(context)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 1018, in render
+    return SafeString("".join([node.render_annotated(context) for node in self]))
+                               ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\base.py", line 979, in render_annotated
+    return self.render(context)
+           ~~~~~~~~~~~^^^^^^^^^
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\template\defaulttags.py", line 480, in render
+    url = reverse(view_name, args=args, kwargs=kwargs, current_app=current_app)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\urls\base.py", line 98, in reverse
+    resolved_url = resolver._reverse_with_prefix(view, prefix, *args, **kwargs)
+  File "C:\Users\Mohamed Gamal\AppData\Roaming\Python\Python314\site-packages\django\urls\resolvers.py", line 831, in _reverse_with_prefix
+    raise NoReverseMatch(msg)
+django.urls.exceptions.NoReverseMatch: Reverse for 'employees' not found. 'employees' is not a valid view function or pattern name.
+ERROR 2026-01-27 15:15:30,706 basehttp 396 29020 "GET /dashboard/ HTTP/1.1" 500 213175
+INFO 2026-01-27 15:16:58,925 autoreload 396 15564 E:\My_Project\ElDawliya_Sys\ElDawliya_Sys\apps\hr\urls.py changed, reloading.
+INFO 2026-01-27 15:17:03,239 autoreload 1796 34012 Watching for file changes with StatReloader
+INFO 2026-01-27 15:36:25,193 autoreload 1796 34012 E:\My_Project\ElDawliya_Sys\ElDawliya_Sys\apps\inventory\urls.py changed, reloading.
+INFO 2026-01-27 15:36:29,529 autoreload 30980 6412 Watching for file changes with StatReloader
+INFO 2026-01-27 15:46:22,938 autoreload 43228 19960 Watching for file changes with StatReloader
+INFO 2026-01-27 15:46:54,180 autoreload 43228 19960 E:\My_Project\ElDawliya_Sys\ElDawliya_Sys\apps\inventory\views\dashboard_views.py changed, reloading.
+INFO 2026-01-27 15:46:58,790 autoreload 36600 43240 Watching for file changes with StatReloader
+INFO 2026-01-27 15:47:08,547 autoreload 36600 43240 E:\My_Project\ElDawliya_Sys\ElDawliya_Sys\apps\inventory\views\product_views.py changed, reloading.
+INFO 2026-01-27 15:47:15,279 autoreload 43056 15712 Watching for file changes with StatReloader
+INFO 2026-01-27 15:47:43,158 autoreload 43056 15712 E:\My_Project\ElDawliya_Sys\ElDawliya_Sys\apps\inventory\views\purchase_request_views.py changed, reloading.
+INFO 2026-01-27 15:47:48,992 autoreload 43532 26260 Watching for file changes with StatReloader
+INFO 2026-01-27 15:47:54,598 autoreload 43532 26260 E:\My_Project\ElDawliya_Sys\ElDawliya_Sys\apps\inventory\views\supplier_views.py changed, reloading.
+INFO 2026-01-27 15:47:59,430 autoreload 24592 24196 Watching for file changes with StatReloader
+INFO 2026-01-27 15:51:06,459 autoreload 24592 24196 E:\My_Project\ElDawliya_Sys\ElDawliya_Sys\apps\inventory\views\voucher_views.py changed, reloading.
+INFO 2026-01-27 15:51:10,466 autoreload 35304 42204 Watching for file changes with StatReloader
+INFO 2026-01-27 17:43:23,609 autoreload 46976 32832 Watching for file changes with StatReloader
+INFO 2026-01-27 17:49:10,987 autoreload 46976 32832 E:\My_Project\ElDawliya_Sys\ElDawliya_Sys\apps\projects\tasks\views.py changed, reloading.
+INFO 2026-01-27 17:49:15,321 autoreload 44976 46320 Watching for file changes with StatReloader

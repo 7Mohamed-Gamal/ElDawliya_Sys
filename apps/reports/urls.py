@@ -1,11 +1,19 @@
 from django.urls import path
+from django.views.generic import RedirectView
 from . import views
 
 app_name = 'reports'
 
 urlpatterns = [
     # لوحة التحكم الرئيسية
+    # لوحة التحكم الرئيسية
     path('', views.dashboard, name='dashboard'),
+    
+    # Aliases for dashboard links
+    path('hr/', RedirectView.as_view(pattern_name='reports:dashboard', permanent=False), name='hr'),
+    path('finance/', RedirectView.as_view(pattern_name='reports:dashboard', permanent=False), name='finance'),
+    path('projects/', RedirectView.as_view(pattern_name='reports:dashboard', permanent=False), name='projects'),
+    path('inventory/', RedirectView.as_view(pattern_name='reports:dashboard', permanent=False), name='inventory'),
 
     # فئات التقارير
     path('categories/', views.report_categories, name='categories'),

@@ -9,7 +9,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
 
-from apps.inventory.decorators import apps.inventory_class_permission_required
+from apps.inventory.decorators import inventory_class_permission_required
 from apps.inventory.models_local import Category
 from apps.inventory.forms import CategoryForm
 

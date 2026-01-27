@@ -13,7 +13,7 @@ from django.utils.decorators import method_decorator
 from django.core.exceptions import ValidationError
 from datetime import datetime
 
-from apps.inventory.decorators import apps.inventory_class_permission_required
+from apps.inventory.decorators import inventory_class_permission_required
 from apps.inventory.models_local import (
     Product, Voucher, VoucherItem, Supplier, Customer, Department
 )

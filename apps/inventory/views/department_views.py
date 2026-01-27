@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
 
-from apps.inventory.decorators import apps.inventory_class_permission_required
+from apps.inventory.decorators import inventory_class_permission_required
 from apps.inventory.models_local import Department
 from apps.inventory.forms import DepartmentForm
 

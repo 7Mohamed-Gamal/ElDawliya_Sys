@@ -4,6 +4,7 @@
 {% block title %}لوحة التحكم - نظام الدولية{% endblock %}
 
 {% block page_title %}لوحة التحكم{% endblock %}
+{% block breadcrumb_title %}لوحة التحكم{% endblock %}
 
 {% block page_description %}مرحباً بك في نظام الدولية الشامل{% endblock %}
 
@@ -391,7 +392,7 @@
                                 <p>عرض وإدارة جميع الموظفين في النظام</p>
                             </div>
                             <div class="detail-card-footer">
-                                <a href="{% url 'hr:employees' %}" class="btn btn-primary">
+                                <a href="{% url 'hr:employees:dashboard' %}" class="btn btn-primary">
                                     <i class="fas fa-arrow-left me-2"></i>
                                     عرض الموظفين
                                 </a>
@@ -411,7 +412,7 @@
                                 <p>تتبع حضور الموظفين ومغادراتهم</p>
                             </div>
                             <div class="detail-card-footer">
-                                <a href="{% url 'hr:attendance' %}" class="btn btn-primary">
+                                <a href="{% url 'hr:attendance:dashboard' %}" class="btn btn-primary">
                                     <i class="fas fa-arrow-left me-2"></i>
                                     إدارة الحضور
                                 </a>
@@ -431,7 +432,7 @@
                                 <p>إدارة طلبات الإجازات والموافقات</p>
                             </div>
                             <div class="detail-card-footer">
-                                <a href="{% url 'hr:leaves' %}" class="btn btn-primary">
+                                <a href="{% url 'hr:leaves:dashboard' %}" class="btn btn-primary">
                                     <i class="fas fa-arrow-left me-2"></i>
                                     إدارة الإجازات
                                 </a>
@@ -451,7 +452,7 @@
                                 <p>إدارة مرتبات الموظفين والبدلات</p>
                             </div>
                             <div class="detail-card-footer">
-                                <a href="{% url 'hr:salaries' %}" class="btn btn-primary">
+                                <a href="{% url 'hr:payrolls:dashboard' %}" class="btn btn-primary">
                                     <i class="fas fa-arrow-left me-2"></i>
                                     إدارة المرتبات
                                 </a>
@@ -471,7 +472,7 @@
                                 <p>إدارة الوظائف والمسميات الوظيفية</p>
                             </div>
                             <div class="detail-card-footer">
-                                <a href="{% url 'hr:positions' %}" class="btn btn-primary">
+                                <a href="{% url 'hr:employees:job_list' %}" class="btn btn-primary">
                                     <i class="fas fa-arrow-left me-2"></i>
                                     إدارة الوظائف
                                 </a>
@@ -491,7 +492,7 @@
                                 <p>إدارة برامج التدريب والتطوير</p>
                             </div>
                             <div class="detail-card-footer">
-                                <a href="{% url 'hr:training' %}" class="btn btn-primary">
+                                <a href="{% url 'hr:training:dashboard' %}" class="btn btn-primary">
                                     <i class="fas fa-arrow-left me-2"></i>
                                     إدارة التدريب
                                 </a>
@@ -941,7 +942,7 @@
                                 <p>إدارة حسابات المستخدمين والصلاحيات</p>
                             </div>
                             <div class="detail-card-footer">
-                                <a href="{% url 'administration:users' %}" class="btn btn-primary">
+                                <a href="{% url 'administrator:user_list' %}" class="btn btn-primary">
                                     <i class="fas fa-arrow-left me-2"></i>
                                     إدارة المستخدمين
                                 </a>
@@ -961,7 +962,7 @@
                                 <p>إعدادات النظام والتكوينات العامة</p>
                             </div>
                             <div class="detail-card-footer">
-                                <a href="{% url 'administration:settings' %}" class="btn btn-primary">
+                                <a href="{% url 'administrator:settings' %}" class="btn btn-primary">
                                     <i class="fas fa-arrow-left me-2"></i>
                                     إعدادات النظام
                                 </a>
@@ -981,7 +982,7 @@
                                 <p>النسخ الاحتياطي والاستعادة</p>
                             </div>
                             <div class="detail-card-footer">
-                                <a href="{% url 'administration:backup' %}" class="btn btn-primary">
+                                <a href="{% url 'administrator:create_database_backup' %}" class="btn btn-primary">
                                     <i class="fas fa-arrow-left me-2"></i>
                                     إدارة البيانات
                                 </a>

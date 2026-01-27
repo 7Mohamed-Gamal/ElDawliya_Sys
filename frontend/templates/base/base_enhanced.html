@@ -122,27 +122,27 @@
                         </a>
                     </div>
                     <div class="nav-item-enhanced">
-                        <a href="{% url 'hr:employees' %}" class="nav-link-enhanced">
+                        <a href="{% url 'hr:employees:dashboard' %}" class="nav-link-enhanced">
                             <i class="nav-icon-enhanced fas fa-users"></i>
                             <span class="nav-text">الموظفين</span>
                             <span class="nav-badge-enhanced">{{ total_employees|default:0 }}</span>
                         </a>
                     </div>
                     <div class="nav-item-enhanced">
-                        <a href="{% url 'hr:attendance' %}" class="nav-link-enhanced">
+                        <a href="{% url 'hr:attendance:dashboard' %}" class="nav-link-enhanced">
                             <i class="nav-icon-enhanced fas fa-clock"></i>
                             <span class="nav-text">الحضور والانصراف</span>
                         </a>
                     </div>
                     <div class="nav-item-enhanced">
-                        <a href="{% url 'hr:leaves' %}" class="nav-link-enhanced">
+                        <a href="{% url 'hr:leaves:dashboard' %}" class="nav-link-enhanced">
                             <i class="nav-icon-enhanced fas fa-calendar-times"></i>
                             <span class="nav-text">الإجازات</span>
                             <span class="nav-badge-enhanced">{{ pending_leaves|default:0 }}</span>
                         </a>
                     </div>
                     <div class="nav-item-enhanced">
-                        <a href="{% url 'hr:salaries' %}" class="nav-link-enhanced">
+                        <a href="{% url 'hr:payrolls:dashboard' %}" class="nav-link-enhanced">
                             <i class="nav-icon-enhanced fas fa-money-bill-wave"></i>
                             <span class="nav-text">المرتبات</span>
                         </a>
@@ -349,7 +349,7 @@
                                 <i class="fas fa-chevron-left"></i>
                             </span>
                             <div class="breadcrumb-item-enhanced active">
-                                {% block page_title %}الصفحة الحالية{% endblock %}
+                                {% block breadcrumb_title %}الصفحة الحالية{% endblock %}
                             </div>
                             {% endblock %}
                         </nav>

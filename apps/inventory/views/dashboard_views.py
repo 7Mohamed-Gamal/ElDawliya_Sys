@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 
-from apps.inventory.decorators import apps.inventory_module_permission_required
+from apps.inventory.decorators import inventory_module_permission_required
 from apps.inventory.models_local import Product, Voucher
 
 @login_required

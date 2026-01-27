@@ -36,7 +36,11 @@ urlpatterns = [
     path('hr/', include('apps.hr.urls')),  # مسارات نظام الموارد البشرية
     path('inventory/', include('apps.inventory.urls')), # مسارات تطبيق مخزن قطع الغيار
     path('purchase/', include('apps.procurement.purchase_orders.urls')), # مسارات تطبيق طلبات الشراء
+    path('procurement/', include('apps.procurement.urls')), # مسارات المشتريات العامة
+    path('finance/', include('apps.finance.urls')), # مسارات المالية
     path('banks/', include('apps.finance.banks.urls')),  # مسارات البنوك
+    path('companies/', include('companies.urls')),  # مسارات الشركات
+    path('projects/', include('apps.projects.urls')),  # مسارات المشاريع
     path('meetings/', include('apps.projects.meetings.urls')),  # مسارات تطبيق الاجتماعات
 
     # Legacy/Optional Paths (keep commented if not sure)

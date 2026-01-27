@@ -5,7 +5,7 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 
-from apps.inventory.decorators import apps.inventory_module_permission_required
+from apps.inventory.decorators import inventory_module_permission_required
 from apps.inventory.models_local import LocalSystemSettings
 from apps.inventory.forms import LocalSystemSettingsForm
 

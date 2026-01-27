@@ -21,7 +21,7 @@ from .forms import (
     BulkTaskUpdateForm, TaskStatusUpdateForm
 )
 from apps.projects.meetings.models import Meeting
-from apps.projects.tasks.decorators import apps.projects.tasks_module_permission_required, can_access_task
+from apps.projects.tasks.decorators import tasks_module_permission_required, can_access_task
 
 # Set up logging
 logger = logging.getLogger(__name__)

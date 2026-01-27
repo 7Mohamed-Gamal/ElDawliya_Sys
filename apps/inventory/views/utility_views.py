@@ -9,7 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.contrib import messages
 from django.utils import timezone
 
-from apps.inventory.decorators import apps.inventory_module_permission_required
+from apps.inventory.decorators import inventory_module_permission_required
 from apps.inventory.models_local import Product
 
 @login_required

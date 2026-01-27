@@ -10,7 +10,7 @@ from django.shortcuts import redirect
 from django.db.models import ProtectedError
 from django.core.exceptions import ValidationError
 
-from apps.inventory.decorators import apps.inventory_class_permission_required
+from apps.inventory.decorators import inventory_class_permission_required
 from apps.inventory.models_local import Customer
 from apps.inventory.forms import CustomerForm
 
