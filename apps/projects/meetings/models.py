@@ -48,7 +48,7 @@ class Meeting(models.Model):
     date = models.DateTimeField(verbose_name="تاريخ ووقت الاجتماع")
     topic = models.TextField(verbose_name="موضوع الاجتماع")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="حالة الاجتماع")
-    created_by = models.ForeignKey(Users_Login_New, on_delete=models.CASCADE, related_name='meetings', verbose_name="منشئ الاجتماع")
+    created_by = models.ForeignKey(Users_Login_New, on_delete=models.CASCADE, related_name='project_meetings', verbose_name="منشئ الاجتماع")
 
     class Meta:
         """Meta class"""

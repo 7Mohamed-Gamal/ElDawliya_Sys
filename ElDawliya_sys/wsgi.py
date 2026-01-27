@@ -12,7 +12,7 @@ import os
 # Import standard Django WSGI application for testing
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ElDawliya_sys.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ElDawliya_sys.settings.production')
 
 # Use standard Django WSGI application for testing
 application = get_wsgi_application()

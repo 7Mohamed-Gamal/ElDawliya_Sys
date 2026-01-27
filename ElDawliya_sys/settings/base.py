@@ -88,6 +88,7 @@ LOCAL_APPS = [
     'audit.apps.AuditConfig',
     'companies.apps.CompaniesConfig',
     'org.apps.OrgConfig',
+    'frontend',  # Enable frontend app
     
     # HR System
     'apps.hr.apps.HrConfig',
@@ -102,12 +103,9 @@ LOCAL_APPS = [
     'apps.inventory.apps.InventoryConfig',
     'apps.procurement.purchase_orders.apps.PurchaseOrdersConfig',
     
-    # Projects (TEMPORARILY DISABLED - conflicts with core models)
-    # 'apps.projects.meetings.apps.MeetingsConfig',  # Conflicts with core.Meeting
+    # Projects and Finance
+    'apps.projects.meetings.apps.MeetingsConfig',
     'apps.finance.banks.apps.BanksConfig',
-    
-    # Note: loans, cars, etc. are in _legacy_backup
-    # They need to be moved to apps/ properly via refactor_codebase.py
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

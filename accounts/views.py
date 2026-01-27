@@ -47,7 +47,7 @@ def login_view(request):
                     icon='fas fa-sign-in-alt'
                 )
 
-            return redirect('accounts:home')
+            return redirect('frontend:dashboard')
         else:
             messages.error(request, 'اسم المستخدم أو كلمة المرور غير صحيحة.')
     else:
