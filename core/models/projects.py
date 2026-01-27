@@ -247,7 +247,7 @@ class Project(AuditableModel, SoftDeleteModel):
     def calculate_progress(self):
         """Calculate project progress based on tasks and phases"""
         # Calculate based on tasks completion
-        tasks = self.tasks.all()
+        tasks = self.core_tasks.all()
         if tasks.exists():
             completed_tasks = tasks.filter(status='completed').count()
             total_tasks = tasks.count()
@@ -584,7 +584,7 @@ class Task(AuditableModel, SoftDeleteModel):
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name='tasks',
+        related_name='core_tasks',
         verbose_name=_('المشروع')
     )
     phase = models.ForeignKey(
@@ -592,7 +592,7 @@ class Task(AuditableModel, SoftDeleteModel):
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name='tasks',
+        related_name='core_tasks',
         verbose_name=_('المرحلة')
     )
     milestone = models.ForeignKey(
@@ -600,7 +600,7 @@ class Task(AuditableModel, SoftDeleteModel):
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name='tasks',
+        related_name='core_tasks',
         verbose_name=_('المعلم')
     )
     parent_task = models.ForeignKey(
@@ -608,14 +608,14 @@ class Task(AuditableModel, SoftDeleteModel):
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name='subtasks',
+        related_name='core_subtasks',
         verbose_name=_('المهمة الأب')
     )
     assigned_to = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
-        related_name='assigned_tasks',
+        related_name='core_assigned_tasks',
         verbose_name=_('مكلف إلى')
     )
     status = models.CharField(
@@ -677,7 +677,7 @@ class Task(AuditableModel, SoftDeleteModel):
         verbose_name = _('مهمة')
         verbose_name_plural = _('المهام')
         ordering = ['-created_at']
-        db_table = 'tasks'
+        db_table = 'core_tasks'
         indexes = [
             models.Index(fields=['status']),
             models.Index(fields=['priority']),

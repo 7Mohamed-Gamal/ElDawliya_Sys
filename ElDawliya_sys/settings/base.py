@@ -104,6 +104,7 @@ LOCAL_APPS = [
     'apps.procurement.purchase_orders.apps.PurchaseOrdersConfig',
     
     # Projects and Finance
+    'apps.projects.tasks.apps.TasksConfig',
     'apps.projects.meetings.apps.MeetingsConfig',
     'apps.finance.banks.apps.BanksConfig',
 ]

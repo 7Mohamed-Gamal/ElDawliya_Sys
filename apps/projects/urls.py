@@ -13,10 +13,12 @@ urlpatterns = [
     path('meetings/', include('apps.projects.meetings.urls')),
     
     # Aliases/Redirects to support dashboard links
-    # Assuming 'projects:list' should go to task list or we need a main project list view if it exists. 
-    # Since we don't have a top-level project list view, we'll route to tasks list for now to prevent crash, 
-    # or better, route to tasks list as the "main" project view.
+    # Redirect 'tasks' to tasks dashboard to support {% url 'projects:tasks' %}
+    path('tasks-redirect/', RedirectView.as_view(pattern_name='projects:tasks:dashboard', permanent=False), name='tasks'),
+    
+    # Redirect 'meetings' to meetings list to support {% url 'projects:meetings' %}
+    path('meetings-redirect/', RedirectView.as_view(pattern_name='projects:meetings:list', permanent=False), name='meetings'),
+    
     # Redirect 'list' to tasks list to support dashboard link
-    path('list/', include('apps.projects.tasks.urls')), 
-    path('overview/', RedirectView.as_view(pattern_name='projects:tasks:list', permanent=False), name='list'),
+    path('list/', RedirectView.as_view(pattern_name='projects:tasks:list', permanent=False), name='list'),
 ]

@@ -216,6 +216,7 @@
                             <span class="nav-text">لوحة التحكم</span>
                         </a>
                     </div>
+                    {% comment "TODO: Add reports app" %}
                     <div class="nav-item-enhanced">
                         <a href="{% url 'reports:list' %}" class="nav-link-enhanced">
                             <i class="nav-icon-enhanced fas fa-chart-bar"></i>
@@ -228,25 +229,26 @@
                             <span class="nav-text">التحليلات</span>
                         </a>
                     </div>
+                    {% endcomment %}
                 </div>
 
                 <!-- Administration Section -->
                 <div class="nav-section-enhanced">
                     <div class="nav-section-title-enhanced">الإدارة والإعدادات</div>
                     <div class="nav-item-enhanced">
-                        <a href="#" class="nav-link-enhanced administration-dashboard" data-section="administration">
+                        <a href="#" class="nav-link-enhanced administrator-dashboard" data-section="administrator">
                             <i class="nav-icon-enhanced fas fa-cogs"></i>
                             <span class="nav-text">لوحة التحكم</span>
                         </a>
                     </div>
                     <div class="nav-item-enhanced">
-                        <a href="{% url 'administration:settings' %}" class="nav-link-enhanced">
+                        <a href="{% url 'administrator:settings' %}" class="nav-link-enhanced">
                             <i class="nav-icon-enhanced fas fa-cogs"></i>
                             <span class="nav-text">إعدادات النظام</span>
                         </a>
                     </div>
                     <div class="nav-item-enhanced">
-                        <a href="{% url 'administration:users' %}" class="nav-link-enhanced">
+                        <a href="{% url 'administrator:user_list' %}" class="nav-link-enhanced">
                             <i class="nav-icon-enhanced fas fa-users-cog"></i>
                             <span class="nav-text">إدارة المستخدمين</span>
                         </a>

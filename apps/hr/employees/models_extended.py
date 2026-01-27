@@ -322,7 +322,7 @@ class ExtendedEmployeeDocument(models.Model):
     """وثائق الموظفين"""
     document_id = models.AutoField(primary_key=True, db_column='DocumentID')
     emp = models.ForeignKey(Employee, on_delete=models.CASCADE, db_column='EmpID',
-                           related_name='documents', verbose_name='الموظف')
+                           related_name='extended_documents', verbose_name='الموظف')
     category = models.ForeignKey(EmployeeDocumentCategory, on_delete=models.PROTECT,
                                 verbose_name='فئة الوثيقة')
     document_name = models.CharField(max_length=200, verbose_name='اسم الوثيقة')
