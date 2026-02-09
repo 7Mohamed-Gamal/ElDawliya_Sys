@@ -21,4 +21,7 @@ urlpatterns = [
     
     # Redirect 'list' to tasks list to support dashboard link
     path('list/', RedirectView.as_view(pattern_name='projects:tasks:list', permanent=False), name='list'),
+
+    # Redirect 'plans' to tasks list (no separate plans functionality yet)
+    path('plans/', RedirectView.as_view(pattern_name='projects:tasks:list', permanent=False), name='plans'),
 ]

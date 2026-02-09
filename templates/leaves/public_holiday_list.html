@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
 <h1>العطلات الرسمية</h1>
-<p><a class="btn btn-primary" href="{% url 'leaves:holiday_create' %}">+ إضافة</a></p>
+<p><a class="btn btn-primary" href="{% url 'hr:leaves:holiday_create' %}">+ إضافة</a></p>
 <table class="table table-striped">
   <thead>
     <tr>
@@ -14,8 +14,8 @@
       <td>{{ i.holiday_date }}</td>
       <td>{{ i.description }}</td>
       <td>
-        <a class="btn btn-sm btn-secondary" href="{% url 'leaves:holiday_edit' i.pk %}">تعديل</a>
-        <a class="btn btn-sm btn-danger" href="{% url 'leaves:holiday_delete' i.pk %}">حذف</a>
+        <a class="btn btn-sm btn-secondary" href="{% url 'hr:leaves:holiday_edit' i.pk %}">تعديل</a>
+        <a class="btn btn-sm btn-danger" href="{% url 'hr:leaves:holiday_delete' i.pk %}">حذف</a>
       </td>
     </tr>
     {% empty %}

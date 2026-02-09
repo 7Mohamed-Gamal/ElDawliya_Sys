@@ -107,6 +107,9 @@ LOCAL_APPS = [
     'apps.projects.tasks.apps.TasksConfig',
     'apps.projects.meetings.apps.MeetingsConfig',
     'apps.finance.banks.apps.BanksConfig',
+
+    # Reports
+    'apps.reports.apps.ReportsConfig',
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

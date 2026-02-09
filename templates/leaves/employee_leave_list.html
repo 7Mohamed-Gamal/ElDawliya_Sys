@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
 <h1>إجازات الموظفين</h1>
-<p><a class="btn btn-primary" href="{% url 'leaves:employee_leave_create' %}">+ إضافة</a></p>
+<p><a class="btn btn-primary" href="{% url 'hr:leaves:employee_leave_create' %}">+ إضافة</a></p>
 <table class="table table-striped">
   <thead>
     <tr>
@@ -17,8 +17,8 @@
       <td>{{ i.end_date }}</td>
       <td>{{ i.status }}</td>
       <td>
-        <a class="btn btn-sm btn-secondary" href="{% url 'leaves:employee_leave_edit' i.pk %}">تعديل</a>
-        <a class="btn btn-sm btn-danger" href="{% url 'leaves:employee_leave_delete' i.pk %}">حذف</a>
+        <a class="btn btn-sm btn-secondary" href="{% url 'hr:leaves:employee_leave_edit' i.pk %}">تعديل</a>
+        <a class="btn btn-sm btn-danger" href="{% url 'hr:leaves:employee_leave_delete' i.pk %}">حذف</a>
       </td>
     </tr>
     {% empty %}
