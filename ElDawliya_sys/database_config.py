@@ -14,10 +14,10 @@ def get_database_config():
     default_db_config = {
         'ENGINE': 'mssql',
         'NAME': os.environ.get('DB_NAME', 'ElDawliya_Sys'),
-        'HOST': os.environ.get('DB_HOST', 'DESKTOP-H36115'),
+        'HOST': os.environ.get('DB_HOST', ''),
         'PORT': os.environ.get('DB_PORT', '1433'),
-        'USER': os.environ.get('DB_USER', 'admin'),
-        'PASSWORD': os.environ.get('DB_PASSWORD', 'hgslduhgfwdv'),
+        'USER': os.environ.get('DB_USER', ''),
+        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
         'OPTIONS': {
             'driver': 'ODBC Driver 17 for SQL Server',
             'Trusted_Connection': 'no',
@@ -47,10 +47,10 @@ def get_database_config():
     backup_db_config = {
         'ENGINE': 'mssql',
         'NAME': os.environ.get('BACKUP_DB_NAME', 'ElDawliya_Sys'),
-        'HOST': os.environ.get('BACKUP_DB_HOST', 'ELDAWLIYA-SYSTE'),
+        'HOST': os.environ.get('BACKUP_DB_HOST', ''),
         'PORT': os.environ.get('BACKUP_DB_PORT', '1433'),
-        'USER': os.environ.get('BACKUP_DB_USER', 'admin'),
-        'PASSWORD': os.environ.get('BACKUP_DB_PASSWORD', 'hgslduhgfwdv'),
+        'USER': os.environ.get('BACKUP_DB_USER', ''),
+        'PASSWORD': os.environ.get('BACKUP_DB_PASSWORD', '')
         'OPTIONS': {
             'driver': 'ODBC Driver 17 for SQL Server',
             'Trusted_Connection': 'yes',

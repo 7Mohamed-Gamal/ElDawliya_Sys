@@ -1,1 +1,0 @@
-# Settings management submodule

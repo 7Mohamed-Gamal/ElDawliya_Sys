@@ -263,242 +263,76 @@ def db_setup_application(environ, start_response, error_message=None, success_me
     # Handle form submission
     if path == '/db-setup-handler' and environ['REQUEST_METHOD'] == 'POST':
         try:
-            # Get form data
-            content_length = int(environ.get('CONTENT_LENGTH', 0))
-            post_data = environ['wsgi.input'].read(content_length).decode('utf-8')
-            form_data = parse_qs(post_data)
+            request_body_size = int(environ.get('CONTENT_LENGTH', 0))
+            request_body = environ['wsgi.input'].read(request_body_size).decode('utf-8')
+            post_data = parse_qs(request_body)
 
-            # Extract form values
-            host = form_data.get('host', [''])[0]
-            database = form_data.get('database', [''])[0]
-            username = form_data.get('username', [''])[0]
-            password = form_data.get('password', [''])[0]
-            port = form_data.get('port', ['1433'])[0]
-            use_windows_auth = 'use_windows_auth' in form_data
-            create_db = 'create_db' in form_data
-            test_only = 'test_only' in form_data
+            host = post_data.get('host', [''])[0]
+            database = post_data.get('database', [''])[0]
+            username = post_data.get('username', [''])[0]
+            password = post_data.get('password', [''])[0]
+            port = post_data.get('port', ['1433'])[0]
+            use_windows_auth = 'use_windows_auth' in post_data
+            create_db = 'create_db' in post_data
+            test_only = 'test_only' in post_data
 
-            # Update form values
-            form_values = {
+            # Update form values for display
+            form_values.update({
                 'host': host,
                 'database': database,
                 'username': username,
-                'password': password,
+                'password': password, # Keep password for re-display
                 'port': port,
                 'windows_auth_checked': 'checked' if use_windows_auth else '',
                 'sql_auth_style': 'display: none;' if use_windows_auth else 'display: block;'
-            }
+            })
 
-            # Test database connection
+            # Construct connection string
+            conn_str = (
+                f"DRIVER={{ODBC Driver 17 for SQL Server}};
+                SERVER={host},{port};
+                DATABASE={database};"
+            )
+            if use_windows_auth:
+                conn_str += "Trusted_Connection=yes;"
+            else:
+                conn_str += f"UID={username};PWD={password};"
+
+            # Attempt to connect
+            conn = None
             try:
-                # Try different ODBC drivers in order of preference
-                drivers = [
-                    'ODBC Driver 17 for SQL Server',
-                    'ODBC Driver 13 for SQL Server',
-                    'SQL Server Native Client 11.0',
-                    'SQL Server',
-                ]
-
-                connection_error = None
-                conn = None
-                driver_used = None
-
-                for driver in drivers:
-                    try:
-                        # Build connection string based on authentication type
-                        if use_windows_auth:
-                            conn_str = f'DRIVER={{{driver}}};SERVER={host};Trusted_Connection=yes;'
-                        else:
-                            conn_str = f'DRIVER={{{driver}}};SERVER={host};UID={username};PWD={password}'
-
-                        # Test connection with a short timeout
-                        conn = pyodbc.connect(conn_str, timeout=5)
-                        driver_used = driver
-                        break
-                    except pyodbc.Error as e:
-                        connection_error = str(e)
-                        continue
-
-                if conn is None:
-                    error_message = f"""
-                    <div class="error-banner">
-                        <h5><i class="fas fa-exclamation-triangle me-2"></i>فشل الاتصال بقاعدة البيانات</h5>
-                        <p>تعذر الاتصال باستخدام أي برنامج تشغيل متاح.</p>
-                        <p>آخر خطأ: {connection_error}</p>
-                    </div>
-                    """
-                    # Return the setup page with error message
-                    html = DB_SETUP_HTML.format(
-                        error_message=error_message,
-                        success_message='',
-                        **form_values
-                    )
-                    start_response('200 OK', [('Content-Type', 'text/html; charset=utf-8')])
-                    return [html.encode('utf-8')]
-
-                # Connection successful, check database
+                conn = pyodbc.connect(conn_str, autocommit=True)
                 cursor = conn.cursor()
 
-                try:
-                    # Get all databases (excluding system databases)
-                    cursor.execute("""
-                        SELECT name
-                        FROM sys.databases
-                        WHERE database_id > 4
-                        AND state_desc = 'ONLINE'
-                        ORDER BY name
-                    """)
+                if create_db:
+                    # Check if DB exists, if not, create it
+                    cursor.execute(f"SELECT DB_ID('{database}')")
+                    if cursor.fetchone()[0] is None:
+                        cursor.execute(f"CREATE DATABASE {database}")
+                        success_message = f"قاعدة البيانات '{database}' تم إنشاؤها بنجاح.<br>"
 
-                    databases = [row[0] for row in cursor.fetchall()]
-                    db_exists = database in databases
+                if not test_only:
+                    # Save settings to environment variables or a config file
+                    # For simplicity, we'll just set them in the current process
+                    os.environ['DB_HOST'] = host
+                    os.environ['DB_PORT'] = port
+                    os.environ['DB_NAME'] = database
+                    if use_windows_auth:
+                        os.environ['DB_TRUSTED_CONNECTION'] = 'yes'
+                        os.environ.pop('DB_USER', None)
+                        os.environ.pop('DB_PASSWORD', None)
+                    else:
+                        os.environ['DB_USER'] = username
+                        os.environ['DB_PASSWORD'] = password
+                        os.environ.pop('DB_TRUSTED_CONNECTION', None)
 
-                    if not db_exists:
-                        if create_db:
-                            # Create database
-                            try:
-                                cursor.execute(f"CREATE DATABASE [{database}]")
-                                conn.commit()
-                                success_message = f"""
-                                <div class="success-banner">
-                                    <h5><i class="fas fa-check-circle me-2"></i>تم إنشاء قاعدة البيانات بنجاح</h5>
-                                    <p>تم إنشاء قاعدة البيانات {database} بنجاح.</p>
-                                </div>
-                                """
-                                db_exists = True
-                            except pyodbc.Error as e:
-                                error_message = f"""
-                                <div class="error-banner">
-                                    <h5><i class="fas fa-exclamation-triangle me-2"></i>فشل إنشاء قاعدة البيانات</h5>
-                                    <p>تعذر إنشاء قاعدة البيانات {database}.</p>
-                                    <p>الخطأ: {str(e)}</p>
-                                </div>
-                                """
-                                # Return the setup page with error message
-                                html = DB_SETUP_HTML.format(
-                                    error_message=error_message,
-                                    success_message='',
-                                    **form_values
-                                )
-                                start_response('200 OK', [('Content-Type', 'text/html; charset=utf-8')])
-                                return [html.encode('utf-8')]
-                        else:
-                            error_message = f"""
-                            <div class="error-banner">
-                                <h5><i class="fas fa-exclamation-triangle me-2"></i>قاعدة البيانات غير موجودة</h5>
-                                <p>قاعدة البيانات {database} غير موجودة.</p>
-                                <p>حدد خيار "إنشاء قاعدة البيانات إذا لم تكن موجودة" لإنشائها تلقائيًا.</p>
-                            </div>
-                            """
-                            # Return the setup page with error message
-                            html = DB_SETUP_HTML.format(
-                                error_message=error_message,
-                                success_message='',
-                                **form_values
-                            )
-                            start_response('200 OK', [('Content-Type', 'text/html; charset=utf-8')])
-                            return [html.encode('utf-8')]
+                    success_message = (success_message or "") + "تم حفظ إعدادات قاعدة البيانات بنجاح. يمكنك الآن إعادة تشغيل التطبيق."
 
-                except pyodbc.Error as e:
-                    # If we can't query databases, try a simpler query
-                    try:
-                        cursor.execute("SELECT DB_NAME()")
-                        current_db = cursor.fetchone()[0]
-                    except Exception as e2:
-                        error_message = f"""
-                        <div class="error-banner">
-                            <h5><i class="fas fa-exclamation-triangle me-2"></i>خطأ في الاستعلام عن قواعد البيانات</h5>
-                            <p>تعذر الاستعلام عن قواعد البيانات المتاحة.</p>
-                            <p>الخطأ: {str(e2)}</p>
-                        </div>
-                        """
-                        # Return the setup page with error message
-                        html = DB_SETUP_HTML.format(
-                            error_message=error_message,
-                            success_message='',
-                            **form_values
-                        )
-                        start_response('200 OK', [('Content-Type', 'text/html; charset=utf-8')])
-                        return [html.encode('utf-8')]
-
-                cursor.close()
-                conn.close()
-
-                # If this is just a test, return success message
-                if test_only:
-                    success_message = f"""
-                    <div class="success-banner">
-                        <h5><i class="fas fa-check-circle me-2"></i>تم الاتصال بنجاح</h5>
-                        <p>تم الاتصال بالخادم {host} بنجاح.</p>
-                        <p>قاعدة البيانات {database} {'موجودة' if db_exists else 'غير موجودة'}.</p>
-                    </div>
-                    """
-                    # Return the setup page with success message
-                    html = DB_SETUP_HTML.format(
-                        error_message='',
-                        success_message=success_message,
-                        **form_values
-                    )
-                    start_response('200 OK', [('Content-Type', 'text/html; charset=utf-8')])
-                    return [html.encode('utf-8')]
-
-                # Update settings.py file
-                settings_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'ElDawliya_sys/settings.py')
-                with open(settings_path, 'r', encoding='utf-8') as f:
-                    settings_content = f.read()
-
-                # Prepare the database configuration
-                if use_windows_auth:
-                    db_config = f"""'default': {{
-        'ENGINE': 'mssql',
-        'NAME': '{database}',
-        'HOST': '{host}',
-        'PORT': '{port}',
-        'OPTIONS': {{
-            'driver': '{driver_used}',
-            'Trusted_Connection': 'yes',
-        }},
-    }}"""
                 else:
-                    db_config = f"""'default': {{
-        'ENGINE': 'mssql',
-        'NAME': '{database}',
-        'HOST': '{host}',
-        'PORT': '{port}',
-        'USER': '{username}',
-        'PASSWORD': '{password}',
-        'OPTIONS': {{
-            'driver': '{driver_used}',
-            'Trusted_Connection': 'no',
-        }},
-    }}"""
+                    success_message = "تم اختبار الاتصال بنجاح!"
 
-                # Update the default database configuration
-                if "'default':" in settings_content:
-                    settings_content = re.sub(
-                        r"'default': \{[^\}]*\},",
-                        f"{db_config},",
-                        settings_content
-                    )
-                else:
-                    # If there's no default configuration, add it to DATABASES
-                    settings_content = re.sub(
-                        r"DATABASES = \{",
-                        f"DATABASES = {{\n    {db_config},",
-                        settings_content
-                    )
-
-                # Write back to settings file
-                with open(settings_path, 'w', encoding='utf-8') as f:
-                    f.write(settings_content)
-
-                # Redirect to home page
-                start_response('302 Found', [('Location', '/')])
-                return [b'Redirecting...']
-
-            except pyodbc.Error as e:
-                error_msg = str(e)
-
-                # Provide more helpful error messages
+            except pyodbc.Error as db_err:
+                error_msg = str(db_err)
                 if "IM002" in error_msg:
                     error_msg = "برنامج التشغيل غير موجود. يرجى تثبيت برامج تشغيل SQL Server ODBC."
                 elif "28000" in error_msg and "Login failed" in error_msg:
@@ -544,7 +378,9 @@ class DatabaseErrorMiddleware:
     and shows the database setup page.
     """
     def __init__(self, application):
-        """__init__ function"""
+        """
+        __init__ function
+        """
         self.application = application
 
     def __call__(self, environ, start_response):
@@ -592,7 +428,7 @@ def get_wsgi_application():
     Return the Django WSGI application wrapped with the database error handler.
     """
     # Set the Django settings module if not already set
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ElDawliya_sys.settings')
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ElDawliya_sys.settings.development')
 
     try:
         # Try to import Django WSGI application
@@ -606,7 +442,9 @@ def get_wsgi_application():
         # If Django can't be loaded due to database error, return the simple application
         error_message = str(e)
         def simple_app(environ, start_response):
-            """simple_app function"""
+            """
+simple_app function
+"""
             return db_setup_application(environ, start_response, error_message)
 
         return simple_app

@@ -83,7 +83,7 @@ class CustomUserCreationForm(UserCreationForm):
         # تعيين صلاحيات المستخدم بناءً على الدور
         if self.cleaned_data.get('Role') == 'admin':
             user.is_staff = True
-            user.is_superuser = True
+
 
         if commit:
             user.save()

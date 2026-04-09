@@ -119,7 +119,6 @@ TEMPLATES[0]['OPTIONS']['debug'] = True
 LOGGING['handlers']['console']['level'] = 'DEBUG'
 LOGGING['loggers']['hr_system']['level'] = 'DEBUG'
 
-print("🚀 Development mode activated")
-print(f"📊 Debug Toolbar: {'Enabled' if 'debug_toolbar' in INSTALLED_APPS else 'Disabled'}")
-print(f"🗄️ Database: {DATABASES['default']['ENGINE']}")
-print(f"📧 Email Backend: {EMAIL_BACKEND}")
+
+
+

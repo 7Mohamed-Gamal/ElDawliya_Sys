@@ -127,7 +127,7 @@ MEDIA_ROOT = BASE_DIR / 'test_media'
 # Test static root
 STATIC_ROOT = BASE_DIR / 'test_staticfiles'
 
-print("🧪 Testing mode activated")
-print("🗄️ Using in-memory SQLite database")
-print("📧 Using locmem email backend")
-print("⚡ Celery tasks running synchronously")
+
+
+
+

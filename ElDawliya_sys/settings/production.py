@@ -292,8 +292,8 @@ REST_FRAMEWORK['DEFAULT_THROTTLE_RATES'] = {
     'sensitive': '10/hour',
 }
 
-print("🚀 Production mode activated")
-print("🔒 Security enhancements enabled")
-print("📊 Performance optimizations applied")
-print("🗄️ Redis caching enabled")
-print("📧 SMTP email configured")
+
+
+
+
+

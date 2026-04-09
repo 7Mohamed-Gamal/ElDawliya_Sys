@@ -26,9 +26,6 @@ User = get_user_model()
 @csrf_protect
 def login_view(request):
     """login_view function"""
-    # Add debugging information
-    print("Starting login_view function")
-
     if request.method == 'POST':
         form = CustomUserLoginForm(data=request.POST)
         if form.is_valid():
@@ -53,10 +50,6 @@ def login_view(request):
     else:
         form = CustomUserLoginForm()
 
-    # Add more debugging information
-    print("Rendering login template")
-
-    # Simplify the context to rule out any issues
     return render(request, 'accounts/login.html', {'form': form})
 
 def logout_view(request):
@@ -144,11 +137,10 @@ def home_view(request):
             # Make sure url_name doesn't include '-cards' suffix
             if hasattr(dept, 'url_name'):
                 if dept.url_name == 'hr':
-                    print(f"Found HR department with url_name: {dept.url_name}")
+                    pass
             else:
                 # If url_name doesn't exist, set a default based on department name
                 dept.url_name = dept.name.lower().replace(' ', '-')
-                print(f"Set url_name for {dept.name}: {dept.url_name}")
 
         # Filter departments based on user permissions and get their modules
         for dept in departments:
@@ -206,23 +198,14 @@ def home_view(request):
             # Store modules for this department
             if dept.url_name:
                 department_modules[dept.url_name] = dept_modules
-                print(f"DEBUG: Stored {len(dept_modules)} modules for department '{dept.name}' with url_name '{dept.url_name}'")
             else:
                 dept_url_key = dept.name.lower().replace(' ', '-')
                 department_modules[dept_url_key] = dept_modules
-                print(f"DEBUG: Stored {len(dept_modules)} modules for department '{dept.name}' with generated key '{dept_url_key}'")
 
     except Exception as e:
         # If administrator app is not installed or any error occurs
-        print(f"Error loading departments and modules: {str(e)}")
         import traceback
         traceback.print_exc()
-
-    print(f"DEBUG: Final department_modules keys: {list(department_modules.keys())}")
-    for key, modules in department_modules.items():
-        print(f"DEBUG: Department '{key}' has {len(modules)} modules")
-        for module in modules:
-            print(f"  - Module: {module.name}, URL: {module.url}")
 
     context = {
         'meetings_count': meetings_count,
@@ -276,315 +259,151 @@ def edit_permissions_view(request, user_id):
     user = get_object_or_404(User, id=user_id)
 
     if request.method == 'POST':
-        # تحديث بيانات المستخدم
+        # تحديث دور المستخدم
+        user.Role = request.POST.get('role', user.Role)
+
+        # تحديث حالة is_staff
+        user.is_staff = 'is_staff' in request.POST
+
+        # تحديث المجموعات
+        selected_groups = request.POST.getlist('groups')
+        user.groups.set(selected_groups)
+
+        user.save()
+        messages.success(request, 'تم تحديث صلاحيات المستخدم بنجاح!')
+        return redirect('accounts:dashboard')
+
+    # الحصول على جميع المجموعات لعرضها في النموذج
+    from django.contrib.auth.models import Group
+    all_groups = Group.objects.all()
+
+    context = {
+        'selected_user': user,
+        'all_groups': all_groups,
+        'user_groups': user.groups.all()
+    }
+
+    return render(request, 'administrator/edit_permissions.html', context)
+
+@login_required
+def user_profile_view(request):
+    """عرض وتحديث ملف المستخدم"""
+    user = request.user
+
+    if request.method == 'POST':
+        # تحديث معلومات المستخدم
         user.first_name = request.POST.get('first_name', user.first_name)
         user.last_name = request.POST.get('last_name', user.last_name)
         user.email = request.POST.get('email', user.email)
-        user.Role = request.POST.get('Role', user.Role)
-        user.is_active = request.POST.get('is_active') == 'on'
-        user.is_staff = request.POST.get('is_staff') == 'on'
-        user.is_superuser = request.POST.get('is_superuser') == 'on'
 
-        # تحديث المجموعات
-        if 'groups' in request.POST:
-            groups = request.POST.getlist('groups')
-            user.groups.set(groups)
+        # تحديث كلمة المرور إذا تم إدخالها
+        password = request.POST.get('password')
+        if password:
+            user.set_password(password)
 
         user.save()
-        messages.success(request, 'تم تحديث بيانات المستخدم بنجاح!')
-        return redirect('accounts:dashboard')
-
-    # استخدام نظام المجموعات الخاص بـ Django
-    from django.contrib.auth.models import Group
-    groups = Group.objects.all()
+        messages.success(request, 'تم تحديث ملفك الشخصي بنجاح!')
+        return redirect('accounts:user_profile')
 
     context = {
-        'user_to_edit': user,
-        'groups': groups,
-        'system_settings': {'system_name': 'نظام الدولية'}
+        'user': user
     }
 
-    return render(request, 'accounts/edit_permissions.html', context)
+    return render(request, 'accounts/user_profile.html', context)
 
-
-# Global Search API
-@login_required
 @csrf_exempt
-def global_search_api(request):
-    """
-    Global search API endpoint that searches across all modules
-    """
-    if request.method != 'POST':
-        return JsonResponse({'error': 'Method not allowed'}, status=405)
-
-    try:
-        data = json.loads(request.body)
-        query = data.get('query', '').strip()
-        module_filter = data.get('module', '').strip()
-        limit = min(int(data.get('limit', 20)), 50)  # Max 50 results
-
-        if len(query) < 2:
-            return JsonResponse({'results': []})
-
-        results = []
-
-        # Search in HR module
-        if not module_filter or module_filter == 'hr':
-            results.extend(search_hr_data(query, request.user, limit))
-
-        # Search in Inventory module
-        if not module_filter or module_filter == 'inventory':
-            results.extend(search_inventory_data(query, request.user, limit))
-
-        # Search in Tasks module
-        if not module_filter or module_filter == 'tasks':
-            results.extend(search_tasks_data(query, request.user, limit))
-
-        # Search in Meetings module
-        if not module_filter or module_filter == 'meetings':
-            results.extend(search_meetings_data(query, request.user, limit))
-
-        # Search in Purchase Orders module
-        if not module_filter or module_filter == 'purchase_orders':
-            results.extend(search_purchase_orders_data(query, request.user, limit))
-
-        # Sort results by relevance
-        results = sorted(results, key=lambda x: x.get('score', 0), reverse=True)[:limit]
-
-        return JsonResponse({'results': results})
-
-    except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
-
-
-def search_hr_data(query, user, limit):
-    """Search in HR module data"""
-    results = []
-
-    try:
-        # Import models from new apps
-        from apps.hr.employees.models import Employee
-        from org.models import Department
-
-        # Search employees
-        employees = Employee.objects.filter(
-            Q(first_name__icontains=query) |
-            Q(second_name__icontains=query) |
-            Q(third_name__icontains=query) |
-            Q(last_name__icontains=query) |
-            Q(emp_code__icontains=query)
-        ).filter(emp_status='Active')[:limit//2]
-
-        for emp in employees:
-            # Create full name
-            full_name = f"{emp.first_name} {emp.second_name or ''} {emp.third_name or ''} {emp.last_name or ''}".strip()
-
-            results.append({
-                'module': 'hr',
-                'type': 'employee',
-                'title': full_name,
-                'description': f'موظف - {emp.dept.dept_name if emp.dept else "بدون قسم"}',
-                'url': f'/employees/list/#employee-{emp.emp_id}',
-                'icon': 'fas fa-user',
-                'meta': [
-                    f'الكود: {emp.emp_code}',
-                    f'القسم: {emp.dept.dept_name if emp.dept else "غير محدد"}'
-                ],
-                'score': calculate_relevance_score(query, full_name)
+def get_user_info(request):
+    """get_user_info function"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            user_id = data.get('user_id')
+            user = User.objects.get(id=user_id)
+            return JsonResponse({
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'role': user.Role,
+                'is_active': user.is_active,
+                'is_staff': user.is_staff,
             })
+        except User.DoesNotExist:
+            return JsonResponse({'error': 'User not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
 
-        # Search departments
-        departments = Department.objects.filter(
-            Q(dept_name__icontains=query)
-        ).filter(is_active=True)[:limit//2]
+@csrf_exempt
+def get_all_users(request):
+    """get_all_users function"""
+    if request.method == 'GET':
+        try:
+            users = User.objects.all().values(
+                'id', 'username', 'email', 'first_name', 'last_name', 'Role', 'is_active', 'is_staff'
+            )
+            return JsonResponse(list(users), safe=False)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
 
-        for dept in departments:
-            results.append({
-                'module': 'hr',
-                'type': 'department',
-                'title': dept.dept_name,
-                'description': f'قسم - {dept.branch.branch_name if dept.branch else "بدون فرع"}',
-                'url': f'/org/#department-{dept.dept_id}',
-                'icon': 'fas fa-building',
-                'meta': [
-                    f'المعرف: {dept.dept_id}',
-                    f'الفرع: {dept.branch.branch_name if dept.branch else "غير محدد"}'
-                ],
-                'score': calculate_relevance_score(query, dept.dept_name)
-            })
+@csrf_exempt
+def update_user_info(request):
+    """update_user_info function"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            user_id = data.get('user_id')
+            user = User.objects.get(id=user_id)
 
-    except Exception as e:
-        print(f"Error searching HR data: {e}")
+            # Update fields if they exist in the request
+            for key, value in data.items():
+                if hasattr(user, key) and key != 'user_id':
+                    setattr(user, key, value)
 
-    return results
+            user.save()
+            return JsonResponse({'success': 'User updated successfully'})
+        except User.DoesNotExist:
+            return JsonResponse({'error': 'User not found'}, status=404)
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
 
+@csrf_exempt
+def search_users(request):
+    """search_users function"""
+    if request.method == 'GET':
+        query = request.GET.get('q', '')
+        if query:
+            users = User.objects.filter(
+                Q(username__icontains=query) |
+                Q(email__icontains=query) |
+                Q(first_name__icontains=query) |
+                Q(last_name__icontains=query)
+            ).values('id', 'username', 'email', 'first_name', 'last_name')
+            return JsonResponse(list(users), safe=False)
+        return JsonResponse([], safe=False)
+    return JsonResponse({'error': 'Invalid request method'}, status=400)
 
-def search_inventory_data(query, user, limit):
-    """Search in Inventory module data"""
-    results = []
+@login_required
+def user_list_view(request):
+    """user_list_view function"""
+    users = User.objects.all()
+    return render(request, 'administrator/user_list.html', {'users': users})
 
-    try:
-        from apps.inventory.models import Product
+@login_required
+def user_detail_view(request, user_id):
+    """user_detail_view function"""
+    user = get_object_or_404(User, id=user_id)
+    return render(request, 'administrator/user_detail.html', {'selected_user': user})
 
-        # Search products
-        products = Product.objects.filter(
-            Q(name__icontains=query) |
-            Q(product_id__icontains=query)
-        )[:limit]
-
-        for product in products:
-            results.append({
-                'module': 'inventory',
-                'type': 'product',
-                'title': product.name,
-                'description': f'منتج - {getattr(product, "category", "بدون تصنيف")}',
-                'url': f'/inventory/products/{product.product_id}/',
-                'icon': 'fas fa-box',
-                'meta': [
-                    f'الكود: {product.product_id}',
-                    f'الكمية: {getattr(product, "quantity", "غير محدد")}'
-                ],
-                'score': calculate_relevance_score(query, product.name)
-            })
-
-    except Exception as e:
-        print(f"Error searching inventory data: {e}")
-
-    return results
-
-
-def search_tasks_data(query, user, limit):
-    """Search in Tasks module data"""
-    results = []
-
-    try:
-        # Search tasks accessible to user
-        if user.is_superuser:
-            tasks = Task.objects.filter(
-                Q(title__icontains=query) |
-                Q(description__icontains=query)
-            )[:limit]
-        else:
-            tasks = Task.objects.filter(
-                Q(title__icontains=query) |
-                Q(description__icontains=query)
-            ).filter(
-                Q(assigned_to=user) |
-                Q(created_by=user)
-            )[:limit]
-
-        for task in tasks:
-            results.append({
-                'module': 'tasks',
-                'type': 'task',
-                'title': task.title,
-                'description': task.description[:100] + '...' if len(task.description) > 100 else task.description,
-                'url': f'/tasks/{task.id}/',
-                'icon': 'fas fa-tasks',
-                'meta': [
-                    f'الحالة: {task.get_status_display()}',
-                    f'الأولوية: {task.get_priority_display()}'
-                ],
-                'score': calculate_relevance_score(query, task.title)
-            })
-
-    except Exception as e:
-        print(f"Error searching tasks data: {e}")
-
-    return results
-
-
-def search_meetings_data(query, user, limit):
-    """Search in Meetings module data"""
-    results = []
-
-    try:
-        # Search meetings
-        meetings = Meeting.objects.filter(
-            Q(title__icontains=query) |
-            Q(description__icontains=query)
-        )[:limit]
-
-        for meeting in meetings:
-            results.append({
-                'module': 'meetings',
-                'type': 'meeting',
-                'title': meeting.title,
-                'description': f'اجتماع - {getattr(meeting, "location", "")}',
-                'url': f'/meetings/{meeting.id}/',
-                'icon': 'fas fa-calendar-alt',
-                'meta': [
-                    f'التاريخ: {meeting.date_time.strftime("%Y-%m-%d") if hasattr(meeting, "date_time") else "غير محدد"}',
-                    f'المكان: {getattr(meeting, "location", "غير محدد")}'
-                ],
-                'score': calculate_relevance_score(query, meeting.title)
-            })
-
-    except Exception as e:
-        print(f"Error searching meetings data: {e}")
-
-    return results
-
-
-def search_purchase_orders_data(query, user, limit):
-    """Search in Purchase Orders module data"""
-    results = []
-
-    try:
-        from apps.procurement.purchase_orders.models import PurchaseRequest
-
-        # Search purchase requests
-        requests = PurchaseRequest.objects.filter(
-            Q(description__icontains=query)
-        )[:limit]
-
-        for req in requests:
-            results.append({
-                'module': 'purchase_orders',
-                'type': 'purchase_request',
-                'title': f'طلب شراء #{req.id}',
-                'description': req.description[:100] + '...' if len(req.description) > 100 else req.description,
-                'url': f'/purchase/requests/{req.id}/',
-                'icon': 'fas fa-shopping-cart',
-                'meta': [
-                    f'الحالة: {getattr(req, "status", "غير محدد")}',
-                    f'التاريخ: {req.created_at.strftime("%Y-%m-%d") if hasattr(req, "created_at") else "غير محدد"}'
-                ],
-                'score': calculate_relevance_score(query, req.description)
-            })
-
-    except Exception as e:
-        print(f"Error searching purchase orders data: {e}")
-
-    return results
-
-
-def calculate_relevance_score(query, text):
-    """Calculate relevance score for search results"""
-    if not query or not text:
-        return 0
-
-    query_lower = query.lower()
-    text_lower = text.lower()
-
-    # Exact match gets highest score
-    if query_lower == text_lower:
-        return 100
-
-    # Starts with query gets high score
-    if text_lower.startswith(query_lower):
-        return 80
-
-    # Contains query gets medium score
-    if query_lower in text_lower:
-        return 60
-
-    # Word match gets lower score
-    query_words = query_lower.split()
-    text_words = text_lower.split()
-
-    matches = sum(1 for word in query_words if any(word in text_word for text_word in text_words))
-    if matches > 0:
-        return 40 + (matches * 10)
-
-    return 0
+@login_required
+def user_delete_view(request, user_id):
+    """user_delete_view function"""
+    user = get_object_or_404(User, id=user_id)
+    if request.method == 'POST':
+        user.delete()
+        messages.success(request, 'تم حذف المستخدم بنجاح!')
+        return redirect('accounts:user_list')
+    return render(request, 'administrator/user_delete.html', {'selected_user': user})
