@@ -117,7 +117,7 @@ if settings.DEBUG:
 @app.task(bind=True)
 def debug_task(self):
     """debug_task function"""
-    print(f"Request: {self.request!r}")
+    pass
     return "Celery is working!"
 
 # دالة لمراقبة صحة النظام

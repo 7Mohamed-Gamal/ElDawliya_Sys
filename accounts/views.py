@@ -3,9 +3,6 @@ from django.contrib.auth import login, logout, get_user_model
 from .forms import CustomUserCreationForm, CustomUserLoginForm
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-# Temporarily commented out to avoid import errors
-# from apps.projects.meetings.models import Meeting
-# from apps.projects.tasks.models import Task
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
 from django.http import JsonResponse
@@ -13,6 +10,10 @@ from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q
 from django.urls import reverse
 import json
+import logging
+
+# Set up logging
+logger = logging.getLogger(__name__)
 
 # استيراد وظائف إنشاء التنبيهات
 try:
@@ -25,7 +26,10 @@ User = get_user_model()
 @ensure_csrf_cookie
 @csrf_protect
 def login_view(request):
-    """login_view function"""
+    """
+    Handles user login requests.
+    معالجة طلبات تسجيل دخول المستخدم.
+    """
     if request.method == 'POST':
         form = CustomUserLoginForm(data=request.POST)
         if form.is_valid():
@@ -53,17 +57,24 @@ def login_view(request):
     return render(request, 'accounts/login.html', {'form': form})
 
 def logout_view(request):
-    """logout_view function"""
+    """
+    Handles user logout requests.
+    معالجة طلبات تسجيل خروج المستخدم.
+    """
     logout(request)
     return redirect('accounts:login')
 
 def access_denied(request):
-    """عرض صفحة رفض الوصول"""
+    """
+    Displays the access denied page.
+    عرض صفحة رفض الوصول.
+    """
     return render(request, 'accounts/access_denied.html', {'title': 'رفض الوصول'})
 
 def csrf_failure(request, reason=""):
     """
-    Custom CSRF failure view
+    Custom view for CSRF failures.
+    عرض مخصص لفشل التحقق من CSRF.
     """
     context = {
         'title': 'خطأ في التحقق من CSRF',
@@ -74,7 +85,10 @@ def csrf_failure(request, reason=""):
 
 @login_required
 def dashboard_view(request):
-    """dashboard_view function"""
+    """
+    Displays the main administrative dashboard.
+    عرض لوحة التحكم الإدارية الرئيسية.
+    """
     # Get all users
     users = User.objects.all()
 
@@ -99,113 +113,73 @@ def dashboard_view(request):
 
 @login_required
 def home_view(request):
-    """home_view function"""
-    # Get real-time stats for dashboard (temporarily using placeholder data)
-    meetings_count = 0  # Meeting.objects.count()
-    tasks_count = 0  # Task.objects.count()
-    completed_tasks_count = 0  # Task.objects.filter(status='completed').count()
+    """
+    Displays the user home dashboard with system-wide statistics.
+    عرض لوحة تحكم المستخدم مع إحصائيات النظام.
+    """
+    # Initialize counts
+    meetings_count = 0
+    tasks_count = 0
+    completed_tasks_count = 0
+    recent_meetings = []
+    recent_tasks = []
+    user_tasks = []
+
+    # Attempt to get real data from other apps
+    try:
+        from apps.projects.meetings.models import Meeting
+        meetings_count = Meeting.objects.count()
+        recent_meetings = Meeting.objects.order_by('-date')[:5]
+    except (ImportError, Exception):
+        logger.debug("Meeting models not available for home_view")
+
+    try:
+        from apps.projects.tasks.models import Task
+        tasks_count = Task.objects.count()
+        completed_tasks_count = Task.objects.filter(status='completed').count()
+        recent_tasks = Task.objects.order_by('-start_date')[:5]
+        user_tasks = Task.objects.filter(assigned_to=request.user).order_by('status', '-start_date')
+    except (ImportError, Exception):
+        logger.debug("Task models not available for home_view")
+
     users_count = User.objects.count()
-
-    # Get recent meetings (temporarily empty)
-    recent_meetings = []  # Meeting.objects.order_by('-date')[:5]
-
-    # Get recent tasks (temporarily empty)
-    recent_tasks = []  # Task.objects.order_by('-start_date')[:5]
-
-    # Get user's tasks (temporarily empty)
-    user_tasks = []  # Task.objects.filter(assigned_to=request.user).order_by('status', '-start_date')
-
-    # Check if user is admin
     is_admin = request.user.Role == 'admin'
 
-    # Get departments and modules from administrator app if it's installed
+    # Get departments and modules from administrator app
     user_departments = []
     all_departments = []
     department_modules = {}
     try:
         from administrator.models import Department, Module
 
-        # Get all active departments
         departments = Department.objects.filter(is_active=True).order_by('order')
-
-        # For admin users, store all departments
         if is_admin:
             all_departments = departments
 
-        # Ensure url_name is set correctly for JavaScript matching
         for dept in departments:
-            # Make sure url_name doesn't include '-cards' suffix
-            if hasattr(dept, 'url_name'):
-                if dept.url_name == 'hr':
-                    pass
-            else:
-                # If url_name doesn't exist, set a default based on department name
+            if not hasattr(dept, 'url_name'):
                 dept.url_name = dept.name.lower().replace(' ', '-')
 
-        # Filter departments based on user permissions and get their modules
-        for dept in departments:
             dept_modules = []
-            # If department requires admin and user is admin, add it
-            if dept.require_admin and is_admin:
+            # Check permissions for department and its modules
+            if (dept.require_admin and is_admin) or not dept.require_admin:
+                # Group permission check if needed
+                if not dept.require_admin and dept.groups.exists() and not dept.groups.filter(id__in=request.user.groups.all()).exists():
+                    continue
+
                 user_departments.append(dept)
-                # Get active modules for this department
-                modules = Module.objects.filter(
-                    department=dept,
-                    is_active=True
-                ).order_by('order')
-                # Filter modules based on user permissions
+                modules = Module.objects.filter(department=dept, is_active=True).order_by('order')
                 for module in modules:
                     if module.require_admin and not is_admin:
-                        continue  # Skip admin-only modules for non-admin users
+                        continue
                     if module.groups.exists() and not module.groups.filter(id__in=request.user.groups.all()).exists():
-                        continue  # Skip modules restricted to specific groups
+                        continue
                     dept_modules.append(module)
-            # If department doesn't require admin, check group permissions
-            elif not dept.require_admin:
-                # If no groups specified, everyone can access
-                if not dept.groups.exists():
-                    user_departments.append(dept)
-                    # Get active modules for this department
-                    modules = Module.objects.filter(
-                        department=dept,
-                        is_active=True
-                    ).order_by('order')
-                    # Filter modules based on user permissions
-                    for module in modules:
-                        if module.require_admin and not is_admin:
-                            continue  # Skip admin-only modules for non-admin users
-                        if module.groups.exists() and not module.groups.filter(id__in=request.user.groups.all()).exists():
-                            continue  # Skip modules restricted to specific groups
-                        dept_modules.append(module)
-                # Otherwise, check if user is in any of the allowed groups
-                else:
-                    # Check if any of the user's groups are in the department's allowed groups
-                    if dept.groups.filter(id__in=request.user.groups.all()).exists():
-                        user_departments.append(dept)
-                        # Get active modules for this department
-                        modules = Module.objects.filter(
-                            department=dept,
-                            is_active=True
-                        ).order_by('order')
-                        # Filter modules based on user permissions
-                        for module in modules:
-                            if module.require_admin and not is_admin:
-                                continue  # Skip admin-only modules for non-admin users
-                            if module.groups.exists() and not module.groups.filter(id__in=request.user.groups.all()).exists():
-                                continue  # Skip modules restricted to specific groups
-                            dept_modules.append(module)
-
-            # Store modules for this department
-            if dept.url_name:
-                department_modules[dept.url_name] = dept_modules
-            else:
-                dept_url_key = dept.name.lower().replace(' ', '-')
-                department_modules[dept_url_key] = dept_modules
+            
+            department_modules[dept.url_name] = dept_modules
 
     except Exception as e:
-        # If administrator app is not installed or any error occurs
-        import traceback
-        traceback.print_exc()
+        logger.error(f"Error loading departments and modules: {str(e)}")
 
     context = {
         'meetings_count': meetings_count,
@@ -225,23 +199,22 @@ def home_view(request):
 
 @login_required
 def create_user_view(request):
-    """create_user_view function"""
+    """
+    Handles new user creation.
+    معالجة إنشاء مستخدم جديد.
+    """
     if request.method == 'POST':
         form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
-
-            # إضافة المستخدم إلى المجموعات المحددة (إذا تم تحديدها)
             if 'groups' in request.POST:
                 groups = request.POST.getlist('groups')
                 user.groups.set(groups)
-
             messages.success(request, 'تم إنشاء المستخدم بنجاح!')
             return redirect('accounts:dashboard')
     else:
         form = CustomUserCreationForm()
 
-    # استخدام نظام المجموعات الخاص بـ Django
     from django.contrib.auth.models import Group
     groups = Group.objects.all()
 
@@ -250,30 +223,25 @@ def create_user_view(request):
         'groups': groups,
         'system_settings': {'system_name': 'نظام الدولية'}
     }
-
     return render(request, 'administrator/user_create.html', context)
 
 @login_required
 def edit_permissions_view(request, user_id):
-    """عرض وتحرير صلاحيات المستخدم"""
+    """
+    Handles user permission and role editing.
+    معالجة تحرير أذونات وأدوار المستخدم.
+    """
     user = get_object_or_404(User, id=user_id)
 
     if request.method == 'POST':
-        # تحديث دور المستخدم
         user.Role = request.POST.get('role', user.Role)
-
-        # تحديث حالة is_staff
         user.is_staff = 'is_staff' in request.POST
-
-        # تحديث المجموعات
         selected_groups = request.POST.getlist('groups')
         user.groups.set(selected_groups)
-
         user.save()
         messages.success(request, 'تم تحديث صلاحيات المستخدم بنجاح!')
         return redirect('accounts:dashboard')
 
-    # الحصول على جميع المجموعات لعرضها في النموذج
     from django.contrib.auth.models import Group
     all_groups = Group.objects.all()
 
@@ -282,38 +250,31 @@ def edit_permissions_view(request, user_id):
         'all_groups': all_groups,
         'user_groups': user.groups.all()
     }
-
     return render(request, 'administrator/edit_permissions.html', context)
 
 @login_required
 def user_profile_view(request):
-    """عرض وتحديث ملف المستخدم"""
+    """
+    Handles user profile viewing and updates.
+    معالجة عرض وتحديث ملف تعريف المستخدم.
+    """
     user = request.user
-
     if request.method == 'POST':
-        # تحديث معلومات المستخدم
         user.first_name = request.POST.get('first_name', user.first_name)
         user.last_name = request.POST.get('last_name', user.last_name)
         user.email = request.POST.get('email', user.email)
-
-        # تحديث كلمة المرور إذا تم إدخالها
         password = request.POST.get('password')
         if password:
             user.set_password(password)
-
         user.save()
         messages.success(request, 'تم تحديث ملفك الشخصي بنجاح!')
         return redirect('accounts:user_profile')
 
-    context = {
-        'user': user
-    }
-
-    return render(request, 'accounts/user_profile.html', context)
+    return render(request, 'accounts/user_profile.html', {'user': user})
 
 @csrf_exempt
 def get_user_info(request):
-    """get_user_info function"""
+    """API endpoint to get single user info."""
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
@@ -337,7 +298,7 @@ def get_user_info(request):
 
 @csrf_exempt
 def get_all_users(request):
-    """get_all_users function"""
+    """API endpoint to get all users."""
     if request.method == 'GET':
         try:
             users = User.objects.all().values(
@@ -350,18 +311,15 @@ def get_all_users(request):
 
 @csrf_exempt
 def update_user_info(request):
-    """update_user_info function"""
+    """API endpoint to update user info."""
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
             user_id = data.get('user_id')
             user = User.objects.get(id=user_id)
-
-            # Update fields if they exist in the request
             for key, value in data.items():
                 if hasattr(user, key) and key != 'user_id':
                     setattr(user, key, value)
-
             user.save()
             return JsonResponse({'success': 'User updated successfully'})
         except User.DoesNotExist:
@@ -372,7 +330,7 @@ def update_user_info(request):
 
 @csrf_exempt
 def search_users(request):
-    """search_users function"""
+    """API endpoint to search users."""
     if request.method == 'GET':
         query = request.GET.get('q', '')
         if query:
@@ -388,22 +346,27 @@ def search_users(request):
 
 @login_required
 def user_list_view(request):
-    """user_list_view function"""
+    """Displays list of all users."""
     users = User.objects.all()
     return render(request, 'administrator/user_list.html', {'users': users})
 
 @login_required
 def user_detail_view(request, user_id):
-    """user_detail_view function"""
+    """Displays details of a specific user."""
     user = get_object_or_404(User, id=user_id)
     return render(request, 'administrator/user_detail.html', {'selected_user': user})
 
 @login_required
 def user_delete_view(request, user_id):
-    """user_delete_view function"""
+    """Handles user deletion."""
     user = get_object_or_404(User, id=user_id)
     if request.method == 'POST':
         user.delete()
         messages.success(request, 'تم حذف المستخدم بنجاح!')
         return redirect('accounts:user_list')
     return render(request, 'administrator/user_delete.html', {'selected_user': user})
+
+@login_required
+def global_search_api(request):
+    """Placeholder for global search API."""
+    return JsonResponse({'results': []})

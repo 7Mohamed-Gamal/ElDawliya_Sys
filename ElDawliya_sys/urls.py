@@ -44,9 +44,7 @@ urlpatterns = [
     path('meetings/', include('apps.projects.meetings.urls')),  # مسارات تطبيق الاجتماعات
     path('reports/', include('apps.reports.urls')),  # مسارات التقارير
 
-    # Legacy/Optional Paths (keep commented if not sure)
-    # path('tasks/', include('tasks.urls')),
-    # path('employee-tasks/', include('employee_tasks.urls')),
+
 
     path('administrator/', include('administrator.urls')),  # مسارات تطبيق مدير النظام
     path('notifications/', include('notifications.urls')),  # مسارات تطبيق التنبيهات

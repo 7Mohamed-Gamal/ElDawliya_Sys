@@ -1,29 +1,38 @@
-# استخدم صورة Python الرسمية
+# Use Python 3.11 slim image
 FROM python:3.11-slim
 
-# تثبيت أدوات النظام المطلوبة لبناء NumPy وPyODBC
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    gcc \
-    g++ \
-    unixodbc-dev \
-    curl \
-    gnupg \
-    && rm -rf /var/lib/apt/lists/*
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+ENV DJANGO_SETTINGS_MODULE ElDawliya_sys.settings.production
 
-# إعداد مجلد العمل داخل الحاوية
+# Set work directory
 WORKDIR /app
 
-# نسخ ملفات المشروع وملف المتطلبات
-COPY . /app
-COPY requirements.txt /app
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    libpq-dev \
+    unixodbc-dev \
+    gnupg2 \
+    && rm -rf /var/lib/apt/lists/*
 
-# تثبيت مكتبات بايثون
-RUN pip install --upgrade pip setuptools wheel
+# Install Microsoft ODBC Driver for SQL Server (required for pyodbc/mssql-django)
+RUN curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
+    && curl https://packages.microsoft.com/config/debian/11/prod.list > /etc/apt/sources.list.d/mssql-release.list \
+    && apt-get update \
+    && ACCEPT_EULA=Y apt-get install -y msodbcsql17
+
+# Install Python dependencies
+COPY requirements.txt /app/
 RUN pip install --no-cache-dir -r requirements.txt
 
-# فتح المنفذ 8000 لتشغيل Django
+# Copy project
+COPY . /app/
+
+# Expose port
 EXPOSE 8000
 
-# أمر التشغيل الافتراضي
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# Start Gunicorn
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "ElDawliya_sys.wsgi:application"]

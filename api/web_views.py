@@ -13,6 +13,9 @@ from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 import json
 import secrets
+import logging
+
+logger = logging.getLogger(__name__)
 
 from .models import APIKey, GeminiConversation, GeminiMessage, APIUsageLog, AIProvider, AIConfiguration
 from .services import GeminiService, DataAnalysisService
@@ -362,14 +365,12 @@ def test_ai_config(request):
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-            provider_id = data.get('provider')  # هذا هو المفتاح الصحيح من JavaScript
+            provider_id = data.get('provider')
             api_key = data.get('api_key')
             model_name = data.get('model_name')
             max_tokens = data.get('max_tokens', 1000)
             temperature = data.get('temperature', 0.7)
             test_message = data.get('message', 'مرحبا، هذا اختبار للاتصال')
-
-            print(f"Testing AI config: provider_id={provider_id}, model_name={model_name}")
 
             provider = AIProvider.objects.get(id=provider_id)
 
@@ -451,10 +452,6 @@ def test_ai_config(request):
                     # Remove trailing slash
                     api_url = api_url.rstrip('/')
 
-                    print(f"Testing Ollama at URL: {api_url}")
-                    print(f"Model: {model_name}")
-                    print(f"Message: {test_message}")
-
                     # Test connection first - check if Ollama is running
                     try:
                         test_response = requests.get(f"{api_url}/api/tags", timeout=5)
@@ -475,7 +472,6 @@ def test_ai_config(request):
                         if models_response.status_code == 200:
                             models_data = models_response.json()
                             available_models = [model['name'] for model in models_data.get('models', [])]
-                            print(f"Available models: {available_models}")
 
                             if model_name not in available_models:
                                 return JsonResponse({
@@ -483,7 +479,7 @@ def test_ai_config(request):
                                     'error': f'النموذج "{model_name}" غير متوفر. النماذج المتاحة: {", ".join(available_models)}. قم بتحميل النموذج أولاً باستخدام: ollama pull {model_name}'
                                 })
                     except Exception as e:
-                        print(f"Could not check available models: {e}")
+                        logger.error(f"Could not check available models: {e}")
 
                     # Make the actual test request
                     payload = {
@@ -496,16 +492,11 @@ def test_ai_config(request):
                         }
                     }
 
-                    print(f"Sending request to: {api_url}/api/generate")
-                    print(f"Payload: {payload}")
-
                     response = requests.post(
                         f"{api_url}/api/generate",
                         json=payload,
                         timeout=60  # Increased timeout for local models
                     )
-
-                    print(f"Response status: {response.status_code}")
 
                     if response.status_code == 200:
                         result = response.json()
@@ -543,9 +534,7 @@ def test_ai_config(request):
                         'error': 'مكتبة requests غير مثبتة. قم بتثبيتها باستخدام: pip install requests'
                     })
                 except Exception as e:
-                    print(f"Ollama test error: {str(e)}")
-                    import traceback
-                    traceback.print_exc()
+                    logger.error(f"Ollama test error: {str(e)}")
                     return JsonResponse({
                         'success': False,
                         'error': f'خطأ في اختبار Ollama: {str(e)}'
