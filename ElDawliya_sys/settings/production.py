@@ -5,7 +5,8 @@ ElDawliya System - Production Settings
 Settings for production environment.
 """
 
-# TODO: Replace wildcard import
+# Wildcard import is intentional for Django settings files to inherit from base.py
+from .base import *
 # from .base import specific_items
 
 # ================================================================

@@ -61,3 +61,8 @@ urlpatterns = special_urlpatterns + urlpatterns
 # إضافة مسارات الوسائط في وضع التطوير
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# Custom error handlers
+handler404 = 'ElDawliya_sys.views.custom_404'
+handler500 = 'ElDawliya_sys.views.custom_500'
+handler403 = 'ElDawliya_sys.views.custom_403'

@@ -1,11 +1,8 @@
-version: '3.9'
+version: '3.8'
 
 services:
   web:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    container_name: eldawliya_web
+    build: .
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/app
@@ -13,24 +10,56 @@ services:
       - "8000:8000"
     depends_on:
       - db
+      - redis
+    env_file:
+      - .env
     environment:
-      DEBUG: "True"
-      DB_NAME: "ElDawliya_Sys"
-      DB_USER: "admin"
-      DB_PASSWORD: "hgslduhgfwdv"
-      DB_HOST: "db"
-      DB_PORT: "1433"
+      - DJANGO_SETTINGS_MODULE=ElDawliya_sys.settings.development
 
   db:
     image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: eldawliya_db
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=${DB_PASSWORD:-YourStrong@Passw0rd}
+      - MSSQL_PID=Developer
     ports:
       - "1433:1433"
-    environment:
-      SA_PASSWORD: "hgslduhgfwdv"
-      ACCEPT_EULA: "Y"
     volumes:
       - mssql_data:/var/opt/mssql
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  celery:
+    build: .
+    command: celery -A ElDawliya_sys worker -l info
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=ElDawliya_sys.settings.development
+
+  celery-beat:
+    build: .
+    command: celery -A ElDawliya_sys beat -l info
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=ElDawliya_sys.settings.development
+
 volumes:
   mssql_data:
+  redis_data:
