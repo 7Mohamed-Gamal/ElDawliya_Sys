@@ -1,0 +1,64 @@
+{% comment %}
+  Icon Button Component
+  Usage: {% include 'components/buttons/btn_icon.html' with icon="fas fa-plus" title="Add" %}
+  
+  Parameters:
+  - icon: Font Awesome icon class (required)
+  - title: Tooltip text (required for accessibility)
+  - href: Link URL (optional)
+  - size: sm, md (default), lg
+  - variant: primary, secondary, ghost (default), danger
+  - disabled: Boolean
+  - onclick: JavaScript onclick handler
+{% endcomment %}
+
+{% with btn_variant=variant|default:'ghost' %}
+{% if href %}
+<a href="{{ href }}"
+   title="{{ title }}"
+   aria-label="{{ title }}"
+   class="inline-flex items-center justify-center rounded-lg
+          {% if btn_variant == 'primary' %}
+            bg-primary-600 hover:bg-primary-700 text-white
+          {% elif btn_variant == 'secondary' %}
+            bg-secondary-600 hover:bg-secondary-700 text-white
+          {% elif btn_variant == 'danger' %}
+            bg-error-600 hover:bg-error-700 text-white
+          {% else %}
+            bg-transparent hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300
+          {% endif %}
+          shadow-sm hover:shadow
+          transition-all duration-200
+          {% if size == 'sm' %}w-8 h-8 text-sm{% endif %}
+          {% if size == 'md' or not size %}w-10 h-10 text-base{% endif %}
+          {% if size == 'lg' %}w-12 h-12 text-lg{% endif %}
+          {% if disabled %}opacity-50 cursor-not-allowed pointer-events-none{% endif %}"
+   {% if onclick %}onclick="{{ onclick }}"{% endif %}>
+  <i class="{{ icon }}"></i>
+</a>
+{% else %}
+<button type="{{ type|default:'button' }}"
+        title="{{ title }}"
+        aria-label="{{ title }}"
+        class="inline-flex items-center justify-center rounded-lg
+               {% if btn_variant == 'primary' %}
+                 bg-primary-600 hover:bg-primary-700 text-white
+               {% elif btn_variant == 'secondary' %}
+                 bg-secondary-600 hover:bg-secondary-700 text-white
+               {% elif btn_variant == 'danger' %}
+                 bg-error-600 hover:bg-error-700 text-white
+               {% else %}
+                 bg-transparent hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300
+               {% endif %}
+               shadow-sm hover:shadow
+               transition-all duration-200
+               {% if size == 'sm' %}w-8 h-8 text-sm{% endif %}
+               {% if size == 'md' or not size %}w-10 h-10 text-base{% endif %}
+               {% if size == 'lg' %}w-12 h-12 text-lg{% endif %}
+               {% if disabled %}opacity-50 cursor-not-allowed pointer-events-none{% endif %}"
+        {% if disabled %}disabled{% endif %}
+        {% if onclick %}onclick="{{ onclick }}"{% endif %}>
+  <i class="{{ icon }}"></i>
+</button>
+{% endif %}
+{% endwith %}

@@ -2,6 +2,12 @@
   Main Base Template - Tailwind CSS with Dark Mode
   Usage: All pages should extend this template
   {% extends 'base.html' %}
+  
+  Context Variables:
+  - show_sidebar: Boolean (default: True for authenticated users)
+  - show_navbar: Boolean (default: True)
+  - show_footer: Boolean (default: True)
+  - menu_items: List of menu items for sidebar
 {% endcomment %}
 {% load static %}
 <!DOCTYPE html>
@@ -64,8 +70,8 @@
     </div>
 
     <!-- Main Layout -->
-    <div class="min-h-full">
-        {% if show_sidebar %}
+    <div class="min-h-full flex flex-col">
+        {% if show_sidebar|default:true %}
         <!-- Desktop Sidebar -->
         <div class="hidden lg:fixed lg:inset-y-0 lg:z-sticky lg:flex lg:w-64 lg:flex-col">
             {% include 'components/navigation/sidebar.html' %}
@@ -84,8 +90,8 @@
         {% endif %}
 
         <!-- Content Area -->
-        <div class="{% if show_sidebar %}lg:pe-64{% endif %}">
-            {% if show_navbar %}
+        <div class="{% if show_sidebar|default:true %}lg:pe-64{% endif %} flex-1">
+            {% if show_navbar|default:true %}
             <!-- Navbar -->
             {% include 'components/navigation/navbar.html' %}
             {% endif %}
@@ -107,7 +113,7 @@
     </div>
 
     <!-- Footer -->
-    {% if show_footer %}
+    {% if show_footer|default:true %}
     <footer class="bg-white dark:bg-neutral-800 border-t border-neutral-200 dark:border-neutral-700 mt-auto">
         <div class="container mx-auto px-4 py-6">
             <div class="text-center text-sm text-neutral-600 dark:text-neutral-400">

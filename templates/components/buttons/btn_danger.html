@@ -1,0 +1,53 @@
+{% comment %}
+  Danger Button Component
+  Usage: {% include 'components/buttons/btn_danger.html' with text="Delete" icon="fas fa-trash" href="/delete/" %}
+  
+  Parameters:
+  - text: Button text (required)
+  - icon: Font Awesome icon class (optional)
+  - href: Link URL (optional, renders as <a>)
+  - type: Button type for <button> (default: 'button')
+  - size: sm, md (default), lg, xl
+  - disabled: Boolean
+  - onclick: JavaScript onclick handler
+  - full_width: Boolean (w-full)
+{% endcomment %}
+
+{% if href %}
+<a href="{{ href }}"
+   class="inline-flex items-center justify-center gap-2 font-medium rounded-lg
+          bg-error-600 hover:bg-error-700 text-white
+          shadow-sm hover:shadow
+          transition-all duration-200
+          {% if size == 'sm' %}px-3 py-1.5 text-sm{% endif %}
+          {% if size == 'md' or not size %}px-4 py-2 text-base{% endif %}
+          {% if size == 'lg' %}px-6 py-3 text-lg{% endif %}
+          {% if size == 'xl' %}px-8 py-4 text-xl{% endif %}
+          {% if disabled %}opacity-50 cursor-not-allowed pointer-events-none{% endif %}
+          {% if full_width %}w-full{% endif %}"
+   {% if onclick %}onclick="{{ onclick }}"{% endif %}>
+  {% if icon %}
+  <i class="{{ icon }}"></i>
+  {% endif %}
+  {{ text }}
+</a>
+{% else %}
+<button type="{{ type|default:'button' }}"
+        class="inline-flex items-center justify-center gap-2 font-medium rounded-lg
+               bg-error-600 hover:bg-error-700 text-white
+               shadow-sm hover:shadow
+               transition-all duration-200
+               {% if size == 'sm' %}px-3 py-1.5 text-sm{% endif %}
+               {% if size == 'md' or not size %}px-4 py-2 text-base{% endif %}
+               {% if size == 'lg' %}px-6 py-3 text-lg{% endif %}
+               {% if size == 'xl' %}px-8 py-4 text-xl{% endif %}
+               {% if disabled %}opacity-50 cursor-not-allowed pointer-events-none{% endif %}
+               {% if full_width %}w-full{% endif %}"
+        {% if disabled %}disabled{% endif %}
+        {% if onclick %}onclick="{{ onclick }}"{% endif %}>
+  {% if icon %}
+  <i class="{{ icon }}"></i>
+  {% endif %}
+  {{ text }}
+</button>
+{% endif %}

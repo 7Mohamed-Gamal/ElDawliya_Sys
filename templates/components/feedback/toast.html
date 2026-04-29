@@ -1,0 +1,78 @@
+{% comment %}
+  Toast Notification Container
+  Usage: Include in base template, then use JavaScript to show toasts
+  
+  JavaScript API:
+  showToast(message, type='info', duration=3000)
+  // Types: info, success, warning, error
+{% endcomment %}
+
+<div id="toast-container" 
+     class="fixed top-4 end-4 z-toast flex flex-col gap-3 max-w-sm"
+     aria-live="polite"
+     aria-atomic="true">
+  <!-- Toasts will be dynamically inserted here -->
+</div>
+
+<script>
+// Toast notification system
+function showToast(message, type = 'info', duration = 3000) {
+  const container = document.getElementById('toast-container');
+  const toastId = 'toast-' + Date.now();
+  
+  // Icon mapping
+  const icons = {
+    'info': 'fas fa-info-circle',
+    'success': 'fas fa-check-circle',
+    'warning': 'fas fa-exclamation-triangle',
+    'error': 'fas fa-times-circle'
+  };
+  
+  // Color mapping
+  const colors = {
+    'info': 'bg-info-50 dark:bg-info-900/20 border-info-200 dark:border-info-800 text-info-800 dark:text-info-200',
+    'success': 'bg-success-50 dark:bg-success-900/20 border-success-200 dark:border-success-800 text-success-800 dark:text-success-200',
+    'warning': 'bg-warning-50 dark:bg-warning-900/20 border-warning-200 dark:border-warning-800 text-warning-800 dark:text-warning-200',
+    'error': 'bg-error-50 dark:bg-error-900/20 border-error-200 dark:border-error-800 text-error-800 dark:text-error-200'
+  };
+  
+  // Create toast element
+  const toast = document.createElement('div');
+  toast.id = toastId;
+  toast.className = `flex items-start gap-3 p-4 rounded-lg border shadow-lg ${colors[type]} animate-slide-in`;
+  toast.setAttribute('role', 'alert');
+  
+  toast.innerHTML = `
+    <i class="${icons[type]} text-lg flex-shrink-0 mt-0.5"></i>
+    <p class="flex-1 text-sm font-medium">${message}</p>
+    <button type="button" 
+            onclick="dismissToast('${toastId}')" 
+            class="flex-shrink-0 ms-2 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
+            aria-label="إغلاق">
+      <i class="fas fa-times"></i>
+    </button>
+  `;
+  
+  // Add to container
+  container.appendChild(toast);
+  
+  // Auto dismiss
+  if (duration > 0) {
+    setTimeout(() => dismissToast(toastId), duration);
+  }
+}
+
+function dismissToast(toastId) {
+  const toast = document.getElementById(toastId);
+  if (toast) {
+    toast.classList.add('animate-fade-out');
+    setTimeout(() => toast.remove(), 300);
+  }
+}
+
+// Show Django messages as toasts
+document.addEventListener('DOMContentLoaded', function() {
+  // If you have Django messages, convert them to toasts
+  // This is handled by Django's message framework in the template
+});
+</script>

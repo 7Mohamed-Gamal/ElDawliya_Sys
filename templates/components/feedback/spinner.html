@@ -1,0 +1,38 @@
+{% comment %}
+  Loading Spinner Component
+  Usage: 
+  - Inline: {% include 'components/feedback/spinner.html' with size="md" %}
+  - Full page: {% include 'components/feedback/spinner.html' with full_page=True %}
+  
+  Parameters:
+  - size: sm, md (default), lg, xl
+  - full_page: Boolean (shows fullscreen overlay)
+  - text: Loading text (optional)
+{% endcomment %}
+
+{% if full_page %}
+<!-- Full Page Loading Overlay -->
+<div id="{{ id|default:'loadingOverlay' }}" 
+     class="fixed inset-0 z-modal flex items-center justify-center bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm">
+  <div class="text-center">
+    {% include 'components/feedback/spinner.html' with size="xl" %}
+    {% if text %}
+    <p class="mt-4 text-neutral-600 dark:text-neutral-400">{{ text|default:"جاري التحميل..." }}</p>
+    {% endif %}
+  </div>
+</div>
+{% else %}
+<!-- Inline Spinner -->
+{% with spinner_size=size|default:"md" %}
+<div class="inline-flex items-center justify-center {% if center %}w-full{% endif %}">
+  <div class="animate-spin rounded-full border-2 border-neutral-200 dark:border-neutral-700 
+              {% if spinner_size == 'sm' %}w-4 h-4 border-t-primary-600{% endif %}
+              {% if spinner_size == 'md' %}w-8 h-8 border-t-primary-600{% endif %}
+              {% if spinner_size == 'lg' %}w-12 h-12 border-t-primary-600{% endif %}
+              {% if spinner_size == 'xl' %}w-16 h-16 border-t-primary-600{% endif %}"
+       role="status">
+    <span class="sr-only">جاري التحميل...</span>
+  </div>
+</div>
+{% endwith %}
+{% endif %}

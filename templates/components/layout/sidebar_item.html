@@ -1,0 +1,57 @@
+{% comment %}
+  Sidebar Item Component
+  Usage: {% include 'components/layout/sidebar_item.html' with item=item %}
+  
+  Parameters:
+  - item: Dictionary with 'title', 'icon', 'url', 'active', 'badge', 'children'
+{% endcomment %}
+
+{% if item.children %}
+<!-- Menu with Submenu -->
+<details class="group" {% if item.active %}open{% endif %}>
+  <summary class="flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer list-none
+                  text-neutral-700 dark:text-neutral-300
+                  hover:bg-neutral-100 dark:hover:bg-neutral-800
+                  transition-colors duration-200">
+    <i class="{{ item.icon|default:'fas fa-circle' }} text-lg"></i>
+    <span class="flex-1 text-sm font-medium">{{ item.title }}</span>
+    <i class="fas fa-chevron-down text-sm transition-transform duration-200 group-open:rotate-180"></i>
+  </summary>
+  <ul class="mt-1 ms-4 space-y-1">
+    {% for child in item.children %}
+    <li>
+      <a href="{{ child.url }}" 
+         class="flex items-center gap-3 px-3 py-2 rounded-lg text-sm
+                {% if child.active %}
+                  bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400 font-medium
+                {% else %}
+                  text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800
+                {% endif %}
+                transition-colors duration-200">
+        <span class="w-1.5 h-1.5 rounded-full {% if child.active %}bg-primary-600 dark:bg-primary-400{% else %}bg-neutral-400 dark:bg-neutral-600{% endif %}"></span>
+        {{ child.title }}
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+</details>
+{% else %}
+<!-- Simple Menu Item -->
+<a href="{{ item.url }}" 
+   class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+          {% if item.active %}
+            bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400
+          {% else %}
+            text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800
+          {% endif %}
+          transition-colors duration-200">
+  <i class="{{ item.icon|default:'fas fa-circle' }} text-lg"></i>
+  <span class="flex-1">{{ item.title }}</span>
+  {% if item.badge %}
+  <span class="px-2 py-0.5 text-xs font-semibold rounded-full
+               bg-error-500 text-white">
+    {{ item.badge }}
+  </span>
+  {% endif %}
+</a>
+{% endif %}

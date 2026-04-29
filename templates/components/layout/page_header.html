@@ -1,0 +1,53 @@
+{% comment %}
+  Page Header Component with Breadcrumbs and Title
+  Usage: {% include 'components/layout/page_header.html' with title="Page Title" breadcrumbs=items %}
+  
+  Parameters:
+  - title: Page title (required)
+  - breadcrumbs: List of breadcrumb items (optional)
+    [{'url': '/path/', 'label': 'Label'}, ...]
+  - actions: HTML for action buttons (optional)
+{% endcomment %}
+
+<div class="mb-6">
+  {% if breadcrumbs %}
+  <!-- Breadcrumbs -->
+  <nav class="flex mb-3" aria-label="Breadcrumb">
+    <ol class="inline-flex items-center space-x-1 md:space-x-3 rtl:space-x-reverse">
+      {% for crumb in breadcrumbs %}
+      <li class="inline-flex items-center">
+        {% if forloop.first %}
+        <a href="{{ crumb.url }}" class="inline-flex items-center text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:text-primary-600 dark:hover:text-primary-400">
+          <i class="fas fa-home ms-1"></i>
+          {{ crumb.label }}
+        </a>
+        {% elif forloop.last %}
+        <span class="ms-1 text-sm font-medium text-neutral-500 dark:text-neutral-400 md:ms-2">
+          {{ crumb.label }}
+        </span>
+        {% else %}
+        <a href="{{ crumb.url }}" class="ms-1 text-sm font-medium text-neutral-700 dark:text-neutral-300 hover:text-primary-600 dark:hover:text-primary-400 md:ms-2">
+          {{ crumb.label }}
+        </a>
+        {% endif %}
+        {% if not forloop.last %}
+        <i class="fas fa-chevron-left text-neutral-400 mx-2 rtl:rotate-180"></i>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ol>
+  </nav>
+  {% endif %}
+
+  <!-- Page Title and Actions -->
+  <div class="flex items-center justify-between">
+    <h1 class="text-2xl lg:text-3xl font-bold text-neutral-900 dark:text-neutral-100">
+      {{ title }}
+    </h1>
+    {% if actions %}
+    <div class="flex items-center gap-3">
+      {{ actions|safe }}
+    </div>
+    {% endif %}
+  </div>
+</div>

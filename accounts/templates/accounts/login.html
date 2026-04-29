@@ -1,15 +1,194 @@
+{% comment %}
+  Login Page - Migrated to Tailwind CSS
+  Date: 2026-04-29
+  Status: ✅ Migrated from Bootstrap to Tailwind
+{% endcomment %}
 {% load static %}
 {% load widget_tweaks %}
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>تسجيل الدخول - نظام الدولية</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.rtl.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts - Cairo -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{% static 'css/style_updated.css' %}">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Tailwind CSS -->
+    <link rel="stylesheet" href="{% static 'css/output.css' %}">
+    
+    <!-- Dark Mode Initialization -->
+    <script>
+        (function() {
+            const theme = localStorage.getItem('theme');
+            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.documentElement.classList.add('dark');
+            }
+        })();
+    </script>
+</head>
+
+<body class="h-full bg-gradient-to-br from-primary-50 via-white to-secondary-50 dark:from-neutral-900 dark:via-neutral-800 dark:to-neutral-900 font-sans antialiased">
+    <div class="min-h-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-md w-full">
+            <!-- Logo and Title -->
+            <div class="text-center mb-8">
+                <div class="mx-auto h-16 w-16 rounded-full bg-primary-600 flex items-center justify-center shadow-lg">
+                    <i class="fas fa-building text-white text-2xl"></i>
+                </div>
+                <h2 class="mt-6 text-3xl font-bold text-neutral-900 dark:text-neutral-100">
+                    نظام الدولية
+                </h2>
+                <p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+                    تسجيل الدخول إلى حسابك
+                </p>
+            </div>
+            
+            <!-- Login Form Card -->
+            <div class="bg-white dark:bg-neutral-800 rounded-2xl shadow-xl p-8 border border-neutral-200 dark:border-neutral-700">
+                <!-- Messages -->
+                {% if messages %}
+                <div class="mb-6 space-y-3">
+                    {% for message in messages %}
+                    <div class="flex items-start gap-3 p-4 rounded-lg border
+                                {% if message.tags == 'error' %}
+                                    bg-error-50 dark:bg-error-900/20 border-error-200 dark:border-error-800 text-error-800 dark:text-error-200
+                                {% elif message.tags == 'success' %}
+                                    bg-success-50 dark:bg-success-900/20 border-success-200 dark:border-success-800 text-success-800 dark:text-success-200
+                                {% else %}
+                                    bg-info-50 dark:bg-info-900/20 border-info-200 dark:border-info-800 text-info-800 dark:text-info-200
+                                {% endif %}">
+                        <i class="fas {% if message.tags == 'error' %}fa-times-circle{% elif message.tags == 'success' %}fa-check-circle{% else %}fa-info-circle{% endif %} text-lg flex-shrink-0 mt-0.5"></i>
+                        <p class="flex-1 text-sm font-medium">{{ message }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <form method="post" action="{% url 'accounts:login' %}" class="space-y-6">
+                    {% csrf_token %}
+                    
+                    <!-- Username Field -->
+                    <div>
+                        <label for="username" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                            اسم المستخدم
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <i class="fas fa-user text-neutral-400"></i>
+                            </div>
+                            <input type="text" 
+                                   name="username" 
+                                   id="username" 
+                                   required
+                                   autofocus
+                                   placeholder="أدخل اسم المستخدم"
+                                   class="block w-full pr-10 pl-4 py-3 rounded-lg border border-neutral-300 dark:border-neutral-600
+                                          bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100
+                                          placeholder-neutral-400 dark:placeholder-neutral-500
+                                          focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                                          transition-colors duration-200">
+                        </div>
+                    </div>
+                    
+                    <!-- Password Field -->
+                    <div>
+                        <label for="password" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                            كلمة المرور
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                <i class="fas fa-lock text-neutral-400"></i>
+                            </div>
+                            <input type="password" 
+                                   name="password" 
+                                   id="password" 
+                                   required
+                                   placeholder="أدخل كلمة المرور"
+                                   class="block w-full pr-10 pl-4 py-3 rounded-lg border border-neutral-300 dark:border-neutral-600
+                                          bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100
+                                          placeholder-neutral-400 dark:placeholder-neutral-500
+                                          focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                                          transition-colors duration-200">
+                        </div>
+                    </div>
+                    
+                    <!-- Remember Me & Forgot Password -->
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <input type="checkbox" 
+                                   name="remember_me" 
+                                   id="remember_me"
+                                   class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-300 dark:border-neutral-600 rounded">
+                            <label for="remember_me" class="mr-2 block text-sm text-neutral-700 dark:text-neutral-300">
+                                تذكرني
+                            </label>
+                        </div>
+                        
+                        <div class="text-sm">
+                            <a href="#" class="font-medium text-primary-600 dark:text-primary-400 hover:text-primary-500">
+                                نسيت كلمة المرور؟
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <div>
+                        <button type="submit" 
+                                class="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-lg
+                                       bg-primary-600 hover:bg-primary-700 text-white
+                                       font-semibold text-base
+                                       shadow-lg hover:shadow-xl
+                                       transform hover:-translate-y-0.5
+                                       transition-all duration-200">
+                            <i class="fas fa-sign-in-alt"></i>
+                            تسجيل الدخول
+                        </button>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Footer -->
+            <div class="mt-8 text-center">
+                <p class="text-sm text-neutral-600 dark:text-neutral-400">
+                    © {% now "Y" %} نظام الدولية. جميع الحقوق محفوظة.
+                </p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Theme Toggle (Optional) -->
+    <button type="button" 
+            onclick="toggleTheme()"
+            class="fixed top-4 left-4 p-3 rounded-full bg-white dark:bg-neutral-800 shadow-lg hover:shadow-xl border border-neutral-200 dark:border-neutral-700 transition-all duration-200"
+            aria-label="تبديل الوضع">
+        <i class="fas fa-sun text-xl hidden dark:block text-amber-500"></i>
+        <i class="fas fa-moon text-xl dark:hidden text-neutral-600"></i>
+    </button>
+    
+    <!-- Scripts -->
+    <script>
+        function toggleTheme() {
+            const html = document.documentElement;
+            const isDark = html.classList.contains('dark');
+            
+            if (isDark) {
+                html.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                html.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+        }
+    </script>
+</body>
+</html>
     <style>
         :root {
             --primary-color: #1a56db;

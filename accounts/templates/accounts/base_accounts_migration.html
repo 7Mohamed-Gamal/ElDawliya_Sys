@@ -1,0 +1,37 @@
+{% comment %}
+  Migration Wrapper for Accounts App
+  Created: 2026-04-29
+  Status: In Migration
+  
+  This wrapper extends the global base.html and provides
+  app-specific customization for the accounts module.
+  
+  Migration Path:
+  - Old: extends 'accounts/base_accounts.html' (Bootstrap)
+  - New: extends 'accounts/base_accounts_migration.html' → extends 'base.html' (Tailwind)
+  - Future: extends 'base.html' (direct, after 2 weeks)
+{% endcomment %}
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+  {% block account_title %}نظام إدارة الحسابات{% endblock %}
+{% endblock %}
+
+{% block extra_css %}
+  {# Add app-specific CSS if absolutely necessary during migration #}
+  {% block account_css %}{% endblock %}
+{% endblock %}
+
+{# Override sidebar with accounts-specific menu #}
+{% block sidebar %}
+  {% include 'components/navigation/sidebar.html' with menu_items=accounts_menu_items|default:default_menu_items %}
+{% endblock %}
+
+{# Pass through all blocks #}
+{% block content %}{% endblock %}
+
+{% block extra_js %}
+  {# Add app-specific JavaScript #}
+  {% block account_js %}{% endblock %}
+{% endblock %}

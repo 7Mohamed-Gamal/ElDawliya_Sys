@@ -3,12 +3,16 @@ module.exports = {
   content: [
     './templates/**/*.html',
     './apps/**/templates/**/*.html',
+    './apps/**/*.py',
     './accounts/templates/**/*.html',
     './administrator/templates/**/*.html',
     './api/templates/**/*.html',
     './core/templates/**/*.html',
     './frontend/templates/**/*.html',
     './notifications/templates/**/*.html',
+    './companies/templates/**/*.html',
+    './org/templates/**/*.html',
+    './audit/templates/**/*.html',
     './static/js/**/*.js',
   ],
   darkMode: 'class', // Enable class-based dark mode
