@@ -159,7 +159,7 @@ def salary_list(request):
     salaries = paginator.get_page(page_number)
 
     # قوائم للفلترة
-    departments = Department.objects.filter(is_active=True).order_by('dept_name')
+    departments = Department.objects.filter(is_active=True).order_by('name')
 
     context = {
         'salaries': salaries,
@@ -894,7 +894,7 @@ def advanced_payroll_processing(request, run_id):
         return redirect('payrolls:payroll_run_detail', run_id=run_id)
 
     # بيانات النموذج
-    departments = Department.objects.filter(is_active=True).order_by('dept_name')
+    departments = Department.objects.filter(is_active=True).order_by('name')
 
     context = {
         'payroll_run': payroll_run,
@@ -1047,7 +1047,7 @@ def payroll_summary_report(request, run_id):
     department_breakdown = PayrollDetail.objects.filter(
         run=payroll_run
     ).values(
-        'emp__dept__dept_name'
+        'emp__dept__name'
     ).annotate(
         employee_count=Count('payroll_detail_id'),
         total_basic=Sum('basic_salary'),

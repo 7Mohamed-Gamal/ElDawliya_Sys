@@ -99,7 +99,7 @@
                         <option value="">جميع الأقسام</option>
                         {% for dept in departments %}
                         <option value="{{ dept.dept_id }}" {% if request.GET.department == dept.dept_id|stringformat:"s" %}selected{% endif %}>
-                            {{ dept.dept_name }}
+                            {{ dept.name }}
                         </option>
                         {% endfor %}
                     </select>
@@ -168,7 +168,7 @@
                                 </div>
                             </td>
                             <td>
-                                <span class="badge bg-info">{{ evaluation.emp.department.dept_name }}</span>
+                                <span class="badge bg-info">{{ evaluation.emp.department.name }}</span>
                             </td>
                             <td>
                                 <div>

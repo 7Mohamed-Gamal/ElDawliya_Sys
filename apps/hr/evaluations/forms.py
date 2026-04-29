@@ -223,7 +223,7 @@ class EvaluationSearchForm(forms.Form):
 
     department = forms.ModelChoiceField(
         label='القسم',
-        queryset=Department.objects.filter(is_active=True).order_by('dept_name'),
+        queryset=Department.objects.filter(is_active=True).order_by('name'),
         required=False,
         empty_label='جميع الأقسام',
         widget=forms.Select(attrs={
@@ -262,7 +262,7 @@ class BulkEvaluationForm(forms.Form):
 
     department = forms.ModelChoiceField(
         label='القسم',
-        queryset=Department.objects.filter(is_active=True).order_by('dept_name'),
+        queryset=Department.objects.filter(is_active=True).order_by('name'),
         required=False,
         empty_label='جميع الأقسام',
         widget=forms.Select(attrs={
@@ -318,7 +318,7 @@ class EvaluationReportForm(forms.Form):
 
     department = forms.ModelChoiceField(
         label='القسم',
-        queryset=Department.objects.filter(is_active=True).order_by('dept_name'),
+        queryset=Department.objects.filter(is_active=True).order_by('name'),
         required=False,
         empty_label='جميع الأقسام',
         widget=forms.Select(attrs={
@@ -394,7 +394,7 @@ class PerformanceComparisonForm(forms.Form):
 
     departments = forms.ModelMultipleChoiceField(
         label='الأقسام للمقارنة',
-        queryset=Department.objects.filter(is_active=True).order_by('dept_name'),
+        queryset=Department.objects.filter(is_active=True).order_by('name'),
         required=False,
         widget=forms.CheckboxSelectMultiple(attrs={
             'class': 'form-check-input'

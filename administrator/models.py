@@ -3,6 +3,10 @@ from django.conf import settings
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import Group
 
+# Import from unified core models to maintain backward compatibility
+from core.models.settings import SystemSetting as CoreSystemSetting
+
+
 class SystemSettings(models.Model):
     """
     System-wide settings for the application
@@ -153,3 +157,9 @@ class Module(models.Model):
     def __str__(self):
         """__str__ function"""
         return f"{self.department.name} - {self.name}"
+
+
+# Compatibility alias - use core.models.settings.SystemSetting instead
+SystemSetting = CoreSystemSetting
+
+__all__ = ['SystemSettings', 'Department', 'Module', 'SystemSetting']

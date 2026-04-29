@@ -125,7 +125,7 @@
                         <select class="form-select" id="departmentFilter">
                             <option value="">جميع الأقسام</option>
                             {% for dept in departments %}
-                            <option value="{{ dept.dept_id }}">{{ dept.dept_name }}</option>
+                            <option value="{{ dept.id }}">{{ dept.name }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -139,7 +139,7 @@
                                     </div>
                                     <div class="flex-grow-1">
                                         <div class="fw-bold">{{ employee.full_name }}</div>
-                                        <small class="text-muted">{{ employee.department.dept_name }}</small>
+                                        <small class="text-muted">{{ employee.department.name }}</small>
                                     </div>
                                     <div class="text-end">
                                         <div class="fw-bold text-warning">{{ employee.average_score|floatformat:1|default:"--" }}</div>

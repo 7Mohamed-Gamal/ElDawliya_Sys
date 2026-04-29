@@ -64,7 +64,7 @@
                 <div class="row">
                     <div class="col-sm-6">
                         <p class="mb-1"><i class="fas fa-id-card me-2"></i>{{ employee.emp_code }}</p>
-                        <p class="mb-1"><i class="fas fa-building me-2"></i>{{ employee.dept.dept_name|default:"غير محدد" }}</p>
+                        <p class="mb-1"><i class="fas fa-building me-2"></i>{{ employee.dept.name|default:"غير محدد" }}</p>
                     </div>
                     <div class="col-sm-6">
                         <p class="mb-1"><i class="fas fa-calendar me-2"></i>{{ employee.hire_date|date:"d/m/Y"|default:"غير محدد" }}</p>
@@ -189,7 +189,7 @@
                 <div class="card-body">
                     <div class="row mb-3">
                         <div class="col-sm-5"><strong>القسم:</strong></div>
-                        <div class="col-sm-7">{{ employee.dept.dept_name|default:"غير محدد" }}</div>
+                        <div class="col-sm-7">{{ employee.dept.name|default:"غير محدد" }}</div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-sm-5"><strong>الوظيفة:</strong></div>

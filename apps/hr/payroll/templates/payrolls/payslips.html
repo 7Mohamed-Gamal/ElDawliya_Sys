@@ -162,7 +162,7 @@
                         <option value="">جميع الأقسام</option>
                         {% for dept in departments %}
                         <option value="{{ dept.dept_id }}" {% if request.GET.department == dept.dept_id|stringformat:"s" %}selected{% endif %}>
-                            {{ dept.dept_name }}
+                            {{ dept.name }}
                         </option>
                         {% endfor %}
                     </select>

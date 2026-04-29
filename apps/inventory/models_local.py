@@ -1,91 +1,51 @@
 """
-Local models for inventory application.
-These models are used for the new inventory system.
+Inventory Local Models
+======================
+Local inventory models with backward compatibility for shared models.
 """
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-
-class Category(models.Model):
-    """نموذج التصنيفات"""
-    name = models.CharField(max_length=100, verbose_name=_('اسم التصنيف'))
-    description = models.TextField(blank=True, null=True, verbose_name=_('الوصف'))
-
-    class Meta:
-        """Meta class"""
-        verbose_name = _('تصنيف')
-        verbose_name_plural = _('التصنيفات')
-
-    def __str__(self):
-        """__str__ function"""
-        return self.name
+# Import from unified core models to maintain backward compatibility
+from core.models.hr import Department as CoreDepartment
+from core.models.inventory import (
+    ProductCategory as CoreCategory,
+    Unit as CoreUnit,
+    Warehouse,
+    Supplier as CoreSupplier,
+    Product as CoreProduct,
+    StockLevel,
+    StockMovement,
+)
 
 
-class Unit(models.Model):
-    """نموذج وحدات القياس"""
-    name = models.CharField(max_length=50, verbose_name=_('اسم الوحدة'))
-    symbol = models.CharField(max_length=10, verbose_name=_('الرمز'))
-
-    class Meta:
-        """Meta class"""
-        verbose_name = _('وحدة قياس')
-        verbose_name_plural = _('وحدات القياس')
-
-    def __str__(self):
-        """__str__ function"""
-        return f"{self.name} ({self.symbol})"
+# Compatibility aliases - proxy models for backward compatibility
+class Category(CoreCategory):
+    """Compatibility alias for ProductCategory"""
+    class Meta(CoreCategory.Meta):
+        proxy = True
 
 
-class Product(models.Model):
-    """نموذج المنتجات"""
-    product_id = models.CharField(max_length=100, primary_key=True, verbose_name=_('رقم الصنف'))
-    name = models.CharField(max_length=200, verbose_name=_('اسم الصنف'))
-    description = models.TextField(blank=True, null=True, verbose_name=_('الوصف'))
-    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True,
-                                 related_name='products', verbose_name=_('التصنيف'))
-    unit = models.ForeignKey(Unit, on_delete=models.SET_NULL, null=True, blank=True,
-                            related_name='products', verbose_name=_('الوحدة'))
-    initial_quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0,
-                                          verbose_name=_('الرصيد الافتتاحي'))
-    quantity = models.DecimalField(max_digits=10, decimal_places=2, default=0,
-                                   verbose_name=_('الكمية الحالية'))
-    unit_price = models.DecimalField(max_digits=10, decimal_places=2, default=0,
-                                     verbose_name=_('سعر الوحدة'))
-    minimum_threshold = models.DecimalField(max_digits=10, decimal_places=2, default=0,
-                                           verbose_name=_('الحد الأدنى'))
-    maximum_threshold = models.DecimalField(max_digits=10, decimal_places=2, default=0,
-                                           verbose_name=_('الحد الأقصى'))
-    location = models.CharField(max_length=100, blank=True, null=True, verbose_name=_('الموقع'))
-    image = models.ImageField(upload_to='products/', blank=True, null=True, verbose_name=_('الصورة'))
-
-    class Meta:
-        """Meta class"""
-        verbose_name = _('صنف')
-        verbose_name_plural = _('الأصناف')
-        ordering = ['name']
-
-    def __str__(self):
-        """__str__ function"""
-        return f"{self.product_id} - {self.name}"
+class Unit(CoreUnit):
+    """Compatibility alias for Unit"""
+    class Meta(CoreUnit.Meta):
+        proxy = True
 
 
-class Supplier(models.Model):
-    """نموذج الموردين"""
-    name = models.CharField(max_length=100, verbose_name=_('اسم المورد'))
-    contact_person = models.CharField(max_length=100, blank=True, null=True,
-                                     verbose_name=_('الشخص المسؤول'))
-    phone = models.CharField(max_length=20, blank=True, null=True, verbose_name=_('رقم الهاتف'))
-    email = models.EmailField(blank=True, null=True, verbose_name=_('البريد الإلكتروني'))
-    address = models.TextField(blank=True, null=True, verbose_name=_('العنوان'))
+class Supplier(CoreSupplier):
+    """Compatibility alias for Supplier"""
+    class Meta(CoreSupplier.Meta):
+        proxy = True
 
-    class Meta:
-        """Meta class"""
-        verbose_name = _('مورد')
-        verbose_name_plural = _('الموردين')
 
-    def __str__(self):
-        """__str__ function"""
-        return self.name
+class Product(CoreProduct):
+    """Compatibility alias for Product"""
+    class Meta(CoreProduct.Meta):
+        proxy = True
+
+
+# Compatibility alias - use core.models.hr.Department instead
+Department = CoreDepartment
 
 
 class Customer(models.Model):
@@ -101,21 +61,6 @@ class Customer(models.Model):
         """Meta class"""
         verbose_name = _('عميل')
         verbose_name_plural = _('العملاء')
-
-    def __str__(self):
-        """__str__ function"""
-        return self.name
-
-
-class Department(models.Model):
-    """نموذج الأقسام"""
-    name = models.CharField(max_length=100, verbose_name=_('اسم القسم'))
-    description = models.TextField(blank=True, null=True, verbose_name=_('الوصف'))
-
-    class Meta:
-        """Meta class"""
-        verbose_name = _('قسم')
-        verbose_name_plural = _('الأقسام')
 
     def __str__(self):
         """__str__ function"""

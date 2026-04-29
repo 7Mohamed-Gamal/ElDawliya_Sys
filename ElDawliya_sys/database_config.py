@@ -1,96 +1,80 @@
 """
 إعدادات قاعدة البيانات المحسنة لنظام الموارد البشرية
+Enhanced database settings for HR System
 """
 
 import os
 from django.core.exceptions import ImproperlyConfigured
 
+
 def get_database_config():
     """
     إرجاع إعدادات قاعدة البيانات المحسنة
+    Returns enhanced database configuration using environment variables
     """
-
-    # إعدادات قاعدة البيانات الأساسية
+    
+    # Get database engine from environment
+    db_engine = os.environ.get('DB_ENGINE', 'mssql')
+    
+    # SQL Server Configuration
     default_db_config = {
-        'ENGINE': 'mssql',
+        'ENGINE': db_engine,
         'NAME': os.environ.get('DB_NAME', 'ElDawliya_Sys'),
-        'HOST': os.environ.get('DB_HOST', ''),
+        'HOST': os.environ.get('DB_HOST', '192.168.56.1'),
         'PORT': os.environ.get('DB_PORT', '1433'),
-        'USER': os.environ.get('DB_USER', ''),
-        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+        'USER': os.environ.get('DB_USER', 'admin'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', 'hgslduhgfwdv'),
         'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
-            'Trusted_Connection': 'no',
-            'MARS_Connection': 'yes',  # تفعيل Multiple Active Result Sets
-            'charset': 'utf8',
-            'collation': 'Arabic_CI_AS',  # ترتيب عربي
-            'init_command': "SET NAMES 'utf8' COLLATE 'utf8_unicode_ci'",
-            'autocommit': True,
-            'isolation_level': 'read committed',
-            'timeout': 30,  # مهلة الاتصال
-            'query_timeout': 60,  # مهلة الاستعلام
-            'connection_timeout': 30,  # مهلة الاتصال
-            'command_timeout': 60,  # مهلة الأمر
-            'pool_size': 10,  # حجم مجموعة الاتصالات
-            'max_overflow': 20,  # الحد الأقصى للاتصالات الإضافية
-            'pool_recycle': 3600,  # إعادة تدوير الاتصالات كل ساعة
-            'pool_pre_ping': True,  # فحص الاتصال قبل الاستخدام
-        },
-        'TEST': {
-            'NAME': 'test_ElDawliya_Sys',
-            'CHARSET': 'utf8',
-            'COLLATION': 'Arabic_CI_AS',
-        }
-    }
-
-    # إعدادات قاعدة البيانات الاحتياطية
-    backup_db_config = {
-        'ENGINE': 'mssql',
-        'NAME': os.environ.get('BACKUP_DB_NAME', 'ElDawliya_Sys'),
-        'HOST': os.environ.get('BACKUP_DB_HOST', ''),
-        'PORT': os.environ.get('BACKUP_DB_PORT', '1433'),
-        'USER': os.environ.get('BACKUP_DB_USER', ''),
-        'PASSWORD': os.environ.get('BACKUP_DB_PASSWORD', '')
-        'OPTIONS': {
-            'driver': 'ODBC Driver 17 for SQL Server',
-            'Trusted_Connection': 'yes',
+            'driver': os.environ.get('DB_DRIVER', 'ODBC Driver 17 for SQL Server'),
+            'Trusted_Connection': os.environ.get('DB_TRUSTED', 'no'),
             'MARS_Connection': 'yes',
             'charset': 'utf8',
             'collation': 'Arabic_CI_AS',
-            'init_command': "SET NAMES 'utf8' COLLATE 'utf8_unicode_ci'",
             'autocommit': True,
             'isolation_level': 'read committed',
             'timeout': 30,
             'query_timeout': 60,
             'connection_timeout': 30,
             'command_timeout': 60,
-            'pool_size': 10,
-            'max_overflow': 20,
-            'pool_recycle': 3600,
-            'pool_pre_ping': True,
         },
         'TEST': {
-            'NAME': 'test_ElDawliya_Sys_backup',
+            'NAME': f"test_{os.environ.get('DB_NAME', 'ElDawliya_Sys')}",
             'CHARSET': 'utf8',
             'COLLATION': 'Arabic_CI_AS',
         }
     }
-
-    # إعدادات قاعدة بيانات للقراءة فقط (للتقارير)
-    readonly_db_config = default_db_config.copy()
-    readonly_db_config['OPTIONS']['readonly'] = True
-    readonly_db_config['OPTIONS']['autocommit'] = False
-
-    # إعدادات قاعدة بيانات للتحليلات
-    analytics_db_config = default_db_config.copy()
-    analytics_db_config['NAME'] = os.environ.get('ANALYTICS_DB_NAME', 'ElDawliya_Analytics')
-    analytics_db_config['OPTIONS']['pool_size'] = 5  # حجم أصغر للتحليلات
-
+    
+    # Backup Database Configuration (Optional)
+    backup_db_config = {
+        'ENGINE': db_engine,
+        'NAME': os.environ.get('BACKUP_DB_NAME', 'ElDawliya_Sys_Backup'),
+        'HOST': os.environ.get('BACKUP_DB_HOST', 'localhost'),
+        'PORT': os.environ.get('BACKUP_DB_PORT', '1433'),
+        'USER': os.environ.get('BACKUP_DB_USER', ''),
+        'PASSWORD': os.environ.get('BACKUP_DB_PASSWORD', ''),
+        'OPTIONS': {
+            'driver': os.environ.get('DB_DRIVER', 'ODBC Driver 17 for SQL Server'),
+            'Trusted_Connection': 'yes',
+            'MARS_Connection': 'yes',
+            'charset': 'utf8',
+            'collation': 'Arabic_CI_AS',
+            'autocommit': True,
+            'isolation_level': 'read committed',
+            'timeout': 30,
+            'query_timeout': 60,
+            'connection_timeout': 30,
+            'command_timeout': 60,
+        },
+        'TEST': {
+            'NAME': f"test_{os.environ.get('BACKUP_DB_NAME', 'ElDawliya_Sys_Backup')}",
+            'CHARSET': 'utf8',
+            'COLLATION': 'Arabic_CI_AS',
+        }
+    }
+    
     return {
         'default': default_db_config,
-        'primary': backup_db_config,
-        'readonly': readonly_db_config,
-        'analytics': analytics_db_config,
+        'backup': backup_db_config,
     }
 
 def get_database_router_config():

@@ -83,7 +83,7 @@ def employee_list(request):
     employees = paginator.get_page(page_number)
 
     # قائمة الأقسام للفلترة
-    departments = Department.objects.filter(is_active=True).order_by('dept_name')
+    departments = Department.objects.filter(is_active=True).order_by('name')
 
     context = {
         'employees': employees,
@@ -154,8 +154,8 @@ def employee_delete(request, emp_id):
 def department_list(request):
     """عرض قائمة الأقسام"""
     departments = Department.objects.annotate(
-        employee_count=Count('employee')
-    ).order_by('dept_name')
+        employee_count=Count('employees')
+    ).order_by('name')
 
     context = {
         'departments': departments,
@@ -182,14 +182,12 @@ def job_list(request):
 @login_required
 def get_departments_by_branch(request):
     """API لجلب الأقسام حسب الفرع"""
-    branch_id = request.GET.get('branch_id')
-    if branch_id:
-        departments = Department.objects.filter(
-            branch_id=branch_id,
-            is_active=True
-        ).values('dept_id', 'dept_name')
-        return JsonResponse(list(departments), safe=False)
-    return JsonResponse([], safe=False)
+    # Note: core.models.hr.Department doesn't have branch field
+    # Returning all active departments
+    departments = Department.objects.filter(
+        is_active=True
+    ).values('id', 'name')
+    return JsonResponse(list(departments), safe=False)
 
 
 @login_required
@@ -249,7 +247,7 @@ def add_department(request):
         form = DepartmentForm(request.POST)
         if form.is_valid():
             department = form.save()
-            messages.success(request, f'تم إضافة القسم {department.dept_name} بنجاح.')
+            messages.success(request, f'تم إضافة القسم {department.name} بنجاح.')
             return redirect('employees:department_list')
         else:
             messages.error(request, 'يرجى تصحيح الأخطاء أدناه.')
@@ -267,7 +265,7 @@ def add_department(request):
 @login_required
 def department_detail(request, dept_id):
     """عرض تفاصيل قسم"""
-    department = get_object_or_404(Department, dept_id=dept_id)
+    department = get_object_or_404(Department, id=dept_id)
     employees = Employee.objects.filter(dept=department).order_by('emp_code')
 
     context = {
@@ -283,14 +281,14 @@ def edit_department(request, dept_id):
     """تعديل قسم"""
     from .forms import DepartmentForm
 
-    department = get_object_or_404(Department, dept_id=dept_id)
+    department = get_object_or_404(Department, id=dept_id)
 
     if request.method == 'POST':
         form = DepartmentForm(request.POST, instance=department)
         if form.is_valid():
             department = form.save()
-            messages.success(request, f'تم تحديث القسم {department.dept_name} بنجاح.')
-            return redirect('employees:department_detail', dept_id=department.dept_id)
+            messages.success(request, f'تم تحديث القسم {department.name} بنجاح.')
+            return redirect('employees:department_detail', dept_id=department.id)
         else:
             messages.error(request, 'يرجى تصحيح الأخطاء أدناه.')
     else:
@@ -309,8 +307,8 @@ def edit_department(request, dept_id):
 @require_http_methods(["POST"])
 def delete_department(request, dept_id):
     """حذف قسم"""
-    department = get_object_or_404(Department, dept_id=dept_id)
-    department_name = department.dept_name
+    department = get_object_or_404(Department, id=dept_id)
+    department_name = department.name
 
     try:
         # التحقق من وجود موظفين في القسم
@@ -461,7 +459,7 @@ def export_employees(request):
             emp.emp_code,
             emp.first_name,
             emp.last_name,
-            emp.dept.dept_name if emp.dept else '',
+            emp.dept.name if emp.dept else '',
             emp.job.job_title if emp.job else '',
             emp.emp_status
         ])
@@ -473,9 +471,9 @@ def export_employees(request):
 def department_summary(request):
     """ملخص الأقسام"""
     departments = Department.objects.annotate(
-        employee_count=Count('employee'),
-        active_count=Count('employee', filter=Q(employee__emp_status='Active'))
-    ).order_by('dept_name')
+        employee_count=Count('employees'),
+        active_count=Count('employees', filter=Q(employees__emp_status='Active'))
+    ).order_by('name')
 
     context = {
         'departments': departments,
@@ -497,7 +495,7 @@ def get_employee_ajax(request, emp_id):
             'last_name': employee.last_name,
             'email': employee.email,
             'mobile': employee.mobile,
-            'dept_name': employee.dept.dept_name if employee.dept else '',
+            'dept_name': employee.dept.name if employee.dept else '',
             'job_title': employee.job.job_title if employee.job else '',
             'emp_status': employee.emp_status,
         }

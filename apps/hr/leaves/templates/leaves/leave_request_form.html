@@ -148,7 +148,7 @@
                                     {% for emp in employees %}
                                     <option value="{{ emp.emp_id }}" 
                                             {% if leave and leave.emp.emp_id == emp.emp_id %}selected{% endif %}
-                                            data-dept="{{ emp.dept.dept_name|default:'غير محدد' }}"
+                                            data-dept="{{ emp.dept.name|default:'غير محدد' }}"
                                             data-job="{{ emp.job.job_title|default:'غير محدد' }}">
                                         {{ emp.first_name }} {{ emp.last_name }} - {{ emp.emp_code }}
                                     </option>

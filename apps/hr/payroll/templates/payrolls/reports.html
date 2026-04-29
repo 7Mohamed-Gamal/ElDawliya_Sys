@@ -202,7 +202,7 @@
                     <option value="">جميع الأقسام</option>
                     {% for dept in departments %}
                     <option value="{{ dept.dept_id }}" {% if request.GET.department == dept.dept_id|stringformat:"s" %}selected{% endif %}>
-                        {{ dept.dept_name }}
+                        {{ dept.name }}
                     </option>
                     {% endfor %}
                 </select>
@@ -372,7 +372,7 @@
                                         </div>
                                     </div>
                                 </td>
-                                <td>{{ payroll.employee.dept.dept_name|default:"غير محدد" }}</td>
+                                <td>{{ payroll.employee.dept.name|default:"غير محدد" }}</td>
                                 <td>{{ payroll.employee.job.job_title|default:"غير محدد" }}</td>
                                 <td>
                                     <span class="fw-bold">{{ payroll.basic_salary|floatformat:2 }}</span>
@@ -627,7 +627,7 @@
                         <label class="form-label">الأقسام المطلوبة</label>
                         <select class="form-select" name="custom_departments" multiple>
                             {% for dept in departments %}
-                            <option value="{{ dept.dept_id }}">{{ dept.dept_name }}</option>
+                            <option value="{{ dept.id }}">{{ dept.name }}</option>
                             {% endfor %}
                         </select>
                         <small class="text-muted">اتركه فارغاً لتشمل جميع الأقسام</small>

@@ -8,12 +8,8 @@ class BranchAdmin(admin.ModelAdmin):
     search_fields = ('branch_name', 'phone')
     list_filter = ('is_active', 'company')
 
-@admin.register(Department)
-class DepartmentAdmin(admin.ModelAdmin):
-    """DepartmentAdmin class"""
-    list_display = ('dept_id', 'dept_name', 'branch', 'is_active')
-    search_fields = ('dept_name',)
-    list_filter = ('is_active', 'branch')
+# Note: Department admin is already registered in core/admin/
+# The Department model is now imported from core.models.hr
 
 @admin.register(Job)
 class JobAdmin(admin.ModelAdmin):

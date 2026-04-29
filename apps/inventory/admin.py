@@ -58,21 +58,18 @@ class CategoryAdmin(admin.ModelAdmin):
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     """ProductAdmin class"""
-    list_display = ['product_id', 'name', 'category', 'unit', 'quantity']
-    search_fields = ['product_id', 'name', 'description']
-    list_filter = ['category', 'unit']
+    list_display = ['code', 'name', 'category', 'unit', 'product_type']
+    search_fields = ['code', 'name', 'description']
+    list_filter = ['category', 'unit', 'product_type']
     fieldsets = (
-        (_('معلومات المنتج الأساسية'), {
-            'fields': ('product_id', 'name', 'description', 'category', 'unit', 'image')
+        ('معلومات المنتج الأساسية', {
+            'fields': ('code', 'name', 'barcode', 'description', 'category', 'unit', 'product_type', 'image')
         }),
-        (_('معلومات المخزون'), {
-            'fields': ('initial_quantity', 'quantity', 'minimum_threshold', 'maximum_threshold')
+        ('معلومات المخزون', {
+            'fields': ('min_stock_level', 'max_stock_level')
         }),
-        (_('معلومات السعر'), {
-            'fields': ('unit_price',)
-        }),
-        (_('معلومات إضافية'), {
-            'fields': ('location',)
+        ('معلومات السعر', {
+            'fields': ('cost_price', 'selling_price')
         }),
     )
 
@@ -88,11 +85,8 @@ class CustomerAdmin(admin.ModelAdmin):
     list_display = ['name', 'contact_person', 'phone', 'email']
     search_fields = ['name', 'contact_person', 'phone', 'email']
 
-@admin.register(Department)
-class DepartmentAdmin(admin.ModelAdmin):
-    """DepartmentAdmin class"""
-    list_display = ['name', 'description']
-    search_fields = ['name', 'description']
+# Note: Department admin is already registered in core/admin/
+# Remove duplicate registration to avoid AlreadyRegistered error
 
 class VoucherItemInline(admin.TabularInline):
     """VoucherItemInline class"""

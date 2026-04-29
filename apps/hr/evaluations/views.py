@@ -146,7 +146,7 @@ def evaluation_list(request):
 
     # قوائم للفلترة
     periods = EvaluationPeriod.objects.all().order_by('-start_date')
-    departments = Department.objects.filter(is_active=True).order_by('dept_name')
+    departments = Department.objects.filter(is_active=True).order_by('name')
 
     context = {
         'evaluations': evaluations,

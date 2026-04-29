@@ -1,6 +1,7 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+
 class Voucher(models.Model):
     """Voucher class"""
     VOUCHER_TYPES = (
@@ -14,7 +15,7 @@ class Voucher(models.Model):
     voucher_type = models.CharField(max_length=20, choices=VOUCHER_TYPES, verbose_name=_("نوع الإذن"))
     date = models.DateField(verbose_name=_("تاريخ الإذن"))
     supplier = models.ForeignKey('Supplier', on_delete=models.SET_NULL, null=True, blank=True, related_name="vouchers", verbose_name=_("المورد"))
-    department = models.ForeignKey('Department', on_delete=models.SET_NULL, null=True, blank=True, related_name="vouchers", verbose_name=_("القسم"))
+    department = models.ForeignKey('core.Department', on_delete=models.SET_NULL, null=True, blank=True, related_name="inventory_vouchers", verbose_name=_("القسم"))
     customer = models.ForeignKey('Customer', on_delete=models.SET_NULL, null=True, blank=True, related_name="vouchers", verbose_name=_("العميل"))
     supplier_voucher_number = models.CharField(max_length=100, null=True, blank=True, verbose_name=_("رقم إذن المورد"))
     recipient = models.CharField(max_length=100, null=True, blank=True, verbose_name=_("المستلم"))

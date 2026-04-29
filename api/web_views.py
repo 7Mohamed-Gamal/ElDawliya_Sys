@@ -378,7 +378,7 @@ def test_ai_config(request):
             if provider.name == 'gemini':
                 # اختبار Gemini
                 try:
-                    import google.generativeai as genai
+                    import google.genai as genai
                     genai.configure(api_key=api_key)
                     model = genai.GenerativeModel(model_name)
 

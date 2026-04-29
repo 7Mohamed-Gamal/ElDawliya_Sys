@@ -33,7 +33,7 @@
                     {% for dept in departments %}
                         <option value="{{ dept.dept_id }}" 
                                 {% if request.GET.department == dept.dept_id|stringformat:"s" %}selected{% endif %}>
-                            {{ dept.dept_name }}
+                            {{ dept.name }}
                         </option>
                     {% endfor %}
                 </select>
@@ -120,7 +120,7 @@
                                     </div>
                                 </div>
                             </td>
-                            <td>{{ employee.dept.dept_name }}</td>
+                            <td>{{ employee.dept.name }}</td>
                             <td>{{ employee.job.job_title }}</td>
                             <td>
                                 {% if employee.email %}

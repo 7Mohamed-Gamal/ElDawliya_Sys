@@ -48,18 +48,18 @@ class ProductForm(forms.ModelForm):
     class Meta:
         """Meta class"""
         model = Product
-        fields = ['product_id', 'name', 'category', 'unit', 'initial_quantity', 'quantity', 'unit_price', 'minimum_threshold', 'maximum_threshold', 'location', 'description', 'image']
+        fields = ['code', 'name', 'barcode', 'category', 'unit', 'product_type', 'cost_price', 'selling_price', 'min_stock_level', 'max_stock_level', 'description', 'image']
         widgets = {
-            'product_id': forms.TextInput(attrs={'class': 'form-control', 'required': True}),
+            'code': forms.TextInput(attrs={'class': 'form-control', 'required': True}),
             'name': forms.TextInput(attrs={'class': 'form-control', 'required': True}),
+            'barcode': forms.TextInput(attrs={'class': 'form-control'}),
             'category': forms.Select(attrs={'class': 'form-select'}),
             'unit': forms.Select(attrs={'class': 'form-select'}),
-            'initial_quantity': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01', 'value': '0'}),
-            'quantity': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01', 'value': '0'}),
-            'unit_price': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01', 'value': '0'}),
-            'minimum_threshold': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01', 'value': '0'}),
-            'maximum_threshold': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01', 'value': '0'}),
-            'location': forms.TextInput(attrs={'class': 'form-control'}),
+            'product_type': forms.Select(attrs={'class': 'form-select'}),
+            'cost_price': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01'}),
+            'selling_price': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01'}),
+            'min_stock_level': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01'}),
+            'max_stock_level': forms.NumberInput(attrs={'class': 'form-control', 'min': '0', 'step': '0.01'}),
             'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'image': forms.FileInput(attrs={'class': 'form-control'}),
         }
@@ -68,14 +68,14 @@ class ProductForm(forms.ModelForm):
         """__init__ function"""
         super().__init__(*args, **kwargs)
         # جعل الحقول الأساسية إلزامية
-        self.fields['product_id'].required = True
+        self.fields['code'].required = True
         self.fields['name'].required = True
 
         # جعل الحقول الأخرى غير إلزامية
         self.fields['category'].required = False
         self.fields['unit'].required = False
-        self.fields['initial_quantity'].required = False
-        self.fields['quantity'].required = False
+        self.fields['cost_price'].required = False
+        self.fields['selling_price'].required = False
 
 class CustomerForm(forms.ModelForm):
     """CustomerForm class"""
@@ -96,13 +96,21 @@ class SupplierForm(forms.ModelForm):
     class Meta:
         """Meta class"""
         model = Supplier
-        fields = ['name', 'contact_person', 'phone', 'email', 'address']
+        fields = ['name', 'code', 'supplier_type', 'contact_person', 'phone', 'mobile', 'email', 'street_address', 'city', 'state_province', 'country', 'payment_terms', 'is_active']
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'code': forms.TextInput(attrs={'class': 'form-control'}),
+            'supplier_type': forms.Select(attrs={'class': 'form-select'}),
             'contact_person': forms.TextInput(attrs={'class': 'form-control'}),
             'phone': forms.TextInput(attrs={'class': 'form-control'}),
+            'mobile': forms.TextInput(attrs={'class': 'form-control'}),
             'email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'street_address': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'city': forms.TextInput(attrs={'class': 'form-control'}),
+            'state_province': forms.TextInput(attrs={'class': 'form-control'}),
+            'country': forms.TextInput(attrs={'class': 'form-control'}),
+            'payment_terms': forms.Select(attrs={'class': 'form-select'}),
+            'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
 class DepartmentForm(forms.ModelForm):
@@ -153,13 +161,13 @@ class VoucherForm(forms.ModelForm):
     class Meta:
         """Meta class"""
         model = Voucher
-        fields = ['voucher_number', 'voucher_type', 'date', 'supplier', 'department', 'customer', 'supplier_voucher_number', 'recipient', 'notes']
+        # Exclude department field to avoid circular import - it will be added manually
+        fields = ['voucher_number', 'voucher_type', 'date', 'supplier', 'customer', 'supplier_voucher_number', 'recipient', 'notes']
         widgets = {
             'voucher_number': forms.TextInput(attrs={'class': 'form-control'}),
             'voucher_type': forms.Select(attrs={'class': 'form-select'}),
             'date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'supplier': forms.Select(attrs={'class': 'form-select'}),
-            'department': forms.Select(attrs={'class': 'form-select'}),
             'customer': forms.Select(attrs={'class': 'form-select'}),
             'supplier_voucher_number': forms.TextInput(attrs={'class': 'form-control'}),
             'recipient': forms.TextInput(attrs={'class': 'form-control'}),
@@ -169,6 +177,13 @@ class VoucherForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         """__init__ function"""
         super().__init__(*args, **kwargs)
+        # Add department field manually to avoid circular import
+        from org.models import Department
+        self.fields['department'] = forms.ModelChoiceField(
+            queryset=Department.objects.all(),
+            required=False,
+            widget=forms.Select(attrs={'class': 'form-select'})
+        )
         # Make fields conditionally required based on voucher type
         self.fields['supplier'].required = False
         self.fields['department'].required = False

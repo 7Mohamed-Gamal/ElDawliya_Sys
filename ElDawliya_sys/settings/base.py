@@ -171,12 +171,11 @@ ASGI_APPLICATION = 'ElDawliya_sys.asgi.application'
 # DATABASE CONFIGURATION
 # ================================================================
 
+# Get database configuration from database_config module
+from ElDawliya_sys.database_config import get_database_config
 from .config import config_manager
 
-# Get database configuration from config manager
-DATABASES = {
-    'default': config_manager.get_database_config()
-}
+DATABASES = get_database_config()
 
 # Active database setting for router
 ACTIVE_DB = 'default'

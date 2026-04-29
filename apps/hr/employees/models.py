@@ -36,7 +36,7 @@ class Employee(models.Model):
     join_date = models.DateField(db_column='JoinDate', blank=True, null=True, verbose_name='تاريخ الالتحاق')
     probation_end = models.DateField(db_column='ProbationEnd', blank=True, null=True, verbose_name='تاريخ انتهاء فترة التجربة')
     job = models.ForeignKey(Job, on_delete=models.PROTECT, db_column='JobID', related_name='employees', verbose_name='الوظيفة')
-    dept = models.ForeignKey(Department, on_delete=models.PROTECT, db_column='DeptID', related_name='employees', verbose_name='القسم')
+    dept = models.ForeignKey(Department, on_delete=models.PROTECT, db_column='DeptID', related_name='employees_legacy', verbose_name='القسم')
     branch = models.ForeignKey(Branch, on_delete=models.PROTECT, db_column='BranchID', related_name='employees', verbose_name='الفرع')
     manager = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, db_column='ManagerID',
                                related_name='subordinates', verbose_name='المدير المباشر')

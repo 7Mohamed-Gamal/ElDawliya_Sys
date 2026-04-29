@@ -120,7 +120,7 @@ class EmployeeForm(forms.ModelForm):
 
         # تخصيص خيارات القوائم المنسدلة
         self.fields['job'].queryset = Job.objects.filter(is_active=True).order_by('job_title')
-        self.fields['dept'].queryset = Department.objects.filter(is_active=True).order_by('dept_name')
+        self.fields['dept'].queryset = Department.objects.filter(is_active=True).order_by('name')
         self.fields['branch'].queryset = Branch.objects.filter(is_active=True).order_by('branch_name')
 
         # تخصيص خيارات المدير المباشر (استبعاد الموظف نفسه)
@@ -350,7 +350,7 @@ class EmployeeSearchForm(forms.Form):
 
     department = forms.ModelChoiceField(
         label='القسم',
-        queryset=Department.objects.filter(is_active=True).order_by('dept_name'),
+        queryset=Department.objects.filter(is_active=True).order_by('name'),
         required=False,
         empty_label='جميع الأقسام',
         widget=forms.Select(attrs={
@@ -400,22 +400,43 @@ class DepartmentForm(forms.ModelForm):
     class Meta:
         """Meta class"""
         model = Department
-        fields = ['dept_name', 'parent_dept', 'branch', 'manager_id', 'is_active']
+        fields = ['name', 'name_en', 'code', 'parent_department', 'manager', 'budget', 'cost_center', 'location', 'description', 'is_active']
 
         widgets = {
-            'dept_name': forms.TextInput(attrs={
+            'name': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'اسم القسم'
             }),
-            'parent_dept': forms.Select(attrs={
-                'class': 'form-select'
-            }),
-            'branch': forms.Select(attrs={
-                'class': 'form-select'
-            }),
-            'manager_id': forms.NumberInput(attrs={
+            'name_en': forms.TextInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'معرف المدير'
+                'placeholder': 'Department Name in English'
+            }),
+            'code': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'رمز القسم'
+            }),
+            'parent_department': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'manager': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'budget': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'الميزانية'
+            }),
+            'cost_center': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'مركز التكلفة'
+            }),
+            'location': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'الموقع'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'الوصف'
             }),
             'is_active': forms.CheckboxInput(attrs={
                 'class': 'form-check-input'
@@ -427,12 +448,10 @@ class DepartmentForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         # تخصيص خيارات القوائم المنسدلة
-        self.fields['parent_dept'].queryset = Department.objects.filter(is_active=True).order_by('dept_name')
-        self.fields['branch'].queryset = Branch.objects.filter(is_active=True).order_by('branch_name')
-
+        self.fields['parent_department'].queryset = Department.objects.filter(is_active=True).order_by('name')
+        
         # إضافة خيارات فارغة
-        self.fields['parent_dept'].empty_label = "لا يوجد قسم أب"
-        self.fields['branch'].empty_label = "اختر الفرع"
+        self.fields['parent_department'].empty_label = "لا يوجد قسم أب"
 
 
 class JobForm(forms.ModelForm):

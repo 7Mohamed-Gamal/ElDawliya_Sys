@@ -314,7 +314,7 @@ class LeavePolicy(models.Model):
     policy_id = models.AutoField(primary_key=True)
     policy_name = models.CharField(max_length=100, verbose_name='اسم السياسة')
     leave_type = models.ForeignKey(LeaveType, on_delete=models.CASCADE, verbose_name='نوع الإجازة')
-    department = models.ForeignKey('org.Department', on_delete=models.CASCADE, blank=True, null=True, verbose_name='القسم')
+    department = models.ForeignKey('core.Department', on_delete=models.CASCADE, blank=True, null=True, verbose_name='القسم', related_name='leave_policies')
     job_position = models.ForeignKey('org.Job', on_delete=models.CASCADE, blank=True, null=True, verbose_name='المنصب')
     min_service_years = models.IntegerField(default=0, verbose_name='الحد الأدنى لسنوات الخدمة')
     max_consecutive_days = models.IntegerField(blank=True, null=True, verbose_name='الحد الأقصى للأيام المتتالية')

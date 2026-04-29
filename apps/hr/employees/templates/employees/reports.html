@@ -59,7 +59,7 @@
                         <option value="">جميع الأقسام</option>
                         {% for dept in departments %}
                         <option value="{{ dept.dept_id }}" {% if request.GET.department == dept.dept_id|stringformat:"s" %}selected{% endif %}>
-                            {{ dept.dept_name }}
+                            {{ dept.name }}
                         </option>
                         {% endfor %}
                     </select>
@@ -221,7 +221,7 @@
                                 {% for dept_report in department_reports %}
                                 <tr>
                                     <td>
-                                        <strong>{{ dept_report.dept_name }}</strong>
+                                        <strong>{{ dept_report.name }}</strong>
                                     </td>
                                     <td>{{ dept_report.total_employees }}</td>
                                     <td>
@@ -354,7 +354,7 @@ const deptCtx = document.getElementById('departmentChart').getContext('2d');
 const departmentChart = new Chart(deptCtx, {
     type: 'doughnut',
     data: {
-        labels: [{% for dept in department_stats %}'{{ dept.dept_name }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+        labels: [{% for dept in department_stats %}'{{ dept.name }}'{% if not forloop.last %},{% endif %}{% endfor %}],
         datasets: [{
             data: [{% for dept in department_stats %}{{ dept.employee_count }}{% if not forloop.last %},{% endif %}{% endfor %}],
             backgroundColor: [

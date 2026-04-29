@@ -352,7 +352,7 @@ class PayrollSearchForm(forms.Form):
 
     department = forms.ModelChoiceField(
         label='القسم',
-        queryset=Department.objects.filter(is_active=True).order_by('dept_name'),
+        queryset=Department.objects.filter(is_active=True).order_by('name'),
         required=False,
         empty_label='جميع الأقسام',
         widget=forms.Select(attrs={
@@ -410,7 +410,7 @@ class BulkSalaryUpdateForm(forms.Form):
 
     department = forms.ModelChoiceField(
         label='القسم',
-        queryset=Department.objects.filter(is_active=True).order_by('dept_name'),
+        queryset=Department.objects.filter(is_active=True).order_by('name'),
         required=False,
         empty_label='جميع الأقسام',
         widget=forms.Select(attrs={
@@ -527,7 +527,7 @@ class PayrollReportForm(forms.Form):
 
     department = forms.ModelChoiceField(
         label='القسم',
-        queryset=Department.objects.filter(is_active=True).order_by('dept_name'),
+        queryset=Department.objects.filter(is_active=True).order_by('name'),
         required=False,
         empty_label='جميع الأقسام',
         widget=forms.Select(attrs={

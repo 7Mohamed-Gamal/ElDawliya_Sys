@@ -206,7 +206,7 @@ def loan_list(request):
 
     # قوائم للفلترة
     loan_types = LoanType.objects.all().order_by('type_name')
-    departments = Department.objects.filter(is_active=True).order_by('dept_name')
+    departments = Department.objects.filter(is_active=True).order_by('name')
 
     context = {
         'loans': loans,

@@ -1,5 +1,14 @@
+"""
+Org Models - Compatibility Layer
+================================
+This module provides backward compatibility by re-exporting models from core.models.
+All actual model definitions have been moved to core/models/ to avoid duplication.
+"""
 from django.db import models
 from companies.models import Company
+
+# Import from unified core models to maintain backward compatibility
+from core.models.hr import Department as CoreDepartment
 
 
 class Branch(models.Model):
@@ -23,24 +32,8 @@ class Branch(models.Model):
         return self.branch_name
 
 
-class Department(models.Model):
-    """Department class"""
-    dept_id = models.AutoField(primary_key=True, db_column='DeptID')
-    dept_name = models.CharField(max_length=150, db_column='DeptName')
-    parent_dept = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True, db_column='ParentDeptID')
-    branch = models.ForeignKey(Branch, on_delete=models.PROTECT, db_column='BranchID')
-    manager_id = models.IntegerField(db_column='ManagerID', blank=True, null=True)
-    is_active = models.BooleanField(db_column='IsActive', default=True)
-
-    class Meta:
-        """Meta class"""
-        db_table = 'Departments'
-        verbose_name = 'القسم'
-        verbose_name_plural = 'الأقسام'
-
-    def __str__(self):
-        """__str__ function"""
-        return self.dept_name
+# Compatibility alias - use core.models.hr.Department instead
+Department = CoreDepartment
 
 
 class Job(models.Model):
@@ -62,4 +55,5 @@ class Job(models.Model):
         """__str__ function"""
         return self.job_title
 
-# Create your models here.
+
+__all__ = ['Branch', 'Department', 'Job']

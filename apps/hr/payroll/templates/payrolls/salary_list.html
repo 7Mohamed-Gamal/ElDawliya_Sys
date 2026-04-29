@@ -90,7 +90,7 @@
                         <option value="">جميع الأقسام</option>
                         {% for dept in departments %}
                         <option value="{{ dept.dept_id }}" {% if request.GET.department == dept.dept_id|stringformat:"s" %}selected{% endif %}>
-                            {{ dept.dept_name }}
+                            {{ dept.name }}
                         </option>
                         {% endfor %}
                     </select>
@@ -174,7 +174,7 @@
                                 </div>
                             </td>
                             <td>
-                                <span class="badge bg-primary">{{ salary.emp.department.dept_name }}</span>
+                                <span class="badge bg-primary">{{ salary.emp.department.name }}</span>
                             </td>
                             <td>
                                 <div class="salary-amount">{{ salary.basic_salary|floatformat:2|default:"0.00" }}</div>
