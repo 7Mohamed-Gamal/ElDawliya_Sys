@@ -1,0 +1,13 @@
+{% comment %}
+  Form Group Wrapper
+  Usage: Wrap multiple form components
+  {% include 'components/forms/form_group.html' with action="" method="POST" extra_class="" %}
+{% endcomment %}
+
+<form action="{{ action|default:'' }}" 
+      method="{{ method|default:'POST' }}" 
+      class="space-y-6 {{ extra_class|default:'' }}"
+      {% if enctype %}enctype="{{ enctype }}"{% endif %}>
+  {% csrf_token %}
+  {{ children|safe }}
+</form>

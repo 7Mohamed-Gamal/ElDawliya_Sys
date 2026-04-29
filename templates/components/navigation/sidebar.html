@@ -1,0 +1,79 @@
+{% comment %}
+  Sidebar Component
+  Usage: {% include 'components/navigation/sidebar.html' %}
+  
+  Requires context:
+  - menu_items: List of menu items with structure:
+    [
+      {
+        'title': 'الرئيسية',
+        'icon': 'fas fa-home',
+        'url': 'home',
+        'active': True/False,
+        'children': [...]  # optional submenu
+      }
+    ]
+{% endcomment %}
+
+<aside class="sidebar">
+  <!-- Logo -->
+  <div class="p-6 border-b border-neutral-200 dark:border-neutral-700">
+    <a href="{% url 'home' %}" class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg bg-primary-600 flex items-center justify-center">
+        <i class="fas fa-building text-white text-xl"></i>
+      </div>
+      <div>
+        <h1 class="text-lg font-bold text-neutral-900 dark:text-neutral-100">إلضولية</h1>
+        <p class="text-xs text-neutral-500 dark:text-neutral-400">النظام الإداري</p>
+      </div>
+    </a>
+  </div>
+
+  <!-- Navigation Menu -->
+  <nav class="flex-1 overflow-y-auto py-4" aria-label="القائمة الرئيسية">
+    <ul class="space-y-1 px-3">
+      {% for item in menu_items|default:default_menu_items %}
+      <li>
+        {% if item.children %}
+        <!-- Menu with Submenu -->
+        <details class="group" {% if item.active %}open{% endif %}>
+          <summary class="sidebar-item cursor-pointer list-none">
+            <i class="{{ item.icon|default:'fas fa-circle' }} text-lg"></i>
+            <span class="flex-1">{{ item.title }}</span>
+            <i class="fas fa-chevron-down text-sm transition-transform group-open:rotate-180"></i>
+          </summary>
+          <ul class="mt-1 ms-4 space-y-1">
+            {% for child in item.children %}
+            <li>
+              <a href="{{ child.url }}" 
+                 class="sidebar-item {% if child.active %}sidebar-item-active{% endif %}">
+                {{ child.title }}
+              </a>
+            </li>
+            {% endfor %}
+          </ul>
+        </details>
+        {% else %}
+        <!-- Simple Menu Item -->
+        <a href="{{ item.url }}" 
+           class="sidebar-item {% if item.active %}sidebar-item-active{% endif %}">
+          <i class="{{ item.icon|default:'fas fa-circle' }} text-lg"></i>
+          <span>{{ item.title }}</span>
+          {% if item.badge %}
+          <span class="badge badge-error badge-sm">{{ item.badge }}</span>
+          {% endif %}
+        </a>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </nav>
+
+  <!-- Footer -->
+  <div class="p-4 border-t border-neutral-200 dark:border-neutral-700">
+    <div class="flex items-center justify-between text-xs text-neutral-500 dark:text-neutral-400">
+      <span>الإصدار 1.0</span>
+      <a href="#" class="hover:text-primary-600 dark:hover:text-primary-400">المساعدة</a>
+    </div>
+  </div>
+</aside>

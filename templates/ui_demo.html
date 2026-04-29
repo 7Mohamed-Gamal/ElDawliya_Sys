@@ -1,0 +1,237 @@
+{% extends 'base.html' %}
+
+{% block title %}UI Components Demo - Design System{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-4xl font-bold text-neutral-900 dark:text-neutral-100 mb-2">
+            🎨 Tailwind CSS Design System
+        </h1>
+        <p class="text-lg text-neutral-600 dark:text-neutral-400">
+            ElDawliya ERP - Modern, Responsive, Dark Mode Ready
+        </p>
+    </div>
+
+    <!-- Buttons Section -->
+    <section class="card">
+        <div class="card-header">
+            <h2 class="text-2xl font-bold">Buttons</h2>
+        </div>
+        <div class="card-body space-y-6">
+            <!-- Primary Buttons -->
+            <div>
+                <h3 class="text-lg font-semibold mb-3">Primary Buttons</h3>
+                <div class="flex flex-wrap gap-3">
+                    {% include 'components/buttons/btn_primary.html' with text="حفظ" icon="fas fa-save" %}
+                    {% include 'components/buttons/btn_primary.html' with text="إرسال" size="sm" %}
+                    {% include 'components/buttons/btn_primary.html' with text="متوسط" size="lg" %}
+                    {% include 'components/buttons/btn_primary.html' with text="كبير" size="xl" %}
+                    {% include 'components/buttons/btn_primary.html' with text="معطل" disabled=True %}
+                </div>
+            </div>
+
+            <!-- Secondary Buttons -->
+            <div>
+                <h3 class="text-lg font-semibold mb-3">Secondary Buttons</h3>
+                <div class="flex flex-wrap gap-3">
+                    {% include 'components/buttons/btn_secondary.html' with text="إلغاء" %}
+                    {% include 'components/buttons/btn_secondary.html' with text="رجوع" icon="fas fa-arrow-left" %}
+                </div>
+            </div>
+
+            <!-- Outline Buttons -->
+            <div>
+                <h3 class="text-lg font-semibold mb-3">Outline Buttons</h3>
+                <div class="flex flex-wrap gap-3">
+                    {% include 'components/buttons/btn_outline.html' with text="Primary" color="primary" %}
+                    {% include 'components/buttons/btn_outline.html' with text="Success" color="success" %}
+                    {% include 'components/buttons/btn_outline.html' with text="Warning" color="warning" %}
+                    {% include 'components/buttons/btn_outline.html' with text="Error" color="error" %}
+                </div>
+            </div>
+
+            <!-- Ghost Buttons -->
+            <div>
+                <h3 class="text-lg font-semibold mb-3">Ghost Buttons</h3>
+                <div class="flex flex-wrap gap-3">
+                    {% include 'components/buttons/btn_ghost.html' with text="عرض" %}
+                    {% include 'components/buttons/btn_ghost.html' with text="تعديل" icon="fas fa-edit" %}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Forms Section -->
+    <section class="card">
+        <div class="card-header">
+            <h2 class="text-2xl font-bold">Form Components</h2>
+        </div>
+        <div class="card-body">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {% include 'components/forms/input.html' with 
+                    name="username" 
+                    label="اسم المستخدم" 
+                    placeholder="أدخل اسم المستخدم"
+                    required=True 
+                    icon="fas fa-user" %}
+
+                {% include 'components/forms/input.html' with 
+                    name="email" 
+                    label="البريد الإلكتروني" 
+                    type="email"
+                    placeholder="example@domain.com"
+                    icon="fas fa-envelope" %}
+
+                {% include 'components/forms/textarea.html' with 
+                    name="notes" 
+                    label="ملاحظات" 
+                    placeholder="أدخل الملاحظات..." 
+                    rows=3 %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Alerts Section -->
+    <section class="card">
+        <div class="card-header">
+            <h2 class="text-2xl font-bold">Alerts</h2>
+        </div>
+        <div class="card-body space-y-4">
+            {% include 'components/feedback/alert.html' with 
+                type="info" 
+                title="معلومة"
+                message="هذا تنبيه معلوماتي مهم" 
+                dismissible=True %}
+
+            {% include 'components/feedback/alert.html' with 
+                type="success" 
+                title="نجاح"
+                message="تمت العملية بنجاح" 
+                dismissible=True %}
+
+            {% include 'components/feedback/alert.html' with 
+                type="warning" 
+                title="تحذير"
+                message="يرجى مراجعة البيانات قبل المتابعة" 
+                dismissible=True %}
+
+            {% include 'components/feedback/alert.html' with 
+                type="error" 
+                title="خطأ"
+                message="حدث خطأ في العملية" 
+                dismissible=True %}
+        </div>
+    </section>
+
+    <!-- Badges Section -->
+    <section class="card">
+        <div class="card-header">
+            <h2 class="text-2xl font-bold">Badges</h2>
+        </div>
+        <div class="card-body">
+            <div class="flex flex-wrap gap-3">
+                {% include 'components/feedback/badge.html' with text="نشط" color="success" %}
+                {% include 'components/feedback/badge.html' with text="معلق" color="warning" %}
+                {% include 'components/feedback/badge.html' with text="ملغي" color="error" %}
+                {% include 'components/feedback/badge.html' with text="جديد" color="info" %}
+                {% include 'components/feedback/badge.html' with text="افتراضي" color="primary" %}
+                {% include 'components/feedback/badge.html' with text="صغير" color="neutral" size="sm" %}
+            </div>
+        </div>
+    </section>
+
+    <!-- Cards Section -->
+    <section>
+        <h2 class="text-2xl font-bold mb-4">Cards</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Basic Card -->
+            {% include 'components/cards/card_basic.html' with 
+                title="بطاقة أساسية" 
+                body="هذه بطاقة أساسية يمكن استخدامها لعرض المحتوى" 
+                hover=True %}
+
+            <!-- Stat Cards -->
+            {% include 'components/cards/card_stat.html' with 
+                title="إجمالي الموظفين" 
+                value="150" 
+                icon="fas fa-users" 
+                color="primary" 
+                trend="+5%" %}
+
+            {% include 'components/cards/card_stat.html' with 
+                title="المشاريع النشطة" 
+                value="45" 
+                icon="fas fa-project-diagram" 
+                color="success" 
+                trend="+12%" %}
+        </div>
+    </section>
+
+    <!-- Table Section -->
+    <section>
+        <h2 class="text-2xl font-bold mb-4">Tables</h2>
+        {% with 
+            headers=["الاسم", "القسم", "المنصب", "الحالة"]
+            rows=[
+                ["أحمد محمد", "تقنية المعلومات", "مطور برمجيات", "نشط"],
+                ["فاطمة علي", "الموارد البشرية", "مدير HR", "نشط"],
+                ["محمد عبدالله", "المالية", "محاسب", "معلق"]
+            ]
+        %}
+        {% include 'components/tables/table_responsive.html' with 
+            title="قائمة الموظفين"
+            headers=headers
+            rows=rows
+            sortable=True
+            empty_message="لا توجد بيانات" %}
+        {% endwith %}
+    </section>
+
+    <!-- Dark Mode Demo -->
+    <section class="card">
+        <div class="card-header">
+            <h2 class="text-2xl font-bold">🌙 Dark Mode</h2>
+        </div>
+        <div class="card-body">
+            <p class="text-neutral-700 dark:text-neutral-300 mb-4">
+                Click the moon/sun icon in the navbar to toggle dark mode. All components automatically adapt to the theme.
+            </p>
+            <div class="p-4 bg-neutral-100 dark:bg-neutral-700 rounded-lg">
+                <p class="text-sm">
+                    <strong>Current Theme:</strong> 
+                    <span class="text-primary-600 dark:text-primary-400">
+                        <script>
+                            document.write(document.documentElement.classList.contains('dark') ? 'Dark Mode 🌙' : 'Light Mode ☀️');
+                        </script>
+                    </span>
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Responsive Grid Demo -->
+    <section>
+        <h2 class="text-2xl font-bold mb-4">📱 Responsive Grid</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div class="card p-4 text-center">
+                <p class="text-sm text-neutral-500 dark:text-neutral-400">Mobile</p>
+                <p class="text-2xl font-bold">1 Column</p>
+            </div>
+            <div class="card p-4 text-center">
+                <p class="text-sm text-neutral-500 dark:text-neutral-400">Tablet</p>
+                <p class="text-2xl font-bold">2 Columns</p>
+            </div>
+            <div class="card p-4 text-center">
+                <p class="text-sm text-neutral-500 dark:text-neutral-400">Laptop</p>
+                <p class="text-2xl font-bold">3 Columns</p>
+            </div>
+            <div class="card p-4 text-center">
+                <p class="text-sm text-neutral-500 dark:text-neutral-400">Desktop</p>
+                <p class="text-2xl font-bold">4 Columns</p>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

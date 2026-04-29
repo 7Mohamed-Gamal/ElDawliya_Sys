@@ -1,0 +1,28 @@
+{% comment %}
+  Textarea Component
+  Usage: {% include 'components/forms/textarea.html' with name="notes" label="ملاحظات" placeholder="أدخل الملاحظات..." rows=4 %}
+{% endcomment %}
+
+<div class="form-group {% if error %}has-error{% endif %}">
+  {% if label %}
+  <label for="{{ name }}" class="form-label {% if required %}required{% endif %}">
+    {{ label }}
+  </label>
+  {% endif %}
+  
+  <textarea name="{{ name }}" 
+            id="{{ name }}"
+            rows="{{ rows|default:4 }}"
+            {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
+            {% if required %}required{% endif %}
+            {% if disabled %}disabled{% endif %}
+            class="form-textarea {{ extra_class|default:'' }}">{{ value|default:'' }}</textarea>
+  
+  {% if help_text and not error %}
+  <p class="form-hint">{{ help_text }}</p>
+  {% endif %}
+  
+  {% if error %}
+  <p class="form-error" role="alert">{{ error }}</p>
+  {% endif %}
+</div>

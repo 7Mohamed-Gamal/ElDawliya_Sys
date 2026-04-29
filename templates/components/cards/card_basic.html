@@ -1,0 +1,40 @@
+{% comment %}
+  Basic Card Component
+  Usage: {% include 'components/cards/card_basic.html' with title="" body="" footer="" hover=True %}
+  
+  Or with block content:
+  {% include 'components/cards/card_basic.html' with hover=True %}
+    {% block card_content %}...{% endblock %}
+{% endcomment %}
+
+<div class="card {% if hover %}card-hover{% endif %} {{ extra_class|default:'' }}">
+  {% if title or card_header %}
+  <div class="card-header">
+    {% if title %}
+    <h3 class="card-title">{{ title }}</h3>
+    {% endif %}
+    {% if card_header %}
+    {{ card_header|safe }}
+    {% endif %}
+  </div>
+  {% endif %}
+  
+  <div class="card-body">
+    {% if body %}
+    {{ body|safe }}
+    {% else %}
+    {{ children|safe }}
+    {% endif %}
+  </div>
+  
+  {% if footer or card_footer %}
+  <div class="card-footer">
+    {% if footer %}
+    {{ footer|safe }}
+    {% endif %}
+    {% if card_footer %}
+    {{ card_footer|safe }}
+    {% endif %}
+  </div>
+  {% endif %}
+</div>

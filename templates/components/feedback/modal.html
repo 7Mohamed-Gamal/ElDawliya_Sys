@@ -1,0 +1,44 @@
+{% comment %}
+  Modal Component
+  Usage: 
+  {% include 'components/feedback/modal.html' with id="myModal" title="عنوان النافذة" size="md" %}
+    <!-- Modal content goes here -->
+  {% endinclude %}
+  
+  Size options: sm, md, lg, xl
+  
+  Trigger with JavaScript:
+  - Open: document.getElementById('myModal').showModal()
+  - Close: document.getElementById('myModal').close()
+{% endcomment %}
+
+<dialog id="{{ id }}" 
+        class="modal modal-{{ size|default:'md' }} {{ extra_class|default:'' }}"
+        onclick="if(event.target === this) this.close()">
+  <div class="modal-content">
+    <!-- Header -->
+    <div class="card-header flex items-center justify-between">
+      {% if title %}
+      <h2 class="card-title mb-0">{{ title }}</h2>
+      {% endif %}
+      <button type="button" 
+              class="btn btn-ghost btn-sm"
+              onclick="document.getElementById('{{ id }}').close()"
+              aria-label="إغلاق">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    
+    <!-- Body -->
+    <div class="card-body">
+      {{ children|safe }}
+    </div>
+    
+    <!-- Footer (optional) -->
+    {% if footer %}
+    <div class="card-footer">
+      {{ footer|safe }}
+    </div>
+    {% endif %}
+  </div>
+</dialog>

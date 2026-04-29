@@ -1,0 +1,53 @@
+{% comment %}
+  Input Field Component
+  Usage: {% include 'components/forms/input.html' with name="username" label="اسم المستخدم" type="text" placeholder="أدخل اسم المستخدم" value="" required=True help_text="" error="" icon="" %}
+  
+  Parameters:
+  - name: Field name (required)
+  - label: Field label
+  - type: text, email, password, number, tel, url, search, date, time (default: "text")
+  - placeholder: Placeholder text
+  - value: Current value
+  - required: True/False (default: False)
+  - disabled: True/False (default: False)
+  - readonly: True/False (default: False)
+  - help_text: Help text below input
+  - error: Error message
+  - icon: Icon class (e.g., "fas fa-user")
+  - extra_class: Additional CSS classes
+{% endcomment %}
+
+<div class="form-group {% if error %}has-error{% endif %}">
+  {% if label %}
+  <label for="{{ name }}" class="form-label {% if required %}required{% endif %}">
+    {{ label }}
+  </label>
+  {% endif %}
+  
+  <div class="relative">
+    {% if icon %}
+    <div class="absolute inset-y-0 start-0 flex items-center pointer-events-none ps-3.5">
+      <i class="{{ icon }} text-neutral-400 dark:text-neutral-500"></i>
+    </div>
+    {% endif %}
+    
+    <input type="{{ type|default:'text' }}" 
+           name="{{ name }}" 
+           id="{{ name }}"
+           {% if placeholder %}placeholder="{{ placeholder }}"{% endif %}
+           {% if value %}value="{{ value }}"{% endif %}
+           {% if required %}required{% endif %}
+           {% if disabled %}disabled{% endif %}
+           {% if readonly %}readonly{% endif %}
+           class="form-input {% if icon %}ps-10{% endif %} {{ extra_class|default:'' }}"
+           {% if aria_describedby %}aria-describedby="{{ aria_describedby }}"{% endif %}>
+  </div>
+  
+  {% if help_text and not error %}
+  <p class="form-hint">{{ help_text }}</p>
+  {% endif %}
+  
+  {% if error %}
+  <p class="form-error" role="alert">{{ error }}</p>
+  {% endif %}
+</div>

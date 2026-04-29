@@ -3,7 +3,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin  # Import Django's default admin
-from .views import test_view
+from .views import test_view, ui_demo_view
 from accounts.views import global_search_api
 
 # Import the database setup view directly to avoid database dependency
@@ -28,6 +28,7 @@ special_urlpatterns = [
 # Regular URL patterns that require database access
 urlpatterns = [
     path('test/', test_view, name='test'),  # مسار اختبار بسيط
+    path('ui-demo/', ui_demo_view, name='ui_demo'),  # UI Components Demo
     path('admin/', admin.site.urls),  # لوحة الإدارة الافتراضية
     path('accounts/', include('accounts.urls')),  # مسارات تطبيق الحسابات
     path('', include('frontend.urls')),  # مسارات الواجهة الأمامية (Dashboard)

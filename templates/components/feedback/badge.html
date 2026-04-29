@@ -1,0 +1,12 @@
+{% comment %}
+  Badge Component
+  Usage: {% include 'components/feedback/badge.html' with text="نشط" color="success" size="" %}
+  
+  Color options: primary, secondary, success, warning, error, info, neutral
+  Size options: sm, lg
+{% endcomment %}
+
+<span class="badge badge-{{ color|default:'primary' }} {% if size == 'sm' %}badge-sm{% elif size == 'lg' %}badge-lg{% endif %} {{ extra_class|default:'' }}">
+  {% if icon %}<i class="{{ icon }} me-1"></i>{% endif %}
+  {{ text }}
+</span>

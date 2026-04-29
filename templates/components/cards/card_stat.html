@@ -1,0 +1,40 @@
+{% comment %}
+  Stat Card Component (for dashboards)
+  Usage: {% include 'components/cards/card_stat.html' with title="إجمالي الموظفين" value="150" icon="fas fa-users" color="primary" trend="+5%" %}
+  
+  Color options: primary, secondary, success, warning, error, info
+{% endcomment %}
+
+<div class="card {{ extra_class|default:'' }}">
+  <div class="card-body p-6">
+    <div class="flex items-center justify-between">
+      <div class="flex-1">
+        {% if title %}
+        <p class="text-sm font-medium text-neutral-600 dark:text-neutral-400 mb-1">
+          {{ title }}
+        </p>
+        {% endif %}
+        
+        {% if value %}
+        <p class="text-3xl font-bold text-neutral-900 dark:text-neutral-100">
+          {{ value }}
+        </p>
+        {% endif %}
+        
+        {% if trend %}
+        <p class="text-sm mt-2 {% if trend|slice:':1' == '+' %}text-success-600 dark:text-success-400{% else %}text-error-600 dark:text-error-400{% endif %}">
+          {{ trend }}
+        </p>
+        {% endif %}
+      </div>
+      
+      {% if icon %}
+      <div class="flex-shrink-0">
+        <div class="w-14 h-14 rounded-xl bg-{{ color|default:'primary' }}-100 dark:bg-{{ color|default:'primary' }}-900/20 flex items-center justify-center">
+          <i class="{{ icon }} text-2xl text-{{ color|default:'primary' }}-600 dark:text-{{ color|default:'primary' }}-400"></i>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>

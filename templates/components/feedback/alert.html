@@ -1,0 +1,37 @@
+{% comment %}
+  Alert Component
+  Usage: {% include 'components/feedback/alert.html' with type="info" message="هذا تنبيه مهم" dismissible=True %}
+  
+  Type options: info, success, warning, error
+{% endcomment %}
+
+<div class="alert alert-{{ type|default:'info' }} {% if dismissible %}flex justify-between items-start{% endif %} {{ extra_class|default:'' }}"
+     role="alert">
+  <div class="flex items-start gap-3">
+    {% if type == 'info' %}
+    <i class="fas fa-info-circle text-lg mt-0.5"></i>
+    {% elif type == 'success' %}
+    <i class="fas fa-check-circle text-lg mt-0.5"></i>
+    {% elif type == 'warning' %}
+    <i class="fas fa-exclamation-triangle text-lg mt-0.5"></i>
+    {% elif type == 'error' %}
+    <i class="fas fa-times-circle text-lg mt-0.5"></i>
+    {% endif %}
+    
+    <div>
+      {% if title %}
+      <h4 class="font-semibold mb-1">{{ title }}</h4>
+      {% endif %}
+      <p>{{ message }}</p>
+    </div>
+  </div>
+  
+  {% if dismissible %}
+  <button type="button" 
+          class="btn btn-ghost btn-sm flex-shrink-0 -mt-1 -me-2"
+          onclick="this.parentElement.remove()"
+          aria-label="إغلاق">
+    <i class="fas fa-times"></i>
+  </button>
+  {% endif %}
+</div>

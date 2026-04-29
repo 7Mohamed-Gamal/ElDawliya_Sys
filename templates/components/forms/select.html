@@ -1,0 +1,45 @@
+{% comment %}
+  Select Field Component
+  Usage: {% include 'components/forms/select.html' with name="department" label="القسم" options=department_list selected="" required=True %}
+  
+  Parameters:
+  - name: Field name (required)
+  - label: Field label
+  - options: List of tuples/choices [(value, label), ...]
+  - selected: Selected value
+  - required: True/False
+  - disabled: True/False
+  - help_text: Help text
+  - error: Error message
+{% endcomment %}
+
+<div class="form-group {% if error %}has-error{% endif %}">
+  {% if label %}
+  <label for="{{ name }}" class="form-label {% if required %}required{% endif %}">
+    {{ label }}
+  </label>
+  {% endif %}
+  
+  <select name="{{ name }}" 
+          id="{{ name }}"
+          {% if required %}required{% endif %}
+          {% if disabled %}disabled{% endif %}
+          class="form-select {{ extra_class|default:'' }}">
+    {% if include_empty %}
+    <option value="">{{ empty_label|default:"---------" }}</option>
+    {% endif %}
+    {% for value, label in options %}
+    <option value="{{ value }}" {% if value == selected %}selected{% endif %}>
+      {{ label }}
+    </option>
+    {% endfor %}
+  </select>
+  
+  {% if help_text and not error %}
+  <p class="form-hint">{{ help_text }}</p>
+  {% endif %}
+  
+  {% if error %}
+  <p class="form-error" role="alert">{{ error }}</p>
+  {% endif %}
+</div>

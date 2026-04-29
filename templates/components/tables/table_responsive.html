@@ -1,0 +1,70 @@
+{% comment %}
+  Responsive Table Component
+  Usage: 
+  {% include 'components/tables/table_responsive.html' with headers=header_list rows=row_list sortable=True %}
+  
+  headers: ['ID', 'الاسم', 'القسم']
+  rows: [
+    [1, 'أحمد', 'IT'],
+    [2, 'محمد', 'HR']
+  ]
+{% endcomment %}
+
+<div class="card overflow-hidden">
+  {% if title %}
+  <div class="card-header">
+    <h3 class="card-title">{{ title }}</h3>
+    {% if card_actions %}
+    <div class="card-actions">
+      {{ card_actions|safe }}
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+  
+  <div class="card-body p-0">
+    <div class="overflow-x-auto">
+      <table class="table table-responsive {{ extra_class|default:'' }}">
+        {% if headers %}
+        <thead>
+          <tr>
+            {% for header in headers %}
+            <th class="table-header {% if sortable %}cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-700{% endif %}">
+              {{ header }}
+              {% if sortable %}
+              <i class="fas fa-sort text-neutral-400 ms-1"></i>
+              {% endif %}
+            </th>
+            {% endfor %}
+          </tr>
+        </thead>
+        {% endif %}
+        
+        {% if rows %}
+        <tbody>
+          {% for row in rows %}
+          <tr class="table-row">
+            {% for cell in row %}
+            <td class="table-cell">{{ cell }}</td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+        {% endif %}
+      </table>
+    </div>
+    
+    {% if empty_message and not rows %}
+    <div class="text-center py-12">
+      <i class="fas fa-inbox text-5xl text-neutral-300 dark:text-neutral-600 mb-4"></i>
+      <p class="text-neutral-500 dark:text-neutral-400">{{ empty_message }}</p>
+    </div>
+    {% endif %}
+  </div>
+  
+  {% if pagination %}
+  <div class="card-footer">
+    {{ pagination|safe }}
+  </div>
+  {% endif %}
+</div>

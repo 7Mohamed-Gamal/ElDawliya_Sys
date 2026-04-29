@@ -1,0 +1,20 @@
+{% comment %}
+  Ghost Button Component (Transparent with hover)
+  Usage: {% include 'components/buttons/btn_ghost.html' with text="عرض" href="#" %}
+{% endcomment %}
+
+{% if href %}
+<a href="{{ href }}" 
+   class="btn btn-ghost {% if size == 'sm' %}btn-sm{% elif size == 'lg' %}btn-lg{% elif size == 'xl' %}btn-xl{% endif %} {{ extra_class|default:'' }}"
+   {% if disabled %}aria-disabled="true" tabindex="-1"{% endif %}>
+    {% if icon %}<i class="{{ icon }}"></i>{% endif %}
+    {{ text }}
+</a>
+{% else %}
+<button type="{{ type|default:'button' }}" 
+        class="btn btn-ghost {% if size == 'sm' %}btn-sm{% elif size == 'lg' %}btn-lg{% elif size == 'xl' %}btn-xl{% endif %} {{ extra_class|default:'' }}"
+        {% if disabled %}disabled{% endif %}>
+    {% if icon %}<i class="{{ icon }}"></i>{% endif %}
+    {{ text }}
+</button>
+{% endif %}
