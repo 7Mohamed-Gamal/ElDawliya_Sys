@@ -49,7 +49,8 @@ urlpatterns = [
 
     path('administrator/', include('administrator.urls')),  # مسارات تطبيق مدير النظام
     path('notifications/', include('notifications.urls')),  # مسارات تطبيق التنبيهات
-    
+    path('core/', include('core.urls')),  # مسارات الخدمات الأساسية والمراقبة
+
     path('api/v1/', include('api.urls')),  # مسارات API
     path('api/global-search/', global_search_api, name='global_search_api'),  # Global search API endpoint
     

@@ -37,6 +37,28 @@ def is_system_admin(user):
 # Decorator for system admin access
 system_admin_required = user_passes_test(is_system_admin)
 
+def _administrator_ui_context(page_title, active_title=None):
+    """Shared global shell context for administrator pages."""
+    return {
+        'page_title': page_title,
+        'breadcrumbs': [
+            {'title': 'الرئيسية', 'url': '/'},
+            {'title': 'إدارة النظام', 'url': reverse('administrator:admin_dashboard')},
+            {'title': active_title or page_title, 'active': True},
+        ],
+    }
+
+
+class AdministratorPageContextMixin:
+    """Adds global layout metadata to administrator class-based views."""
+    page_title = 'إدارة النظام'
+    active_title = None
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(_administrator_ui_context(self.page_title, self.active_title))
+        return context
+
 # Special exception to be raised when the database connection is being configured
 class DatabaseSetupMode(Exception):
     """Exception raised to indicate the system is in database setup mode."""
@@ -78,6 +100,7 @@ def admin_dashboard(request):
         'departments_count': departments_count,
         'modules_count': modules_count,
     }
+    context.update(_administrator_ui_context('لوحة تحكم مدير النظام', 'لوحة التحكم'))
     return render(request, 'administrator/dashboard.html', context)
 
 @login_required
@@ -173,118 +196,140 @@ def database_settings(request):
 # Department Views
 @method_decorator(login_required, name='dispatch')
 @method_decorator(system_admin_required, name='dispatch')
-class DepartmentListView(ListView):
+class DepartmentListView(AdministratorPageContextMixin, ListView):
     """DepartmentListView class"""
     model = Department
     template_name = 'administrator/department_list.html'
     context_object_name = 'departments'
+    page_title = 'إدارة الأقسام'
+
+    def get_queryset(self):
+        return Department.objects.prefetch_related('groups').order_by('order', 'name')
 
 @method_decorator(login_required, name='dispatch')
 @method_decorator(system_admin_required, name='dispatch')
-class DepartmentCreateView(CreateView):
+class DepartmentCreateView(AdministratorPageContextMixin, CreateView):
     """DepartmentCreateView class"""
     model = Department
     form_class = DepartmentForm
     template_name = 'administrator/department_form.html'
     success_url = reverse_lazy('administrator:department_list')
+    page_title = 'إضافة قسم جديد'
 
 @method_decorator(login_required, name='dispatch')
 @method_decorator(system_admin_required, name='dispatch')
-class DepartmentUpdateView(UpdateView):
+class DepartmentUpdateView(AdministratorPageContextMixin, UpdateView):
     """DepartmentUpdateView class"""
     model = Department
     form_class = DepartmentForm
     template_name = 'administrator/department_form.html'
     success_url = reverse_lazy('administrator:department_list')
+    page_title = 'تعديل قسم'
 
 @method_decorator(login_required, name='dispatch')
 @method_decorator(system_admin_required, name='dispatch')
-class DepartmentDeleteView(DeleteView):
+class DepartmentDeleteView(AdministratorPageContextMixin, DeleteView):
     """DepartmentDeleteView class"""
     model = Department
     template_name = 'administrator/department_confirm_delete.html'
     success_url = reverse_lazy('administrator:department_list')
+    page_title = 'حذف قسم'
 
 # Module Views
 @method_decorator(login_required, name='dispatch')
 @method_decorator(system_admin_required, name='dispatch')
-class ModuleListView(ListView):
+class ModuleListView(AdministratorPageContextMixin, ListView):
     """ModuleListView class"""
     model = Module
     template_name = 'administrator/module_list.html'
     context_object_name = 'modules'
+    page_title = 'إدارة الوحدات'
+
+    def get_queryset(self):
+        return Module.objects.select_related('department').prefetch_related('groups').order_by('department__order', 'order', 'name')
 
 @method_decorator(login_required, name='dispatch')
 @method_decorator(system_admin_required, name='dispatch')
-class ModuleCreateView(CreateView):
+class ModuleCreateView(AdministratorPageContextMixin, CreateView):
     """ModuleCreateView class"""
     model = Module
     form_class = ModuleForm
     template_name = 'administrator/module_form.html'
     success_url = reverse_lazy('administrator:module_list')
+    page_title = 'إضافة وحدة جديدة'
 
 @method_decorator(login_required, name='dispatch')
 @method_decorator(system_admin_required, name='dispatch')
-class ModuleUpdateView(UpdateView):
+class ModuleUpdateView(AdministratorPageContextMixin, UpdateView):
     """ModuleUpdateView class"""
     model = Module
     form_class = ModuleForm
     template_name = 'administrator/module_form.html'
     success_url = reverse_lazy('administrator:module_list')
+    page_title = 'تعديل وحدة'
 
 @method_decorator(login_required, name='dispatch')
 @method_decorator(system_admin_required, name='dispatch')
-class ModuleDeleteView(DeleteView):
+class ModuleDeleteView(AdministratorPageContextMixin, DeleteView):
     """ModuleDeleteView class"""
     model = Module
     template_name = 'administrator/module_confirm_delete.html'
     success_url = reverse_lazy('administrator:module_list')
+    page_title = 'حذف وحدة'
 
 # Group Views
 @method_decorator(login_required, name='dispatch')
 @method_decorator(system_admin_required, name='dispatch')
-class GroupListView(ListView):
+class GroupListView(AdministratorPageContextMixin, ListView):
     """List all user groups"""
     model = Group
     template_name = 'administrator/group_list.html'
     context_object_name = 'groups'
+    page_title = 'إدارة المجموعات'
+
+    def get_queryset(self):
+        return Group.objects.prefetch_related('permissions', 'users_login_new_groups').order_by('name')
 
 @method_decorator(login_required, name='dispatch')
 @method_decorator(system_admin_required, name='dispatch')
-class GroupCreateView(CreateView):
+class GroupCreateView(AdministratorPageContextMixin, CreateView):
     """Create a new user group"""
     model = Group
     form_class = GroupForm
     template_name = 'administrator/group_form.html'
     success_url = reverse_lazy('administrator:group_list')
+    page_title = 'إضافة مجموعة جديدة'
 
 @method_decorator(login_required, name='dispatch')
 @method_decorator(system_admin_required, name='dispatch')
-class GroupUpdateView(UpdateView):
+class GroupUpdateView(AdministratorPageContextMixin, UpdateView):
     """Update an existing user group"""
     model = Group
     form_class = GroupForm
     template_name = 'administrator/group_form.html'
     success_url = reverse_lazy('administrator:group_list')
+    page_title = 'تعديل مجموعة'
 
 @method_decorator(login_required, name='dispatch')
 @method_decorator(system_admin_required, name='dispatch')
-class GroupDeleteView(DeleteView):
+class GroupDeleteView(AdministratorPageContextMixin, DeleteView):
     """Delete a user group"""
     model = Group
     template_name = 'administrator/group_confirm_delete.html'
     success_url = reverse_lazy('administrator:group_list')
+    context_object_name = 'group'
+    page_title = 'حذف مجموعة'
 
 @login_required
 @system_admin_required
 def group_detail(request, pk):
     """View to display group details"""
-    group = get_object_or_404(Group, pk=pk)
+    group = get_object_or_404(Group.objects.prefetch_related('permissions', 'users_login_new_groups'), pk=pk)
 
     context = {
         'group': group,
-        'page_title': f'تفاصيل المجموعة: {group.name}'
     }
+    context.update(_administrator_ui_context(f'تفاصيل المجموعة: {group.name}', 'تفاصيل المجموعة'))
     return render(request, 'administrator/group_detail.html', context)
 
 # User Views
@@ -314,49 +359,80 @@ class UserCreateView(CreateView):
 
 @method_decorator(login_required, name='dispatch')
 @method_decorator(system_admin_required, name='dispatch')
-class UserDetailView(DetailView):
+class UserDetailView(AdministratorPageContextMixin, DetailView):
     """View user details"""
     model = User
     template_name = 'administrator/user_detail.html'
     context_object_name = 'user_obj'
+    page_title = 'تفاصيل مستخدم'
+
+    def get_queryset(self):
+        return User.objects.prefetch_related('groups', 'user_permissions')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(_administrator_ui_context(f'تفاصيل المستخدم: {self.object.username}', 'تفاصيل مستخدم'))
+        context['user_groups'] = self.object.groups.all()
+        context['direct_permissions'] = self.object.user_permissions.select_related('content_type')
+        return context
 
 @method_decorator(login_required, name='dispatch')
 @method_decorator(system_admin_required, name='dispatch')
-class UserUpdateView(UpdateView):
+class UserUpdateView(AdministratorPageContextMixin, UpdateView):
     """Update an existing user"""
     model = User
     fields = ['username', 'email', 'first_name', 'last_name', 'is_active']
     template_name = 'administrator/user_edit.html'
     success_url = reverse_lazy('administrator:user_list')
     context_object_name = 'user_obj'
+    page_title = 'تعديل مستخدم'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(_administrator_ui_context(f'تعديل المستخدم: {self.object.username}', 'تعديل مستخدم'))
+        return context
 
 @method_decorator(login_required, name='dispatch')
 @method_decorator(system_admin_required, name='dispatch')
-class UserDeleteView(DeleteView):
+class UserDeleteView(AdministratorPageContextMixin, DeleteView):
     """Delete a user"""
     model = User
     template_name = 'administrator/user_confirm_delete.html'
     success_url = reverse_lazy('administrator:user_list')
     context_object_name = 'user_obj'
+    page_title = 'حذف مستخدم'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(_administrator_ui_context(f'حذف المستخدم: {self.object.username}', 'حذف مستخدم'))
+        return context
 
 @method_decorator(login_required, name='dispatch')
 @method_decorator(system_admin_required, name='dispatch')
-class UserListView(ListView):
+class UserListView(AdministratorPageContextMixin, ListView):
     """List all users"""
     model = User
     template_name = 'administrator/user_list.html'
     context_object_name = 'users'
+    page_title = 'إدارة المستخدمين'
 
-class UserGroupsUpdateView(UpdateView):
+    def get_queryset(self):
+        return User.objects.prefetch_related('groups').order_by('username')
+
+@method_decorator(login_required, name='dispatch')
+@method_decorator(system_admin_required, name='dispatch')
+class UserGroupsUpdateView(AdministratorPageContextMixin, UpdateView):
     """Update user's group memberships"""
     model = User
     template_name = 'administrator/user_groups_form.html'
     fields = []
     success_url = reverse_lazy('administrator:user_list')
+    page_title = 'إدارة مجموعات المستخدم'
 
     def get_context_data(self, **kwargs):
         """get_context_data function"""
         context = super().get_context_data(**kwargs)
+        context.update(_administrator_ui_context(f'إدارة مجموعات المستخدم: {self.object.username}', 'مجموعات المستخدم'))
         context['groups'] = Group.objects.all()
         context['user_groups'] = self.object.groups.all()
         return context

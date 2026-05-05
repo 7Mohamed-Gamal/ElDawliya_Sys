@@ -37,6 +37,8 @@
     <!-- Tailwind CSS (Compiled) -->
     <link rel="stylesheet" href="{% static 'css/output.css' %}">
     
+    {% block meta %}{% endblock %}
+
     <!-- Additional CSS -->
     {% block extra_css %}{% endblock %}
     
@@ -54,7 +56,7 @@
     </script>
 </head>
 
-<body class="h-full bg-neutral-50 dark:bg-neutral-900 font-sans antialiased">
+<body class="h-full bg-neutral-50 dark:bg-neutral-900 font-sans antialiased {% block body_class %}{% endblock %}">
     <!-- Skip to main content (Accessibility) -->
     <a href="#main-content" 
        class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:start-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary-600 focus:text-white focus:rounded-lg">
@@ -71,10 +73,12 @@
 
     <!-- Main Layout -->
     <div class="min-h-full flex flex-col">
-        {% if show_sidebar|default:true %}
+        {% if show_sidebar %}
         <!-- Desktop Sidebar -->
         <div class="hidden lg:fixed lg:inset-y-0 lg:z-sticky lg:flex lg:w-64 lg:flex-col">
+            {% block sidebar %}
             {% include 'components/navigation/sidebar.html' %}
+            {% endblock %}
         </div>
 
         <!-- Mobile Sidebar (Off-canvas) -->
@@ -84,16 +88,20 @@
             
             <!-- Sidebar -->
             <div class="relative w-64 h-full">
+                {% block mobile_sidebar %}
                 {% include 'components/navigation/sidebar.html' %}
+                {% endblock %}
             </div>
         </div>
         {% endif %}
 
         <!-- Content Area -->
-        <div class="{% if show_sidebar|default:true %}lg:pe-64{% endif %} flex-1">
-            {% if show_navbar|default:true %}
+        <div class="{% if show_sidebar %}lg:pe-64{% endif %} flex-1">
+            {% if show_navbar %}
             <!-- Navbar -->
+            {% block navbar %}
             {% include 'components/navigation/navbar.html' %}
+            {% endblock %}
             {% endif %}
 
             <!-- Flash Messages -->
@@ -107,13 +115,43 @@
 
             <!-- Main Content -->
             <main id="main-content" class="container mx-auto px-4 py-6 lg:py-8">
+                {% block page_header %}
+                {% if page_title %}
+                <div class="mb-6">
+                    {% block breadcrumb %}
+                    {% if breadcrumbs %}
+                    <nav class="mb-2 text-sm text-neutral-500 dark:text-neutral-400" aria-label="مسار التنقل">
+                        <ol class="flex flex-wrap items-center gap-2">
+                            {% for crumb in breadcrumbs %}
+                            <li class="flex items-center gap-2">
+                                {% if crumb.url and not crumb.active %}
+                                <a href="{{ crumb.url }}" class="hover:text-primary-600 dark:hover:text-primary-400">{{ crumb.title }}</a>
+                                {% else %}
+                                <span class="{% if crumb.active %}text-neutral-800 dark:text-neutral-100 font-medium{% endif %}">{{ crumb.title }}</span>
+                                {% endif %}
+                                {% if not forloop.last %}
+                                <i class="fas fa-chevron-left text-xs text-neutral-400"></i>
+                                {% endif %}
+                            </li>
+                            {% endfor %}
+                        </ol>
+                    </nav>
+                    {% endif %}
+                    {% endblock %}
+                    <h1 class="text-2xl font-semibold text-neutral-900 dark:text-neutral-100">
+                        {% block page_title %}{{ page_title }}{% endblock %}
+                    </h1>
+                    {% block page_description %}{% endblock %}
+                </div>
+                {% endif %}
+                {% endblock %}
                 {% block content %}{% endblock %}
             </main>
         </div>
     </div>
 
     <!-- Footer -->
-    {% if show_footer|default:true %}
+    {% if show_footer %}
     <footer class="bg-white dark:bg-neutral-800 border-t border-neutral-200 dark:border-neutral-700 mt-auto">
         <div class="container mx-auto px-4 py-6">
             <div class="text-center text-sm text-neutral-600 dark:text-neutral-400">
@@ -162,6 +200,7 @@
         }
     </script>
 
+    {% block modals %}{% endblock %}
     {% block extra_js %}{% endblock %}
 </body>
 </html>

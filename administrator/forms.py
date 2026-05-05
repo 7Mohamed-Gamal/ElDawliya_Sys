@@ -106,10 +106,11 @@ class ModuleForm(forms.ModelForm):
     class Meta:
         """Meta class"""
         model = Module
-        fields = ['department', 'name', 'icon', 'url', 'description', 'is_active', 'order', 'bg_color']
+        fields = ['department', 'name', 'icon', 'url', 'description', 'is_active', 'order', 'bg_color', 'require_admin', 'groups']
         widgets = {
             'description': forms.Textarea(attrs={'rows': 2}),
             'bg_color': forms.TextInput(attrs={'type': 'color'}),
+            'groups': forms.SelectMultiple(attrs={'class': 'form-select', 'size': 5}),
         }
 
 
@@ -226,14 +227,14 @@ class GroupForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # If editing an existing group, pre-select its users
         if self.instance.pk:
-            self.initial['users'] = self.instance.user_set.all()
+            self.initial['users'] = self.instance.users_login_new_groups.all()
 
     def save(self, commit=True):
         """save function"""
         group = super().save(commit)
         if commit:
             # Update group users
-            current_users = set(group.user_set.all())
+            current_users = set(group.users_login_new_groups.all())
             selected_users = set(self.cleaned_data.get('users', []))
 
             # Remove users no longer in the group

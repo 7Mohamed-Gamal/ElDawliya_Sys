@@ -43,6 +43,7 @@ urlpatterns = [
 
     # System Monitoring URLs - Include monitoring dashboard URLs
     path('monitoring/', include('core.urls.monitoring')),
+    path('permissions/', include('core.urls.permissions')),
 
     # Data Integration URLs
     path('integration/', views.integration_dashboard, name='integration_dashboard'),

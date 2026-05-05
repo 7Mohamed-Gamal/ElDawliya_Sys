@@ -1,348 +1,115 @@
-{% extends 'base/base_enhanced.html' %}
-{% load static %}
+{% extends 'base.html' %}
 
 {% block title %}مراقبة النظام - نظام الدولية{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-<style>
-.monitoring-card {
-    background: white;
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
-    transition: transform 0.2s;
-}
-
-.monitoring-card:hover {
-    transform: translateY(-2px);
-}
-
-.metric-value {
-    font-size: 2rem;
-    font-weight: bold;
-    margin: 10px 0;
-}
-
-.metric-label {
-    color: #666;
-    font-size: 0.9rem;
-    margin-bottom: 5px;
-}
-
-.status-indicator {
-    display: inline-block;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    margin-left: 8px;
-}
-
-.status-healthy { background-color: #10b981; }
-.status-warning { background-color: #f59e0b; }
-.status-critical { background-color: #ef4444; }
-.status-unknown { background-color: #6b7280; }
-
-.progress-bar {
-    width: 100%;
-    height: 8px;
-    background-color: #e5e7eb;
-    border-radius: 4px;
-    overflow: hidden;
-    margin: 10px 0;
-}
-
-.progress-fill {
-    height: 100%;
-    transition: width 0.3s ease;
-}
-
-.progress-normal { background-color: #10b981; }
-.progress-warning { background-color: #f59e0b; }
-.progress-critical { background-color: #ef4444; }
-
-.chart-container {
-    height: 300px;
-    margin: 20px 0;
-}
-
-.alert-item {
-    padding: 12px;
-    margin: 8px 0;
-    border-radius: 4px;
-    border-left: 4px solid;
-}
-
-.alert-info { 
-    background-color: #eff6ff; 
-    border-left-color: #3b82f6; 
-}
-
-.alert-warning { 
-    background-color: #fffbeb; 
-    border-left-color: #f59e0b; 
-}
-
-.alert-critical { 
-    background-color: #fef2f2; 
-    border-left-color: #ef4444; 
-}
-
-.loading {
-    text-align: center;
-    padding: 40px;
-    color: #666;
-}
-
-.error-message {
-    background-color: #fef2f2;
-    border: 1px solid #fecaca;
-    color: #dc2626;
-    padding: 12px;
-    border-radius: 4px;
-    margin: 10px 0;
-}
-
-.refresh-button {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    z-index: 1000;
-}
-
-.settings-panel {
-    background: white;
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
-    display: none;
-}
-
-.settings-panel.show {
-    display: block;
-}
-
-.form-group {
-    margin-bottom: 15px;
-}
-
-.form-label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: 500;
-}
-
-.form-control {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #d1d5db;
-    border-radius: 4px;
-    font-size: 14px;
-}
-
-.btn {
-    padding: 8px 16px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    margin: 2px;
-}
-
-.btn-primary { background-color: #3b82f6; color: white; }
-.btn-success { background-color: #10b981; color: white; }
-.btn-warning { background-color: #f59e0b; color: white; }
-.btn-danger { background-color: #ef4444; color: white; }
-.btn-secondary { background-color: #6b7280; color: white; }
-
-.table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 15px;
-}
-
-.table th,
-.table td {
-    padding: 12px;
-    text-align: right;
-    border-bottom: 1px solid #e5e7eb;
-}
-
-.table th {
-    background-color: #f9fafb;
-    font-weight: 600;
-}
-
-.badge {
-    display: inline-block;
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 500;
-}
-
-.badge-success { background-color: #d1fae5; color: #065f46; }
-.badge-warning { background-color: #fef3c7; color: #92400e; }
-.badge-danger { background-color: #fee2e2; color: #991b1b; }
-</style>
+{% block page_description %}
+<p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+    مراقبة موارد الخادم، صحة النظام، الأداء، التنبيهات، وتحليل السجلات.
+</p>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <!-- Header -->
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="h3 mb-0">
-                    <i class="fas fa-heartbeat me-2"></i>
-                    مراقبة النظام
-                </h1>
-                <div class="d-flex align-items-center">
-                    <span id="last-update" class="text-muted me-3">آخر تحديث: --</span>
-                    <button class="btn btn-outline-secondary btn-sm me-2" onclick="toggleSettings()">
-                        <i class="fas fa-cog"></i> الإعدادات
-                    </button>
-                    <button class="btn btn-outline-primary btn-sm" onclick="refreshAll()">
-                        <i class="fas fa-sync-alt"></i> تحديث
-                    </button>
-                </div>
-            </div>
+<div class="space-y-6">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <span id="last-update" class="text-sm text-neutral-500 dark:text-neutral-400">آخر تحديث: --</span>
+        <div class="flex flex-wrap gap-2">
+            <button class="btn btn-outline" onclick="toggleSettings()"><i class="fas fa-gear"></i> الإعدادات</button>
+            <button class="btn btn-primary" onclick="refreshAll()"><i class="fas fa-rotate"></i> تحديث</button>
         </div>
     </div>
 
-    <!-- Settings Panel -->
-    <div id="settings-panel" class="settings-panel">
-        <h5>إعدادات المراقبة</h5>
-        <div class="row">
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label class="form-label">حد تنبيه استخدام المعالج (%)</label>
-                    <input type="number" class="form-control" id="cpu-threshold" min="1" max="100" value="80">
+    <section id="settings-panel" class="card hidden">
+        <div class="card-header"><h2 class="text-base font-semibold">إعدادات المراقبة</h2></div>
+        <div class="card-body space-y-4">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                    <label class="form-label" for="cpu-threshold">حد تنبيه استخدام المعالج (%)</label>
+                    <input type="number" class="form-input" id="cpu-threshold" min="1" max="100" value="80">
                 </div>
-                <div class="form-group">
-                    <label class="form-label">حد تنبيه استخدام الذاكرة (%)</label>
-                    <input type="number" class="form-control" id="memory-threshold" min="1" max="100" value="85">
+                <div>
+                    <label class="form-label" for="memory-threshold">حد تنبيه استخدام الذاكرة (%)</label>
+                    <input type="number" class="form-input" id="memory-threshold" min="1" max="100" value="85">
                 </div>
-            </div>
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label class="form-label">حد تنبيه استخدام القرص (%)</label>
-                    <input type="number" class="form-control" id="disk-threshold" min="1" max="100" value="90">
+                <div>
+                    <label class="form-label" for="disk-threshold">حد تنبيه استخدام القرص (%)</label>
+                    <input type="number" class="form-input" id="disk-threshold" min="1" max="100" value="90">
                 </div>
-                <div class="form-group">
-                    <label class="form-label">بريد التنبيهات</label>
-                    <input type="email" class="form-control" id="alert-email" placeholder="admin@example.com">
+                <div>
+                    <label class="form-label" for="alert-email">بريد التنبيهات</label>
+                    <input type="email" class="form-input" id="alert-email" placeholder="admin@example.com">
                 </div>
             </div>
+            <div class="flex flex-wrap gap-2">
+                <button class="btn btn-primary" onclick="saveSettings()">حفظ الإعدادات</button>
+                <button class="btn btn-warning" onclick="testAlert()">اختبار التنبيه</button>
+                <button class="btn btn-ghost" onclick="toggleSettings()">إلغاء</button>
+            </div>
         </div>
-        <div class="mt-3">
-            <button class="btn btn-primary" onclick="saveSettings()">حفظ الإعدادات</button>
-            <button class="btn btn-warning" onclick="testAlert()">اختبار التنبيه</button>
-            <button class="btn btn-secondary" onclick="toggleSettings()">إلغاء</button>
-        </div>
-    </div>
+    </section>
 
-    <!-- System Health Status -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="monitoring-card">
-                <h5>حالة النظام العامة</h5>
-                <div id="system-health" class="loading">جاري فحص حالة النظام...</div>
-            </div>
-        </div>
-    </div>
+    <section class="card">
+        <div class="card-header"><h2 class="text-base font-semibold">حالة النظام العامة</h2></div>
+        <div class="card-body"><div id="system-health" class="py-6 text-center text-neutral-500">جاري فحص حالة النظام...</div></div>
+    </section>
 
-    <!-- System Metrics -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="monitoring-card text-center">
-                <div class="metric-label">استخدام المعالج</div>
-                <div id="cpu-usage" class="metric-value">--</div>
-                <div id="cpu-progress" class="progress-bar">
-                    <div class="progress-fill progress-normal" style="width: 0%"></div>
-                </div>
+    <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div class="card">
+            <div class="card-body">
+                <p class="text-sm text-neutral-500">استخدام المعالج</p>
+                <p id="cpu-usage" class="mt-2 text-2xl font-semibold">--</p>
+                <div id="cpu-progress" class="mt-3 h-2 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700"><div class="progress-fill h-full bg-success-500" style="width: 0%"></div></div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="monitoring-card text-center">
-                <div class="metric-label">استخدام الذاكرة</div>
-                <div id="memory-usage" class="metric-value">--</div>
-                <div id="memory-progress" class="progress-bar">
-                    <div class="progress-fill progress-normal" style="width: 0%"></div>
-                </div>
+        <div class="card">
+            <div class="card-body">
+                <p class="text-sm text-neutral-500">استخدام الذاكرة</p>
+                <p id="memory-usage" class="mt-2 text-2xl font-semibold">--</p>
+                <div id="memory-progress" class="mt-3 h-2 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700"><div class="progress-fill h-full bg-success-500" style="width: 0%"></div></div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="monitoring-card text-center">
-                <div class="metric-label">استخدام القرص</div>
-                <div id="disk-usage" class="metric-value">--</div>
-                <div id="disk-progress" class="progress-bar">
-                    <div class="progress-fill progress-normal" style="width: 0%"></div>
-                </div>
+        <div class="card">
+            <div class="card-body">
+                <p class="text-sm text-neutral-500">استخدام القرص</p>
+                <p id="disk-usage" class="mt-2 text-2xl font-semibold">--</p>
+                <div id="disk-progress" class="mt-3 h-2 overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700"><div class="progress-fill h-full bg-success-500" style="width: 0%"></div></div>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="monitoring-card text-center">
-                <div class="metric-label">اتصالات قاعدة البيانات</div>
-                <div id="db-connections" class="metric-value">--</div>
-                <div class="metric-label">حجم قاعدة البيانات: <span id="db-size">--</span> MB</div>
+        <div class="card">
+            <div class="card-body">
+                <p class="text-sm text-neutral-500">اتصالات قاعدة البيانات</p>
+                <p id="db-connections" class="mt-2 text-2xl font-semibold">--</p>
+                <p class="mt-2 text-xs text-neutral-500">حجم قاعدة البيانات: <span id="db-size">--</span> MB</p>
             </div>
         </div>
-    </div>
+    </section>
 
-    <!-- Performance Metrics -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="monitoring-card">
-                <h5>مقاييس الأداء</h5>
-                <div id="performance-metrics" class="loading">جاري تحميل مقاييس الأداء...</div>
-            </div>
+    <section class="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div class="card">
+            <div class="card-header"><h2 class="text-base font-semibold">مقاييس الأداء</h2></div>
+            <div class="card-body"><div id="performance-metrics" class="py-6 text-center text-neutral-500">جاري تحميل مقاييس الأداء...</div></div>
         </div>
-        <div class="col-md-6">
-            <div class="monitoring-card">
-                <h5>تاريخ التنبيهات</h5>
-                <div id="alert-history" class="loading">جاري تحميل تاريخ التنبيهات...</div>
-            </div>
+        <div class="card">
+            <div class="card-header"><h2 class="text-base font-semibold">تاريخ التنبيهات</h2></div>
+            <div class="card-body"><div id="alert-history" class="py-6 text-center text-neutral-500">جاري تحميل تاريخ التنبيهات...</div></div>
         </div>
-    </div>
+    </section>
 
-    <!-- Charts -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <div class="monitoring-card">
-                <h5>استخدام الموارد (آخر 24 ساعة)</h5>
-                <div class="chart-container">
-                    <canvas id="resource-chart"></canvas>
-                </div>
-            </div>
+    <section class="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div class="card">
+            <div class="card-header"><h2 class="text-base font-semibold">استخدام الموارد (آخر 24 ساعة)</h2></div>
+            <div class="card-body"><div class="h-80"><canvas id="resource-chart"></canvas></div></div>
         </div>
-        <div class="col-md-6">
-            <div class="monitoring-card">
-                <h5>أداء الاستجابة</h5>
-                <div class="chart-container">
-                    <canvas id="performance-chart"></canvas>
-                </div>
-            </div>
+        <div class="card">
+            <div class="card-header"><h2 class="text-base font-semibold">أداء الاستجابة</h2></div>
+            <div class="card-body"><div class="h-80"><canvas id="performance-chart"></canvas></div></div>
         </div>
-    </div>
+    </section>
 
-    <!-- Log Analysis -->
-    <div class="row">
-        <div class="col-12">
-            <div class="monitoring-card">
-                <h5>تحليل السجلات</h5>
-                <div id="log-analysis" class="loading">جاري تحليل السجلات...</div>
-            </div>
-        </div>
-    </div>
+    <section class="card">
+        <div class="card-header"><h2 class="text-base font-semibold">تحليل السجلات</h2></div>
+        <div class="card-body"><div id="log-analysis" class="py-6 text-center text-neutral-500">جاري تحليل السجلات...</div></div>
+    </section>
 </div>
-
-<!-- Floating Refresh Button -->
-<button class="btn btn-primary refresh-button" onclick="refreshAll()" title="تحديث البيانات">
-    <i class="fas fa-sync-alt"></i>
-</button>
 {% endblock %}
 
 {% block extra_js %}
@@ -354,77 +121,29 @@ let resourceChart, performanceChart;
 document.addEventListener('DOMContentLoaded', function() {
     initializeCharts();
     loadAllData();
-    
-    // Auto-refresh every 30 seconds
     refreshInterval = setInterval(loadAllData, 30000);
 });
 
 function initializeCharts() {
-    // Resource usage chart
     const resourceCtx = document.getElementById('resource-chart').getContext('2d');
     resourceChart = new Chart(resourceCtx, {
         type: 'line',
         data: {
             labels: [],
             datasets: [
-                {
-                    label: 'المعالج %',
-                    data: [],
-                    borderColor: '#3b82f6',
-                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                    tension: 0.4
-                },
-                {
-                    label: 'الذاكرة %',
-                    data: [],
-                    borderColor: '#10b981',
-                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                    tension: 0.4
-                },
-                {
-                    label: 'القرص %',
-                    data: [],
-                    borderColor: '#f59e0b',
-                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
-                    tension: 0.4
-                }
+                { label: 'المعالج %', data: [], borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,.1)', tension: .4 },
+                { label: 'الذاكرة %', data: [], borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,.1)', tension: .4 },
+                { label: 'القرص %', data: [], borderColor: '#d97706', backgroundColor: 'rgba(217,119,6,.1)', tension: .4 }
             ]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 100
-                }
-            }
-        }
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, max: 100 } } }
     });
 
-    // Performance chart
     const performanceCtx = document.getElementById('performance-chart').getContext('2d');
     performanceChart = new Chart(performanceCtx, {
         type: 'bar',
-        data: {
-            labels: [],
-            datasets: [{
-                label: 'وقت الاستجابة (ثانية)',
-                data: [],
-                backgroundColor: 'rgba(139, 92, 246, 0.8)',
-                borderColor: '#8b5cf6',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true
-                }
-            }
-        }
+        data: { labels: [], datasets: [{ label: 'وقت الاستجابة (ثانية)', data: [], backgroundColor: 'rgba(79,70,229,.8)', borderColor: '#4f46e5', borderWidth: 1 }] },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
     });
 }
 
@@ -435,286 +154,156 @@ function loadAllData() {
     loadAlertHistory();
     loadLogAnalysis();
     loadResourceHistory();
-    
-    document.getElementById('last-update').textContent = 
-        'آخر تحديث: ' + new Date().toLocaleString('ar-SA');
+    document.getElementById('last-update').textContent = 'آخر تحديث: ' + new Date().toLocaleString('ar-SA');
 }
 
 function loadSystemMetrics() {
-    fetch('{% url "core:system_metrics_api" %}')
+    fetch('{% url "core:monitoring:system_metrics_api" %}')
         .then(response => response.json())
         .then(data => {
-            if (data.error) {
-                showError('خطأ في تحميل مقاييس النظام: ' + data.error);
-                return;
-            }
-            
+            if (data.error) { showToast('خطأ في تحميل مقاييس النظام: ' + data.error, 'error'); return; }
             updateSystemMetrics(data);
         })
-        .catch(error => {
-            showError('خطأ في الاتصال: ' + error.message);
-        });
+        .catch(error => showToast('خطأ في الاتصال: ' + error.message, 'error'));
 }
 
 function loadSystemHealth() {
-    fetch('{% url "core:system_health_api" %}')
+    fetch('{% url "core:monitoring:system_health_api" %}')
         .then(response => response.json())
-        .then(data => {
-            updateSystemHealth(data);
-        })
+        .then(data => updateSystemHealth(data))
         .catch(error => {
-            document.getElementById('system-health').innerHTML = 
-                '<div class="error-message">خطأ في فحص الحالة: ' + error.message + '</div>';
+            document.getElementById('system-health').innerHTML = renderAlert('خطأ في فحص الحالة: ' + error.message, 'error');
         });
 }
 
 function loadPerformanceMetrics() {
-    fetch('{% url "core:performance_metrics_api" %}?hours=1')
+    fetch('{% url "core:monitoring:performance_metrics_api" %}?hours=1')
         .then(response => response.json())
         .then(data => {
-            if (data.error) {
-                document.getElementById('performance-metrics').innerHTML = 
-                    '<div class="error-message">خطأ في تحميل مقاييس الأداء: ' + data.error + '</div>';
-                return;
-            }
-            
+            if (data.error) { document.getElementById('performance-metrics').innerHTML = renderAlert('خطأ في تحميل مقاييس الأداء: ' + data.error, 'error'); return; }
             updatePerformanceMetrics(data);
         })
-        .catch(error => {
-            document.getElementById('performance-metrics').innerHTML = 
-                '<div class="error-message">خطأ في الاتصال: ' + error.message + '</div>';
-        });
+        .catch(error => document.getElementById('performance-metrics').innerHTML = renderAlert('خطأ في الاتصال: ' + error.message, 'error'));
 }
 
 function loadAlertHistory() {
-    fetch('{% url "core:alert_history_api" %}')
+    fetch('{% url "core:monitoring:alert_history_api" %}')
         .then(response => response.json())
         .then(data => {
-            if (data.error) {
-                document.getElementById('alert-history').innerHTML = 
-                    '<div class="error-message">خطأ في تحميل تاريخ التنبيهات: ' + data.error + '</div>';
-                return;
-            }
-            
+            if (data.error) { document.getElementById('alert-history').innerHTML = renderAlert('خطأ في تحميل تاريخ التنبيهات: ' + data.error, 'error'); return; }
             updateAlertHistory(data.alerts);
         })
-        .catch(error => {
-            document.getElementById('alert-history').innerHTML = 
-                '<div class="error-message">خطأ في الاتصال: ' + error.message + '</div>';
-        });
+        .catch(error => document.getElementById('alert-history').innerHTML = renderAlert('خطأ في الاتصال: ' + error.message, 'error'));
 }
 
 function loadLogAnalysis() {
-    fetch('{% url "core:log_analysis_api" %}?type=application&hours=24')
+    fetch('{% url "core:monitoring:log_analysis_api" %}?type=application&hours=24')
         .then(response => response.json())
         .then(data => {
-            if (data.error) {
-                document.getElementById('log-analysis').innerHTML = 
-                    '<div class="error-message">خطأ في تحليل السجلات: ' + data.error + '</div>';
-                return;
-            }
-            
+            if (data.error) { document.getElementById('log-analysis').innerHTML = renderAlert('خطأ في تحليل السجلات: ' + data.error, 'error'); return; }
             updateLogAnalysis(data);
         })
-        .catch(error => {
-            document.getElementById('log-analysis').innerHTML = 
-                '<div class="error-message">خطأ في الاتصال: ' + error.message + '</div>';
-        });
+        .catch(error => document.getElementById('log-analysis').innerHTML = renderAlert('خطأ في الاتصال: ' + error.message, 'error'));
 }
 
 function loadResourceHistory() {
-    fetch('{% url "core:resource_usage_history_api" %}?hours=24')
+    fetch('{% url "core:monitoring:resource_usage_history_api" %}?hours=24')
         .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                console.error('Error loading resource history:', data.error);
-                return;
-            }
-            
-            updateResourceChart(data);
-        })
-        .catch(error => {
-            console.error('Error loading resource history:', error);
-        });
+        .then(data => { if (!data.error) updateResourceChart(data); })
+        .catch(error => console.error('Error loading resource history:', error));
 }
 
 function updateSystemMetrics(data) {
     const system = data.system || {};
     const database = data.database || {};
-    
-    // CPU Usage
     const cpuUsage = system.cpu?.usage_percent || 0;
-    document.getElementById('cpu-usage').textContent = cpuUsage.toFixed(1) + '%';
-    updateProgressBar('cpu-progress', cpuUsage);
-    
-    // Memory Usage
     const memoryUsage = system.memory?.usage_percent || 0;
-    document.getElementById('memory-usage').textContent = memoryUsage.toFixed(1) + '%';
-    updateProgressBar('memory-progress', memoryUsage);
-    
-    // Disk Usage
     const diskUsage = system.disk?.usage_percent || 0;
+    document.getElementById('cpu-usage').textContent = cpuUsage.toFixed(1) + '%';
+    document.getElementById('memory-usage').textContent = memoryUsage.toFixed(1) + '%';
     document.getElementById('disk-usage').textContent = diskUsage.toFixed(1) + '%';
+    updateProgressBar('cpu-progress', cpuUsage);
+    updateProgressBar('memory-progress', memoryUsage);
     updateProgressBar('disk-progress', diskUsage);
-    
-    // Database metrics
-    const dbConnections = database.connections?.total || 0;
-    const dbSize = database.size_mb || 0;
-    document.getElementById('db-connections').textContent = dbConnections;
-    document.getElementById('db-size').textContent = dbSize.toFixed(1);
+    document.getElementById('db-connections').textContent = database.connections?.total || 0;
+    document.getElementById('db-size').textContent = (database.size_mb || 0).toFixed(1);
 }
 
 function updateProgressBar(elementId, percentage) {
-    const progressBar = document.querySelector(`#${elementId} .progress-fill`);
-    if (!progressBar) return;
-    
-    progressBar.style.width = percentage + '%';
-    
-    // Update color based on percentage
-    progressBar.className = 'progress-fill';
-    if (percentage >= 90) {
-        progressBar.classList.add('progress-critical');
-    } else if (percentage >= 75) {
-        progressBar.classList.add('progress-warning');
-    } else {
-        progressBar.classList.add('progress-normal');
-    }
+    const bar = document.querySelector(`#${elementId} .progress-fill`);
+    if (!bar) return;
+    bar.style.width = percentage + '%';
+    bar.className = 'progress-fill h-full ' + (percentage >= 90 ? 'bg-error-500' : percentage >= 75 ? 'bg-warning-500' : 'bg-success-500');
 }
 
 function updateSystemHealth(data) {
     const container = document.getElementById('system-health');
-    
-    let html = '<div class="d-flex align-items-center mb-3">';
-    
-    const statusClass = data.overall_status === 'healthy' ? 'status-healthy' : 
-                       data.overall_status === 'warning' ? 'status-warning' : 
-                       data.overall_status === 'critical' ? 'status-critical' : 'status-unknown';
-    
-    html += `<span class="status-indicator ${statusClass}"></span>`;
-    html += `<strong>الحالة العامة: ${getStatusText(data.overall_status)}</strong>`;
-    html += '</div>';
-    
+    const badgeClass = data.overall_status === 'healthy' ? 'badge-success' : data.overall_status === 'warning' ? 'badge-warning' : data.overall_status === 'critical' ? 'badge-error' : 'badge-secondary';
+    let html = `<div class="mb-4"><span class="badge ${badgeClass}">الحالة العامة: ${getStatusText(data.overall_status)}</span></div>`;
     if (data.checks && data.checks.length > 0) {
-        html += '<div class="row">';
+        html += '<div class="grid grid-cols-1 gap-3 md:grid-cols-2">';
         data.checks.forEach(check => {
-            const checkStatusClass = check.status === 'healthy' ? 'status-healthy' : 
-                                   check.status === 'warning' ? 'status-warning' : 
-                                   check.status === 'critical' ? 'status-critical' : 'status-unknown';
-            
-            html += '<div class="col-md-6 mb-2">';
-            html += `<div class="d-flex align-items-center">`;
-            html += `<span class="status-indicator ${checkStatusClass}"></span>`;
-            html += `<div>`;
-            html += `<strong>${check.name}</strong><br>`;
-            html += `<small class="text-muted">${check.message}</small>`;
-            html += `</div>`;
-            html += `</div>`;
-            html += '</div>';
+            const cls = check.status === 'healthy' ? 'badge-success' : check.status === 'warning' ? 'badge-warning' : check.status === 'critical' ? 'badge-error' : 'badge-secondary';
+            html += `<div class="rounded-lg border border-neutral-200 p-3 dark:border-neutral-700"><span class="badge ${cls}">${check.name}</span><p class="mt-2 text-sm text-neutral-600 dark:text-neutral-300">${check.message}</p></div>`;
         });
         html += '</div>';
     }
-    
     container.innerHTML = html;
 }
 
 function updatePerformanceMetrics(data) {
-    const container = document.getElementById('performance-metrics');
-    
-    let html = '<div class="row">';
-    html += `<div class="col-6"><strong>إجمالي الطلبات:</strong> ${(data.total_requests || 0).toLocaleString()}</div>`;
-    html += `<div class="col-6"><strong>متوسط وقت الاستجابة:</strong> ${data.avg_response_time || 0}s</div>`;
-    html += `<div class="col-6"><strong>متوسط الاستعلامات:</strong> ${data.avg_query_count || 0}</div>`;
-    html += `<div class="col-6"><strong>معدل الأخطاء:</strong> ${data.error_rate || 0}%</div>`;
+    let html = '<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">';
+    html += `<div><strong>إجمالي الطلبات:</strong> ${(data.total_requests || 0).toLocaleString()}</div>`;
+    html += `<div><strong>متوسط وقت الاستجابة:</strong> ${data.avg_response_time || 0}s</div>`;
+    html += `<div><strong>متوسط الاستعلامات:</strong> ${data.avg_query_count || 0}</div>`;
+    html += `<div><strong>معدل الأخطاء:</strong> ${data.error_rate || 0}%</div>`;
     html += '</div>';
-    
     if (data.slowest_endpoints && data.slowest_endpoints.length > 0) {
-        html += '<h6 class="mt-3">أبطأ النقاط:</h6>';
-        html += '<div class="table-responsive"><table class="table table-sm">';
-        html += '<thead><tr><th>المسار</th><th>وقت الاستجابة</th><th>العدد</th></tr></thead>';
-        html += '<tbody>';
-        
+        html += '<div class="table-container mt-4"><table class="table"><thead><tr><th class="text-right">المسار</th><th class="text-right">وقت الاستجابة</th><th class="text-right">العدد</th></tr></thead><tbody>';
         data.slowest_endpoints.slice(0, 5).forEach(endpoint => {
-            html += '<tr>';
-            html += `<td><code>${endpoint.path}</code></td>`;
-            html += `<td><span class="badge badge-warning">${endpoint.avg_response_time}s</span></td>`;
-            html += `<td>${endpoint.count}</td>`;
-            html += '</tr>';
+            html += `<tr><td><code>${endpoint.path}</code></td><td><span class="badge badge-warning">${endpoint.avg_response_time}s</span></td><td>${endpoint.count}</td></tr>`;
         });
-        
         html += '</tbody></table></div>';
     }
-    
-    container.innerHTML = html;
+    document.getElementById('performance-metrics').innerHTML = html;
 }
 
 function updateAlertHistory(alerts) {
     const container = document.getElementById('alert-history');
-    
-    if (!alerts || alerts.length === 0) {
-        container.innerHTML = '<p class="text-muted">لا توجد تنبيهات حديثة</p>';
-        return;
-    }
-    
-    let html = '';
+    if (!alerts || alerts.length === 0) { container.innerHTML = '<p class="text-neutral-500">لا توجد تنبيهات حديثة</p>'; return; }
+    let html = '<div class="space-y-3">';
     alerts.slice(0, 10).forEach(alert => {
-        const timeAgo = Math.floor(alert.time_ago / 60); // minutes
-        const alertClass = alert.name.includes('Critical') ? 'alert-critical' : 
-                          alert.name.includes('Warning') ? 'alert-warning' : 'alert-info';
-        
-        html += `<div class="alert-item ${alertClass}">`;
-        html += `<strong>${alert.name}</strong><br>`;
-        html += `<small>منذ ${timeAgo} دقيقة</small>`;
-        html += `</div>`;
+        const timeAgo = Math.floor(alert.time_ago / 60);
+        html += `<div class="rounded-lg border border-neutral-200 p-3 dark:border-neutral-700"><strong>${alert.name}</strong><br><small class="text-neutral-500">منذ ${timeAgo} دقيقة</small></div>`;
     });
-    
+    html += '</div>';
     container.innerHTML = html;
 }
 
 function updateLogAnalysis(data) {
-    const container = document.getElementById('log-analysis');
-    
-    let html = '<div class="row mb-3">';
-    html += `<div class="col-3 text-center"><strong>${data.total_entries}</strong><br><small>إجمالي المدخلات</small></div>`;
-    html += `<div class="col-3 text-center"><strong>${data.error_count}</strong><br><small>أخطاء</small></div>`;
-    html += `<div class="col-3 text-center"><strong>${data.warning_count}</strong><br><small>تحذيرات</small></div>`;
-    html += `<div class="col-3 text-center"><strong>${data.info_count}</strong><br><small>معلومات</small></div>`;
+    let html = '<div class="grid grid-cols-2 gap-3 md:grid-cols-4">';
+    html += `<div class="text-center"><strong>${data.total_entries}</strong><br><small>إجمالي المدخلات</small></div>`;
+    html += `<div class="text-center"><strong>${data.error_count}</strong><br><small>أخطاء</small></div>`;
+    html += `<div class="text-center"><strong>${data.warning_count}</strong><br><small>تحذيرات</small></div>`;
+    html += `<div class="text-center"><strong>${data.info_count}</strong><br><small>معلومات</small></div>`;
     html += '</div>';
-    
     if (data.top_errors && data.top_errors.length > 0) {
-        html += '<h6>أهم الأخطاء:</h6>';
-        html += '<div class="table-responsive"><table class="table table-sm">';
-        html += '<thead><tr><th>الرسالة</th><th>العدد</th><th>آخر حدوث</th></tr></thead>';
-        html += '<tbody>';
-        
+        html += '<div class="table-container mt-4"><table class="table"><thead><tr><th class="text-right">الرسالة</th><th class="text-right">العدد</th><th class="text-right">آخر حدوث</th></tr></thead><tbody>';
         data.top_errors.forEach(error => {
-            const lastOccurrence = new Date(error.last_occurrence).toLocaleString('ar-SA');
-            html += '<tr>';
-            html += `<td>${error.message}</td>`;
-            html += `<td><span class="badge badge-danger">${error.count}</span></td>`;
-            html += `<td><small>${lastOccurrence}</small></td>`;
-            html += '</tr>';
+            html += `<tr><td>${error.message}</td><td><span class="badge badge-error">${error.count}</span></td><td><small>${new Date(error.last_occurrence).toLocaleString('ar-SA')}</small></td></tr>`;
         });
-        
         html += '</tbody></table></div>';
     }
-    
-    container.innerHTML = html;
+    document.getElementById('log-analysis').innerHTML = html;
 }
 
 function updateResourceChart(data) {
     if (!resourceChart || !data.timestamps) return;
-    
-    // Format timestamps for display
-    const labels = data.timestamps.map(ts => {
-        const date = new Date(ts);
-        return date.toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' });
-    });
-    
+    const labels = data.timestamps.map(ts => new Date(ts).toLocaleTimeString('ar-SA', { hour: '2-digit', minute: '2-digit' }));
     resourceChart.data.labels = labels;
     resourceChart.data.datasets[0].data = data.cpu_usage;
     resourceChart.data.datasets[1].data = data.memory_usage;
     resourceChart.data.datasets[2].data = data.disk_usage;
-    
     resourceChart.update();
 }
 
@@ -727,17 +316,8 @@ function getStatusText(status) {
         default: return 'غير معروف';
     }
 }
-
-function refreshAll() {
-    loadAllData();
-    showSuccess('تم تحديث البيانات');
-}
-
-function toggleSettings() {
-    const panel = document.getElementById('settings-panel');
-    panel.classList.toggle('show');
-}
-
+function refreshAll() { loadAllData(); showToast('تم تحديث البيانات', 'success'); }
+function toggleSettings() { document.getElementById('settings-panel').classList.toggle('hidden'); }
 function saveSettings() {
     const settings = {
         alert_thresholds: {
@@ -747,85 +327,41 @@ function saveSettings() {
         },
         alert_email: document.getElementById('alert-email').value,
     };
-    
-    fetch('{% url "core:monitoring_settings_api" %}', {
+    fetch('{% url "core:monitoring:monitoring_settings_api" %}', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRFToken': '{{ csrf_token }}',
-        },
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}' },
         body: JSON.stringify(settings)
     })
     .then(response => response.json())
     .then(data => {
-        if (data.success) {
-            showSuccess(data.message);
-            toggleSettings();
-        } else {
-            showError(data.error || 'خطأ في حفظ الإعدادات');
-        }
+        if (data.success) { showToast(data.message, 'success'); toggleSettings(); }
+        else { showToast(data.error || 'خطأ في حفظ الإعدادات', 'error'); }
     })
-    .catch(error => {
-        showError('خطأ في الاتصال: ' + error.message);
-    });
+    .catch(error => showToast('خطأ في الاتصال: ' + error.message, 'error'));
 }
-
 function testAlert() {
     const formData = new FormData();
     formData.append('type', 'monitoring_test');
     formData.append('severity', 'info');
     formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-    
-    fetch('{% url "core:trigger_test_alert_api" %}', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showSuccess(data.message);
-        } else {
-            showError(data.error || 'خطأ في إرسال التنبيه');
-        }
-    })
-    .catch(error => {
-        showError('خطأ في الاتصال: ' + error.message);
-    });
+    fetch('{% url "core:monitoring:trigger_test_alert_api" %}', { method: 'POST', body: formData })
+        .then(response => response.json())
+        .then(data => showToast(data.success ? data.message : (data.error || 'خطأ في إرسال التنبيه'), data.success ? 'success' : 'error'))
+        .catch(error => showToast('خطأ في الاتصال: ' + error.message, 'error'));
 }
-
-function showSuccess(message) {
-    // Simple toast notification
+function renderAlert(message, type) {
+    const cls = type === 'error' ? 'alert-error' : type === 'success' ? 'alert-success' : 'alert-info';
+    return `<div class="alert ${cls}">${message}</div>`;
+}
+function showToast(message, type) {
     const toast = document.createElement('div');
-    toast.className = 'alert alert-success position-fixed';
-    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    toast.className = `alert ${type === 'error' ? 'alert-error' : type === 'success' ? 'alert-success' : 'alert-info'} fixed left-4 top-4 z-toast min-w-72 shadow-lg`;
     toast.textContent = message;
-    
     document.body.appendChild(toast);
-    
-    setTimeout(() => {
-        document.body.removeChild(toast);
-    }, 3000);
+    setTimeout(() => toast.remove(), type === 'error' ? 5000 : 3000);
 }
-
-function showError(message) {
-    // Simple error notification
-    const toast = document.createElement('div');
-    toast.className = 'alert alert-danger position-fixed';
-    toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-    toast.textContent = message;
-    
-    document.body.appendChild(toast);
-    
-    setTimeout(() => {
-        document.body.removeChild(toast);
-    }, 5000);
-}
-
-// Cleanup on page unload
 window.addEventListener('beforeunload', function() {
-    if (refreshInterval) {
-        clearInterval(refreshInterval);
-    }
+    if (refreshInterval) clearInterval(refreshInterval);
 });
 </script>
 {% endblock %}

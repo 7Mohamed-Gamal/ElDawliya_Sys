@@ -207,9 +207,9 @@
                             </div>
                             <div class="card-body">
                                 <p><strong>اسم المجموعة:</strong> {{ group.name }}</p>
-                                <p><strong>عدد المستخدمين في المجموعة:</strong> {{ group.user_set.count }}</p>
+                                <p><strong>عدد المستخدمين في المجموعة:</strong> {{ group.users_login_new_groups.count }}</p>
                                 <p><strong>المستخدمين:</strong> 
-                                    {% for user in group.user_set.all %}
+                                    {% for user in group.users_login_new_groups.all %}
                                     <span class="badge bg-primary">{{ user.username }}</span>
                                     {% empty %}
                                     <span class="text-muted">لا يوجد مستخدمين في هذه المجموعة</span>

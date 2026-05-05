@@ -1,133 +1,101 @@
-{% extends 'administrator/base_admin.html' %}
-{% load static %}
+{% extends 'base.html' %}
 
-{% block title %}الوحدات - لوحة تحكم مدير النظام{% endblock %}
+{% block title %}إدارة الوحدات{% endblock %}
 
-{% block page_icon %}cubes{% endblock %}
-{% block page_header %}إدارة الوحدات{% endblock %}
+{% block page_description %}
+<p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+    إدارة الوحدات الفرعية وروابطها وحالتها داخل أقسام النظام.
+</p>
+{% endblock %}
 
 {% block content %}
-<div class="row">
-        <div class="col-12 mb-4">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="fas fa-cubes me-2"></i>
-                        قائمة الوحدات
-                    </h5>
-                    <a href="{% url 'administrator:module_add' %}" class="btn btn-primary btn-sm">
-                        <i class="fas fa-plus-circle me-2"></i>
-                        إضافة وحدة جديدة
-                    </a>
-                </div>
-                <div class="card-body">
-                    {% if modules %}
-                    <div class="table-responsive">
-                        <table class="table table-hover table-striped align-middle">
-                            <thead>
-                                <tr>
-                                    <th scope="col">#</th>
-                                    <th scope="col">الوحدة</th>
-                                    <th scope="col">القسم</th>
-                                    <th scope="col">الأيقونة</th>
-                                    <th scope="col">الرابط</th>
-                                    <th scope="col">الحالة</th>
-                                    <th scope="col">الترتيب</th>
-                                    <th scope="col">الإجراءات</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for module in modules %}
-                                <tr>
-                                    <td>{{ forloop.counter }}</td>
-                                    <td>
-                                        <strong>{{ module.name }}</strong>
+<div class="space-y-6">
+    <div class="card">
+        <div class="card-header flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-100">قائمة الوحدات</h2>
+                <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">تأكد من صحة الروابط وربط كل وحدة بالقسم المناسب.</p>
+            </div>
+            <a href="{% url 'administrator:module_add' %}" class="btn btn-primary">
+                <i class="fas fa-plus-circle"></i>
+                <span>إضافة وحدة</span>
+            </a>
+        </div>
+        <div class="card-body">
+            {% if modules %}
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th class="text-right">#</th>
+                            <th class="text-right">الوحدة</th>
+                            <th class="text-right">القسم</th>
+                            <th class="text-right">الرابط</th>
+                            <th class="text-right">الحالة</th>
+                            <th class="text-right">الترتيب</th>
+                            <th class="text-right">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for module in modules %}
+                        <tr>
+                            <td class="text-neutral-500 dark:text-neutral-400">{{ forloop.counter }}</td>
+                            <td>
+                                <div class="flex items-start gap-3">
+                                    <span class="mt-1 inline-flex size-8 items-center justify-center rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-300">
+                                        <i class="fas {{ module.icon }}"></i>
+                                    </span>
+                                    <div>
+                                        <div class="font-semibold text-neutral-900 dark:text-neutral-100">{{ module.name }}</div>
                                         {% if module.description %}
-                                        <div class="text-muted small">{{ module.description }}</div>
+                                        <div class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">{{ module.description }}</div>
                                         {% endif %}
-                                    </td>
-                                    <td>
-                                        <span class="badge bg-info">{{ module.department.name }}</span>
-                                    </td>
-                                    <td>
-                                        <i class="fas {{ module.icon }} fa-lg" style="color: {{ module.bg_color }};"></i>
-                                        <span class="ms-2 text-muted small">{{ module.icon }}</span>
-                                    </td>
-                                    <td>
-                                        <code class="small">{{ module.url }}</code>
-                                    </td>
-                                    <td>
-                                        {% if module.is_active %}
-                                        <span class="badge bg-success">نشط</span>
-                                        {% else %}
-                                        <span class="badge bg-danger">غير نشط</span>
-                                        {% endif %}
-                                        {% if module.require_admin %}
-                                        <br><span class="badge bg-warning mt-1">يتطلب صلاحيات المدير</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ module.order }}</td>
-                                    <td>
-                                        <div class="btn-group">
-                                            <a href="{% url 'administrator:module_edit' module.id %}" class="btn btn-sm btn-outline-primary">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            <a href="{% url 'administrator:module_delete' module.id %}" class="btn btn-sm btn-outline-danger">
-                                                <i class="fas fa-trash"></i>
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <div class="text-center py-5">
-                        <i class="fas fa-cubes fa-4x mb-3 text-muted"></i>
-                        <h5>لا توجد وحدات</h5>
-                        <p class="text-muted">لم يتم إنشاء أي وحدات بعد. انقر على زر "إضافة وحدة جديدة" لإنشاء أول وحدة.</p>
-                        <a href="{% url 'administrator:module_add' %}" class="btn btn-primary mt-2">
-                            <i class="fas fa-plus-circle me-2"></i>
-                            إضافة وحدة جديدة
-                        </a>
-                    </div>
-                    {% endif %}
-                </div>
+                                        <span class="mt-1 inline-block text-xs text-neutral-500 dark:text-neutral-400">{{ module.icon }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="badge badge-info">{{ module.department.name }}</span></td>
+                            <td><code class="text-xs text-neutral-600 dark:text-neutral-300">{{ module.url }}</code></td>
+                            <td>
+                                <div class="flex flex-wrap gap-1.5">
+                                    {% if module.is_active %}
+                                    <span class="badge badge-success">نشط</span>
+                                    {% else %}
+                                    <span class="badge badge-error">غير نشط</span>
+                                    {% endif %}
+                                    {% if module.require_admin %}
+                                    <span class="badge badge-warning">مدير</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>{{ module.order }}</td>
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    <a href="{% url 'administrator:module_edit' module.id %}" class="btn btn-outline btn-sm" title="تعديل">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'administrator:module_delete' module.id %}" class="btn btn-error btn-sm" title="حذف">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
-        </div>
-
-        <div class="col-12 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5>
-                        <i class="fas fa-info-circle me-2"></i>
-                        معلومات حول الوحدات
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <p>الوحدات هي العناصر الفرعية التي تظهر ضمن الأقسام في الشريط الجانبي للنظام. يمكنك إضافة وتعديل الوحدات حسب حاجتك.</p>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6 class="mb-3">تنبيهات هامة:</h6>
-                            <ul>
-                                <li>يجب ربط كل وحدة بقسم موجود.</li>
-                                <li>يجب استخدام أسماء أيقونات من مكتبة Font Awesome.</li>
-                                <li>تأكد من استخدام رابط فريد وصحيح لكل وحدة.</li>
-                                <li>يمكنك تخصيص لون الخلفية لكل وحدة.</li>
-                                <li>يمكنك ترتيب الوحدات باستخدام خانة "الترتيب".</li>
-                            </ul>
-                        </div>
-                        <div class="col-md-6">
-                            <h6 class="mb-3">روابط مفيدة:</h6>
-                            <ul>
-                                <li><a href="https://fontawesome.com/icons?d=gallery&m=free" target="_blank">مكتبة أيقونات Font Awesome</a></li>
-                                <li><a href="{% url 'administrator:department_list' %}">إدارة الأقسام</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
+            {% else %}
+            <div class="py-12 text-center">
+                <i class="fas fa-cubes mb-4 text-5xl text-neutral-300 dark:text-neutral-600"></i>
+                <h3 class="text-lg font-semibold text-neutral-900 dark:text-neutral-100">لا توجد وحدات</h3>
+                <p class="mt-2 text-sm text-neutral-500 dark:text-neutral-400">أنشئ وحدة جديدة بعد تجهيز القسم المناسب لها.</p>
+                <a href="{% url 'administrator:module_add' %}" class="btn btn-primary mt-4">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>إضافة وحدة</span>
+                </a>
             </div>
+            {% endif %}
         </div>
+    </div>
 </div>
 {% endblock %}

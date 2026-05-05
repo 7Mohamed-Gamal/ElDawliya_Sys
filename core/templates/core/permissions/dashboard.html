@@ -1,255 +1,119 @@
 {% extends 'base.html' %}
-{% load static %}
 
 {% block title %}لوحة تحكم الصلاحيات{% endblock %}
 
-{% block extra_css %}
-<link href="{% static 'css/permissions.css' %}" rel="stylesheet">
+{% block page_description %}
+<p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+    متابعة الأدوار، الصلاحيات، الموافقات، وملخص صلاحيات المستخدم الحالي.
+</p>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="page-header">
-                <h1 class="page-title">
-                    <i class="fas fa-shield-alt me-2"></i>
-                    لوحة تحكم الصلاحيات
-                </h1>
-                <div class="page-options">
-                    {% if can_manage_permissions %}
-                    <a href="{% url 'core:permissions:clear_cache' %}" class="btn btn-outline-warning">
-                        <i class="fas fa-sync-alt"></i>
-                        مسح ذاكرة التخزين المؤقت
+<div class="space-y-6">
+    {% if can_manage_permissions %}
+    <div class="flex justify-end">
+        <a href="{% url 'core:permissions:clear_cache' %}" class="btn btn-warning">
+            <i class="fas fa-rotate"></i>
+            مسح ذاكرة التخزين المؤقت
+        </a>
+    </div>
+    {% endif %}
+
+    <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div class="card"><div class="card-body flex items-center justify-between"><div><p class="text-sm text-neutral-500">إجمالي المستخدمين</p><p class="mt-2 text-2xl font-semibold">{{ stats.total_users }}</p></div><i class="fas fa-users text-2xl text-primary-500"></i></div></div>
+        <div class="card"><div class="card-body flex items-center justify-between"><div><p class="text-sm text-neutral-500">إجمالي الأدوار</p><p class="mt-2 text-2xl font-semibold">{{ stats.total_roles }}</p></div><i class="fas fa-user-tag text-2xl text-success-500"></i></div></div>
+        <div class="card"><div class="card-body flex items-center justify-between"><div><p class="text-sm text-neutral-500">إجمالي الصلاحيات</p><p class="mt-2 text-2xl font-semibold">{{ stats.total_permissions }}</p></div><i class="fas fa-key text-2xl text-info-500"></i></div></div>
+        <div class="card"><div class="card-body flex items-center justify-between"><div><p class="text-sm text-neutral-500">الموافقات المعلقة</p><p class="mt-2 text-2xl font-semibold">{{ stats.pending_approvals }}</p></div><i class="fas fa-clock text-2xl text-warning-500"></i></div></div>
+    </section>
+
+    <section class="grid grid-cols-1 gap-6 xl:grid-cols-3">
+        <div class="card">
+            <div class="card-header"><h2 class="text-base font-semibold">الإجراءات السريعة</h2></div>
+            <div class="card-body">
+                <div class="divide-y divide-neutral-200 dark:divide-neutral-700">
+                    <a href="{% url 'core:permissions:modules_list' %}" class="flex items-center gap-3 py-3 text-sm hover:text-primary-600"><i class="fas fa-cubes"></i> إدارة الوحدات</a>
+                    {% if can_manage_roles %}
+                    <a href="{% url 'core:permissions:roles_list' %}" class="flex items-center gap-3 py-3 text-sm hover:text-primary-600"><i class="fas fa-user-tag"></i> إدارة الأدوار</a>
+                    <a href="{% url 'core:permissions:role_create' %}" class="flex items-center gap-3 py-3 text-sm hover:text-primary-600"><i class="fas fa-plus"></i> إنشاء دور جديد</a>
+                    {% endif %}
+                    {% if can_manage_users %}
+                    <a href="{% url 'core:permissions:assign_role' %}" class="flex items-center gap-3 py-3 text-sm hover:text-primary-600"><i class="fas fa-user-plus"></i> تعيين دور لمستخدم</a>
+                    {% endif %}
+                    <a href="{% url 'core:permissions:approval_workflows' %}" class="flex items-center justify-between gap-3 py-3 text-sm hover:text-primary-600">
+                        <span><i class="fas fa-tasks me-2"></i> سير عمل الموافقات</span>
+                        {% if stats.pending_approvals > 0 %}<span class="badge badge-warning">{{ stats.pending_approvals }}</span>{% endif %}
                     </a>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Statistics Cards -->
-    <div class="row mb-4">
-        <div class="col-lg-3 col-md-6">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="card-title">{{ stats.total_users }}</h4>
-                            <p class="card-text">إجمالي المستخدمين</p>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-users fa-2x"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-lg-3 col-md-6">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="card-title">{{ stats.total_roles }}</h4>
-                            <p class="card-text">إجمالي الأدوار</p>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-user-tag fa-2x"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-lg-3 col-md-6">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="card-title">{{ stats.total_permissions }}</h4>
-                            <p class="card-text">إجمالي الصلاحيات</p>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-key fa-2x"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-lg-3 col-md-6">
-            <div class="card bg-warning text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h4 class="card-title">{{ stats.pending_approvals }}</h4>
-                            <p class="card-text">الموافقات المعلقة</p>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-clock fa-2x"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row">
-        <!-- Quick Actions -->
-        <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title">الإجراءات السريعة</h5>
-                </div>
-                <div class="card-body">
-                    <div class="list-group list-group-flush">
-                        <a href="{% url 'core:permissions:modules_list' %}" class="list-group-item list-group-item-action">
-                            <i class="fas fa-cubes me-2"></i>
-                            إدارة الوحدات
-                        </a>
-                        
-                        {% if can_manage_roles %}
-                        <a href="{% url 'core:permissions:roles_list' %}" class="list-group-item list-group-item-action">
-                            <i class="fas fa-user-tag me-2"></i>
-                            إدارة الأدوار
-                        </a>
-                        
-                        <a href="{% url 'core:permissions:role_create' %}" class="list-group-item list-group-item-action">
-                            <i class="fas fa-plus me-2"></i>
-                            إنشاء دور جديد
-                        </a>
-                        {% endif %}
-                        
-                        {% if can_manage_users %}
-                        <a href="{% url 'core:permissions:assign_role' %}" class="list-group-item list-group-item-action">
-                            <i class="fas fa-user-plus me-2"></i>
-                            تعيين دور لمستخدم
-                        </a>
-                        {% endif %}
-                        
-                        <a href="{% url 'core:permissions:approval_workflows' %}" class="list-group-item list-group-item-action">
-                            <i class="fas fa-tasks me-2"></i>
-                            سير عمل الموافقات
-                            {% if stats.pending_approvals > 0 %}
-                            <span class="badge bg-warning rounded-pill">{{ stats.pending_approvals }}</span>
-                            {% endif %}
-                        </a>
-                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Recent Role Assignments -->
-        <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title">تعيينات الأدوار الأخيرة</h5>
+        <div class="card">
+            <div class="card-header"><h2 class="text-base font-semibold">تعيينات الأدوار الأخيرة</h2></div>
+            <div class="card-body">
+                {% if recent_role_assignments %}
+                <div class="space-y-3">
+                    {% for assignment in recent_role_assignments %}
+                    <article class="rounded-lg border border-neutral-200 p-3 dark:border-neutral-700">
+                        <h3 class="font-medium">{{ assignment.role.display_name }}</h3>
+                        <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-300">تم تعيين الدور للمستخدم <strong>{{ assignment.user.username }}</strong> بواسطة {{ assignment.granted_by.username }}</p>
+                        <p class="mt-1 text-xs text-neutral-500">{{ assignment.granted_at|timesince }} مضت</p>
+                    </article>
+                    {% endfor %}
                 </div>
-                <div class="card-body">
-                    {% if recent_role_assignments %}
-                    <div class="timeline">
-                        {% for assignment in recent_role_assignments %}
-                        <div class="timeline-item">
-                            <div class="timeline-marker bg-primary"></div>
-                            <div class="timeline-content">
-                                <h6 class="timeline-title">{{ assignment.role.display_name }}</h6>
-                                <p class="timeline-text">
-                                    تم تعيين الدور للمستخدم <strong>{{ assignment.user.username }}</strong>
-                                    بواسطة {{ assignment.granted_by.username }}
-                                </p>
-                                <small class="text-muted">{{ assignment.granted_at|timesince }} مضت</small>
-                            </div>
-                        </div>
-                        {% endfor %}
-                    </div>
-                    {% else %}
-                    <p class="text-muted">لا توجد تعيينات أدوار حديثة</p>
-                    {% endif %}
-                </div>
+                {% else %}
+                <p class="text-sm text-neutral-500">لا توجد تعيينات أدوار حديثة.</p>
+                {% endif %}
             </div>
         </div>
 
-        <!-- Recent Approvals -->
-        <div class="col-lg-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title">طلبات الموافقة الأخيرة</h5>
-                </div>
-                <div class="card-body">
-                    {% if recent_approvals %}
-                    <div class="timeline">
-                        {% for approval in recent_approvals %}
-                        <div class="timeline-item">
-                            <div class="timeline-marker 
-                                {% if approval.status == 'pending' %}bg-warning
-                                {% elif approval.status == 'approved' %}bg-success
-                                {% elif approval.status == 'rejected' %}bg-danger
-                                {% else %}bg-secondary{% endif %}">
-                            </div>
-                            <div class="timeline-content">
-                                <h6 class="timeline-title">{{ approval.title }}</h6>
-                                <p class="timeline-text">
-                                    طلب من <strong>{{ approval.requested_by.username }}</strong>
-                                    {% if approval.target_user %}
-                                    للمستخدم <strong>{{ approval.target_user.username }}</strong>
-                                    {% endif %}
-                                </p>
-                                <span class="badge 
-                                    {% if approval.status == 'pending' %}bg-warning
-                                    {% elif approval.status == 'approved' %}bg-success
-                                    {% elif approval.status == 'rejected' %}bg-danger
-                                    {% else %}bg-secondary{% endif %}">
-                                    {{ approval.get_status_display }}
-                                </span>
-                                <small class="text-muted d-block">{{ approval.created_at|timesince }} مضت</small>
-                            </div>
+        <div class="card">
+            <div class="card-header"><h2 class="text-base font-semibold">طلبات الموافقة الأخيرة</h2></div>
+            <div class="card-body">
+                {% if recent_approvals %}
+                <div class="space-y-3">
+                    {% for approval in recent_approvals %}
+                    <article class="rounded-lg border border-neutral-200 p-3 dark:border-neutral-700">
+                        <div class="flex items-start justify-between gap-3">
+                            <h3 class="font-medium">{{ approval.title }}</h3>
+                            <span class="badge {% if approval.status == 'pending' %}badge-warning{% elif approval.status == 'approved' %}badge-success{% elif approval.status == 'rejected' %}badge-error{% else %}badge-secondary{% endif %}">
+                                {{ approval.get_status_display }}
+                            </span>
                         </div>
-                        {% endfor %}
-                    </div>
-                    {% else %}
-                    <p class="text-muted">لا توجد طلبات موافقة حديثة</p>
-                    {% endif %}
+                        <p class="mt-1 text-sm text-neutral-600 dark:text-neutral-300">
+                            طلب من <strong>{{ approval.requested_by.username }}</strong>
+                            {% if approval.target_user %} للمستخدم <strong>{{ approval.target_user.username }}</strong>{% endif %}
+                        </p>
+                        <p class="mt-1 text-xs text-neutral-500">{{ approval.created_at|timesince }} مضت</p>
+                    </article>
+                    {% endfor %}
                 </div>
+                {% else %}
+                <p class="text-sm text-neutral-500">لا توجد طلبات موافقة حديثة.</p>
+                {% endif %}
             </div>
         </div>
-    </div>
+    </section>
 
-    <!-- User Permissions Summary -->
-    <div class="row mt-4">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title">ملخص صلاحياتك</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        {% for module_name, permissions in user_permissions.items %}
-                        <div class="col-lg-3 col-md-4 col-sm-6 mb-3">
-                            <div class="permission-module">
-                                <h6 class="module-name">{{ module_name|title }}</h6>
-                                <div class="permissions-list">
-                                    {% for perm_name, has_perm in permissions.items %}
-                                    <span class="badge {% if has_perm %}bg-success{% else %}bg-secondary{% endif %} me-1 mb-1">
-                                        {{ perm_name }}
-                                    </span>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        </div>
-                        {% empty %}
-                        <div class="col-12">
-                            <p class="text-muted">لا توجد صلاحيات محددة</p>
-                        </div>
+    <section class="card">
+        <div class="card-header"><h2 class="text-base font-semibold">ملخص صلاحياتك</h2></div>
+        <div class="card-body">
+            {% if user_permissions %}
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+                {% for module_name, permissions in user_permissions.items %}
+                <div class="rounded-lg border border-neutral-200 p-4 dark:border-neutral-700">
+                    <h3 class="mb-3 font-medium">{{ module_name|title }}</h3>
+                    <div class="flex flex-wrap gap-2">
+                        {% for perm_name, has_perm in permissions.items %}
+                        <span class="badge {% if has_perm %}badge-success{% else %}badge-secondary{% endif %}">{{ perm_name }}</span>
                         {% endfor %}
                     </div>
                 </div>
+                {% endfor %}
             </div>
+            {% else %}
+            <p class="text-sm text-neutral-500">لا توجد صلاحيات محددة.</p>
+            {% endif %}
         </div>
-    </div>
+    </section>
 </div>
-{% endblock %}
-
-{% block extra_js %}
-<script src="{% static 'js/permissions.js' %}"></script>
 {% endblock %}

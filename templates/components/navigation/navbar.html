@@ -48,9 +48,9 @@
                 @click="open = !open"
                 aria-label="الإشعارات">
           <i class="fas fa-bell text-xl"></i>
-          {% if unread_notifications > 0 %}
+          {% if unread_notifications_count > 0 %}
           <span class="absolute top-1 end-1 w-5 h-5 bg-error-500 text-white text-xs rounded-full flex items-center justify-center">
-            {{ unread_notifications }}
+            {{ unread_notifications_count }}
           </span>
           {% endif %}
         </button>
@@ -67,7 +67,7 @@
             <h3 class="font-semibold text-neutral-900 dark:text-neutral-100">الإشعارات</h3>
           </div>
           <div class="max-h-96 overflow-y-auto">
-            {% if unread_notifications > 0 %}
+            {% if unread_notifications_count > 0 %}
             <a href="{% url 'notifications:list' %}" class="block p-4 hover:bg-neutral-50 dark:hover:bg-neutral-700/50">
               <p class="text-sm text-neutral-600 dark:text-neutral-400">عرض جميع الإشعارات</p>
             </a>
@@ -111,10 +111,10 @@
             <p class="text-sm text-neutral-500 dark:text-neutral-400">{{ user.email|default:"" }}</p>
           </div>
           <div class="py-1">
-            <a href="{% url 'accounts:profile' %}" class="block px-4 py-2 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-700/50 text-neutral-700 dark:text-neutral-300">
+            <a href="{% url 'accounts:home' %}" class="block px-4 py-2 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-700/50 text-neutral-700 dark:text-neutral-300">
               <i class="fas fa-user me-2"></i>الملف الشخصي
             </a>
-            <a href="{% url 'accounts:settings' %}" class="block px-4 py-2 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-700/50 text-neutral-700 dark:text-neutral-300">
+            <a href="{% url 'administrator:settings' %}" class="block px-4 py-2 text-sm hover:bg-neutral-50 dark:hover:bg-neutral-700/50 text-neutral-700 dark:text-neutral-300">
               <i class="fas fa-cog me-2"></i>الإعدادات
             </a>
           </div>

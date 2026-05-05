@@ -1,499 +1,74 @@
-{% comment %}
-  Login Page - Migrated to Tailwind CSS
-  Date: 2026-04-29
-  Status: ✅ Migrated from Bootstrap to Tailwind
-{% endcomment %}
-{% load static %}
+{% extends "base.html" %}
 {% load widget_tweaks %}
-<!DOCTYPE html>
-<html lang="ar" dir="rtl" class="h-full">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تسجيل الدخول - نظام الدولية</title>
-    
-    <!-- Google Fonts - Cairo -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
-    <!-- Tailwind CSS -->
-    <link rel="stylesheet" href="{% static 'css/output.css' %}">
-    
-    <!-- Dark Mode Initialization -->
-    <script>
-        (function() {
-            const theme = localStorage.getItem('theme');
-            if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                document.documentElement.classList.add('dark');
-            }
-        })();
-    </script>
-</head>
 
-<body class="h-full bg-gradient-to-br from-primary-50 via-white to-secondary-50 dark:from-neutral-900 dark:via-neutral-800 dark:to-neutral-900 font-sans antialiased">
-    <div class="min-h-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div class="max-w-md w-full">
-            <!-- Logo and Title -->
-            <div class="text-center mb-8">
-                <div class="mx-auto h-16 w-16 rounded-full bg-primary-600 flex items-center justify-center shadow-lg">
-                    <i class="fas fa-building text-white text-2xl"></i>
-                </div>
-                <h2 class="mt-6 text-3xl font-bold text-neutral-900 dark:text-neutral-100">
-                    نظام الدولية
-                </h2>
-                <p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
-                    تسجيل الدخول إلى حسابك
-                </p>
+{% block title %}تسجيل الدخول - نظام الدولية{% endblock %}
+
+{% block body_class %}bg-gradient-to-br from-primary-50 via-white to-secondary-50 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-950{% endblock %}
+
+{% block content %}
+<div class="min-h-[calc(100vh-8rem)] flex items-center justify-center px-4 py-10">
+    <div class="w-full max-w-md">
+        <div class="mb-8 text-center">
+            <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-600 shadow-lg">
+                <i class="fas fa-building text-2xl text-white"></i>
             </div>
-            
-            <!-- Login Form Card -->
-            <div class="bg-white dark:bg-neutral-800 rounded-2xl shadow-xl p-8 border border-neutral-200 dark:border-neutral-700">
-                <!-- Messages -->
-                {% if messages %}
-                <div class="mb-6 space-y-3">
-                    {% for message in messages %}
-                    <div class="flex items-start gap-3 p-4 rounded-lg border
-                                {% if message.tags == 'error' %}
-                                    bg-error-50 dark:bg-error-900/20 border-error-200 dark:border-error-800 text-error-800 dark:text-error-200
-                                {% elif message.tags == 'success' %}
-                                    bg-success-50 dark:bg-success-900/20 border-success-200 dark:border-success-800 text-success-800 dark:text-success-200
-                                {% else %}
-                                    bg-info-50 dark:bg-info-900/20 border-info-200 dark:border-info-800 text-info-800 dark:text-info-200
-                                {% endif %}">
-                        <i class="fas {% if message.tags == 'error' %}fa-times-circle{% elif message.tags == 'success' %}fa-check-circle{% else %}fa-info-circle{% endif %} text-lg flex-shrink-0 mt-0.5"></i>
-                        <p class="flex-1 text-sm font-medium">{{ message }}</p>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% endif %}
-                
-                <form method="post" action="{% url 'accounts:login' %}" class="space-y-6">
-                    {% csrf_token %}
-                    
-                    <!-- Username Field -->
-                    <div>
-                        <label for="username" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                            اسم المستخدم
-                        </label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                <i class="fas fa-user text-neutral-400"></i>
-                            </div>
-                            <input type="text" 
-                                   name="username" 
-                                   id="username" 
-                                   required
-                                   autofocus
-                                   placeholder="أدخل اسم المستخدم"
-                                   class="block w-full pr-10 pl-4 py-3 rounded-lg border border-neutral-300 dark:border-neutral-600
-                                          bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100
-                                          placeholder-neutral-400 dark:placeholder-neutral-500
-                                          focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                                          transition-colors duration-200">
-                        </div>
-                    </div>
-                    
-                    <!-- Password Field -->
-                    <div>
-                        <label for="password" class="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                            كلمة المرور
-                        </label>
-                        <div class="relative">
-                            <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                                <i class="fas fa-lock text-neutral-400"></i>
-                            </div>
-                            <input type="password" 
-                                   name="password" 
-                                   id="password" 
-                                   required
-                                   placeholder="أدخل كلمة المرور"
-                                   class="block w-full pr-10 pl-4 py-3 rounded-lg border border-neutral-300 dark:border-neutral-600
-                                          bg-white dark:bg-neutral-700 text-neutral-900 dark:text-neutral-100
-                                          placeholder-neutral-400 dark:placeholder-neutral-500
-                                          focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                                          transition-colors duration-200">
-                        </div>
-                    </div>
-                    
-                    <!-- Remember Me & Forgot Password -->
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center">
-                            <input type="checkbox" 
-                                   name="remember_me" 
-                                   id="remember_me"
-                                   class="h-4 w-4 text-primary-600 focus:ring-primary-500 border-neutral-300 dark:border-neutral-600 rounded">
-                            <label for="remember_me" class="mr-2 block text-sm text-neutral-700 dark:text-neutral-300">
-                                تذكرني
-                            </label>
-                        </div>
-                        
-                        <div class="text-sm">
-                            <a href="#" class="font-medium text-primary-600 dark:text-primary-400 hover:text-primary-500">
-                                نسيت كلمة المرور؟
-                            </a>
-                        </div>
-                    </div>
-                    
-                    <!-- Submit Button -->
-                    <div>
-                        <button type="submit" 
-                                class="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-lg
-                                       bg-primary-600 hover:bg-primary-700 text-white
-                                       font-semibold text-base
-                                       shadow-lg hover:shadow-xl
-                                       transform hover:-translate-y-0.5
-                                       transition-all duration-200">
-                            <i class="fas fa-sign-in-alt"></i>
-                            تسجيل الدخول
-                        </button>
-                    </div>
-                </form>
-            </div>
-            
-            <!-- Footer -->
-            <div class="mt-8 text-center">
-                <p class="text-sm text-neutral-600 dark:text-neutral-400">
-                    © {% now "Y" %} نظام الدولية. جميع الحقوق محفوظة.
-                </p>
-            </div>
+            <h1 class="mt-5 text-2xl font-semibold text-neutral-900 dark:text-neutral-100">نظام الدولية</h1>
+            <p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400">تسجيل الدخول إلى لوحة إدارة النظام</p>
         </div>
-    </div>
-    
-    <!-- Theme Toggle (Optional) -->
-    <button type="button" 
-            onclick="toggleTheme()"
-            class="fixed top-4 left-4 p-3 rounded-full bg-white dark:bg-neutral-800 shadow-lg hover:shadow-xl border border-neutral-200 dark:border-neutral-700 transition-all duration-200"
-            aria-label="تبديل الوضع">
-        <i class="fas fa-sun text-xl hidden dark:block text-amber-500"></i>
-        <i class="fas fa-moon text-xl dark:hidden text-neutral-600"></i>
-    </button>
-    
-    <!-- Scripts -->
-    <script>
-        function toggleTheme() {
-            const html = document.documentElement;
-            const isDark = html.classList.contains('dark');
-            
-            if (isDark) {
-                html.classList.remove('dark');
-                localStorage.setItem('theme', 'light');
-            } else {
-                html.classList.add('dark');
-                localStorage.setItem('theme', 'dark');
-            }
-        }
-    </script>
-</body>
-</html>
-    <style>
-        :root {
-            --primary-color: #1a56db;
-            --secondary-color: #2563eb;
-            --medium: #6b7280;
-        }
-        
-        body {
-            background-color: #f5f7fb;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Cairo', sans-serif;
-        }
-        
-        .login-container {
-            width: 100%;
-            max-width: 420px;
-            padding: 15px;
-        }
-        
-        .login-card {
-            border-radius: 15px;
-            overflow: hidden;
-            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
-            background-color: #ffffff;
-        }
-        
-        .login-header {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-            text-align: center;
-            padding: 2.5rem 1rem 2rem;
-            position: relative;
-        }
-        
-        .login-header h2 {
-            margin: 0;
-            font-weight: 800;
-            font-size: 1.9rem;
-            text-shadow: 0px 2px 4px rgba(0,0,0,0.5);
-            line-height: 1.4;
-            padding: 0.3rem 0;
-            color: white;
-            position: relative;
-            z-index: 2;
-        }
-        
-        .login-header h2::after {
-            content: "";
-            position: absolute;
-            left: 50%;
-            bottom: -5px;
-            transform: translateX(-50%);
-            width: 50px;
-            height: 3px;
-            background: rgba(255,255,255,0.7);
-            border-radius: 3px;
-        }
-        
-        .login-body {
-            padding: 2rem;
-            background-color: white;
-        }
-        
-        .logo-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            color: rgba(255, 255, 255, 0.95);
-            text-shadow: 0px 2px 4px rgba(0,0,0,0.2);
-        }
-        
-        .login-form .form-control {
-            height: calc(3rem + 2px);
-            font-size: 1.1rem;
-        }
-        
-        .login-form .form-label {
-            font-weight: 600;
-        }
-        
-        .btn-login {
-            height: 3rem;
-            font-size: 1.1rem;
-            font-weight: 600;
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-            transition: all 0.3s ease;
-        }
-        
-        .btn-login:hover {
-            background-color: var(--secondary-color);
-            border-color: var(--secondary-color);
-            transform: translateY(-1px);
-        }
-        
-        .login-footer {
-            text-align: center;
-            margin-top: 1.5rem;
-            color: var(--medium);
-        }
-        
-        .wave {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            height: 15px;
-            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%23ffffff' fill-opacity='1' d='M0,160L48,144C96,128,192,96,288,106.7C384,117,480,171,576,186.7C672,203,768,181,864,154.7C960,128,1056,96,1152,96C1248,96,1344,128,1392,144L1440,160L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E");
-            background-size: cover;
-        }
-        
-        .info-icon {
-            cursor: pointer;
-            margin-right: 5px;
-            vertical-align: middle;
-            color: var(--primary-color);
-            transition: transform 0.3s ease;
-        }
-        
-        .info-icon:hover {
-            transform: scale(1.1);
-        }
-        
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1050;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
-        }
-        
-        .modal-content {
-            background-color: #ffffff;
-            margin: 10% auto;
-            border-radius: 10px;
-            width: 90%;
-            max-width: 380px;
-            overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-        }
-        
-        .modal-header {
-            padding: 15px;
-            background: linear-gradient(135deg, var(--primary-color), #4a90e2);
-            color: #fff;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .modal-header .modal-title {
-            margin: 0;
-            font-size: 1.2rem;
-            font-weight: 600;
-        }
-        
-        .modal-close {
-            font-size: 1.4rem;
-            cursor: pointer;
-            color: #ffffff;
-            transition: color 0.3s ease;
-        }
-        
-        .modal-close:hover {
-            color: #f1f1f1;
-        }
-        
-        .modal-body {
-            padding: 20px;
-            background: linear-gradient(to bottom, #fbfbfb, #eaeff5);
-            font-size: 1rem;
-            color: #333;
-            line-height: 1.5;
-        }
-    </style>
-</head>
-<body>
-    <div class="login-container">
-        <div class="login-card">
-            <div class="login-header">
-                <div class="logo-icon">
-                    <i class="fas fa-building"></i>
+
+        <section class="card">
+            <div class="card-body p-6 sm:p-8">
+                {% if form.non_field_errors %}
+                <div class="mb-5">
+                    {% include "components/feedback/alert.html" with type="error" message=form.non_field_errors.0 %}
                 </div>
-                <h2>نظام شركة الدولية إنترناشونال</h2>
-                <div class="wave"></div>
-            </div>
-            <div class="login-body">
-                {% if messages %}
-                    <div class="mb-4">
-                    {% for message in messages %}
-                        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% else %}alert-info{% endif %} alert-dismissible fade show" role="alert">
-                            <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% elif message.tags == 'warning' %}fa-exclamation-triangle{% else %}fa-info-circle{% endif %} me-2"></i>
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    {% endfor %}
-                    </div>
                 {% endif %}
-                <form method="post" class="login-form needs-validation" novalidate>
+
+                <form method="post" action="{% url 'accounts:login' %}" class="space-y-5" novalidate>
                     {% csrf_token %}
-                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
-                    <div class="mb-4">
-                        <label for="username" class="form-label">اسم المستخدم</label>
-                        <div class="input-group">
-                            <span class="input-group-text">
+
+                    <div>
+                        <label for="{{ form.username.id_for_label }}" class="form-label">اسم المستخدم</label>
+                        <div class="relative">
+                            <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-neutral-400">
                                 <i class="fas fa-user"></i>
                             </span>
-                            {{ form.username|add_class:"form-control"|attr:"placeholder:أدخل اسم المستخدم"|attr:"required:required" }}
+                            {{ form.username|add_class:"form-input pr-10"|attr:"placeholder:أدخل اسم المستخدم"|attr:"autocomplete:username"|attr:"autofocus:autofocus" }}
                         </div>
                         {% if form.username.errors %}
-                            <div class="invalid-feedback d-block">{{ form.username.errors.0 }}</div>
+                        <p class="form-error">{{ form.username.errors.0 }}</p>
                         {% endif %}
                     </div>
-                    <div class="mb-4">
-                        <label for="password" class="form-label">كلمة المرور</label>
-                        <div class="input-group">
-                            <span class="input-group-text">
+
+                    <div>
+                        <label for="{{ form.password.id_for_label }}" class="form-label">كلمة المرور</label>
+                        <div class="relative">
+                            <span class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-neutral-400">
                                 <i class="fas fa-lock"></i>
                             </span>
-                            {{ form.password|add_class:"form-control"|attr:"placeholder:أدخل كلمة المرور"|attr:"required:required" }}
+                            {{ form.password|add_class:"form-input pr-10"|attr:"placeholder:أدخل كلمة المرور"|attr:"autocomplete:current-password" }}
                         </div>
                         {% if form.password.errors %}
-                            <div class="invalid-feedback d-block">{{ form.password.errors.0 }}</div>
+                        <p class="form-error">{{ form.password.errors.0 }}</p>
                         {% endif %}
                     </div>
-                    <div class="d-grid">
-                        <button type="submit" name="login_button" value="submit" class="btn btn-primary btn-login">
-                            <i class="fas fa-sign-in-alt ml-2"></i>
-                            تسجيل الدخول
-                        </button>
-                    </div>
+
+                    <label class="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300">
+                        <input type="checkbox" name="remember_me" class="h-4 w-4 rounded border-neutral-300 text-primary-600 focus:ring-primary-500">
+                        <span>تذكرني على هذا الجهاز</span>
+                    </label>
+
+                    <button type="submit" name="login_button" value="submit" class="btn btn-primary w-full py-3 text-base">
+                        <i class="fas fa-right-to-bracket"></i>
+                        تسجيل الدخول
+                    </button>
                 </form>
             </div>
-        </div>
-        <div class="login-footer">
-            <p>
-                © {{ current_year|default:"2025" }} نظام الدولية. جميع الحقوق محفوظة.
-                <i class="fas fa-info-circle info-icon" id="infoBtn" aria-label="معلومات"></i>
-            </p>
-        </div>
+        </section>
+
+        <p class="mt-6 text-center text-xs text-neutral-500 dark:text-neutral-400">
+            © {{ current_year }} نظام الدولية. جميع الحقوق محفوظة.
+        </p>
     </div>
-
-    <div id="infoModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">معلومات النظام</h5>
-                <span class="modal-close" id="infoClose">&times;</span>
-            </div>
-            <div class="modal-body">
-                <p>تم تطوير وبرمجة هذا النظام بواسطة الأستاذ محمد جمال<br>
-                مدير إدارة الموارد البشرية<br>
-                هاتف / 01007902026</p>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{% static 'js/main.js' %}"></script>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            var infoBtn = document.getElementById('infoBtn');
-            var infoModal = document.getElementById('infoModal');
-            var infoClose = document.getElementById('infoClose');
-
-            infoBtn.addEventListener('click', function() {
-                infoModal.style.display = 'block';
-            });
-            infoClose.addEventListener('click', function() {
-                infoModal.style.display = 'none';
-            });
-            window.addEventListener('click', function(e) {
-                if (e.target === infoModal) {
-                    infoModal.style.display = 'none';
-                }
-            });
-
-            function getCookie(name) {
-                let cookieValue = null;
-                if (document.cookie && document.cookie !== '') {
-                    const cookies = document.cookie.split(';');
-                    for (let i = 0; i < cookies.length; i++) {
-                        const cookie = cookies[i].trim();
-                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
-                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-                            break;
-                        }
-                    }
-                }
-                return cookieValue;
-            }
-
-            const csrftoken = getCookie('csrftoken');
-            if (csrftoken) {
-                const csrfInput = document.querySelector('input[name="csrfmiddlewaretoken"]');
-                if (csrfInput) {
-                    csrfInput.value = csrftoken;
-                }
-            }
-        });
-    </script>
-</body>
-</html>
+</div>
+{% endblock %}

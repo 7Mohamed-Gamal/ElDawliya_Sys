@@ -1,131 +1,82 @@
-{% extends 'administrator/base_admin.html' %}
-{% load static %}
+{% extends 'base.html' %}
 
-{% block title %}{{ page_title }} | {{ system_settings.system_name }}{% endblock %}
+{% block title %}إدارة المجموعات{% endblock %}
+
+{% block page_description %}
+<p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+    إدارة مجموعات المستخدمين والصلاحيات المرتبطة بها ضمن نموذج صلاحيات Django.
+</p>
+{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <h2 class="page-title">{{ page_title }}</h2>
-                <div>
-                    <a href="{% url 'administrator:permission_dashboard' %}" class="btn btn-info me-2">
-                        <i class="fas fa-question-circle me-1"></i>
-                        لوحة الصلاحيات
-                    </a>
-                    <a href="{% url 'administrator:permission_dashboard' %}" class="btn btn-outline-primary me-2">
-                        <i class="fas fa-arrow-right ml-1"></i>
-                        العودة إلى لوحة الصلاحيات
-                    </a>
-                    <a href="{% url 'administrator:group_add' %}" class="btn btn-success">
-                        <i class="fas fa-plus-circle me-1"></i>
-                        إضافة مجموعة جديدة
-                    </a>
-                </div>
-            </div>
-        </div>
+<div class="space-y-6">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+        <a href="{% url 'administrator:permission_dashboard' %}" class="btn btn-outline">
+            <i class="fas fa-user-shield"></i>
+            <span>لوحة الصلاحيات</span>
+        </a>
+        <a href="{% url 'administrator:group_add' %}" class="btn btn-primary">
+            <i class="fas fa-plus-circle"></i>
+            <span>إضافة مجموعة</span>
+        </a>
     </div>
 
-    <div class="row">
-        <div class="col-12">
-            <div class="card border-0 shadow">
-                <div class="card-header bg-light">
-                    <h5 class="mb-0">قائمة مجموعات المستخدمين</h5>
-                </div>
-                <div class="card-body">
-                    {% if groups %}
-                    <div class="table-responsive">
-                        <table class="table table-hover table-striped">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>#</th>
-                                    <th>اسم المجموعة</th>
-                                    <th>عدد المستخدمين</th>
-                                    <th>آخر تعديل</th>
-                                    <th>الإجراءات</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for group in groups %}
-                                <tr>
-                                    <td>{{ forloop.counter }}</td>
-                                    <td>{{ group.name }}</td>
-                                    <td>
-                                        <span class="badge bg-secondary">{{ group.user_set.count }}</span>
-                                    </td>
-                                    <td>
-                                        {% if group.last_modified %}
-                                            {{ group.last_modified|date:"Y-m-d H:i" }}
-                                        {% else %}
-                                            ---
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <div class="btn-group" role="group">
-                                            <a href="{% url 'administrator:group_detail' group.id %}" class="btn btn-sm btn-info">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                            <a href="{% url 'administrator:group_edit' group.id %}" class="btn btn-sm btn-primary">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            <a href="{% url 'administrator:group_permissions' group.id %}" class="btn btn-sm btn-warning">
-                                                <i class="fas fa-user-shield"></i>
-                                            </a>
-                                            <a href="{% url 'administrator:group_delete' group.id %}" class="btn btn-sm btn-danger">
-                                                <i class="fas fa-trash"></i>
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    
-                    {% if is_paginated %}
-                    <div class="pagination mt-4 d-flex justify-content-center">
-                        <ul class="pagination">
-                            {% if page_obj.has_previous %}
-                                <li class="page-item">
-                                    <a class="page-link" href="?page=1"><i class="fas fa-angle-double-right"></i></a>
-                                </li>
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}"><i class="fas fa-angle-right"></i></a>
-                                </li>
-                            {% endif %}
-
-                            <li class="page-item active">
-                                <span class="page-link">{{ page_obj.number }} من {{ page_obj.paginator.num_pages }}</span>
-                            </li>
-
-                            {% if page_obj.has_next %}
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}"><i class="fas fa-angle-left"></i></a>
-                                </li>
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}"><i class="fas fa-angle-double-left"></i></a>
-                                </li>
-                            {% endif %}
-                        </ul>
-                    </div>
-                    {% endif %}
-                    
-                    {% else %}
-                    <div class="alert alert-info text-center">
-                        <i class="fas fa-info-circle me-2"></i>
-                        لا توجد مجموعات مسجلة حالياً. قم بإضافة مجموعة جديدة.
-                    </div>
-                    
-                    <div class="text-center mt-4">
-                        <a href="{% url 'administrator:group_add' %}" class="btn btn-success">
-                            <i class="fas fa-plus-circle me-1"></i>
-                            إضافة مجموعة جديدة
-                        </a>
-                    </div>
-                    {% endif %}
-                </div>
+    <div class="card">
+        <div class="card-header">
+            <h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-100">قائمة المجموعات</h2>
+        </div>
+        <div class="card-body">
+            {% if groups %}
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th class="text-right">#</th>
+                            <th class="text-right">اسم المجموعة</th>
+                            <th class="text-right">عدد المستخدمين</th>
+                            <th class="text-right">الصلاحيات</th>
+                            <th class="text-right">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for group in groups %}
+                        <tr>
+                            <td class="text-neutral-500 dark:text-neutral-400">{{ forloop.counter }}</td>
+                            <td class="font-semibold text-neutral-900 dark:text-neutral-100">{{ group.name }}</td>
+                            <td><span class="badge badge-secondary">{{ group.users_login_new_groups.count }}</span></td>
+                            <td><span class="badge badge-info">{{ group.permissions.count }}</span></td>
+                            <td>
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <a href="{% url 'administrator:group_detail' group.id %}" class="btn btn-outline btn-sm" title="عرض">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'administrator:group_edit' group.id %}" class="btn btn-outline btn-sm" title="تعديل">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'administrator:group_permissions' group.id %}" class="btn btn-warning btn-sm" title="الصلاحيات">
+                                        <i class="fas fa-key"></i>
+                                    </a>
+                                    <a href="{% url 'administrator:group_delete' group.id %}" class="btn btn-error btn-sm" title="حذف">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
+            {% else %}
+            <div class="py-12 text-center">
+                <i class="fas fa-users-gear mb-4 text-5xl text-neutral-300 dark:text-neutral-600"></i>
+                <h3 class="text-lg font-semibold text-neutral-900 dark:text-neutral-100">لا توجد مجموعات</h3>
+                <p class="mt-2 text-sm text-neutral-500 dark:text-neutral-400">أنشئ مجموعة لتجميع الصلاحيات وتطبيقها على المستخدمين.</p>
+                <a href="{% url 'administrator:group_add' %}" class="btn btn-primary mt-4">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>إضافة مجموعة</span>
+                </a>
+            </div>
+            {% endif %}
         </div>
     </div>
 </div>

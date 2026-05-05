@@ -1,3 +1,5 @@
+{% extends 'base.html' %}
+{% load static %}
 {% comment %}
   Migration Wrapper for Accounts App
   Created: 2026-04-29
@@ -11,8 +13,6 @@
   - New: extends 'accounts/base_accounts_migration.html' → extends 'base.html' (Tailwind)
   - Future: extends 'base.html' (direct, after 2 weeks)
 {% endcomment %}
-{% extends 'base.html' %}
-{% load static %}
 
 {% block title %}
   {% block account_title %}نظام إدارة الحسابات{% endblock %}
@@ -25,6 +25,10 @@
 
 {# Override sidebar with accounts-specific menu #}
 {% block sidebar %}
+  {% include 'components/navigation/sidebar.html' with menu_items=accounts_menu_items|default:default_menu_items %}
+{% endblock %}
+
+{% block mobile_sidebar %}
   {% include 'components/navigation/sidebar.html' with menu_items=accounts_menu_items|default:default_menu_items %}
 {% endblock %}
 

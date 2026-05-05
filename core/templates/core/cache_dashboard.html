@@ -1,268 +1,100 @@
-{% extends 'base/base_enhanced.html' %}
-{% load static %}
+{% extends 'base.html' %}
 
 {% block title %}مراقبة التخزين المؤقت - نظام الدولية{% endblock %}
 
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-<style>
-.cache-metric {
-    background: white;
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.cache-metric h3 {
-    margin: 0 0 10px 0;
-    color: #333;
-    font-size: 2rem;
-}
-
-.cache-metric p {
-    margin: 0;
-    color: #666;
-    font-size: 0.9rem;
-}
-
-.status-indicator {
-    display: inline-block;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    margin-left: 8px;
-}
-
-.status-healthy { background-color: #10b981; }
-.status-warning { background-color: #f59e0b; }
-.status-error { background-color: #ef4444; }
-
-.cache-operations {
-    background: white;
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
-}
-
-.btn-cache-op {
-    margin: 5px;
-    padding: 8px 16px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9rem;
-}
-
-.btn-danger { background-color: #ef4444; color: white; }
-.btn-warning { background-color: #f59e0b; color: white; }
-.btn-success { background-color: #10b981; color: white; }
-.btn-info { background-color: #06b6d4; color: white; }
-
-.cache-table {
-    background: white;
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
-}
-
-.table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.table th,
-.table td {
-    padding: 12px;
-    text-align: right;
-    border-bottom: 1px solid #e5e7eb;
-}
-
-.table th {
-    background-color: #f9fafb;
-    font-weight: 600;
-    color: #374151;
-}
-
-.chart-container {
-    background: white;
-    border-radius: 8px;
-    padding: 20px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
-    height: 400px;
-}
-
-.loading {
-    text-align: center;
-    padding: 40px;
-    color: #666;
-}
-
-.error-message {
-    background-color: #fef2f2;
-    border: 1px solid #fecaca;
-    color: #dc2626;
-    padding: 12px;
-    border-radius: 4px;
-    margin: 10px 0;
-}
-
-.success-message {
-    background-color: #f0fdf4;
-    border: 1px solid #bbf7d0;
-    color: #166534;
-    padding: 12px;
-    border-radius: 4px;
-    margin: 10px 0;
-}
-</style>
+{% block page_description %}
+<p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+    متابعة صحة التخزين المؤقت، معدل النجاح، الاستعلامات البطيئة، وتوصيات تحسين الفهارس.
+</p>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1 class="h3 mb-0">
-                    <i class="fas fa-tachometer-alt me-2"></i>
-                    مراقبة التخزين المؤقت
-                </h1>
-                <div class="d-flex align-items-center">
-                    <span class="badge bg-info me-2">{{ cache_backend }}</span>
-                    <button class="btn btn-outline-primary btn-sm" onclick="refreshData()">
-                        <i class="fas fa-sync-alt"></i> تحديث
-                    </button>
-                </div>
-            </div>
-        </div>
+<div class="space-y-6">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <span class="badge badge-info w-fit">{{ cache_backend }}</span>
+        <button type="button" class="btn btn-outline" onclick="refreshData()">
+            <i class="fas fa-rotate"></i>
+            تحديث
+        </button>
     </div>
 
-    <!-- Cache Health Status -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="cache-operations">
-                <h5>حالة النظام</h5>
-                <div id="health-status" class="loading">جاري التحقق من حالة النظام...</div>
+    <section class="card">
+        <div class="card-header">
+            <h2 class="text-base font-semibold text-neutral-900 dark:text-neutral-100">حالة النظام</h2>
+        </div>
+        <div class="card-body">
+            <div id="health-status" class="py-6 text-center text-neutral-500 dark:text-neutral-400">
+                <span class="spinner spinner-sm"></span>
+                <span class="ms-2">جاري التحقق من حالة النظام...</span>
             </div>
         </div>
-    </div>
+    </section>
 
-    <!-- Cache Metrics -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="cache-metric">
-                <h3 id="hit-ratio">--</h3>
-                <p>معدل النجاح (%)</p>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="cache-metric">
-                <h3 id="total-requests">--</h3>
-                <p>إجمالي الطلبات</p>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="cache-metric">
-                <h3 id="cache-hits">--</h3>
-                <p>النجاحات</p>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="cache-metric">
-                <h3 id="cache-misses">--</h3>
-                <p>الإخفاقات</p>
-            </div>
-        </div>
-    </div>
+    <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <div class="card"><div class="card-body"><p class="text-sm text-neutral-500 dark:text-neutral-400">معدل النجاح (%)</p><p id="hit-ratio" class="mt-2 text-2xl font-semibold">--</p></div></div>
+        <div class="card"><div class="card-body"><p class="text-sm text-neutral-500 dark:text-neutral-400">إجمالي الطلبات</p><p id="total-requests" class="mt-2 text-2xl font-semibold">--</p></div></div>
+        <div class="card"><div class="card-body"><p class="text-sm text-neutral-500 dark:text-neutral-400">النجاحات</p><p id="cache-hits" class="mt-2 text-2xl font-semibold">--</p></div></div>
+        <div class="card"><div class="card-body"><p class="text-sm text-neutral-500 dark:text-neutral-400">الإخفاقات</p><p id="cache-misses" class="mt-2 text-2xl font-semibold">--</p></div></div>
+    </section>
 
-    <!-- Cache Operations -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="cache-operations">
-                <h5>عمليات التخزين المؤقت</h5>
-                <div id="operation-messages"></div>
-                <button class="btn-cache-op btn-success" onclick="warmCache()">
-                    <i class="fas fa-fire"></i> تسخين التخزين المؤقت
-                </button>
-                <button class="btn-cache-op btn-warning" onclick="resetStats()">
-                    <i class="fas fa-chart-bar"></i> إعادة تعيين الإحصائيات
-                </button>
-                <button class="btn-cache-op btn-info" onclick="showClearPatternDialog()">
-                    <i class="fas fa-filter"></i> مسح نمط محدد
-                </button>
-                <button class="btn-cache-op btn-danger" onclick="clearAllCache()">
-                    <i class="fas fa-trash"></i> مسح جميع البيانات
-                </button>
+    <section class="card">
+        <div class="card-header">
+            <h2 class="text-base font-semibold text-neutral-900 dark:text-neutral-100">عمليات التخزين المؤقت</h2>
+        </div>
+        <div class="card-body space-y-4">
+            <div id="operation-messages"></div>
+            <div class="flex flex-wrap gap-2">
+                <button class="btn btn-success" onclick="warmCache()"><i class="fas fa-fire"></i> تسخين التخزين المؤقت</button>
+                <button class="btn btn-warning" onclick="resetStats()"><i class="fas fa-chart-bar"></i> إعادة تعيين الإحصائيات</button>
+                <button class="btn btn-secondary" onclick="showClearPatternDialog()"><i class="fas fa-filter"></i> مسح نمط محدد</button>
+                <button class="btn btn-error" onclick="clearAllCache()"><i class="fas fa-trash"></i> مسح جميع البيانات</button>
             </div>
         </div>
-    </div>
+    </section>
 
-    <div class="row">
-        <!-- Query Performance -->
-        <div class="col-md-6">
-            <div class="cache-table">
-                <h5>أداء الاستعلامات</h5>
-                <div id="query-stats" class="loading">جاري تحميل إحصائيات الاستعلامات...</div>
-            </div>
+    <section class="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div class="card">
+            <div class="card-header"><h2 class="text-base font-semibold">أداء الاستعلامات</h2></div>
+            <div class="card-body"><div id="query-stats" class="py-6 text-center text-neutral-500">جاري تحميل إحصائيات الاستعلامات...</div></div>
         </div>
+        <div class="card">
+            <div class="card-header"><h2 class="text-base font-semibold">الاستعلامات البطيئة</h2></div>
+            <div class="card-body"><div id="slow-queries" class="py-6 text-center text-neutral-500">جاري تحميل الاستعلامات البطيئة...</div></div>
+        </div>
+    </section>
 
-        <!-- Slow Queries -->
-        <div class="col-md-6">
-            <div class="cache-table">
-                <h5>الاستعلامات البطيئة</h5>
-                <div id="slow-queries" class="loading">جاري تحميل الاستعلامات البطيئة...</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row">
-        <!-- Index Recommendations -->
-        <div class="col-12">
-            <div class="cache-table">
-                <h5>توصيات الفهارس</h5>
-                <div id="index-suggestions" class="loading">جاري تحميل توصيات الفهارس...</div>
-            </div>
-        </div>
-    </div>
+    <section class="card">
+        <div class="card-header"><h2 class="text-base font-semibold">توصيات الفهارس</h2></div>
+        <div class="card-body"><div id="index-suggestions" class="py-6 text-center text-neutral-500">جاري تحميل توصيات الفهارس...</div></div>
+    </section>
 </div>
+{% endblock %}
 
-<!-- Clear Pattern Modal -->
-<div class="modal fade" id="clearPatternModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">مسح نمط محدد</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label for="pattern-input" class="form-label">النمط:</label>
-                    <input type="text" class="form-control" id="pattern-input" placeholder="مثال: emp_* أو dashboard_*">
-                    <div class="form-text">استخدم * كرمز بديل</div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button>
-                <button type="button" class="btn btn-danger" onclick="clearPattern()">مسح</button>
-            </div>
+{% block modals %}
+<div id="clearPatternModal" class="fixed inset-0 z-modal hidden items-center justify-center bg-black/50 p-4">
+    <div class="w-full max-w-md rounded-xl bg-white shadow-modal dark:bg-neutral-800">
+        <div class="border-b border-neutral-200 p-4 dark:border-neutral-700">
+            <h2 class="font-semibold text-neutral-900 dark:text-neutral-100">مسح نمط محدد</h2>
+        </div>
+        <div class="p-4">
+            <label for="pattern-input" class="form-label">النمط</label>
+            <input type="text" class="form-input" id="pattern-input" placeholder="مثال: emp_* أو dashboard_*">
+            <p class="form-hint">استخدم * كرمز بديل.</p>
+        </div>
+        <div class="flex justify-end gap-2 border-t border-neutral-200 p-4 dark:border-neutral-700">
+            <button type="button" class="btn btn-ghost" onclick="hideClearPatternDialog()">إلغاء</button>
+            <button type="button" class="btn btn-error" onclick="clearPattern()">مسح</button>
         </div>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 let refreshInterval;
 
 document.addEventListener('DOMContentLoaded', function() {
     loadData();
-    
-    // Auto-refresh every 30 seconds
     refreshInterval = setInterval(loadData, 30000);
 });
 
@@ -277,28 +109,22 @@ function loadCacheStats() {
         .then(response => response.json())
         .then(data => {
             if (data.error) {
-                showError('خطأ في تحميل الإحصائيات: ' + data.error);
+                showMessage('خطأ في تحميل الإحصائيات: ' + data.error, 'error');
                 return;
             }
-            
             updateCacheMetrics(data);
             updateQueryStats(data.query_stats);
             updateIndexSuggestions(data.index_suggestions);
         })
-        .catch(error => {
-            showError('خطأ في الاتصال: ' + error.message);
-        });
+        .catch(error => showMessage('خطأ في الاتصال: ' + error.message, 'error'));
 }
 
 function loadHealthStatus() {
     fetch('{% url "core:cache_health_check" %}')
         .then(response => response.json())
-        .then(data => {
-            updateHealthStatus(data);
-        })
+        .then(data => updateHealthStatus(data))
         .catch(error => {
-            document.getElementById('health-status').innerHTML = 
-                '<div class="error-message">خطأ في فحص الحالة: ' + error.message + '</div>';
+            document.getElementById('health-status').innerHTML = renderAlert('خطأ في فحص الحالة: ' + error.message, 'error');
         });
 }
 
@@ -307,131 +133,79 @@ function loadSlowQueries() {
         .then(response => response.json())
         .then(data => {
             if (data.error) {
-                document.getElementById('slow-queries').innerHTML = 
-                    '<div class="error-message">خطأ في تحميل الاستعلامات البطيئة: ' + data.error + '</div>';
+                document.getElementById('slow-queries').innerHTML = renderAlert('خطأ في تحميل الاستعلامات البطيئة: ' + data.error, 'error');
                 return;
             }
-            
             updateSlowQueries(data.slow_queries);
         })
         .catch(error => {
-            document.getElementById('slow-queries').innerHTML = 
-                '<div class="error-message">خطأ في الاتصال: ' + error.message + '</div>';
+            document.getElementById('slow-queries').innerHTML = renderAlert('خطأ في الاتصال: ' + error.message, 'error');
         });
 }
 
 function updateCacheMetrics(data) {
     const perfStats = data.performance_stats || {};
-    
-    document.getElementById('hit-ratio').textContent = 
-        (perfStats.hit_ratio || 0).toFixed(1);
-    document.getElementById('total-requests').textContent = 
-        (perfStats.total_requests || 0).toLocaleString();
-    document.getElementById('cache-hits').textContent = 
-        (perfStats.cache_hits || 0).toLocaleString();
-    document.getElementById('cache-misses').textContent = 
-        (perfStats.cache_misses || 0).toLocaleString();
+    document.getElementById('hit-ratio').textContent = (perfStats.hit_ratio || 0).toFixed(1);
+    document.getElementById('total-requests').textContent = (perfStats.total_requests || 0).toLocaleString();
+    document.getElementById('cache-hits').textContent = (perfStats.cache_hits || 0).toLocaleString();
+    document.getElementById('cache-misses').textContent = (perfStats.cache_misses || 0).toLocaleString();
 }
 
 function updateHealthStatus(data) {
     const statusDiv = document.getElementById('health-status');
-    let html = '<div class="d-flex align-items-center mb-3">';
-    
-    const statusClass = data.overall_status === 'healthy' ? 'status-healthy' : 
-                       data.overall_status === 'degraded' ? 'status-warning' : 'status-error';
-    
-    html += `<span class="status-indicator ${statusClass}"></span>`;
-    html += `<strong>الحالة العامة: ${getStatusText(data.overall_status)}</strong>`;
-    html += '</div>';
-    
+    const statusClass = data.overall_status === 'healthy' ? 'badge-success' : data.overall_status === 'degraded' ? 'badge-warning' : 'badge-error';
+    let html = `<div class="mb-4"><span class="badge ${statusClass}">الحالة العامة: ${getStatusText(data.overall_status)}</span></div>`;
     if (data.checks && data.checks.length > 0) {
-        html += '<div class="row">';
+        html += '<div class="grid grid-cols-1 gap-3 md:grid-cols-2">';
         data.checks.forEach(check => {
-            const checkStatusClass = check.status === 'pass' ? 'status-healthy' : 
-                                   check.status === 'warning' ? 'status-warning' : 'status-error';
-            
-            html += '<div class="col-md-6 mb-2">';
-            html += `<div class="d-flex align-items-center">`;
-            html += `<span class="status-indicator ${checkStatusClass}"></span>`;
-            html += `<div>`;
-            html += `<strong>${check.name}</strong><br>`;
-            html += `<small class="text-muted">${check.message}</small>`;
-            html += `</div>`;
-            html += `</div>`;
-            html += '</div>';
+            const cls = check.status === 'pass' ? 'badge-success' : check.status === 'warning' ? 'badge-warning' : 'badge-error';
+            html += `<div class="rounded-lg border border-neutral-200 p-3 dark:border-neutral-700"><span class="badge ${cls}">${check.name}</span><p class="mt-2 text-sm text-neutral-600 dark:text-neutral-300">${check.message}</p></div>`;
         });
         html += '</div>';
     }
-    
     statusDiv.innerHTML = html;
 }
 
 function updateQueryStats(queryStats) {
     const container = document.getElementById('query-stats');
-    
     if (!queryStats) {
-        container.innerHTML = '<p class="text-muted">لا توجد إحصائيات متاحة</p>';
+        container.innerHTML = '<p class="text-neutral-500">لا توجد إحصائيات متاحة</p>';
         return;
     }
-    
-    let html = '<div class="row">';
-    html += `<div class="col-6"><strong>إجمالي الاستعلامات:</strong> ${(queryStats.total_queries || 0).toLocaleString()}</div>`;
-    html += `<div class="col-6"><strong>الاستعلامات البطيئة:</strong> ${queryStats.slow_queries || 0}</div>`;
-    html += `<div class="col-6"><strong>نسبة البطء:</strong> ${(queryStats.slow_query_percentage || 0).toFixed(1)}%</div>`;
-    html += `<div class="col-6"><strong>متوسط وقت التنفيذ:</strong> ${(queryStats.avg_execution_time || 0).toFixed(3)}s</div>`;
-    html += '</div>';
-    
-    container.innerHTML = html;
+    container.innerHTML = `
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div><strong>إجمالي الاستعلامات:</strong> ${(queryStats.total_queries || 0).toLocaleString()}</div>
+            <div><strong>الاستعلامات البطيئة:</strong> ${queryStats.slow_queries || 0}</div>
+            <div><strong>نسبة البطء:</strong> ${(queryStats.slow_query_percentage || 0).toFixed(1)}%</div>
+            <div><strong>متوسط وقت التنفيذ:</strong> ${(queryStats.avg_execution_time || 0).toFixed(3)}s</div>
+        </div>`;
 }
 
 function updateSlowQueries(slowQueries) {
     const container = document.getElementById('slow-queries');
-    
     if (!slowQueries || slowQueries.length === 0) {
-        container.innerHTML = '<p class="text-muted">لا توجد استعلامات بطيئة</p>';
+        container.innerHTML = '<p class="text-neutral-500">لا توجد استعلامات بطيئة</p>';
         return;
     }
-    
-    let html = '<div class="table-responsive"><table class="table table-sm">';
-    html += '<thead><tr><th>الاستعلام</th><th>وقت التنفيذ</th><th>التاريخ</th></tr></thead>';
-    html += '<tbody>';
-    
+    let html = '<div class="table-container"><table class="table"><thead><tr><th class="text-right">الاستعلام</th><th class="text-right">وقت التنفيذ</th><th class="text-right">التاريخ</th></tr></thead><tbody>';
     slowQueries.slice(0, 10).forEach(query => {
-        html += '<tr>';
-        html += `<td><code>${query.query.substring(0, 50)}...</code></td>`;
-        html += `<td><span class="badge bg-warning">${query.execution_time.toFixed(3)}s</span></td>`;
-        html += `<td><small>${new Date(query.timestamp).toLocaleString('ar-SA')}</small></td>`;
-        html += '</tr>';
+        html += `<tr><td><code>${String(query.query || '').substring(0, 50)}...</code></td><td><span class="badge badge-warning">${Number(query.execution_time || 0).toFixed(3)}s</span></td><td><small>${new Date(query.timestamp).toLocaleString('ar-SA')}</small></td></tr>`;
     });
-    
     html += '</tbody></table></div>';
     container.innerHTML = html;
 }
 
 function updateIndexSuggestions(suggestions) {
     const container = document.getElementById('index-suggestions');
-    
     if (!suggestions || suggestions.length === 0) {
-        container.innerHTML = '<p class="text-muted">لا توجد توصيات للفهارس</p>';
+        container.innerHTML = '<p class="text-neutral-500">لا توجد توصيات للفهارس</p>';
         return;
     }
-    
-    let html = '<div class="table-responsive"><table class="table table-sm">';
-    html += '<thead><tr><th>النوع</th><th>الجدول</th><th>التوصية</th><th>الأولوية</th></tr></thead>';
-    html += '<tbody>';
-    
+    let html = '<div class="table-container"><table class="table"><thead><tr><th class="text-right">النوع</th><th class="text-right">الجدول</th><th class="text-right">التوصية</th><th class="text-right">الأولوية</th></tr></thead><tbody>';
     suggestions.forEach(suggestion => {
-        const priorityClass = suggestion.priority === 'high' ? 'bg-danger' : 
-                             suggestion.priority === 'medium' ? 'bg-warning' : 'bg-info';
-        
-        html += '<tr>';
-        html += `<td><span class="badge bg-secondary">${suggestion.type}</span></td>`;
-        html += `<td><code>${suggestion.table}</code></td>`;
-        html += `<td>${suggestion.recommendation}</td>`;
-        html += `<td><span class="badge ${priorityClass}">${suggestion.priority}</span></td>`;
-        html += '</tr>';
+        const priorityClass = suggestion.priority === 'high' ? 'badge-error' : suggestion.priority === 'medium' ? 'badge-warning' : 'badge-info';
+        html += `<tr><td><span class="badge badge-secondary">${suggestion.type}</span></td><td><code>${suggestion.table}</code></td><td>${suggestion.recommendation}</td><td><span class="badge ${priorityClass}">${suggestion.priority}</span></td></tr>`;
     });
-    
     html += '</tbody></table></div>';
     container.innerHTML = html;
 }
@@ -447,100 +221,54 @@ function getStatusText(status) {
 
 function refreshData() {
     loadData();
-    showSuccess('تم تحديث البيانات');
+    showMessage('تم تحديث البيانات', 'success');
 }
 
-function warmCache() {
-    performCacheOperation('warm_cache', 'جاري تسخين التخزين المؤقت...');
-}
-
-function resetStats() {
-    performCacheOperation('reset_stats', 'جاري إعادة تعيين الإحصائيات...');
-}
-
+function warmCache() { performCacheOperation('warm_cache', 'جاري تسخين التخزين المؤقت...'); }
+function resetStats() { performCacheOperation('reset_stats', 'جاري إعادة تعيين الإحصائيات...'); }
 function clearAllCache() {
-    if (confirm('هل أنت متأكد من مسح جميع البيانات المخزنة مؤقتاً؟')) {
+    if (confirm('هل أنت متأكد من مسح جميع البيانات المخزنة مؤقتا؟')) {
         performCacheOperation('clear_all', 'جاري مسح جميع البيانات...');
     }
 }
-
-function showClearPatternDialog() {
-    const modal = new bootstrap.Modal(document.getElementById('clearPatternModal'));
-    modal.show();
-}
-
+function showClearPatternDialog() { document.getElementById('clearPatternModal').classList.replace('hidden', 'flex'); }
+function hideClearPatternDialog() { document.getElementById('clearPatternModal').classList.replace('flex', 'hidden'); }
 function clearPattern() {
     const pattern = document.getElementById('pattern-input').value.trim();
     if (!pattern) {
-        showError('يجب إدخال نمط');
+        showMessage('يجب إدخال نمط', 'error');
         return;
     }
-    
-    const modal = bootstrap.Modal.getInstance(document.getElementById('clearPatternModal'));
-    modal.hide();
-    
+    hideClearPatternDialog();
     performCacheOperation('clear_pattern', 'جاري مسح النمط...', {pattern: pattern});
 }
 
 function performCacheOperation(operation, loadingMessage, extraData = {}) {
-    showInfo(loadingMessage);
-    
+    showMessage(loadingMessage, 'info');
     const formData = new FormData();
     formData.append('operation', operation);
     formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
-    
-    Object.keys(extraData).forEach(key => {
-        formData.append(key, extraData[key]);
-    });
-    
-    fetch('{% url "core:cache_operations_api" %}', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            showSuccess(data.message);
-            setTimeout(loadData, 1000); // Refresh data after operation
-        } else {
-            showError(data.message);
-        }
-    })
-    .catch(error => {
-        showError('خطأ في تنفيذ العملية: ' + error.message);
-    });
+    Object.keys(extraData).forEach(key => formData.append(key, extraData[key]));
+    fetch('{% url "core:cache_operations_api" %}', { method: 'POST', body: formData })
+        .then(response => response.json())
+        .then(data => {
+            showMessage(data.message, data.success ? 'success' : 'error');
+            if (data.success) setTimeout(loadData, 1000);
+        })
+        .catch(error => showMessage('خطأ في تنفيذ العملية: ' + error.message, 'error'));
 }
 
-function showSuccess(message) {
-    showMessage(message, 'success');
+function renderAlert(message, type) {
+    const cls = type === 'success' ? 'alert-success' : type === 'error' ? 'alert-error' : 'alert-info';
+    return `<div class="alert ${cls}">${message}</div>`;
 }
-
-function showError(message) {
-    showMessage(message, 'error');
-}
-
-function showInfo(message) {
-    showMessage(message, 'info');
-}
-
 function showMessage(message, type) {
     const container = document.getElementById('operation-messages');
-    const className = type === 'success' ? 'success-message' : 
-                     type === 'error' ? 'error-message' : 'info-message';
-    
-    container.innerHTML = `<div class="${className}">${message}</div>`;
-    
-    // Auto-hide after 5 seconds
-    setTimeout(() => {
-        container.innerHTML = '';
-    }, 5000);
+    container.innerHTML = renderAlert(message, type);
+    setTimeout(() => { container.innerHTML = ''; }, 5000);
 }
-
-// Cleanup on page unload
 window.addEventListener('beforeunload', function() {
-    if (refreshInterval) {
-        clearInterval(refreshInterval);
-    }
+    if (refreshInterval) clearInterval(refreshInterval);
 });
 </script>
 {% endblock %}

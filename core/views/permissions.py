@@ -59,6 +59,12 @@ def permissions_dashboard(request):
     user_permissions = permission_service.get_user_permissions()
 
     context = {
+        'page_title': 'لوحة تحكم الصلاحيات',
+        'breadcrumbs': [
+            {'title': 'الرئيسية', 'url': '/'},
+            {'title': 'الخدمات الأساسية', 'url': '/core/'},
+            {'title': 'الصلاحيات', 'active': True},
+        ],
         'stats': stats,
         'recent_role_assignments': recent_role_assignments,
         'recent_approvals': recent_approvals,
@@ -202,11 +208,11 @@ def assign_role_to_user(request):
                 # Approval workflow created
                 messages.info(request, f'تم إنشاء طلب موافقة لتعيين دور "{role.display_name}" للمستخدم "{user.username}"')
 
-            return redirect('core:role_detail', role_id=role.id)
+            return redirect('core:permissions:role_detail', role_id=role.id)
 
         except Exception as e:
             messages.error(request, f'خطأ في تعيين الدور: {str(e)}')
-            return redirect('core:roles_list')
+            return redirect('core:permissions:roles_list')
 
     # GET request - show assignment form
     users = User.objects.filter(is_active=True).order_by('username')
@@ -468,7 +474,7 @@ def clear_permissions_cache(request):
         except Exception as e:
             messages.error(request, f'خطأ في مسح ذاكرة التخزين المؤقت: {str(e)}')
 
-    return redirect('core:permissions_dashboard')
+    return redirect('core:permissions:dashboard')
 
 
 # Class-based views for CRUD operations
@@ -478,7 +484,7 @@ class RoleCreateView(CreateView):
     model = Role
     fields = ['name', 'display_name', 'description', 'role_type', 'parent_role', 'max_users', 'permissions']
     template_name = 'core/permissions/role_form.html'
-    success_url = reverse_lazy('core:roles_list')
+    success_url = reverse_lazy('core:permissions:roles_list')
 
     def dispatch(self, request, *args, **kwargs):
         """dispatch function"""
@@ -497,7 +503,7 @@ class RoleUpdateView(UpdateView):
     model = Role
     fields = ['display_name', 'description', 'role_type', 'parent_role', 'max_users', 'permissions', 'is_active']
     template_name = 'core/permissions/role_form.html'
-    success_url = reverse_lazy('core:roles_list')
+    success_url = reverse_lazy('core:permissions:roles_list')
 
     def dispatch(self, request, *args, **kwargs):
         """dispatch function"""

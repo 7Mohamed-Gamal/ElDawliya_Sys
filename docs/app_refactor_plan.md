@@ -1,890 +1,1185 @@
-# 🧩 ElDawliya ERP - App-by-App Refactoring Plan
-
-**Created:** April 29, 2026  
-**Based on:** UI Refactoring Master Plan  
-**Status:** Ready for Execution
-
----
-
-## Overview
-
-This document provides detailed refactoring plans for each Django app in the ElDawliya ERP system. Each app is analyzed for current UI problems, required changes, dependencies, priority, and estimated complexity.
-
-**Total Apps:** 31  
-**Estimated Timeline:** 10-12 weeks  
-**Execution Strategy:** Incremental, app-by-app migration
-
----
-
-## Phase 1: Foundation (Week 1-2)
-
-### APP 0: **core** - Global Base Template Enhancement
-
-#### 1. App Name
-`core` (Global base template and shared components)
-
-#### 2. Current Problems
-
-**UI Issues:**
-- Global `base.html` exists (167 lines) but lacks advanced features
-- No unified sidebar component in `/templates/components/layout/`
-- Missing global navbar with user menu and notifications
-- No breadcrumb system integration
-- Missing toast notification system
-- No loading state management
-
-**Layout Inconsistencies:**
-- Layout components directory is empty
-- No standardized page wrapper
-- Missing footer component
-
-**Responsiveness Problems:**
-- Mobile menu toggle not implemented in global base
-- Sidebar not responsive on mobile devices
-- No mobile-first grid system examples
-
-#### 3. Required Changes
-
-**Templates to Create:**
-1. Enhance `/templates/base.html` (add advanced features)
-2. Create `/templates/components/layout/header.html`
-3. Create `/templates/components/layout/sidebar.html`
-4. Create `/templates/components/layout/sidebar_item.html`
-5. Create `/templates/components/layout/footer.html`
-6. Create `/templates/components/layout/page_wrapper.html`
-7. Create `/templates/components/navigation/navbar_user_menu.html`
-8. Create `/templates/components/navigation/navbar_notifications.html`
-9. Create `/templates/components/feedback/toast.html`
-10. Create `/templates/components/feedback/spinner.html`
-
-**Components to Reuse:**
-- Existing buttons (`/templates/components/buttons/`)
-- Existing cards (`/templates/components/cards/`)
-- Existing forms (`/templates/components/forms/`)
-- Existing feedback (`/templates/components/feedback/`)
-
-**Layout Changes:**
-- Add responsive sidebar with mobile toggle
-- Add global navbar with:
-  - Logo and branding
-  - Global search
-  - Notifications dropdown
-  - User menu dropdown
-  - Theme toggle (dark/light)
-- Add breadcrumb navigation system
-- Add toast notification container
-- Add loading overlay component
-
-**Enhanced base.html Structure:**
-```django
-{% extends None %}
-<!DOCTYPE html>
-<html lang="ar" dir="rtl" class="h-full">
-<head>
-  <!-- Meta, fonts, Tailwind CSS -->
-</head>
-<body class="h-full bg-neutral-50 dark:bg-neutral-900">
-  <!-- Loading overlay -->
-  {% include 'components/feedback/spinner.html' with id="globalLoader" %}
-  
-  <!-- Toast container -->
-  <div id="toastContainer"></div>
-  
-  <div class="flex h-screen overflow-hidden">
-    <!-- Sidebar -->
-    {% block sidebar %}
-      {% include 'components/layout/sidebar.html' %}
-    {% endblock %}
-    
-    <!-- Main content area -->
-    <div class="flex-1 flex flex-col overflow-hidden">
-      <!-- Navbar -->
-      {% block navbar %}
-        {% include 'components/navigation/navbar.html' %}
-      {% endblock %}
-      
-      <!-- Page content -->
-      <main class="flex-1 overflow-y-auto p-6">
-        <!-- Breadcrumbs -->
-        {% block breadcrumbs %}{% endblock %}
-        
-        <!-- Page title -->
-        {% block page_title %}{% endblock %}
-        
-        <!-- Main content -->
-        {% block content %}{% endblock %}
-      </main>
-      
-      <!-- Footer -->
-      {% block footer %}
-        {% include 'components/layout/footer.html' %}
-      {% endblock %}
-    </div>
-  </div>
-  
-  <!-- JavaScript -->
-  {% block extra_js %}{% endblock %}
-</body>
-</html>
-```
-
-#### 4. Dependencies
-
-**Shared Components Needed:**
-- None (this is the foundation)
-
-**Backend Impact:**
-- Add context processor for global menu items
-- Add context processor for user notifications count
-- Add context processor for system settings (theme, language)
-
-**Required Context Variables:**
-```python
-{
-  'menu_items': [...],           # Sidebar menu
-  'notifications_count': 0,      # Notification badge
-  'system_settings': {...},      # Theme, language, etc.
-  'current_app': 'core',         # Active app name
-}
-```
-
-#### 5. Refactor Priority
-
-🔴 **CRITICAL - DO FIRST**
-
-This is the foundation for all other apps. Must be completed before any app migration can begin.
-
-#### 6. Estimated Complexity
-
-**Complexity:** Medium (2-3 days)
-
-**Breakdown:**
-- Enhance base.html: 1 day
-- Create layout components: 1 day
-- Create navigation components: 0.5 days
-- Testing and documentation: 0.5 days
-
----
-
-## Phase 2: High-User-Impact Apps (Week 3-4)
-
-### APP 1: **accounts** - Authentication & User Management
-
-#### 1. App Name
-`accounts`
-
-#### 2. Current Problems
-
-**UI Issues:**
-- Uses Bootstrap 5 (`base_accounts.html` - 400 lines)
-- Custom CSS variables conflict with design system:
-  ```css
-  --primary-color: #4a6da7;  /* Should be #3b82f6 */
-  --secondary-color: #2c3e50;
-  ```
-- 400 lines of custom styles in base template
-- Login page uses old Bootstrap form styling
-- Dashboard page inconsistent with design system
-
-**Layout Inconsistencies:**
-- Different sidebar structure (Bootstrap grid)
-- Custom navbar with different colors
-- Different font loading mechanism
-
-**Responsiveness Problems:**
-- Mobile menu not optimized
-- Forms not responsive on small screens
-- Tables not horizontally scrollable on mobile
-
-#### 3. Required Changes
-
-**Templates to Refactor (6):**
-1. `base_accounts.html` → Create `base_accounts_migration.html`
-2. `login.html` → Migrate to Tailwind forms
-3. `dashboard.html` → Use design system cards
-4. `home.html` → Refactor to use Tailwind grid
-5. `access_denied.html` → Use design system feedback
-6. `edit_permissions.html` → Migrate forms to Tailwind
-
-**Components to Reuse:**
-- `{% include 'components/forms/input.html' %}` - Login form
-- `{% include 'components/buttons/btn_primary.html' %}` - Submit button
-- `{% include 'components/cards/card_stat.html' %}` - Dashboard stats
-- `{% include 'components/feedback/alert.html' %}` - Error messages
-- `{% include 'components/navigation/breadcrumbs.html' %}` - Breadcrumbs
-
-**Layout Changes:**
-- Replace Bootstrap grid with Tailwind grid
-- Replace Bootstrap forms with Tailwind form components
-- Replace Bootstrap alerts with Tailwind alert components
-- Standardize colors to design system
-- Remove custom CSS variables
-
-**Migration Wrapper:**
-```django
-{# accounts/templates/accounts/base_accounts_migration.html #}
-{% extends 'base.html' %}
-
-{% block title %}
-  {% block account_title %}نظام إدارة الحسابات{% endblock %}
-{% endblock %}
-
-{% block sidebar %}
-  {% include 'components/navigation/sidebar_accounts.html' %}
-{% endblock %}
-
-{% block extra_css %}
-  {# Minimal custom CSS if needed #}
-{% endblock %}
-
-{% block content %}{% endblock %}
-
-{% block extra_js %}{% endblock %}
-```
-
-#### 4. Dependencies
-
-**Shared Components Needed:**
-- ✅ Global base.html (from core app)
-- ✅ Form components
-- ✅ Button components
-- ✅ Card components
-- ✅ Feedback components
-
-**Backend Impact:**
-- No backend changes required
-- Template-only refactoring
-
-#### 5. Refactor Priority
-
-🔴 **HIGH** (Users see this first - login page)
-
-#### 6. Estimated Complexity
-
-**Complexity:** Medium (3-4 days)
-
-**Breakdown:**
-- Create migration wrapper: 0.5 days
-- Refactor login page: 1 day
-- Refactor dashboard: 1 day
-- Refactor remaining templates: 1 day
-- Testing: 0.5 days
-
----
-
-### APP 2: **administrator** - System Administration
-
-#### 1. App Name
-`administrator`
-
-#### 2. Current Problems
-
-**UI Issues:**
-- Uses Bootstrap 5 (`base_admin.html` - 460 lines)
-- Different primary color: `#3f51b5` (should be `#3b82f6`)
-- 460 lines of duplicate layout code
-- Complex permission UI with nested tables
-- User management forms use Bootstrap styling
-
-**Layout Inconsistencies:**
-- Custom sidebar with different gradient
-- Different navbar structure
-- Inconsistent spacing and padding
-
-**Responsiveness Problems:**
-- Permission tables not responsive
-- User list table breaks on mobile
-- Forms not optimized for small screens
-
-#### 3. Required Changes
-
-**Templates to Refactor (30):**
-1. `base_admin.html` → Create `base_admin_migration.html`
-2. `dashboard.html` → Use design system
-3. `user_list.html` → Responsive table
-4. `user_create.html` → Tailwind forms
-5. `user_edit.html` → Tailwind forms
-6. `user_detail.html` → Tailwind layout
-7. `user_permissions.html` → Simplify UI
-8. `group_list.html` → Responsive table
-9. `group_form.html` → Tailwind forms
-10. `group_permissions.html` → Simplify UI
-11. `module_list.html` → Use cards
-12. `module_form.html` → Tailwind forms
-13. `department_list.html` → Responsive table
-14. `department_form.html` → Tailwind forms
-15. `system_settings.html` → Use form components
-16. `database_settings.html` → Complex form refactor
-17. All other templates (13 more)
-
-**Components to Reuse:**
-- `{% include 'components/tables/table_responsive.html' %}` - All lists
-- `{% include 'components/forms/input.html' %}` - All forms
-- `{% include 'components/cards/card_basic.html' %}` - Settings cards
-- `{% include 'components/buttons/btn_primary.html' %}` - Actions
-- `{% include 'components/feedback/modal.html' %}` - Delete confirmations
-
-**Layout Changes:**
-- Replace Bootstrap grid with Tailwind
-- Replace Bootstrap tables with responsive table component
-- Simplify permission UI (use cards instead of nested tables)
-- Standardize all forms to use Tailwind form components
-- Remove custom CSS variables
-
-#### 4. Dependencies
-
-**Shared Components Needed:**
-- ✅ Global base.html
-- ✅ Table component
-- ✅ Form components
-- ✅ Modal component
-- ✅ Card components
-
-**Backend Impact:**
-- No backend changes required
-- May need to add pagination to some views
-
-#### 5. Refactor Priority
-
-🔴 **HIGH** (Admin functionality critical)
-
-#### 6. Estimated Complexity
-
-**Complexity:** High (5-7 days)
-
-**Breakdown:**
-- Create migration wrapper: 0.5 days
-- Refactor user management (7 templates): 2 days
-- Refactor group/permission (5 templates): 1.5 days
-- Refactor modules/departments (4 templates): 1 day
-- Refactor settings (3 templates): 1 day
-- Refactor remaining (10 templates): 1 day
-- Testing: 1 day
-
----
-
-## Phase 3: Core Business Apps (Week 5-7)
-
-### APP 3: **apps.hr.attendance** - Attendance Tracking
-
-#### 1. App Name
-`apps.hr.attendance`
-
-#### 2. Current Problems
-
-**UI Issues:**
-- Uses Bootstrap 5 (`base_attendance.html` - 207 lines)
-- 66 lines of inline `<style>` tags
-- Different gradient sidebar: `linear-gradient(135deg, #667eea 0%, #764ba2 100%)`
-- Dashboard (512 lines) too large
-- Enhanced dashboard (651 lines) needs splitting
-- Mark attendance page (439 lines) needs simplification
-
-**Layout Inconsistencies:**
-- Custom Bootstrap navbar
-- Different card styling
-- Inconsistent form layouts
-
-**Responsiveness Problems:**
-- Not responsive on mobile
-- Attendance table breaks on small screens
-- Calendar view not mobile-friendly
-
-#### 3. Required Changes
-
-**Templates to Refactor (~15):**
-1. `base_attendance.html` → Create migration wrapper
-2. `dashboard.html` (512 lines) → Split into components
-3. `enhanced_dashboard.html` (651 lines) → Split into components
-4. `mark_attendance.html` (439 lines) → Simplify
-5. `emp_att_list.html` → Responsive table
-6. `emp_att_form.html` → Tailwind forms
-7. `leave_balance_list.html` → Use table component
-8. All rules and settings templates
-
-**Components to Reuse:**
-- `{% include 'components/cards/card_stat.html' %}` - Dashboard stats
-- `{% include 'components/tables/table_responsive.html' %}` - Attendance lists
-- `{% include 'components/forms/input.html' %}` - Forms
-- `{% include 'components/buttons/btn_primary.html' %}` - Actions
-- `{% include 'components/feedback/badge.html' %}` - Status indicators
-
-**Layout Changes:**
-- Remove inline styles (66 lines)
-- Replace Bootstrap navbar with global navbar
-- Use Tailwind sidebar component
-- Refactor dashboard into stat cards + tables
-- Simplify mark attendance page
-- Make calendar responsive
-
-#### 4. Dependencies
-
-**Shared Components Needed:**
-- ✅ Global base.html
-- ✅ Stat cards
-- ✅ Table component
-- ✅ Form components
-- ✅ Badge component
-
-**Backend Impact:**
-- No backend changes
-- May need to add AJAX endpoints for real-time attendance
-
-#### 5. Refactor Priority
-
-🔴 **HIGH** (Daily use by all employees)
-
-#### 6. Estimated Complexity
-
-**Complexity:** High (5-6 days)
-
-**Breakdown:**
-- Create migration wrapper: 0.5 days
-- Refactor dashboards (2 large files): 2 days
-- Refactor mark attendance: 1 day
-- Refactor list/form templates: 1.5 days
-- Testing: 1 day
-
----
-
-### APP 4: **apps.hr.employees** - Employee Management
-
-#### 1. App Name
-`apps.hr.employees`
-
-#### 2. Current Problems
-
-**UI Issues:**
-- Empty base template (12 lines - placeholder)
-- Inconsistent usage of global `base.html`
-- Large employee list CSS file (25.9KB)
-- Mixed Bootstrap and Tailwind classes
-- Employee detail pages need modernization
-
-**Layout Inconsistencies:**
-- Some templates use global base, others don't
-- Inconsistent sidebar across pages
-- Different navbar implementations
-
-**Responsiveness Problems:**
-- Employee list not responsive
-- Profile page breaks on mobile
-- Forms not optimized for small screens
-
-#### 3. Required Changes
-
-**Templates to Refactor (~20):**
-1. Remove `base.html` placeholder (12 lines)
-2. Standardize all templates to use global base
-3. `employee_list.html` → Responsive table + migrate CSS
-4. `employee_detail.html` → Modern profile layout
-5. `employee_create.html` → Tailwind forms
-6. `employee_edit.html` → Tailwind forms
-7. All other employee templates
-
-**Components to Reuse:**
-- `{% include 'components/tables/table_responsive.html' %}` - Employee list
-- `{% include 'components/cards/card_profile.html' %}` - Employee profile
-- `{% include 'components/forms/input.html' %}` - Forms
-- `{% include 'components/buttons/btn_primary.html' %}` - Actions
-
-**Layout Changes:**
-- Delete placeholder base template
-- Migrate 25.9KB custom CSS to Tailwind
-- Create employee profile card component
-- Standardize all forms
-- Improve search and filter UI
-
-#### 4. Dependencies
-
-**Shared Components Needed:**
-- ✅ Global base.html
-- ✅ Table component
-- ✅ Profile card component (create new)
-- ✅ Form components
-
-**Backend Impact:**
-- No backend changes
-- May optimize queryset for employee list
-
-#### 5. Refactor Priority
-
-🔴 **HIGH** (Core HR functionality)
-
-#### 6. Estimated Complexity
-
-**Complexity:** Medium (4-5 days)
-
-**Breakdown:**
-- Remove placeholder base: 0.5 days
-- Migrate custom CSS to Tailwind: 1.5 days
-- Refactor employee list: 1 day
-- Refactor employee detail: 1 day
-- Refactor forms: 1 day
-- Testing: 0.5 days
-
----
-
-### APP 5: **apps.inventory** - Inventory Management
-
-#### 1. App Name
-`apps.inventory`
-
-#### 2. Current Problems
-
-**UI Issues:**
-- **LARGEST base template** (853 lines!)
-- Uses Bootstrap 5
-- Custom CSS variables:
-  ```css
-  --primary-color: #3f51b5;  /* Should be #3b82f6 */
-  --secondary-color: #ff4081;
-  ```
-- Very complex layout structure
-- 39 template files (largest app)
-- Duplicate functionality across templates
-
-**Layout Inconsistencies:**
-- Custom Bootstrap navbar
-- Different sidebar structure
-- Inconsistent card and table styling
-- Mixed form layouts
-
-**Responsiveness Problems:**
-- Product table not responsive
-- Stock movement UI breaks on mobile
-- Reports not mobile-friendly
-- Complex forms not optimized
-
-#### 3. Required Changes
-
-**Templates to Refactor (39):**
-1. `base_inventory.html` (853 lines) → Decompose into components
-2. All product templates (~10)
-3. All category templates (~5)
-4. All stock movement templates (~8)
-5. All supplier templates (~5)
-6. All report templates (~6)
-7. All settings templates (~5)
-
-**Components to Reuse:**
-- `{% include 'components/tables/table_responsive.html' %}` - Product lists
-- `{% include 'components/cards/card_stat.html' %}` - Dashboard stats
-- `{% include 'components/cards/card_action.html' %}` - Quick actions
-- `{% include 'components/forms/input.html' %}` - Forms
-- `{% include 'components/feedback/badge.html' %}` - Stock status
-- `{% include 'components/feedback/alert.html' %}` - Low stock warnings
-
-**Layout Changes:**
-- Break down 853-line base template into:
-  - Sidebar component (~100 lines)
-  - Navbar component (~80 lines)
-  - Layout structure (~50 lines)
-  - Total: ~230 lines (73% reduction!)
-- Create inventory-specific sidebar
-- Use Tailwind grid for product cards
-- Implement responsive stock table
-- Simplify complex forms
-- Add low stock alert system
-
-#### 4. Dependencies
-
-**Shared Components Needed:**
-- ✅ Global base.html
-- ✅ Table component
-- ✅ Stat cards
-- ✅ Action cards (create new)
-- ✅ Badge component
-- ✅ Alert component
-
-**Backend Impact:**
-- No backend changes
-- May add real-time stock updates via AJAX
-
-#### 5. Refactor Priority
-
-🔴 **HIGH** (Complex, heavily used)
-
-#### 6. Estimated Complexity
-
-**Complexity:** Very High (7-10 days)
-
-**Breakdown:**
-- Decompose base template: 2 days
-- Refactor product management: 2 days
-- Refactor stock movements: 2 days
-- Refactor categories/suppliers: 1.5 days
-- Refactor reports: 1.5 days
-- Testing: 1 day
-
----
-
-## Phase 4: Medium Priority Apps (Week 8-9)
-
-### APP 6: **apps.procurement.purchase_orders** - Purchase Orders
-
-#### 1. App Name
-`apps.procurement.purchase_orders`
-
-#### 2. Current Problems
-
-**UI Issues:**
-- Two base templates (`base_purchase.html` - 112 lines, `base_purchase_orders.html` - 444 lines)
-- 444 lines of duplicate code
-- Inconsistent styling between templates
-- Approval workflow UI outdated
-
-**Layout Inconsistencies:**
-- Different navbar structure
-- Mixed Bootstrap and custom styles
-- Inconsistent form layouts
-
-#### 3. Required Changes
-
-**Templates to Refactor (~15):**
-1. Consolidate two base templates into one migration wrapper
-2. Remove duplicate `base_purchase.html`
-3. All purchase order templates
-4. Approval workflow templates
-5. Supplier integration templates
-
-#### 4. Dependencies
-
-- ✅ Global base.html
-- ✅ App 5 (inventory integration)
-
-#### 5. Refactor Priority
-
-🟡 **MEDIUM**
-
-#### 6. Estimated Complexity
-
-**Complexity:** Medium (4-5 days)
-
----
+# App-by-App UI Refactor Plan
 
-### APP 7: **apps.projects.tasks** - Task Management
+This document defines a step-by-step UI refactor roadmap for each Django app. It is planning-only and intentionally avoids code changes.
 
-#### 1. App Name
-`apps.projects.tasks`
+## Global Execution Rules
 
-#### 2. Current Problems
+1. Stabilize the global design-system contract before migrating business screens.
+2. Keep every app URL and view context stable during UI migration.
+3. Convert app-local base templates into temporary adapters before changing child templates.
+4. Remove Bootstrap and inline layout CSS only after the matching templates no longer depend on them.
+5. Validate template inheritance after each app migration.
+6. Do not delete legacy global templates until routing confirms they are unused.
 
-**UI Issues:**
-- 420 lines base template
-- Mixed framework usage
-- Task board needs modernization (Kanban-style)
-- Task assignment UI outdated
+## Phase 0 - Foundation Work
 
-#### 3. Required Changes
+Required before app-specific work:
 
-**Templates to Refactor (~12):**
-1. Create migration wrapper
-2. Modernize task board (Kanban view)
-3. Improve task assignment UI
-4. Standardize forms
+- Finalize `templates/base.html` block contract.
+- Finalize shared sidebar and navbar behavior.
+- Normalize Tailwind config and rebuild `static/css/output.css`.
+- Create or finalize shared components for buttons, cards, alerts, badges, forms, tables, page headers, breadcrumbs, modals, empty states, pagination, and action buttons.
+- Add a navigation data strategy using either a context processor or explicit include data.
+- Create a template smoke-test checklist for each migrated app.
 
-#### 4. Dependencies
+Priority: High
 
-- ✅ Global base.html
+Estimated complexity: معقد
 
-#### 5. Refactor Priority
+## App: frontend
 
-🟡 **MEDIUM**
+### Current Problems
 
-#### 6. Estimated Complexity
+- Contains a second enhanced base template that competes with `templates/base.html`.
+- Uses Bootstrap, custom CSS, custom grid system, custom theme system, and PWA/service-worker behavior in one large shell.
+- Hard-codes many URL names that may not exist or may not belong to this app.
+- Duplicates component ideas already present in global `templates/components/`.
 
-**Complexity:** Medium (3-4 days)
-
----
+### Required Changes
 
-### APP 8: **apps.projects.meetings** - Meetings Management
+- Treat `frontend/templates/base/base_enhanced.html` as a source of patterns, not as a runtime app base.
+- Extract useful pieces into global components:
+  - Enhanced sidebar patterns
+  - Page header
+  - Stat cards
+  - Form field
+  - Data table
+  - Modal
+  - Help system, if still needed
+- Retire or freeze `frontend/static/css/*` after equivalent Tailwind components exist.
+- Move service-worker/PWA behavior into a separate documented decision; do not keep it inside the base template by default.
 
-#### 1. App Name
-`apps.projects.meetings`
+### Dependencies
 
-#### 2. Current Problems
-
-**UI Issues:**
-- 461 lines base template
-- Calendar UI needs improvement
-- Meeting forms outdated
+- Global `base.html`
+- Global component library
+- Global navigation config
+- Tailwind output
 
-#### 3. Required Changes
+### Backend Impact
 
-**Templates to Refactor (~10):**
-1. Create migration wrapper
-2. Improve calendar interface
-3. Standardize meeting forms
-4. Better integration with tasks
+- Possible context processor cleanup for notifications, search, user menu, and dashboard counters.
 
-#### 4. Dependencies
+### Refactor Priority
 
-- ✅ Global base.html
-- ✅ App 7 (tasks integration)
+High
 
-#### 5. Refactor Priority
+### Estimated Complexity
 
-🟢 **LOW**
+معقد
 
-#### 6. Estimated Complexity
+## App: accounts
 
-**Complexity:** Medium (3-4 days)
+### Current Problems
 
----
+- Has two account base templates: `base_accounts.html` and `base_accounts_migration.html`.
+- Login and access-denied pages may not follow the same shell contract as authenticated screens.
+- Account home/dashboard is a high-traffic entry point, so inconsistency here affects the whole product.
 
-### APP 9: **api** - REST API & AI Features
+### Required Changes
 
-#### 1. App Name
-`api`
+- Make `base_accounts_migration.html` a thin adapter over global `base.html`, then migrate children to global blocks.
+- Keep login in an auth layout mode using global form, alert, button, and card components.
+- Refactor:
+  - `home.html`
+  - `dashboard.html`
+  - `edit_permissions.html`
+  - `access_denied.html`
+  - `login.html`
+- Remove `base_accounts.html` only after confirming no template extends it.
 
-#### 2. Current Problems
+### Dependencies
 
-**UI Issues:**
-- Mixed framework usage
-- 593 lines base template
-- AI chat interface needs modernization
-- API key management UI outdated
+- Auth layout mode in `base.html`
+- Shared form components
+- Shared permission/status badges
 
-#### 3. Required Changes
+### Backend Impact
 
-**Templates to Refactor (9):**
-1. Create migration wrapper
-2. Modernize AI chat interface
-3. Standardize API dashboard
-4. Improve API key management UI
+- Low. May need explicit context variables: `show_sidebar`, `show_navbar`, `show_footer`, `active_app`.
 
-#### 4. Dependencies
+### Refactor Priority
 
-- ✅ Global base.html
+High
 
-#### 5. Refactor Priority
+### Estimated Complexity
 
-🟡 **MEDIUM**
+متوسط
 
-#### 6. Estimated Complexity
+## App: administrator
 
-**Complexity:** Medium (3-4 days)
+### Current Problems
 
----
+- Owns a full Bootstrap-based admin shell with sidebar, navbar, inline CSS, jQuery, and automatic form class mutation.
+- Audit templates depend on `administrator/base_admin.html`, increasing coupling.
+- Permission and user-management screens likely contain dense tables/forms that need consistent design-system components.
 
-## Phase 5: Low Priority Apps (Week 10-12)
+### Required Changes
 
-### APP 10-20: Remaining Apps
+- Convert `administrator/base_admin.html` into an adapter over global `base.html`.
+- Replace admin sidebar with shared sidebar section configured for administration.
+- Migrate pages in batches:
+  1. Dashboard and system settings
+  2. Users and groups
+  3. Permissions and modules
+  4. Departments
+  5. Database settings/setup
+  6. Helper pages
+- Replace Bootstrap form mutation script with shared form rendering.
+- Move database setup JS to explicit page-level initialization.
 
-All remaining apps follow the same pattern:
+### Dependencies
 
-#### 1. App Names
-- `apps.hr.leaves` - Leave management
-- `apps.hr.payroll` - Payroll processing
-- `apps.hr.evaluations` - Performance evaluations
-- `apps.hr.training` - Training management
-- `apps.hr.insurance` - Insurance
-- `apps.hr.disciplinary` - Disciplinary
-- `apps.hr.loans` - Employee loans
-- `apps.finance.banks` - Bank management
-- `apps.reports` - Reporting system
-- `notifications` - Notifications
-- Other small apps
+- Shared admin navigation section
+- Shared table, form, badge, confirm-delete, and page-header components
+- Audit app migration coordination
 
-#### 2. Current Problems
+### Backend Impact
 
-**Common Issues:**
-- Use Bootstrap 5
-- Custom CSS variables
-- Empty or placeholder base templates
-- Inconsistent styling
-- Not responsive
+- Medium. Permission screens may need standardized context for active modules, breadcrumbs, and action buttons.
 
-#### 3. Required Changes
+### Refactor Priority
 
-**Standard Pattern for Each App:**
-1. Create migration wrapper
-2. Replace Bootstrap with Tailwind
-3. Remove custom CSS
-4. Use shared components
-5. Test responsiveness
+High
 
-#### 4. Dependencies
+### Estimated Complexity
 
-- ✅ Global base.html
-- ✅ Shared components
+معقد
 
-#### 5. Refactor Priority
+## App: audit
 
-🟢 **LOW** (Can be done in parallel)
+### Current Problems
 
-#### 6. Estimated Complexity
+- Audit screens extend `administrator/base_admin.html`, so audit UI is blocked by administrator layout migration.
+- Audit list/detail screens are security-sensitive and must remain readable and dense.
 
-**Complexity:** Simple-Medium (2-4 days each)
+### Required Changes
 
-**Can be executed simultaneously by multiple developers**
+- After administrator adapter exists, migrate `auditlog_list.html` and `auditlog_detail.html` to global `base.html`.
+- Use shared table component with compact density.
+- Use semantic badges for action type, severity, user, timestamp, and object.
+- Add a clear filter/search toolbar if backend supports it.
 
----
+### Dependencies
 
-## Execution Summary
+- Administrator adapter or completed administrator shell migration
+- Shared table and badge components
 
-### Week 1-2: Foundation
-- Task 0: Enhance global base.html (core app) - **2-3 days**
+### Backend Impact
 
-### Week 3-4: High Impact
-- Task 1: accounts app - **3-4 days**
-- Task 2: administrator app - **5-7 days**
-- Task 3: apps.hr.attendance - **5-6 days**
+- Low unless filters/pagination are standardized.
 
-### Week 5-7: Core Business
-- Task 4: apps.hr.employees - **4-5 days**
-- Task 5: apps.inventory - **7-10 days**
-- Task 6: apps.procurement.purchase_orders - **4-5 days**
+### Refactor Priority
 
-### Week 8-9: Project Management
-- Task 7: apps.projects.tasks - **3-4 days**
-- Task 8: apps.projects.meetings - **3-4 days**
-- Task 9: api app - **3-4 days**
+Medium
 
-### Week 10-12: Remaining Apps
-- Tasks 10-20: All remaining apps - **2-4 days each (parallel)**
+### Estimated Complexity
 
----
+Simple
 
-## Risk Mitigation
+## App: core
 
-### DO NOT:
-- ❌ Migrate multiple apps simultaneously in early weeks
-- ❌ Delete old base templates immediately
-- ❌ Skip testing after each app migration
-- ❌ Modify backend logic during UI refactoring
+### Current Problems
 
-### DO:
-- ✅ Keep old base templates until new ones are verified
-- ✅ Test each app thoroughly before moving to next
-- ✅ Use Git branches for each app migration
-- ✅ Create rollback plan for each app
-- ✅ Document issues and solutions
+- Uses both global `base.html` and `base/base_enhanced.html`.
+- Monitoring and cache dashboards likely use custom dashboard card patterns.
+- `core/base.html` creates another app-local base layer.
 
----
+### Required Changes
 
-## Success Criteria
+- Convert `core/base.html` to a temporary adapter or remove if unused.
+- Migrate cache and monitoring dashboards away from `base/base_enhanced.html`.
+- Use shared stat cards, chart panels, and status badges.
+- Standardize permissions dashboard with administrator permission components.
 
-### Per App:
-- [ ] All pages render correctly
-- [ ] Forms submit properly
-- [ ] Mobile responsive
-- [ ] Dark mode works
-- [ ] RTL layout correct
-- [ ] No console errors
-- [ ] All JavaScript functional
-- [ ] Performance improved or maintained
+### Dependencies
 
-### Overall Project:
-- [ ] 26 base templates → 1 global base
-- [ ] Bootstrap usage → 0%
-- [ ] Component reusability → 80%+
-- [ ] Custom CSS files → <5
-- [ ] Zero production bugs from migration
+- Frontend base deprecation
+- Shared dashboard components
+- Shared status badge component
 
----
+### Backend Impact
 
-**Plan Status:** Ready for Execution ✅  
-**Last Updated:** April 29, 2026  
-**Next Step:** Begin Task 0 - Enhance global base.html
+- Low to medium depending on dashboard context shape.
+
+### Refactor Priority
+
+High
+
+### Estimated Complexity
+
+متوسط
+
+## App: api
+
+### Current Problems
+
+- `base_api.html` exists but most API UI screens extend global `base.html`.
+- API management screens need a consistent admin/security look.
+- AI chat/data-analysis screens may have unique interactive layouts.
+
+### Required Changes
+
+- Remove or convert `base_api.html` into a thin adapter.
+- Standardize key creation, provider forms, usage stats, and settings pages using shared form/table components.
+- Use semantic risk/status components for API keys and provider health.
+- Create a specialized chat panel component only if the AI chat page requires it.
+
+### Dependencies
+
+- Shared form/table/status components
+- Admin/security navigation section
+
+### Backend Impact
+
+- Low. Usage stats may benefit from standardized pagination/filter context.
+
+### Refactor Priority
+
+Medium
+
+### Estimated Complexity
+
+متوسط
+
+## App: notifications
+
+### Current Problems
+
+- Owns `base_notifications.html`.
+- Notification styling likely differs from global alerts/toasts and navbar notification menu.
+- Dashboard/list/detail/user notification pages duplicate notification UI concepts.
+
+### Required Changes
+
+- Convert `base_notifications.html` into an adapter over `base.html`.
+- Align notification list and detail screens with shared notification item/status components.
+- Integrate unread/read status badges with navbar notification count.
+- Standardize empty states and pagination.
+
+### Dependencies
+
+- Global navbar notification menu
+- Shared status badge, list item, empty state, and pagination components
+
+### Backend Impact
+
+- Medium if notification counts are centralized in a context processor.
+
+### Refactor Priority
+
+Medium
+
+### Estimated Complexity
+
+متوسط
+
+## App: companies
+
+### Current Problems
+
+- Templates live globally under `templates/companies/` instead of app-local `companies/templates/companies/`.
+- Uses global base but likely has inconsistent form/table/card markup.
+- CRUD pages are straightforward but need shared action patterns.
+
+### Required Changes
+
+- Decide whether to keep global templates temporarily or move to app-local templates during a separate cleanup phase.
+- Refactor company list/detail/form/add/delete to use shared page header, table, form, card, and confirm-delete components.
+- Standardize action buttons and breadcrumbs.
+
+### Dependencies
+
+- Shared CRUD components
+- Navigation section for companies/customers
+
+### Backend Impact
+
+- Low if template paths remain stable. Medium if moving templates requires view `template_name` updates.
+
+### Refactor Priority
+
+Low
+
+### Estimated Complexity
+
+Simple
+
+## App: org
+
+### Current Problems
+
+- Templates live globally under `templates/org/` instead of app-local `org/templates/org/`.
+- Branch, department, and job screens likely use basic but inconsistent CRUD markup.
+
+### Required Changes
+
+- Standardize branches, departments, and jobs using shared CRUD components.
+- Use a single org navigation/breadcrumb pattern.
+- Keep template paths stable until view template names are audited.
+
+### Dependencies
+
+- Shared CRUD components
+- Administrator/org navigation relationship
+
+### Backend Impact
+
+- Low unless templates are moved into the app.
+
+### Refactor Priority
+
+Low
+
+### Estimated Complexity
+
+Simple
+
+## App: apps.hr.employees
+
+### Current Problems
+
+- Mixed inheritance between global `base.html` and `employees/base.html`.
+- Multiple list variants exist: `employee_list.html`, `modern_list.html`, `index.html`.
+- Employee profile/detail/form screens likely use separate visual patterns.
+
+### Required Changes
+
+- Convert `employees/base.html` into an adapter, then migrate all children to global blocks.
+- Choose one canonical employee list UI and mark other list templates as legacy.
+- Standardize:
+  - Employee list table/cards
+  - Employee profile/detail page
+  - Comprehensive edit form
+  - Pickup points
+  - Vehicles
+  - Social insurance job titles
+  - Reports
+- Use shared avatars, status badges, table actions, and form sections.
+
+### Dependencies
+
+- HR navigation section
+- Shared table, form, profile header, stat card, and action button components
+
+### Backend Impact
+
+- Medium. Duplicate list views/templates may require route-level decisions.
+
+### Refactor Priority
+
+High
+
+### Estimated Complexity
+
+معقد
+
+## App: apps.hr.attendance
+
+### Current Problems
+
+- Mixed inheritance: `base.html`, `attendance/base_attendance.html`, and references to missing/ambiguous `attendance/base.html`.
+- Has app-local CSS/JS.
+- ZK device, attendance rules, reports, and attendance records are visually and behaviorally different surfaces.
+
+### Required Changes
+
+- Resolve missing `attendance/base.html` references before migration.
+- Convert `base_attendance.html` into an adapter over global `base.html`.
+- Migrate in batches:
+  1. Dashboard/enhanced dashboard
+  2. Attendance records and forms
+  3. Rules
+  4. Leave balance/mark attendance/profile
+  5. ZK device screens
+  6. Reports
+- Keep app-specific JS only for device workflows and attendance interactions.
+- Replace app CSS layout classes with shared components.
+
+### Dependencies
+
+- HR navigation
+- Shared table, form, status badge, report filter, and device-status components
+
+### Backend Impact
+
+- Medium. Device screens may require explicit UI state context.
+
+### Refactor Priority
+
+High
+
+### Estimated Complexity
+
+معقد
+
+## App: apps.hr.leaves
+
+### Current Problems
+
+- Mixed inheritance between `leaves/base.html` and global `base.html`.
+- Global legacy templates also exist under `templates/leaves/`.
+- Leave request/list/type/holiday/balance screens need consistent workflows.
+
+### Required Changes
+
+- Convert `leaves/base.html` into adapter.
+- Audit global `templates/leaves/*` and decide whether they are active legacy routes.
+- Standardize leave dashboard, request form, leave list, leave types, holidays, and balance report.
+- Use shared status badges for pending/approved/rejected and shared date/filter components.
+
+### Dependencies
+
+- HR navigation
+- Shared status badge, table, form, calendar/date input, and report components
+
+### Backend Impact
+
+- Low to medium if global legacy templates are still referenced by views.
+
+### Refactor Priority
+
+High
+
+### Estimated Complexity
+
+متوسط
+
+## App: apps.hr.payroll
+
+### Current Problems
+
+- Mixed inheritance between `payrolls/base.html` and global `base.html`.
+- Global legacy payroll dashboard also exists.
+- Payroll screens need high readability and strong table/form consistency.
+
+### Required Changes
+
+- Convert `payrolls/base.html` into adapter.
+- Standardize dashboard, payroll runs, payslips, salary list, reports, and payslip detail.
+- Use shared financial amount formatting components where possible.
+- Ensure print/export screens are not broken by global shell changes.
+
+### Dependencies
+
+- HR/finance navigation relationship
+- Shared table, amount display, status badge, print layout, and report components
+
+### Backend Impact
+
+- Medium. Print/export flows may require layout mode flags.
+
+### Refactor Priority
+
+High
+
+### Estimated Complexity
+
+معقد
+
+## App: apps.hr.evaluations
+
+### Current Problems
+
+- Mixed inheritance between `evaluations/base.html` and global `base.html`.
+- Has app-local CSS/JS.
+- Dashboard and modern dashboard coexist.
+
+### Required Changes
+
+- Convert `evaluations/base.html` into adapter.
+- Choose canonical dashboard template.
+- Standardize evaluation list, periods, reports, and performance comparison using shared chart/table/card components.
+- Keep app JS only for charts or evaluation-specific interactions.
+
+### Dependencies
+
+- HR navigation
+- Shared stat card, chart panel, table, and report filter components
+
+### Backend Impact
+
+- Low to medium depending on chart data format.
+
+### Refactor Priority
+
+Medium
+
+### Estimated Complexity
+
+متوسط
+
+## App: apps.hr.training
+
+### Current Problems
+
+- Only `modern_dashboard.html` was found.
+- UI likely bypasses a domain-specific base and extends global base directly.
+
+### Required Changes
+
+- Align dashboard with HR dashboard components.
+- Add clear empty states/placeholders if module is incomplete.
+- Ensure navigation exposes training only when routes are ready.
+
+### Dependencies
+
+- HR navigation
+- Shared dashboard/stat components
+
+### Backend Impact
+
+- Low.
+
+### Refactor Priority
+
+Low
+
+### Estimated Complexity
+
+Simple
+
+## App: apps.hr.insurance
+
+### Current Problems
+
+- Has templates but is not currently installed in `LOCAL_APPS`.
+- Mixed inheritance between `insurance/base.html` and global `base.html`.
+
+### Required Changes
+
+- Confirm whether insurance is active before refactoring.
+- If active, convert base to adapter and standardize dashboard screens.
+- If inactive, document as dormant and avoid migration effort.
+
+### Dependencies
+
+- HR navigation
+- Shared dashboard components
+
+### Backend Impact
+
+- Depends on whether app is activated.
+
+### Refactor Priority
+
+Low
+
+### Estimated Complexity
+
+Simple
+
+## App: apps.hr.loans
+
+### Current Problems
+
+- Has one dashboard template but is not installed in `LOCAL_APPS`.
+
+### Required Changes
+
+- Confirm active/inactive status.
+- If active, align dashboard with HR financial components.
+- If inactive, leave untouched until module activation.
+
+### Dependencies
+
+- HR navigation
+
+### Backend Impact
+
+- Low unless activated.
+
+### Refactor Priority
+
+Low
+
+### Estimated Complexity
+
+Simple
+
+## App: apps.inventory
+
+### Current Problems
+
+- Owns a large Bootstrap-based `base_inventory.html` with sidebar, inline CSS, Bootstrap imports, and custom JS.
+- Has many CRUD/report screens and both app-local and global inventory JS.
+- One supplier delete template extends global `base.html`, while most extend `base_inventory.html`.
+- Inventory is a core operational module with high regression risk.
+
+### Required Changes
+
+- Convert `base_inventory.html` into a compatibility adapter over global `base.html`.
+- Preserve inventory-specific sidebar items as navigation config, not custom layout.
+- Migrate in batches:
+  1. Dashboard and settings
+  2. Products, categories, units
+  3. Suppliers, customers, departments
+  4. Invoices and invoice items
+  5. Vouchers
+  6. Product movements
+  7. Reports
+  8. Purchase request bridge screen
+- Consolidate duplicate JS:
+  - Keep `product_form.js` and `voucher_form.js` only if still required.
+  - Review global `static/inventory/js/*` and remove obsolete filter loaders after migration.
+- Replace inventory-specific `.card`, `.btn`, `.table`, `.sidebar` styles with shared components.
+
+### Dependencies
+
+- Shared dense table component
+- Shared form sections
+- Shared report filters
+- Shared status badges
+- Shared action buttons
+- Inventory navigation config
+
+### Backend Impact
+
+- Medium. Some screens may need normalized context for filters, pagination, low-stock count, and active menu.
+
+### Refactor Priority
+
+High
+
+### Estimated Complexity
+
+معقد
+
+## App: apps.procurement.purchase_orders
+
+### Current Problems
+
+- Owns `base_purchase_orders.html` and `base_purchase.html`.
+- Template folder is capitalized as `Purchase_orders`, which is fragile across platforms and inconsistent with Django conventions.
+- Uses global purchase-orders CSS/JS.
+- Approval workflows need consistent state visualization.
+
+### Required Changes
+
+- Convert `base_purchase_orders.html` into adapter over global `base.html`.
+- Decide whether to rename template namespace to lowercase `purchase_orders` in a separate compatibility-safe phase.
+- Migrate:
+  1. Dashboard
+  2. Purchase request list/detail/form/item form/delete
+  3. Approval form
+  4. Pending/approved/rejected lists
+  5. Vendors
+  6. Reports
+- Replace global `purchase_orders.css` with Tailwind components.
+- Keep JS only for workflow-specific interactions.
+
+### Dependencies
+
+- Shared workflow/status badge component
+- Shared table/action buttons
+- Shared form components
+- Inventory integration points
+
+### Backend Impact
+
+- Medium. Approval status, permissions, and inventory links may require stable context.
+
+### Refactor Priority
+
+High
+
+### Estimated Complexity
+
+معقد
+
+## App: apps.projects.tasks
+
+### Current Problems
+
+- Owns `base_tasks.html`.
+- Has both legacy and unified templates: `dashboard.html`, `unified_dashboard.html`, `task_list.html`, `unified_task_list.html`, etc.
+- Task state, priority, owner, and due-date UI likely differs from meetings/project pages.
+
+### Required Changes
+
+- Convert `base_tasks.html` into adapter.
+- Choose unified templates as canonical if routes support them.
+- Standardize task list/detail/form/my tasks/completed tasks/analytics/reports.
+- Use shared status badges, priority indicators, user chips, date badges, and action menus.
+
+### Dependencies
+
+- Projects navigation
+- Shared table/list, badge, form, analytics card, and report components
+
+### Backend Impact
+
+- Medium because duplicate templates may map to different views.
+
+### Refactor Priority
+
+Medium
+
+### Estimated Complexity
+
+متوسط
+
+## App: apps.projects.meetings
+
+### Current Problems
+
+- Owns `base_meetings.html`.
+- Calendar, meeting detail, and meeting task pages likely have custom patterns.
+- Needs consistency with tasks because both are projects-domain apps.
+
+### Required Changes
+
+- Convert `base_meetings.html` into adapter.
+- Standardize meeting dashboard, list, detail, form, task detail, reports, and calendar.
+- Use shared page header, cards, action buttons, and status badges.
+- Keep calendar-specific styling isolated if required.
+
+### Dependencies
+
+- Projects navigation
+- Shared calendar/list/form components or approved app-specific calendar CSS
+
+### Backend Impact
+
+- Low to medium for calendar data/context.
+
+### Refactor Priority
+
+Medium
+
+### Estimated Complexity
+
+متوسط
+
+## App: apps.finance.banks
+
+### Current Problems
+
+- Only `bank_list.html` was found.
+- Extends global `base.html`, so layout risk is low.
+- Finance domain is underdeveloped in UI compared with other modules.
+
+### Required Changes
+
+- Standardize bank list with shared table and empty state.
+- Add finance navigation only for confirmed active routes.
+- Avoid creating a finance-specific base template.
+
+### Dependencies
+
+- Shared table and page-header components
+
+### Backend Impact
+
+- Low.
+
+### Refactor Priority
+
+Low
+
+### Estimated Complexity
+
+Simple
+
+## App: apps.reports
+
+### Current Problems
+
+- Single enhanced dashboard extends global `base.html`.
+- Reporting dashboards may duplicate cards/charts used elsewhere.
+
+### Required Changes
+
+- Standardize dashboard with shared stat grid, chart panel, filters, and empty states.
+- Ensure report pages use a print/export layout mode if needed.
+
+### Dependencies
+
+- Shared dashboard/chart/report filter components
+
+### Backend Impact
+
+- Low to medium depending on chart/report data context.
+
+### Refactor Priority
+
+Medium
+
+### Estimated Complexity
+
+متوسط
+
+## App: apps/administration/cars
+
+### Current Problems
+
+- Not installed in `LOCAL_APPS`, but has a substantial UI.
+- Uses `cars/base.html`, `templates/base.html`, and mixed Windows-style template extends such as `cars\base.html`.
+- Has app-local custom CSS.
+
+### Required Changes
+
+- Confirm whether this app is active or legacy before investing effort.
+- Replace backslash template paths with forward slashes during implementation if active.
+- Convert `cars/base.html` into adapter.
+- Standardize car, employee, supplier, trip, route point, settings, reports, and average price screens.
+
+### Dependencies
+
+- Administration or fleet navigation section
+- Shared CRUD/table/report components
+
+### Backend Impact
+
+- Medium if the app is activated because template path cleanup may expose hidden route issues.
+
+### Refactor Priority
+
+Low until activated; High if production-active outside `LOCAL_APPS`
+
+### Estimated Complexity
+
+متوسط
+
+## App: apps/administration/assets
+
+### Current Problems
+
+- Discovered but not installed.
+- No templates or static files found.
+
+### Required Changes
+
+- No UI refactor now.
+- Add to future roadmap only after routes/templates exist.
+
+### Dependencies
+
+- None.
+
+### Backend Impact
+
+- None.
+
+### Refactor Priority
+
+Low
+
+### Estimated Complexity
+
+Simple
+
+## App: apps/administration/tickets
+
+### Current Problems
+
+- Discovered but not installed.
+- No templates or static files found.
+
+### Required Changes
+
+- No UI refactor now.
+- If activated later, build from global base and shared components from day one.
+
+### Dependencies
+
+- None.
+
+### Backend Impact
+
+- None.
+
+### Refactor Priority
+
+Low
+
+### Estimated Complexity
+
+Simple
+
+## App: apps.hr.disciplinary
+
+### Current Problems
+
+- Discovered but not installed.
+- No templates/static files found.
+
+### Required Changes
+
+- No UI refactor now.
+- Future implementation should use global HR navigation and shared CRUD components.
+
+### Dependencies
+
+- HR navigation if activated.
+
+### Backend Impact
+
+- None for UI refactor.
+
+### Refactor Priority
+
+Low
+
+### Estimated Complexity
+
+Simple
+
+## App: apps.rbac
+
+### Current Problems
+
+- Discovered but not installed.
+- No templates/static files found.
+- Permission UI currently appears split across administrator, accounts, and core.
+
+### Required Changes
+
+- Do not create UI until architecture decision is made.
+- If RBAC becomes the canonical permission app, migrate permission screens from administrator/accounts/core later.
+
+### Dependencies
+
+- Permission architecture decision
+
+### Backend Impact
+
+- Potentially high in future, but none for current UI plan.
+
+### Refactor Priority
+
+Low
+
+### Estimated Complexity
+
+معقد if activated
+
+## App: apps.syssettings
+
+### Current Problems
+
+- Discovered but not installed.
+- System settings UI currently lives in administrator and inventory.
+
+### Required Changes
+
+- Decide whether system settings should be centralized here.
+- No UI refactor until that ownership decision is made.
+
+### Dependencies
+
+- Settings ownership decision
+
+### Backend Impact
+
+- Potentially high in future.
+
+### Refactor Priority
+
+Low
+
+### Estimated Complexity
+
+معقد if activated
+
+## App: apps.workflow
+
+### Current Problems
+
+- Discovered but not installed.
+- No templates/static files found.
+- Workflow concepts appear in purchase approvals and tasks but are not centralized.
+
+### Required Changes
+
+- No UI refactor now.
+- Future workflow screens should reuse shared status, timeline, approval-step, and action components.
+
+### Dependencies
+
+- Workflow architecture decision
+
+### Backend Impact
+
+- None for current UI plan.
+
+### Refactor Priority
+
+Low
+
+### Estimated Complexity
+
+متوسط if activated
+
+## Safe Execution Order
+
+### 1. Foundation and Design System
+
+Refactor first:
+
+- `templates/base.html`
+- `templates/components/*`
+- `tailwind.config.js`
+- `static/css/tailwind.css`
+- Global navigation/sidebar/navbar JS
+
+Why:
+
+- Every app migration depends on a stable shell and component contract.
+- Without this, each app will continue inventing local fixes.
+
+Risk:
+
+- High, because the global base is widely used.
+
+Mitigation:
+
+- Preserve existing block names.
+- Add new blocks without removing old ones.
+- Smoke-test high-traffic pages after base changes.
+
+### 2. Frontend Design System Consolidation
+
+Refactor second:
+
+- `frontend/templates/base/base_enhanced.html`
+- `frontend/templates/components/*`
+- `frontend/static/css/*`
+- `frontend/static/js/*`
+
+Why:
+
+- It currently represents a parallel design system.
+- Its useful parts should be merged before app migrations begin.
+
+Risk:
+
+- Medium to high because it hard-codes routes and layout behavior.
+
+Mitigation:
+
+- Extract components first.
+- Do not switch app templates to `base_enhanced.html`.
+
+### 3. Accounts
+
+Why first app:
+
+- It is the entry point after login.
+- It already has a migration base extending global `base.html`.
+- It validates auth layout, sidebar visibility flags, messages, and user menu.
+
+### 4. Core
+
+Why:
+
+- It depends on both global and enhanced bases.
+- Monitoring/cache dashboards validate dashboard components before business modules.
+
+### 5. Administrator
+
+Why:
+
+- It is a dependency for audit and permission management.
+- It contains many reusable admin patterns needed elsewhere.
+
+### 6. Audit
+
+Why:
+
+- It currently depends on administrator base.
+- It is small and can validate the migrated admin/security visual language.
+
+### 7. Notifications
+
+Why:
+
+- Navbar notification behavior and notification pages should align before broad app rollout.
+
+### 8. HR Core Apps
+
+Recommended order:
+
+1. Employees
+2. Attendance
+3. Leaves
+4. Payroll
+5. Evaluations
+6. Training
+7. Insurance/Loans only if active
+
+Why:
+
+- Employees is a foundational HR entity used by attendance, leaves, payroll, evaluations, and training.
+- Attendance and payroll are complex and should benefit from components hardened during employees/leaves migration.
+
+### 9. Inventory
+
+Why:
+
+- It is large and operationally critical.
+- It should be migrated after table/form/report components are proven in HR and admin.
+
+### 10. Procurement Purchase Orders
+
+Why:
+
+- It depends conceptually on inventory and approval workflow components.
+- Status/approval UI should reuse components proven in inventory and tasks.
+
+### 11. Projects
+
+Recommended order:
+
+1. Tasks
+2. Meetings
+
+Why:
+
+- Tasks define shared project status and action patterns.
+- Meetings can reuse those patterns for meeting tasks and reports.
+
+### 12. Finance, Reports, Companies, Org
+
+Recommended order:
+
+1. Reports
+2. Finance banks
+3. Companies
+4. Org
+
+Why:
+
+- These are smaller or already closer to global base inheritance.
+- They are suitable after the main component system is stable.
+
+### 13. Dormant Apps
+
+Only refactor after activation decision:
+
+- `apps/administration/cars`
+- `apps/administration/assets`
+- `apps/administration/tickets`
+- `apps/hr/disciplinary`
+- `apps/hr/insurance`
+- `apps/hr/loans`
+- `apps/rbac`
+- `apps/syssettings`
+- `apps/workflow`
+
+## Final Migration Checklist Per App
+
+Before marking any app complete:
+
+- All active templates render without `TemplateDoesNotExist`.
+- No active screen imports Bootstrap unless explicitly approved as a temporary exception.
+- No active screen owns a full sidebar/navbar layout.
+- App-local base is removed or documented as a temporary adapter.
+- Tables use shared responsive table patterns.
+- Forms use shared form rendering.
+- Delete/confirm flows use shared confirm-delete pattern.
+- Empty states exist for list screens.
+- Mobile width works without overlapping sidebar/content.
+- RTL layout is preserved.
+- Tailwind build includes the migrated templates.
+- App-specific CSS/JS is reduced to necessary behavior only.

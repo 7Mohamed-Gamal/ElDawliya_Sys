@@ -1,196 +1,114 @@
-{% extends 'administrator/base_admin.html' %}
-{% load static %}
+{% extends 'base.html' %}
 
 {% block title %}
-    {% if form.instance.pk %}
-        تعديل القسم - {{ form.instance.name }}
-    {% else %}
-        إضافة قسم جديد
-    {% endif %} - لوحة تحكم مدير النظام
+{% if form.instance.pk %}تعديل القسم - {{ form.instance.name }}{% else %}إضافة قسم جديد{% endif %}
 {% endblock %}
 
-{% block page_icon %}building{% endblock %}
-{% block page_header %}
-    {% if form.instance.pk %}
-        تعديل القسم - {{ form.instance.name }}
-    {% else %}
-        إضافة قسم جديد
-    {% endif %}
+{% block page_description %}
+<p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+    {% if form.instance.pk %}تحديث بيانات القسم وترتيبه وصلاحيات الوصول إليه.{% else %}إنشاء قسم جديد لاستخدامه في تنظيم وحدات النظام.{% endif %}
+</p>
 {% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-8 mx-auto">
-        <div class="card mb-4">
-            <div class="card-header bg-light">
-                <h5 class="mb-0">
-                    <i class="fas fa-{% if form.instance.pk %}edit{% else %}plus-circle{% endif %} me-2"></i>
-                    {% if form.instance.pk %}
-                        تعديل بيانات القسم
-                    {% else %}
-                        إضافة قسم جديد
-                    {% endif %}
-                </h5>
+<div class="mx-auto max-w-4xl">
+    <form method="post" class="card">
+        {% csrf_token %}
+        <div class="card-header">
+            <h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+                {% if form.instance.pk %}تعديل بيانات القسم{% else %}إضافة قسم جديد{% endif %}
+            </h2>
+        </div>
+        <div class="card-body space-y-6">
+            {% if form.errors %}
+            <div class="rounded-lg border border-error-200 bg-error-50 p-4 text-sm text-error-700 dark:border-error-900/50 dark:bg-error-900/20 dark:text-error-300">
+                <i class="fas fa-exclamation-triangle ms-2"></i>
+                يرجى تصحيح الأخطاء أدناه قبل الحفظ.
             </div>
-            <div class="card-body">
-                <form method="post">
-                    {% csrf_token %}
+            {% endif %}
 
-                    {% if form.errors %}
-                    <div class="alert alert-danger">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        يرجى تصحيح الأخطاء أدناه.
+            <div class="grid gap-5 md:grid-cols-2">
+                <div>
+                    <label for="{{ form.name.id_for_label }}" class="form-label">{{ form.name.label }}*</label>
+                    {{ form.name }}
+                    {% if form.name.errors %}<div class="invalid-feedback">{{ form.name.errors }}</div>{% endif %}
+                    <div class="form-text">اسم القسم كما يظهر في القائمة الجانبية.</div>
+                </div>
+
+                <div>
+                    <label for="{{ form.url_name.id_for_label }}" class="form-label">{{ form.url_name.label }}*</label>
+                    {{ form.url_name }}
+                    {% if form.url_name.errors %}<div class="invalid-feedback">{{ form.url_name.errors }}</div>{% endif %}
+                    <div class="form-text">اسم داخلي للرابط بدون مسافات أو رموز غير ضرورية.</div>
+                </div>
+
+                <div>
+                    <label for="{{ form.icon.id_for_label }}" class="form-label">{{ form.icon.label }}*</label>
+                    <div class="flex items-center gap-3">
+                        <span class="inline-flex size-11 shrink-0 items-center justify-center rounded-lg bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-300">
+                            <i class="fas fa-question" id="icon-preview"></i>
+                        </span>
+                        {{ form.icon }}
                     </div>
-                    {% endif %}
+                    {% if form.icon.errors %}<div class="invalid-feedback">{{ form.icon.errors }}</div>{% endif %}
+                    <div class="form-text">مثال: fa-users أو fa-cog.</div>
+                </div>
 
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="{{ form.name.id_for_label }}" class="form-label">
-                                {{ form.name.label }}*
-                            </label>
-                            {{ form.name }}
-                            {% if form.name.errors %}
-                            <div class="invalid-feedback d-block">
-                                {{ form.name.errors }}
-                            </div>
-                            {% endif %}
-                            <div class="form-text">اسم القسم كما سيظهر في القائمة الجانبية</div>
-                        </div>
+                <div>
+                    <label for="{{ form.order.id_for_label }}" class="form-label">{{ form.order.label }}</label>
+                    {{ form.order }}
+                    {% if form.order.errors %}<div class="invalid-feedback">{{ form.order.errors }}</div>{% endif %}
+                    <div class="form-text">الأرقام الأقل تظهر أولاً.</div>
+                </div>
+            </div>
 
-                        <div class="col-md-6">
-                            <label for="{{ form.url_name.id_for_label }}" class="form-label">
-                                {{ form.url_name.label }}*
-                            </label>
-                            {{ form.url_name }}
-                            {% if form.url_name.errors %}
-                            <div class="invalid-feedback d-block">
-                                {{ form.url_name.errors }}
-                            </div>
-                            {% endif %}
-                            <div class="form-text">الاسم المستخدم في الروابط (بدون مسافات أو أحرف خاصة)</div>
-                        </div>
-                    </div>
+            <div>
+                <label for="{{ form.description.id_for_label }}" class="form-label">{{ form.description.label }}</label>
+                {{ form.description }}
+                {% if form.description.errors %}<div class="invalid-feedback">{{ form.description.errors }}</div>{% endif %}
+            </div>
 
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label for="{{ form.icon.id_for_label }}" class="form-label">
-                                {{ form.icon.label }}*
-                            </label>
-                            <div class="input-group">
-                                <span class="input-group-text">
-                                    <i class="fas fa-question" id="icon-preview"></i>
-                                </span>
-                                {{ form.icon }}
-                            </div>
-                            {% if form.icon.errors %}
-                            <div class="invalid-feedback d-block">
-                                {{ form.icon.errors }}
-                            </div>
-                            {% endif %}
-                            <div class="form-text">مثال: fa-users أو fa-cog. <a href="https://fontawesome.com/icons?d=gallery&m=free" target="_blank">استعرض الأيقونات</a></div>
-                        </div>
+            <div class="grid gap-4 md:grid-cols-2">
+                <label class="flex items-start gap-3 rounded-lg border border-neutral-200 p-4 dark:border-neutral-700">
+                    {{ form.is_active }}
+                    <span>
+                        <span class="block text-sm font-medium text-neutral-800 dark:text-neutral-100">{{ form.is_active.label }}</span>
+                        <span class="mt-1 block text-xs text-neutral-500 dark:text-neutral-400">إيقافه يخفي القسم من التنقل.</span>
+                    </span>
+                </label>
+                <label class="flex items-start gap-3 rounded-lg border border-neutral-200 p-4 dark:border-neutral-700">
+                    {{ form.require_admin }}
+                    <span>
+                        <span class="block text-sm font-medium text-neutral-800 dark:text-neutral-100">{{ form.require_admin.label }}</span>
+                        <span class="mt-1 block text-xs text-neutral-500 dark:text-neutral-400">يحصر الوصول على مديري النظام.</span>
+                    </span>
+                </label>
+            </div>
 
-                        <div class="col-md-6">
-                            <label for="{{ form.order.id_for_label }}" class="form-label">
-                                {{ form.order.label }}
-                            </label>
-                            {{ form.order }}
-                            {% if form.order.errors %}
-                            <div class="invalid-feedback d-block">
-                                {{ form.order.errors }}
-                            </div>
-                            {% endif %}
-                            <div class="form-text">ترتيب ظهور القسم في القائمة (الأرقام الأقل تظهر في الأعلى)</div>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-12">
-                            <label for="{{ form.description.id_for_label }}" class="form-label">
-                                {{ form.description.label }}
-                            </label>
-                            {{ form.description }}
-                            {% if form.description.errors %}
-                            <div class="invalid-feedback d-block">
-                                {{ form.description.errors }}
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <div class="form-check form-switch">
-                                {{ form.is_active }}
-                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
-                                    {{ form.is_active.label }}
-                                </label>
-                            </div>
-                            {% if form.is_active.errors %}
-                            <div class="invalid-feedback d-block">
-                                {{ form.is_active.errors }}
-                            </div>
-                            {% endif %}
-                            <div class="form-text">إذا كان غير نشط، لن يظهر في القائمة الجانبية</div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="form-check form-switch">
-                                {{ form.require_admin }}
-                                <label class="form-check-label" for="{{ form.require_admin.id_for_label }}">
-                                    {{ form.require_admin.label }}
-                                </label>
-                            </div>
-                            {% if form.require_admin.errors %}
-                            <div class="invalid-feedback d-block">
-                                {{ form.require_admin.errors }}
-                            </div>
-                            {% endif %}
-                            <div class="form-text">إذا كان مفعلاً، فقط المدراء يمكنهم الوصول إلى هذا القسم</div>
-                        </div>
-                    </div>
-
-                    <div class="row mb-3">
-                        <div class="col-12">
-                            <label for="{{ form.groups.id_for_label }}" class="form-label">
-                                {{ form.groups.label }}
-                            </label>
-                            {{ form.groups }}
-                            {% if form.groups.errors %}
-                            <div class="invalid-feedback d-block">
-                                {{ form.groups.errors }}
-                            </div>
-                            {% endif %}
-                            <div class="form-text">المجموعات المسموح لها بالوصول إلى هذا القسم. إذا لم يتم تحديد أي مجموعة، فسيكون القسم متاحاً للجميع.</div>
-                        </div>
-                    </div>
-
-                    <hr class="my-4">
-
-                    <div class="d-flex justify-content-between">
-                        <a href="{% url 'administrator:department_list' %}" class="btn btn-outline-secondary">
-                            <i class="fas fa-chevron-right me-1"></i>
-                            العودة للقائمة
-                        </a>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save me-1"></i>
-                            {% if form.instance.pk %}
-                                حفظ التغييرات
-                            {% else %}
-                                إضافة القسم
-                            {% endif %}
-                        </button>
-                    </div>
-                </form>
+            <div>
+                <label for="{{ form.groups.id_for_label }}" class="form-label">{{ form.groups.label }}</label>
+                {{ form.groups }}
+                {% if form.groups.errors %}<div class="invalid-feedback">{{ form.groups.errors }}</div>{% endif %}
+                <div class="form-text">اتركه فارغاً إذا كان القسم متاحاً لكل المجموعات المسموح لها بالنظام.</div>
             </div>
         </div>
-    </div>
+        <div class="card-footer flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <a href="{% url 'administrator:department_list' %}" class="btn btn-outline">
+                <i class="fas fa-chevron-right"></i>
+                <span>العودة للقائمة</span>
+            </a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i>
+                <span>{% if form.instance.pk %}حفظ التغييرات{% else %}إضافة القسم{% endif %}</span>
+            </button>
+        </div>
+    </form>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // Icon preview
         const iconInput = document.getElementById('{{ form.icon.id_for_label }}');
         const iconPreview = document.getElementById('icon-preview');
 
@@ -199,39 +117,9 @@
             iconPreview.className = iconValue ? 'fas ' + iconValue : 'fas fa-question';
         }
 
-        // Initial preview
         updateIconPreview();
-
-        // Update on change
         iconInput.addEventListener('input', updateIconPreview);
         iconInput.addEventListener('change', updateIconPreview);
-
-        // Form field styling
-        document.querySelectorAll('input[type="checkbox"]').forEach(function(el) {
-            el.classList.add('form-check-input');
-            el.style.float = 'right';
-            el.style.marginLeft = '0.5em';
-        });
-
-        // Style select elements
-        document.querySelectorAll('select').forEach(function(el) {
-            el.classList.add('form-select');
-        });
-
-        // Style text inputs
-        document.querySelectorAll('input[type="text"]').forEach(function(el) {
-            el.classList.add('form-control');
-        });
-
-        // Style number inputs
-        document.querySelectorAll('input[type="number"]').forEach(function(el) {
-            el.classList.add('form-control');
-        });
-
-        // Style textareas
-        document.querySelectorAll('textarea').forEach(function(el) {
-            el.classList.add('form-control');
-        });
     });
 </script>
 {% endblock %}

@@ -31,6 +31,12 @@ def cache_dashboard(request):
 
     context = {
         'title': 'مراقبة التخزين المؤقت',
+        'page_title': 'مراقبة التخزين المؤقت',
+        'breadcrumbs': [
+            {'title': 'الرئيسية', 'url': '/'},
+            {'title': 'الخدمات الأساسية', 'url': '/core/'},
+            {'title': 'مراقبة التخزين المؤقت', 'active': True},
+        ],
         'cache_backend': 'Redis' if hasattr(settings, 'REDIS_URL') else 'Database',
         'current_time': timezone.now(),
     }

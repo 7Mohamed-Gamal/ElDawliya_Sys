@@ -23,6 +23,42 @@ except ImportError:
 
 User = get_user_model()
 
+
+def _accounts_ui_context(request, page_title=None):
+    """Return shared accounts UI shell context for migrated templates."""
+    path = request.path or ''
+    menu_items = [
+        {
+            'title': 'الرئيسية',
+            'icon': 'fas fa-house',
+            'url': reverse('accounts:home'),
+            'active': path == reverse('accounts:home'),
+        },
+        {
+            'title': 'إدارة المستخدمين',
+            'icon': 'fas fa-users-gear',
+            'url': reverse('accounts:dashboard'),
+            'active': path.startswith(reverse('accounts:dashboard')),
+        },
+    ]
+
+    if request.user.is_authenticated and getattr(request.user, 'Role', None) == 'admin':
+        menu_items.append({
+            'title': 'إضافة مستخدم',
+            'icon': 'fas fa-user-plus',
+            'url': reverse('accounts:create_user'),
+            'active': path.startswith(reverse('accounts:create_user')),
+        })
+
+    return {
+        'accounts_menu_items': menu_items,
+        'page_title': page_title,
+        'breadcrumbs': [
+            {'title': 'الرئيسية', 'url': reverse('accounts:home') if request.user.is_authenticated else reverse('accounts:login')},
+            {'title': page_title, 'active': True},
+        ] if page_title else [],
+    }
+
 @ensure_csrf_cookie
 @csrf_protect
 def login_view(request):
@@ -54,7 +90,12 @@ def login_view(request):
     else:
         form = CustomUserLoginForm()
 
-    return render(request, 'accounts/login.html', {'form': form})
+    return render(request, 'accounts/login.html', {
+        'form': form,
+        'show_sidebar': False,
+        'show_navbar': False,
+        'show_footer': False,
+    })
 
 def logout_view(request):
     """
@@ -69,7 +110,14 @@ def access_denied(request):
     Displays the access denied page.
     عرض صفحة رفض الوصول.
     """
-    return render(request, 'accounts/access_denied.html', {'title': 'رفض الوصول'})
+    context = _accounts_ui_context(request, 'رفض الوصول')
+    context.update({
+        'title': 'رفض الوصول',
+        'show_sidebar': False,
+        'show_navbar': False,
+        'show_footer': False,
+    })
+    return render(request, 'accounts/access_denied.html', context)
 
 def csrf_failure(request, reason=""):
     """
@@ -108,6 +156,7 @@ def dashboard_view(request):
         'active_users': active_users,
         'recent_activities': []  # Add recent activity logic if available
     }
+    context.update(_accounts_ui_context(request, 'لوحة إدارة المستخدمين'))
 
     return render(request, 'accounts/dashboard.html', context)
 
@@ -194,6 +243,7 @@ def home_view(request):
         'department_modules': department_modules,
         'is_admin': is_admin
     }
+    context.update(_accounts_ui_context(request, 'لوحة التحكم'))
 
     return render(request, 'home_dashboard.html', context)
 

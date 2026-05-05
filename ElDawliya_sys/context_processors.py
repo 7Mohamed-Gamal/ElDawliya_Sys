@@ -53,3 +53,69 @@ def system_info(request):
         'current_year': datetime.datetime.now().year,
         'debug_mode': settings.DEBUG,
     }
+
+
+def ui_shell(request):
+    """
+    Provides safe default UI shell values for the global Tailwind base.
+    View-level context can override these values when a page needs a focused
+    layout such as login or access-denied screens.
+    """
+    path = request.path or ''
+
+    return {
+        'show_sidebar': True,
+        'show_navbar': True,
+        'show_footer': True,
+        'active_path': path,
+        'default_menu_items': [
+            {
+                'title': 'لوحة التحكم',
+                'icon': 'fas fa-gauge-high',
+                'url': '/dashboard/',
+                'active': path.startswith('/dashboard/'),
+            },
+            {
+                'title': 'الحسابات',
+                'icon': 'fas fa-users-gear',
+                'url': '/accounts/dashboard/',
+                'active': path.startswith('/accounts/'),
+            },
+            {
+                'title': 'الموارد البشرية',
+                'icon': 'fas fa-users',
+                'url': '/hr/',
+                'active': path.startswith('/hr/'),
+            },
+            {
+                'title': 'المخزون',
+                'icon': 'fas fa-boxes-stacked',
+                'url': '/inventory/',
+                'active': path.startswith('/inventory/'),
+            },
+            {
+                'title': 'المشتريات',
+                'icon': 'fas fa-cart-shopping',
+                'url': '/purchase/',
+                'active': path.startswith('/purchase/') or path.startswith('/procurement/'),
+            },
+            {
+                'title': 'المشاريع',
+                'icon': 'fas fa-diagram-project',
+                'url': '/projects/',
+                'active': path.startswith('/projects/') or path.startswith('/meetings/'),
+            },
+            {
+                'title': 'التقارير',
+                'icon': 'fas fa-chart-line',
+                'url': '/reports/',
+                'active': path.startswith('/reports/'),
+            },
+            {
+                'title': 'إدارة النظام',
+                'icon': 'fas fa-shield-halved',
+                'url': '/administrator/',
+                'active': path.startswith('/administrator/'),
+            },
+        ],
+    }

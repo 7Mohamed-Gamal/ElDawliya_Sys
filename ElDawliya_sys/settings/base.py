@@ -155,6 +155,8 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
                 'django.template.context_processors.i18n',
                 'ElDawliya_sys.context_processors.system_info',
+                'ElDawliya_sys.context_processors.ui_shell',
+                'notifications.context_processors.notifications_processor',
             ],
         },
     },

@@ -27,6 +27,12 @@ def monitoring_dashboard(request):
 
     context = {
         'title': 'مراقبة النظام',
+        'page_title': 'مراقبة النظام',
+        'breadcrumbs': [
+            {'title': 'الرئيسية', 'url': '/'},
+            {'title': 'الخدمات الأساسية', 'url': '/core/'},
+            {'title': 'مراقبة النظام', 'active': True},
+        ],
         'current_time': timezone.now(),
     }
 

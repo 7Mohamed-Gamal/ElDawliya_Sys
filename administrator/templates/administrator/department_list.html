@@ -1,119 +1,110 @@
-{% extends 'administrator/base_admin.html' %}
-{% load static %}
+{% extends 'base.html' %}
 
-{% block title %}الأقسام - لوحة تحكم مدير النظام{% endblock %}
+{% block title %}إدارة الأقسام{% endblock %}
 
-{% block page_icon %}building{% endblock %}
-{% block page_header %}إدارة الأقسام{% endblock %}
+{% block page_description %}
+<p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
+    إدارة أقسام التنقل الرئيسية التي تظهر في الشريط الجانبي وتتحكم في تنظيم وحدات النظام.
+</p>
+{% endblock %}
 
 {% block content %}
-<div class="row">
-        <div class="col-12 mb-4">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">
-                        <i class="fas fa-building me-2"></i>
-                        قائمة الأقسام
-                    </h5>
-                    <a href="{% url 'administrator:department_add' %}" class="btn btn-primary btn-sm">
-                        <i class="fas fa-plus-circle me-2"></i>
-                        إضافة قسم جديد
-                    </a>
-                </div>
-                <div class="card-body">
-                    {% if departments %}
-                    <div class="table-responsive">
-                        <table class="table table-hover table-striped align-middle">
-                            <thead>
-                                <tr>
-                                    <th scope="col">#</th>
-                                    <th scope="col">القسم</th>
-                                    <th scope="col">الأيقونة</th>
-                                    <th scope="col">الحالة</th>
-                                    <th scope="col">الترتيب</th>
-                                    <th scope="col">الإجراءات</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for department in departments %}
-                                <tr>
-                                    <td>{{ forloop.counter }}</td>
-                                    <td>
-                                        <strong>{{ department.name }}</strong>
-                                        {% if department.description %}
-                                        <div class="text-muted small">{{ department.description }}</div>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <i class="fas {{ department.icon }} fa-lg"></i>
-                                        <span class="ms-2 text-muted small">{{ department.icon }}</span>
-                                    </td>
-                                    <td>
-                                        {% if department.is_active %}
-                                        <span class="badge bg-success">نشط</span>
-                                        {% else %}
-                                        <span class="badge bg-danger">غير نشط</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ department.order }}</td>
-                                    <td>
-                                        <div class="btn-group">
-                                            <a href="{% url 'administrator:department_edit' department.id %}" class="btn btn-sm btn-outline-primary">
-                                                <i class="fas fa-edit"></i>
-                                            </a>
-                                            <a href="{% url 'administrator:department_delete' department.id %}" class="btn btn-sm btn-outline-danger">
-                                                <i class="fas fa-trash"></i>
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                    {% else %}
-                    <div class="text-center py-5">
-                        <i class="fas fa-folder-open fa-4x mb-3 text-muted"></i>
-                        <h5>لا توجد أقسام</h5>
-                        <p class="text-muted">لم يتم إنشاء أي أقسام بعد. انقر على زر "إضافة قسم جديد" لإنشاء أول قسم.</p>
-                        <a href="{% url 'administrator:department_add' %}" class="btn btn-primary mt-2">
-                            <i class="fas fa-plus-circle me-2"></i>
-                            إضافة قسم جديد
-                        </a>
-                    </div>
-                    {% endif %}
-                </div>
+<div class="space-y-6">
+    <div class="card">
+        <div class="card-header flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h2 class="text-lg font-semibold text-neutral-900 dark:text-neutral-100">قائمة الأقسام</h2>
+                <p class="mt-1 text-sm text-neutral-500 dark:text-neutral-400">رتب الأقسام وحدد حالتها وصلاحيات الوصول إليها.</p>
+            </div>
+            <a href="{% url 'administrator:department_add' %}" class="btn btn-primary">
+                <i class="fas fa-plus-circle"></i>
+                <span>إضافة قسم</span>
+            </a>
+        </div>
+        <div class="card-body">
+            {% if departments %}
+            <div class="table-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th class="text-right">#</th>
+                            <th class="text-right">القسم</th>
+                            <th class="text-right">الأيقونة</th>
+                            <th class="text-right">الحالة</th>
+                            <th class="text-right">يتطلب مدير</th>
+                            <th class="text-right">الترتيب</th>
+                            <th class="text-right">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for department in departments %}
+                        <tr>
+                            <td class="text-neutral-500 dark:text-neutral-400">{{ forloop.counter }}</td>
+                            <td>
+                                <div class="font-semibold text-neutral-900 dark:text-neutral-100">{{ department.name }}</div>
+                                {% if department.description %}
+                                <div class="mt-1 text-xs text-neutral-500 dark:text-neutral-400">{{ department.description }}</div>
+                                {% endif %}
+                                <code class="mt-1 inline-block text-xs text-neutral-500 dark:text-neutral-400">{{ department.url_name }}</code>
+                            </td>
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    <i class="fas {{ department.icon }} text-primary-600 dark:text-primary-400"></i>
+                                    <span class="text-xs text-neutral-500 dark:text-neutral-400">{{ department.icon }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                {% if department.is_active %}
+                                <span class="badge badge-success">نشط</span>
+                                {% else %}
+                                <span class="badge badge-error">غير نشط</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if department.require_admin %}
+                                <span class="badge badge-warning">نعم</span>
+                                {% else %}
+                                <span class="badge badge-secondary">لا</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ department.order }}</td>
+                            <td>
+                                <div class="flex items-center gap-2">
+                                    <a href="{% url 'administrator:department_edit' department.id %}" class="btn btn-outline btn-sm" title="تعديل">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <a href="{% url 'administrator:department_delete' department.id %}" class="btn btn-error btn-sm" title="حذف">
+                                        <i class="fas fa-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="py-12 text-center">
+                <i class="fas fa-folder-open mb-4 text-5xl text-neutral-300 dark:text-neutral-600"></i>
+                <h3 class="text-lg font-semibold text-neutral-900 dark:text-neutral-100">لا توجد أقسام</h3>
+                <p class="mt-2 text-sm text-neutral-500 dark:text-neutral-400">ابدأ بإنشاء أول قسم لتنظيم وحدات النظام.</p>
+                <a href="{% url 'administrator:department_add' %}" class="btn btn-primary mt-4">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>إضافة قسم</span>
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <h3 class="text-base font-semibold text-neutral-900 dark:text-neutral-100">ضوابط الترحيل</h3>
+            <div class="mt-3 grid gap-3 text-sm text-neutral-600 dark:text-neutral-400 md:grid-cols-2">
+                <p>استخدم أسماء أيقونات Font Awesome الحالية إلى أن يتم اعتماد قاموس أيقونات مركزي.</p>
+                <p>تغيير ترتيب الأقسام يؤثر مباشرة في تجربة التنقل، لذلك يفضل مراجعته مع ترتيب الوحدات المرتبطة.</p>
             </div>
         </div>
-        
-        <div class="col-12 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5>
-                        <i class="fas fa-info-circle me-2"></i>
-                        معلومات حول الأقسام
-                    </h5>
-                </div>
-                <div class="card-body">
-                    <p>الأقسام هي العناصر الرئيسية التي تظهر في الشريط الجانبي للنظام. يمكنك إضافة وتعديل الأقسام حسب حاجتك.</p>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6 class="mb-3">تنبيهات هامة:</h6>
-                            <ul>
-                                <li>يجب استخدام أسماء أيقونات من مكتبة Font Awesome.</li>
-                                <li>تأكد من استخدام اسم رابط فريد لكل قسم.</li>
-                                <li>يمكنك ترتيب الأقسام باستخدام خانة "الترتيب".</li>
-                            </ul>
-                        </div>
-                        <div class="col-md-6">
-                            <h6 class="mb-3">روابط مفيدة:</h6>
-                            <ul>
-                                <li><a href="https://fontawesome.com/icons?d=gallery&m=free" target="_blank">مكتبة أيقونات Font Awesome</a></li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+    </div>
 </div>
 {% endblock %}

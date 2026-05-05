@@ -1,116 +1,65 @@
-{% extends 'administrator/base_admin.html' %}
-{% load static %}
+{% extends 'base.html' %}
 
-{% block title %}حذف المستخدم - {{ user_obj.username }} - نظام الدولية{% endblock %}
+{% block title %}حذف المستخدم - {{ user_obj.username }}{% endblock %}
 
-{% block page_icon %}trash-alt{% endblock %}
-{% block page_header %}حذف المستخدم - {{ user_obj.username }}{% endblock %}
-
-{% block breadcrumb %}
-<li class="breadcrumb-item"><a href="{% url 'accounts:home' %}">الرئيسية</a></li>
-<li class="breadcrumb-item"><a href="{% url 'administrator:admin_dashboard' %}">مدير النظام</a></li>
-<li class="breadcrumb-item"><a href="{% url 'administrator:user_list' %}">المستخدمين</a></li>
-<li class="breadcrumb-item active">حذف {{ user_obj.username }}</li>
+{% block page_description %}
+<p class="mt-2 text-sm text-neutral-600 dark:text-neutral-400">تأكيد حذف حساب مستخدم من النظام.</p>
 {% endblock %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-8 mx-auto">
-        <div class="card border-0 shadow">
-            <div class="card-header bg-danger text-white">
-                <h5 class="mb-0">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
-                    تأكيد حذف المستخدم
-                </h5>
+<div class="mx-auto max-w-3xl">
+    <div class="card border-error-200 dark:border-error-900/50">
+        <div class="card-header">
+            <h2 class="flex items-center gap-2 text-lg font-semibold text-error-700 dark:text-error-300">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>تأكيد حذف المستخدم</span>
+            </h2>
+        </div>
+        <div class="card-body space-y-5">
+            <div class="rounded-lg border border-warning-200 bg-warning-50 p-4 text-sm text-warning-800 dark:border-warning-900/50 dark:bg-warning-900/20 dark:text-warning-200">
+                حذف المستخدم إجراء دائم وقد يؤثر على سجلات المراجعة والعمليات المرتبطة به.
             </div>
-            <div class="card-body">
-                <div class="alert alert-warning mb-4">
-                    <div class="d-flex">
-                        <div class="me-3">
-                            <i class="fas fa-exclamation-triangle fa-2x text-warning"></i>
-                        </div>
-                        <div>
-                            <h5 class="alert-heading">تحذير!</h5>
-                            <p>أنت على وشك حذف المستخدم "{{ user_obj.username }}". هذا الإجراء لا يمكن التراجع عنه.</p>
-                            <p class="mb-0">سيتم حذف جميع بيانات هذا المستخدم والصلاحيات المرتبطة به.</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h5 class="card-title">معلومات المستخدم</h5>
-                        <div class="list-group list-group-flush">
-                            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-                                <span><i class="fas fa-user me-2"></i> اسم المستخدم:</span>
-                                <span class="fw-bold">{{ user_obj.username }}</span>
-                            </div>
-                            {% if user_obj.get_full_name %}
-                            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-                                <span><i class="fas fa-id-card me-2"></i> الاسم الكامل:</span>
-                                <span>{{ user_obj.get_full_name }}</span>
-                            </div>
-                            {% endif %}
-                            {% if user_obj.email %}
-                            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-                                <span><i class="fas fa-envelope me-2"></i> البريد الإلكتروني:</span>
-                                <span>{{ user_obj.email }}</span>
-                            </div>
-                            {% endif %}
-                            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-                                <span><i class="fas fa-users me-2"></i> المجموعات:</span>
-                                <span class="badge bg-primary">{{ user_obj.groups.count }}</span>
-                            </div>
-                            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-                                <span><i class="fas fa-key me-2"></i> الصلاحيات:</span>
-                                <span class="badge bg-danger">{{ user_obj.user_permissions.count }}</span>
-                            </div>
-                            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-                                <span><i class="fas fa-calendar me-2"></i> تاريخ الإنشاء:</span>
-                                <span>{{ user_obj.date_joined|date:"Y-m-d" }}</span>
-                            </div>
-                            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-                                <span><i class="fas fa-sign-in-alt me-2"></i> آخر تسجيل دخول:</span>
-                                <span>{{ user_obj.last_login|date:"Y-m-d H:i"|default:"لا يوجد" }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                {% if user_obj.is_superuser %}
-                <div class="alert alert-danger mb-4">
-                    <i class="fas fa-exclamation-circle me-2"></i>
-                    <strong>تنبيه:</strong> هذا المستخدم لديه صلاحيات مدير النظام. حذف هذا المستخدم قد يؤثر على إمكانية الوصول إلى وظائف إدارية مهمة في النظام.
-                </div>
-                {% endif %}
-                
-                {% if user_obj.groups.exists %}
-                <div class="alert alert-info mb-4">
-                    <i class="fas fa-info-circle me-2"></i>
-                    <strong>ملاحظة:</strong> هذا المستخدم ينتمي إلى {{ user_obj.groups.count }} مجموعة. سيتم إلغاء هذه العلاقات عند الحذف.
-                </div>
-                {% endif %}
 
-                <form method="post" class="mt-4">
-                    {% csrf_token %}
-                    
-                    <div class="form-check mb-4">
-                        <input class="form-check-input" type="checkbox" id="confirmDelete" required>
-                        <label class="form-check-label" for="confirmDelete">
-                            أؤكد أنني أريد حذف المستخدم "{{ user_obj.username }}" وأدرك أن هذا الإجراء لا يمكن التراجع عنه.
-                        </label>
-                    </div>
-                    
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
-                        <a href="{% url 'administrator:user_list' %}" class="btn btn-outline-secondary">
-                            <i class="fas fa-times me-1"></i> إلغاء
-                        </a>
-                        <button type="submit" class="btn btn-danger" id="deleteBtn" disabled>
-                            <i class="fas fa-trash-alt me-1"></i> حذف المستخدم
-                        </button>
-                    </div>
-                </form>
+            <div class="rounded-lg border border-neutral-200 p-4 dark:border-neutral-700">
+                <dl class="grid gap-4 sm:grid-cols-3">
+                    <dt class="text-sm text-neutral-500 dark:text-neutral-400">اسم المستخدم</dt>
+                    <dd class="sm:col-span-2 font-semibold text-neutral-900 dark:text-neutral-100">{{ user_obj.username }}</dd>
+                    <dt class="text-sm text-neutral-500 dark:text-neutral-400">الاسم الكامل</dt>
+                    <dd class="sm:col-span-2 text-neutral-700 dark:text-neutral-300">{{ user_obj.get_full_name|default:"-" }}</dd>
+                    <dt class="text-sm text-neutral-500 dark:text-neutral-400">البريد الإلكتروني</dt>
+                    <dd class="sm:col-span-2 text-neutral-700 dark:text-neutral-300">{{ user_obj.email|default:"-" }}</dd>
+                    <dt class="text-sm text-neutral-500 dark:text-neutral-400">المجموعات</dt>
+                    <dd class="sm:col-span-2"><span class="badge badge-secondary">{{ user_obj.groups.count }}</span></dd>
+                    <dt class="text-sm text-neutral-500 dark:text-neutral-400">الصلاحيات المباشرة</dt>
+                    <dd class="sm:col-span-2"><span class="badge badge-info">{{ user_obj.user_permissions.count }}</span></dd>
+                </dl>
             </div>
+
+            {% if user_obj.is_superuser %}
+            <div class="rounded-lg border border-error-200 bg-error-50 p-4 text-sm text-error-700 dark:border-error-900/50 dark:bg-error-900/20 dark:text-error-300">
+                هذا الحساب لديه صلاحيات مدير نظام. يفضل تعطيله بدلاً من حذفه إذا كانت هناك سجلات مرتبطة به.
+            </div>
+            {% endif %}
+
+            <form method="post" class="space-y-4">
+                {% csrf_token %}
+                <label class="flex items-start gap-3 rounded-lg border border-neutral-200 p-4 dark:border-neutral-700">
+                    <input class="form-check-input mt-1" type="checkbox" id="confirmDelete" required>
+                    <span class="text-sm text-neutral-700 dark:text-neutral-300">
+                        أؤكد حذف المستخدم "{{ user_obj.username }}" وأدرك أن الإجراء لا يمكن التراجع عنه.
+                    </span>
+                </label>
+                <div class="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <a href="{% url 'administrator:user_list' %}" class="btn btn-outline">
+                        <i class="fas fa-times"></i>
+                        <span>إلغاء</span>
+                    </a>
+                    <button type="submit" class="btn btn-error" id="deleteBtn" disabled>
+                        <i class="fas fa-trash-alt"></i>
+                        <span>حذف المستخدم</span>
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -118,13 +67,11 @@
 
 {% block extra_js %}
 <script>
-    $(document).ready(function() {
-        $('#confirmDelete').change(function() {
-            if ($(this).is(':checked')) {
-                $('#deleteBtn').prop('disabled', false);
-            } else {
-                $('#deleteBtn').prop('disabled', true);
-            }
+    document.addEventListener('DOMContentLoaded', function() {
+        const confirmDelete = document.getElementById('confirmDelete');
+        const deleteBtn = document.getElementById('deleteBtn');
+        confirmDelete.addEventListener('change', function() {
+            deleteBtn.disabled = !confirmDelete.checked;
         });
     });
 </script>
